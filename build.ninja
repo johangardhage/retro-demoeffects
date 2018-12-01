@@ -1,0 +1,63 @@
+cc = g++
+ccflags = -Wall -s -march=native
+linux = $ccflags `sdl2-config --cflags --libs`
+windows = $ccflags -Dmain=SDL_main -lmingw32 -lSDL2main -lSDL2 -mwindows
+builddir = build
+srcdir = src
+
+rule cc
+  command = $cc $in $linux -o $out
+#  command = $cc $in $windows -o $out.
+  description = Building executable $out
+
+build $builddir/blobs: cc $srcdir/blobs.cpp
+build $builddir/bump: cc $srcdir/bump.cpp
+build $builddir/distort: cc $srcdir/distort.cpp
+build $builddir/distortlogo: cc $srcdir/distortlogo.cpp
+build $builddir/dotflag: cc $srcdir/dotflag.cpp
+build $builddir/dottunnel: cc $srcdir/dottunnel.cpp
+build $builddir/fade: cc $srcdir/fade.cpp
+build $builddir/fire: cc $srcdir/fire.cpp
+build $builddir/firelogo: cc $srcdir/firelogo.cpp
+build $builddir/lens: cc $srcdir/lens.cpp
+build $builddir/magiclines: cc $srcdir/magiclines.cpp
+build $builddir/metaballs: cc $srcdir/metaballs.cpp
+build $builddir/paint: cc $srcdir/paint.cpp
+build $builddir/particles: cc $srcdir/particles.cpp
+build $builddir/plasma: cc $srcdir/plasma.cpp
+build $builddir/ripples: cc $srcdir/ripples.cpp
+build $builddir/rototunnel: cc $srcdir/rototunnel.cpp
+build $builddir/rotozoom: cc $srcdir/rotozoom.cpp
+build $builddir/scroller: cc $srcdir/scroller.cpp
+build $builddir/showpcx: cc $srcdir/showpcx.cpp
+build $builddir/texturetunnel: cc $srcdir/texturetunnel.cpp
+build $builddir/water: cc $srcdir/water.cpp
+build $builddir/whitenoise: cc $srcdir/whitenoise.cpp
+build $builddir/wormhole: cc $srcdir/wormhole.cpp
+build $builddir/xorcircles: cc $srcdir/xorcircles.cpp
+
+build blobs: phony $builddir/blobs
+build bump: phony $builddir/bump
+build distort: phony $builddir/distort
+build distortlogo: phony $builddir/distortlogo
+build dotflag: phony $builddir/dotflag
+build dottunnel: phony $builddir/dottunnel
+build fade: phony $builddir/fade
+build fire: phony $builddir/fire
+build firelogo: phony $builddir/firelogo
+build lens: phony $builddir/lens
+build magiclines: phony $builddir/magiclines
+build metaballs: phony $builddir/metaballs
+build paint: phony $builddir/paint
+build particles: phony $builddir/particles
+build plasma: phony $builddir/plasma
+build ripples: phony $builddir/ripples
+build rototunnel: phony $builddir/rototunnel
+build rotozoom: phony $builddir/rotozoom
+build scroller: phony $builddir/scroller
+build showpcx: phony $builddir/showpcx
+build texturetunnel: phony $builddir/texturetunnel
+build water: phony $builddir/water
+build whitenoise: phony $builddir/whitenoise
+build wormhole: phony $builddir/wormhole
+build xorcircles: phony $builddir/xorcircles

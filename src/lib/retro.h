@@ -472,9 +472,6 @@ void RETRO_Initialize(int argc, char *argv[], int param)
 
 	// Create window
 	flags = 0;
-	if (RETRO_parameters & RETRO_FULLSCREEN) {
-		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-	}
 	RETRO_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, dm.w, dm.h, flags);
 	if (RETRO_window == NULL) {
 		RETRO_RageQuit("SDL_CreateWindow failed: %s\n", SDL_GetError());
@@ -490,6 +487,11 @@ void RETRO_Initialize(int argc, char *argv[], int param)
 	}
 	RETRO_renderer = SDL_CreateRenderer(RETRO_window, -1, flags);
 	SDL_RenderSetLogicalSize(RETRO_renderer, RETRO_WIDTH, RETRO_HEIGHT);
+
+	// Set fullscreen
+	if (RETRO_parameters & RETRO_FULLSCREEN) {
+		SDL_SetWindowFullscreen(RETRO_window, SDL_WINDOW_FULLSCREEN);
+	}
 
 	// Create surface and surface texture
 	RETRO_surface = SDL_CreateRGBSurface(0, RETRO_WIDTH, RETRO_HEIGHT, 32, 0, 0, 0, 0);

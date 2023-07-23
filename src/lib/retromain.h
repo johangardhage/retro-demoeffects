@@ -9,11 +9,108 @@
 
 #include "retro.h"
 
+void RETRO_ParseArguments(int argc, char *argv[], RETRO_Context &context)
+{
+	context.basename = basename(argv[0]);
+	static struct option long_options[] = {
+		{"help", no_argument, 0, 'h'},
+		{"window", no_argument, 0, 'w'},
+		{"fullwindow", no_argument, 0, 0},
+		{"fullscreen", no_argument, 0, 'f'},
+		{"vsync", no_argument, 0, 'v'},
+		{"novsync", no_argument, 0, 0},
+		{"linear", no_argument, 0, 'l'},
+		{"nolinear", no_argument, 0, 0},
+		{"showcursor", no_argument, 0, 'c'},
+		{"nocursor", no_argument, 0, 0},
+		{"showfps", no_argument, 0, 0},
+		{"nofps", no_argument, 0, 0},
+		{"capfps", required_argument, 0, 0},
+		{0, 0, 0, 0}};
+	bool usage = false;
+	int c;
+	int option_index = 0;
+	while ((c = getopt_long(argc, argv, ":hwflcv", long_options, &option_index)) != -1) {
+		switch (c) {
+		case 0:
+			if (strcmp("fullwindow", long_options[option_index].name) == 0) {
+				context.mode = RETRO_Context::FULLWINDOW;
+			} else if (strcmp("novsync", long_options[option_index].name) == 0) {
+				context.vsync = false;
+			} else if (strcmp("nolinear", long_options[option_index].name) == 0) {
+				context.linear = false;
+			} else if (strcmp("nocursor", long_options[option_index].name) == 0) {
+				context.showcursor = false;
+			} else if (strcmp("showfps", long_options[option_index].name) == 0) {
+				context.showfps = true;
+			} else if (strcmp("nofps", long_options[option_index].name) == 0) {
+				context.showfps = false;
+			} else if (strcmp("capfps", long_options[option_index].name) == 0) {
+				context.fpscap = atoi(optarg);
+			}
+			break;
+		case 'h':
+			usage = true;
+			break;
+		case 'w':
+			context.mode = RETRO_Context::WINDOW;
+			break;
+		case 'f':
+			context.mode = RETRO_Context::FULLSCREEN;
+			break;
+		case 'v':
+			context.vsync = true;
+			break;
+		case 'l':
+			context.linear = true;
+			break;
+		case 'c':
+			context.showcursor = true;
+			break;
+		case '?':
+			usage = true;
+			printf("unrecognized option '%s'\n", argv[optind - 1]);
+			break;
+		default:
+			usage = true;
+			break;
+		}
+	}
+	if (optind < argc) {
+		usage = true;
+		printf("non-option ARGV-elements: ");
+		while (optind < argc) {
+			printf("%s ", argv[optind++]);
+		}
+		printf("\n");
+	}
+	if (usage) {
+		printf("Usage: %s [OPTION]...\n\n", context.basename);
+		printf("Options:\n");
+		printf(" -h, --help           Display this text and exit\n");
+		printf(" -w, --window         Render in a window\n");
+		printf("     --fullwindow     Render in a fullscreen window\n");
+		printf(" -f, --fullscreen     Render in fullscreen\n");
+		printf(" -v, --vsync          Enable sync to vertical refresh\n");
+		printf("     --novsync        Disable sync to vertical refresh\n");
+		printf(" -l, --linear         Render using linear filtering\n");
+		printf("     --nolinear       Render using nearest pixel sampling\n");
+		printf(" -c, --showcursor     Show mouse cursor\n");
+		printf("     --nocursor       Hide mouse cursor\n");
+		printf("     --showfps        Show frame rate in window title\n");
+		printf("     --nofps          Hide frame rate\n");
+		printf("     --capfps=VALUE   Limit frame rate to the specified VALUE\n");
+		exit(1);
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	if (DEMO_Startup != NULL) DEMO_Startup();
 
-	RETRO_Initialize(argc, argv, RETRO_FULLSCREEN | RETRO_VSYNC | RETRO_SHOWFPS);
+	RETRO_ParseArguments(argc, argv, RETRO_context);
+
+	RETRO_Initialize();
 	RETRO_Mainloop();
 	RETRO_Deinitialize();
 

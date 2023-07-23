@@ -53,16 +53,6 @@ void __attribute__((weak)) RETRO_Deinitialize_3D();
 #define WRAPHEIGHT(n) ((int)(n) % RETRO_HEIGHT)
 #define SWAP(x, y) do { typeof(x) _SWAP = x; x = y; y = _SWAP; } while (0)
 
-enum {
-	RETRO_WINDOW = 1,
-	RETRO_FULLWINDOW = 2,
-	RETRO_FULLSCREEN = 4,
-	RETRO_VSYNC = 8,
-	RETRO_LINEAR = 16,
-	RETRO_SHOWCURSOR = 32,
-	RETRO_SHOWFPS = 64
-};
-
 struct Palette {
 	unsigned char r, g, b;
 };
@@ -92,9 +82,17 @@ struct Point2D {
 // Private variables
 // *******************************************************************
 
-char *RETRO_basename;
-int RETRO_parameters;
-int RETRO_fpscap = 0;
+struct RETRO_Context {
+	enum { FULLSCREEN, WINDOW, FULLWINDOW } mode;
+	char *basename;
+	bool vsync;
+	bool linear;
+	bool showcursor;
+	bool showfps;
+	int fpscap;
+};
+
+RETRO_Context RETRO_context = { .mode = RETRO_Context::FULLSCREEN, .vsync = true, .showfps = true };
 
 SDL_Window *RETRO_window = NULL;
 SDL_Renderer *RETRO_renderer = NULL;
@@ -125,9 +123,9 @@ void RETRO_PrintFPS(void)
 
 	fpscounter++;
 	if (fpslasttime < SDL_GetTicks() - 1 * 1000) {
-		if (RETRO_parameters & RETRO_SHOWFPS) {
+		if (RETRO_context.showfps) {
 			char title[256];
-			snprintf(title, 256, "RETRO - %s - FPS: %d", RETRO_basename, fpscounter);
+			snprintf(title, 256, "RETRO - %s - FPS: %d", RETRO_context.basename, fpscounter);
 			SDL_SetWindowTitle(RETRO_window, title);
 		}
 		fpslasttime = SDL_GetTicks();
@@ -338,116 +336,8 @@ void RETRO_Flip()
 	SDL_RenderPresent(RETRO_renderer);
 }
 
-int RETRO_ParseArguments(int argc, char *argv[], int param)
+void RETRO_Initialize()
 {
-	int parameters = param;
-	static struct option long_options[] = {
-		{"help", no_argument, 0, 'h'},
-		{"window", no_argument, 0, 'w'},
-		{"fullwindow", no_argument, 0, 0},
-		{"fullscreen", no_argument, 0, 'f'},
-		{"vsync", no_argument, 0, 'v'},
-		{"novsync", no_argument, 0, 0},
-		{"linear", no_argument, 0, 'l'},
-		{"nolinear", no_argument, 0, 0},
-		{"showcursor", no_argument, 0, 'c'},
-		{"nocursor", no_argument, 0, 0},
-		{"showfps", no_argument, 0, 0},
-		{"nofps", no_argument, 0, 0},
-		{"capfps", required_argument, 0, 0},
-		{0, 0, 0, 0}};
-	bool usage = false;
-	int c;
-	int option_index = 0;
-	while ((c = getopt_long(argc, argv, ":hwflcv", long_options, &option_index)) != -1) {
-		switch (c) {
-		case 0:
-			if (strcmp("fullwindow", long_options[option_index].name) == 0) {
-				parameters |= RETRO_FULLWINDOW;
-				parameters &= ~(RETRO_WINDOW | RETRO_FULLSCREEN);
-			} else if (strcmp("novsync", long_options[option_index].name) == 0) {
-				parameters &= ~RETRO_VSYNC;
-			} else if (strcmp("nolinear", long_options[option_index].name) == 0) {
-				parameters &= ~RETRO_LINEAR;
-			} else if (strcmp("nocursor", long_options[option_index].name) == 0) {
-				parameters &= ~RETRO_SHOWCURSOR;
-			} else if (strcmp("showfps", long_options[option_index].name) == 0) {
-				parameters |= RETRO_SHOWFPS;
-			} else if (strcmp("nofps", long_options[option_index].name) == 0) {
-				parameters &= ~RETRO_SHOWFPS;
-			} else if (strcmp("capfps", long_options[option_index].name) == 0) {
-				RETRO_fpscap = atoi(optarg);
-			}
-			break;
-		case 'h':
-			usage = true;
-			break;
-		case 'w':
-			parameters |= RETRO_WINDOW;
-			parameters &= ~(RETRO_FULLWINDOW | RETRO_FULLSCREEN);
-			break;
-		case 'f':
-			parameters |= RETRO_FULLSCREEN;
-			parameters &= ~(RETRO_WINDOW | RETRO_FULLWINDOW);
-			break;
-		case 'v':
-			parameters |= RETRO_VSYNC;
-			break;
-		case 'l':
-			parameters |= RETRO_LINEAR;
-			break;
-		case 'c':
-			parameters |= RETRO_SHOWCURSOR;
-			break;
-		case '?':
-			usage = true;
-			printf("unrecognized option '%s'\n", argv[optind - 1]);
-			break;
-		default:
-			usage = true;
-			break;
-		}
-	}
-	if (optind < argc) {
-		usage = true;
-		printf("non-option ARGV-elements: ");
-		while (optind < argc) {
-			printf("%s ", argv[optind++]);
-		}
-		printf("\n");
-	}
-	if (usage) {
-		printf("Usage: %s [OPTION]...\n\n", RETRO_basename);
-		printf("Options:\n");
-		printf(" -h, --help           Display this text and exit\n");
-		printf(" -w, --window         Render in a window\n");
-		printf("     --fullwindow     Render in a fullscreen window\n");
-		printf(" -f, --fullscreen     Render in fullscreen\n");
-		printf(" -v, --vsync          Enable sync to vertical refresh\n");
-		printf("     --novsync        Disable sync to vertical refresh\n");
-		printf(" -l, --linear         Render using linear filtering\n");
-		printf("     --nolinear       Render using nearest pixel sampling\n");
-		printf(" -c, --showcursor     Show mouse cursor\n");
-		printf("     --nocursor       Hide mouse cursor\n");
-		printf("     --showfps        Show frame rate in window title\n");
-		printf("     --nofps          Hide frame rate\n");
-		printf("     --capfps=VALUE   Limit frame rate to the specified VALUE\n");
-		exit(1);
-	}
-	return parameters;
-}
-
-void RETRO_Initialize(int argc, char *argv[], int param)
-{
-	// Parse arguments
-	RETRO_basename = basename(argv[0]);
-	RETRO_parameters = RETRO_ParseArguments(argc, argv, param);
-	Uint32 flags = 0;
-
-	// Title
-	char title[256];
-	snprintf(title, 256, "RETRO - %s", RETRO_basename);
-
 	// Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
 		RETRO_RageQuit("SDL_Init failed: %s\n", SDL_GetError());
@@ -458,38 +348,43 @@ void RETRO_Initialize(int argc, char *argv[], int param)
 	if (SDL_GetCurrentDisplayMode(0, &dm) != 0) {
 		RETRO_RageQuit("SDL_GetCurrentDisplayMode failed: %s\n", SDL_GetError());
 	}
-	if (RETRO_parameters & RETRO_WINDOW) {
+
+	// Set size of window
+	if (RETRO_context.mode == RETRO_Context::WINDOW) {
 		dm.w = RETRO_WIDTH;
 		dm.h = RETRO_HEIGHT;
 	}
 
+	// Create window title
+	char title[256];
+	snprintf(title, 256, "RETRO - %s", RETRO_context.basename);
+
+	// Create window
+	RETRO_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, dm.w, dm.h, 0);
+	if (RETRO_window == NULL) {
+		RETRO_RageQuit("SDL_CreateWindow failed: %s\n", SDL_GetError());
+	}
+
 	// Cursor
-	if (RETRO_parameters & RETRO_SHOWCURSOR) {
+	if (RETRO_context.showcursor) {
 		SDL_ShowCursor(1);
 	} else {
 		SDL_ShowCursor(0);
 	}
 
-	// Create window
-	flags = 0;
-	RETRO_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, dm.w, dm.h, flags);
-	if (RETRO_window == NULL) {
-		RETRO_RageQuit("SDL_CreateWindow failed: %s\n", SDL_GetError());
-	}
-
 	// Create renderer
-	flags = SDL_RENDERER_ACCELERATED;
-	if (RETRO_parameters & RETRO_VSYNC) {
+	Uint32 flags = SDL_RENDERER_ACCELERATED;
+	if (RETRO_context.vsync) {
 		flags |= SDL_RENDERER_PRESENTVSYNC;
 	}
-	if (RETRO_parameters & RETRO_LINEAR) {
+	if (RETRO_context.linear) {
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 	}
 	RETRO_renderer = SDL_CreateRenderer(RETRO_window, -1, flags);
 	SDL_RenderSetLogicalSize(RETRO_renderer, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Set fullscreen
-	if (RETRO_parameters & RETRO_FULLSCREEN) {
+	if (RETRO_context.mode == RETRO_Context::FULLSCREEN) {
 		SDL_SetWindowFullscreen(RETRO_window, SDL_WINDOW_FULLSCREEN);
 	}
 
@@ -574,8 +469,8 @@ void RETRO_Mainloop()
 		Uint32 render_end = SDL_GetTicks();
 
 		// Limit FPS
-		if (RETRO_fpscap && ((render_end - render_begin) < (Uint32)1000 / RETRO_fpscap)) {
-			SDL_Delay((1000 / RETRO_fpscap) - (render_end - render_begin));
+		if (RETRO_context.fpscap && ((render_end - render_begin) < (Uint32)1000 / RETRO_context.fpscap)) {
+			SDL_Delay((1000 / RETRO_context.fpscap) - (render_end - render_begin));
 		}
 
 		// Print FPS

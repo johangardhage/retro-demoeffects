@@ -9,9 +9,9 @@
 
 #include "retro.h"
 
-void RETRO_ParseArguments(int argc, char *argv[], RETRO_Context &context)
+void RETRO_ParseArguments(int argc, char *argv[])
 {
-	context.basename = basename(argv[0]);
+	RETRO_lib.basename = basename(argv[0]);
 	static struct option long_options[] = {
 		{"help", no_argument, 0, 'h'},
 		{"window", no_argument, 0, 'w'},
@@ -34,38 +34,38 @@ void RETRO_ParseArguments(int argc, char *argv[], RETRO_Context &context)
 		switch (c) {
 		case 0:
 			if (strcmp("fullwindow", long_options[option_index].name) == 0) {
-				context.mode = RETRO_Context::FULLWINDOW;
+				RETRO_lib.mode = RETRO_Lib::FULLWINDOW;
 			} else if (strcmp("novsync", long_options[option_index].name) == 0) {
-				context.vsync = false;
+				RETRO_lib.vsync = false;
 			} else if (strcmp("nolinear", long_options[option_index].name) == 0) {
-				context.linear = false;
+				RETRO_lib.linear = false;
 			} else if (strcmp("nocursor", long_options[option_index].name) == 0) {
-				context.showcursor = false;
+				RETRO_lib.showcursor = false;
 			} else if (strcmp("showfps", long_options[option_index].name) == 0) {
-				context.showfps = true;
+				RETRO_lib.showfps = true;
 			} else if (strcmp("nofps", long_options[option_index].name) == 0) {
-				context.showfps = false;
+				RETRO_lib.showfps = false;
 			} else if (strcmp("capfps", long_options[option_index].name) == 0) {
-				context.fpscap = atoi(optarg);
+				RETRO_lib.fpscap = atoi(optarg);
 			}
 			break;
 		case 'h':
 			usage = true;
 			break;
 		case 'w':
-			context.mode = RETRO_Context::WINDOW;
+			RETRO_lib.mode = RETRO_Lib::WINDOW;
 			break;
 		case 'f':
-			context.mode = RETRO_Context::FULLSCREEN;
+			RETRO_lib.mode = RETRO_Lib::FULLSCREEN;
 			break;
 		case 'v':
-			context.vsync = true;
+			RETRO_lib.vsync = true;
 			break;
 		case 'l':
-			context.linear = true;
+			RETRO_lib.linear = true;
 			break;
 		case 'c':
-			context.showcursor = true;
+			RETRO_lib.showcursor = true;
 			break;
 		case '?':
 			usage = true;
@@ -85,7 +85,7 @@ void RETRO_ParseArguments(int argc, char *argv[], RETRO_Context &context)
 		printf("\n");
 	}
 	if (usage) {
-		printf("Usage: %s [OPTION]...\n\n", context.basename);
+		printf("Usage: %s [OPTION]...\n\n", RETRO_lib.basename);
 		printf("Options:\n");
 		printf(" -h, --help           Display this text and exit\n");
 		printf(" -w, --window         Render in a window\n");
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 {
 	if (DEMO_Startup != NULL) DEMO_Startup();
 
-	RETRO_ParseArguments(argc, argv, RETRO_context);
+	RETRO_ParseArguments(argc, argv);
 
 	RETRO_Initialize();
 	RETRO_Mainloop();

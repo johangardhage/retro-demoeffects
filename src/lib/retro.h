@@ -82,7 +82,7 @@ struct Point2D {
 // Private variables
 // *******************************************************************
 
-struct RETRO_Context {
+struct RETRO_Lib {
 	enum { FULLSCREEN, WINDOW, FULLWINDOW } mode;
 	char *basename;
 	bool vsync;
@@ -90,21 +90,19 @@ struct RETRO_Context {
 	bool showcursor;
 	bool showfps;
 	int fpscap;
+	SDL_Window *window = NULL;
+	SDL_Renderer *renderer = NULL;
+	SDL_Surface *surface = NULL;
+	SDL_Texture *surfacetexture = NULL;
+	unsigned char *surfacebuffer = NULL;
+	int yoffsettable[RETRO_HEIGHT];
+	SDL_Color colorpalette[RETRO_COLORS];
+	Uint32 colortable[RETRO_COLORS];
+	Texture *texture[RETRO_MAX_TEXTURES];
+	int textures = 0;
 };
 
-RETRO_Context RETRO_context = { .mode = RETRO_Context::FULLSCREEN, .vsync = true, .showfps = true };
-
-SDL_Window *RETRO_window = NULL;
-SDL_Renderer *RETRO_renderer = NULL;
-SDL_Surface *RETRO_surface = NULL;
-SDL_Texture *RETRO_surfacetexture = NULL;
-
-unsigned char *RETRO_surfacebuffer = NULL;
-int RETRO_yoffsettable[RETRO_HEIGHT];
-SDL_Color RETRO_colorpalette[RETRO_COLORS];
-Uint32 RETRO_colortable[RETRO_COLORS];
-Texture *RETRO_texture[RETRO_MAX_TEXTURES];
-int RETRO_textures = 0;
+RETRO_Lib RETRO_lib = { .mode = RETRO_Lib::FULLSCREEN, .vsync = true, .showfps = true };
 
 // *******************************************************************
 // Public methods
@@ -123,10 +121,10 @@ void RETRO_PrintFPS(void)
 
 	fpscounter++;
 	if (fpslasttime < SDL_GetTicks() - 1 * 1000) {
-		if (RETRO_context.showfps) {
+		if (RETRO_lib.showfps) {
 			char title[256];
-			snprintf(title, 256, "RETRO - %s - FPS: %d", RETRO_context.basename, fpscounter);
-			SDL_SetWindowTitle(RETRO_window, title);
+			snprintf(title, 256, "RETRO - %s - FPS: %d", RETRO_lib.basename, fpscounter);
+			SDL_SetWindowTitle(RETRO_lib.window, title);
 		}
 		fpslasttime = SDL_GetTicks();
 		fpscounter = 0;
@@ -135,54 +133,54 @@ void RETRO_PrintFPS(void)
 
 Texture *RETRO_AllocateTexture(void)
 {
-	int id = RETRO_textures++;
-	RETRO_texture[id] = new Texture();
-	return RETRO_texture[id];
+	int id = RETRO_lib.textures++;
+	RETRO_lib.texture[id] = new Texture();
+	return RETRO_lib.texture[id];
 }
 
 Texture *RETRO_GetTexture(int id = 0)
 {
-	return RETRO_texture[id];
+	return RETRO_lib.texture[id];
 }
 
 unsigned char *RETRO_GetTextureImage(int id = 0)
 {
-	return RETRO_texture[id] != NULL ? RETRO_texture[id]->image : NULL;
+	return RETRO_lib.texture[id] != NULL ? RETRO_lib.texture[id]->image : NULL;
 }
 
 Palette *RETRO_GetTexturePalette(int id = 0)
 {
-	return RETRO_texture[id] != NULL ? RETRO_texture[id]->palette : NULL;
+	return RETRO_lib.texture[id] != NULL ? RETRO_lib.texture[id]->palette : NULL;
 }
 
 unsigned char *RETRO_GetSurfaceBuffer(void)
 {
-	return RETRO_surfacebuffer;
+	return RETRO_lib.surfacebuffer;
 }
 
 int *RETRO_GetYOffsetTable(void)
 {
-	return RETRO_yoffsettable;
+	return RETRO_lib.yoffsettable;
 }
 
 void RETRO_PutPixel(int x, int y, unsigned char color)
 {
-	RETRO_surfacebuffer[RETRO_yoffsettable[y] + x] = color;
+	RETRO_lib.surfacebuffer[RETRO_lib.yoffsettable[y] + x] = color;
 }
 
 unsigned char RETRO_GetPixel(int x, int y)
 {
-	return (RETRO_surfacebuffer[RETRO_yoffsettable[y] + x]);
+	return (RETRO_lib.surfacebuffer[RETRO_lib.yoffsettable[y] + x]);
 }
 
 void RETRO_Clear(unsigned char color = 0)
 {
-	memset(RETRO_surfacebuffer, color, RETRO_WIDTH * RETRO_HEIGHT);
+	memset(RETRO_lib.surfacebuffer, color, RETRO_WIDTH * RETRO_HEIGHT);
 }
 
 void RETRO_Blit(unsigned char *src, int size)
 {
-	memcpy(RETRO_surfacebuffer, src, size);
+	memcpy(RETRO_lib.surfacebuffer, src, size);
 }
 
 void RETRO_Copy(unsigned char *src, unsigned char *dst, int size)
@@ -192,20 +190,20 @@ void RETRO_Copy(unsigned char *src, unsigned char *dst, int size)
 
 void RETRO_SetColor(unsigned char color, unsigned char r, unsigned char g, unsigned char b)
 {
-	RETRO_colorpalette[color].r = r;
-	RETRO_colorpalette[color].g = g;
-	RETRO_colorpalette[color].b = b;
-	RETRO_colortable[color] = SDL_MapRGB(RETRO_surface->format, r, g, b);
+	RETRO_lib.colorpalette[color].r = r;
+	RETRO_lib.colorpalette[color].g = g;
+	RETRO_lib.colorpalette[color].b = b;
+	RETRO_lib.colortable[color] = SDL_MapRGB(RETRO_lib.surface->format, r, g, b);
 }
 
 SDL_Color RETRO_GetColor(unsigned char color)
 {
-	return RETRO_colorpalette[color];
+	return RETRO_lib.colorpalette[color];
 }
 
 void RETRO_SetPalette(void)
 {
-	SDL_SetPaletteColors(RETRO_surface->format->palette, RETRO_colorpalette, 0, RETRO_COLORS);
+	SDL_SetPaletteColors(RETRO_lib.surface->format->palette, RETRO_lib.colorpalette, 0, RETRO_COLORS);
 }
 
 void RETRO_SetPalette(Palette *palette)
@@ -324,16 +322,16 @@ void RETRO_Flip()
 	int pitch;
 
 	// Copy surface buffer to surface
-	SDL_LockTexture(RETRO_surfacetexture, NULL, &pixels, &pitch);
+	SDL_LockTexture(RETRO_lib.surfacetexture, NULL, &pixels, &pitch);
 	Uint32 *pixels_ptr = (Uint32 *)pixels;
 	for (int i = 0; i < RETRO_HEIGHT * RETRO_WIDTH; i++) {
-		pixels_ptr[i] = RETRO_colortable[RETRO_surfacebuffer[i]];
+		pixels_ptr[i] = RETRO_lib.colortable[RETRO_lib.surfacebuffer[i]];
 	}
-	SDL_UnlockTexture(RETRO_surfacetexture);
+	SDL_UnlockTexture(RETRO_lib.surfacetexture);
 
-	SDL_RenderClear(RETRO_renderer);
-	SDL_RenderCopy(RETRO_renderer, RETRO_surfacetexture, NULL, NULL);
-	SDL_RenderPresent(RETRO_renderer);
+	SDL_RenderClear(RETRO_lib.renderer);
+	SDL_RenderCopy(RETRO_lib.renderer, RETRO_lib.surfacetexture, NULL, NULL);
+	SDL_RenderPresent(RETRO_lib.renderer);
 }
 
 void RETRO_Initialize()
@@ -350,23 +348,23 @@ void RETRO_Initialize()
 	}
 
 	// Set size of window
-	if (RETRO_context.mode == RETRO_Context::WINDOW) {
+	if (RETRO_lib.mode == RETRO_Lib::WINDOW) {
 		dm.w = RETRO_WIDTH;
 		dm.h = RETRO_HEIGHT;
 	}
 
 	// Create window title
 	char title[256];
-	snprintf(title, 256, "RETRO - %s", RETRO_context.basename);
+	snprintf(title, 256, "RETRO - %s", RETRO_lib.basename);
 
 	// Create window
-	RETRO_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, dm.w, dm.h, 0);
-	if (RETRO_window == NULL) {
+	RETRO_lib.window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, dm.w, dm.h, 0);
+	if (RETRO_lib.window == NULL) {
 		RETRO_RageQuit("SDL_CreateWindow failed: %s\n", SDL_GetError());
 	}
 
 	// Cursor
-	if (RETRO_context.showcursor) {
+	if (RETRO_lib.showcursor) {
 		SDL_ShowCursor(1);
 	} else {
 		SDL_ShowCursor(0);
@@ -374,31 +372,31 @@ void RETRO_Initialize()
 
 	// Create renderer
 	Uint32 flags = SDL_RENDERER_ACCELERATED;
-	if (RETRO_context.vsync) {
+	if (RETRO_lib.vsync) {
 		flags |= SDL_RENDERER_PRESENTVSYNC;
 	}
-	if (RETRO_context.linear) {
+	if (RETRO_lib.linear) {
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 	}
-	RETRO_renderer = SDL_CreateRenderer(RETRO_window, -1, flags);
-	SDL_RenderSetLogicalSize(RETRO_renderer, RETRO_WIDTH, RETRO_HEIGHT);
+	RETRO_lib.renderer = SDL_CreateRenderer(RETRO_lib.window, -1, flags);
+	SDL_RenderSetLogicalSize(RETRO_lib.renderer, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Set fullscreen
-	if (RETRO_context.mode == RETRO_Context::FULLSCREEN) {
-		SDL_SetWindowFullscreen(RETRO_window, SDL_WINDOW_FULLSCREEN);
+	if (RETRO_lib.mode == RETRO_Lib::FULLSCREEN) {
+		SDL_SetWindowFullscreen(RETRO_lib.window, SDL_WINDOW_FULLSCREEN);
 	}
 
 	// Create surface and surface texture
-	RETRO_surface = SDL_CreateRGBSurface(0, RETRO_WIDTH, RETRO_HEIGHT, 32, 0, 0, 0, 0);
-	RETRO_surfacetexture = SDL_CreateTexture(RETRO_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
+	RETRO_lib.surface = SDL_CreateRGBSurface(0, RETRO_WIDTH, RETRO_HEIGHT, 32, 0, 0, 0, 0);
+	RETRO_lib.surfacetexture = SDL_CreateTexture(RETRO_lib.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Create surface buffer
-	RETRO_surfacebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);
-	memset(RETRO_surfacebuffer, 0, RETRO_WIDTH * RETRO_HEIGHT);
+	RETRO_lib.surfacebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);
+	memset(RETRO_lib.surfacebuffer, 0, RETRO_WIDTH * RETRO_HEIGHT);
 
 	// Build Y offset table
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		RETRO_yoffsettable[y] = y * RETRO_WIDTH;
+		RETRO_lib.yoffsettable[y] = y * RETRO_WIDTH;
 	}
 
 	// Initialize demo
@@ -413,14 +411,14 @@ void RETRO_Deinitialize()
 	// Deinitialize 3D
 	if (RETRO_Deinitialize_3D != NULL) RETRO_Deinitialize_3D();
 
-	for (int i = 0; i < RETRO_textures; i++) {
-		if (RETRO_texture[i]) delete RETRO_texture[i];
+	for (int i = 0; i < RETRO_lib.textures; i++) {
+		if (RETRO_lib.texture[i]) delete RETRO_lib.texture[i];
 	}
-	if (RETRO_surfacebuffer) free(RETRO_surfacebuffer);
-	SDL_DestroyTexture(RETRO_surfacetexture);
-	SDL_FreeSurface(RETRO_surface);
-	SDL_DestroyRenderer(RETRO_renderer);
-	SDL_DestroyWindow(RETRO_window);
+	if (RETRO_lib.surfacebuffer) free(RETRO_lib.surfacebuffer);
+	SDL_DestroyTexture(RETRO_lib.surfacetexture);
+	SDL_FreeSurface(RETRO_lib.surface);
+	SDL_DestroyRenderer(RETRO_lib.renderer);
+	SDL_DestroyWindow(RETRO_lib.window);
 	SDL_Quit();
 }
 
@@ -469,8 +467,8 @@ void RETRO_Mainloop()
 		Uint32 render_end = SDL_GetTicks();
 
 		// Limit FPS
-		if (RETRO_context.fpscap && ((render_end - render_begin) < (Uint32)1000 / RETRO_context.fpscap)) {
-			SDL_Delay((1000 / RETRO_context.fpscap) - (render_end - render_begin));
+		if (RETRO_lib.fpscap && ((render_end - render_begin) < (Uint32)1000 / RETRO_lib.fpscap)) {
+			SDL_Delay((1000 / RETRO_lib.fpscap) - (render_end - render_begin));
 		}
 
 		// Print FPS

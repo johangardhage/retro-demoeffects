@@ -66,23 +66,25 @@ void RETRO_ScanEdge(PolygonPoint p1, PolygonPoint p2, EdgeSpan *span)
 	float nz = p1.nz;
 
 	for (int y = p1.y; y < p2.y; y++) {
-		if (x < span[y].x1) {
-			span[y].x1 = x;
-			span[y].c1 = c;
-			span[y].u1 = u;
-			span[y].v1 = v;
-			span[y].nx1 = nx;
-			span[y].ny1 = ny;
-			span[y].nz1 = nz;
-		}
-		if (x > span[y].x2) {
-			span[y].x2 = x;
-			span[y].c2 = c;
-			span[y].u2 = u;
-			span[y].v2 = v;
-			span[y].nx2 = nx;
-			span[y].ny2 = ny;
-			span[y].nz2 = nz;
+		if (y >= 0 && y < RETRO_HEIGHT) {
+			if (x < span[y].x1) {
+				span[y].x1 = x;
+				span[y].c1 = c;
+				span[y].u1 = u;
+				span[y].v1 = v;
+				span[y].nx1 = nx;
+				span[y].ny1 = ny;
+				span[y].nz1 = nz;
+			}
+			if (x > span[y].x2) {
+				span[y].x2 = x;
+				span[y].c2 = c;
+				span[y].u2 = u;
+				span[y].v2 = v;
+				span[y].nx2 = nx;
+				span[y].ny2 = ny;
+				span[y].nz2 = nz;
+			}
 		}
 		x += mx;
 		c += mc;
@@ -97,13 +99,13 @@ void RETRO_ScanEdge(PolygonPoint p1, PolygonPoint p2, EdgeSpan *span)
 //
 // Flat shaded polygon
 //
-void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH)
+void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO_GetSurfaceBuffer();
 
 	EdgeSpan span[RETRO_HEIGHT];
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
+	for (int y = 0; y < height; y++) {
 		span[y].x1 = width;
 		span[y].x2 = 0;
 	}
@@ -114,9 +116,11 @@ void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned cha
 		RETRO_ScanEdge(*p1, *p2, span);
 	}
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
+	for (int y = 0; y < height; y++) {
 		for (int x = (int)span[y].x1; x < (int)span[y].x2; x++) {
-			buffer[y * RETRO_WIDTH + x] = color;
+			if (x >= 0 && x < width) {
+				buffer[y * width + x] = color;
+			}
 		}
 	}
 }
@@ -124,13 +128,13 @@ void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned cha
 //
 // Glenz shaded polygon
 //
-void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH)
+void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO_GetSurfaceBuffer();
 
 	EdgeSpan span[RETRO_HEIGHT];
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
+	for (int y = 0; y < height; y++) {
 		span[y].x1 = width;
 		span[y].x2 = 0;
 	}
@@ -141,9 +145,11 @@ void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned ch
 		RETRO_ScanEdge(*p1, *p2, span);
 	}
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
+	for (int y = 0; y < height; y++) {
 		for (int x = (int)span[y].x1; x < (int)span[y].x2; x++) {
-			buffer[y * RETRO_WIDTH + x] += color;
+			if (x >= 0 && x < width) {
+				buffer[y * width + x] += color;
+			}
 		}
 	}
 }
@@ -151,13 +157,13 @@ void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned ch
 //
 // Gouraud shaded polygon
 //
-void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices, unsigned char *buffer = NULL, int width = RETRO_WIDTH)
+void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO_GetSurfaceBuffer();
 
 	EdgeSpan span[RETRO_HEIGHT];
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
+	for (int y = 0; y < height; y++) {
 		span[y].x1 = width;
 		span[y].x2 = 0;
 	}
@@ -168,13 +174,15 @@ void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices, unsigned 
 		RETRO_ScanEdge(*p1, *p2, span);
 	}
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
+	for (int y = 0; y < height; y++) {
 		if (span[y].x1 <= span[y].x2) {
 			float xdiff = (span[y].x2 - span[y].x1) != 0 ? span[y].x2 - span[y].x1 : 1;
 			float mc = (span[y].c2 - span[y].c1) / xdiff;
 
 			for (int x = (int)span[y].x1; x < (int)span[y].x2; x++) {
-				buffer[y * RETRO_WIDTH + x] = span[y].c1;
+				if (x >= 0 && x < width) {
+					buffer[y * width + x] = span[y].c1;
+				}
 				span[y].c1 += mc;
 			}
 		}
@@ -184,13 +192,13 @@ void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices, unsigned 
 //
 // Phong shaded polygon
 //
-void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSourcePoint light, unsigned char *buffer = NULL, int width = RETRO_WIDTH)
+void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSourcePoint light, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO_GetSurfaceBuffer();
 
 	EdgeSpan span[RETRO_HEIGHT];
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
+	for (int y = 0; y < height; y++) {
 		span[y].x1 = width;
 		span[y].x2 = 0;
 	}
@@ -201,7 +209,7 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 		RETRO_ScanEdge(*p1, *p2, span);
 	}
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
+	for (int y = 0; y < height; y++) {
 		if (span[y].x1 <= span[y].x2) {
 			float xdiff = (span[y].x2 - span[y].x1) != 0 ? span[y].x2 - span[y].x1 : 1;
 			float mnx = (span[y].nx2 - span[y].nx1) / xdiff;
@@ -209,8 +217,10 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 			float mnz = (span[y].nz2 - span[y].nz1) / xdiff;
 
 			for (int x = (int)span[y].x1; x < (int)span[y].x2; x++) {
-				float angle = (span[y].nx1 * light.nx + span[y].ny1 * light.ny + span[y].nz1 * light.nz) / (sqrt(span[y].nx1 * span[y].nx1 + span[y].ny1 * span[y].ny1 + span[y].nz1 * span[y].nz1) * light.nn);
-				buffer[y * RETRO_WIDTH + x] = CLAMP(light.cintensity * angle, light.c, light.cintensity);
+				if (x >= 0 && x < width) {
+					float angle = (span[y].nx1 * light.nx + span[y].ny1 * light.ny + span[y].nz1 * light.nz) / (sqrt(span[y].nx1 * span[y].nx1 + span[y].ny1 * span[y].ny1 + span[y].nz1 * span[y].nz1) * light.nn);
+					buffer[y * width + x] = CLAMP(light.cintensity * angle, light.c, light.cintensity);
+				}
 				span[y].nx1 += mnx;
 				span[y].ny1 += mny;
 				span[y].nz1 += mnz;
@@ -222,13 +232,13 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 //
 // Texture mapped polygon
 //
-void RETRO_DrawTexturePolygon(PolygonPoint *vertices, int numvertices, unsigned char *image, unsigned char *buffer = NULL, int width = RETRO_WIDTH)
+void RETRO_DrawTexturePolygon(PolygonPoint *vertices, int numvertices, unsigned char *image, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO_GetSurfaceBuffer();
 
 	EdgeSpan span[RETRO_HEIGHT];
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
+	for (int y = 0; y < height; y++) {
 		span[y].x1 = width;
 		span[y].x2 = 0;
 	}
@@ -239,16 +249,18 @@ void RETRO_DrawTexturePolygon(PolygonPoint *vertices, int numvertices, unsigned 
 		RETRO_ScanEdge(*p1, *p2, span);
 	}
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
+	for (int y = 0; y < height; y++) {
 		if (span[y].x1 <= span[y].x2) {
 			float xdiff = (span[y].x2 - span[y].x1) != 0 ? span[y].x2 - span[y].x1 : 1;
 			float mu = (span[y].u2 - span[y].u1) / xdiff;
 			float mv = (span[y].v2 - span[y].v1) / xdiff;
 
 			for (int x = span[y].x1; x < span[y].x2; x++) {
-				int u = CLAMP128(span[y].u1);
-				int v = CLAMP128(span[y].v1);
-				buffer[y * RETRO_WIDTH + x] = image[v * 128 + u];
+				if (x >= 0 && x < width) {
+					int u = CLAMP128(span[y].u1);
+					int v = CLAMP128(span[y].v1);
+					buffer[y * width + x] = image[v * 128 + u];
+				}
 				span[y].u1 += mu;
 				span[y].v1 += mv;
 			}

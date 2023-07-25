@@ -58,14 +58,16 @@ void RETRO_RotateFaceNormals(Model3D *model = NULL)
 	}
 }
 
-void RETRO_ProjectVertices(float scale, Model3D *model = NULL)
+void RETRO_ProjectVertices(float scale, int x = 0, int y = 0, Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
+	x = x ? x : (RETRO_WIDTH / 2);
+	y = y ? y : (RETRO_HEIGHT / 2);
 
 	for (int i = 0; i < model->vertices; i++) {
 		int eye = 250;
-		model->vertex[i].sx = (RETRO_WIDTH / 2) + (scale * model->vertex[i].rx * eye) / (scale * model->vertex[i].rz + eye);
-		model->vertex[i].sy = (RETRO_HEIGHT / 2) + (scale * model->vertex[i].ry * eye) / (scale * model->vertex[i].rz + eye);
+		model->vertex[i].sx = x + (scale * model->vertex[i].rx * eye) / (scale * model->vertex[i].rz + eye);
+		model->vertex[i].sy = y + (scale * model->vertex[i].ry * eye) / (scale * model->vertex[i].rz + eye);
 	}
 }
 

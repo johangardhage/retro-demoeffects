@@ -114,23 +114,6 @@ void RETRO_RageQuit(const char *message, const char *error)
 	exit(-1);
 }
 
-void RETRO_PrintFPS(void)
-{
-	static Uint32 fpslasttime = SDL_GetTicks();
-	static Uint32 fpscounter = 0;
-
-	fpscounter++;
-	if (fpslasttime < SDL_GetTicks() - 1 * 1000) {
-		if (RETRO_lib.showfps) {
-			char title[256];
-			snprintf(title, 256, "RETRO - %s - FPS: %d", RETRO_lib.basename, fpscounter);
-			SDL_SetWindowTitle(RETRO_lib.window, title);
-		}
-		fpslasttime = SDL_GetTicks();
-		fpscounter = 0;
-	}
-}
-
 Texture *RETRO_AllocateTexture(void)
 {
 	int id = RETRO_lib.textures++;
@@ -472,7 +455,18 @@ void RETRO_Mainloop()
 		}
 
 		// Print FPS
-		RETRO_PrintFPS();
+		static Uint32 fpslasttime = SDL_GetTicks();
+		static Uint32 fpscounter = 0;
+		if (fpslasttime < SDL_GetTicks() - 1 * 1000) {
+			if (RETRO_lib.showfps) {
+				char title[256];
+				snprintf(title, 256, "RETRO - %s - FPS: %d", RETRO_lib.basename, fpscounter);
+				SDL_SetWindowTitle(RETRO_lib.window, title);
+			}
+			fpslasttime = SDL_GetTicks();
+			fpscounter = 0;
+		}
+		fpscounter++;
 	}
 }
 

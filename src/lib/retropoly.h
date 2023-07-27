@@ -101,7 +101,7 @@ void RETRO_ScanEdge(PolygonPoint p1, PolygonPoint p2, EdgeSpan *span)
 //
 void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO_GetSurfaceBuffer();
+	buffer = buffer ? buffer : RETRO_GetFrameBuffer();
 
 	EdgeSpan span[RETRO_HEIGHT];
 
@@ -130,7 +130,7 @@ void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned cha
 //
 void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO_GetSurfaceBuffer();
+	buffer = buffer ? buffer : RETRO_GetFrameBuffer();
 
 	EdgeSpan span[RETRO_HEIGHT];
 
@@ -159,7 +159,7 @@ void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned ch
 //
 void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO_GetSurfaceBuffer();
+	buffer = buffer ? buffer : RETRO_GetFrameBuffer();
 
 	EdgeSpan span[RETRO_HEIGHT];
 
@@ -194,7 +194,7 @@ void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices, unsigned 
 //
 void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSourcePoint light, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO_GetSurfaceBuffer();
+	buffer = buffer ? buffer : RETRO_GetFrameBuffer();
 
 	EdgeSpan span[RETRO_HEIGHT];
 
@@ -234,7 +234,7 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 //
 void RETRO_DrawTexturePolygon(PolygonPoint *vertices, int numvertices, unsigned char *image, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO_GetSurfaceBuffer();
+	buffer = buffer ? buffer : RETRO_GetFrameBuffer();
 
 	EdgeSpan span[RETRO_HEIGHT];
 

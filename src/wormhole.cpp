@@ -35,7 +35,7 @@ void DEMO_Render(double deltatime)
 	}
 
 	// Draw wormhole
-	unsigned char *buffer = RETRO_GetSurfaceBuffer();
+	unsigned char *buffer = RETRO_GetFrameBuffer();
 	for (int i = 0; i < RETRO_WIDTH * RETRO_HEIGHT; i++) {
 		buffer[i] = newimage[WormHole[i]];
 	}

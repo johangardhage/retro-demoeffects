@@ -25,7 +25,7 @@ void DEMO_Render(double deltatime)
 	frame_counter += deltatime * 100;
 	int frame = frame_counter;
 
-	unsigned char *buffer = RETRO_GetSurfaceBuffer();
+	unsigned char *buffer = RETRO_GetFrameBuffer();
 	unsigned char *image = RETRO_GetTextureImage();
 
 	// Light position

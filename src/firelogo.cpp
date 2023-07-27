@@ -13,7 +13,7 @@
 void DEMO_Render(double deltatime)
 {
 	static unsigned char firebuffer[RETRO_HEIGHT*RETRO_WIDTH];
-	unsigned char *buffer = RETRO_GetSurfaceBuffer();
+	unsigned char *buffer = RETRO_GetFrameBuffer();
 	unsigned char *image = RETRO_GetTextureImage();
 
 	// Create flaming logo

@@ -20,7 +20,7 @@ void DEMO_Render(double deltatime)
 	frame_counter += deltatime * 30;
 	int frame = frame_counter;
 
-	unsigned char *buffer = RETRO_GetSurfaceBuffer();
+	unsigned char *buffer = RETRO_GetFrameBuffer();
 
 	// Draw background
 	RETRO_Blit(RETRO_GetTextureImage(), RETRO_WIDTH * RETRO_HEIGHT);

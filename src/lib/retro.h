@@ -94,7 +94,7 @@ struct RETRO_Lib {
 	SDL_Renderer *renderer = NULL;
 	SDL_Surface *surface = NULL;
 	SDL_Texture *surfacetexture = NULL;
-	unsigned char *surfacebuffer = NULL;
+	unsigned char *framebuffer = NULL;
 	int yoffsettable[RETRO_HEIGHT];
 	Texture *texture[RETRO_MAX_TEXTURES];
 	int textures = 0;
@@ -134,9 +134,9 @@ Palette *RETRO_GetTexturePalette(int id = 0)
 	return RETRO_lib.texture[id] != NULL ? RETRO_lib.texture[id]->palette : NULL;
 }
 
-unsigned char *RETRO_GetSurfaceBuffer(void)
+unsigned char *RETRO_GetFrameBuffer(void)
 {
-	return RETRO_lib.surfacebuffer;
+	return RETRO_lib.framebuffer;
 }
 
 int *RETRO_GetYOffsetTable(void)
@@ -146,22 +146,22 @@ int *RETRO_GetYOffsetTable(void)
 
 void RETRO_PutPixel(int x, int y, unsigned char color)
 {
-	RETRO_lib.surfacebuffer[RETRO_lib.yoffsettable[y] + x] = color;
+	RETRO_lib.framebuffer[RETRO_lib.yoffsettable[y] + x] = color;
 }
 
 unsigned char RETRO_GetPixel(int x, int y)
 {
-	return (RETRO_lib.surfacebuffer[RETRO_lib.yoffsettable[y] + x]);
+	return (RETRO_lib.framebuffer[RETRO_lib.yoffsettable[y] + x]);
 }
 
 void RETRO_Clear(unsigned char color = 0)
 {
-	memset(RETRO_lib.surfacebuffer, color, RETRO_WIDTH * RETRO_HEIGHT);
+	memset(RETRO_lib.framebuffer, color, RETRO_WIDTH * RETRO_HEIGHT);
 }
 
 void RETRO_Blit(unsigned char *src, int size)
 {
-	memcpy(RETRO_lib.surfacebuffer, src, size);
+	memcpy(RETRO_lib.framebuffer, src, size);
 }
 
 void RETRO_Copy(unsigned char *src, unsigned char *dst, int size)
@@ -292,11 +292,11 @@ void RETRO_Flip()
 	void *pixels;
 	int pitch;
 
-	// Copy surface buffer to surface
+	// Copy framebuffer to surfacetexture
 	SDL_LockTexture(RETRO_lib.surfacetexture, NULL, &pixels, &pitch);
-	SDL_Color *buffer = (SDL_Color *)pixels;
+	SDL_Color *pixel = (SDL_Color *)pixels;
 	for (int i = 0; i < RETRO_HEIGHT * RETRO_WIDTH; i++) {
-		buffer[i] = RETRO_lib.surface->format->palette->colors[RETRO_lib.surfacebuffer[i]];
+		pixel[i] = RETRO_lib.surface->format->palette->colors[RETRO_lib.framebuffer[i]];
 	}
 	SDL_UnlockTexture(RETRO_lib.surfacetexture);
 
@@ -361,9 +361,9 @@ void RETRO_Initialize()
 	RETRO_lib.surface = SDL_CreateRGBSurface(0, RETRO_WIDTH, RETRO_HEIGHT, 8, 0, 0, 0, 0);
 	RETRO_lib.surfacetexture = SDL_CreateTexture(RETRO_lib.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
 
-	// Create surface buffer
-	RETRO_lib.surfacebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);
-	memset(RETRO_lib.surfacebuffer, 0, RETRO_WIDTH * RETRO_HEIGHT);
+	// Create framebuffer
+	RETRO_lib.framebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);
+	memset(RETRO_lib.framebuffer, 0, RETRO_WIDTH * RETRO_HEIGHT);
 
 	// Build Y offset table
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
@@ -385,7 +385,7 @@ void RETRO_Deinitialize()
 	for (int i = 0; i < RETRO_lib.textures; i++) {
 		if (RETRO_lib.texture[i]) delete RETRO_lib.texture[i];
 	}
-	if (RETRO_lib.surfacebuffer) free(RETRO_lib.surfacebuffer);
+	if (RETRO_lib.framebuffer) free(RETRO_lib.framebuffer);
 	SDL_DestroyTexture(RETRO_lib.surfacetexture);
 	SDL_FreeSurface(RETRO_lib.surface);
 	SDL_DestroyRenderer(RETRO_lib.renderer);

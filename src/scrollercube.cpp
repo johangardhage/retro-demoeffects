@@ -76,7 +76,6 @@ void DEMO_Initialize()
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, i, i, i);
 	}
-	RETRO_SetPalette();
 
 	RETRO_CreateCube3Model();
 	RETRO_InitializeVertexNormals();

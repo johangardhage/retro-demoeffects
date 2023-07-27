@@ -28,7 +28,6 @@ void DEMO_Initialize()
 	// Init palette
 	RETRO_SetColor(0, 0, 0, 0);
 	RETRO_SetColor(1, RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS));
-	RETRO_SetPalette();
 
 	RETRO_CreateCube4Model();
 	RETRO_InitializeVertexNormals();

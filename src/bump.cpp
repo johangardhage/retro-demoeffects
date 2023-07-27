@@ -70,7 +70,6 @@ void DEMO_Initialize()
 		g += 3;
 		b += 3;
 	}
-	RETRO_SetPalette();
 
 	// Init light map
 	for (int y = 0; y < LIGHTMAP_HEIGHT; y++) {

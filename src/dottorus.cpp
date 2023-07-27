@@ -178,5 +178,4 @@ void DEMO_Initialize()
 		unsigned char b = NUM_COLORS * exp(7 * log((double) i / (NUM_COLORS - 10)));
 		RETRO_SetColor(i, r, g, b);
 	}
-	RETRO_SetPalette();
 }

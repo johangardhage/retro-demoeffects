@@ -70,5 +70,4 @@ void DEMO_Initialize()
 		int b = CLAMP256(128 * ambient / 255.0 + 128 * intensity + pow(intensity, reflect) * light);
 		RETRO_SetColor(i, r, g, b);
 	}
-	RETRO_SetPalette();
 }

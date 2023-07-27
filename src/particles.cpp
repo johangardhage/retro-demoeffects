@@ -101,5 +101,4 @@ void DEMO_Initialize()
 	for (int i = 128; i < 256; i++) {
 		RETRO_SetColor(i, 63 * 4, 63 * 4, ((i - 128) >> 1) * 4);
 	}
-	RETRO_SetPalette();
 }

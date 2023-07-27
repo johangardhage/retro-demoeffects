@@ -37,7 +37,6 @@ void DEMO_Initialize()
 		g += 11;
 		b += 11;
 	}
-	RETRO_SetPalette();
 
 	RETRO_Load3DModel("assets/duck.asc");
 	RETRO_InitializeVertexNormals();

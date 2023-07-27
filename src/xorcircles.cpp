@@ -38,5 +38,4 @@ void DEMO_Initialize()
 	RETRO_LoadTexture("assets/xorcircles_640x480.pcx");
 	RETRO_SetColor(0, 155, 20, 147);
 	RETRO_SetColor(255, 255, 102, 204);
-	RETRO_SetPalette();
 }

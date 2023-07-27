@@ -40,7 +40,6 @@ void DEMO_Initialize()
 		g += 11;
 		b += 11;
 	}
-	RETRO_SetPalette();
 
 	RETRO_CreateCube3Model();
 	RETRO_InitializeVertexNormals();

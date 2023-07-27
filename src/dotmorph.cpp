@@ -63,7 +63,6 @@ void DEMO_Initialize()
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, i, i, i);
 	}
-	RETRO_SetPalette();
 
 	// Create Sphere
 	for (int i = 0; i < POINTS; i++) {

@@ -96,8 +96,6 @@ struct RETRO_Lib {
 	SDL_Texture *surfacetexture = NULL;
 	unsigned char *surfacebuffer = NULL;
 	int yoffsettable[RETRO_HEIGHT];
-	SDL_Color colorpalette[RETRO_COLORS];
-	Uint32 colortable[RETRO_COLORS];
 	Texture *texture[RETRO_MAX_TEXTURES];
 	int textures = 0;
 };
@@ -173,20 +171,14 @@ void RETRO_Copy(unsigned char *src, unsigned char *dst, int size)
 
 void RETRO_SetColor(unsigned char color, unsigned char r, unsigned char g, unsigned char b)
 {
-	RETRO_lib.colorpalette[color].r = r;
-	RETRO_lib.colorpalette[color].g = g;
-	RETRO_lib.colorpalette[color].b = b;
-	RETRO_lib.colortable[color] = SDL_MapRGB(RETRO_lib.surface->format, r, g, b);
+	RETRO_lib.surface->format->palette->colors[color].r = r;
+	RETRO_lib.surface->format->palette->colors[color].g = g;
+	RETRO_lib.surface->format->palette->colors[color].b = b;
 }
 
 SDL_Color RETRO_GetColor(unsigned char color)
 {
-	return RETRO_lib.colorpalette[color];
-}
-
-void RETRO_SetPalette(void)
-{
-	SDL_SetPaletteColors(RETRO_lib.surface->format->palette, RETRO_lib.colorpalette, 0, RETRO_COLORS);
+	return RETRO_lib.surface->format->palette->colors[color];
 }
 
 void RETRO_SetPalette(Palette *palette)
@@ -195,7 +187,6 @@ void RETRO_SetPalette(Palette *palette)
 		RETRO_SetColor(i, palette->r, palette->g, palette->b);
 		palette++;
 	}
-	RETRO_SetPalette();
 }
 
 void RETRO_SetPaletteFromTexture(int id = 0)
@@ -208,7 +199,6 @@ void RETRO_SetBlackPalette(void)
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, 0, 0, 0);
 	}
-	RETRO_SetPalette();
 }
 
 bool RETRO_FadeIn(int steps, int step, Palette *palette)
@@ -221,7 +211,6 @@ bool RETRO_FadeIn(int steps, int step, Palette *palette)
 		unsigned char b = (float)palette[i].b / steps * step;
 		RETRO_SetColor(i, r, g, b);
 	}
-	RETRO_SetPalette();
 
 	return false;
 }
@@ -236,7 +225,6 @@ bool RETRO_FadeOut(int steps, int step, Palette *palette)
 		unsigned char b = (float)palette[i].b / steps * (steps - step);
 		RETRO_SetColor(i, r, g, b);
 	}
-	RETRO_SetPalette();
 
 	return false;
 }
@@ -306,9 +294,9 @@ void RETRO_Flip()
 
 	// Copy surface buffer to surface
 	SDL_LockTexture(RETRO_lib.surfacetexture, NULL, &pixels, &pitch);
-	Uint32 *pixels_ptr = (Uint32 *)pixels;
+	SDL_Color *buffer = (SDL_Color *)pixels;
 	for (int i = 0; i < RETRO_HEIGHT * RETRO_WIDTH; i++) {
-		pixels_ptr[i] = RETRO_lib.colortable[RETRO_lib.surfacebuffer[i]];
+		buffer[i] = RETRO_lib.surface->format->palette->colors[RETRO_lib.surfacebuffer[i]];
 	}
 	SDL_UnlockTexture(RETRO_lib.surfacetexture);
 
@@ -370,8 +358,8 @@ void RETRO_Initialize()
 	}
 
 	// Create surface and surface texture
-	RETRO_lib.surface = SDL_CreateRGBSurface(0, RETRO_WIDTH, RETRO_HEIGHT, 32, 0, 0, 0, 0);
-	RETRO_lib.surfacetexture = SDL_CreateTexture(RETRO_lib.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
+	RETRO_lib.surface = SDL_CreateRGBSurface(0, RETRO_WIDTH, RETRO_HEIGHT, 8, 0, 0, 0, 0);
+	RETRO_lib.surfacetexture = SDL_CreateTexture(RETRO_lib.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Create surface buffer
 	RETRO_lib.surfacebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);

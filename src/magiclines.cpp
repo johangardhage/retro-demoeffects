@@ -65,5 +65,4 @@ void DEMO_Initialize()
 		k = k > 63 ? 63 : k;
 		RETRO_SetColor(i, k * 4, k * 4, i);
 	}
-	RETRO_SetPalette();
 }

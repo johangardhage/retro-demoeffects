@@ -43,5 +43,4 @@ void DEMO_Initialize()
 	// Init palette
 	RETRO_SetColor(0, 0, 0, 0);
 	RETRO_SetColor(255, 255, 255, 255);
-	RETRO_SetPalette();
 }

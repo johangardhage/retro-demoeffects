@@ -67,5 +67,4 @@ void DEMO_Initialize()
 		RETRO_SetColor(i, 63 * 4, 63 * 4, b * 4);
 		b++;
 	}
-	RETRO_SetPalette();
 }

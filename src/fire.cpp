@@ -49,5 +49,4 @@ void DEMO_Initialize()
 	Gradient(32, 64, 0, 0, 12, 63, 0, 0);
 	Gradient(64, 128, 63, 0, 0, 63, 63, 0);
 	Gradient(128, 256, 63, 63, 63, 63, 63, 63);
-	RETRO_SetPalette();
 }

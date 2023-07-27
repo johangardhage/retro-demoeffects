@@ -72,7 +72,6 @@ void DEMO_Initialize()
 		RETRO_SetColor(i, r, g, b);
 		b--;
 	}
-	RETRO_SetPalette();
 
 	RETRO_CreateCube3Model();
 	RETRO_InitializeVertexNormals();

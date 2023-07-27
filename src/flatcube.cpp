@@ -31,7 +31,6 @@ void DEMO_Initialize()
 		RETRO_SetColor(i, 0, r, 0);
 		r = r + p;
 	}
-	RETRO_SetPalette();
 
 	RETRO_CreateCube4Model();
 

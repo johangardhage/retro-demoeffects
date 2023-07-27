@@ -44,7 +44,6 @@ void DEMO_Initialize()
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, i / 2.5, i / 1.5, i);
 	}
-	RETRO_SetPalette();
 
 	// Init blob positions
 	for (int i = 0; i < NUM_BLOBS; i++) {

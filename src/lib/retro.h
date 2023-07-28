@@ -92,9 +92,9 @@ struct RETRO_Lib {
 	int fpscap;
 	SDL_Window *window = NULL;
 	SDL_Renderer *renderer = NULL;
-	SDL_Surface *surface = NULL;
 	SDL_Texture *surfacetexture = NULL;
 	unsigned char *framebuffer = NULL;
+	Uint32 palette[RETRO_COLORS];
 	int yoffsettable[RETRO_HEIGHT];
 	Texture *texture[RETRO_MAX_TEXTURES];
 	int textures = 0;
@@ -171,14 +171,7 @@ void RETRO_Copy(unsigned char *src, unsigned char *dst, int size)
 
 void RETRO_SetColor(unsigned char color, unsigned char r, unsigned char g, unsigned char b)
 {
-	RETRO_lib.surface->format->palette->colors[color].r = r;
-	RETRO_lib.surface->format->palette->colors[color].g = g;
-	RETRO_lib.surface->format->palette->colors[color].b = b;
-}
-
-SDL_Color RETRO_GetColor(unsigned char color)
-{
-	return RETRO_lib.surface->format->palette->colors[color];
+	RETRO_lib.palette[color] = (b << 16) | (g << 8) | (r);
 }
 
 void RETRO_SetPalette(Palette *palette)
@@ -294,9 +287,9 @@ void RETRO_Flip()
 
 	// Copy framebuffer to surfacetexture
 	SDL_LockTexture(RETRO_lib.surfacetexture, NULL, &pixels, &pitch);
-	SDL_Color *pixel = (SDL_Color *)pixels;
+	Uint32 *pixel = (Uint32 *)pixels;
 	for (int i = 0; i < RETRO_HEIGHT * RETRO_WIDTH; i++) {
-		pixel[i] = RETRO_lib.surface->format->palette->colors[RETRO_lib.framebuffer[i]];
+		pixel[i] = RETRO_lib.palette[RETRO_lib.framebuffer[i]];
 	}
 	SDL_UnlockTexture(RETRO_lib.surfacetexture);
 
@@ -357,8 +350,7 @@ void RETRO_Initialize()
 		SDL_SetWindowFullscreen(RETRO_lib.window, SDL_WINDOW_FULLSCREEN);
 	}
 
-	// Create surface and surface texture
-	RETRO_lib.surface = SDL_CreateRGBSurface(0, RETRO_WIDTH, RETRO_HEIGHT, 8, 0, 0, 0, 0);
+	// Create surface texture
 	RETRO_lib.surfacetexture = SDL_CreateTexture(RETRO_lib.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Create framebuffer
@@ -387,7 +379,6 @@ void RETRO_Deinitialize()
 	}
 	if (RETRO_lib.framebuffer) free(RETRO_lib.framebuffer);
 	SDL_DestroyTexture(RETRO_lib.surfacetexture);
-	SDL_FreeSurface(RETRO_lib.surface);
 	SDL_DestroyRenderer(RETRO_lib.renderer);
 	SDL_DestroyWindow(RETRO_lib.window);
 	SDL_Quit();

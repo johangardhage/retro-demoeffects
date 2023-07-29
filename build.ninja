@@ -50,6 +50,8 @@ build $builddir/rotozoom: cc $srcdir/rotozoom.cpp
 build $builddir/scroller: cc $srcdir/scroller.cpp
 build $builddir/scrollercube: cc $srcdir/scrollercube.cpp
 build $builddir/showpcx: cc $srcdir/showpcx.cpp
+build $builddir/template_main: cc $srcdir/template_main.cpp
+build $builddir/template_retromain: cc $srcdir/template_retromain.cpp
 build $builddir/texturecube: cc $srcdir/texturecube.cpp
 build $builddir/texturetunnel: cc $srcdir/texturetunnel.cpp
 build $builddir/water: cc $srcdir/water.cpp
@@ -98,6 +100,8 @@ build rotozoom: phony $builddir/rotozoom
 build scroller: phony $builddir/scroller
 build scrollercube: phony $builddir/scrollercube
 build showpcx: phony $builddir/showpcx
+build template_main: phony $builddir/template_main
+build template_retromain: phony $builddir/template_retromain
 build texturecube: phony $builddir/texturecube
 build texturetunnel: phony $builddir/texturetunnel
 build water: phony $builddir/water

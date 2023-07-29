@@ -63,11 +63,7 @@ struct Texture {
 	unsigned char *image;
 	int width;
 	int height;
-	~Texture() {
-		if (image != NULL) {
-			free(image);
-		}
-	}
+	~Texture() { if (image != NULL) free(image); }
 };
 
 struct Point2Df {
@@ -361,16 +357,10 @@ void RETRO_Initialize()
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		RETRO_lib.yoffsettable[y] = y * RETRO_WIDTH;
 	}
-
-	// Initialize demo
-	if (DEMO_Initialize != NULL) DEMO_Initialize();
 }
 
 void RETRO_Deinitialize()
 {
-	// Deinitialize demo
-	if (DEMO_Deinitialize != NULL) DEMO_Deinitialize();
-
 	// Deinitialize 3D
 	if (RETRO_Deinitialize_3D != NULL) RETRO_Deinitialize_3D();
 
@@ -384,32 +374,39 @@ void RETRO_Deinitialize()
 	SDL_Quit();
 }
 
-void RETRO_Mainloop()
+double RETRO_GetDeltaTime()
 {
 	// Initialize delta time
-	Uint32 now_counter = SDL_GetPerformanceCounter();
-	Uint32 last_counter = 0;
+	static Uint32 current = SDL_GetPerformanceCounter();
+	static Uint32 previous = 0;
 
-	char done = 0;
-	while (!done) {
-		// Update delta time
-		last_counter = now_counter;
-		now_counter = SDL_GetPerformanceCounter();
-		double delta_time = (double)(now_counter - last_counter) / SDL_GetPerformanceFrequency();
+	// Update delta time
+	previous = current;
+	current = SDL_GetPerformanceCounter();
 
-		// Update keys
+	return (double)(current - previous) / SDL_GetPerformanceFrequency();
+}
+
+// *******************************************************************
+// Private methods
+// *******************************************************************
+
+void RETRO_Mainloop()
+{
+	while (true) {
+		// Calculate delta time
+		double deltatime = RETRO_GetDeltaTime();
+
+		// Check events
 		SDL_PumpEvents();
 		const Uint8 *keys = SDL_GetKeyboardState(NULL);
 		if (SDL_QuitRequested()) {
-			done = 1;
 			break;
 		}
 		if (keys[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
-			done = 1;
 			break;
 		}
 		if (keys[SDL_GetScancodeFromKey(SDLK_q)]) {
-			done = 1;
 			break;
 		}
 
@@ -417,20 +414,20 @@ void RETRO_Mainloop()
 			continue;
 		}
 
-		// Update render buffer
-		Uint32 render_begin = SDL_GetTicks();
+		// Render scene
+		Uint32 start = SDL_GetTicks();
 		if (DEMO_Render != NULL) {
 			RETRO_Clear();
-			DEMO_Render(delta_time);
+			DEMO_Render(deltatime);
 			RETRO_Flip();
 		} else if (DEMO_Render2 != NULL) {
-			DEMO_Render2(delta_time);
+			DEMO_Render2(deltatime);
 		}
-		Uint32 render_end = SDL_GetTicks();
+		Uint32 stop = SDL_GetTicks();
 
 		// Limit FPS
-		if (RETRO_lib.fpscap && ((render_end - render_begin) < (Uint32)1000 / RETRO_lib.fpscap)) {
-			SDL_Delay((1000 / RETRO_lib.fpscap) - (render_end - render_begin));
+		if (RETRO_lib.fpscap && ((stop - start) < (Uint32)1000 / RETRO_lib.fpscap)) {
+			SDL_Delay((1000 / RETRO_lib.fpscap) - (stop - start));
 		}
 
 		// Print FPS

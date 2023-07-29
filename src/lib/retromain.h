@@ -106,12 +106,13 @@ void RETRO_ParseArguments(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-	if (DEMO_Startup != NULL) DEMO_Startup();
-
 	RETRO_ParseArguments(argc, argv);
 
+	if (DEMO_Startup != NULL) DEMO_Startup();
 	RETRO_Initialize();
+	if (DEMO_Initialize != NULL) DEMO_Initialize();
 	RETRO_Mainloop();
+	if (DEMO_Deinitialize != NULL) DEMO_Deinitialize();
 	RETRO_Deinitialize();
 
 	return 0;

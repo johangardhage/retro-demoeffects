@@ -525,7 +525,7 @@ void RETRO_TriangularizeModel(Model3D *model = NULL)
 	}
 }
 
-void RETRO_Initialize_3D()
+void RETRO_Deinitialize_3D()
 {
 	if (RETRO_3dmodel) delete RETRO_3dmodel;
 }

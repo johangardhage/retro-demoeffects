@@ -94,6 +94,7 @@ struct RETRO_Lib {
 	int yoffsettable[RETRO_HEIGHT];
 	Texture *texture[RETRO_MAX_TEXTURES];
 	int textures = 0;
+	const Uint8 *keystate;
 };
 
 RETRO_Lib RETRO_lib = { .mode = RETRO_Lib::FULLSCREEN, .vsync = true, .showfps = true };
@@ -387,30 +388,39 @@ double RETRO_GetDeltaTime()
 	return (double)(current - previous) / SDL_GetPerformanceFrequency();
 }
 
+bool RETRO_KeyState(SDL_KeyCode keycode)
+{
+	return RETRO_lib.keystate[SDL_GetScancodeFromKey(keycode)];
+}
+
+bool RETRO_QuitRequested(void)
+{
+	SDL_PumpEvents();
+	RETRO_lib.keystate = SDL_GetKeyboardState(NULL);
+	if (SDL_QuitRequested()) {
+		return true;
+	}
+	else if (RETRO_lib.keystate[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
+		return true;
+	}
+	else if (RETRO_lib.keystate[SDL_GetScancodeFromKey(SDLK_q)]) {
+		return true;
+	}
+	return false;
+}
+
 // *******************************************************************
 // Private methods
 // *******************************************************************
 
 void RETRO_Mainloop()
 {
-	while (true) {
+	while (!RETRO_QuitRequested()) {
 		// Calculate delta time
 		double deltatime = RETRO_GetDeltaTime();
 
 		// Check events
-		SDL_PumpEvents();
-		const Uint8 *keys = SDL_GetKeyboardState(NULL);
-		if (SDL_QuitRequested()) {
-			break;
-		}
-		if (keys[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
-			break;
-		}
-		if (keys[SDL_GetScancodeFromKey(SDLK_q)]) {
-			break;
-		}
-
-		if (keys[SDL_GetScancodeFromKey(SDLK_SPACE)]) {
+		if (RETRO_lib.keystate[SDL_GetScancodeFromKey(SDLK_SPACE)]) {
 			continue;
 		}
 

@@ -16,18 +16,10 @@ int main(int argc, char *argv[])
 		RETRO_SetColor(i, RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS));
 	}
 
-	while (true) {
+	while (!RETRO_QuitRequested()) {
 		// Check events
-		SDL_PumpEvents();
-		const Uint8 *keys = SDL_GetKeyboardState(NULL);
-		if (SDL_QuitRequested()) {
-			break;
-		}
-		if (keys[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
-			break;
-		}
-		if (keys[SDL_GetScancodeFromKey(SDLK_q)]) {
-			break;
+		if (RETRO_KeyState(SDLK_SPACE)) {
+			continue;
 		}
 
 		// Draw polygons

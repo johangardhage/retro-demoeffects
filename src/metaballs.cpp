@@ -51,7 +51,7 @@ void DEMO_Render(double deltatime)
 	}
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init tables
 	for (int i = 0; i < SINE_VALUES; i++) {

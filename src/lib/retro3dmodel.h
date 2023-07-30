@@ -261,7 +261,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 	}
 }
 
-Model3D *RETRO_CreateCube3Model()
+Model3D *RETRO_CreateCube3Model(void)
 {
 	Model3D *model = new Model3D();
 	RETRO_3dmodel = model;
@@ -296,7 +296,7 @@ Model3D *RETRO_CreateCube3Model()
 	return model;
 }
 
-Model3D *RETRO_CreateCube4Model()
+Model3D *RETRO_CreateCube4Model(void)
 {
 	Model3D *model = new Model3D();
 	RETRO_3dmodel = model;
@@ -525,7 +525,7 @@ void RETRO_TriangularizeModel(Model3D *model = NULL)
 	}
 }
 
-void RETRO_Deinitialize_3D()
+void RETRO_Deinitialize_3D(void)
 {
 	if (RETRO_3dmodel) delete RETRO_3dmodel;
 }

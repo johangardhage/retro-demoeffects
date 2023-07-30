@@ -33,7 +33,7 @@ void DEMO_Render(double deltatime)
 	}
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/font_16x16.pcx");
 	RETRO_SetPaletteFromTexture();

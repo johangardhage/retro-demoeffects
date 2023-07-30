@@ -45,7 +45,7 @@ void DEMO_Render(double deltatime)
 				RETRO_PutPixel(RETRO_WIDTH / 2 + x, RETRO_HEIGHT / 2 + y, 0);
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/texturetunnel_128x128.pcx");
 	RETRO_SetPaletteFromTexture();

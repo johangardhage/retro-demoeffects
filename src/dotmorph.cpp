@@ -57,7 +57,7 @@ void DEMO_Render(double deltatime)
 	RETRO_Blur(RETRO_BLUR_3);
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init palette
 	for (int i = 0; i < RETRO_COLORS; i++) {

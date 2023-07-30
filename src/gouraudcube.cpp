@@ -23,7 +23,7 @@ void DEMO_Render(double deltatime)
 	RETRO_RenderModel(RETRO_POLY_GOURAUD);
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init palette
 	unsigned char r = 0, g = 0, b = 0;

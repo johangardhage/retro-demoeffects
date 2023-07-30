@@ -23,7 +23,7 @@ void DEMO_Render(double deltatime)
 	RETRO_RenderModel(RETRO_POLY_GLENZ, RETRO_SHADE_FLAT);
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// 8-128 purple
 	float p = 0.8;

@@ -12,7 +12,7 @@ void DEMO_Render(double deltatime)
 	RETRO_Blit(texture->image, texture->width * texture->height);
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/showpcx_320x240.pcx");
 	RETRO_SetPaletteFromTexture();

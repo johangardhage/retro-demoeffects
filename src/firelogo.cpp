@@ -52,7 +52,7 @@ void Gradient(int s, int e, int r1, int g1, int b1, int r2, int g2, int b2)
 	}
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init palette
 	RETRO_LoadTexture("assets/firelogo_320x240.pcx");

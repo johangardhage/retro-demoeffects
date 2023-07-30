@@ -23,7 +23,7 @@ void DEMO_Render(double deltatime)
 	RETRO_RenderModel(RETRO_POLY_TEXTURE);
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/texturecube_128x128.pcx");
 	RETRO_SetPaletteFromTexture();

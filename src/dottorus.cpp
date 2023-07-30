@@ -163,7 +163,7 @@ void DEMO_Render2(double deltatime)
 	RETRO_Flip();
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init sine table
 	for (int i = 0; i < SINE_VALUES; i++) {

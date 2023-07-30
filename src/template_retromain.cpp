@@ -22,7 +22,7 @@ void DEMO_Render2(double deltatime)
 	RETRO_Flip();
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init palette
 	RETRO_SetColor(0, 0, 0, 0);

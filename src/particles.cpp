@@ -15,7 +15,7 @@ struct Particle {
 	int col;
 } Particles[NUM_PARTICLES];
 
-void CreateExplosion()
+void CreateExplosion(void)
 {
 	int x = RANDOM(RETRO_WIDTH);
 	int y = RANDOM(RETRO_HEIGHT);
@@ -36,7 +36,7 @@ void CreateExplosion()
 	}
 }
 
-void DrawParticles()
+void DrawParticles(void)
 {
 	for (int i = 0; i < NUM_PARTICLES; i++) {
 		RETRO_PutPixel(Particles[i].x, Particles[i].y, Particles[i].col);
@@ -89,7 +89,7 @@ void DEMO_Render2(double deltatime)
 	RETRO_Flip();
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init palette
 	for (int i = 0; i < 64; i++) {

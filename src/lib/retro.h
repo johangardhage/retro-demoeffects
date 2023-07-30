@@ -18,9 +18,9 @@
 // Public dynamic functions
 // *******************************************************************
 
-void __attribute__((weak)) DEMO_Startup();
-void __attribute__((weak)) DEMO_Initialize();
-void __attribute__((weak)) DEMO_Deinitialize();
+void __attribute__((weak)) DEMO_Startup(void);
+void __attribute__((weak)) DEMO_Initialize(void);
+void __attribute__((weak)) DEMO_Deinitialize(void);
 void __attribute__((weak)) DEMO_Render(double deltatime);
 void __attribute__((weak)) DEMO_Render2(double deltatime);
 
@@ -28,7 +28,7 @@ void __attribute__((weak)) DEMO_Render2(double deltatime);
 // Private dynamic functions
 // *******************************************************************
 
-void __attribute__((weak)) RETRO_Deinitialize_3D();
+void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 
 // *******************************************************************
 // Public variables
@@ -277,7 +277,7 @@ Texture *RETRO_LoadTexture(const char *filename)
 	return texture;
 }
 
-void RETRO_Flip()
+void RETRO_Flip(void)
 {
 	void *pixels;
 	int pitch;
@@ -295,7 +295,7 @@ void RETRO_Flip()
 	SDL_RenderPresent(RETRO_lib.renderer);
 }
 
-void RETRO_Initialize()
+void RETRO_Initialize(void)
 {
 	// Initialize SDL
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -360,7 +360,7 @@ void RETRO_Initialize()
 	}
 }
 
-void RETRO_Deinitialize()
+void RETRO_Deinitialize(void)
 {
 	// Deinitialize 3D
 	if (RETRO_Deinitialize_3D != NULL) RETRO_Deinitialize_3D();
@@ -375,7 +375,7 @@ void RETRO_Deinitialize()
 	SDL_Quit();
 }
 
-double RETRO_GetDeltaTime()
+double RETRO_GetDeltaTime(void)
 {
 	// Initialize delta time
 	static Uint32 current = SDL_GetPerformanceCounter();
@@ -413,7 +413,7 @@ bool RETRO_QuitRequested(void)
 // Private methods
 // *******************************************************************
 
-void RETRO_Mainloop()
+void RETRO_Mainloop(void)
 {
 	while (!RETRO_QuitRequested()) {
 		// Calculate delta time

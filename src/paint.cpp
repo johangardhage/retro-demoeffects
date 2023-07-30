@@ -35,7 +35,7 @@ void DEMO_Render2(double deltatime)
 	RETRO_Flip();
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Show the cursor
 	SDL_ShowCursor(1);

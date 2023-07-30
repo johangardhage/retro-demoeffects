@@ -75,7 +75,7 @@ void InitLens(Lens *lens)
 	}
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/lens_320x240.pcx");
 	RETRO_SetPaletteFromTexture();

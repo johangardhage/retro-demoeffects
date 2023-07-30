@@ -23,7 +23,7 @@ void DEMO_Render(double deltatime)
 	RETRO_RenderModel(RETRO_POLY_HIDDENLINE);
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init palette
 	RETRO_SetColor(0, 0, 0, 0);

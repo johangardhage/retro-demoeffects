@@ -71,7 +71,7 @@ void DEMO_Render(double deltatime)
 	RETRO_RenderModel(RETRO_POLY_TEXTURE);
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, i, i, i);

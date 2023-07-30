@@ -78,7 +78,7 @@ void DEMO_Render(double deltatime)
 	}
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	Texture *texture = RETRO_LoadTexture("assets/water_320x240.pcx");
 	RETRO_SetPaletteFromTexture();

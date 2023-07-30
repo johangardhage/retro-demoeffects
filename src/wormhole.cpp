@@ -41,7 +41,7 @@ void DEMO_Render(double deltatime)
 	}
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init palette
 	RETRO_LoadTexture("assets/wormhole_15x15.pcx");

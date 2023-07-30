@@ -32,7 +32,7 @@ void DEMO_Render(double deltatime)
 	}
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init palette
 	RETRO_LoadTexture("assets/xorcircles_640x480.pcx");

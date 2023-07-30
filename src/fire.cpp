@@ -41,7 +41,7 @@ void Gradient(int s, int e, int r1, int g1, int b1, int r2, int g2, int b2)
 	}
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// Init palette
 	Gradient(0, 16, 0, 0, 0, 5, 0, 5);

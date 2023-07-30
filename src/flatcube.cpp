@@ -22,7 +22,7 @@ void DEMO_Render(double deltatime)
 	RETRO_RenderModel(RETRO_POLY_FLAT);
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	// 0-32 green
 	float p = 1.8;

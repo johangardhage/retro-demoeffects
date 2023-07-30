@@ -42,7 +42,7 @@ void DEMO_Render(double deltatime)
 	RETRO_RenderModel(RETRO_POLY_TEXTURE);
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	unsigned char r = 0, g = 0, b = 0;
 	for (int i = 0; i < 256; i++) {

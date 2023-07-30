@@ -33,7 +33,7 @@ void DEMO_Render(double deltatime)
 	}
 }
 
-void DEMO_Initialize()
+void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/distortlogo_320x240.pcx");
 	RETRO_SetPaletteFromTexture();

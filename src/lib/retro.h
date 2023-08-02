@@ -95,7 +95,7 @@ struct RETRO_Lib {
 	int yoffsettable[RETRO_HEIGHT];
 };
 
-RETRO_Lib RETRO_lib = { .mode = RETRO_Lib::FULLSCREEN, .vsync = true, .showfps = true };
+RETRO_Lib RETRO = { .mode = RETRO_Lib::FULLSCREEN, .vsync = true, .showfps = true };
 
 // *******************************************************************
 // Public methods
@@ -113,54 +113,54 @@ Texture *RETRO_AllocateTexture(void)
 	if (texture == NULL) {
 		RETRO_RageQuit("Cannot allocate texture memory\n", "");
 	}
-	int id = RETRO_lib.textures++;
-	RETRO_lib.texture[id] = texture;
-	return RETRO_lib.texture[id];
+	int id = RETRO.textures++;
+	RETRO.texture[id] = texture;
+	return RETRO.texture[id];
 }
 
 Texture *RETRO_GetTexture(int id = 0)
 {
-	return RETRO_lib.texture[id];
+	return RETRO.texture[id];
 }
 
 unsigned char *RETRO_GetTextureImage(int id = 0)
 {
-	return RETRO_lib.texture[id] != NULL ? RETRO_lib.texture[id]->image : NULL;
+	return RETRO.texture[id] != NULL ? RETRO.texture[id]->image : NULL;
 }
 
 Palette *RETRO_GetTexturePalette(int id = 0)
 {
-	return RETRO_lib.texture[id] != NULL ? RETRO_lib.texture[id]->palette : NULL;
+	return RETRO.texture[id] != NULL ? RETRO.texture[id]->palette : NULL;
 }
 
 unsigned char *RETRO_GetFrameBuffer(void)
 {
-	return RETRO_lib.framebuffer;
+	return RETRO.framebuffer;
 }
 
 int *RETRO_GetYOffsetTable(void)
 {
-	return RETRO_lib.yoffsettable;
+	return RETRO.yoffsettable;
 }
 
 void RETRO_PutPixel(int x, int y, unsigned char color)
 {
-	RETRO_lib.framebuffer[RETRO_lib.yoffsettable[y] + x] = color;
+	RETRO.framebuffer[RETRO.yoffsettable[y] + x] = color;
 }
 
 unsigned char RETRO_GetPixel(int x, int y)
 {
-	return RETRO_lib.framebuffer[RETRO_lib.yoffsettable[y] + x];
+	return RETRO.framebuffer[RETRO.yoffsettable[y] + x];
 }
 
 void RETRO_Clear(unsigned char color = 0)
 {
-	memset(RETRO_lib.framebuffer, color, RETRO_WIDTH * RETRO_HEIGHT);
+	memset(RETRO.framebuffer, color, RETRO_WIDTH * RETRO_HEIGHT);
 }
 
 void RETRO_Blit(unsigned char *src, int size)
 {
-	memcpy(RETRO_lib.framebuffer, src, size);
+	memcpy(RETRO.framebuffer, src, size);
 }
 
 void RETRO_Copy(unsigned char *src, unsigned char *dst, int size)
@@ -170,7 +170,7 @@ void RETRO_Copy(unsigned char *src, unsigned char *dst, int size)
 
 void RETRO_SetColor(unsigned char color, unsigned char r, unsigned char g, unsigned char b)
 {
-	RETRO_lib.palette[color] = (b << 16) | (g << 8) | (r);
+	RETRO.palette[color] = (b << 16) | (g << 8) | (r);
 }
 
 void RETRO_SetPalette(Palette *palette)
@@ -289,16 +289,16 @@ void RETRO_Flip(void)
 	int pitch;
 
 	// Copy framebuffer
-	SDL_LockTexture(RETRO_lib.surfacebuffer, NULL, &pixels, &pitch);
+	SDL_LockTexture(RETRO.surfacebuffer, NULL, &pixels, &pitch);
 	Uint32 *pixel = (Uint32 *)pixels;
 	for (int i = 0; i < RETRO_HEIGHT * RETRO_WIDTH; i++) {
-		pixel[i] = RETRO_lib.palette[RETRO_lib.framebuffer[i]];
+		pixel[i] = RETRO.palette[RETRO.framebuffer[i]];
 	}
-	SDL_UnlockTexture(RETRO_lib.surfacebuffer);
+	SDL_UnlockTexture(RETRO.surfacebuffer);
 
-	SDL_RenderClear(RETRO_lib.renderer);
-	SDL_RenderCopy(RETRO_lib.renderer, RETRO_lib.surfacebuffer, NULL, NULL);
-	SDL_RenderPresent(RETRO_lib.renderer);
+	SDL_RenderClear(RETRO.renderer);
+	SDL_RenderCopy(RETRO.renderer, RETRO.surfacebuffer, NULL, NULL);
+	SDL_RenderPresent(RETRO.renderer);
 }
 
 void RETRO_Initialize(void)
@@ -315,23 +315,23 @@ void RETRO_Initialize(void)
 	}
 
 	// Set size of window
-	if (RETRO_lib.mode == RETRO_Lib::WINDOW) {
+	if (RETRO.mode == RETRO_Lib::WINDOW) {
 		dm.w = RETRO_WIDTH;
 		dm.h = RETRO_HEIGHT;
 	}
 
 	// Create window title
 	char title[256];
-	snprintf(title, 256, "RETRO - %s", RETRO_lib.basename);
+	snprintf(title, 256, "RETRO - %s", RETRO.basename);
 
 	// Create window
-	RETRO_lib.window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, dm.w, dm.h, 0);
-	if (RETRO_lib.window == NULL) {
+	RETRO.window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, dm.w, dm.h, 0);
+	if (RETRO.window == NULL) {
 		RETRO_RageQuit("SDL_CreateWindow failed: %s\n", SDL_GetError());
 	}
 
 	// Cursor
-	if (RETRO_lib.showcursor) {
+	if (RETRO.showcursor) {
 		SDL_ShowCursor(1);
 	} else {
 		SDL_ShowCursor(0);
@@ -339,30 +339,30 @@ void RETRO_Initialize(void)
 
 	// Create renderer
 	Uint32 flags = SDL_RENDERER_ACCELERATED;
-	if (RETRO_lib.vsync) {
+	if (RETRO.vsync) {
 		flags |= SDL_RENDERER_PRESENTVSYNC;
 	}
-	if (RETRO_lib.linear) {
+	if (RETRO.linear) {
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 	}
-	RETRO_lib.renderer = SDL_CreateRenderer(RETRO_lib.window, -1, flags);
-	SDL_RenderSetLogicalSize(RETRO_lib.renderer, RETRO_WIDTH, RETRO_HEIGHT);
+	RETRO.renderer = SDL_CreateRenderer(RETRO.window, -1, flags);
+	SDL_RenderSetLogicalSize(RETRO.renderer, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Set fullscreen
-	if (RETRO_lib.mode == RETRO_Lib::FULLSCREEN) {
-		SDL_SetWindowFullscreen(RETRO_lib.window, SDL_WINDOW_FULLSCREEN);
+	if (RETRO.mode == RETRO_Lib::FULLSCREEN) {
+		SDL_SetWindowFullscreen(RETRO.window, SDL_WINDOW_FULLSCREEN);
 	}
 
 	// Create surface buffer
-	RETRO_lib.surfacebuffer = SDL_CreateTexture(RETRO_lib.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
+	RETRO.surfacebuffer = SDL_CreateTexture(RETRO.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Create framebuffer
-	RETRO_lib.framebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);
-	memset(RETRO_lib.framebuffer, 0, RETRO_WIDTH * RETRO_HEIGHT);
+	RETRO.framebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);
+	memset(RETRO.framebuffer, 0, RETRO_WIDTH * RETRO_HEIGHT);
 
 	// Build Y offset table
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		RETRO_lib.yoffsettable[y] = y * RETRO_WIDTH;
+		RETRO.yoffsettable[y] = y * RETRO_WIDTH;
 	}
 }
 
@@ -372,23 +372,23 @@ void RETRO_Deinitialize(void)
 	if (RETRO_Deinitialize_3D != NULL) RETRO_Deinitialize_3D();
 
 	// Free textures
-	while (RETRO_lib.textures) {
-		int id = --RETRO_lib.textures;
-		if (RETRO_lib.texture[id]) {
-			if (RETRO_lib.texture[id]->image) {
-				free(RETRO_lib.texture[id]->image);
+	while (RETRO.textures) {
+		int id = --RETRO.textures;
+		if (RETRO.texture[id]) {
+			if (RETRO.texture[id]->image) {
+				free(RETRO.texture[id]->image);
 			}
-			free(RETRO_lib.texture[id]);
+			free(RETRO.texture[id]);
 		}
 	}
 
-	if (RETRO_lib.framebuffer) {
-		free(RETRO_lib.framebuffer);
+	if (RETRO.framebuffer) {
+		free(RETRO.framebuffer);
 	}
 
-	SDL_DestroyTexture(RETRO_lib.surfacebuffer);
-	SDL_DestroyRenderer(RETRO_lib.renderer);
-	SDL_DestroyWindow(RETRO_lib.window);
+	SDL_DestroyTexture(RETRO.surfacebuffer);
+	SDL_DestroyRenderer(RETRO.renderer);
+	SDL_DestroyWindow(RETRO.window);
 	SDL_Quit();
 }
 
@@ -407,20 +407,20 @@ double RETRO_GetDeltaTime(void)
 
 bool RETRO_KeyState(SDL_KeyCode keycode)
 {
-	return RETRO_lib.keystate[SDL_GetScancodeFromKey(keycode)];
+	return RETRO.keystate[SDL_GetScancodeFromKey(keycode)];
 }
 
 bool RETRO_QuitRequested(void)
 {
 	SDL_PumpEvents();
-	RETRO_lib.keystate = SDL_GetKeyboardState(NULL);
+	RETRO.keystate = SDL_GetKeyboardState(NULL);
 	if (SDL_QuitRequested()) {
 		return true;
 	}
-	else if (RETRO_lib.keystate[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
+	else if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
 		return true;
 	}
-	else if (RETRO_lib.keystate[SDL_GetScancodeFromKey(SDLK_q)]) {
+	else if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_q)]) {
 		return true;
 	}
 	return false;
@@ -437,7 +437,7 @@ void RETRO_Mainloop(void)
 		double deltatime = RETRO_GetDeltaTime();
 
 		// Check events
-		if (RETRO_lib.keystate[SDL_GetScancodeFromKey(SDLK_SPACE)]) {
+		if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_SPACE)]) {
 			continue;
 		}
 
@@ -453,18 +453,18 @@ void RETRO_Mainloop(void)
 		Uint32 stop = SDL_GetTicks();
 
 		// Limit FPS
-		if (RETRO_lib.fpscap && ((stop - start) < (Uint32)1000 / RETRO_lib.fpscap)) {
-			SDL_Delay((1000 / RETRO_lib.fpscap) - (stop - start));
+		if (RETRO.fpscap && ((stop - start) < (Uint32)1000 / RETRO.fpscap)) {
+			SDL_Delay((1000 / RETRO.fpscap) - (stop - start));
 		}
 
 		// Print FPS
 		static Uint32 fpslasttime = SDL_GetTicks();
 		static Uint32 fpscounter = 0;
 		if (fpslasttime < SDL_GetTicks() - 1 * 1000) {
-			if (RETRO_lib.showfps) {
+			if (RETRO.showfps) {
 				char title[256];
-				snprintf(title, 256, "RETRO - %s - FPS: %d", RETRO_lib.basename, fpscounter);
-				SDL_SetWindowTitle(RETRO_lib.window, title);
+				snprintf(title, 256, "RETRO - %s - FPS: %d", RETRO.basename, fpscounter);
+				SDL_SetWindowTitle(RETRO.window, title);
 			}
 			fpslasttime = SDL_GetTicks();
 			fpscounter = 0;

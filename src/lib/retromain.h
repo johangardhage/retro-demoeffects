@@ -11,7 +11,7 @@
 
 void RETRO_ParseArguments(int argc, char *argv[])
 {
-	RETRO_lib.basename = basename(argv[0]);
+	RETRO.basename = basename(argv[0]);
 	static struct option long_options[] = {
 		{"help", no_argument, 0, 'h'},
 		{"window", no_argument, 0, 'w'},
@@ -34,38 +34,38 @@ void RETRO_ParseArguments(int argc, char *argv[])
 		switch (c) {
 		case 0:
 			if (strcmp("fullwindow", long_options[option_index].name) == 0) {
-				RETRO_lib.mode = RETRO_Lib::FULLWINDOW;
+				RETRO.mode = RETRO_Lib::FULLWINDOW;
 			} else if (strcmp("novsync", long_options[option_index].name) == 0) {
-				RETRO_lib.vsync = false;
+				RETRO.vsync = false;
 			} else if (strcmp("nolinear", long_options[option_index].name) == 0) {
-				RETRO_lib.linear = false;
+				RETRO.linear = false;
 			} else if (strcmp("nocursor", long_options[option_index].name) == 0) {
-				RETRO_lib.showcursor = false;
+				RETRO.showcursor = false;
 			} else if (strcmp("showfps", long_options[option_index].name) == 0) {
-				RETRO_lib.showfps = true;
+				RETRO.showfps = true;
 			} else if (strcmp("nofps", long_options[option_index].name) == 0) {
-				RETRO_lib.showfps = false;
+				RETRO.showfps = false;
 			} else if (strcmp("capfps", long_options[option_index].name) == 0) {
-				RETRO_lib.fpscap = atoi(optarg);
+				RETRO.fpscap = atoi(optarg);
 			}
 			break;
 		case 'h':
 			usage = true;
 			break;
 		case 'w':
-			RETRO_lib.mode = RETRO_Lib::WINDOW;
+			RETRO.mode = RETRO_Lib::WINDOW;
 			break;
 		case 'f':
-			RETRO_lib.mode = RETRO_Lib::FULLSCREEN;
+			RETRO.mode = RETRO_Lib::FULLSCREEN;
 			break;
 		case 'v':
-			RETRO_lib.vsync = true;
+			RETRO.vsync = true;
 			break;
 		case 'l':
-			RETRO_lib.linear = true;
+			RETRO.linear = true;
 			break;
 		case 'c':
-			RETRO_lib.showcursor = true;
+			RETRO.showcursor = true;
 			break;
 		case '?':
 			usage = true;
@@ -85,7 +85,7 @@ void RETRO_ParseArguments(int argc, char *argv[])
 		printf("\n");
 	}
 	if (usage) {
-		printf("Usage: %s [OPTION]...\n\n", RETRO_lib.basename);
+		printf("Usage: %s [OPTION]...\n\n", RETRO.basename);
 		printf("Options:\n");
 		printf(" -h, --help           Display this text and exit\n");
 		printf(" -w, --window         Render in a window\n");

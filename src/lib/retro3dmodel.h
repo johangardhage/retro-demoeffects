@@ -263,7 +263,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 
 Model3D *RETRO_CreateCube3Model(void)
 {
-	Model3D *model = new Model3D();
+	Model3D *model = (Model3D *) malloc(sizeof(Model3D));
 	RETRO_3dmodel = model;
 
 	model->vertices = 8;
@@ -527,7 +527,7 @@ void RETRO_TriangularizeModel(Model3D *model = NULL)
 
 void RETRO_Deinitialize_3D(void)
 {
-	if (RETRO_3dmodel) delete RETRO_3dmodel;
+	if (RETRO_3dmodel) free(RETRO_3dmodel);
 }
 
 #endif

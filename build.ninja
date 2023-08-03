@@ -43,6 +43,7 @@ build $builddir/particles: cc $srcdir/particles.cpp
 build $builddir/phongcube: cc $srcdir/phongcube.cpp
 build $builddir/plane: cc $srcdir/plane.cpp
 build $builddir/plasma: cc $srcdir/plasma.cpp
+build $builddir/plasma2: cc $srcdir/plasma2.cpp
 build $builddir/plasmacube: cc $srcdir/plasmacube.cpp
 build $builddir/ripples: cc $srcdir/ripples.cpp
 build $builddir/rototunnel: cc $srcdir/rototunnel.cpp
@@ -94,6 +95,7 @@ build particles: phony $builddir/particles
 build phongcube: phony $builddir/phongcube
 build plane: phony $builddir/plane
 build plasma: phony $builddir/plasma
+build plasma2: phony $builddir/plasma2
 build plasmacube: phony $builddir/plasmacube
 build ripples: phony $builddir/ripples
 build rototunnel: phony $builddir/rototunnel

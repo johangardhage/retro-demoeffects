@@ -8,11 +8,10 @@
 
 #define TEXTURE_WIDTH 256
 #define TEXTURE_HEIGHT 256
-#define RADIUS 32
-#define DIST 256
+#define RATIO 32 * TEXTURE_HEIGHT
 
-unsigned int AngleTable[2 * RETRO_WIDTH * 2 * RETRO_HEIGHT];
-unsigned int DistanceTable[2 * RETRO_WIDTH * 2 * RETRO_HEIGHT];
+int DistanceTable[2 * RETRO_WIDTH][2 * RETRO_HEIGHT];
+int AngleTable[2 * RETRO_WIDTH][2 * RETRO_HEIGHT];
 
 void DEMO_Render(double deltatime)
 {
@@ -33,8 +32,8 @@ void DEMO_Render(double deltatime)
 	// Draw tunnel
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int tx = (DistanceTable[(y + dy) * RETRO_WIDTH * 2 + (x + dx)] + sx) % TEXTURE_WIDTH;
-			int ty = (AngleTable[(y + dy) * RETRO_WIDTH * 2 + (x + dx)] + sy) % TEXTURE_HEIGHT;
+			int tx = ((unsigned int)DistanceTable[x + dx][y + dy] + sx) % TEXTURE_WIDTH;
+			int ty = ((unsigned int)AngleTable[x + dx][y + dy] + sy) % TEXTURE_HEIGHT;
 			unsigned char color = image[ty * TEXTURE_WIDTH + tx];
 
 			RETRO_PutPixel(x, y, color);
@@ -50,8 +49,8 @@ void DEMO_Initialize(void)
 	// Init sine table
 	for (int y = 0; y < RETRO_HEIGHT * 2; y++) {
 		for (int x = 0; x < RETRO_WIDTH * 2; x++) {
-			AngleTable[y * RETRO_WIDTH * 2 + x] = atan2(x - RETRO_WIDTH, y - RETRO_HEIGHT) * TEXTURE_WIDTH / M_PI;
-			DistanceTable[y * RETRO_WIDTH * 2 + x] = (RADIUS * DIST) / sqrt((x - RETRO_WIDTH) * (x - RETRO_WIDTH) + (y - RETRO_HEIGHT) * (y - RETRO_HEIGHT));
+			AngleTable[x][y] = atan2(x - RETRO_WIDTH, y - RETRO_HEIGHT) * TEXTURE_WIDTH / M_PI;
+			DistanceTable[x][y] = RATIO / sqrt((x - RETRO_WIDTH) * (x - RETRO_WIDTH) + (y - RETRO_HEIGHT) * (y - RETRO_HEIGHT));
 		}
 	}
 }

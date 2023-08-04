@@ -19,7 +19,7 @@ void DEMO_Render(double deltatime)
 	static double frame = 0;
 	frame += deltatime * 1;
 
-	unsigned char *image = RETRO_GetTextureImage();
+	unsigned char *image = RETRO_TextureImage();
 
 	// Calculate tunnel movement
 	int sx = TEXTURE_WIDTH * 1.0 * frame;
@@ -44,7 +44,7 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/rototunnel_256x256.pcx");
-	RETRO_SetPaletteFromTexture();
+	RETRO_SetPalette(RETRO_TexturePalette());
 
 	// Init sine table
 	for (int y = 0; y < RETRO_HEIGHT * 2; y++) {

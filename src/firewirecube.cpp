@@ -21,7 +21,7 @@ void DEMO_Render2(double deltatime)
 	RETRO_SortAllFaces();
 	RETRO_RenderModel(RETRO_POLY_WIREFIRE);
 
-	unsigned char *burn = RETRO_GetFrameBuffer();
+	unsigned char *burn = RETRO_FrameBuffer();
 
 	for (int a = 0; a < RETRO_WIDTH; a++) {
 		for (int b = 0; b < RETRO_HEIGHT - 1; b++) {

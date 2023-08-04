@@ -36,10 +36,10 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/font_16x16.pcx");
-	RETRO_SetPaletteFromTexture();
+	RETRO_SetPalette(RETRO_TexturePalette());
 
 	// Init scroll bitmap
-	Texture *texture = RETRO_GetTexture();
+	Texture *texture = RETRO_Texture();
 
 	int scroll_length = strlen(SCROLL_TEXT);
 	for (int i = 0; i < scroll_length; i++) {

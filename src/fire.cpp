@@ -13,7 +13,7 @@
 void DEMO_Render(double deltatime)
 {
 	static unsigned char firebuffer[RETRO_HEIGHT*RETRO_WIDTH];
-	unsigned char *buffer = RETRO_GetFrameBuffer();
+	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Create flame at the bottom of the screen
 	for (int x = 0; x < RETRO_WIDTH; x++) {

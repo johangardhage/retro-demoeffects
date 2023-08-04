@@ -118,27 +118,27 @@ Texture *RETRO_AllocateTexture(void)
 	return RETRO.texture[id];
 }
 
-Texture *RETRO_GetTexture(int id = 0)
+Texture *RETRO_Texture(int id = 0)
 {
 	return RETRO.texture[id];
 }
 
-unsigned char *RETRO_GetTextureImage(int id = 0)
+unsigned char *RETRO_TextureImage(int id = 0)
 {
 	return RETRO.texture[id] != NULL ? RETRO.texture[id]->image : NULL;
 }
 
-Palette *RETRO_GetTexturePalette(int id = 0)
+Palette *RETRO_TexturePalette(int id = 0)
 {
 	return RETRO.texture[id] != NULL ? RETRO.texture[id]->palette : NULL;
 }
 
-unsigned char *RETRO_GetFrameBuffer(void)
+unsigned char *RETRO_FrameBuffer(void)
 {
 	return RETRO.framebuffer;
 }
 
-int *RETRO_GetYOffsetTable(void)
+int *RETRO_YOffsetTable(void)
 {
 	return RETRO.yoffsettable;
 }
@@ -178,18 +178,6 @@ void RETRO_SetPalette(Palette *palette)
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, palette->r, palette->g, palette->b);
 		palette++;
-	}
-}
-
-void RETRO_SetPaletteFromTexture(int id = 0)
-{
-	RETRO_SetPalette(RETRO_GetTexturePalette(id));
-}
-
-void RETRO_SetBlackPalette(void)
-{
-	for (int i = 0; i < RETRO_COLORS; i++) {
-		RETRO_SetColor(i, 0, 0, 0);
 	}
 }
 
@@ -392,7 +380,7 @@ void RETRO_Deinitialize(void)
 	SDL_Quit();
 }
 
-double RETRO_GetDeltaTime(void)
+double RETRO_DeltaTime(void)
 {
 	// Initialize delta time
 	static Uint32 current = SDL_GetPerformanceCounter();
@@ -434,7 +422,7 @@ void RETRO_Mainloop(void)
 {
 	while (!RETRO_QuitRequested()) {
 		// Calculate delta time
-		double deltatime = RETRO_GetDeltaTime();
+		double deltatime = RETRO_DeltaTime();
 
 		// Check events
 		if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_SPACE)]) {

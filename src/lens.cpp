@@ -32,7 +32,7 @@ void DrawLens(Lens *lens, unsigned char *image)
 
 void DEMO_Render(double deltatime)
 {
-	unsigned char *image = RETRO_GetTextureImage();
+	unsigned char *image = RETRO_TextureImage();
 
 	// Calculate movement
 	Lens1.x += Lens1.xspeed * deltatime;
@@ -78,6 +78,6 @@ void InitLens(Lens *lens)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/lens_320x240.pcx");
-	RETRO_SetPaletteFromTexture();
+	RETRO_SetPalette(RETRO_TexturePalette());
 	InitLens(&Lens1);
 }

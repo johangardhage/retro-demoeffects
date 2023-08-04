@@ -15,7 +15,7 @@ void DEMO_Render(double deltatime)
 	static double frame = 0;
 	frame += deltatime * 400;
 
-	Texture *texture = RETRO_GetTexture();
+	Texture *texture = RETRO_Texture();
 
 	// Calculate movement
 	int x1 = (RETRO_WIDTH / 2) + (RETRO_WIDTH / 2 * cos(frame / 205));
@@ -43,7 +43,7 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/distort_320x240.pcx");
-	RETRO_SetPaletteFromTexture();
+	RETRO_SetPalette(RETRO_TexturePalette());
 
 	// Init sin table
 	int offset = 0;

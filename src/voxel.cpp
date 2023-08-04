@@ -48,9 +48,9 @@ void DEMO_Render(double deltatime)
 		camera.horizon -= 1.5f;
 	}
 
-	unsigned char *colormap = RETRO_GetTextureImage(0);
-	unsigned char *heightmap = RETRO_GetTextureImage(1);
-	unsigned char *buffer = RETRO_GetFrameBuffer();
+	unsigned char *colormap = RETRO_TextureImage(0);
+	unsigned char *heightmap = RETRO_TextureImage(1);
+	unsigned char *buffer = RETRO_FrameBuffer();
 
 	int mapwidthperiod = MAP_WIDTH - 1;
 	int mapheightperiod = MAP_HEIGHT - 1;
@@ -107,6 +107,6 @@ void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/voxel_color_1024x1024.pcx"); // color
 	RETRO_LoadTexture("assets/voxel_height_1024x1024.pcx"); // height
-	RETRO_SetPaletteFromTexture(0);
+	RETRO_SetPalette(RETRO_TexturePalette(0));
 	RETRO_SetColor(0, 36, 36, 56);
 }

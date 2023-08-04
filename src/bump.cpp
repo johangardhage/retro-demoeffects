@@ -25,8 +25,8 @@ void DEMO_Render(double deltatime)
 	frame_counter += deltatime * 100;
 	int frame = frame_counter;
 
-	unsigned char *buffer = RETRO_GetFrameBuffer();
-	unsigned char *image = RETRO_GetTextureImage();
+	unsigned char *buffer = RETRO_FrameBuffer();
+	unsigned char *image = RETRO_TextureImage();
 
 	// Light position
 	int lx = RETRO_WIDTH / 2 + LIGHT_SIZE + CosTable[frame % SINE_VALUES];

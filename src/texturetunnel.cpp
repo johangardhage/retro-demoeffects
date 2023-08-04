@@ -20,7 +20,7 @@ void DEMO_Render(double deltatime)
 	static double frame = 0;
 	frame += M_PI * deltatime * 0.2;
 
-	unsigned char *image = RETRO_GetTextureImage();
+	unsigned char *image = RETRO_TextureImage();
 
 	// Calculate movement
 	int dx = RETRO_WIDTH * sin(frame);
@@ -48,7 +48,7 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/texturetunnel_128x128.pcx");
-	RETRO_SetPaletteFromTexture();
+	RETRO_SetPalette(RETRO_TexturePalette());
 
 	// Init tables
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

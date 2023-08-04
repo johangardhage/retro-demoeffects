@@ -21,7 +21,7 @@ void DEMO_Render2(double deltatime)
 	RETRO_SortAllFaces();
 	RETRO_RenderModel(RETRO_POLY_WIREFRAME);
 
-	unsigned char *dest = RETRO_GetFrameBuffer();
+	unsigned char *dest = RETRO_FrameBuffer();
 
 	for (int i = 0; i < RETRO_WIDTH * RETRO_HEIGHT / 2; i++) {
 		if (dest[i] != 0) {

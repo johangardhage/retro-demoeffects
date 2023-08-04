@@ -17,7 +17,7 @@ void DEMO_Render(double deltatime)
 	frame_counter += deltatime * 100;
 	int frame = frame_counter;
 
-	Texture *texture = RETRO_GetTexture();
+	Texture *texture = RETRO_Texture();
 
 	// Draw distortion
 	for (int y = 0; y < texture->height; y++) {
@@ -36,7 +36,7 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/distortlogo_320x240.pcx");
-	RETRO_SetPaletteFromTexture();
+	RETRO_SetPalette(RETRO_TexturePalette());
 
 	// Init sin table
 	for (int i = 0; i < SINE_VALUES; i++) {

@@ -21,7 +21,7 @@ enum {
 
 void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO_GetFrameBuffer();
+	buffer = buffer ? buffer : RETRO.framebuffer;
 
 	int x = 0;
 	int y = 0;
@@ -64,7 +64,7 @@ void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, unsigne
 
 void RETRO_DrawLine2(int x1, int y1, int x2, int y2, unsigned char *colors, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO_GetFrameBuffer();
+	buffer = buffer ? buffer : RETRO.framebuffer;
 
 	int x = 0;
 	int y = 0;
@@ -107,7 +107,7 @@ void RETRO_DrawLine2(int x1, int y1, int x2, int y2, unsigned char *colors, unsi
 
 void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO_GetFrameBuffer();
+	buffer = buffer ? buffer : RETRO.framebuffer;
 
 	for (int y = y1; y < y2; y++) {
 		if (x >= 0 && x < width && y >= 0 && y < height) {
@@ -118,7 +118,7 @@ void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *
 
 void RETRO_Blur(int blur, int decay = 0, int mode = RETRO_BLUR_CLAMP, unsigned char *buffer = NULL)
 {
-	buffer = buffer ? buffer : RETRO_GetFrameBuffer();
+	buffer = buffer ? buffer : RETRO.framebuffer;
 
 	typedef int pattern_ptr[2];
 	static int pattern3[][2] = {{0, -1}, {0, 0}, {0, 1}};

@@ -19,7 +19,7 @@ void DEMO_Render(double deltatime)
 	Point3Df up = { 256.0f, 0, 0 };
 	Point3Df vp = { 0, 0, 256.0f };
 
-	unsigned char *image = RETRO_GetTextureImage();
+	unsigned char *image = RETRO_TextureImage();
 
 	// Draw a perspective correct textured plane
 	float cx = up.y * vp.z - vp.y * up.z;
@@ -59,5 +59,5 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/plane_256x256.pcx");
-	RETRO_SetPaletteFromTexture();
+	RETRO_SetPalette(RETRO_TexturePalette());
 }

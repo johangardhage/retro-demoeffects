@@ -15,11 +15,11 @@ void DEMO_Render(double deltatime)
 	static int delay = 30;
 	static double step = 0;
 
-	Texture *texture = RETRO_GetTexture();
+	Texture *texture = RETRO_Texture();
 	RETRO_Blit(texture->image, texture->width * texture->height);
 
 	if (fadein && !delay) {
-		if (RETRO_FadeIn(FADEINSTEPS, step, RETRO_GetTexturePalette())) {
+		if (RETRO_FadeIn(FADEINSTEPS, step, RETRO_TexturePalette())) {
 			fadein = false;
 			step = 0;
 			delay = 60;
@@ -29,7 +29,7 @@ void DEMO_Render(double deltatime)
 	}
 
 	if (!fadein && !delay) {
-		if (RETRO_FadeOut(FADEOUTSTEPS, step, RETRO_GetTexturePalette())) {
+		if (RETRO_FadeOut(FADEOUTSTEPS, step, RETRO_TexturePalette())) {
 			fadein = true;
 			step = 0;
 			delay = 30;
@@ -46,5 +46,4 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/fade_320x240.pcx");
-	RETRO_SetBlackPalette();
 }

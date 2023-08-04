@@ -26,13 +26,13 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTexture("assets/texturecube_128x128.pcx");
-	RETRO_SetPaletteFromTexture();
+	RETRO_SetPalette(RETRO_TexturePalette());
 
 	RETRO_CreateCube3Model();
 	RETRO_InitializeVertexNormals();
 
 	Model3D *model = RETRO_Get3DModel();
-	model->texture = RETRO_GetTextureImage();
+	model->texture = RETRO_TextureImage();
 	model->c = 64;
 	model->cintensity = 64;
 }

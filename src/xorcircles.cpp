@@ -12,7 +12,7 @@ void DEMO_Render(double deltatime)
 	static double frame = 0;
 	frame += deltatime * 1;
 
-	Texture *texture = RETRO_GetTexture();
+	Texture *texture = RETRO_Texture();
 
 	// Coordinates for first circle
 	int slx1 = RETRO_WIDTH / 2 + (RETRO_WIDTH / 2 * cos(frame));

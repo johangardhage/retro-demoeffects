@@ -80,10 +80,10 @@ struct RETRO_Lib {
 	SDL_Renderer *renderer = NULL;
 	SDL_Texture *surfacebuffer = NULL;
 	unsigned char *framebuffer = NULL;
-	Uint32 palette[RETRO_COLORS];
+	unsigned int palette[RETRO_COLORS];
 	Texture *texture[RETRO_MAX_TEXTURES];
 	int textures = 0;
-	const Uint8 *keystate;
+	const unsigned char *keystate;
 	int yoffsettable[RETRO_HEIGHT];
 };
 
@@ -242,7 +242,7 @@ void RETRO_Flip(void)
 
 	// Copy framebuffer
 	SDL_LockTexture(RETRO.surfacebuffer, NULL, &pixels, &pitch);
-	Uint32 *pixel = (Uint32 *)pixels;
+	unsigned int *pixel = (unsigned int *)pixels;
 	for (int i = 0; i < RETRO_HEIGHT * RETRO_WIDTH; i++) {
 		pixel[i] = RETRO.palette[RETRO.framebuffer[i]];
 	}
@@ -290,7 +290,7 @@ void RETRO_Initialize(void)
 	}
 
 	// Create renderer
-	Uint32 flags = SDL_RENDERER_ACCELERATED;
+	unsigned int flags = SDL_RENDERER_ACCELERATED;
 	if (RETRO.vsync) {
 		flags |= SDL_RENDERER_PRESENTVSYNC;
 	}
@@ -347,8 +347,8 @@ void RETRO_Deinitialize(void)
 double RETRO_DeltaTime(void)
 {
 	// Initialize delta time
-	static Uint32 current = SDL_GetPerformanceCounter();
-	static Uint32 previous = 0;
+	static unsigned int current = SDL_GetPerformanceCounter();
+	static unsigned int previous = 0;
 
 	// Update delta time
 	previous = current;
@@ -394,7 +394,7 @@ void RETRO_Mainloop(void)
 		}
 
 		// Render scene
-		Uint32 start = SDL_GetTicks();
+		unsigned int start = SDL_GetTicks();
 		if (DEMO_Render != NULL) {
 			RETRO_Clear();
 			DEMO_Render(deltatime);
@@ -402,16 +402,16 @@ void RETRO_Mainloop(void)
 		} else if (DEMO_Render2 != NULL) {
 			DEMO_Render2(deltatime);
 		}
-		Uint32 stop = SDL_GetTicks();
+		unsigned int stop = SDL_GetTicks();
 
 		// Limit FPS
-		if (RETRO.fpscap && ((stop - start) < (Uint32)1000 / RETRO.fpscap)) {
+		if (RETRO.fpscap && ((stop - start) < (unsigned int)1000 / RETRO.fpscap)) {
 			SDL_Delay((1000 / RETRO.fpscap) - (stop - start));
 		}
 
 		// Print FPS
-		static Uint32 fpslasttime = SDL_GetTicks();
-		static Uint32 fpscounter = 0;
+		static unsigned int fpslasttime = SDL_GetTicks();
+		static unsigned int fpscounter = 0;
 		if (fpslasttime < SDL_GetTicks() - 1 * 1000) {
 			if (RETRO.showfps) {
 				char title[256];

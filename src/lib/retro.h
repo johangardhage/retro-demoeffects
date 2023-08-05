@@ -64,14 +64,6 @@ struct Texture {
 	int height;
 };
 
-struct Point2Df {
-	float x, y;
-};
-
-struct Point2D {
-	int x, y;
-};
-
 // *******************************************************************
 // Private variables
 // *******************************************************************
@@ -107,40 +99,22 @@ void RETRO_RageQuit(const char *message, const char *error)
 	exit(-1);
 }
 
-Texture *RETRO_AllocateTexture(void)
-{
-	Texture *texture = (Texture *)malloc(sizeof(Texture));
-	if (texture == NULL) {
-		RETRO_RageQuit("Cannot allocate texture memory\n", "");
-	}
-	int id = RETRO.textures++;
-	RETRO.texture[id] = texture;
-	return RETRO.texture[id];
-}
-
-Texture *RETRO_Texture(int id = 0)
-{
-	return RETRO.texture[id];
-}
-
-unsigned char *RETRO_TextureImage(int id = 0)
-{
-	return RETRO.texture[id] != NULL ? RETRO.texture[id]->image : NULL;
-}
-
-Palette *RETRO_TexturePalette(int id = 0)
-{
-	return RETRO.texture[id] != NULL ? RETRO.texture[id]->palette : NULL;
-}
-
 unsigned char *RETRO_FrameBuffer(void)
 {
 	return RETRO.framebuffer;
 }
 
-int *RETRO_YOffsetTable(void)
+void RETRO_SetColor(unsigned char color, unsigned char r, unsigned char g, unsigned char b)
 {
-	return RETRO.yoffsettable;
+	RETRO.palette[color] = (b << 16) | (g << 8) | (r);
+}
+
+void RETRO_SetPalette(Palette *palette)
+{
+	for (int i = 0; i < RETRO_COLORS; i++) {
+		RETRO_SetColor(i, palette->r, palette->g, palette->b);
+		palette++;
+	}
 }
 
 void RETRO_PutPixel(int x, int y, unsigned char color)
@@ -168,45 +142,35 @@ void RETRO_Copy(unsigned char *src, unsigned char *dst, int size)
 	memcpy(dst, src, size);
 }
 
-void RETRO_SetColor(unsigned char color, unsigned char r, unsigned char g, unsigned char b)
+int *RETRO_YOffsetTable(void)
 {
-	RETRO.palette[color] = (b << 16) | (g << 8) | (r);
+	return RETRO.yoffsettable;
 }
 
-void RETRO_SetPalette(Palette *palette)
+Texture *RETRO_Texture(int id = 0)
 {
-	for (int i = 0; i < RETRO_COLORS; i++) {
-		RETRO_SetColor(i, palette->r, palette->g, palette->b);
-		palette++;
-	}
+	return RETRO.texture[id];
 }
 
-bool RETRO_FadeIn(int steps, int step, Palette *palette)
+unsigned char *RETRO_TextureImage(int id = 0)
 {
-	if (step >= steps) return true;
-
-	for (int i = 0; i < RETRO_COLORS; i++) {
-		unsigned char r = (float)palette[i].r / steps * step;
-		unsigned char g = (float)palette[i].g / steps * step;
-		unsigned char b = (float)palette[i].b / steps * step;
-		RETRO_SetColor(i, r, g, b);
-	}
-
-	return false;
+	return RETRO.texture[id] != NULL ? RETRO.texture[id]->image : NULL;
 }
 
-bool RETRO_FadeOut(int steps, int step, Palette *palette)
+Palette *RETRO_TexturePalette(int id = 0)
 {
-	if (step >= steps) return true;
+	return RETRO.texture[id] != NULL ? RETRO.texture[id]->palette : NULL;
+}
 
-	for (int i = 0; i < RETRO_COLORS; i++) {
-		unsigned char r = (float)palette[i].r / steps * (steps - step);
-		unsigned char g = (float)palette[i].g / steps * (steps - step);
-		unsigned char b = (float)palette[i].b / steps * (steps - step);
-		RETRO_SetColor(i, r, g, b);
+Texture *RETRO_AllocateTexture(void)
+{
+	Texture *texture = (Texture *)malloc(sizeof(Texture));
+	if (texture == NULL) {
+		RETRO_RageQuit("Cannot allocate texture memory\n", "");
 	}
-
-	return false;
+	int id = RETRO.textures++;
+	RETRO.texture[id] = texture;
+	return RETRO.texture[id];
 }
 
 Texture *RETRO_LoadTexture(const char *filename)

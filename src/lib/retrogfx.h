@@ -19,6 +19,42 @@ enum {
 	RETRO_BLUR_8
 };
 
+struct Point2Df {
+	float x, y;
+};
+
+struct Point2D {
+	int x, y;
+};
+
+bool RETRO_FadeIn(int steps, int step, Palette *palette)
+{
+	if (step >= steps) return true;
+
+	for (int i = 0; i < RETRO_COLORS; i++) {
+		unsigned char r = (float)palette[i].r / steps * step;
+		unsigned char g = (float)palette[i].g / steps * step;
+		unsigned char b = (float)palette[i].b / steps * step;
+		RETRO_SetColor(i, r, g, b);
+	}
+
+	return false;
+}
+
+bool RETRO_FadeOut(int steps, int step, Palette *palette)
+{
+	if (step >= steps) return true;
+
+	for (int i = 0; i < RETRO_COLORS; i++) {
+		unsigned char r = (float)palette[i].r / steps * (steps - step);
+		unsigned char g = (float)palette[i].g / steps * (steps - step);
+		unsigned char b = (float)palette[i].b / steps * (steps - step);
+		RETRO_SetColor(i, r, g, b);
+	}
+
+	return false;
+}
+
 void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;

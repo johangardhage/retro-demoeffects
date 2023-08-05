@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retro3d2.h"
 #include "lib/retromain.h"
+#include "lib/retrogfx.h"
 
 #define POINTS 4096
 #define EYEDISTANCE 256

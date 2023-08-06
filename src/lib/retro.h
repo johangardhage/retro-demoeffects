@@ -68,8 +68,14 @@ struct Texture {
 // Private variables
 // *******************************************************************
 
-struct RETRO_Lib {
-	enum { FULLSCREEN, WINDOW, FULLWINDOW } mode;
+enum {
+	RETRO_MODE_FULLSCREEN,
+	RETRO_MODE_WINDOW,
+	RETRO_MODE_FULLWINDOW
+};
+
+struct {
+	int mode;
 	char *basename;
 	bool vsync;
 	bool linear;
@@ -85,9 +91,7 @@ struct RETRO_Lib {
 	int textures = 0;
 	const unsigned char *keystate;
 	int yoffsettable[RETRO_HEIGHT];
-};
-
-RETRO_Lib RETRO = { .mode = RETRO_Lib::FULLSCREEN, .vsync = true, .showfps = true };
+} RETRO = { .mode = RETRO_MODE_FULLSCREEN, .vsync = true, .showfps = true };
 
 // *******************************************************************
 // Public methods
@@ -104,7 +108,7 @@ unsigned char *RETRO_FrameBuffer(void)
 	return RETRO.framebuffer;
 }
 
-void RETRO_SetColor(unsigned char color, unsigned char r, unsigned char g, unsigned char b)
+void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b)
 {
 	RETRO.palette[color] = (b << 16) | (g << 8) | (r);
 }
@@ -112,8 +116,7 @@ void RETRO_SetColor(unsigned char color, unsigned char r, unsigned char g, unsig
 void RETRO_SetPalette(Palette *palette)
 {
 	for (int i = 0; i < RETRO_COLORS; i++) {
-		RETRO_SetColor(i, palette->r, palette->g, palette->b);
-		palette++;
+		RETRO_SetColor(i, palette[i].r, palette[i].g, palette[i].b);
 	}
 }
 
@@ -164,13 +167,24 @@ Palette *RETRO_TexturePalette(int id = 0)
 
 Texture *RETRO_AllocateTexture(void)
 {
-	Texture *texture = (Texture *)malloc(sizeof(Texture));
-	if (texture == NULL) {
+	RETRO.texture[RETRO.textures] = (Texture *)malloc(sizeof(Texture));
+	if (RETRO.texture[RETRO.textures] == NULL) {
 		RETRO_RageQuit("Cannot allocate texture memory\n", "");
 	}
-	int id = RETRO.textures++;
-	RETRO.texture[id] = texture;
-	return RETRO.texture[id];
+	return RETRO.texture[RETRO.textures++];
+}
+
+void RETRO_FreeTexture(int id = 0)
+{
+	if (RETRO.texture[id]) {
+		if (RETRO.texture[id]->image) {
+			free(RETRO.texture[id]->image);
+			RETRO.texture[id]->image = NULL;
+		}
+		free(RETRO.texture[id]);
+		RETRO.texture[id] = NULL;
+		RETRO.textures--;
+	}
 }
 
 Texture *RETRO_LoadTexture(const char *filename)
@@ -203,7 +217,7 @@ Texture *RETRO_LoadTexture(const char *filename)
 	// Reserve memory
 	texture->image = (unsigned char *)malloc(texture->width * texture->height);
 	if (texture->image == NULL) {
-		RETRO_RageQuit("Cannot allocate texture memory\n", "");
+		RETRO_RageQuit("Cannot allocate texture image memory\n", "");
 	}
 
 	// Unpack image
@@ -237,14 +251,13 @@ Texture *RETRO_LoadTexture(const char *filename)
 
 void RETRO_Flip(void)
 {
-	void *pixels;
+	unsigned int *pixels;
 	int pitch;
 
 	// Copy framebuffer
-	SDL_LockTexture(RETRO.surfacebuffer, NULL, &pixels, &pitch);
-	unsigned int *pixel = (unsigned int *)pixels;
-	for (int i = 0; i < RETRO_HEIGHT * RETRO_WIDTH; i++) {
-		pixel[i] = RETRO.palette[RETRO.framebuffer[i]];
+	SDL_LockTexture(RETRO.surfacebuffer, NULL, (void **)&pixels, &pitch);
+	for (int i = 0; i < RETRO_WIDTH * RETRO_HEIGHT; i++) {
+		pixels[i] = RETRO.palette[RETRO.framebuffer[i]];
 	}
 	SDL_UnlockTexture(RETRO.surfacebuffer);
 
@@ -267,7 +280,7 @@ void RETRO_Initialize(void)
 	}
 
 	// Set size of window
-	if (RETRO.mode == RETRO_Lib::WINDOW) {
+	if (RETRO.mode == RETRO_MODE_WINDOW) {
 		dm.w = RETRO_WIDTH;
 		dm.h = RETRO_HEIGHT;
 	}
@@ -282,13 +295,6 @@ void RETRO_Initialize(void)
 		RETRO_RageQuit("SDL_CreateWindow failed: %s\n", SDL_GetError());
 	}
 
-	// Cursor
-	if (RETRO.showcursor) {
-		SDL_ShowCursor(1);
-	} else {
-		SDL_ShowCursor(0);
-	}
-
 	// Create renderer
 	unsigned int flags = SDL_RENDERER_ACCELERATED;
 	if (RETRO.vsync) {
@@ -301,7 +307,7 @@ void RETRO_Initialize(void)
 	SDL_RenderSetLogicalSize(RETRO.renderer, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Set fullscreen
-	if (RETRO.mode == RETRO_Lib::FULLSCREEN) {
+	if (RETRO.mode == RETRO_MODE_FULLSCREEN) {
 		SDL_SetWindowFullscreen(RETRO.window, SDL_WINDOW_FULLSCREEN);
 	}
 
@@ -310,7 +316,13 @@ void RETRO_Initialize(void)
 
 	// Create framebuffer
 	RETRO.framebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);
+	if (RETRO.framebuffer == NULL) {
+		RETRO_RageQuit("Cannot allocate framebuffer memory\n", "");
+	}
 	memset(RETRO.framebuffer, 0, RETRO_WIDTH * RETRO_HEIGHT);
+
+	// Cursor
+	SDL_ShowCursor(RETRO.showcursor);
 
 	// Build Y offset table
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
@@ -324,14 +336,8 @@ void RETRO_Deinitialize(void)
 	if (RETRO_Deinitialize_3D != NULL) RETRO_Deinitialize_3D();
 
 	// Free textures
-	while (RETRO.textures) {
-		int id = --RETRO.textures;
-		if (RETRO.texture[id]) {
-			if (RETRO.texture[id]->image) {
-				free(RETRO.texture[id]->image);
-			}
-			free(RETRO.texture[id]);
-		}
+	for (int i = 0; i < RETRO_MAX_TEXTURES; i++) {
+		RETRO_FreeTexture(i);
 	}
 
 	if (RETRO.framebuffer) {
@@ -342,6 +348,12 @@ void RETRO_Deinitialize(void)
 	SDL_DestroyRenderer(RETRO.renderer);
 	SDL_DestroyWindow(RETRO.window);
 	SDL_Quit();
+}
+
+void RETRO_SetVSync(bool state = true)
+{
+	SDL_RenderSetVSync(RETRO.renderer, state);
+	RETRO.vsync = state;
 }
 
 double RETRO_DeltaTime(void)
@@ -368,11 +380,9 @@ bool RETRO_QuitRequested(void)
 	RETRO.keystate = SDL_GetKeyboardState(NULL);
 	if (SDL_QuitRequested()) {
 		return true;
-	}
-	else if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
+	} else if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
 		return true;
-	}
-	else if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_q)]) {
+	} else if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_q)]) {
 		return true;
 	}
 	return false;

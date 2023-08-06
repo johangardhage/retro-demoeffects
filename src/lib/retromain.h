@@ -34,7 +34,7 @@ void RETRO_ParseArguments(int argc, char *argv[])
 		switch (c) {
 		case 0:
 			if (strcmp("fullwindow", long_options[option_index].name) == 0) {
-				RETRO.mode = RETRO_Lib::FULLWINDOW;
+				RETRO.mode = RETRO_MODE_FULLWINDOW;
 			} else if (strcmp("novsync", long_options[option_index].name) == 0) {
 				RETRO.vsync = false;
 			} else if (strcmp("nolinear", long_options[option_index].name) == 0) {
@@ -53,10 +53,10 @@ void RETRO_ParseArguments(int argc, char *argv[])
 			usage = true;
 			break;
 		case 'w':
-			RETRO.mode = RETRO_Lib::WINDOW;
+			RETRO.mode = RETRO_MODE_WINDOW;
 			break;
 		case 'f':
-			RETRO.mode = RETRO_Lib::FULLSCREEN;
+			RETRO.mode = RETRO_MODE_FULLSCREEN;
 			break;
 		case 'v':
 			RETRO.vsync = true;

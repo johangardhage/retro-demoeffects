@@ -90,7 +90,7 @@ struct {
 	Texture *texture[RETRO_MAX_TEXTURES];
 	int textures = 0;
 	const unsigned char *keystate;
-	int yoffsettable[RETRO_HEIGHT];
+	int yoffset[RETRO_HEIGHT];
 } RETRO = { .mode = RETRO_MODE_FULLSCREEN, .vsync = true, .showfps = true };
 
 // *******************************************************************
@@ -122,12 +122,12 @@ void RETRO_SetPalette(Palette *palette)
 
 void RETRO_PutPixel(int x, int y, unsigned char color)
 {
-	RETRO.framebuffer[RETRO.yoffsettable[y] + x] = color;
+	RETRO.framebuffer[RETRO.yoffset[y] + x] = color;
 }
 
 unsigned char RETRO_GetPixel(int x, int y)
 {
-	return RETRO.framebuffer[RETRO.yoffsettable[y] + x];
+	return RETRO.framebuffer[RETRO.yoffset[y] + x];
 }
 
 void RETRO_Clear(unsigned char color = 0)
@@ -140,9 +140,9 @@ void RETRO_Blit(unsigned char *src, unsigned char *dest = RETRO.framebuffer, int
 	memcpy(dest, src, size);
 }
 
-int *RETRO_YOffsetTable(void)
+int *RETRO_Yoffset(void)
 {
-	return RETRO.yoffsettable;
+	return RETRO.yoffset;
 }
 
 Texture *RETRO_Texture(int id = 0)
@@ -321,7 +321,7 @@ void RETRO_Initialize(void)
 
 	// Build Y offset table
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		RETRO.yoffsettable[y] = y * RETRO_WIDTH;
+		RETRO.yoffset[y] = y * RETRO_WIDTH;
 	}
 }
 

@@ -183,14 +183,14 @@ void RETRO_Blur(int blur, int decay = 0, int mode = RETRO_BLUR_CLAMP, unsigned c
 			int color = 0;
 			for (int i = 0; i < pixels; i++) {
 				if (mode == RETRO_BLUR_WRAP) {
-					color += buffer[RETRO.yoffsettable[WRAPHEIGHT(y + pattern[i][1])] + WRAPWIDTH(x + pattern[i][0])];
+					color += buffer[RETRO.yoffset[WRAPHEIGHT(y + pattern[i][1])] + WRAPWIDTH(x + pattern[i][0])];
 				} else if (mode == RETRO_BLUR_CLAMP) {
-					color += buffer[RETRO.yoffsettable[CLAMPHEIGHT(y + pattern[i][1])] + CLAMPWIDTH(x + pattern[i][0])];
+					color += buffer[RETRO.yoffset[CLAMPHEIGHT(y + pattern[i][1])] + CLAMPWIDTH(x + pattern[i][0])];
 				} else if (mode == RETRO_BLUR_OVERFLOW) {
 					int x2 = x + pattern[i][0];
 					int y2 = y + pattern[i][1];
 					if (y2 >= 0 && y2 < RETRO_HEIGHT && x2 >= 0 && x2 < RETRO_WIDTH) {
-						color += buffer[RETRO.yoffsettable[y2] + x2];
+						color += buffer[RETRO.yoffset[y2] + x2];
 					}
 				}
 			}
@@ -201,7 +201,7 @@ void RETRO_Blur(int blur, int decay = 0, int mode = RETRO_BLUR_CLAMP, unsigned c
 				color -= decay;
 			}
 
-			buffer[RETRO.yoffsettable[y] + x] = (unsigned char)color;
+			buffer[RETRO.yoffset[y] + x] = (unsigned char)color;
 		}
 	}
 }

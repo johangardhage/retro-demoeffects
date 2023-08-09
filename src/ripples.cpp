@@ -23,14 +23,14 @@ void DEMO_Render(double deltatime)
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Draw background
-	RETRO_Blit(RETRO_TextureImage(), RETRO_WIDTH * RETRO_HEIGHT);
+	RETRO_Blit(RETRO_TextureImage());
 
 	// Draw ripples
 	for (int y = WATER_YPOS; y < RETRO_HEIGHT; y++) {
 		int ysrc = WATER_YPOS + (WATER_YPOS - y) + SinTable[(y + frame) % SINE_VALUES];
 		int ydst = y;
 
-		RETRO_Copy(buffer + ysrc * RETRO_WIDTH, buffer + ydst * RETRO_WIDTH, RETRO_WIDTH);
+		RETRO_Blit(buffer + ysrc * RETRO_WIDTH, buffer + ydst * RETRO_WIDTH, RETRO_WIDTH);
 	}
 }
 

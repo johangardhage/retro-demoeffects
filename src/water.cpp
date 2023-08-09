@@ -80,7 +80,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	Texture *texture = RETRO_LoadTexture("assets/water_320x240.pcx");
+	RETRO_LoadTexture("assets/water_320x240.pcx");
 	RETRO_SetPalette(RETRO_TexturePalette());
-	RETRO_Blit(texture->image, texture->width * texture->height);
+	RETRO_Blit(RETRO_TextureImage());
 }

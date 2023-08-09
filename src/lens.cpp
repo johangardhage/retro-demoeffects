@@ -45,7 +45,7 @@ void DEMO_Render(double deltatime)
 	}
 
 	// Draw background
-	RETRO_Blit(image, RETRO_WIDTH * RETRO_HEIGHT);
+	RETRO_Blit(image);
 
 	// Draw lens
 	DrawLens(&Lens1, image);

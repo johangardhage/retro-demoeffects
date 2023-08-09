@@ -16,8 +16,7 @@ void DEMO_Render(double deltatime)
 	static int delay = 30;
 	static double step = 0;
 
-	Texture *texture = RETRO_Texture();
-	RETRO_Blit(texture->image, texture->width * texture->height);
+	RETRO_Blit(RETRO_TextureImage());
 
 	if (fadein && !delay) {
 		if (RETRO_FadeIn(FADEINSTEPS, step, RETRO_TexturePalette())) {

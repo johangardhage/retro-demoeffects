@@ -135,14 +135,9 @@ void RETRO_Clear(unsigned char color = 0)
 	memset(RETRO.framebuffer, color, RETRO_WIDTH * RETRO_HEIGHT);
 }
 
-void RETRO_Blit(unsigned char *src, int size)
+void RETRO_Blit(unsigned char *src, unsigned char *dest = RETRO.framebuffer, int size = RETRO_WIDTH * RETRO_HEIGHT)
 {
-	memcpy(RETRO.framebuffer, src, size);
-}
-
-void RETRO_Copy(unsigned char *src, unsigned char *dst, int size)
-{
-	memcpy(dst, src, size);
+	memcpy(dest, src, size);
 }
 
 int *RETRO_YOffsetTable(void)

@@ -8,8 +8,7 @@
 
 void DEMO_Render(double deltatime)
 {
-	Texture *texture = RETRO_Texture();
-	RETRO_Blit(texture->image, texture->width * texture->height);
+	RETRO_Blit(RETRO_TextureImage());
 }
 
 void DEMO_Initialize(void)

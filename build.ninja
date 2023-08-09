@@ -37,6 +37,7 @@ build $builddir/gouraudduck: cc $srcdir/gouraudduck.cpp
 build $builddir/hiddenlinecube: cc $srcdir/hiddenlinecube.cpp
 build $builddir/lens: cc $srcdir/lens.cpp
 build $builddir/magiclines: cc $srcdir/magiclines.cpp
+build $builddir/mandelbrot: cc $srcdir/mandelbrot.cpp
 build $builddir/metaballs: cc $srcdir/metaballs.cpp
 build $builddir/paint: cc $srcdir/paint.cpp
 build $builddir/particles: cc $srcdir/particles.cpp
@@ -89,6 +90,7 @@ build gouraudduck: phony $builddir/gouraudduck
 build hiddenlinecube: phony $builddir/hiddenlinecube
 build lens: phony $builddir/lens
 build magiclines: phony $builddir/magiclines
+build mandelbrot: phony $builddir/mandelbrot
 build metaballs: phony $builddir/metaballs
 build paint: phony $builddir/paint
 build particles: phony $builddir/particles

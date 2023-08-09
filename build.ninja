@@ -35,6 +35,7 @@ build $builddir/glenzshadedcube: cc $srcdir/glenzshadedcube.cpp
 build $builddir/gouraudcube: cc $srcdir/gouraudcube.cpp
 build $builddir/gouraudduck: cc $srcdir/gouraudduck.cpp
 build $builddir/hiddenlinecube: cc $srcdir/hiddenlinecube.cpp
+build $builddir/julia: cc $srcdir/julia.cpp
 build $builddir/lens: cc $srcdir/lens.cpp
 build $builddir/magiclines: cc $srcdir/magiclines.cpp
 build $builddir/mandelbrot: cc $srcdir/mandelbrot.cpp
@@ -88,6 +89,7 @@ build glenzshadedcube: phony $builddir/glenzshadedcube
 build gouraudcube: phony $builddir/gouraudcube
 build gouraudduck: phony $builddir/gouraudduck
 build hiddenlinecube: phony $builddir/hiddenlinecube
+build julia: phony $builddir/julia
 build lens: phony $builddir/lens
 build magiclines: phony $builddir/magiclines
 build mandelbrot: phony $builddir/mandelbrot

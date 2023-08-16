@@ -30,6 +30,7 @@ build $builddir/flatcube: cc $srcdir/flatcube.cpp
 build $builddir/flatshadedcube2: cc $srcdir/flatshadedcube2.cpp
 build $builddir/flatshadedcube: cc $srcdir/flatshadedcube.cpp
 build $builddir/flatshadedduck: cc $srcdir/flatshadedduck.cpp
+build $builddir/font: cc $srcdir/font.cpp
 build $builddir/glenzcube: cc $srcdir/glenzcube.cpp
 build $builddir/glenzshadedcube: cc $srcdir/glenzshadedcube.cpp
 build $builddir/gouraudcube: cc $srcdir/gouraudcube.cpp
@@ -84,6 +85,7 @@ build flatcube: phony $builddir/flatcube
 build flatshadedcube2: phony $builddir/flatshadedcube2
 build flatshadedcube: phony $builddir/flatshadedcube
 build flatshadedduck: phony $builddir/flatshadedduck
+build font: phony $builddir/font
 build glenzcube: phony $builddir/glenzcube
 build glenzshadedcube: phony $builddir/glenzshadedcube
 build gouraudcube: phony $builddir/gouraudcube

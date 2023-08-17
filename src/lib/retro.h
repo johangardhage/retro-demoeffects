@@ -80,7 +80,7 @@ struct {
 	int fpscap;
 	SDL_Window *window = NULL;
 	SDL_Renderer *renderer = NULL;
-	SDL_Texture *surfacebuffer = NULL;
+	SDL_Texture *renderbuffer = NULL;
 	unsigned char *framebuffer = NULL;
 	unsigned int palette[RETRO_COLORS];
 	RETRO_Image *image[RETRO_MAX_IMAGES];
@@ -90,7 +90,7 @@ struct {
 } RETRO = { .mode = RETRO_MODE_FULLSCREEN, .vsync = true, .showfps = true };
 
 // *******************************************************************
-// Public methods
+// Public functions
 // *******************************************************************
 
 void RETRO_RageQuit(const char *message, const char *error)
@@ -237,18 +237,16 @@ RETRO_Image *RETRO_LoadImage(const char *filename)
 
 void RETRO_Flip(void)
 {
-	unsigned int *pixels;
-	int pitch;
-
 	// Copy framebuffer
-	SDL_LockTexture(RETRO.surfacebuffer, NULL, (void **)&pixels, &pitch);
+	unsigned int *pixels, pitch;
+	SDL_LockTexture(RETRO.renderbuffer, NULL, (void **)&pixels, (int *)&pitch);
 	for (int i = 0; i < RETRO_WIDTH * RETRO_HEIGHT; i++) {
 		pixels[i] = RETRO.palette[RETRO.framebuffer[i]];
 	}
-	SDL_UnlockTexture(RETRO.surfacebuffer);
+	SDL_UnlockTexture(RETRO.renderbuffer);
 
 	SDL_RenderClear(RETRO.renderer);
-	SDL_RenderCopy(RETRO.renderer, RETRO.surfacebuffer, NULL, NULL);
+	SDL_RenderCopy(RETRO.renderer, RETRO.renderbuffer, NULL, NULL);
 	SDL_RenderPresent(RETRO.renderer);
 }
 
@@ -297,8 +295,8 @@ void RETRO_Initialize(void)
 		SDL_SetWindowFullscreen(RETRO.window, SDL_WINDOW_FULLSCREEN);
 	}
 
-	// Create surface buffer
-	RETRO.surfacebuffer = SDL_CreateTexture(RETRO.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
+	// Create render buffer
+	RETRO.renderbuffer = SDL_CreateTexture(RETRO.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Create framebuffer
 	RETRO.framebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);
@@ -318,10 +316,8 @@ void RETRO_Initialize(void)
 
 void RETRO_Deinitialize(void)
 {
-	// Deinitialize 3D
 	if (RETRO_Deinitialize_3D != NULL) RETRO_Deinitialize_3D();
 
-	// Free images
 	for (int i = 0; i < RETRO_MAX_IMAGES; i++) {
 		RETRO_FreeImage(i);
 	}
@@ -330,7 +326,7 @@ void RETRO_Deinitialize(void)
 		free(RETRO.framebuffer);
 	}
 
-	SDL_DestroyTexture(RETRO.surfacebuffer);
+	SDL_DestroyTexture(RETRO.renderbuffer);
 	SDL_DestroyRenderer(RETRO.renderer);
 	SDL_DestroyWindow(RETRO.window);
 	SDL_Quit();
@@ -344,11 +340,9 @@ void RETRO_SetVSync(bool state = true)
 
 double RETRO_DeltaTime(void)
 {
-	// Initialize delta time
 	static unsigned long int now = SDL_GetPerformanceCounter();
 	static unsigned long int old = 0;
 
-	// Update delta time
 	old = now;
 	now = SDL_GetPerformanceCounter();
 
@@ -375,13 +369,12 @@ bool RETRO_QuitRequested(void)
 }
 
 // *******************************************************************
-// Private methods
+// Private functions
 // *******************************************************************
 
 void RETRO_Mainloop(void)
 {
 	while (!RETRO_QuitRequested()) {
-		// Calculate delta time
 		double deltatime = RETRO_DeltaTime();
 
 		// Check events

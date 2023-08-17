@@ -63,7 +63,7 @@ struct Model3D {
 	float matrix[3][3];					// Rotation matrix
 	int c;								// Base color
 	int cintensity;						// Color intensity
-	unsigned char* texture;				// Texture
+	unsigned char *texture;				// Texture
 };
 
 struct LightSourceType {
@@ -263,16 +263,16 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 
 Model3D *RETRO_CreateCube3Model(void)
 {
-	Model3D *model = (Model3D *) malloc(sizeof(Model3D));
+	Model3D *model = (Model3D *)malloc(sizeof(Model3D));
 	RETRO_3dmodel = model;
 
 	model->vertices = 8;
 	model->faces = 12;
 
-	int vertex[model->vertices][3] = {{100, 100, 100}, {100, 100, -100}, {100, -100, 100}, {100, -100, -100}, {-100, 100, 100}, {-100, 100, -100}, {-100, -100, 100}, {-100, -100, -100}};
-	int face[model->faces][3] = {{5, 1, 3}, {7, 5, 3}, {1, 0, 2}, {3, 1, 2}, {0, 4, 6}, {2, 0, 6}, {4, 5, 7}, {6, 4, 7}, {4, 0, 1}, {5, 4, 1}, {7, 3, 2}, {6, 7, 2}};
-	int faceu[model->faces][3] = {{0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}};
-	int facev[model->faces][3] = {{0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}};
+	int vertex[model->vertices][3] = { {100, 100, 100}, {100, 100, -100}, {100, -100, 100}, {100, -100, -100}, {-100, 100, 100}, {-100, 100, -100}, {-100, -100, 100}, {-100, -100, -100} };
+	int face[model->faces][3] = { {5, 1, 3}, {7, 5, 3}, {1, 0, 2}, {3, 1, 2}, {0, 4, 6}, {2, 0, 6}, {4, 5, 7}, {6, 4, 7}, {4, 0, 1}, {5, 4, 1}, {7, 3, 2}, {6, 7, 2} };
+	int faceu[model->faces][3] = { {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127} };
+	int facev[model->faces][3] = { {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127} };
 
 	for (int i = 0; i < model->vertices; i++) {
 		model->vertex[i].x = vertex[i][0];
@@ -304,8 +304,8 @@ Model3D *RETRO_CreateCube4Model(void)
 	model->vertices = 8;
 	model->faces = 6;
 
-	int vertex[model->vertices][3] = {{100, 100, 100}, {100, 100, -100}, {100, -100, 100}, {100, -100, -100}, {-100, 100, 100}, {-100, 100, -100}, {-100, -100, 100}, {-100, -100, -100}};
-	int face[model->faces][4] = {{4, 0, 1, 5}, {1, 0, 2, 3}, {5, 1, 3, 7}, {4, 5, 7, 6}, {0, 4, 6, 2}, {3, 2, 6, 7}};
+	int vertex[model->vertices][3] = { {100, 100, 100}, {100, 100, -100}, {100, -100, 100}, {100, -100, -100}, {-100, 100, 100}, {-100, 100, -100}, {-100, -100, 100}, {-100, -100, -100} };
+	int face[model->faces][4] = { {4, 0, 1, 5}, {1, 0, 2, 3}, {5, 1, 3, 7}, {4, 5, 7, 6}, {0, 4, 6, 2}, {3, 2, 6, 7} };
 
 	for (int i = 0; i < model->vertices; i++) {
 		model->vertex[i].x = vertex[i][0];

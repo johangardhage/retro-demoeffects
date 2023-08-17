@@ -26,7 +26,7 @@ void RETRO_ParseArguments(int argc, char *argv[])
 		{"showfps", no_argument, 0, 0},
 		{"nofps", no_argument, 0, 0},
 		{"capfps", required_argument, 0, 0},
-		{0, 0, 0, 0}};
+		{0, 0, 0, 0} };
 	bool usage = false;
 	int c;
 	int option_index = 0;

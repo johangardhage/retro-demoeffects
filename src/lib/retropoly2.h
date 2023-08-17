@@ -47,7 +47,7 @@ void RETRO_DrawEdgeFlat(int y, EdgeSpan span, unsigned char color)
 
 	int xdiff = span.x2 - span.x1;
 	if (xdiff > 0) {
-		unsigned char *buffer = RETRO_GetFrameBuffer();
+		unsigned char *buffer = RETRO_FrameBuffer();
 
 		for (int x = span.x1; x < span.x2; x++) {
 			buffer[y * RETRO_WIDTH + x] = color;
@@ -118,7 +118,7 @@ void RETRO_DrawEdgeGlenz(int y, EdgeSpan span, unsigned char color)
 
 	int xdiff = span.x2 - span.x1;
 	if (xdiff > 0) {
-		unsigned char *buffer = RETRO_GetFrameBuffer();
+		unsigned char *buffer = RETRO_FrameBuffer();
 
 		for (int x = span.x1; x < span.x2; x++) {
 			buffer[y * RETRO_WIDTH + x] += color;
@@ -193,7 +193,7 @@ void RETRO_DrawEdgeGouraud(int y, EdgeSpan span)
 		long cdiff = span.c2 - span.c1;
 		long cstep = cdiff / xdiff;
 
-		unsigned char *buffer = RETRO_GetFrameBuffer();
+		unsigned char *buffer = RETRO_FrameBuffer();
 
 		for (long x = span.x1; x < span.x2; x++) {
 			buffer[y * RETRO_WIDTH + x] = span.c1 >> 8;
@@ -283,7 +283,7 @@ void RETRO_DrawEdgePhong(int y, EdgeSpan span, LightSourcePoint light)
 		long nystep = nydiff / xdiff;
 		long nzstep = nzdiff / xdiff;
 
-		unsigned char *buffer = RETRO_GetFrameBuffer();
+		unsigned char *buffer = RETRO_FrameBuffer();
 
 		for (long x = span.x1; x < span.x2; x++) {
 			long angle = ((span.nx1 * light.nx + span.ny1 * light.ny + span.nz1 * light.nz) << 8) / (sqrt(span.nx1 * span.nx1 + span.ny1 * span.ny1 + span.nz1 * span.nz1) * light.nn);
@@ -389,7 +389,7 @@ void RETRO_DrawEdgeTexture(int y, EdgeSpan span, unsigned char *image)
 		long ustep = udiff / xdiff;
 		long vstep = vdiff / xdiff;
 
-		unsigned char *buffer = RETRO_GetFrameBuffer();
+		unsigned char *buffer = RETRO_FrameBuffer();
 
 		for (int x = span.x1; x <= span.x2; x++) {
 			buffer[y * RETRO_WIDTH + x] = image[(span.v1 >> 8) * 128 + (span.u1 >> 8)];

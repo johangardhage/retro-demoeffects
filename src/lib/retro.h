@@ -272,8 +272,8 @@ void RETRO_Initialize(void)
 	}
 
 	// Create window title
-	char title[256];
-	snprintf(title, 256, "RETRO - %s", RETRO.basename);
+	char title[128];
+	snprintf(title, 128, "RETRO - %s", RETRO.basename);
 
 	// Create window
 	RETRO.window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, dm.w, dm.h, 0);
@@ -345,14 +345,14 @@ void RETRO_SetVSync(bool state = true)
 double RETRO_DeltaTime(void)
 {
 	// Initialize delta time
-	static unsigned int current = SDL_GetPerformanceCounter();
-	static unsigned int previous = 0;
+	static unsigned long int now = SDL_GetPerformanceCounter();
+	static unsigned long int old = 0;
 
 	// Update delta time
-	previous = current;
-	current = SDL_GetPerformanceCounter();
+	old = now;
+	now = SDL_GetPerformanceCounter();
 
-	return (double)(current - previous) / SDL_GetPerformanceFrequency();
+	return (double)(now - old) / SDL_GetPerformanceFrequency();
 }
 
 bool RETRO_KeyState(SDL_KeyCode keycode)
@@ -390,7 +390,7 @@ void RETRO_Mainloop(void)
 		}
 
 		// Render scene
-		unsigned int start = SDL_GetTicks();
+		unsigned long int start = SDL_GetTicks64();
 		if (DEMO_Render != NULL) {
 			RETRO_Clear();
 			DEMO_Render(deltatime);
@@ -398,26 +398,26 @@ void RETRO_Mainloop(void)
 		} else if (DEMO_Render2 != NULL) {
 			DEMO_Render2(deltatime);
 		}
-		unsigned int stop = SDL_GetTicks();
+		unsigned long int stop = SDL_GetTicks64();
 
 		// Limit FPS
-		if (RETRO.fpscap && ((stop - start) < (unsigned int)1000 / RETRO.fpscap)) {
+		if (RETRO.fpscap && ((stop - start) < 1000UL / RETRO.fpscap)) {
 			SDL_Delay((1000 / RETRO.fpscap) - (stop - start));
 		}
 
-		// Print FPS
-		static unsigned int fpslasttime = SDL_GetTicks();
-		static unsigned int fpscounter = 0;
-		if (fpslasttime < SDL_GetTicks() - 1 * 1000) {
-			if (RETRO.showfps) {
-				char title[256];
-				snprintf(title, 256, "RETRO - %s - FPS: %d", RETRO.basename, fpscounter);
+		// Show FPS once a second
+		if (RETRO.showfps) {
+			static unsigned long int fpsticks = SDL_GetTicks64();
+			static int fpscount = 0;
+			if (fpsticks < SDL_GetTicks64() - 1000UL) {
+				char title[128];
+				snprintf(title, 128, "RETRO - %s - FPS: %d", RETRO.basename, fpscount);
 				SDL_SetWindowTitle(RETRO.window, title);
+				fpsticks = SDL_GetTicks();
+				fpscount = 0;
 			}
-			fpslasttime = SDL_GetTicks();
-			fpscounter = 0;
+			fpscount++;
 		}
-		fpscounter++;
 	}
 }
 

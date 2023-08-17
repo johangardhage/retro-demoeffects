@@ -23,7 +23,7 @@ void DEMO_Render(double deltatime)
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Draw background
-	RETRO_Blit(RETRO_TextureImage());
+	RETRO_Blit(RETRO_ImageData());
 
 	// Draw ripples
 	for (int y = WATER_YPOS; y < RETRO_HEIGHT; y++) {
@@ -36,8 +36,8 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTexture("assets/ripples_320x240.pcx");
-	RETRO_SetPalette(RETRO_TexturePalette());
+	RETRO_LoadImage("assets/ripples_320x240.pcx");
+	RETRO_SetPalette(RETRO_ImagePalette());
 
 	// Init sine table
 	for (int i = 0; i < SINE_VALUES; i++) {

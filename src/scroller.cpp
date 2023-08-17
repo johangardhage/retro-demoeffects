@@ -35,20 +35,20 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTexture("assets/font_16x16.pcx");
-	RETRO_SetPalette(RETRO_TexturePalette());
+	RETRO_LoadImage("assets/font_16x16.pcx");
+	RETRO_SetPalette(RETRO_ImagePalette());
 
 	// Init scroll bitmap
-	Texture *texture = RETRO_Texture();
+	Image *image = RETRO_Image();
 
 	int scroll_length = strlen(SCROLL_TEXT);
 	for (int i = 0; i < scroll_length; i++) {
-		unsigned char *src = texture->image + ((SCROLL_TEXT[i] - 32) * FONT_WIDTH);
+		unsigned char *src = image->data + ((SCROLL_TEXT[i] - 32) * FONT_WIDTH);
 		unsigned char *dst = scroll_bitmap + (i * FONT_WIDTH);
 
 		for (int y = 0; y < FONT_HEIGHT; y++) {
 			for (int x = 0; x < FONT_WIDTH; x++) {
-				dst[FONT_WIDTH * scroll_length * y + x] = src[texture->width * y + x];
+				dst[FONT_WIDTH * scroll_length * y + x] = src[image->width * y + x];
 			}
 		}
 	}

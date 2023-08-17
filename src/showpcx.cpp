@@ -8,11 +8,11 @@
 
 void DEMO_Render(double deltatime)
 {
-	RETRO_Blit(RETRO_TextureImage());
+	RETRO_Blit(RETRO_ImageData());
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTexture("assets/showpcx_320x240.pcx");
-	RETRO_SetPalette(RETRO_TexturePalette());
+	RETRO_LoadImage("assets/showpcx_320x240.pcx");
+	RETRO_SetPalette(RETRO_ImagePalette());
 }

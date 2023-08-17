@@ -16,7 +16,7 @@ void DEMO_Render(double deltatime)
 	static double angle = 0;
 	angle += deltatime * 100;
 
-	unsigned char *image = RETRO_TextureImage();
+	unsigned char *image = RETRO_ImageData();
 
 	// Calculate movement
 	float sina = sin(angle * M_PI / 180.0f);
@@ -36,6 +36,6 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTexture("assets/rotozoom_256x256.pcx");
-	RETRO_SetPalette(RETRO_TexturePalette());
+	RETRO_LoadImage("assets/rotozoom_256x256.pcx");
+	RETRO_SetPalette(RETRO_ImagePalette());
 }

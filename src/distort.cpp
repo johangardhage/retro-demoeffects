@@ -15,7 +15,7 @@ void DEMO_Render(double deltatime)
 	static double frame = 0;
 	frame += deltatime * 400;
 
-	Texture *texture = RETRO_Texture();
+	Image *image = RETRO_Image();
 
 	// Calculate movement
 	int x1 = (RETRO_WIDTH / 2) + (RETRO_WIDTH / 2 * cos(frame / 205));
@@ -33,7 +33,7 @@ void DEMO_Render(double deltatime)
 			int ty = y + DistortTableY[ysrc];
 
 			if (ty >= 0 && ty < RETRO_HEIGHT && tx >= 0 && tx < RETRO_WIDTH) {
-				unsigned char col = texture->image[ty * texture->width + tx];
+				unsigned char col = image->data[ty * image->width + tx];
 				RETRO_PutPixel(x, y, col);
 			}
 		}
@@ -42,8 +42,8 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTexture("assets/distort_320x240.pcx");
-	RETRO_SetPalette(RETRO_TexturePalette());
+	RETRO_LoadImage("assets/distort_320x240.pcx");
+	RETRO_SetPalette(RETRO_ImagePalette());
 
 	// Init sin table
 	int offset = 0;

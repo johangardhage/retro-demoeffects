@@ -25,12 +25,12 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTexture("assets/texturecube_128x128.pcx");
-	RETRO_SetPalette(RETRO_TexturePalette());
+	RETRO_LoadImage("assets/texturecube_128x128.pcx");
+	RETRO_SetPalette(RETRO_ImagePalette());
 
 	RETRO_CreateCube3Model();
 	RETRO_InitializeVertexNormals();
 
 	Model3D *model = RETRO_Get3DModel();
-	model->texture = RETRO_TextureImage();
+	model->texture = RETRO_ImageData();
 }

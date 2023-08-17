@@ -14,7 +14,7 @@ void DEMO_Render(double deltatime)
 {
 	static unsigned char firebuffer[RETRO_HEIGHT*RETRO_WIDTH];
 	unsigned char *buffer = RETRO_FrameBuffer();
-	unsigned char *image = RETRO_TextureImage();
+	unsigned char *image = RETRO_ImageData();
 
 	// Create flaming logo
 	for (int y = 100; y < 130; y++) {
@@ -55,7 +55,7 @@ void Gradient(int s, int e, int r1, int g1, int b1, int r2, int g2, int b2)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_LoadTexture("assets/firelogo_320x240.pcx");
+	RETRO_LoadImage("assets/firelogo_320x240.pcx");
 	Gradient(0, 24, 0, 0, 0, 0, 0, 31);
 	Gradient(24, 48, 0, 0, 31, 63, 0, 0);
 	Gradient(48, 64, 63, 0, 0, 63, 63, 0);

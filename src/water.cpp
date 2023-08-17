@@ -20,7 +20,7 @@ void DEMO_Render(double deltatime)
 	frame_counter += deltatime * 100;
 	int frame = (int)frame_counter;
 
-	unsigned char *image = RETRO_TextureImage();
+	unsigned char *image = RETRO_ImageData();
 
 	// Make drop
 	if (frame % 60 == 0) {
@@ -80,7 +80,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTexture("assets/water_320x240.pcx");
-	RETRO_SetPalette(RETRO_TexturePalette());
-	RETRO_Blit(RETRO_TextureImage());
+	RETRO_LoadImage("assets/water_320x240.pcx");
+	RETRO_SetPalette(RETRO_ImagePalette());
+	RETRO_Blit(RETRO_ImageData());
 }

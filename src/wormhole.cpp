@@ -17,7 +17,7 @@ unsigned char WormHole[RETRO_WIDTH * RETRO_HEIGHT];
 
 void DEMO_Render(double deltatime)
 {
-	unsigned char *image = RETRO_TextureImage();
+	unsigned char *image = RETRO_ImageData();
 
 	// Calculate frame
 	static double frame_counter = 0;
@@ -44,8 +44,8 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_LoadTexture("assets/wormhole_15x15.pcx");
-	RETRO_SetPalette(RETRO_TexturePalette());
+	RETRO_LoadImage("assets/wormhole_15x15.pcx");
+	RETRO_SetPalette(RETRO_ImagePalette());
 
 	// Init sin table
 	float CosTable[WORM_SPOKES];

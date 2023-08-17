@@ -38,7 +38,7 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #define RETRO_HEIGHT 240
 #define RETRO_COLORS 256
 
-#define RETRO_MAX_TEXTURES 5
+#define RETRO_MAX_IMAGES 5
 
 #define RAD2DEG (M_PI / 180)
 #define RANDOM(n) (((float)rand() / (float)RAND_MAX) * (n))
@@ -57,9 +57,9 @@ struct Palette {
 	unsigned char r, g, b;
 };
 
-struct Texture {
+struct Image {
 	Palette palette[256];
-	unsigned char *image;
+	unsigned char *data;
 	int width;
 	int height;
 };
@@ -87,8 +87,8 @@ struct {
 	SDL_Texture *surfacebuffer = NULL;
 	unsigned char *framebuffer = NULL;
 	unsigned int palette[RETRO_COLORS];
-	Texture *texture[RETRO_MAX_TEXTURES];
-	int textures = 0;
+	Image *image[RETRO_MAX_IMAGES];
+	int images = 0;
 	const unsigned char *keystate;
 	int yoffset[RETRO_HEIGHT];
 } RETRO = { .mode = RETRO_MODE_FULLSCREEN, .vsync = true, .showfps = true };
@@ -145,46 +145,46 @@ int *RETRO_Yoffset(void)
 	return RETRO.yoffset;
 }
 
-Texture *RETRO_Texture(int id = 0)
+Image *RETRO_Image(int id = 0)
 {
-	return RETRO.texture[id];
+	return RETRO.image[id];
 }
 
-unsigned char *RETRO_TextureImage(int id = 0)
+unsigned char *RETRO_ImageData(int id = 0)
 {
-	return RETRO.texture[id] != NULL ? RETRO.texture[id]->image : NULL;
+	return RETRO.image[id] != NULL ? RETRO.image[id]->data : NULL;
 }
 
-Palette *RETRO_TexturePalette(int id = 0)
+Palette *RETRO_ImagePalette(int id = 0)
 {
-	return RETRO.texture[id] != NULL ? RETRO.texture[id]->palette : NULL;
+	return RETRO.image[id] != NULL ? RETRO.image[id]->palette : NULL;
 }
 
-Texture *RETRO_AllocateTexture(void)
+Image *RETRO_AllocateImage(void)
 {
-	RETRO.texture[RETRO.textures] = (Texture *)malloc(sizeof(Texture));
-	if (RETRO.texture[RETRO.textures] == NULL) {
-		RETRO_RageQuit("Cannot allocate texture memory\n", "");
+	RETRO.image[RETRO.images] = (Image *)malloc(sizeof(Image));
+	if (RETRO.image[RETRO.images] == NULL) {
+		RETRO_RageQuit("Cannot allocate image memory\n", "");
 	}
-	return RETRO.texture[RETRO.textures++];
+	return RETRO.image[RETRO.images++];
 }
 
-void RETRO_FreeTexture(int id = 0)
+void RETRO_FreeImage(int id = 0)
 {
-	if (RETRO.texture[id]) {
-		if (RETRO.texture[id]->image) {
-			free(RETRO.texture[id]->image);
-			RETRO.texture[id]->image = NULL;
+	if (RETRO.image[id]) {
+		if (RETRO.image[id]->data) {
+			free(RETRO.image[id]->data);
+			RETRO.image[id]->data = NULL;
 		}
-		free(RETRO.texture[id]);
-		RETRO.texture[id] = NULL;
-		RETRO.textures--;
+		free(RETRO.image[id]);
+		RETRO.image[id] = NULL;
+		RETRO.images--;
 	}
 }
 
-Texture *RETRO_LoadTexture(const char *filename)
+Image *RETRO_LoadImage(const char *filename)
 {
-	Texture *texture = RETRO_AllocateTexture();
+	Image *image = RETRO_AllocateImage();
 
 	// Open file
 	FILE *fp = fopen(filename, "rb");
@@ -206,26 +206,26 @@ Texture *RETRO_LoadTexture(const char *filename)
 	int ymax = (header[10] + (header[11] << 8));
 
 	// Calculate the size of image
-	texture->width = xmax - xmin + 1;
-	texture->height = ymax - ymin + 1;
+	image->width = xmax - xmin + 1;
+	image->height = ymax - ymin + 1;
 
 	// Reserve memory
-	texture->image = (unsigned char *)malloc(texture->width * texture->height);
-	if (texture->image == NULL) {
-		RETRO_RageQuit("Cannot allocate texture image memory\n", "");
+	image->data = (unsigned char *)malloc(image->width * image->height);
+	if (image->data == NULL) {
+		RETRO_RageQuit("Cannot allocate image data memory\n", "");
 	}
 
 	// Unpack image
 	int index = 0;
-	while (index < texture->width * texture->height) {
+	while (index < image->width * image->height) {
 		unsigned char data = getc(fp);
 		if (data < 192) {
-			texture->image[index++] = data;
+			image->data[index++] = data;
 		} else {
 			unsigned char num = data - 192;
 			data = getc(fp);
 			while (num-- > 0) {
-				texture->image[index++] = data;
+				image->data[index++] = data;
 			}
 		}
 	}
@@ -233,15 +233,15 @@ Texture *RETRO_LoadTexture(const char *filename)
 	// Read palette from end of file
 	fseek(fp, -768, SEEK_END);
 	for (int i = 0; i < 256; i++) {
-		texture->palette[i].r = fgetc(fp);
-		texture->palette[i].g = fgetc(fp);
-		texture->palette[i].b = fgetc(fp);
+		image->palette[i].r = fgetc(fp);
+		image->palette[i].g = fgetc(fp);
+		image->palette[i].b = fgetc(fp);
 	}
 
 	// Close file
 	fclose(fp);
 
-	return texture;
+	return image;
 }
 
 void RETRO_Flip(void)
@@ -330,9 +330,9 @@ void RETRO_Deinitialize(void)
 	// Deinitialize 3D
 	if (RETRO_Deinitialize_3D != NULL) RETRO_Deinitialize_3D();
 
-	// Free textures
-	for (int i = 0; i < RETRO_MAX_TEXTURES; i++) {
-		RETRO_FreeTexture(i);
+	// Free images
+	for (int i = 0; i < RETRO_MAX_IMAGES; i++) {
+		RETRO_FreeImage(i);
 	}
 
 	if (RETRO.framebuffer) {

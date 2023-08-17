@@ -26,7 +26,7 @@ void DEMO_Render(double deltatime)
 	int frame = frame_counter;
 
 	unsigned char *buffer = RETRO_FrameBuffer();
-	unsigned char *image = RETRO_TextureImage();
+	unsigned char *image = RETRO_ImageData();
 
 	// Light position
 	int lx = RETRO_WIDTH / 2 + LIGHT_SIZE + CosTable[frame % SINE_VALUES];
@@ -50,7 +50,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTexture("assets/bump_320x240.pcx");
+	RETRO_LoadImage("assets/bump_320x240.pcx");
 
 	// Init sin table
 	for (int i = 0; i < SINE_VALUES; i++) {

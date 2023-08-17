@@ -6,6 +6,8 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
+#define IMAGE_WIDTH 320
+#define IMAGE_HEIGHT 240
 #define SINE_VALUES 64
 
 int SinTable[SINE_VALUES];
@@ -17,16 +19,16 @@ void DEMO_Render(double deltatime)
 	frame_counter += deltatime * 100;
 	int frame = frame_counter;
 
-	Image *image = RETRO_Image();
+	unsigned char *image = RETRO_ImageData();
 
 	// Draw distortion
-	for (int y = 0; y < image->height; y++) {
+	for (int y = 0; y < IMAGE_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int tx = x + SinTable[(y + frame) % SINE_VALUES];
 			int ty = y + SinTable[(x + frame) % SINE_VALUES] / 2;
 
-			if (tx >= 0 && tx < image->height && ty >= 0 && ty < image->height) {
-				unsigned char col = image->data[ty * image->width + tx];
+			if (tx >= 0 && tx < IMAGE_HEIGHT && ty >= 0 && ty < IMAGE_HEIGHT) {
+				unsigned char col = image[ty * IMAGE_WIDTH + tx];
 				RETRO_PutPixel(x, y, col);
 			}
 		}

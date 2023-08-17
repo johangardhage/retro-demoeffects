@@ -8,6 +8,7 @@
 
 #define FONT_WIDTH 16
 #define FONT_HEIGHT 16
+#define IMAGE_WIDTH 944
 
 #define SCROLL_TEXT "                    HORIZONTAL SCROLLER..."
 
@@ -39,16 +40,16 @@ void DEMO_Initialize(void)
 	RETRO_SetPalette(RETRO_ImagePalette());
 
 	// Init scroll bitmap
-	Image *image = RETRO_Image();
+	unsigned char *image = RETRO_ImageData();
 
 	int scroll_length = strlen(SCROLL_TEXT);
 	for (int i = 0; i < scroll_length; i++) {
-		unsigned char *src = image->data + ((SCROLL_TEXT[i] - 32) * FONT_WIDTH);
+		unsigned char *src = image + ((SCROLL_TEXT[i] - 32) * FONT_WIDTH);
 		unsigned char *dst = scroll_bitmap + (i * FONT_WIDTH);
 
 		for (int y = 0; y < FONT_HEIGHT; y++) {
 			for (int x = 0; x < FONT_WIDTH; x++) {
-				dst[FONT_WIDTH * scroll_length * y + x] = src[image->width * y + x];
+				dst[FONT_WIDTH * scroll_length * y + x] = src[IMAGE_WIDTH * y + x];
 			}
 		}
 	}

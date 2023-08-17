@@ -6,6 +6,8 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
+#define IMAGE_WIDTH 320
+
 char DistortTableX[(RETRO_WIDTH * 2) * (RETRO_HEIGHT * 2)];
 char DistortTableY[(RETRO_WIDTH * 2) * (RETRO_HEIGHT * 2)];
 
@@ -15,7 +17,7 @@ void DEMO_Render(double deltatime)
 	static double frame = 0;
 	frame += deltatime * 400;
 
-	Image *image = RETRO_Image();
+	unsigned char *image = RETRO_ImageData();
 
 	// Calculate movement
 	int x1 = (RETRO_WIDTH / 2) + (RETRO_WIDTH / 2 * cos(frame / 205));
@@ -33,7 +35,7 @@ void DEMO_Render(double deltatime)
 			int ty = y + DistortTableY[ysrc];
 
 			if (ty >= 0 && ty < RETRO_HEIGHT && tx >= 0 && tx < RETRO_WIDTH) {
-				unsigned char col = image->data[ty * image->width + tx];
+				unsigned char col = image[ty * IMAGE_WIDTH + tx];
 				RETRO_PutPixel(x, y, col);
 			}
 		}

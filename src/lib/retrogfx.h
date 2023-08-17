@@ -27,7 +27,7 @@ struct Point2D {
 	int x, y;
 };
 
-bool RETRO_FadeIn(int steps, int step, Palette *palette)
+bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 {
 	if (step >= steps) return true;
 
@@ -41,7 +41,7 @@ bool RETRO_FadeIn(int steps, int step, Palette *palette)
 	return false;
 }
 
-bool RETRO_FadeOut(int steps, int step, Palette *palette)
+bool RETRO_FadeOut(int steps, int step, RETRO_Palette *palette)
 {
 	if (step >= steps) return true;
 
@@ -206,7 +206,7 @@ void RETRO_Blur(int blur, int decay = 0, int mode = RETRO_BLUR_CLAMP, unsigned c
 	}
 }
 
-Palette RETRO_Default8bitPalette[256] = {
+RETRO_Palette RETRO_Default8bitPalette[256] = {
   0,   0,   0,
   0,   0, 170,
   0, 170,   0,
@@ -465,7 +465,7 @@ Palette RETRO_Default8bitPalette[256] = {
   0,   0,   0
 };
 
-Palette RETRO_Default6bitPalette[256] = {
+RETRO_Palette RETRO_Default6bitPalette[256] = {
  0,  0,  0,
  0,  0, 42,
  0, 42,  0,

@@ -53,12 +53,12 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #define WRAPHEIGHT(n) ((int)(n) % RETRO_HEIGHT)
 #define SWAP(x, y) do { typeof(x) _SWAP = x; x = y; y = _SWAP; } while (0)
 
-struct Palette {
+struct RETRO_Palette {
 	unsigned char r, g, b;
 };
 
-struct Image {
-	Palette palette[256];
+struct RETRO_Image {
+	RETRO_Palette palette[256];
 	unsigned char *data;
 	int width;
 	int height;
@@ -68,11 +68,7 @@ struct Image {
 // Private variables
 // *******************************************************************
 
-enum {
-	RETRO_MODE_FULLSCREEN,
-	RETRO_MODE_WINDOW,
-	RETRO_MODE_FULLWINDOW
-};
+enum { RETRO_MODE_FULLSCREEN, RETRO_MODE_FULLWINDOW, RETRO_MODE_WINDOW };
 
 struct {
 	int mode;
@@ -87,7 +83,7 @@ struct {
 	SDL_Texture *surfacebuffer = NULL;
 	unsigned char *framebuffer = NULL;
 	unsigned int palette[RETRO_COLORS];
-	Image *image[RETRO_MAX_IMAGES];
+	RETRO_Image *image[RETRO_MAX_IMAGES];
 	int images = 0;
 	const unsigned char *keystate;
 	int yoffset[RETRO_HEIGHT];
@@ -113,7 +109,7 @@ void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b
 	RETRO.palette[color] = (b << 16) | (g << 8) | (r);
 }
 
-void RETRO_SetPalette(Palette *palette)
+void RETRO_SetPalette(RETRO_Palette *palette)
 {
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, palette[i].r, palette[i].g, palette[i].b);
@@ -145,24 +141,19 @@ int *RETRO_Yoffset(void)
 	return RETRO.yoffset;
 }
 
-Image *RETRO_Image(int id = 0)
-{
-	return RETRO.image[id];
-}
-
 unsigned char *RETRO_ImageData(int id = 0)
 {
 	return RETRO.image[id] != NULL ? RETRO.image[id]->data : NULL;
 }
 
-Palette *RETRO_ImagePalette(int id = 0)
+RETRO_Palette *RETRO_ImagePalette(int id = 0)
 {
 	return RETRO.image[id] != NULL ? RETRO.image[id]->palette : NULL;
 }
 
-Image *RETRO_AllocateImage(void)
+RETRO_Image *RETRO_AllocateImage(void)
 {
-	RETRO.image[RETRO.images] = (Image *)malloc(sizeof(Image));
+	RETRO.image[RETRO.images] = (RETRO_Image *)malloc(sizeof(RETRO_Image));
 	if (RETRO.image[RETRO.images] == NULL) {
 		RETRO_RageQuit("Cannot allocate image memory\n", "");
 	}
@@ -182,9 +173,9 @@ void RETRO_FreeImage(int id = 0)
 	}
 }
 
-Image *RETRO_LoadImage(const char *filename)
+RETRO_Image *RETRO_LoadImage(const char *filename)
 {
-	Image *image = RETRO_AllocateImage();
+	RETRO_Image *image = RETRO_AllocateImage();
 
 	// Open file
 	FILE *fp = fopen(filename, "rb");

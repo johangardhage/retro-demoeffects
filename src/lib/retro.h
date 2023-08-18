@@ -106,7 +106,7 @@ unsigned char *RETRO_FrameBuffer(void)
 
 void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b)
 {
-	RETRO.palette[color] = (b << 16) | (g << 8) | (r);
+	RETRO.palette[color] = (r << 16) | (g << 8) | (b);
 }
 
 void RETRO_SetPalette(RETRO_Palette *palette)
@@ -296,7 +296,7 @@ void RETRO_Initialize(void)
 	}
 
 	// Create render buffer
-	RETRO.renderbuffer = SDL_CreateTexture(RETRO.renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
+	RETRO.renderbuffer = SDL_CreateTexture(RETRO.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Create framebuffer
 	RETRO.framebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);

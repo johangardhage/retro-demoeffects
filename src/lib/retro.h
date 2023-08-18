@@ -349,9 +349,9 @@ double RETRO_DeltaTime(void)
 	return (double)(now - old) / SDL_GetPerformanceFrequency();
 }
 
-bool RETRO_KeyState(SDL_KeyCode keycode)
+bool RETRO_KeyState(SDL_Scancode key)
 {
-	return RETRO.keystate[SDL_GetScancodeFromKey(keycode)];
+	return RETRO.keystate[key];
 }
 
 bool RETRO_QuitRequested(void)
@@ -360,9 +360,9 @@ bool RETRO_QuitRequested(void)
 	RETRO.keystate = SDL_GetKeyboardState(NULL);
 	if (SDL_QuitRequested()) {
 		return true;
-	} else if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
+	} else if (RETRO.keystate[SDL_SCANCODE_ESCAPE]) {
 		return true;
-	} else if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_q)]) {
+	} else if (RETRO.keystate[SDL_SCANCODE_Q]) {
 		return true;
 	}
 	return false;
@@ -378,7 +378,7 @@ void RETRO_Mainloop(void)
 		double deltatime = RETRO_DeltaTime();
 
 		// Check events
-		if (RETRO.keystate[SDL_GetScancodeFromKey(SDLK_SPACE)]) {
+		if (RETRO.keystate[SDL_SCANCODE_SPACE]) {
 			continue;
 		}
 

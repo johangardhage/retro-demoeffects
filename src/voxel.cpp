@@ -21,30 +21,30 @@ struct {
 
 void DEMO_Render(double deltatime)
 {
-	if (RETRO_KeyState(SDLK_LEFT)) {
+	if (RETRO_KeyState(SDL_SCANCODE_LEFT)) {
 		camera.angle += 0.02f;
 	}
-	if (RETRO_KeyState(SDLK_RIGHT)) {
+	if (RETRO_KeyState(SDL_SCANCODE_RIGHT)) {
 		camera.angle -= 0.02f;
 	}
-	if (RETRO_KeyState(SDLK_UP)) {
+	if (RETRO_KeyState(SDL_SCANCODE_UP)) {
 		camera.x -= (float)sin(camera.angle) * 1.1f;
 		camera.y -= (float)cos(camera.angle) * 1.1f;
 	}
-	if (RETRO_KeyState(SDLK_DOWN)) {
+	if (RETRO_KeyState(SDL_SCANCODE_DOWN)) {
 		camera.x += (float)sin(camera.angle) * 0.75f;
 		camera.y += (float)cos(camera.angle) * 0.75f;
 	}
-	if (RETRO_KeyState(SDLK_r)) {
+	if (RETRO_KeyState(SDL_SCANCODE_R)) {
 		camera.height += 0.5f;
 	}
-	if (RETRO_KeyState(SDLK_f)) {
+	if (RETRO_KeyState(SDL_SCANCODE_F)) {
 		camera.height -= 0.5f;
 	}
-	if (RETRO_KeyState(SDLK_a)) {
+	if (RETRO_KeyState(SDL_SCANCODE_A)) {
 		camera.horizon += 1.5f;
 	}
-	if (RETRO_KeyState(SDLK_s)) {
+	if (RETRO_KeyState(SDL_SCANCODE_S)) {
 		camera.horizon -= 1.5f;
 	}
 

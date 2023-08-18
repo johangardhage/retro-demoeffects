@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 
 	while (!RETRO_QuitRequested()) {
 		// Check events
-		if (RETRO_KeyState(SDLK_SPACE)) {
+		if (RETRO_KeyState(SDL_SCANCODE_SPACE)) {
 			continue;
 		}
 

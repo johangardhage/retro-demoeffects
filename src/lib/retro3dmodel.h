@@ -478,53 +478,6 @@ Model3D *RETRO_LoadV10Model(const char *filename)
 	return model;
 }
 
-void RETRO_TriangularizeModel(Model3D *model = NULL)
-{
-	model = model ? model : RETRO_Get3DModel();
-
-	Face newface[RETRO_MAXFACES];
-	int newfaces = 0;
-
-	printf("Faces: %d\n", model->faces);
-	for (int i = 0; i < model->faces; i++) {
-		printf("face%d: ", i);
-		for (int j = 0; j < model->face[i].vertices; j++) {
-			printf("%d ", model->face[i].vertex[j]);
-		}
-		printf("\n");
-	}
-
-	for (int i = 0; i < model->faces; i++) {
-		Face *face = &model->face[i];
-
-		// Loop through all vertices in polygon and create new faces
-		for (int j = 0; j < face->vertices - 2; j++) {
-			newface[newfaces].vertices = 3;
-			newface[newfaces].vertex[0] = face->vertex[0];
-			newface[newfaces].vertex[1] = face->vertex[j + 1];
-			newface[newfaces].vertex[2] = face->vertex[j + 2];
-			newface[newfaces].u[0] = face->u[0];
-			newface[newfaces].u[1] = face->u[j + 1];
-			newface[newfaces].u[2] = face->u[j + 2];
-			newface[newfaces].v[0] = face->v[0];
-			newface[newfaces].v[1] = face->v[j + 1];
-			newface[newfaces].v[2] = face->v[j + 2];
-			newface[newfaces].c = face->c;
-			newfaces++;
-		}
-	}
-
-	model->faces = newfaces;
-	for (int i = 0; i < model->faces; i++) {
-		model->face[i] = newface[i];
-	}
-
-	printf("New faces: %d\n", model->faces);
-	for (int i = 0; i < model->faces; i++) {
-		printf("face%d: %d %d %d\n", i, model->face[i].vertex[0], model->face[i].vertex[1], model->face[i].vertex[2]);
-	}
-}
-
 void RETRO_Deinitialize_3D(void)
 {
 	if (RETRO_3dmodel) free(RETRO_3dmodel);

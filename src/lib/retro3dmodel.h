@@ -429,55 +429,6 @@ Model3D *RETRO_Load3DModel(const char *filename)
 	return model;
 }
 
-Model3D *RETRO_LoadV10Model(const char *filename)
-{
-	Model3D *model = new Model3D();
-	RETRO_3dmodel = model;
-
-	FILE *fp = fopen(filename, "rt");
-	if (fp == NULL) {
-		RETRO_RageQuit("Cannot open file: %s\n", filename);
-	}
-
-	short int temp;
-
-	fread(&temp, sizeof(short int), 1, fp);
-	model->vertices = temp;
-
-	for (int i = 0; i < model->vertices; i++) {
-		fread(&temp, sizeof(short int), 1, fp);
-		model->vertex[i].x = temp;
-		fread(&temp, sizeof(short int), 1, fp);
-		model->vertex[i].y = temp;
-		fread(&temp, sizeof(short int), 1, fp);
-		model->vertex[i].z = temp;
-
-		model->vertex[i].x /= 2;
-		model->vertex[i].y /= 2;
-		model->vertex[i].z /= -2;
-	}
-
-	fread(&temp, sizeof(short int), 1, fp);
-	model->faces = temp;
-
-	for (int i = 0; i < model->faces; i++) {
-		fread(&temp, sizeof(short int), 1, fp);
-		model->face[i].vertices = temp;
-
-		for (int j = 0; j < model->face[i].vertices; j++) {
-			fread(&temp, sizeof(short int), 1, fp);
-			model->face[i].vertex[j] = temp;
-		}
-
-		fread(&temp, sizeof(short int), 1, fp);
-		model->face[i].c = temp;
-	}
-
-	fclose(fp);
-
-	return model;
-}
-
 void RETRO_Deinitialize_3D(void)
 {
 	if (RETRO_3dmodel) free(RETRO_3dmodel);

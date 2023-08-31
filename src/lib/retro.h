@@ -28,6 +28,7 @@ void __attribute__((weak)) DEMO_Render2(double deltatime);
 // Private dynamic functions
 // *******************************************************************
 
+void __attribute__((weak)) RETRO_Initialize_3D(void);
 void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 
 // *******************************************************************
@@ -38,7 +39,7 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #define RETRO_HEIGHT 240
 #define RETRO_COLORS 256
 
-#define RETRO_MAX_IMAGES 5
+#define RETRO_MAX_IMAGES 10
 
 #define RAD2DEG (M_PI / 180)
 #define RANDOM(n) (((float)rand() / (float)RAND_MAX) * (n))
@@ -109,10 +110,20 @@ void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b
 	RETRO.palette[color] = (r << 16) | (g << 8) | (b);
 }
 
-void RETRO_SetPalette(RETRO_Palette *palette)
+void RETRO_SetPalette(RETRO_Palette *palette, int colors = RETRO_COLORS)
 {
-	for (int i = 0; i < RETRO_COLORS; i++) {
+	for (int i = 0; i < colors; i++) {
 		RETRO_SetColor(i, palette[i].r, palette[i].g, palette[i].b);
+	}
+}
+
+void RETRO_Set6bitPalette(RETRO_Palette *palette, int colors = RETRO_COLORS)
+{
+	for (int i = 0; i < colors; i++) {
+		unsigned char r = (palette[i].r & 63) << 2;
+		unsigned char g = (palette[i].g & 63) << 2;
+		unsigned char b = (palette[i].b & 63) << 2;
+		RETRO_SetColor(i, r, g, b);
 	}
 }
 
@@ -312,6 +323,8 @@ void RETRO_Initialize(void)
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		RETRO.yoffset[y] = y * RETRO_WIDTH;
 	}
+
+	if (RETRO_Initialize_3D != NULL) RETRO_Initialize_3D();
 }
 
 void RETRO_Deinitialize(void)

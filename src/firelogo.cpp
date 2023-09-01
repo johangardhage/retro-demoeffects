@@ -37,7 +37,7 @@ void DEMO_Render(double deltatime)
 
 	RETRO_Blur(RETRO_BLUR_8, 3, RETRO_BLUR_WRAP, firebuffer);
 	// Only render the top part of the flame
-	RETRO_Blit(firebuffer, buffer + (FIRE_HEIGHT * RETRO_WIDTH), (RETRO_HEIGHT - FIRE_HEIGHT) * RETRO_WIDTH);
+	RETRO_Blit(firebuffer, (RETRO_HEIGHT - FIRE_HEIGHT) * RETRO_WIDTH, buffer + (FIRE_HEIGHT * RETRO_WIDTH));
 }
 
 void Gradient(int s, int e, int r1, int g1, int b1, int r2, int g2, int b2)

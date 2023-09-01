@@ -30,7 +30,7 @@ void DEMO_Render(double deltatime)
 		int ysrc = WATER_YPOS + (WATER_YPOS - y) + SinTable[(y + frame) % SINE_VALUES];
 		int ydst = y;
 
-		RETRO_Blit(buffer + ysrc * RETRO_WIDTH, buffer + ydst * RETRO_WIDTH, RETRO_WIDTH);
+		RETRO_Blit(buffer + ysrc * RETRO_WIDTH, RETRO_WIDTH, buffer + ydst * RETRO_WIDTH);
 	}
 }
 

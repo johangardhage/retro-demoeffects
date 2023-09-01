@@ -143,7 +143,7 @@ void RETRO_Clear(unsigned char color = 0)
 	memset(RETRO.framebuffer, color, RETRO_WIDTH * RETRO_HEIGHT);
 }
 
-void RETRO_Blit(unsigned char *src, unsigned char *dest = RETRO.framebuffer, int size = RETRO_WIDTH * RETRO_HEIGHT)
+void RETRO_Blit(unsigned char *src, int size = RETRO_WIDTH * RETRO_HEIGHT, unsigned char *dest = RETRO.framebuffer)
 {
 	memcpy(dest, src, size);
 }

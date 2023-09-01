@@ -87,6 +87,7 @@ struct {
 	RETRO_Image *image[RETRO_MAX_IMAGES];
 	int images = 0;
 	const unsigned char *keystate;
+	bool keydown[256];
 	int yoffset[RETRO_HEIGHT];
 } RETRO = { .mode = RETRO_MODE_FULLSCREEN, .vsync = true, .showfps = true };
 
@@ -364,7 +365,23 @@ double RETRO_DeltaTime(void)
 
 bool RETRO_KeyState(SDL_Scancode key)
 {
+	if (key > 255) return false;
 	return RETRO.keystate[key];
+}
+
+bool RETRO_KeyPressed(SDL_Scancode key)
+{
+	if (key > 255) return false;
+	if (RETRO.keystate[key]) {
+		if (RETRO.keydown[key]) {
+			return false;
+		} else {
+			RETRO.keydown[key] = true;
+			return true;
+		}
+	}
+	RETRO.keydown[key] = false;
+	return false;
 }
 
 bool RETRO_QuitRequested(void)

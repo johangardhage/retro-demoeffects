@@ -32,7 +32,7 @@ void DEMO_Initialize(void)
 	RETRO_InitializeVertexNormals();
 
 	Model3D *model = RETRO_Get3DModel();
-	model->texmap = RETRO_ImageData();
+	model->envmap = RETRO_ImageData();
 	model->c = 64;
 	model->cintensity = 64;
 }

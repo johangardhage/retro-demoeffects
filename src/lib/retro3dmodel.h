@@ -10,6 +10,7 @@
 #include "retro.h"
 #include "retropoly.h"
 #include "retrogfx.h"
+#include "retrocolor.h"
 
 #define RETRO_MAX_VERTICES 1000
 #define RETRO_MAX_UVS 1000
@@ -32,7 +33,11 @@ typedef enum {
 
 typedef enum {
 	RETRO_SHADE_NONE,
-	RETRO_SHADE_FLAT
+	RETRO_SHADE_TABLE,
+	RETRO_SHADE_FLAT,
+	RETRO_SHADE_GOURAUD,
+	RETRO_SHADE_ENVIRONMENT,
+	RETRO_SHADE_PHONG
 } RETRO_POLY_SHADE;
 
 struct Vertex {
@@ -86,6 +91,8 @@ struct LightSourceType {
 	float nx, ny, nz, nn;	// Rotated coordinates
 };
 
+int RETRO_UVlookup[256];
+
 LightSourceType LightSource;
 
 Model3D *RETRO_3dmodel = NULL;
@@ -95,15 +102,15 @@ Model3D *RETRO_Get3DModel(void)
 	return RETRO_3dmodel;
 }
 
-void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHADE_NONE, Model3D *model = NULL)
+void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE, Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
-	if (type == RETRO_POLY_DOT) {
+	if (rendertype == RETRO_POLY_DOT) {
 		for (int i = 0; i < model->vertices; i++) {
 			RETRO_PutPixel(model->vertex[i].sx, model->vertex[i].sy, model->c);
 		}
-	} else if (type == RETRO_POLY_WIREFRAME) {
+	} else if (rendertype == RETRO_POLY_WIREFRAME) {
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -121,7 +128,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 				RETRO_DrawLine(p1->x, p1->y, p2->x, p2->y, color);
 			}
 		}
-	} else if (type == RETRO_POLY_WIREFIRE) {
+	} else if (rendertype == RETRO_POLY_WIREFIRE) {
 		unsigned char color[RETRO_WIDTH];
 		for (int i = 0; i < RETRO_WIDTH; i++) {
 			color[i] = model->c + RANDOM(model->cintensity);
@@ -142,7 +149,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 				RETRO_DrawLine2(p1->x, p1->y, p2->x, p2->y, color);
 			}
 		}
-	} else if (type == RETRO_POLY_HIDDENLINE) {
+	} else if (rendertype == RETRO_POLY_HIDDENLINE) {
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -160,7 +167,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 				RETRO_DrawLine(p1->x, p1->y, p2->x, p2->y, color);
 			}
 		}
-	} else if (type == RETRO_POLY_FLAT) {
+	} else if (rendertype == RETRO_POLY_FLAT) {
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -172,16 +179,16 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 
 			int color = model->c + face->c;
 			float lint = 0;
-			if (shade == RETRO_SHADE_FLAT) {
+			if (shadertype == RETRO_SHADE_FLAT) {
 				lint = (face->rnx * LightSource.nx + face->rny * LightSource.ny + face->rnz * LightSource.nz) / (face->nn * LightSource.nn);
 				int cmin = model->c;
 				int cmax = model->c + face->c + model->cintensity;
-				color = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
+				color = CLAMP(model->c + face->c + lint * model->cintensity - model->c, cmin, cmax);
 			}
 
 			RETRO_DrawFlatPolygon(points, face->vertices, color);
 		}
-	} else if (type == RETRO_POLY_GLENZ) {
+	} else if (rendertype == RETRO_POLY_GLENZ) {
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -191,9 +198,9 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 				points[j].y = model->vertex[face->vertex[j]].sy;
 			}
 
-			int color = model->c + face->c;
+			int shade = model->c + face->c;
 			float lint = 0;
-			if (shade == RETRO_SHADE_FLAT) {
+			if (shadertype == RETRO_SHADE_FLAT) {
 				if (face->znm > 0) {
 					lint = (face->rnx * LightSource.nx + face->rny * LightSource.ny + face->rnz * LightSource.nz) / (face->nn * LightSource.nn);
 				} else {
@@ -201,12 +208,12 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 				}
 				int cmin = model->c;
 				int cmax = model->c + face->c + model->cintensity;
-				color = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
+				shade = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
 			}
 
-			RETRO_DrawGlenzPolygon(points, face->vertices, color);
+			RETRO_DrawGlenzPolygon(points, face->vertices, shade);
 		}
-	} else if (type == RETRO_POLY_GOURAUD) {
+	} else if (rendertype == RETRO_POLY_GOURAUD) {
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -223,7 +230,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 
 			RETRO_DrawGouraudPolygon(points, face->vertices);
 		}
-	} else if (type == RETRO_POLY_PHONG) {
+	} else if (rendertype == RETRO_POLY_PHONG) {
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -245,7 +252,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 			light.cintensity = model->cintensity;
 			RETRO_DrawPhongPolygon(points, face->vertices, light);
 		}
-	} else if (type == RETRO_POLY_TEXTURE) {
+	} else if (rendertype == RETRO_POLY_TEXTURE) {
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -255,11 +262,32 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 				points[j].y = model->vertex[face->vertex[j]].sy;
 				points[j].u = model->uv[face->uv[j]].u;
 				points[j].v = model->uv[face->uv[j]].v;
+				points[j].e = model->c + model->cintensity * model->normal[face->normal[j]].rnx / model->normal[face->normal[j]].nn;
+				points[j].w = model->c + model->cintensity * model->normal[face->normal[j]].rny / model->normal[face->normal[j]].nn;
 			}
 
-			RETRO_DrawTexturePolygon(points, face->vertices, model->texmap);
+			int shade = model->c + face->c;
+			if (shadertype == RETRO_SHADE_NONE) {
+				RETRO_DrawTexMapPolygon(points, face->vertices, model->texmap);
+			} if (shadertype == RETRO_SHADE_TABLE) {
+				RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade);
+			} else if (shadertype == RETRO_SHADE_FLAT) {
+				float lint = 0;
+				if (face->znm > 0) {
+					lint = (face->rnx * LightSource.nx + face->rny * LightSource.ny + face->rnz * LightSource.nz) / (face->nn * LightSource.nn);
+				} else {
+					lint = (face->rnx * LightSource.nx + face->rny * LightSource.ny + face->rnz * LightSource.nz / 2) / (face->nn * LightSource.nn);
+				}
+				shade = CLAMP128(shade + lint * 128);
+
+				RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade);
+			} else if (shadertype == RETRO_SHADE_ENVIRONMENT && model->bumpmap == NULL) {
+				RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable);
+			} else if (shadertype == RETRO_SHADE_ENVIRONMENT && model->bumpmap) {
+				RETRO_DrawTexMapEnvMapBumpPolygon(points, face->vertices, model->texmap, model->envmap, model->bumpmap, RETRO_Color.shadetable);
+			}
 		}
-	} else if (type == RETRO_POLY_ENVIRONMENT) {
+	} else if (rendertype == RETRO_POLY_ENVIRONMENT) {
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -267,11 +295,16 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 			for (int j = 0; j < face->vertices; j++) {
 				points[j].x = model->vertex[face->vertex[j]].sx;
 				points[j].y = model->vertex[face->vertex[j]].sy;
-				points[j].u = model->c + model->cintensity * model->normal[face->normal[j]].rnx / model->normal[face->normal[j]].nn;
-				points[j].v = model->c + model->cintensity * model->normal[face->normal[j]].rny / model->normal[face->normal[j]].nn;
+				points[j].u = model->uv[face->uv[j]].u;
+				points[j].v = model->uv[face->uv[j]].v;
+				points[j].e = model->c + model->cintensity * model->normal[face->normal[j]].rnx / model->normal[face->normal[j]].nn;
+				points[j].w = model->c + model->cintensity * model->normal[face->normal[j]].rny / model->normal[face->normal[j]].nn;
 			}
-
-			RETRO_DrawTexturePolygon(points, face->vertices, model->texmap);
+			if (model->bumpmap) {
+				RETRO_DrawEnvMapBumpPolygon(points, face->vertices, model->envmap, model->bumpmap);
+			} else {
+				RETRO_DrawEnvMapPolygon(points, face->vertices, model->envmap);
+			}
 		}
 	}
 }
@@ -355,6 +388,14 @@ Model3D *RETRO_CreateCube4Model(void)
 	}
 
 	return model;
+}
+
+void RETRO_Initialize_3D(void)
+{
+	// Create arc cosine correction lookup
+	for (int i = -128; i < 128; i++) {
+		RETRO_UVlookup[i + 128] = 255.0 * asin(i / 128.0) / M_PI + 127;
+	}
 }
 
 void RETRO_Deinitialize_3D(void)

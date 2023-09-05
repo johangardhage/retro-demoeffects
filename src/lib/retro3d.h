@@ -40,10 +40,10 @@ void RETRO_RotateVertexNormals(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
-	for (int i = 0; i < model->vertices; i++) {
-		model->vertex[i].rnx = model->vertex[i].nx * model->matrix[0][0] + model->vertex[i].ny * model->matrix[1][0] + model->vertex[i].nz * model->matrix[2][0];
-		model->vertex[i].rny = model->vertex[i].nx * model->matrix[0][1] + model->vertex[i].ny * model->matrix[1][1] + model->vertex[i].nz * model->matrix[2][1];
-		model->vertex[i].rnz = model->vertex[i].nx * model->matrix[0][2] + model->vertex[i].ny * model->matrix[1][2] + model->vertex[i].nz * model->matrix[2][2];
+	for (int i = 0; i < model->normals; i++) {
+		model->normal[i].rnx = model->normal[i].nx * model->matrix[0][0] + model->normal[i].ny * model->matrix[1][0] + model->normal[i].nz * model->matrix[2][0];
+		model->normal[i].rny = model->normal[i].nx * model->matrix[0][1] + model->normal[i].ny * model->matrix[1][1] + model->normal[i].nz * model->matrix[2][1];
+		model->normal[i].rnz = model->normal[i].nx * model->matrix[0][2] + model->normal[i].ny * model->matrix[1][2] + model->normal[i].nz * model->matrix[2][2];
 	}
 }
 
@@ -77,12 +77,12 @@ void RETRO_InitializeVertexNormals(Model3D *model = NULL)
 
 	for (int i = 0; i < model->vertices; i++) {
 		// Calculate normal
-		model->vertex[i].nx = model->vertex[i].x;
-		model->vertex[i].ny = model->vertex[i].y;
-		model->vertex[i].nz = model->vertex[i].z;
+		model->normal[i].nx = model->vertex[i].x;
+		model->normal[i].ny = model->vertex[i].y;
+		model->normal[i].nz = model->vertex[i].z;
 
 		// Calculate the length of the normal (used to scale it to a unit normal)
-		model->vertex[i].nn = sqrt(model->vertex[i].nx * model->vertex[i].nx + model->vertex[i].ny * model->vertex[i].ny + model->vertex[i].nz * model->vertex[i].nz);
+		model->normal[i].nn = sqrt(model->normal[i].nx * model->normal[i].nx + model->normal[i].ny * model->normal[i].ny + model->normal[i].nz * model->normal[i].nz);
 	}
 }
 
@@ -182,7 +182,10 @@ void RETRO_SortVisibleFaces(Model3D *model = NULL, bool all = false)
 
 	model->visiblefaces = 0;
 	for (int i = 0; i < model->faces; i++) {
-		model->face[i].znm = (model->vertex[model->face[i].vertex[1]].sx - model->vertex[model->face[i].vertex[0]].sx) * (model->vertex[model->face[i].vertex[0]].sy - model->vertex[model->face[i].vertex[2]].sy) - (model->vertex[model->face[i].vertex[1]].sy - model->vertex[model->face[i].vertex[0]].sy) * (model->vertex[model->face[i].vertex[0]].sx - model->vertex[model->face[i].vertex[2]].sx);
+		model->face[i].znm = (model->vertex[model->face[i].vertex[1]].sx - model->vertex[model->face[i].vertex[0]].sx) *
+							 (model->vertex[model->face[i].vertex[0]].sy - model->vertex[model->face[i].vertex[2]].sy) -
+							 (model->vertex[model->face[i].vertex[1]].sy - model->vertex[model->face[i].vertex[0]].sy) *
+							 (model->vertex[model->face[i].vertex[0]].sx - model->vertex[model->face[i].vertex[2]].sx);
 		if (model->face[i].znm > 0 || all) {
 			// model->face[i].z = model->vertex[model->face[i].vertex[0]].rz + model->vertex[model->face[i].vertex[1]].rz + model->vertex[model->face[i].vertex[2]].rz;
 			model->face[i].z = 0;

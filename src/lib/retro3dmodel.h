@@ -11,9 +11,11 @@
 #include "retropoly.h"
 #include "retrogfx.h"
 
-#define RETRO_MAXVERTICES 500
-#define RETRO_MAXFACES 1000
-#define RETRO_MAXFACEVERTICES 5
+#define RETRO_MAX_VERTICES 1000
+#define RETRO_MAX_UVS 1000
+#define RETRO_MAX_NORMALS 1000
+#define RETRO_MAX_FACES 2000
+#define RETRO_MAX_FACEVERTICES 5
 
 typedef enum {
 	RETRO_POLY_DOT,
@@ -34,36 +36,49 @@ typedef enum {
 } RETRO_POLY_SHADE;
 
 struct Vertex {
-	int x, y, z;			// Original coordinates
-	float rx, ry, rz;		// Rotated coordinates
-	float nx, ny, nz, nn;	// Normal coordinates
-	float rnx, rny, rnz;	// Rotated normal coordinates
-	float sx, sy;			// Screen coordinates
+	float x, y, z;				// Original coordinates
+	float rx, ry, rz;			// Rotated coordinates
+	float sx, sy;				// Screen coordinates
+};
+
+struct UV {
+	float u, v;					// Original UV coordinates
+};
+
+struct VertexNormal {
+	float nx, ny, nz, nn;		// Original normal coordinates
+	float rnx, rny, rnz;		// Rotated normal coordinates
 };
 
 struct Face {
 	int vertices;						// Number of vertices in face
-	int vertex[RETRO_MAXFACEVERTICES];	// Vertices in face
-	int u[RETRO_MAXFACEVERTICES];		// U coordinates
-	int v[RETRO_MAXFACEVERTICES];		// V coordinates
+	int vertex[RETRO_MAX_FACEVERTICES];	// Index of vertices in face
+	int uv[RETRO_MAX_FACEVERTICES];		// Index of UV coordinates in face
+	int normal[RETRO_MAX_FACEVERTICES];	// Index of normals in face
 	int c;								// Color
-	float nx, ny, nz, nn;				// Normal coordinates
-	float rnx, rny, rnz;				// Rotated normal coordinates
+	float nx, ny, nz;					// Normal coordinates
+	float rnx, rny, rnz, nn;			// Rotated normal coordinates
 	float znm;							// Z
 	int z;								// Z center, used for Quicksort
 };
 
 struct Model3D {
-	int vertices;						// Number of total vertices
-	int faces;							// Number of total faces
-	Vertex vertex[RETRO_MAXVERTICES];	// Vertex list
-	Face face[RETRO_MAXFACES];			// Face list
-	int visiblefaces;					// Number of visible faces
-	int visibleface[RETRO_MAXFACES];	// Visible faces
-	float matrix[3][3];					// Rotation matrix
-	int c;								// Base color
-	int cintensity;						// Color intensity
-	unsigned char *texture;				// Texture
+	int faces;								// Number of total faces
+	int vertices;							// Number of total vertices
+	int uvs;								// Number of total uv coordinates
+	int normals;							// Number of total vertex normals
+	Face face[RETRO_MAX_FACES];				// Face list
+	Vertex vertex[RETRO_MAX_VERTICES];		// Vertex list
+	UV uv[RETRO_MAX_UVS];					// UV list
+	VertexNormal normal[RETRO_MAX_NORMALS];	// Normal list
+	int visiblefaces;						// Number of visible faces
+	int visibleface[RETRO_MAX_FACES];		// Visible faces
+	float matrix[3][3];						// Rotation matrix
+	int c;									// Base color
+	int cintensity;							// Color intensity
+	unsigned char *texmap = NULL;			// Texture
+	unsigned char *envmap = NULL;			// Environment texture
+	unsigned char *bumpmap = NULL;			// Bump texture
 };
 
 struct LightSourceType {
@@ -202,7 +217,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 
 				int cmin = model->c;
 				int cmax = model->c + face->c + model->cintensity;
-				float lint = (model->vertex[face->vertex[j]].rnx * LightSource.nx + model->vertex[face->vertex[j]].rny * LightSource.ny + model->vertex[face->vertex[j]].rnz * LightSource.nz) / (model->vertex[face->vertex[j]].nn * LightSource.nn);
+				float lint = (model->normal[face->normal[j]].rnx * LightSource.nx + model->normal[face->normal[j]].rny * LightSource.ny + model->normal[face->normal[j]].rnz * LightSource.nz) / (model->normal[face->normal[j]].nn * LightSource.nn);
 				points[j].c = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
 			}
 
@@ -216,9 +231,9 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 			for (int j = 0; j < face->vertices; j++) {
 				points[j].x = model->vertex[face->vertex[j]].sx;
 				points[j].y = model->vertex[face->vertex[j]].sy;
-				points[j].nx = model->vertex[face->vertex[j]].rnx;
-				points[j].ny = model->vertex[face->vertex[j]].rny;
-				points[j].nz = model->vertex[face->vertex[j]].rnz;
+				points[j].nx = model->normal[face->normal[j]].rnx;
+				points[j].ny = model->normal[face->normal[j]].rny;
+				points[j].nz = model->normal[face->normal[j]].rnz;
 			}
 
 			LightSourcePoint light;
@@ -238,11 +253,11 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 			for (int j = 0; j < face->vertices; j++) {
 				points[j].x = model->vertex[face->vertex[j]].sx;
 				points[j].y = model->vertex[face->vertex[j]].sy;
-				points[j].u = face->u[j];
-				points[j].v = face->v[j];
+				points[j].u = model->uv[face->uv[j]].u;
+				points[j].v = model->uv[face->uv[j]].v;
 			}
 
-			RETRO_DrawTexturePolygon(points, face->vertices, model->texture);
+			RETRO_DrawTexturePolygon(points, face->vertices, model->texmap);
 		}
 	} else if (type == RETRO_POLY_ENVIRONMENT) {
 		for (int i = 0; i < model->visiblefaces; i++) {
@@ -252,11 +267,11 @@ void RETRO_RenderModel(RETRO_POLY_TYPE type, RETRO_POLY_SHADE shade = RETRO_SHAD
 			for (int j = 0; j < face->vertices; j++) {
 				points[j].x = model->vertex[face->vertex[j]].sx;
 				points[j].y = model->vertex[face->vertex[j]].sy;
-				points[j].u = model->c + model->cintensity * model->vertex[face->vertex[j]].rnx / model->vertex[face->vertex[j]].nn;
-				points[j].v = model->c + model->cintensity * model->vertex[face->vertex[j]].rny / model->vertex[face->vertex[j]].nn;
+				points[j].u = model->c + model->cintensity * model->normal[face->normal[j]].rnx / model->normal[face->normal[j]].nn;
+				points[j].v = model->c + model->cintensity * model->normal[face->normal[j]].rny / model->normal[face->normal[j]].nn;
 			}
 
-			RETRO_DrawTexturePolygon(points, face->vertices, model->texture);
+			RETRO_DrawTexturePolygon(points, face->vertices, model->texmap);
 		}
 	}
 }
@@ -267,6 +282,8 @@ Model3D *RETRO_CreateCube3Model(void)
 	RETRO_3dmodel = model;
 
 	model->vertices = 8;
+	model->uvs = 36;
+	model->normals = 8;
 	model->faces = 12;
 
 	int vertex[model->vertices][3] = { {100, 100, 100}, {100, 100, -100}, {100, -100, 100}, {100, -100, -100}, {-100, 100, 100}, {-100, 100, -100}, {-100, -100, 100}, {-100, -100, -100} };
@@ -280,17 +297,33 @@ Model3D *RETRO_CreateCube3Model(void)
 		model->vertex[i].z = vertex[i][2];
 	}
 
+	for (int i = 0; i < model->uvs; i++) {
+		for (int j = 0; j < 3; j++) {
+			model->uv[i * 3 + j].u = faceu[i][j];
+			model->uv[i * 3 + j].v = facev[i][j];
+		}
+	}
+
+	for (int i = 0; i < model->normals; i++) {
+		model->normal[i].nx = vertex[i][0];
+		model->normal[i].ny = vertex[i][1];
+		model->normal[i].nz = vertex[i][2];
+		// Calculate the length of the normal (used to scale it to a unit normal)
+		model->normal[i].nn = sqrt(model->normal[i].nx * model->normal[i].nx + model->normal[i].ny * model->normal[i].ny + model->normal[i].nz * model->normal[i].nz);
+
+	}
+
 	for (int i = 0; i < model->faces; i++) {
 		model->face[i].vertices = 3;
 		model->face[i].vertex[0] = face[i][0];
 		model->face[i].vertex[1] = face[i][1];
 		model->face[i].vertex[2] = face[i][2];
-		model->face[i].u[0] = faceu[i][0];
-		model->face[i].u[1] = faceu[i][1];
-		model->face[i].u[2] = faceu[i][2];
-		model->face[i].v[0] = facev[i][0];
-		model->face[i].v[1] = facev[i][1];
-		model->face[i].v[2] = facev[i][2];
+		model->face[i].normal[0] = face[i][0];
+		model->face[i].normal[1] = face[i][1];
+		model->face[i].normal[2] = face[i][2];
+		model->face[i].uv[0] = i * 3 + 0;
+		model->face[i].uv[1] = i * 3 + 1;
+		model->face[i].uv[2] = i * 3 + 2;
 	}
 
 	return model;
@@ -372,7 +405,13 @@ Model3D *RETRO_Load3DModel(const char *filename)
 				model->vertex[model->vertices].x = x / 16; // Shrink a bit to allow fixed math
 				model->vertex[model->vertices].y = y / 16; // Shrink a bit to allow fixed math
 				model->vertex[model->vertices].z = z / 16; // Shrink a bit to allow fixed math
+
+				model->normal[model->vertices].nx = x / 16; // Shrink a bit to allow fixed math
+				model->normal[model->vertices].ny = y / 16; // Shrink a bit to allow fixed math
+				model->normal[model->vertices].nz = z / 16; // Shrink a bit to allow fixed math
+
 				model->vertices++;
+				model->normals++;
 			}
 		} else if (!strncmp(chain, "Face", 4)) {
 			if (strncmp(chain, "Face list", 9)) {
@@ -391,6 +430,7 @@ Model3D *RETRO_Load3DModel(const char *filename)
 				strncpy(vertex, chain + i, j - i);
 				vertex[j - i] = '\0';
 				model->face[model->faces].vertex[0] = atoi(vertex) + offset;
+				model->face[model->faces].normal[0] = atoi(vertex) + offset;
 
 				while (chain[i] != 'B') {
 					i++;
@@ -403,6 +443,7 @@ Model3D *RETRO_Load3DModel(const char *filename)
 				strncpy(vertex, chain + i, j - i);
 				vertex[j - i] = '\0';
 				model->face[model->faces].vertex[1] = atoi(vertex) + offset;
+				model->face[model->faces].normal[1] = atoi(vertex) + offset;
 
 				while (chain[i] != 'C') {
 					i++;
@@ -415,6 +456,7 @@ Model3D *RETRO_Load3DModel(const char *filename)
 				strncpy(vertex, chain + i, j - i);
 				vertex[j - i] = '\0';
 				model->face[model->faces].vertex[2] = atoi(vertex) + offset;
+				model->face[model->faces].normal[2] = atoi(vertex) + offset;
 
 				model->face[model->faces].vertices = 3;
 				model->faces++;

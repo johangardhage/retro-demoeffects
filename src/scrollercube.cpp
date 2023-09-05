@@ -81,7 +81,7 @@ void DEMO_Initialize(void)
 	RETRO_InitializeVertexNormals();
 
 	Model3D *model = RETRO_Get3DModel();
-	model->texture = image;
+	model->texmap = image;
 
 	// Init scroller bitmap
 	for (int ty = 0; ty < TEXT_HEIGHT; ty++) {

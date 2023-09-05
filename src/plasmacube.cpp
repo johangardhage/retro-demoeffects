@@ -77,7 +77,7 @@ void DEMO_Initialize(void)
 	RETRO_InitializeVertexNormals();
 
 	Model3D *model = RETRO_Get3DModel();
-	model->texture = image;
+	model->texmap = image;
 
 	for (int i = 0; i < PLASMA_SIN; i++) {
 		SinTable[i] = sin((M_PI * i) / 180) * 1024;

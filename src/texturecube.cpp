@@ -32,5 +32,5 @@ void DEMO_Initialize(void)
 	RETRO_InitializeVertexNormals();
 
 	Model3D *model = RETRO_Get3DModel();
-	model->texture = RETRO_ImageData();
+	model->texmap = RETRO_ImageData();
 }

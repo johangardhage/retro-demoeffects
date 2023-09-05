@@ -16,7 +16,6 @@ build $builddir/bump: cc $srcdir/bump.cpp
 build $builddir/burncube: cc $srcdir/burncube.cpp
 build $builddir/distort: cc $srcdir/distort.cpp
 build $builddir/distortlogo: cc $srcdir/distortlogo.cpp
-build $builddir/dotduck: cc $srcdir/dotduck.cpp
 build $builddir/dotflag: cc $srcdir/dotflag.cpp
 build $builddir/dotmorph: cc $srcdir/dotmorph.cpp
 build $builddir/dottorus: cc $srcdir/dottorus.cpp
@@ -29,12 +28,10 @@ build $builddir/firewirecube: cc $srcdir/firewirecube.cpp
 build $builddir/flatcube: cc $srcdir/flatcube.cpp
 build $builddir/flatshadedcube2: cc $srcdir/flatshadedcube2.cpp
 build $builddir/flatshadedcube: cc $srcdir/flatshadedcube.cpp
-build $builddir/flatshadedduck: cc $srcdir/flatshadedduck.cpp
 build $builddir/font: cc $srcdir/font.cpp
 build $builddir/glenzcube: cc $srcdir/glenzcube.cpp
 build $builddir/glenzshadedcube: cc $srcdir/glenzshadedcube.cpp
 build $builddir/gouraudcube: cc $srcdir/gouraudcube.cpp
-build $builddir/gouraudduck: cc $srcdir/gouraudduck.cpp
 build $builddir/hiddenlinecube: cc $srcdir/hiddenlinecube.cpp
 build $builddir/julia: cc $srcdir/julia.cpp
 build $builddir/lens: cc $srcdir/lens.cpp
@@ -73,7 +70,6 @@ build bump: phony $builddir/bump
 build burncube: phony $builddir/burncube
 build distort: phony $builddir/distort
 build distortlogo: phony $builddir/distortlogo
-build dotduck: phony $builddir/dotduck
 build dotflag: phony $builddir/dotflag
 build dotmorph: phony $builddir/dotmorph
 build dottorus: phony $builddir/dottorus
@@ -86,12 +82,10 @@ build firewirecube: phony $builddir/firewirecube
 build flatcube: phony $builddir/flatcube
 build flatshadedcube2: phony $builddir/flatshadedcube2
 build flatshadedcube: phony $builddir/flatshadedcube
-build flatshadedduck: phony $builddir/flatshadedduck
 build font: phony $builddir/font
 build glenzcube: phony $builddir/glenzcube
 build glenzshadedcube: phony $builddir/glenzshadedcube
 build gouraudcube: phony $builddir/gouraudcube
-build gouraudduck: phony $builddir/gouraudduck
 build hiddenlinecube: phony $builddir/hiddenlinecube
 build julia: phony $builddir/julia
 build lens: phony $builddir/lens

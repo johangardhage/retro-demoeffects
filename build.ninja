@@ -11,9 +11,7 @@ rule cc
   description = Building executable $out
 
 build $builddir/blobs: cc $srcdir/blobs.cpp
-build $builddir/blurwirecube: cc $srcdir/blurwirecube.cpp
 build $builddir/bump: cc $srcdir/bump.cpp
-build $builddir/burncube: cc $srcdir/burncube.cpp
 build $builddir/distort: cc $srcdir/distort.cpp
 build $builddir/distortlogo: cc $srcdir/distortlogo.cpp
 build $builddir/dotflag: cc $srcdir/dotflag.cpp
@@ -23,10 +21,9 @@ build $builddir/dottunnel: cc $srcdir/dottunnel.cpp
 build $builddir/environcube: cc $srcdir/environcube.cpp
 build $builddir/fade: cc $srcdir/fade.cpp
 build $builddir/fire: cc $srcdir/fire.cpp
+build $builddir/firecube: cc $srcdir/firecube.cpp
 build $builddir/firelogo: cc $srcdir/firelogo.cpp
-build $builddir/firewirecube: cc $srcdir/firewirecube.cpp
 build $builddir/flatcube: cc $srcdir/flatcube.cpp
-build $builddir/flatshadedcube2: cc $srcdir/flatshadedcube2.cpp
 build $builddir/flatshadedcube: cc $srcdir/flatshadedcube.cpp
 build $builddir/font: cc $srcdir/font.cpp
 build $builddir/glenzcube: cc $srcdir/glenzcube.cpp
@@ -51,11 +48,9 @@ build $builddir/rototunnel: cc $srcdir/rototunnel.cpp
 build $builddir/rotozoom: cc $srcdir/rotozoom.cpp
 build $builddir/scroller: cc $srcdir/scroller.cpp
 build $builddir/scrollercube: cc $srcdir/scrollercube.cpp
-build $builddir/showpcx: cc $srcdir/showpcx.cpp
 build $builddir/template_main: cc $srcdir/template_main.cpp
 build $builddir/template_retromain: cc $srcdir/template_retromain.cpp
 build $builddir/texturecube: cc $srcdir/texturecube.cpp
-build $builddir/texturetunnel: cc $srcdir/texturetunnel.cpp
 build $builddir/twister: cc $srcdir/twister.cpp
 build $builddir/voxel: cc $srcdir/voxel.cpp
 build $builddir/water: cc $srcdir/water.cpp
@@ -65,9 +60,7 @@ build $builddir/wormhole: cc $srcdir/wormhole.cpp
 build $builddir/xorcircles: cc $srcdir/xorcircles.cpp
 
 build blobs: phony $builddir/blobs
-build blurwirecube: phony $builddir/blurwirecube
 build bump: phony $builddir/bump
-build burncube: phony $builddir/burncube
 build distort: phony $builddir/distort
 build distortlogo: phony $builddir/distortlogo
 build dotflag: phony $builddir/dotflag
@@ -77,10 +70,9 @@ build dottunnel: phony $builddir/dottunnel
 build environcube: phony $builddir/environcube
 build fade: phony $builddir/fade
 build fire: phony $builddir/fire
+build firecube: phony $builddir/firecube
 build firelogo: phony $builddir/firelogo
-build firewirecube: phony $builddir/firewirecube
 build flatcube: phony $builddir/flatcube
-build flatshadedcube2: phony $builddir/flatshadedcube2
 build flatshadedcube: phony $builddir/flatshadedcube
 build font: phony $builddir/font
 build glenzcube: phony $builddir/glenzcube
@@ -105,11 +97,9 @@ build rototunnel: phony $builddir/rototunnel
 build rotozoom: phony $builddir/rotozoom
 build scroller: phony $builddir/scroller
 build scrollercube: phony $builddir/scrollercube
-build showpcx: phony $builddir/showpcx
 build template_main: phony $builddir/template_main
 build template_retromain: phony $builddir/template_retromain
 build texturecube: phony $builddir/texturecube
-build texturetunnel: phony $builddir/texturetunnel
 build twister: phony $builddir/twister
 build voxel: phony $builddir/voxel
 build water: phony $builddir/water

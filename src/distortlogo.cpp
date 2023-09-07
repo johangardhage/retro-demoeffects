@@ -37,7 +37,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/distortlogo_320x240.pcx");
+	RETRO_LoadImage("assets/logo_320x240.pcx");
 	RETRO_SetPalette(RETRO_ImagePalette());
 
 	// Init sin table

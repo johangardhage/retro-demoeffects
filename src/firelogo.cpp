@@ -55,7 +55,7 @@ void Gradient(int s, int e, int r1, int g1, int b1, int r2, int g2, int b2)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_LoadImage("assets/firelogo_320x240.pcx");
+	RETRO_LoadImage("assets/logo_320x240.pcx");
 	Gradient(0, 24, 0, 0, 0, 0, 0, 31);
 	Gradient(24, 48, 0, 0, 31, 63, 0, 0);
 	Gradient(48, 64, 63, 0, 0, 63, 63, 0);

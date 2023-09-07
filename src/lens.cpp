@@ -77,7 +77,7 @@ void InitLens(Lens *lens)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/lens_320x240.pcx");
+	RETRO_LoadImage("assets/monkey_320x240.pcx");
 	RETRO_SetPalette(RETRO_ImagePalette());
 	InitLens(&Lens1);
 }

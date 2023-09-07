@@ -45,5 +45,5 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/fade_320x240.pcx");
+	RETRO_LoadImage("assets/monkey_320x240.pcx");
 }

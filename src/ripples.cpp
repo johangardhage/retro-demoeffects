@@ -36,7 +36,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/ripples_320x240.pcx");
+	RETRO_LoadImage("assets/monkey_320x240.pcx");
 	RETRO_SetPalette(RETRO_ImagePalette());
 
 	// Init sine table

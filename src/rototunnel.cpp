@@ -43,7 +43,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/rototunnel_256x256.pcx");
+	RETRO_LoadImage("assets/flowers_256x256.pcx");
 	RETRO_SetPalette(RETRO_ImagePalette());
 
 	// Init sine table

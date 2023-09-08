@@ -45,5 +45,5 @@ void DEMO_Initialize(void)
 	model->c = 32;
 	model->cintensity = 96;
 
-	RETRO_InitializeLightSource(0, 120, 10);
+	RETRO_InitializeLightSource(0, 0, -1);
 }

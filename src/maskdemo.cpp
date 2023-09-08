@@ -177,5 +177,6 @@ void DEMO_Initialize(void)
 	// Load model
 	RETRO_Load3DModel("assets/mask.obj", 1);
 
-	RETRO_InitializeLightSource(0, 120, 10);
+	// Set up light source
+	RETRO_InitializeLightSource(0, 0, -1);
 }

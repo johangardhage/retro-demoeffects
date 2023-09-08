@@ -35,5 +35,5 @@ void DEMO_Initialize(void)
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->cintensity = 32;
 
-	RETRO_InitializeLightSource(0, 120, 10);
+	RETRO_InitializeLightSource(0, 0, -1);
 }

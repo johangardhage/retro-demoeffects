@@ -90,15 +90,15 @@ Point3Df RETRO_RotatePoint(Point3Df point, float acos, float asin)
 {
 	Point3Df rotated;
 
-	// Rotate on X
+	// Rotate around x axis
 	rotated.y = point.y * acos - point.z * asin;
 	rotated.z = point.y * asin + point.z * acos;
 
-	// Rotate on Y
+	// Rotate around y axis
 	rotated.x = point.x * acos + rotated.z * asin;
-	rotated.z = -point.x * asin + rotated.z * acos;
+	rotated.z = point.x * -asin + rotated.z * acos;
 
-	// Rotate on Z
+	// Rotate around z axis
 	float tmpx = rotated.x * acos - rotated.y * asin;
 	rotated.y = rotated.x * asin + rotated.y * acos;
 	rotated.x = tmpx;
@@ -110,15 +110,15 @@ Point3Df RETRO_RotatePoint(Point3Df point, float ax, float ay, float az)
 {
 	Point3Df rotated;
 
-	// Rotate on X
+	// Rotate around x axis
 	rotated.y = point.y * cos(ax) - point.z * sin(ax);
 	rotated.z = point.y * sin(ax) + point.z * cos(ax);
 
-	// Rotate on Y
+	// Rotate around y axis
 	rotated.x = point.x * cos(ay) + rotated.z * sin(ay);
-	rotated.z = -point.x * sin(ay) + rotated.z * cos(ay);
+	rotated.z = point.x * -sin(ay) + rotated.z * cos(ay);
 
-	// Rotate on Z
+	// Rotate around z axis
 	float tmpx = rotated.x * cos(az) - rotated.y * sin(az);
 	rotated.y = rotated.x * sin(az) + rotated.y * cos(az);
 	rotated.x = tmpx;
@@ -128,37 +128,28 @@ Point3Df RETRO_RotatePoint(Point3Df point, float ax, float ay, float az)
 
 void RETRO_RotateLightSource(float ax, float ay, float az)
 {
-	float nx, ny, nz;
+	// Rotate around x axis
+	RETRO_lightsource.rny = RETRO_lightsource.ny * cos(ax) - RETRO_lightsource.nz * sin(ax);
+	RETRO_lightsource.rnz = RETRO_lightsource.ny * sin(ax) + RETRO_lightsource.nz * cos(ax);
 
-	// Rotate around the x-axis
-	LightSource.nz = LightSource.y * cos(ax) - LightSource.z * sin(ax);
-	LightSource.ny = LightSource.y * sin(ax) + LightSource.z * cos(ax);
-	LightSource.nx = LightSource.x;
+	// Rotate around y axis
+	RETRO_lightsource.rnx = RETRO_lightsource.nx * cos(ay) + RETRO_lightsource.rnz * sin(ay);
+	RETRO_lightsource.rnz = RETRO_lightsource.nx * -sin(ay) + RETRO_lightsource.rnz * cos(ay);
 
-	// Rotate around the y-axis
-	nx = LightSource.nx * cos(ay) - LightSource.nz * sin(ay);
-	nz = LightSource.nx * sin(ay) + LightSource.nz * cos(ay);
-	LightSource.nx = nx;
-	LightSource.nz = nz;
-
-	// Rotate around the z-axis
-	nx = LightSource.nx * cos(az) - LightSource.ny * sin(az);
-	ny = LightSource.nx * sin(az) + LightSource.ny * cos(az);
-
-	// Reverse the direction of the normals for lightsource shading
-	LightSource.nx = -nx;
-	LightSource.ny = -ny;
-	LightSource.nz = -nz;
+	// Rotate around z axis
+	float tmpx = RETRO_lightsource.rnx * cos(az) - RETRO_lightsource.rny * sin(az);
+	RETRO_lightsource.rny = RETRO_lightsource.rnx * sin(az) + RETRO_lightsource.rny * cos(az);
+	RETRO_lightsource.rnx = tmpx;
 }
 
 void RETRO_InitializeLightSource(float x, float y, float z)
 {
-	LightSource.x = x;
-	LightSource.y = y;
-	LightSource.z = z;
+	RETRO_lightsource.nx = x;
+	RETRO_lightsource.ny = y;
+	RETRO_lightsource.nz = z;
 
 	// Calculate the length of the vector
-	LightSource.nn = sqrt(x * x + y * y + z * z);
+	RETRO_lightsource.nn = sqrt(x * x + y * y + z * z);
 
 	// Rotate it once
 	RETRO_RotateLightSource(0, 0, 0);

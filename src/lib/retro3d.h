@@ -10,6 +10,14 @@
 #include "retro.h"
 #include "retro3dmodel.h"
 
+struct Point3Df {
+	float x, y, z;
+};
+
+struct Point3D {
+	int x, y, z;
+};
+
 void RETRO_RotateMatrix(float ax, float ay, float az, Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
@@ -58,15 +66,64 @@ void RETRO_RotateFaceNormals(Model3D *model = NULL)
 	}
 }
 
-void RETRO_ProjectVertices(float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), Model3D *model = NULL)
+void RETRO_ProjectVertices(float scale = 50, int eye = 256, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->vertices; i++) {
-		int eye = 250;
 		model->vertex[i].sx = x + (scale * model->vertex[i].rx * eye) / (scale * model->vertex[i].rz + eye);
 		model->vertex[i].sy = y + (scale * model->vertex[i].ry * eye) / (scale * model->vertex[i].rz + eye);
 	}
+}
+
+Point2D RETRO_ProjectPoint(Point3Df point, float scale = 50, int eye = 256, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2))
+{
+	Point2D projected;
+
+	projected.x = x + (scale * point.x * eye) / (scale * point.z + eye);
+	projected.y = y + (scale * point.y * eye) / (scale * point.z + eye);
+
+	return projected;
+}
+
+Point3Df RETRO_RotatePoint(Point3Df point, float acos, float asin)
+{
+	Point3Df rotated;
+
+	// Rotate on X
+	rotated.y = point.y * acos - point.z * asin;
+	rotated.z = point.y * asin + point.z * acos;
+
+	// Rotate on Y
+	rotated.x = point.x * acos + rotated.z * asin;
+	rotated.z = -point.x * asin + rotated.z * acos;
+
+	// Rotate on Z
+	float tmpx = rotated.x * acos - rotated.y * asin;
+	rotated.y = rotated.x * asin + rotated.y * acos;
+	rotated.x = tmpx;
+
+	return rotated;
+}
+
+Point3Df RETRO_RotatePoint(Point3Df point, float ax, float ay, float az)
+{
+	Point3Df rotated;
+
+	// Rotate on X
+	rotated.y = point.y * cos(ax) - point.z * sin(ax);
+	rotated.z = point.y * sin(ax) + point.z * cos(ax);
+
+	// Rotate on Y
+	rotated.x = point.x * cos(ay) + rotated.z * sin(ay);
+	rotated.z = -point.x * sin(ay) + rotated.z * cos(ay);
+
+	// Rotate on Z
+	float tmpx = rotated.x * cos(az) - rotated.y * sin(az);
+	rotated.y = rotated.x * sin(az) + rotated.y * cos(az);
+	rotated.x = tmpx;
+
+	return rotated;
 }
 
 void RETRO_RotateLightSource(float ax, float ay, float az)

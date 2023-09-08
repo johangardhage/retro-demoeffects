@@ -4,12 +4,11 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
-#include "lib/retro3d2.h"
+#include "lib/retro3d.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
 
 #define POINTS 4096
-#define EYEDISTANCE 256
 #define SCALE 80
 
 Point3Df Sphere[POINTS];
@@ -48,8 +47,8 @@ void DEMO_Render(double deltatime)
 	}
 
 	for (int i = 0; i < POINTS; i++) {
-		Point3Df rotated = RETRO_Rotate(Morph[i], 0, angle, angle);
-		Point2D projected = RETRO_Project(rotated, EYEDISTANCE, SCALE);
+		Point3Df rotated = RETRO_RotatePoint(Morph[i], 0, angle, angle);
+		Point2D projected = RETRO_ProjectPoint(rotated, SCALE);
 
 		unsigned char color = ceil(SCALE * (rotated.z / -8.6)) + 230;
 		RETRO_PutPixel(projected.x, projected.y, color);

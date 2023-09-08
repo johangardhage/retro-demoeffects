@@ -5,7 +5,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retro3d2.h"
+#include "lib/retro3d.h"
 #include "lib/retrogfx.h"
 
 #define NUM_TORUS 5
@@ -13,7 +13,6 @@
 #define POINTS 100
 #define BLUR 2
 #define NUM_COLORS 163
-#define EYEDISTANCE 256
 #define SCALE 1
 #define SINE_VALUES 720
 
@@ -142,8 +141,8 @@ void DEMO_Render2(double deltatime)
 	// Draw blob
 	for (int b = 0; b < BLUR; b++) {
 		for (int p = 0; p < POINTS; p++) {
-			Point3Df rotated = RETRO_Rotate(Points[p], CosTable[(frame + b) % SINE_VALUES], SinTable[(frame + b) % SINE_VALUES]);
-			Point2D projected = RETRO_Project(rotated, EYEDISTANCE, SCALE);
+			Point3Df rotated = RETRO_RotatePoint(Points[p], CosTable[(frame + b) % SINE_VALUES], SinTable[(frame + b) % SINE_VALUES]);
+			Point2D projected = RETRO_ProjectPoint(rotated, SCALE);
 
 			for (int y = 0; y < NUM_TORUS; y++) {
 				for (int x = 0; x < NUM_TORUS; x++) {

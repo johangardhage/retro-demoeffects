@@ -268,6 +268,47 @@ void RETRO_DrawTexMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 //
 // Texture mapped polygon
 //
+void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *shadetable = NULL)
+{
+	EdgeSpan span[RETRO_HEIGHT];
+
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		span[y].p1.x = RETRO_WIDTH;
+		span[y].p2.x = 0;
+	}
+
+	for (int i = 0; i < numvertices; i++) {
+		PolygonPoint *p1 = vertices + i;
+		PolygonPoint *p2 = vertices + (i + 1) % numvertices;
+		RETRO_ScanEdge(*p1, *p2, span);
+	}
+
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		if (span[y].p1.x <= span[y].p2.x) {
+			float xdiff = (span[y].p2.x - span[y].p1.x) != 0 ? span[y].p2.x - span[y].p1.x : 1;
+			float du = (span[y].p2.u - span[y].p1.u) / xdiff;
+			float dv = (span[y].p2.v - span[y].p1.v) / xdiff;
+			float dc = (span[y].p2.c - span[y].p1.c) / xdiff;
+
+			for (int x = (int)span[y].p1.x; x < (int)span[y].p2.x; x++) {
+				if (x >= 0 && x < RETRO_WIDTH) {
+					unsigned int u = CLAMP256(span[y].p1.u);
+					unsigned int v = CLAMP256(span[y].p1.v);
+					unsigned char texel = CLAMP128(texmap[v * 256 + u]);
+					int shade = span[y].p1.c;
+					RETRO.framebuffer[y * RETRO_WIDTH + x] = CLAMP256(shadetable[texel * 128 + shade]);
+				}
+				span[y].p1.u += du;
+				span[y].p1.v += dv;
+				span[y].p1.c += dc;
+			}
+		}
+	}
+}
+
+//
+// Texture mapped polygon
+//
 void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *envmap = NULL, unsigned char *shadetable = NULL, unsigned char shade = 0)
 {
 	EdgeSpan span[RETRO_HEIGHT];

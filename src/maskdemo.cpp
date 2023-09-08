@@ -61,11 +61,38 @@ void DEMO_Render(double deltatime)
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_2)) {
 		rendertype = RETRO_POLY_TEXTURE;
+		shadertype = RETRO_SHADE_GOURAUD;
+		texmap = RETRO_ImageData(ASSET_TEXMAP);
+		envmap = NULL;
+		color = 0;
+		colorintensity = 128;
+		RETRO_Set6bitPalette(RETRO_OptimalPalette());
+	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_3)) {
+		rendertype = RETRO_POLY_TEXTURE;
 		shadertype = RETRO_SHADE_ENVIRONMENT;
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
 		colorintensity = 90;
+		RETRO_Set6bitPalette(RETRO_OptimalPalette());
+	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_D)) {
+		rendertype = RETRO_POLY_DOT;
+		shadertype = RETRO_SHADE_NONE;
+		texmap = RETRO_ImageData(ASSET_TEXMAP);
+		envmap = NULL;
+		color = 255;
+		colorintensity = 0;
+		RETRO_Set6bitPalette(RETRO_OptimalPalette());
+	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_W)) {
+		rendertype = RETRO_POLY_WIREFIRE;
+		shadertype = RETRO_SHADE_NONE;
+		texmap = RETRO_ImageData(ASSET_TEXMAP);
+		envmap = NULL;
+		color = 255;
+		colorintensity = 0;
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
@@ -104,27 +131,27 @@ void DEMO_Render(double deltatime)
 		az += deltatime * 1;
 	}
 
-	if (RETRO_KeyState(SDL_SCANCODE_W)) {
+	if (RETRO_KeyState(SDL_SCANCODE_I)) {
 		rotate = false;
 		ax += 1 * deltatime;
 	}
-	if (RETRO_KeyState(SDL_SCANCODE_S)) {
+	if (RETRO_KeyState(SDL_SCANCODE_K)) {
 		rotate = false;
 		ax -= 1 * deltatime;
 	}
-	if (RETRO_KeyState(SDL_SCANCODE_L)) {
+	if (RETRO_KeyState(SDL_SCANCODE_X)) {
 		rotate = false;
 		ay += 1 * deltatime;
 	}
-	if (RETRO_KeyState(SDL_SCANCODE_K)) {
+	if (RETRO_KeyState(SDL_SCANCODE_Z)) {
 		rotate = false;
 		ay -= 1 * deltatime;
 	}
-	if (RETRO_KeyState(SDL_SCANCODE_A)) {
+	if (RETRO_KeyState(SDL_SCANCODE_J)) {
 		rotate = false;
 		az += 1 * deltatime;
 	}
-	if (RETRO_KeyState(SDL_SCANCODE_D)) {
+	if (RETRO_KeyState(SDL_SCANCODE_L)) {
 		rotate = false;
 		az -= 1 * deltatime;
 	}
@@ -142,18 +169,21 @@ void DEMO_Render(double deltatime)
 
 	if (usage) {
 		RETRO_PutString("Runtime controls:", 0, 10, 255);
-		RETRO_PutString("r to toggle rotation", 10, 30, 255);
-		RETRO_PutString(", and . to change object distance", 10, 40, 255);
-		RETRO_PutString("w and s to change x rotation", 10, 50, 255);
-		RETRO_PutString("a and d to change y rotation", 10, 60, 255);
-		RETRO_PutString("k and l to change z rotation", 10, 70, 255);
-		RETRO_PutString("t to use texture mapping", 10, 90, 255);
-		RETRO_PutString("1 to use flat shaded texture mapping", 10, 100, 255);
-		RETRO_PutString("2 to use phong shaded texture mapping", 10, 110, 255);
-		RETRO_PutString("m to use metal environment mapping", 10, 120, 255);
-		RETRO_PutString("p to use phong environment mapping", 10, 130, 255);
-		RETRO_PutString("b to toggle bumpmapping", 10, 140, 255);
-		RETRO_PutString("h to toggle this help screen", 10, 160, 255);
+		RETRO_PutString("r to toggle rotation", 0, 30, 255);
+		RETRO_PutString(", and . to change object distance", 0, 40, 255);
+		RETRO_PutString("i and k to change x rotation", 0, 50, 255);
+		RETRO_PutString("j and l to change y rotation", 0, 60, 255);
+		RETRO_PutString("z and x to change z rotation", 0, 70, 255);
+		RETRO_PutString("d to use dots", 0, 90, 255);
+		RETRO_PutString("w to use wireframe", 0, 100, 255);
+		RETRO_PutString("t to use texture mapping", 0, 110, 255);
+		RETRO_PutString("1 to use flat shaded texture mapping", 0, 120, 255);
+		RETRO_PutString("2 to use gouraud shaded texture mapping", 0, 130, 255);
+		RETRO_PutString("3 to use phong shaded texture mapping", 0, 140, 255);
+		RETRO_PutString("m to use metal environment mapping", 0, 150, 255);
+		RETRO_PutString("p to use phong environment mapping", 0, 160, 255);
+		RETRO_PutString("b to toggle bumpmapping", 0, 170, 255);
+		RETRO_PutString("h to toggle this help screen", 0, 190, 255);
 	}
 }
 

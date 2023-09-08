@@ -8,9 +8,9 @@ Classic demo effects using software rendering
 
 To build the demo programs, you must first install the following tools:
 
-- [GCC 7.1](https://gcc.gnu.org/) (or later)
-- [Ninja 1.5](https://ninja-build.org/) (or later)
-- [SDL 2.0.4](https://www.libsdl.org/) (or later)
+- [GCC](https://gcc.gnu.org/)
+- [Ninja](https://ninja-build.org/)
+- [SDL2](https://www.libsdl.org/)
 
 ### Install dependencies
 
@@ -79,25 +79,29 @@ Licensed under MIT license. See [LICENSE](LICENSE) for more information.
 
 ## Screenshots
 
-![Screenshot](/screenshots/scroller.png "scroller")
-![Screenshot](/screenshots/bump.png "bump")
+![Screenshot](/screenshots/texmapflatshademask.png "texmapflatshademask")
+![Screenshot](/screenshots/texmapgouraudshademask.png "texmapgouraudshademask")
+![Screenshot](/screenshots/texmapenvmapbumpmask.png "texmapenvmapbumpmask")
+![Screenshot](/screenshots/envmapmask2.png "envmapmask2")
+![Screenshot](/screenshots/envmapmask.png "envmapmask")
+![Screenshot](/screenshots/envmapbumpmask.png "envmapbumpmask")
 ![Screenshot](/screenshots/lens.png "lens")
 ![Screenshot](/screenshots/water.png "water")
-![Screenshot](/screenshots/blobs.png "blobs")
+![Screenshot](/screenshots/voxel.png "voxel")
 ![Screenshot](/screenshots/metaballs.png "metaballs")
-![Screenshot](/screenshots/rotozoom.png "rotozoom")
-![Screenshot](/screenshots/texturetunnel.png "texturetunnel")
 ![Screenshot](/screenshots/plasma.png "plasma")
 ![Screenshot](/screenshots/xorcircles.png "xorcircles")
 ![Screenshot](/screenshots/fire.png "fire")
 ![Screenshot](/screenshots/dotflag.png "dotflag")
 ![Screenshot](/screenshots/dotmorph.png "dotmorph")
 ![Screenshot](/screenshots/dottunnel.png "dottunnel")
-![Screenshot](/screenshots/burncube.png "burncube")
+![Screenshot](/screenshots/firecube.png "firecube")
 ![Screenshot](/screenshots/flatshadedcube.png "flatshadedcube")
 ![Screenshot](/screenshots/gouraudcube.png "gouraudcube")
 ![Screenshot](/screenshots/phongcube.png "phongcube")
 ![Screenshot](/screenshots/environcube.png "environcube")
 ![Screenshot](/screenshots/plasmacube.png "plasmacube")
-![Screenshot](/screenshots/scrollercube.png "scrollercube")
 ![Screenshot](/screenshots/glenzshadedcube.png "glenzshadedcube")
+![Screenshot](/screenshots/blobs.png "blobs")
+![Screenshot](/screenshots/scroller.png "scroller")
+![Screenshot](/screenshots/bump.png "bump")

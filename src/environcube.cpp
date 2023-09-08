@@ -18,21 +18,18 @@ void DEMO_Render(double deltatime)
 	RETRO_RotateMatrix(ax, ay, az);
 	RETRO_RotateVertices();
 	RETRO_RotateVertexNormals();
-	RETRO_ProjectVertices(0.5);
+	RETRO_ProjectVertices();
 	RETRO_SortVisibleFaces();
 	RETRO_RenderModel(RETRO_POLY_ENVIRONMENT);
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/texturecube_128x128.pcx");
-	RETRO_SetPalette(RETRO_ImagePalette());
+	RETRO_LoadImage("assets/mask_phongmap_256x256.pcx");
+	RETRO_Set6bitPalette(RETRO_ImagePalette());
 
-	RETRO_CreateCube3Model();
-	RETRO_InitializeVertexNormals();
-
-	Model3D *model = RETRO_Get3DModel();
+	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->envmap = RETRO_ImageData();
-	model->c = 64;
-	model->cintensity = 64;
+	model->c = 128;
+	model->cintensity = 90;
 }

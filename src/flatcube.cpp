@@ -17,7 +17,7 @@ void DEMO_Render(double deltatime)
 
 	RETRO_RotateMatrix(ax, ay, az);
 	RETRO_RotateVertices();
-	RETRO_ProjectVertices(0.5);
+	RETRO_ProjectVertices();
 	RETRO_SortVisibleFaces();
 	RETRO_RenderModel(RETRO_POLY_FLAT);
 }
@@ -25,16 +25,14 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	// 0-32 green
-	float p = 1.8;
+	float p = 2.8;
 	float r = 4;
 	for (int i = 0; i < 32; i++) {
 		RETRO_SetColor(i, 0, r, 0);
 		r = r + p;
 	}
 
-	RETRO_CreateCube4Model();
-
-	Model3D *model = RETRO_Get3DModel();
+	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
 	for (int i = 0; i < model->faces; i++) {
 		model->face[i].c = i + 15;
 	}

@@ -17,7 +17,7 @@ void DEMO_Render(double deltatime)
 
 	RETRO_RotateMatrix(ax, ay, az);
 	RETRO_RotateVertices();
-	RETRO_ProjectVertices(0.5);
+	RETRO_ProjectVertices();
 	RETRO_SortAllFaces();
 	RETRO_RenderModel(RETRO_POLY_GLENZ);
 }
@@ -32,9 +32,7 @@ void DEMO_Initialize(void)
 		r += p;
 	}
 
-	RETRO_CreateCube4Model();
-
-	Model3D *model = RETRO_Get3DModel();
+	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
 	int c[model->faces] = {10, 20, 30, 20, 30, 10};
 	for (int i = 0; i < model->faces; i++) {
 		model->face[i].c = c[i];

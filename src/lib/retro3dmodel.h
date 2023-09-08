@@ -309,6 +309,125 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 	}
 }
 
+void RETRO_InitializeVertexNormals(Model3D *model = NULL)
+{
+	model = model ? model : RETRO_Get3DModel();
+
+	// Use vertex values for normal
+	for (int i = 0; i < model->vertices; i++) {
+		model->normal[i].nx = model->vertex[i].x;
+		model->normal[i].ny = model->vertex[i].y;
+		model->normal[i].nz = model->vertex[i].z;
+
+		// Calculate the length of the normal (used to scale it to a unit normal)
+		model->normal[i].nn = sqrt(model->normal[i].nx * model->normal[i].nx + model->normal[i].ny * model->normal[i].ny + model->normal[i].nz * model->normal[i].nz);
+	}
+
+	model->normals = model->vertices;
+
+	// Use vertex index for normal
+	for (int i = 0; i < model->faces; i++) {
+		for (int j = 0; j < model->face[i].vertices; j++) {
+			model->face[i].normal[j] = model->face[i].vertex[j];
+		}
+	}
+}
+
+void RETRO_InitializeFaceNormals(Model3D *model = NULL)
+{
+	model = model ? model : RETRO_Get3DModel();
+
+	for (int i = 0; i < model->faces; i++) {
+		// Calculate vectors
+		float x1 = model->vertex[model->face[i].vertex[0]].x - model->vertex[model->face[i].vertex[1]].x;
+		float y1 = model->vertex[model->face[i].vertex[0]].y - model->vertex[model->face[i].vertex[1]].y;
+		float z1 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[1]].z;
+		float x2 = model->vertex[model->face[i].vertex[0]].x - model->vertex[model->face[i].vertex[2]].x;
+		float y2 = model->vertex[model->face[i].vertex[0]].y - model->vertex[model->face[i].vertex[2]].y;
+		float z2 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[2]].z;
+
+		// Calculate normal (using cross product)
+		model->face[i].nx = y1 * z2 - z1 * y2;
+		model->face[i].ny = z1 * x2 - x1 * z2;
+		model->face[i].nz = x1 * y2 - y1 * x2;
+
+		// Calculate the length of the normal (used to scale it to a unit normal)
+		model->face[i].nn = sqrt(model->face[i].nx * model->face[i].nx + model->face[i].ny * model->face[i].ny + model->face[i].nz * model->face[i].nz);
+	}
+}
+
+Model3D *RETRO_Load3DModel(const char *filename, int scale = 256)
+{
+	Model3D *model = (Model3D *)malloc(sizeof(Model3D));
+	if (model == NULL) {
+		RETRO_RageQuit("Cannot allocate 3D model memory\n", "");
+	}
+	RETRO_3dmodel = model;
+
+	FILE *fp = fopen(filename, "rb");
+	if (fp == NULL) {
+		RETRO_RageQuit("Cannot open file: %s\n", filename);
+	}
+
+	int vertices = 0, uvs = 0, normals = 0, faces = 0;
+
+	char row[128];
+	while (fscanf(fp, "%s", row) != EOF) {
+		if (strcmp(row, "v") == 0) { // Load vertices
+			fscanf(fp, "%f %f %f\n", &model->vertex[vertices].x, &model->vertex[vertices].y, &model->vertex[vertices].z);
+			vertices++;
+		} else if (strcmp(row, "vt") == 0) { // Load UV coordinates
+			fscanf(fp, "%f %f\n", &model->uv[uvs].u, &model->uv[uvs].v);
+			model->uv[uvs].u *= scale;
+			model->uv[uvs].v *= scale;
+			uvs++;
+		} else if (strcmp(row, "vn") == 0) { // Load normals
+			fscanf(fp, "%f %f %f\n", &model->normal[normals].nx, &model->normal[normals].ny, &model->normal[normals].nz);
+			// Calculate normal length
+			model->normal[normals].nn = sqrt(model->normal[normals].nx * model->normal[normals].nx +
+											 model->normal[normals].ny * model->normal[normals].ny +
+											 model->normal[normals].nz * model->normal[normals].nz);
+			normals++;
+		} else if (strcmp(row, "f") == 0) {
+			unsigned int vertex[4], uv[4], normal[4];
+			int matches = fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n", &vertex[0], &uv[0], &normal[0], &vertex[1], &uv[1], &normal[1], &vertex[2], &uv[2], &normal[2], &vertex[3], &uv[3], &normal[3]);
+			model->face[faces].vertices = matches / 3;
+
+			// Store vertex indices to face
+			for (int i = 0; i < model->face[faces].vertices; i++) {
+				model->face[faces].vertex[i] = vertex[i] - 1;
+				model->face[faces].uv[i] = uv[i] - 1;
+				model->face[faces].normal[i] = normal[i] - 1;
+			}
+			faces++;
+		} else { // Probably a comment, eat up the rest of the line
+			fgets(row, 128, fp);
+		}
+	}
+
+	model->vertices = vertices;
+	model->uvs = uvs;
+	model->normals = normals;
+	model->faces = faces;
+
+//	printf("Vertices: %i\n", vertices);
+//	printf("Vertex UV coords: %i\n", uvs);
+//	printf("Normals: %i\n", normals);
+//	printf("Faces: %i\n", faces);
+
+	fclose(fp);
+
+	// Initialize vertex normals
+	if (model->normals == 0) {
+		RETRO_InitializeVertexNormals(model);
+	}
+
+	// Initialize face normals
+	RETRO_InitializeFaceNormals(model);
+
+	return model;
+}
+
 Model3D *RETRO_CreateCube3Model(void)
 {
 	Model3D *model = (Model3D *)malloc(sizeof(Model3D));
@@ -319,10 +438,10 @@ Model3D *RETRO_CreateCube3Model(void)
 	model->normals = 8;
 	model->faces = 12;
 
-	int vertex[model->vertices][3] = { {100, 100, 100}, {100, 100, -100}, {100, -100, 100}, {100, -100, -100}, {-100, 100, 100}, {-100, 100, -100}, {-100, -100, 100}, {-100, -100, -100} };
+	int vertex[model->vertices][3] = { {1, 1, 1}, {1, 1, -1}, {1, -1, 1}, {1, -1, -1}, {-1, 1, 1}, {-1, 1, -1}, {-1, -1, 1}, {-1, -1, -1} };
 	int face[model->faces][3] = { {5, 1, 3}, {7, 5, 3}, {1, 0, 2}, {3, 1, 2}, {0, 4, 6}, {2, 0, 6}, {4, 5, 7}, {6, 4, 7}, {4, 0, 1}, {5, 4, 1}, {7, 3, 2}, {6, 7, 2} };
-	int faceu[model->faces][3] = { {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127}, {0, 127, 127}, {0, 0, 127} };
-	int facev[model->faces][3] = { {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127}, {0, 0, 127}, {127, 0, 127} };
+	int faceu[model->faces][3] = { {0, 1, 1}, {0, 0, 1}, {0, 1, 1}, {0, 0, 1}, {0, 1, 1}, {0, 0, 1}, {0, 1, 1}, {0, 0, 1}, {0, 1, 1}, {0, 0, 1}, {0, 1, 1}, {0, 0, 1} };
+	int facev[model->faces][3] = { {0, 0, 1}, {1, 0, 1}, {0, 0, 1}, {1, 0, 1}, {0, 0, 1}, {1, 0, 1}, {0, 0, 1}, {1, 0, 1}, {0, 0, 1}, {1, 0, 1}, {0, 0, 1}, {1, 0, 1} };
 
 	for (int i = 0; i < model->vertices; i++) {
 		model->vertex[i].x = vertex[i][0];
@@ -343,7 +462,6 @@ Model3D *RETRO_CreateCube3Model(void)
 		model->normal[i].nz = vertex[i][2];
 		// Calculate the length of the normal (used to scale it to a unit normal)
 		model->normal[i].nn = sqrt(model->normal[i].nx * model->normal[i].nx + model->normal[i].ny * model->normal[i].ny + model->normal[i].nz * model->normal[i].nz);
-
 	}
 
 	for (int i = 0; i < model->faces; i++) {
@@ -368,15 +486,25 @@ Model3D *RETRO_CreateCube4Model(void)
 	RETRO_3dmodel = model;
 
 	model->vertices = 8;
+	model->uvs = 0;
+	model->normals = 8;
 	model->faces = 6;
 
-	int vertex[model->vertices][3] = { {100, 100, 100}, {100, 100, -100}, {100, -100, 100}, {100, -100, -100}, {-100, 100, 100}, {-100, 100, -100}, {-100, -100, 100}, {-100, -100, -100} };
+	int vertex[model->vertices][3] = { {1, 1, 1}, {1, 1, -1}, {1, -1, 1}, {1, -1, -1}, {-1, 1, 1}, {-1, 1, -1}, {-1, -1, 1}, {-1, -1, -1} };
 	int face[model->faces][4] = { {4, 0, 1, 5}, {1, 0, 2, 3}, {5, 1, 3, 7}, {4, 5, 7, 6}, {0, 4, 6, 2}, {3, 2, 6, 7} };
 
 	for (int i = 0; i < model->vertices; i++) {
 		model->vertex[i].x = vertex[i][0];
 		model->vertex[i].y = vertex[i][1];
 		model->vertex[i].z = vertex[i][2];
+	}
+
+	for (int i = 0; i < model->normals; i++) {
+		model->normal[i].nx = vertex[i][0];
+		model->normal[i].ny = vertex[i][1];
+		model->normal[i].nz = vertex[i][2];
+		// Calculate the length of the normal (used to scale it to a unit normal)
+		model->normal[i].nn = sqrt(model->normal[i].nx * model->normal[i].nx + model->normal[i].ny * model->normal[i].ny + model->normal[i].nz * model->normal[i].nz);
 	}
 
 	for (int i = 0; i < model->faces; i++) {

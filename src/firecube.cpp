@@ -17,7 +17,7 @@ void DEMO_Render2(double deltatime)
 
 	RETRO_RotateMatrix(ax, ay, az);
 	RETRO_RotateVertices();
-	RETRO_ProjectVertices(0.5);
+	RETRO_ProjectVertices();
 	RETRO_SortAllFaces();
 	RETRO_RenderModel(RETRO_POLY_WIREFIRE);
 
@@ -45,9 +45,7 @@ void DEMO_Initialize(void)
 		b++;
 	}
 
-	RETRO_CreateCube4Model();
-
-	Model3D *model = RETRO_Get3DModel();
+	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
 	model->c = 80;
 	model->cintensity = 100;
 }

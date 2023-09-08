@@ -18,7 +18,7 @@ void DEMO_Render(double deltatime)
 	RETRO_RotateMatrix(ax, ay, az);
 	RETRO_RotateVertices();
 	RETRO_RotateFaceNormals();
-	RETRO_ProjectVertices(0.5);
+	RETRO_ProjectVertices();
 	RETRO_SortVisibleFaces();
 	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT);
 }
@@ -32,10 +32,8 @@ void DEMO_Initialize(void)
 		r = r + p;
 	}
 
-	RETRO_CreateCube4Model();
-	RETRO_InitializeFaceNormals();
-	RETRO_InitializeLightSource(0, 120, 10);
-
-	Model3D *model = RETRO_Get3DModel();
+	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->cintensity = 32;
+
+	RETRO_InitializeLightSource(0, 120, 10);
 }

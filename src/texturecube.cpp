@@ -18,19 +18,16 @@ void DEMO_Render(double deltatime)
 	RETRO_RotateMatrix(ax, ay, az);
 	RETRO_RotateVertices();
 	RETRO_RotateVertexNormals();
-	RETRO_ProjectVertices(0.5);
+	RETRO_ProjectVertices();
 	RETRO_SortVisibleFaces();
 	RETRO_RenderModel(RETRO_POLY_TEXTURE);
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/texturecube_128x128.pcx");
+	RETRO_LoadImage("assets/cube_256x256.pcx");
 	RETRO_SetPalette(RETRO_ImagePalette());
 
-	RETRO_CreateCube3Model();
-	RETRO_InitializeVertexNormals();
-
-	Model3D *model = RETRO_Get3DModel();
+	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->texmap = RETRO_ImageData();
 }

@@ -58,54 +58,14 @@ void RETRO_RotateFaceNormals(Model3D *model = NULL)
 	}
 }
 
-void RETRO_ProjectVertices(float scale, int x = 0, int y = 0, Model3D *model = NULL)
+void RETRO_ProjectVertices(float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
-	x = x ? x : (RETRO_WIDTH / 2);
-	y = y ? y : (RETRO_HEIGHT / 2);
 
 	for (int i = 0; i < model->vertices; i++) {
 		int eye = 250;
 		model->vertex[i].sx = x + (scale * model->vertex[i].rx * eye) / (scale * model->vertex[i].rz + eye);
 		model->vertex[i].sy = y + (scale * model->vertex[i].ry * eye) / (scale * model->vertex[i].rz + eye);
-	}
-}
-
-void RETRO_InitializeVertexNormals(Model3D *model = NULL)
-{
-	model = model ? model : RETRO_Get3DModel();
-
-	for (int i = 0; i < model->vertices; i++) {
-		// Calculate normal
-		model->normal[i].nx = model->vertex[i].x;
-		model->normal[i].ny = model->vertex[i].y;
-		model->normal[i].nz = model->vertex[i].z;
-
-		// Calculate the length of the normal (used to scale it to a unit normal)
-		model->normal[i].nn = sqrt(model->normal[i].nx * model->normal[i].nx + model->normal[i].ny * model->normal[i].ny + model->normal[i].nz * model->normal[i].nz);
-	}
-}
-
-void RETRO_InitializeFaceNormals(Model3D *model = NULL)
-{
-	model = model ? model : RETRO_Get3DModel();
-
-	for (int i = 0; i < model->faces; i++) {
-		// Calculate vectors
-		float x1 = model->vertex[model->face[i].vertex[0]].x - model->vertex[model->face[i].vertex[1]].x;
-		float y1 = model->vertex[model->face[i].vertex[0]].y - model->vertex[model->face[i].vertex[1]].y;
-		float z1 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[1]].z;
-		float x2 = model->vertex[model->face[i].vertex[0]].x - model->vertex[model->face[i].vertex[2]].x;
-		float y2 = model->vertex[model->face[i].vertex[0]].y - model->vertex[model->face[i].vertex[2]].y;
-		float z2 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[2]].z;
-
-		// Calculate normal (using cross product)
-		model->face[i].nx = y1 * z2 - z1 * y2;
-		model->face[i].ny = z1 * x2 - x1 * z2;
-		model->face[i].nz = x1 * y2 - y1 * x2;
-
-		// Calculate the length of the normal (used to scale it to a unit normal)
-		model->face[i].nn = sqrt(model->face[i].nx * model->face[i].nx + model->face[i].ny * model->face[i].ny + model->face[i].nz * model->face[i].nz);
 	}
 }
 

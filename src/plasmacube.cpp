@@ -12,7 +12,7 @@
 
 int SinTable[PLASMA_SIN];
 
-unsigned char image[16384];
+unsigned char image[256 * 256];
 
 void DEMO_Render(double deltatime)
 {
@@ -21,11 +21,11 @@ void DEMO_Render(double deltatime)
 	int ap = (int)frame % 720;
 
 	// Generate plasma
-	for (int x = 0; x < 128; x++) {
+	for (int x = 0; x < 256; x++) {
 		int c1 = 75 + (SinTable[x * 2 + ap / 2] + SinTable[x + ap * 2] + SinTable[x / 2 + ap] * 2) / 32;
-		for (int y = 0; y < 128; y++) {
+		for (int y = 0; y < 256; y++) {
 			int c2 = 75 + (SinTable[y + ap * 2] * 2 + SinTable[y * 2 + ap / 2] + SinTable[y + ap] * 2) / 16;
-			image[x + 128 * y] = c1 + c2;
+			image[x + 256 * y] = c1 + c2;
 		}
 	}
 
@@ -37,7 +37,7 @@ void DEMO_Render(double deltatime)
 	RETRO_RotateMatrix(ax, ay, az);
 	RETRO_RotateVertices();
 	RETRO_RotateVertexNormals();
-	RETRO_ProjectVertices(0.5);
+	RETRO_ProjectVertices();
 	RETRO_SortVisibleFaces();
 	RETRO_RenderModel(RETRO_POLY_TEXTURE);
 }
@@ -73,10 +73,7 @@ void DEMO_Initialize(void)
 		b--;
 	}
 
-	RETRO_CreateCube3Model();
-	RETRO_InitializeVertexNormals();
-
-	Model3D *model = RETRO_Get3DModel();
+	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->texmap = image;
 
 	for (int i = 0; i < PLASMA_SIN; i++) {

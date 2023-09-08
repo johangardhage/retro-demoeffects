@@ -12,8 +12,8 @@
 #define TEXT_WIDTH 77
 #define FONT_HEIGHT 5
 #define FONT_WIDTH 5
-#define IMAGE_HEIGHT 128
-#define IMAGE_WIDTH 128
+#define IMAGE_HEIGHT 256
+#define IMAGE_WIDTH 256
 
 int font[FONT_HEIGHT][FONT_WIDTH] = {{10, 30, 30, 30, 10},
 									 {30, 90, 70, 50, 30},
@@ -41,7 +41,7 @@ void DEMO_Render(double deltatime)
 		int xsrc = (int)(frame + x) % (FONT_WIDTH * TEXT_WIDTH);
 		for (int y = 0; y < TEXT_HEIGHT * FONT_HEIGHT; y++) {
 			int ysrc = TEXT_HEIGHT * FONT_HEIGHT - (y + 1);
-			image[(50 + y) * IMAGE_WIDTH + x] = bitmap[ysrc][xsrc];
+			image[(120 + y) * IMAGE_WIDTH + x] = bitmap[ysrc][xsrc];
 		}
 	}
 
@@ -66,7 +66,7 @@ void DEMO_Render(double deltatime)
 	RETRO_RotateMatrix(ax, ay, az);
 	RETRO_RotateVertices();
 	RETRO_RotateVertexNormals();
-	RETRO_ProjectVertices(0.5);
+	RETRO_ProjectVertices();
 	RETRO_SortVisibleFaces();
 	RETRO_RenderModel(RETRO_POLY_TEXTURE);
 }
@@ -77,10 +77,7 @@ void DEMO_Initialize(void)
 		RETRO_SetColor(i, i, i, i);
 	}
 
-	RETRO_CreateCube3Model();
-	RETRO_InitializeVertexNormals();
-
-	Model3D *model = RETRO_Get3DModel();
+	Model3D *model = RETRO_Load3DModel("assets/cube3.obj");
 	model->texmap = image;
 
 	// Init scroller bitmap

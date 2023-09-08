@@ -18,7 +18,7 @@ struct Point3D {
 	int x, y, z;
 };
 
-void RETRO_RotateMatrix(float ax, float ay, float az, Model3D *model = NULL)
+void RETRO_InitializeRotationMatrix(float ax, float ay, float az, Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -66,7 +66,7 @@ void RETRO_RotateFaceNormals(Model3D *model = NULL)
 	}
 }
 
-void RETRO_ProjectVertices(float scale = 50, int eye = 256, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), Model3D *model = NULL)
+void RETRO_ProjectModel(float scale = 50, int eye = 256, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -74,6 +74,14 @@ void RETRO_ProjectVertices(float scale = 50, int eye = 256, int x = (RETRO_WIDTH
 		model->vertex[i].sx = x + (scale * model->vertex[i].rx * eye) / (scale * model->vertex[i].rz + eye);
 		model->vertex[i].sy = y + (scale * model->vertex[i].ry * eye) / (scale * model->vertex[i].rz + eye);
 	}
+}
+
+void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
+{
+	RETRO_InitializeRotationMatrix(ax, ay, az, model);
+	RETRO_RotateVertices(model);
+	RETRO_RotateVertexNormals(model);
+	RETRO_RotateFaceNormals(model);
 }
 
 Point2D RETRO_ProjectPoint(Point3Df point, float scale = 50, int eye = 256, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2))

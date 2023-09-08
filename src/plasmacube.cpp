@@ -34,10 +34,8 @@ void DEMO_Render(double deltatime)
 	ay += deltatime * 2;
 	az += deltatime * 2;
 
-	RETRO_RotateMatrix(ax, ay, az);
-	RETRO_RotateVertices();
-	RETRO_RotateVertexNormals();
-	RETRO_ProjectVertices();
+	RETRO_RotateModel(ax, ay, az);
+	RETRO_ProjectModel();
 	RETRO_SortVisibleFaces();
 	RETRO_RenderModel(RETRO_POLY_TEXTURE);
 }

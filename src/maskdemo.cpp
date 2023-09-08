@@ -135,13 +135,9 @@ void DEMO_Render(double deltatime)
 		distance -= 1 * deltatime;
 	}
 
-	RETRO_RotateMatrix(ax, ay, az);
-	RETRO_RotateVertices();
-	RETRO_RotateVertexNormals();
-	RETRO_RotateFaceNormals();
-	RETRO_ProjectVertices(distance);
+	RETRO_RotateModel(ax, ay, az);
+	RETRO_ProjectModel(distance);
 	RETRO_SortVisibleFaces();
-
 	RETRO_RenderModel(rendertype, shadertype);
 
 	if (usage) {

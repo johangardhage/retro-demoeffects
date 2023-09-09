@@ -18,12 +18,17 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 {
 	model = model ? model : RETRO_Get3DModel();
 
+	// Render with dots
 	if (rendertype == RETRO_POLY_DOT) {
 		for (int i = 0; i < model->vertices; i++) {
 			RETRO_PutPixel(model->vertex[i].sx, model->vertex[i].sy, model->c);
 		}
-	} else if (rendertype == RETRO_POLY_WIREFRAME) {
+	}
+
+	// Render with wireframe
+	else if (rendertype == RETRO_POLY_WIREFRAME) {
 		RETRO_SortAllFaces();
+
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -41,8 +46,12 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 				RETRO_DrawLine(p1->x, p1->y, p2->x, p2->y, color);
 			}
 		}
-	} else if (rendertype == RETRO_POLY_WIREFIRE) {
+	}
+
+	// Render with wireframe
+	else if (rendertype == RETRO_POLY_WIREFIRE) {
 		RETRO_SortAllFaces();
+
 		unsigned char color[RETRO_WIDTH];
 		for (int i = 0; i < RETRO_WIDTH; i++) {
 			color[i] = model->c + RANDOM(model->cintensity);
@@ -63,8 +72,12 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 				RETRO_DrawLine2(p1->x, p1->y, p2->x, p2->y, color);
 			}
 		}
-	} else if (rendertype == RETRO_POLY_HIDDENLINE) {
+	}
+
+	// Render with hidden line
+	else if (rendertype == RETRO_POLY_HIDDENLINE) {
 		RETRO_SortVisibleFaces();
+
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -82,8 +95,12 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 				RETRO_DrawLine(p1->x, p1->y, p2->x, p2->y, color);
 			}
 		}
-	} else if (rendertype == RETRO_POLY_FLAT) {
+	}
+
+	// Render with flat shading
+	else if (rendertype == RETRO_POLY_FLAT) {
 		RETRO_SortVisibleFaces();
+
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -104,8 +121,12 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 			RETRO_DrawFlatPolygon(points, face->vertices, color);
 		}
-	} else if (rendertype == RETRO_POLY_GLENZ) {
+	}
+
+	// Render with glenz shading
+	else if (rendertype == RETRO_POLY_GLENZ) {
 		RETRO_SortAllFaces();
+
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -130,8 +151,12 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 			RETRO_DrawGlenzPolygon(points, face->vertices, shade);
 		}
-	} else if (rendertype == RETRO_POLY_GOURAUD) {
+	}
+
+	// Render with gouraud shading
+	else if (rendertype == RETRO_POLY_GOURAUD) {
 		RETRO_SortVisibleFaces();
+
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -150,8 +175,12 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 			RETRO_DrawGouraudPolygon(points, face->vertices);
 		}
-	} else if (rendertype == RETRO_POLY_PHONG) {
+	}
+
+	// Render with phong shading
+	else if (rendertype == RETRO_POLY_PHONG) {
 		RETRO_SortVisibleFaces();
+
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -173,8 +202,12 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			light.cintensity = model->cintensity;
 			RETRO_DrawPhongPolygon(points, face->vertices, light);
 		}
-	} else if (rendertype == RETRO_POLY_TEXTURE) {
+	}
+
+	// Render with texture mapping
+	else if (rendertype == RETRO_POLY_TEXTURE) {
 		RETRO_SortVisibleFaces();
+
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -189,15 +222,26 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			}
 
 			int shade = model->c + face->c;
+
+			// No shading
 			if (shadertype == RETRO_SHADE_NONE) {
 				RETRO_DrawTexMapPolygon(points, face->vertices, model->texmap);
-			} if (shadertype == RETRO_SHADE_TABLE) {
+			}
+
+			// Use color from shade table
+			else if (shadertype == RETRO_SHADE_TABLE) {
 				RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade);
-			} else if (shadertype == RETRO_SHADE_FLAT) {
+			}
+
+			// Flat shading
+			else if (shadertype == RETRO_SHADE_FLAT) {
 				float lint = (face->rnx * RETRO_lightsource.rnx + face->rny * RETRO_lightsource.rny + face->rnz * RETRO_lightsource.rnz) / (face->nn * RETRO_lightsource.nn);
 				shade = CLAMP128(shade + lint * 128);
 				RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade);
-			} else if (shadertype == RETRO_SHADE_GOURAUD) {
+			}
+
+			// Gouraud shading
+			else if (shadertype == RETRO_SHADE_GOURAUD) {
 				for (int j = 0; j < face->vertices; j++) {
 					float lint = (model->normal[face->normal[j]].rnx * RETRO_lightsource.rnx +
 								  model->normal[face->normal[j]].rny * RETRO_lightsource.rny +
@@ -205,14 +249,24 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 					points[j].c = CLAMP128(model->c + face->c + lint * 128);;
 				}
 				RETRO_DrawTexMapGouraudPolygon(points, face->vertices, model->texmap, RETRO_Color.shadetable);
-			} else if (shadertype == RETRO_SHADE_ENVIRONMENT && model->bumpmap == NULL) {
+			}
+
+			// Environment shading
+			else if (shadertype == RETRO_SHADE_ENVIRONMENT && model->bumpmap == NULL) {
 				RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable);
-			} else if (shadertype == RETRO_SHADE_ENVIRONMENT && model->bumpmap) {
+			}
+
+			// Environment shading with bump mapping
+			else if (shadertype == RETRO_SHADE_ENVIRONMENT && model->bumpmap) {
 				RETRO_DrawTexMapEnvMapBumpPolygon(points, face->vertices, model->texmap, model->envmap, model->bumpmap, RETRO_Color.shadetable);
 			}
 		}
-	} else if (rendertype == RETRO_POLY_ENVIRONMENT) {
+	}
+
+	// Render with environment mapping
+	else if (rendertype == RETRO_POLY_ENVIRONMENT) {
 		RETRO_SortVisibleFaces();
+
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 

@@ -7,6 +7,7 @@
 #include "lib/retromain.h"
 #include "lib/retropoly.h"
 #include "lib/retro3d.h"
+#include "lib/retrorender.h"
 
 #define PLASMA_SIN 1800
 

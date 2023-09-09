@@ -19,14 +19,6 @@ enum {
 	RETRO_BLUR_8
 };
 
-struct Point2Df {
-	float x, y;
-};
-
-struct Point2D {
-	int x, y;
-};
-
 bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 {
 	if (step >= steps) return true;

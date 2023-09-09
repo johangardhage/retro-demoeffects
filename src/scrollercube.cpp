@@ -7,6 +7,7 @@
 #include "lib/retromain.h"
 #include "lib/retropoly.h"
 #include "lib/retro3d.h"
+#include "lib/retrorender.h"
 
 #define TEXT_HEIGHT 5
 #define TEXT_WIDTH 77

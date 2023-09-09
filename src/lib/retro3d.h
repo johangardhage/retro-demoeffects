@@ -10,6 +10,14 @@
 #include "retro.h"
 #include "retro3dmodel.h"
 
+struct Point2Df {
+	float x, y;
+};
+
+struct Point2D {
+	int x, y;
+};
+
 struct Point3Df {
 	float x, y, z;
 };

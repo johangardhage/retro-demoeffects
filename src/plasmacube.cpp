@@ -37,7 +37,6 @@ void DEMO_Render(double deltatime)
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
-	RETRO_SortVisibleFaces();
 	RETRO_RenderModel(RETRO_POLY_TEXTURE);
 }
 

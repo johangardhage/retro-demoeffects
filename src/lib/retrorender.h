@@ -23,6 +23,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			RETRO_PutPixel(model->vertex[i].sx, model->vertex[i].sy, model->c);
 		}
 	} else if (rendertype == RETRO_POLY_WIREFRAME) {
+		RETRO_SortAllFaces();
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -41,6 +42,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			}
 		}
 	} else if (rendertype == RETRO_POLY_WIREFIRE) {
+		RETRO_SortAllFaces();
 		unsigned char color[RETRO_WIDTH];
 		for (int i = 0; i < RETRO_WIDTH; i++) {
 			color[i] = model->c + RANDOM(model->cintensity);
@@ -62,6 +64,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			}
 		}
 	} else if (rendertype == RETRO_POLY_HIDDENLINE) {
+		RETRO_SortVisibleFaces();
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -80,6 +83,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			}
 		}
 	} else if (rendertype == RETRO_POLY_FLAT) {
+		RETRO_SortVisibleFaces();
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -101,6 +105,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			RETRO_DrawFlatPolygon(points, face->vertices, color);
 		}
 	} else if (rendertype == RETRO_POLY_GLENZ) {
+		RETRO_SortAllFaces();
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -126,6 +131,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			RETRO_DrawGlenzPolygon(points, face->vertices, shade);
 		}
 	} else if (rendertype == RETRO_POLY_GOURAUD) {
+		RETRO_SortVisibleFaces();
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -145,6 +151,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			RETRO_DrawGouraudPolygon(points, face->vertices);
 		}
 	} else if (rendertype == RETRO_POLY_PHONG) {
+		RETRO_SortVisibleFaces();
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -167,6 +174,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			RETRO_DrawPhongPolygon(points, face->vertices, light);
 		}
 	} else if (rendertype == RETRO_POLY_TEXTURE) {
+		RETRO_SortVisibleFaces();
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
@@ -204,6 +212,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			}
 		}
 	} else if (rendertype == RETRO_POLY_ENVIRONMENT) {
+		RETRO_SortVisibleFaces();
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 

@@ -165,7 +165,6 @@ void DEMO_Render(double deltatime)
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel(distance);
-	RETRO_SortVisibleFaces();
 	RETRO_RenderModel(rendertype, shadertype);
 
 	if (usage) {

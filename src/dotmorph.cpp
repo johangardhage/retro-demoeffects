@@ -11,9 +11,9 @@
 #define POINTS 4096
 #define SCALE 80
 
-Point3Df Sphere[POINTS];
-Point3Df Torus[POINTS];
-Point3Df Morph[POINTS];
+Vertex Sphere[POINTS];
+Vertex Torus[POINTS];
+Vertex Morph[POINTS];
 
 void DEMO_Render(double deltatime)
 {
@@ -47,11 +47,11 @@ void DEMO_Render(double deltatime)
 	}
 
 	for (int i = 0; i < POINTS; i++) {
-		Point3Df rotated = RETRO_RotatePoint(Morph[i], 0, angle, angle);
-		Point2D projected = RETRO_ProjectPoint(rotated, SCALE);
+		RETRO_RotateVertex(&Morph[i], 0, angle, angle);
+		RETRO_ProjectVertex(&Morph[i], SCALE);
 
-		unsigned char color = ceil(SCALE * (rotated.z / -8.6)) + 230;
-		RETRO_PutPixel(projected.x, projected.y, color);
+		unsigned char color = ceil(SCALE * (Morph[i].rz / -8.6)) + 230;
+		RETRO_PutPixel(Morph[i].sx, Morph[i].sy, color);
 	}
 
 	RETRO_Blur(RETRO_BLUR_3);

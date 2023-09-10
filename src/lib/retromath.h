@@ -7,24 +7,7 @@
 #ifndef _RETROMATH_H_
 #define _RETROMATH_H_
 
-#include "retro.h"
 #include "retromodel.h"
-
-struct Point2Df {
-	float x, y;
-};
-
-struct Point2D {
-	int x, y;
-};
-
-struct Point3Df {
-	float x, y, z;
-};
-
-struct Point3D {
-	int x, y, z;
-};
 
 void RETRO_InitializeRotationMatrix(float ax, float ay, float az, Model3D *model = NULL)
 {
@@ -92,83 +75,58 @@ void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 	RETRO_RotateFaceNormals(model);
 }
 
-Point2D RETRO_ProjectPoint(Point3Df point, float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), int eye = 256)
+void RETRO_ProjectVertex(Vertex *vertex, float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), int eye = 256)
 {
-	Point2D projected;
-
-	projected.x = x + (scale * point.x * eye) / (scale * point.z + eye);
-	projected.y = y + (scale * point.y * eye) / (scale * point.z + eye);
-
-	return projected;
+	vertex->sx = x + (scale * vertex->rx * eye) / (scale * vertex->rz + eye);
+	vertex->sy = y + (scale * vertex->ry * eye) / (scale * vertex->rz + eye);
 }
 
-Point3Df RETRO_RotatePoint(Point3Df point, float acos, float asin)
-{
-	Point3Df rotated;
-
-	// Rotate around x axis
-	rotated.y = point.y * acos - point.z * asin;
-	rotated.z = point.y * asin + point.z * acos;
-
-	// Rotate around y axis
-	rotated.x = point.x * acos + rotated.z * asin;
-	rotated.z = point.x * -asin + rotated.z * acos;
-
-	// Rotate around z axis
-	float tmpx = rotated.x * acos - rotated.y * asin;
-	rotated.y = rotated.x * asin + rotated.y * acos;
-	rotated.x = tmpx;
-
-	return rotated;
-}
-
-Point3Df RETRO_RotatePoint(Point3Df point, float ax, float ay, float az)
-{
-	Point3Df rotated;
-
-	// Rotate around x axis
-	rotated.y = point.y * cos(ax) - point.z * sin(ax);
-	rotated.z = point.y * sin(ax) + point.z * cos(ax);
-
-	// Rotate around y axis
-	rotated.x = point.x * cos(ay) + rotated.z * sin(ay);
-	rotated.z = point.x * -sin(ay) + rotated.z * cos(ay);
-
-	// Rotate around z axis
-	float tmpx = rotated.x * cos(az) - rotated.y * sin(az);
-	rotated.y = rotated.x * sin(az) + rotated.y * cos(az);
-	rotated.x = tmpx;
-
-	return rotated;
-}
-
-void RETRO_RotateLightSource(float ax, float ay, float az)
+void RETRO_RotateVertex(Vertex *vertex, float cosa, float sina)
 {
 	// Rotate around x axis
-	RETRO_lightsource.rny = RETRO_lightsource.ny * cos(ax) - RETRO_lightsource.nz * sin(ax);
-	RETRO_lightsource.rnz = RETRO_lightsource.ny * sin(ax) + RETRO_lightsource.nz * cos(ax);
+	vertex->ry = vertex->y * cosa - vertex->z * sina;
+	vertex->rz = vertex->y * sina + vertex->z * cosa;
 
 	// Rotate around y axis
-	RETRO_lightsource.rnx = RETRO_lightsource.nx * cos(ay) + RETRO_lightsource.rnz * sin(ay);
-	RETRO_lightsource.rnz = RETRO_lightsource.nx * -sin(ay) + RETRO_lightsource.rnz * cos(ay);
+	vertex->rx = vertex->x * cosa + vertex->rz * sina;
+	vertex->rz = vertex->x * -sina + vertex->rz * cosa;
 
 	// Rotate around z axis
-	float tmpx = RETRO_lightsource.rnx * cos(az) - RETRO_lightsource.rny * sin(az);
-	RETRO_lightsource.rny = RETRO_lightsource.rnx * sin(az) + RETRO_lightsource.rny * cos(az);
-	RETRO_lightsource.rnx = tmpx;
+	float tmpx = vertex->rx * cosa - vertex->ry * sina;
+	vertex->ry = vertex->rx * sina + vertex->ry * cosa;
+	vertex->rx = tmpx;
 }
 
-void RETRO_InitializeLightSource(float x, float y, float z)
+void RETRO_RotateVertex(Vertex *vertex, float ax, float ay, float az)
 {
-	RETRO_lightsource.nx = x;
-	RETRO_lightsource.ny = y;
-	RETRO_lightsource.nz = z;
+	// Rotate around x axis
+	vertex->ry = vertex->y * cos(ax) - vertex->z * sin(ax);
+	vertex->rz = vertex->y * sin(ax) + vertex->z * cos(ax);
 
-	// Calculate the length of the vector
-	RETRO_lightsource.nn = sqrt(x * x + y * y + z * z);
+	// Rotate around y axis
+	vertex->rx = vertex->x * cos(ay) + vertex->rz * sin(ay);
+	vertex->rz = vertex->x * -sin(ay) + vertex->rz * cos(ay);
 
-	// Rotate it once
-	RETRO_RotateLightSource(0, 0, 0);
+	// Rotate around z axis
+	float tmpx = vertex->rx * cos(az) - vertex->ry * sin(az);
+	vertex->ry = vertex->rx * sin(az) + vertex->ry * cos(az);
+	vertex->rx = tmpx;
+}
+
+void RETRO_RotateNormal(Normal *normal, float ax, float ay, float az)
+{
+	// Rotate around x axis
+	normal->rny = normal->ny * cos(ax) - normal->nz * sin(ax);
+	normal->rnz = normal->ny * sin(ax) + normal->nz * cos(ax);
+
+	// Rotate around y axis
+	normal->rnx = normal->nx * cos(ay) + normal->rnz * sin(ay);
+	normal->rnz = normal->nx * -sin(ay) + normal->rnz * cos(ay);
+
+	// Rotate around z axis
+	float tmpx = normal->rnx * cos(az) - normal->rny * sin(az);
+	normal->rny = normal->rnx * sin(az) + normal->rny * cos(az);
+	normal->rnx = tmpx;
 }
 
 void RETRO_QuickSort(Model3D *model, int lo, int hi)

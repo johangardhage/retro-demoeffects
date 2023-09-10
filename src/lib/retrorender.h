@@ -7,13 +7,51 @@
 #ifndef _RETRORENDER_H_
 #define _RETRORENDER_H_
 
-#include "retropoly.h"
-#include "retrogfx.h"
-#include "retrocolor.h"
-#include "retromath.h"
 #include "retromodel.h"
+#include "retropoly.h"
+#include "retromath.h"
+#include "retrocolor.h"
+#include "retrogfx.h"
 
-int RETRO_UVlookup[256];
+enum RETRO_POLY_TYPE {
+	RETRO_POLY_DOT,
+	RETRO_POLY_WIREFRAME,
+	RETRO_POLY_WIREFIRE,
+	RETRO_POLY_HIDDENLINE,
+	RETRO_POLY_FLAT,
+	RETRO_POLY_GLENZ,
+	RETRO_POLY_GOURAUD,
+	RETRO_POLY_PHONG,
+	RETRO_POLY_TEXTURE,
+	RETRO_POLY_ENVIRONMENT
+};
+
+enum RETRO_POLY_SHADE {
+	RETRO_SHADE_NONE,
+	RETRO_SHADE_TABLE,
+	RETRO_SHADE_FLAT,
+	RETRO_SHADE_GOURAUD,
+	RETRO_SHADE_ENVIRONMENT,
+	RETRO_SHADE_PHONG
+};
+
+struct {
+	Normal lightsource;
+	int uvlookup[256];
+} RETRO_Render;
+
+void RETRO_InitializeLightSource(float x, float y, float z)
+{
+	RETRO_Render.lightsource.nx = x;
+	RETRO_Render.lightsource.ny = y;
+	RETRO_Render.lightsource.nz = z;
+
+	// Calculate the length of the vector
+	RETRO_Render.lightsource.nn = sqrt(x * x + y * y + z * z);
+
+	// Rotate it once
+	RETRO_RotateNormal(&RETRO_Render.lightsource, 0, 0, 0);
+}
 
 void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE, Model3D *model = NULL)
 {
@@ -114,7 +152,9 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			int color = model->c + face->c;
 			float lint = 0;
 			if (shadertype == RETRO_SHADE_FLAT) {
-				lint = (face->rnx * RETRO_lightsource.rnx + face->rny * RETRO_lightsource.rny + face->rnz * RETRO_lightsource.rnz) / (face->nn * RETRO_lightsource.nn);
+				lint = (face->rnx * RETRO_Render.lightsource.rnx +
+						face->rny * RETRO_Render.lightsource.rny +
+						face->rnz * RETRO_Render.lightsource.rnz) / (face->nn * RETRO_Render.lightsource.nn);
 				int cmin = model->c;
 				int cmax = model->c + face->c + model->cintensity;
 				color = CLAMP(model->c + face->c + lint * model->cintensity - model->c, cmin, cmax);
@@ -141,9 +181,13 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			float lint = 0;
 			if (shadertype == RETRO_SHADE_FLAT) {
 				if (face->znm > 0) {
-					lint = (face->rnx * RETRO_lightsource.rnx + face->rny * RETRO_lightsource.rny + face->rnz * RETRO_lightsource.rnz) / (face->nn * RETRO_lightsource.nn);
+					lint = (face->rnx * RETRO_Render.lightsource.rnx +
+						    face->rny * RETRO_Render.lightsource.rny +
+							face->rnz * RETRO_Render.lightsource.rnz) / (face->nn * RETRO_Render.lightsource.nn);
 				} else {
-					lint = (face->rnx * RETRO_lightsource.rnx + face->rny * RETRO_lightsource.rny + face->rnz * RETRO_lightsource.rnz / 2) / (face->nn * RETRO_lightsource.nn);
+					lint = (face->rnx * RETRO_Render.lightsource.rnx +
+						    face->rny * RETRO_Render.lightsource.rny +
+							face->rnz * RETRO_Render.lightsource.rnz / 2) / (face->nn * RETRO_Render.lightsource.nn);
 				}
 				int cmin = model->c;
 				int cmax = model->c + face->c + model->cintensity;
@@ -168,9 +212,9 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 				int cmin = model->c;
 				int cmax = model->c + face->c + model->cintensity;
-				float lint = (model->normal[face->normal[j]].rnx * RETRO_lightsource.rnx +
-							  model->normal[face->normal[j]].rny * RETRO_lightsource.rny +
-							  model->normal[face->normal[j]].rnz * RETRO_lightsource.rnz) / (model->normal[face->normal[j]].nn * RETRO_lightsource.nn);
+				float lint = (model->normal[face->normal[j]].rnx * RETRO_Render.lightsource.rnx +
+							  model->normal[face->normal[j]].rny * RETRO_Render.lightsource.rny +
+							  model->normal[face->normal[j]].rnz * RETRO_Render.lightsource.rnz) / (model->normal[face->normal[j]].nn * RETRO_Render.lightsource.nn);
 				points[j].c = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
 			}
 
@@ -195,10 +239,10 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			}
 
 			LightSourcePoint light;
-			light.nx = RETRO_lightsource.rnx;
-			light.ny = RETRO_lightsource.rny;
-			light.nz = RETRO_lightsource.rnz;
-			light.nn = RETRO_lightsource.nn;
+			light.nx = RETRO_Render.lightsource.rnx;
+			light.ny = RETRO_Render.lightsource.rny;
+			light.nz = RETRO_Render.lightsource.rnz;
+			light.nn = RETRO_Render.lightsource.nn;
 			light.c = model->c;
 			light.cintensity = model->cintensity;
 			RETRO_DrawPhongPolygon(points, face->vertices, light);
@@ -236,7 +280,9 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 			// Flat shading
 			else if (shadertype == RETRO_SHADE_FLAT) {
-				float lint = (face->rnx * RETRO_lightsource.rnx + face->rny * RETRO_lightsource.rny + face->rnz * RETRO_lightsource.rnz) / (face->nn * RETRO_lightsource.nn);
+				float lint = (face->rnx * RETRO_Render.lightsource.rnx +
+				 			  face->rny * RETRO_Render.lightsource.rny +
+							  face->rnz * RETRO_Render.lightsource.rnz) / (face->nn * RETRO_Render.lightsource.nn);
 				shade = CLAMP128(shade + lint * 128);
 				RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade);
 			}
@@ -244,9 +290,9 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			// Gouraud shading
 			else if (shadertype == RETRO_SHADE_GOURAUD) {
 				for (int j = 0; j < face->vertices; j++) {
-					float lint = (model->normal[face->normal[j]].rnx * RETRO_lightsource.rnx +
-								  model->normal[face->normal[j]].rny * RETRO_lightsource.rny +
-								  model->normal[face->normal[j]].rnz * RETRO_lightsource.rnz) / (model->normal[face->normal[j]].nn * RETRO_lightsource.nn);
+					float lint = (model->normal[face->normal[j]].rnx * RETRO_Render.lightsource.rnx +
+								  model->normal[face->normal[j]].rny * RETRO_Render.lightsource.rny +
+								  model->normal[face->normal[j]].rnz * RETRO_Render.lightsource.rnz) / (model->normal[face->normal[j]].nn * RETRO_Render.lightsource.nn);
 					points[j].c = CLAMP128(model->c + face->c + lint * 128);;
 				}
 				RETRO_DrawTexMapGouraudPolygon(points, face->vertices, model->texmap, RETRO_Color.shadetable);
@@ -293,13 +339,13 @@ void RETRO_Initialize_3D(void)
 {
 	// Create arc cosine correction lookup
 	for (int i = -128; i < 128; i++) {
-		RETRO_UVlookup[i + 128] = 255.0 * asin(i / 128.0) / M_PI + 127;
+		RETRO_Render.uvlookup[i + 128] = 255.0 * asin(i / 128.0) / M_PI + 127;
 	}
 }
 
 void RETRO_Deinitialize_3D(void)
 {
-	if (RETRO_3dmodel) free(RETRO_3dmodel);
+	if (RETRO_Model.model) free(RETRO_Model.model);
 }
 
 #endif

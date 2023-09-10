@@ -6,7 +6,6 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retromath.h"
 
 #define POINTS 170
 

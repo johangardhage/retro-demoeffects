@@ -4,9 +4,8 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
-#include "lib/retrogfx.h"
-#include "lib/retromath.h"
 #include "lib/retromain.h"
+#include "lib/retrogfx.h"
 
 void DEMO_Render(double deltatime)
 {

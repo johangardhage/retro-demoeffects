@@ -5,7 +5,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retromath.h"
+#include "lib/retrogfx.h"
 
 #define PLANE_DISTANCE 320
 

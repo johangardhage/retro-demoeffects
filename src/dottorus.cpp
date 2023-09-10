@@ -25,7 +25,7 @@ unsigned char Form[NUM_TORUS][NUM_TORUS] = {
 	{K * 0, K * 3, K * 3, K * 3, K * 0}
 };
 
-Point3Df Points[POINTS] = {
+Vertex Points[POINTS] = {
 	{19, 0, -13},
 	{8, 0, -21},
 	{-7, 0, -22},
@@ -141,18 +141,18 @@ void DEMO_Render2(double deltatime)
 	// Draw blob
 	for (int b = 0; b < BLUR; b++) {
 		for (int p = 0; p < POINTS; p++) {
-			Point3Df rotated = RETRO_RotatePoint(Points[p], CosTable[(frame + b) % SINE_VALUES], SinTable[(frame + b) % SINE_VALUES]);
-			Point2D projected = RETRO_ProjectPoint(rotated, SCALE);
+			RETRO_RotateVertex(&Points[p], CosTable[(frame + b) % SINE_VALUES], SinTable[(frame + b) % SINE_VALUES]);
+			RETRO_ProjectVertex(&Points[p], SCALE);
 
 			for (int y = 0; y < NUM_TORUS; y++) {
 				for (int x = 0; x < NUM_TORUS; x++) {
-					unsigned char color = RETRO_GetPixel(projected.x + x, projected.y + y) + Form[x][y];
+					unsigned char color = RETRO_GetPixel(Points[p].sx + x, Points[p].sy + y) + Form[x][y];
 
 					if (color > NUM_COLORS) {
 						color = NUM_COLORS;
 					}
 
-					RETRO_PutPixel(projected.x + x, projected.y + y, color);
+					RETRO_PutPixel(Points[p].sx + x, Points[p].sy + y, color);
 				}
 			}
 		}

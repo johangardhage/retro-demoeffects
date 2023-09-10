@@ -13,28 +13,6 @@
 #define RETRO_MAX_FACES 2000
 #define RETRO_MAX_FACEVERTICES 5
 
-typedef enum {
-	RETRO_POLY_DOT,
-	RETRO_POLY_WIREFRAME,
-	RETRO_POLY_WIREFIRE,
-	RETRO_POLY_HIDDENLINE,
-	RETRO_POLY_FLAT,
-	RETRO_POLY_GLENZ,
-	RETRO_POLY_GOURAUD,
-	RETRO_POLY_PHONG,
-	RETRO_POLY_TEXTURE,
-	RETRO_POLY_ENVIRONMENT
-} RETRO_POLY_TYPE;
-
-typedef enum {
-	RETRO_SHADE_NONE,
-	RETRO_SHADE_TABLE,
-	RETRO_SHADE_FLAT,
-	RETRO_SHADE_GOURAUD,
-	RETRO_SHADE_ENVIRONMENT,
-	RETRO_SHADE_PHONG
-} RETRO_POLY_SHADE;
-
 struct Vertex {
 	float x, y, z;				// Original coordinates
 	float rx, ry, rz;			// Rotated coordinates
@@ -81,13 +59,13 @@ struct Model3D {
 	unsigned char *bumpmap = NULL;			// Bump texture
 };
 
-Normal RETRO_lightsource;
-
-Model3D *RETRO_3dmodel = NULL;
+struct {
+	Model3D *model = NULL;
+} RETRO_Model;
 
 Model3D *RETRO_Get3DModel(void)
 {
-	return RETRO_3dmodel;
+	return RETRO_Model.model;
 }
 
 void RETRO_InitializeVertexNormals(Model3D *model = NULL)
@@ -143,7 +121,7 @@ Model3D *RETRO_Load3DModel(const char *filename, int scale = 256)
 	if (model == NULL) {
 		RETRO_RageQuit("Cannot allocate 3D model memory\n", "");
 	}
-	RETRO_3dmodel = model;
+	RETRO_Model.model = model;
 
 	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL) {

@@ -177,7 +177,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			int shade = model->c + face->c;
 			if (shadertype == RETRO_SHADE_FLAT) {
 				float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
-				if (face->znm <= 0) {
+				if (face->visible == false) {
 					lint /= 2;
 				}
 				int cmin = model->c;

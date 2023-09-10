@@ -35,7 +35,7 @@ struct Face {
 	int normal[RETRO_MAX_FACEVERTICES];	// Index of normals in face
 	int c;								// Color
 	Normal facenormal;					// Face normal
-	float znm;							// Z
+	bool visible;						// Is the face visible?
 	int z;								// Z center, used for Quicksort
 };
 

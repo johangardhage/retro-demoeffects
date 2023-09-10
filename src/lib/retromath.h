@@ -169,12 +169,12 @@ void RETRO_SortVisibleFaces(Model3D *model = NULL, bool all = false)
 
 	model->visiblefaces = 0;
 	for (int i = 0; i < model->faces; i++) {
-		model->face[i].znm = (model->vertex[model->face[i].vertex[1]].sx - model->vertex[model->face[i].vertex[0]].sx) *
-							 (model->vertex[model->face[i].vertex[0]].sy - model->vertex[model->face[i].vertex[2]].sy) -
-							 (model->vertex[model->face[i].vertex[1]].sy - model->vertex[model->face[i].vertex[0]].sy) *
-							 (model->vertex[model->face[i].vertex[0]].sx - model->vertex[model->face[i].vertex[2]].sx);
-		if (model->face[i].znm > 0 || all) {
-			// model->face[i].z = model->vertex[model->face[i].vertex[0]].rz + model->vertex[model->face[i].vertex[1]].rz + model->vertex[model->face[i].vertex[2]].rz;
+		float visible = (model->vertex[model->face[i].vertex[1]].sx - model->vertex[model->face[i].vertex[0]].sx) *
+						(model->vertex[model->face[i].vertex[0]].sy - model->vertex[model->face[i].vertex[2]].sy) -
+						(model->vertex[model->face[i].vertex[1]].sy - model->vertex[model->face[i].vertex[0]].sy) *
+						(model->vertex[model->face[i].vertex[0]].sx - model->vertex[model->face[i].vertex[2]].sx);
+		model->face[i].visible = visible > 0 ? true : false;
+		if (model->face[i].visible || all) {
 			model->face[i].z = 0;
 			for (int j = 0; j < model->face[i].vertices; j++) {
 				model->face[i].z += model->vertex[model->face[i].vertex[j]].rz;

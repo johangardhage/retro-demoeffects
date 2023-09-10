@@ -10,7 +10,8 @@
 #include "retropoly.h"
 #include "retrogfx.h"
 #include "retrocolor.h"
-#include "retro3dmodel.h"
+#include "retromath.h"
+#include "retromodel.h"
 
 int RETRO_UVlookup[256];
 

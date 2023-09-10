@@ -4,8 +4,8 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
-#include "lib/retro3d.h"
 #include "lib/retromain.h"
+#include "lib/retromath.h"
 
 #define NUM_BALLS 5
 #define THRESHOLD 50

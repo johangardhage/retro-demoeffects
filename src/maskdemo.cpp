@@ -6,11 +6,8 @@
 
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retropoly.h"
-#include "lib/retrocolor.h"
-#include "lib/retropoly.h"
-#include "lib/retro3d.h"
 #include "lib/retrorender.h"
+#include "lib/retrocolor.h"
 #include "lib/retrofont.h"
 
 #define TEXTURE_WIDTH 256

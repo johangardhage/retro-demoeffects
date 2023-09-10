@@ -4,8 +4,8 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETRO3DMODEL_H_
-#define _RETRO3DMODEL_H_
+#ifndef _RETROMODEL_H_
+#define _RETROMODEL_H_
 
 #define RETRO_MAX_VERTICES 1000
 #define RETRO_MAX_UVS 1000

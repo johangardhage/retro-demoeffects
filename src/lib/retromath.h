@@ -4,11 +4,11 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETRO3D_H_
-#define _RETRO3D_H_
+#ifndef _RETROMATH_H_
+#define _RETROMATH_H_
 
 #include "retro.h"
-#include "retro3dmodel.h"
+#include "retromodel.h"
 
 struct Point2Df {
 	float x, y;

@@ -5,8 +5,6 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retropoly.h"
-#include "lib/retro3d.h"
 #include "lib/retrorender.h"
 
 void DEMO_Render2(double deltatime)

@@ -51,9 +51,9 @@ void RETRO_RotateFaceNormals(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->faces; i++) {
-		model->face[i].rnx = model->face[i].nx * model->matrix[0][0] + model->face[i].ny * model->matrix[1][0] + model->face[i].nz * model->matrix[2][0];
-		model->face[i].rny = model->face[i].nx * model->matrix[0][1] + model->face[i].ny * model->matrix[1][1] + model->face[i].nz * model->matrix[2][1];
-		model->face[i].rnz = model->face[i].nx * model->matrix[0][2] + model->face[i].ny * model->matrix[1][2] + model->face[i].nz * model->matrix[2][2];
+		model->face[i].facenormal.rnx = model->face[i].facenormal.nx * model->matrix[0][0] + model->face[i].facenormal.ny * model->matrix[1][0] + model->face[i].facenormal.nz * model->matrix[2][0];
+		model->face[i].facenormal.rny = model->face[i].facenormal.nx * model->matrix[0][1] + model->face[i].facenormal.ny * model->matrix[1][1] + model->face[i].facenormal.nz * model->matrix[2][1];
+		model->face[i].facenormal.rnz = model->face[i].facenormal.nx * model->matrix[0][2] + model->face[i].facenormal.ny * model->matrix[1][2] + model->face[i].facenormal.nz * model->matrix[2][2];
 	}
 }
 
@@ -127,6 +127,11 @@ void RETRO_RotateNormal(Normal *normal, float ax, float ay, float az)
 	float tmpx = normal->rnx * cos(az) - normal->rny * sin(az);
 	normal->rny = normal->rnx * sin(az) + normal->rny * cos(az);
 	normal->rnx = tmpx;
+}
+
+float RETRO_DotProduct(Normal n1, Normal n2)
+{
+	return (n1.rnx * n2.rnx + n1.rny * n2.rny + n1.rnz * n2.rnz) / (n1.nn * n2.nn);
 }
 
 void RETRO_QuickSort(Model3D *model, int lo, int hi)

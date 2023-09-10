@@ -34,8 +34,7 @@ struct Face {
 	int uv[RETRO_MAX_FACEVERTICES];		// Index of UV coordinates in face
 	int normal[RETRO_MAX_FACEVERTICES];	// Index of normals in face
 	int c;								// Color
-	float nx, ny, nz, nn;				// Normal coordinates
-	float rnx, rny, rnz;				// Rotated normal coordinates
+	Normal facenormal;					// Face normal
 	float znm;							// Z
 	int z;								// Z center, used for Quicksort
 };
@@ -106,12 +105,14 @@ void RETRO_InitializeFaceNormals(Model3D *model = NULL)
 		float z2 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[2]].z;
 
 		// Calculate normal (using cross product)
-		model->face[i].nx = y1 * z2 - z1 * y2;
-		model->face[i].ny = z1 * x2 - x1 * z2;
-		model->face[i].nz = x1 * y2 - y1 * x2;
+		model->face[i].facenormal.nx = y1 * z2 - z1 * y2;
+		model->face[i].facenormal.ny = z1 * x2 - x1 * z2;
+		model->face[i].facenormal.nz = x1 * y2 - y1 * x2;
 
 		// Calculate the length of the normal (used to scale it to a unit normal)
-		model->face[i].nn = sqrt(model->face[i].nx * model->face[i].nx + model->face[i].ny * model->face[i].ny + model->face[i].nz * model->face[i].nz);
+		model->face[i].facenormal.nn = sqrt(model->face[i].facenormal.nx * model->face[i].facenormal.nx +
+										    model->face[i].facenormal.ny * model->face[i].facenormal.ny +
+											model->face[i].facenormal.nz * model->face[i].facenormal.nz);
 	}
 }
 

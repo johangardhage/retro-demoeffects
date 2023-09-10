@@ -150,11 +150,8 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			}
 
 			int color = model->c + face->c;
-			float lint = 0;
 			if (shadertype == RETRO_SHADE_FLAT) {
-				lint = (face->rnx * RETRO_Render.lightsource.rnx +
-						face->rny * RETRO_Render.lightsource.rny +
-						face->rnz * RETRO_Render.lightsource.rnz) / (face->nn * RETRO_Render.lightsource.nn);
+				float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
 				int cmin = model->c;
 				int cmax = model->c + face->c + model->cintensity;
 				color = CLAMP(model->c + face->c + lint * model->cintensity - model->c, cmin, cmax);
@@ -178,16 +175,10 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			}
 
 			int shade = model->c + face->c;
-			float lint = 0;
 			if (shadertype == RETRO_SHADE_FLAT) {
-				if (face->znm > 0) {
-					lint = (face->rnx * RETRO_Render.lightsource.rnx +
-						    face->rny * RETRO_Render.lightsource.rny +
-							face->rnz * RETRO_Render.lightsource.rnz) / (face->nn * RETRO_Render.lightsource.nn);
-				} else {
-					lint = (face->rnx * RETRO_Render.lightsource.rnx +
-						    face->rny * RETRO_Render.lightsource.rny +
-							face->rnz * RETRO_Render.lightsource.rnz / 2) / (face->nn * RETRO_Render.lightsource.nn);
+				float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
+				if (face->znm <= 0) {
+					lint /= 2;
 				}
 				int cmin = model->c;
 				int cmax = model->c + face->c + model->cintensity;
@@ -212,9 +203,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 				int cmin = model->c;
 				int cmax = model->c + face->c + model->cintensity;
-				float lint = (model->normal[face->normal[j]].rnx * RETRO_Render.lightsource.rnx +
-							  model->normal[face->normal[j]].rny * RETRO_Render.lightsource.rny +
-							  model->normal[face->normal[j]].rnz * RETRO_Render.lightsource.rnz) / (model->normal[face->normal[j]].nn * RETRO_Render.lightsource.nn);
+				float lint = RETRO_DotProduct(model->normal[face->normal[j]], RETRO_Render.lightsource);
 				points[j].c = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
 			}
 
@@ -280,9 +269,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 			// Flat shading
 			else if (shadertype == RETRO_SHADE_FLAT) {
-				float lint = (face->rnx * RETRO_Render.lightsource.rnx +
-				 			  face->rny * RETRO_Render.lightsource.rny +
-							  face->rnz * RETRO_Render.lightsource.rnz) / (face->nn * RETRO_Render.lightsource.nn);
+				float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
 				shade = CLAMP128(shade + lint * 128);
 				RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade);
 			}
@@ -290,9 +277,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			// Gouraud shading
 			else if (shadertype == RETRO_SHADE_GOURAUD) {
 				for (int j = 0; j < face->vertices; j++) {
-					float lint = (model->normal[face->normal[j]].rnx * RETRO_Render.lightsource.rnx +
-								  model->normal[face->normal[j]].rny * RETRO_Render.lightsource.rny +
-								  model->normal[face->normal[j]].rnz * RETRO_Render.lightsource.rnz) / (model->normal[face->normal[j]].nn * RETRO_Render.lightsource.nn);
+					float lint = RETRO_DotProduct(model->normal[face->normal[j]], RETRO_Render.lightsource);
 					points[j].c = CLAMP128(model->c + face->c + lint * 128);;
 				}
 				RETRO_DrawTexMapGouraudPolygon(points, face->vertices, model->texmap, RETRO_Color.shadetable);

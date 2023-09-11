@@ -188,4 +188,46 @@ Model3D *RETRO_Load3DModel(const char *filename, int scale = 256)
 	return model;
 }
 
+void RETRO_Save3DModel(const char *filename, Model3D *model)
+{
+	FILE *fp = fopen(filename, "wb");
+	if (fp == NULL) {
+		RETRO_RageQuit("Cannot open file: %s\n", filename);
+	}
+
+	// Save header
+	fprintf(fp, "o %s\n", filename);
+
+	// Save vertices
+	for (int i = 0; i < model->vertices; i++) {
+		fprintf(fp, "v %f %f %f\n", model->vertex[i].x, model->vertex[i].y, model->vertex[i].z);
+	}
+
+	// Save UV coordinates
+	for (int i = 0; i < model->uvs; i++) {
+		fprintf(fp, "vt %f %f\n", model->uv[i].u, model->uv[i].v);
+	}
+
+	// Save normals
+	for (int i = 0; i < model->normals; i++) {
+		fprintf(fp, "vn %f %f %f\n", model->normal[i].nx, model->normal[i].ny, model->normal[i].nz);
+	}
+
+	// Save faces
+	for (int i = 0; i < model->faces; i++) {
+		if (model->face[i].vertices == 3) {
+			fprintf(fp, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", model->face[i].vertex[0] + 1, model->face[i].uv[0] + 1, model->face[i].normal[0] + 1,
+														  model->face[i].vertex[1] + 1, model->face[i].uv[1] + 1, model->face[i].normal[1] + 1,
+														  model->face[i].vertex[2] + 1, model->face[i].uv[2] + 1, model->face[i].normal[2] + 1);
+		} if (model->face[i].vertices == 4) {
+			fprintf(fp, "f %d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n", model->face[i].vertex[0] + 1, model->face[i].uv[0] + 1, model->face[i].normal[0] + 1,
+																   model->face[i].vertex[1] + 1, model->face[i].uv[1] + 1, model->face[i].normal[1] + 1,
+																   model->face[i].vertex[2] + 1, model->face[i].uv[2] + 1, model->face[i].normal[2] + 1,
+																   model->face[i].vertex[3] + 1, model->face[i].uv[3] + 1, model->face[i].normal[3] + 1);
+		}
+	}
+
+	fclose(fp);
+}
+
 #endif

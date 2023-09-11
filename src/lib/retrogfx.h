@@ -106,7 +106,7 @@ void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, unsigne
 	}
 }
 
-void RETRO_DrawLine2(int x1, int y1, int x2, int y2, unsigned char *colors, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char intensity, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 
@@ -125,7 +125,7 @@ void RETRO_DrawLine2(int x1, int y1, int x2, int y2, unsigned char *colors, unsi
 	if (dx >= dy) {
 		for (x = 0; x < dx; x++) {
 			if (px >= 0 && px < width && py >= 0 && py < height) {
-				buffer[py * width + px] = colors[x];
+				buffer[py * width + px] = color + RANDOM(intensity);
 			}
 			y += dy;
 			if (y >= dx) {
@@ -137,7 +137,7 @@ void RETRO_DrawLine2(int x1, int y1, int x2, int y2, unsigned char *colors, unsi
 	} else {
 		for (y = 0; y < dy; y++) {
 			if (px >= 0 && px < width && py >= 0 && py < height) {
-				buffer[py * width + px] = colors[x];
+				buffer[py * width + px] = color + RANDOM(intensity);
 			}
 			x += dx;
 			if (x >= dy) {

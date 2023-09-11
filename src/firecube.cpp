@@ -16,7 +16,7 @@ void DEMO_Render2(double deltatime)
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
-	RETRO_RenderModel(RETRO_POLY_WIREFIRE);
+	RETRO_RenderModel(RETRO_POLY_WIREFRAME, RETRO_SHADE_WIREFIRE);
 
 	RETRO_Blur(RETRO_BLUR_8, 3);
 	RETRO_Flip();

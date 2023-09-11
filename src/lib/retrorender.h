@@ -16,7 +16,6 @@
 enum RETRO_POLY_TYPE {
 	RETRO_POLY_DOT,
 	RETRO_POLY_WIREFRAME,
-	RETRO_POLY_WIREFIRE,
 	RETRO_POLY_HIDDENLINE,
 	RETRO_POLY_FLAT,
 	RETRO_POLY_GLENZ,
@@ -29,6 +28,7 @@ enum RETRO_POLY_TYPE {
 enum RETRO_POLY_SHADE {
 	RETRO_SHADE_NONE,
 	RETRO_SHADE_TABLE,
+	RETRO_SHADE_WIREFIRE,
 	RETRO_SHADE_FLAT,
 	RETRO_SHADE_GOURAUD,
 	RETRO_SHADE_ENVIRONMENT,
@@ -82,33 +82,12 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			for (int j = 0; j < face->vertices; j++) {
 				PolygonPoint *p1 = points + j;
 				PolygonPoint *p2 = points + (j + 1) % face->vertices;
-				RETRO_DrawLine(p1->x, p1->y, p2->x, p2->y, color);
-			}
-		}
-	}
 
-	// Render with wireframe
-	else if (rendertype == RETRO_POLY_WIREFIRE) {
-		RETRO_SortAllFaces();
-
-		unsigned char color[RETRO_WIDTH];
-		for (int i = 0; i < RETRO_WIDTH; i++) {
-			color[i] = model->c + RANDOM(model->cintensity);
-		}
-
-		for (int i = 0; i < model->visiblefaces; i++) {
-			Face *face = &model->face[model->visibleface[i]];
-
-			PolygonPoint points[face->vertices];
-			for (int j = 0; j < face->vertices; j++) {
-				points[j].x = model->vertex[face->vertex[j]].sx;
-				points[j].y = model->vertex[face->vertex[j]].sy;
-			}
-
-			for (int j = 0; j < face->vertices; j++) {
-				PolygonPoint *p1 = points + j;
-				PolygonPoint *p2 = points + (j + 1) % face->vertices;
-				RETRO_DrawLine2(p1->x, p1->y, p2->x, p2->y, color);
+				if (shadertype == RETRO_SHADE_WIREFIRE) {
+					RETRO_DrawFireLine(p1->x, p1->y, p2->x, p2->y, color, model->cintensity);
+				} else {
+					RETRO_DrawLine(p1->x, p1->y, p2->x, p2->y, color);
+				}
 			}
 		}
 	}
@@ -127,11 +106,15 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			}
 
 			int color = model->c + face->c;
-
 			for (int j = 0; j < face->vertices; j++) {
 				PolygonPoint *p1 = points + j;
 				PolygonPoint *p2 = points + (j + 1) % face->vertices;
-				RETRO_DrawLine(p1->x, p1->y, p2->x, p2->y, color);
+
+				if (shadertype == RETRO_SHADE_WIREFIRE) {
+					RETRO_DrawFireLine(p1->x, p1->y, p2->x, p2->y, color, model->cintensity);
+				} else {
+					RETRO_DrawLine(p1->x, p1->y, p2->x, p2->y, color);
+				}
 			}
 		}
 	}

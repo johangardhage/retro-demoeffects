@@ -85,7 +85,7 @@ void DEMO_Render(double deltatime)
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_W)) {
-		rendertype = RETRO_POLY_WIREFIRE;
+		rendertype = RETRO_POLY_WIREFRAME;
 		shadertype = RETRO_SHADE_NONE;
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = NULL;

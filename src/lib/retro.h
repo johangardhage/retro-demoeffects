@@ -44,6 +44,7 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #define RAD2DEG (M_PI / 180)
 #define RANDOM(n) (((float)rand() / (float)RAND_MAX) * (n))
 #define CLAMP(n, l, h) ((n) < (l) ? (l) : ((n) > ((h) - 1) ? ((h) - 1) : (int)(n)))
+#define CLAMP64(n) ((n) < 0 ? 0 : ((n) > 63 ? 63 : (int)(n)))
 #define CLAMP128(n) ((n) < 0 ? 0 : ((n) > 127 ? 127 : (int)(n)))
 #define CLAMP256(n) ((n) < 0 ? 0 : ((n) > 255 ? 255 : (int)(n)))
 #define CLAMPWIDTH(n) ((n) < 0 ? 0 : ((n) > RETRO_WIDTH - 1 ? RETRO_WIDTH - 1 : (int)(n)))
@@ -95,7 +96,7 @@ struct {
 // Public functions
 // *******************************************************************
 
-void RETRO_RageQuit(const char *message, const char *error)
+void RETRO_RageQuit(const char *message, const char *error = "")
 {
 	printf(message, error);
 	exit(-1);
@@ -167,7 +168,7 @@ RETRO_Image *RETRO_AllocateImage(void)
 {
 	RETRO.image[RETRO.images] = (RETRO_Image *)malloc(sizeof(RETRO_Image));
 	if (RETRO.image[RETRO.images] == NULL) {
-		RETRO_RageQuit("Cannot allocate image memory\n", "");
+		RETRO_RageQuit("Cannot allocate image memory\n");
 	}
 	return RETRO.image[RETRO.images++];
 }
@@ -215,7 +216,7 @@ RETRO_Image *RETRO_LoadImage(const char *filename)
 	// Reserve memory
 	image->data = (unsigned char *)malloc(image->width * image->height);
 	if (image->data == NULL) {
-		RETRO_RageQuit("Cannot allocate image data memory\n", "");
+		RETRO_RageQuit("Cannot allocate image data memory\n");
 	}
 
 	// Unpack image
@@ -313,7 +314,7 @@ void RETRO_Initialize(void)
 	// Create framebuffer
 	RETRO.framebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);
 	if (RETRO.framebuffer == NULL) {
-		RETRO_RageQuit("Cannot allocate framebuffer memory\n", "");
+		RETRO_RageQuit("Cannot allocate framebuffer memory\n");
 	}
 	memset(RETRO.framebuffer, 0, RETRO_WIDTH * RETRO_HEIGHT);
 
@@ -365,7 +366,6 @@ double RETRO_DeltaTime(void)
 
 bool RETRO_KeyState(SDL_Scancode key)
 {
-	if (key > 255) return false;
 	return RETRO.keystate[key];
 }
 

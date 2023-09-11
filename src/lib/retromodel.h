@@ -120,7 +120,7 @@ Model3D *RETRO_Load3DModel(const char *filename, int scale = 256)
 {
 	Model3D *model = (Model3D *)malloc(sizeof(Model3D));
 	if (model == NULL) {
-		RETRO_RageQuit("Cannot allocate 3D model memory\n", "");
+		RETRO_RageQuit("Cannot allocate 3D model memory\n");
 	}
 	RETRO_Model.model = model;
 

@@ -214,6 +214,32 @@ void RETRO_Blur(int blur, int decay = 0, int mode = RETRO_BLUR_CLAMP, unsigned c
 	}
 }
 
+void RETRO_DrawSprite(int x, int y, float xsize, float ysize, int imagewidth, int imageheight, unsigned char* image, unsigned char alpha, int color = -1, unsigned char *buffer = RETRO.framebuffer)
+{
+	float xstart = x - xsize / 2;
+	float ystart = y - ysize / 2;
+	float xdelta = imagewidth / xsize;
+	float ydelta = imageheight / ysize;
+
+	for (int xx = 0; xx < xsize; xx++) {
+		for (int yy = 0; yy < ysize; yy++) {
+			int xpos = xx + xstart;
+			int ypos = yy + ystart;
+			int xsrc = xx * xdelta;
+			int ysrc = yy * ydelta;
+			if (image[ysrc * imagewidth + xsrc] != alpha) {
+				if (xpos >= 0 && xpos < RETRO_WIDTH && ypos >= 0 && ypos < RETRO_HEIGHT) {
+					if (color == -1) {
+						buffer[ypos * RETRO_WIDTH + xpos] = image[ysrc * imagewidth + xsrc];
+					} else {
+						buffer[ypos * RETRO_WIDTH + xpos] = color;
+					}
+				}
+			}
+		}
+	}
+}
+
 RETRO_Palette RETRO_Default8bitPalette[256] = {
   0,   0,   0,
   0,   0, 170,

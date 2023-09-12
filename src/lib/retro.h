@@ -13,6 +13,7 @@
 #include <limits.h> // INT_MIN
 #include <math.h> // cos, sin, pow
 #include <stdio.h> // FILE
+#include <time.h> // time
 
 // *******************************************************************
 // Public dynamic functions

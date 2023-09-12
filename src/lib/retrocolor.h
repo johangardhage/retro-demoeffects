@@ -348,6 +348,37 @@ void RETRO_CreatePlasticPhongPalette(RETRO_Palette *palette)
 	}
 }
 
+void RETRO_CreateRandomPhongPalette(RETRO_Palette *palette, int colors = 64, int exp = 12)
+{
+	float angle = M_PI / 2;
+	float angledelta = M_PI / 2 / colors;
+
+	srand(time(NULL));
+
+	float rdiff = rand() % 20;
+	float rspec = rand() % 50;
+	float gdiff = rand() % 20;
+	float gspec = rand() % 50;
+	float bdiff = rand() % 20;
+	float bspec = rand() % 50;
+
+	for (int i = 0; i < colors; i++) {
+		unsigned char r = rdiff * cos(angle) + rspec * pow(cos(angle), exp);
+		unsigned char g = gdiff * cos(angle) + gspec * pow(cos(angle), exp);
+		unsigned char b = bdiff * cos(angle) + bspec * pow(cos(angle), exp);
+
+		if (r > 31) r = 31;
+		if (g > 63) g = 63;
+		if (b > 31) b = 31;
+
+		palette[i].r = r;
+		palette[i].g = g;
+		palette[i].b = b;
+
+		angle -= angledelta;
+	}
+}
+
 void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 {
 	// clear the map

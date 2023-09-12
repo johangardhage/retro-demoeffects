@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
+#include "lib/retrocolor.h"
 
 void DEMO_Render(double deltatime)
 {
@@ -22,24 +23,13 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	unsigned char r = 0, g = 0, b = 0;
-	for (int i = 0; i < 256; i++) {
-		RETRO_SetColor(i, 0, 0, 0);
-	}
-	for (int i = 32; i < 87; i++) {
-		RETRO_SetColor(i, r, 0, 0);
-		r++;
-	}
-	for (int i = 87; i < 96; i++) {
-		RETRO_SetColor(i, r, g, b);
-		r++;
-		g += 11;
-		b += 11;
-	}
+	RETRO_Palette PhongPalette[RETRO_COLORS];
+	RETRO_CreateRandomPhongPalette(PhongPalette);
+	RETRO_Set6bitPalette(PhongPalette);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
-	model->c = 32;
-	model->cintensity = 96;
+	model->c = 0;
+	model->cintensity = 63 - model->c;
 
 	RETRO_InitializeLightSource(0, 0, -1);
 }

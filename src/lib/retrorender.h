@@ -293,6 +293,8 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 				points[j].v = model->uv[face->uv[j]].v;
 				points[j].e = model->c + model->cintensity * model->normal[face->normal[j]].rnx / model->normal[face->normal[j]].nn;
 				points[j].w = model->c + model->cintensity * model->normal[face->normal[j]].rny / model->normal[face->normal[j]].nn;
+//				points[j].e = RETRO_Render.uvlookup[(int)(model->normal[face->normal[j]].rnx + 256) / 2];
+//				points[j].w = RETRO_Render.uvlookup[(int)(model->normal[face->normal[j]].rny + 256) / 2];
 			}
 			if (model->bumpmap) {
 				RETRO_DrawEnvMapBumpPolygon(points, face->vertices, model->envmap, model->bumpmap);

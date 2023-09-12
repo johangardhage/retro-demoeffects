@@ -215,9 +215,15 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 
 			for (int x = (int)span[y].p1.x; x < (int)span[y].p2.x; x++) {
 				if (x >= 0 && x < RETRO_WIDTH) {
-					float angle = (span[y].p1.nx * light.nx + span[y].p1.ny * light.ny + span[y].p1.nz * light.nz) /
-								  (sqrt(span[y].p1.nx * span[y].p1.nx + span[y].p1.ny * span[y].p1.ny + span[y].p1.nz * span[y].p1.nz) * light.nn);
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = CLAMP(light.cintensity * angle, light.c, light.cintensity);
+					float angle = (span[y].p1.nx * light.nx +
+								   span[y].p1.ny * light.ny +
+								   span[y].p1.nz * light.nz) / (sqrt(span[y].p1.nx * span[y].p1.nx +
+																	 span[y].p1.ny * span[y].p1.ny +
+																	 span[y].p1.nz * span[y].p1.nz) * light.nn);
+					int cmin = light.c;
+					int cmax = light.c + light.cintensity;
+					int color = light.c + light.cintensity * angle;
+					RETRO.framebuffer[y * RETRO_WIDTH + x] = CLAMP(color, cmin, cmax);
 				}
 				span[y].p1.nx += dnx;
 				span[y].p1.ny += dny;

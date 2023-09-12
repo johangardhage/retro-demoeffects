@@ -23,13 +23,13 @@ void DEMO_Initialize(void)
 {
 	float p = 1.8;
 	float d = 4, r = d;
-	for (int i = 0; i < 32; i++) {
+	for (int i = 0; i < 64; i++) {
 		RETRO_SetColor(i, 0, r, 0);
 		r = r + p;
 	}
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
-	model->cintensity = 32;
+	model->cintensity = 64;
 
 	RETRO_InitializeLightSource(0, 0, -1);
 }

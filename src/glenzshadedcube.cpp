@@ -35,7 +35,7 @@ void DEMO_Initialize(void)
 		model->face[i].c = c[i];
 	}
 	model->c = 0;
-	model->cintensity = 32;
+	model->cintensity = 64;
 
 	RETRO_InitializeLightSource(0, 0, -1);
 }

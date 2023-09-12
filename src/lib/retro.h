@@ -49,6 +49,7 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #define CLAMP256(n) ((n) < 0 ? 0 : ((n) > 255 ? 255 : (int)(n)))
 #define CLAMPWIDTH(n) ((n) < 0 ? 0 : ((n) > RETRO_WIDTH - 1 ? RETRO_WIDTH - 1 : (int)(n)))
 #define CLAMPHEIGHT(n) ((n) < 0 ? 0 : ((n) > RETRO_HEIGHT - 1 ? RETRO_HEIGHT - 1 : (int)(n)))
+#define WRAP(n, h) ((int)(n) % (h))
 #define WRAP128(n) ((int)(n) & 127)
 #define WRAP256(n) ((int)(n) & 255)
 #define WRAPWIDTH(n) ((int)(n) % RETRO_WIDTH)

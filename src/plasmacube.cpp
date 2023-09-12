@@ -7,24 +7,29 @@
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 
-#define PLASMA_SIN 1800
+#define PLASMA_FRAMES 720
+#define SINE_VALUES 1800
+#define TEXTURE_WIDTH 256
+#define TEXTURE_HEIGHT 256
 
-int SinTable[PLASMA_SIN];
-
-unsigned char image[256 * 256];
+float SinTable[SINE_VALUES];
+unsigned char image[TEXTURE_WIDTH * TEXTURE_HEIGHT];
 
 void DEMO_Render(double deltatime)
 {
-	static float frame;
-	frame += deltatime * 200;
-	int ap = (int)frame % 720;
+	static float framecounter = 0;
+	framecounter += deltatime * 200;
+	int frame = WRAP(framecounter, PLASMA_FRAMES);
 
 	// Generate plasma
-	for (int x = 0; x < 256; x++) {
-		int c1 = 75 + (SinTable[x * 2 + ap / 2] + SinTable[x + ap * 2] + SinTable[x / 2 + ap] * 2) / 32;
-		for (int y = 0; y < 256; y++) {
-			int c2 = 75 + (SinTable[y + ap * 2] * 2 + SinTable[y * 2 + ap / 2] + SinTable[y + ap] * 2) / 16;
-			image[x + 256 * y] = c1 + c2;
+	for (int y = 0; y < TEXTURE_HEIGHT; y++) {
+		float yc = 75 + SinTable[y + frame * 2] * 2 + SinTable[y * 2 + frame / 2] + SinTable[y + frame] * 2;
+
+		for (int x = 0; x < TEXTURE_WIDTH; x++) {
+			float xc = 75 + SinTable[x * 2 + frame / 2] + SinTable[x + frame * 2] + SinTable[x / 2 + frame] * 2;
+
+			unsigned char color = yc * xc;
+			image[y * TEXTURE_WIDTH + x] = color;
 		}
 	}
 
@@ -41,38 +46,38 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	unsigned char r = 0, g = 0, b = 0;
-	for (int i = 0; i < 256; i++) {
+	for (int i = 0; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, 0, 0, 0);
 	}
 	for (int i = 0; i < 42; i++) {
-		RETRO_SetColor(i, r, g, b);
+		RETRO_SetColor(i, r * 4, g * 4, b * 4);
 		r++;
 	}
 	for (int i = 42; i < 84; i++) {
-		RETRO_SetColor(i, r, g, b);
+		RETRO_SetColor(i, r * 4, g * 4, b * 4);
 		g++;
 	}
 	for (int i = 84; i < 126; i++) {
-		RETRO_SetColor(i, r, g, b);
+		RETRO_SetColor(i, r * 4, g * 4, b * 4);
 		b++;
 	}
 	for (int i = 126; i < 168; i++) {
-		RETRO_SetColor(i, r, g, b);
+		RETRO_SetColor(i, r * 4, g * 4, b * 4);
 		r--;
 	}
 	for (int i = 168; i < 210; i++) {
-		RETRO_SetColor(i, r, g, b);
+		RETRO_SetColor(i, r * 4, g * 4, b * 4);
 		g--;
 	}
 	for (int i = 210; i < 252; i++) {
-		RETRO_SetColor(i, r, g, b);
+		RETRO_SetColor(i, r * 4, g * 4, b * 4);
 		b--;
 	}
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->texmap = image;
 
-	for (int i = 0; i < PLASMA_SIN; i++) {
-		SinTable[i] = sin((M_PI * i) / 180) * 1024;
+	for (int i = 0; i < SINE_VALUES; i++) {
+		SinTable[i] = sin(i * M_PI / 180);
 	}
 }

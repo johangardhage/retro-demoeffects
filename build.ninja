@@ -16,7 +16,7 @@ build $builddir/distort: cc $srcdir/distort.cpp
 build $builddir/distortlogo: cc $srcdir/distortlogo.cpp
 build $builddir/dotflag: cc $srcdir/dotflag.cpp
 build $builddir/dotmorph: cc $srcdir/dotmorph.cpp
-build $builddir/dottorus: cc $srcdir/dottorus.cpp
+build $builddir/dottorus2: cc $srcdir/dottorus2.cpp
 build $builddir/dottunnel: cc $srcdir/dottunnel.cpp
 build $builddir/dottunnel2: cc $srcdir/dottunnel2.cpp
 build $builddir/environcube: cc $srcdir/environcube.cpp
@@ -67,7 +67,7 @@ build distort: phony $builddir/distort
 build distortlogo: phony $builddir/distortlogo
 build dotflag: phony $builddir/dotflag
 build dotmorph: phony $builddir/dotmorph
-build dottorus: phony $builddir/dottorus
+build dottorus2: phony $builddir/dottorus2
 build dottunnel: phony $builddir/dottunnel
 build dottunnel2: phony $builddir/dottunnel2
 build environcube: phony $builddir/environcube

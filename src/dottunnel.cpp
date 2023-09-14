@@ -1,5 +1,5 @@
 //
-// tottunnel.cpp
+// dottunnel.cpp
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

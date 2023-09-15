@@ -57,7 +57,7 @@ void RETRO_RotateFaceNormals(Model3D *model = NULL)
 	}
 }
 
-void RETRO_ProjectModel(float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), Model3D *model = NULL, int eye = 256)
+void RETRO_ProjectModel(float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), Model3D *model = NULL, int eye = 250)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -75,7 +75,7 @@ void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 	RETRO_RotateFaceNormals(model);
 }
 
-void RETRO_ProjectVertex(Vertex *vertex, float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), int eye = 256)
+void RETRO_ProjectVertex(Vertex *vertex, float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), int eye = 250)
 {
 	vertex->sx = x + (scale * vertex->rx * eye) / (scale * vertex->rz + eye);
 	vertex->sy = y + (scale * vertex->ry * eye) / (scale * vertex->rz + eye);

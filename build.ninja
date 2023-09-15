@@ -14,6 +14,7 @@ build $builddir/blobs: cc $srcdir/blobs.cpp
 build $builddir/bump: cc $srcdir/bump.cpp
 build $builddir/distort: cc $srcdir/distort.cpp
 build $builddir/distortlogo: cc $srcdir/distortlogo.cpp
+build $builddir/dotball: cc $srcdir/dotball.cpp
 build $builddir/dotflag: cc $srcdir/dotflag.cpp
 build $builddir/dotmorph: cc $srcdir/dotmorph.cpp
 build $builddir/dottorus: cc $srcdir/dottorus.cpp
@@ -66,6 +67,7 @@ build blobs: phony $builddir/blobs
 build bump: phony $builddir/bump
 build distort: phony $builddir/distort
 build distortlogo: phony $builddir/distortlogo
+build dotball: phony $builddir/dotball
 build dotflag: phony $builddir/dotflag
 build dotmorph: phony $builddir/dotmorph
 build dottorus: phony $builddir/dottorus

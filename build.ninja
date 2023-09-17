@@ -35,8 +35,10 @@ build $builddir/gouraudcube: cc $srcdir/gouraudcube.cpp
 build $builddir/hiddenlinecube: cc $srcdir/hiddenlinecube.cpp
 build $builddir/julia: cc $srcdir/julia.cpp
 build $builddir/lens: cc $srcdir/lens.cpp
+build $builddir/linedance: cc $srcdir/linedance.cpp
+build $builddir/linedance2: cc $srcdir/linedance2.cpp
+build $builddir/linedance3: cc $srcdir/linedance3.cpp
 build $builddir/maskdemo: cc $srcdir/maskdemo.cpp
-build $builddir/magiclines: cc $srcdir/magiclines.cpp
 build $builddir/mandelbrot: cc $srcdir/mandelbrot.cpp
 build $builddir/metaballs: cc $srcdir/metaballs.cpp
 build $builddir/metaballs2: cc $srcdir/metaballs2.cpp
@@ -88,8 +90,10 @@ build gouraudcube: phony $builddir/gouraudcube
 build hiddenlinecube: phony $builddir/hiddenlinecube
 build julia: phony $builddir/julia
 build lens: phony $builddir/lens
+build linedance: phony $builddir/linedance
+build linedance2: phony $builddir/linedance2
+build linedance3: phony $builddir/linedance3
 build maskdemo: phony $builddir/maskdemo
-build magiclines: phony $builddir/magiclines
 build mandelbrot: phony $builddir/mandelbrot
 build metaballs: phony $builddir/metaballs
 build metaballs2: phony $builddir/metaballs2

@@ -1,5 +1,5 @@
 //
-// magiclines.cpp
+// linedance.cpp
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

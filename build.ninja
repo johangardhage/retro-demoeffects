@@ -59,6 +59,7 @@ build $builddir/template_main: cc $srcdir/template_main.cpp
 build $builddir/template_retromain: cc $srcdir/template_retromain.cpp
 build $builddir/texturecube: cc $srcdir/texturecube.cpp
 build $builddir/twister: cc $srcdir/twister.cpp
+build $builddir/twister2: cc $srcdir/twister2.cpp
 build $builddir/voxel: cc $srcdir/voxel.cpp
 build $builddir/water: cc $srcdir/water.cpp
 build $builddir/whitenoise: cc $srcdir/whitenoise.cpp
@@ -115,6 +116,7 @@ build template_main: phony $builddir/template_main
 build template_retromain: phony $builddir/template_retromain
 build texturecube: phony $builddir/texturecube
 build twister: phony $builddir/twister
+build twister2: phony $builddir/twister2
 build voxel: phony $builddir/voxel
 build water: phony $builddir/water
 build whitenoise: phony $builddir/whitenoise

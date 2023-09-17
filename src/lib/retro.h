@@ -42,7 +42,11 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 
 #define RETRO_MAX_IMAGES 10
 
+#define RETRO_SINCOS_ANGLE 256
+
 #define RAD2DEG (M_PI / 180)
+#define COS(x) cos(((x) * 2.0 * M_PI) / RETRO_SINCOS_ANGLE)
+#define SIN(x) sin(((x) * 2.0 * M_PI) / RETRO_SINCOS_ANGLE)
 #define RANDOM(n) (((float)rand() / (float)RAND_MAX) * (n))
 #define CLAMP(n, l, h) ((n) < (l) ? (l) : ((n) > ((h) - 1) ? ((h) - 1) : (int)(n)))
 #define CLAMP64(n) ((n) < 0 ? 0 : ((n) > 63 ? 63 : (int)(n)))
@@ -50,11 +54,11 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #define CLAMP256(n) ((n) < 0 ? 0 : ((n) > 255 ? 255 : (int)(n)))
 #define CLAMPWIDTH(n) ((n) < 0 ? 0 : ((n) > RETRO_WIDTH - 1 ? RETRO_WIDTH - 1 : (int)(n)))
 #define CLAMPHEIGHT(n) ((n) < 0 ? 0 : ((n) > RETRO_HEIGHT - 1 ? RETRO_HEIGHT - 1 : (int)(n)))
-#define WRAP(n, h) ((int)(n) % (h))
-#define WRAP128(n) ((int)(n) & 127)
-#define WRAP256(n) ((int)(n) & 255)
-#define WRAPWIDTH(n) ((int)(n) % RETRO_WIDTH)
-#define WRAPHEIGHT(n) ((int)(n) % RETRO_HEIGHT)
+#define WRAP(n, h) ((unsigned int)(n) % (h))
+#define WRAP128(n) ((unsigned int)(n) & 127)
+#define WRAP256(n) ((unsigned int)(n) & 255)
+#define WRAPWIDTH(n) ((unsigned int)(n) % RETRO_WIDTH)
+#define WRAPHEIGHT(n) ((unsigned int)(n) % RETRO_HEIGHT)
 #define SWAP(x, y) do { typeof(x) _SWAP = x; x = y; y = _SWAP; } while (0)
 
 struct RETRO_Palette {

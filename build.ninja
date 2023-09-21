@@ -55,6 +55,9 @@ build $builddir/rotozoom: cc $srcdir/rotozoom.cpp
 build $builddir/scroller: cc $srcdir/scroller.cpp
 build $builddir/scrollercube: cc $srcdir/scrollercube.cpp
 build $builddir/shadebobs: cc $srcdir/shadebobs.cpp
+build $builddir/stars: cc $srcdir/stars.cpp
+build $builddir/stars2: cc $srcdir/stars2.cpp
+build $builddir/stars3: cc $srcdir/stars3.cpp
 build $builddir/template_main: cc $srcdir/template_main.cpp
 build $builddir/template_retromain: cc $srcdir/template_retromain.cpp
 build $builddir/texturecube: cc $srcdir/texturecube.cpp
@@ -112,6 +115,9 @@ build rotozoom: phony $builddir/rotozoom
 build scroller: phony $builddir/scroller
 build scrollercube: phony $builddir/scrollercube
 build shadebobs: phony $builddir/shadebobs
+build stars: phony $builddir/stars
+build stars2: phony $builddir/stars2
+build stars3: phony $builddir/stars3
 build template_main: phony $builddir/template_main
 build template_retromain: phony $builddir/template_retromain
 build texturecube: phony $builddir/texturecube

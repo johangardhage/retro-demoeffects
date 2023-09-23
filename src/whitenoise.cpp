@@ -11,7 +11,7 @@ void DEMO_Render(double deltatime)
 {
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			unsigned char color = rand() & 1 ? 255 : 0;
+			unsigned char color = RANDOM(2) ? 255 : 0;
 			RETRO_PutPixel(x, y, color);
 		}
 	}

@@ -19,8 +19,8 @@ void DEMO_Render(double deltatime)
 {
 	// Calculate movement
 	for (int i = 0; i < NUM_BLOBS; i++) {
-		Blobs[i].x += -2 + (5.0 * (rand() / (RAND_MAX + 2.0)));
-		Blobs[i].y += -2 + (5.0 * (rand() / (RAND_MAX + 2.0)));
+		Blobs[i].x += RANDOM(5) - 2;
+		Blobs[i].y += RANDOM(5) - 2;
 	}
 
 	// Draw blobs

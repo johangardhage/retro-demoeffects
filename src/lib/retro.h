@@ -45,9 +45,11 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #define RETRO_SINCOS_ANGLE 256
 
 #define RAD2DEG (M_PI / 180)
+#define RAND ((float)rand() / RAND_MAX)
+#define RANDOM(n) ((int)(RAND * (n)))
+#define RANDOMF(n) ((float)(RAND * (n)))
 #define COS(x) cos(((x) * 2.0 * M_PI) / RETRO_SINCOS_ANGLE)
 #define SIN(x) sin(((x) * 2.0 * M_PI) / RETRO_SINCOS_ANGLE)
-#define RANDOM(n) (((float)rand() / (float)RAND_MAX) * (n))
 #define CLAMP(n, l, h) ((n) < (l) ? (l) : ((n) > ((h) - 1) ? ((h) - 1) : (int)(n)))
 #define CLAMP64(n) ((n) < 0 ? 0 : ((n) > 63 ? 63 : (int)(n)))
 #define CLAMP128(n) ((n) < 0 ? 0 : ((n) > 127 ? 127 : (int)(n)))
@@ -332,6 +334,9 @@ void RETRO_Initialize(void)
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		RETRO.yoffset[y] = y * RETRO_WIDTH;
 	}
+
+	// Initialize random number generator
+	srand(time(NULL));
 
 	if (RETRO_Initialize_3D != NULL) RETRO_Initialize_3D();
 }

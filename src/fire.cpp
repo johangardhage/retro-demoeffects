@@ -17,7 +17,7 @@ void DEMO_Render(double deltatime)
 
 	// Create flame at the bottom of the screen
 	for (int x = 0; x < RETRO_WIDTH; x++) {
-		if (rand() % FIRE_CHAOS == 0) {
+		if (RANDOM(FIRE_CHAOS) == 0) {
 			for (int y = RETRO_HEIGHT - FIRE_HEIGHT; y < RETRO_HEIGHT; y++) {
 				firebuffer[y * RETRO_WIDTH + x] = 255;
 			}

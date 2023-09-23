@@ -56,10 +56,10 @@ void DEMO_Initialize(void)
 
 	// Init balls
 	for (int i = 0; i < NUM_BALLS; i++) {
-		Balls[i].pos.x = rand() % RETRO_WIDTH;
-		Balls[i].pos.y = rand() % RETRO_HEIGHT;
-		Balls[i].vel.x = (float)rand() / RAND_MAX * 2;
-		Balls[i].vel.y = (float)rand() / RAND_MAX * 2;
-		Balls[i].radius = rand() % 20 + 10;
+		Balls[i].pos.x = RANDOM(RETRO_WIDTH);
+		Balls[i].pos.y = RANDOM(RETRO_HEIGHT);
+		Balls[i].vel.x = RANDOMF(2);
+		Balls[i].vel.y = RANDOMF(2);
+		Balls[i].radius = RANDOM(10) + 10;
 	}
 }

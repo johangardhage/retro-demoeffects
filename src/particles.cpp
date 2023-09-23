@@ -23,9 +23,9 @@ void CreateExplosion(void)
 	for (int i = 0; i < NUM_PARTICLES; i++) {
 		Particles[i].x = x;
 		Particles[i].y = y;
-		Particles[i].xdir = RANDOM(5) - 1.5;
-		Particles[i].ydir = RANDOM(5) - 1.5;
-		float dist = RANDOM(5);
+		Particles[i].xdir = RANDOMF(5) - 1.5;
+		Particles[i].ydir = RANDOMF(5) - 1.5;
+		float dist = RANDOMF(5);
 
 		float len = sqrt(Particles[i].xdir * Particles[i].xdir + Particles[i].ydir * Particles[i].ydir);
 		len = len == 0.0 ? 0.0 : 1.0 / len;
@@ -67,7 +67,7 @@ void DrawParticles(void)
 		}
 
 		if (Particles[i].y >= 219) {
-			Particles[i].col = (rand() & 127) + 128;
+			Particles[i].col = RANDOM(128) + 128;
 		}
 	}
 }

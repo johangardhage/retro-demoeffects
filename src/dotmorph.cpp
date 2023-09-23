@@ -66,8 +66,8 @@ void DEMO_Initialize(void)
 
 	// Create Sphere
 	for (int i = 0; i < POINTS; i++) {
-		float theta = RANDOM(1) * 2 * M_PI;
-		float phi = RANDOM(1) * 2 * M_PI;
+		float theta = RANDOMF(2 * M_PI);
+		float phi = RANDOMF(2 * M_PI);
 		Sphere[i].x = cos(phi) * sin(theta);
 		Sphere[i].y = sin(phi) * sin(theta);
 		Sphere[i].z = cos(theta);
@@ -75,8 +75,8 @@ void DEMO_Initialize(void)
 
 	// Create torus
 	for (int i = 0; i < POINTS; i++) {
-		float theta = RANDOM(1) * 2 * M_PI;
-		float phi = RANDOM(1) * 2 * M_PI;
+		float theta = RANDOMF(2 * M_PI);
+		float phi = RANDOMF(2 * M_PI);
 		Torus[i].x = (0.8 + 0.4 * cos(theta)) * cos(phi);
 		Torus[i].y = (0.8 + 0.4 * cos(theta)) * sin(phi);
 		Torus[i].z = 0.4 * sin(theta);

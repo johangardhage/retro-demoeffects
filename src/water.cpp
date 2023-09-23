@@ -24,8 +24,8 @@ void DEMO_Render(double deltatime)
 
 	// Make drop
 	if (frame % 60 == 0) {
-		int x = rand() % RETRO_WIDTH;
-		int y = rand() % RETRO_HEIGHT;
+		int x = RANDOM(RETRO_WIDTH);
+		int y = RANDOM(RETRO_HEIGHT);
 
 		if (x > 0 && x < RETRO_WIDTH - 1 && y > 1 && y < RETRO_HEIGHT - 1) {
 			Water[y * RETRO_WIDTH + x] -= WATER_DEPTH;

@@ -45,6 +45,7 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #define RETRO_SINCOS_ANGLE 256
 
 #define RAD2DEG (M_PI / 180)
+#define DEG2RAD (180 / M_PI)
 #define RAND ((float)rand() / RAND_MAX)
 #define RANDOM(n) ((int)(RAND * (n)))
 #define RANDOMF(n) ((float)(RAND * (n)))
@@ -63,6 +64,8 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #define WRAPWIDTH(n) ((unsigned int)(n) % RETRO_WIDTH)
 #define WRAPHEIGHT(n) ((unsigned int)(n) % RETRO_HEIGHT)
 #define SWAP(x, y) do { typeof(x) _SWAP = x; x = y; y = _SWAP; } while (0)
+#define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
+#define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 
 struct RETRO_Palette {
 	unsigned char r, g, b;
@@ -89,6 +92,7 @@ struct {
 	bool showcursor;
 	bool showfps;
 	int fpscap;
+	bool quit;
 	SDL_Window *window = NULL;
 	SDL_Renderer *renderer = NULL;
 	SDL_Texture *renderbuffer = NULL;
@@ -116,8 +120,34 @@ unsigned char *RETRO_FrameBuffer(void)
 	return RETRO.framebuffer;
 }
 
+RETRO_Palette RETRO_GetColor(int color)
+{
+	RETRO_Palette palette;
+	palette.r = RETRO.palette[color] >> 16;
+	palette.g = RETRO.palette[color] >> 8;
+	palette.b = RETRO.palette[color];
+	return palette;
+}
+
+RETRO_Palette RETRO_Get6bitColor(int color)
+{
+	RETRO_Palette palette;
+	palette.r = (RETRO.palette[color] >> 16) >> 2;
+	palette.g = (RETRO.palette[color] >> 8) >> 2;
+	palette.b = (RETRO.palette[color]) >> 2;
+	return palette;
+}
+
 void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b)
 {
+	RETRO.palette[color] = (r << 16) | (g << 8) | (b);
+}
+
+void RETRO_Set6bitColor(int color, unsigned char r, unsigned char g, unsigned char b)
+{
+	r = (r & 63) << 2;
+	g = (g & 63) << 2;
+	b = (b & 63) << 2;
 	RETRO.palette[color] = (r << 16) | (g << 8) | (b);
 }
 
@@ -131,10 +161,7 @@ void RETRO_SetPalette(RETRO_Palette *palette, int colors = RETRO_COLORS)
 void RETRO_Set6bitPalette(RETRO_Palette *palette, int colors = RETRO_COLORS)
 {
 	for (int i = 0; i < colors; i++) {
-		unsigned char r = (palette[i].r & 63) << 2;
-		unsigned char g = (palette[i].g & 63) << 2;
-		unsigned char b = (palette[i].b & 63) << 2;
-		RETRO_SetColor(i, r, g, b);
+		RETRO_Set6bitColor(i, palette[i].r, palette[i].g, palette[i].b);
 	}
 }
 
@@ -148,9 +175,9 @@ unsigned char RETRO_GetPixel(int x, int y)
 	return RETRO.framebuffer[RETRO.yoffset[y] + x];
 }
 
-void RETRO_Clear(unsigned char color = 0)
+void RETRO_Clear(unsigned char color = 0, int size = RETRO_WIDTH * RETRO_HEIGHT, unsigned char *dest = RETRO.framebuffer)
 {
-	memset(RETRO.framebuffer, color, RETRO_WIDTH * RETRO_HEIGHT);
+	memset(dest, color, size);
 }
 
 void RETRO_Blit(unsigned char *src, int size = RETRO_WIDTH * RETRO_HEIGHT, unsigned char *dest = RETRO.framebuffer)
@@ -401,6 +428,8 @@ bool RETRO_QuitRequested(void)
 	SDL_PumpEvents();
 	RETRO.keystate = SDL_GetKeyboardState(NULL);
 	if (SDL_QuitRequested()) {
+		return true;
+	} else if (RETRO.quit) {
 		return true;
 	} else if (RETRO.keystate[SDL_SCANCODE_ESCAPE]) {
 		return true;

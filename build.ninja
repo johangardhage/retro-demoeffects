@@ -12,6 +12,7 @@ rule cc
 
 build $builddir/blobs: cc $srcdir/blobs.cpp
 build $builddir/bump: cc $srcdir/bump.cpp
+build $builddir/conio: cc $srcdir/conio.cpp
 build $builddir/distort: cc $srcdir/distort.cpp
 build $builddir/distortlogo: cc $srcdir/distortlogo.cpp
 build $builddir/dotball: cc $srcdir/dotball.cpp
@@ -72,6 +73,7 @@ build $builddir/xorcircles: cc $srcdir/xorcircles.cpp
 
 build blobs: phony $builddir/blobs
 build bump: phony $builddir/bump
+build conio: phony $builddir/conio
 build distort: phony $builddir/distort
 build distortlogo: phony $builddir/distortlogo
 build dotball: phony $builddir/dotball

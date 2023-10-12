@@ -108,12 +108,17 @@ int main(int argc, char *argv[])
 {
 	RETRO_ParseArguments(argc, argv);
 
-	if (DEMO_Startup != NULL) DEMO_Startup();
-	RETRO_Initialize();
-	if (DEMO_Initialize != NULL) DEMO_Initialize();
-	RETRO_Mainloop();
-	if (DEMO_Deinitialize != NULL) DEMO_Deinitialize();
-	RETRO_Deinitialize();
+	if (DEMO_Startup) DEMO_Startup();
+
+	if (DEMO_Initialize || DEMO_Deinitialize || DEMO_Render || DEMO_Render2 ) {
+		RETRO_Initialize();
+		if (DEMO_Initialize) DEMO_Initialize();
+
+		if (DEMO_Render || DEMO_Render2) RETRO_Mainloop();
+
+		if (DEMO_Deinitialize) DEMO_Deinitialize();
+		RETRO_Deinitialize();
+	}
 
 	return 0;
 }

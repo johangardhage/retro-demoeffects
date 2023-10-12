@@ -365,12 +365,12 @@ void RETRO_Initialize(void)
 	// Initialize random number generator
 	srand(time(NULL));
 
-	if (RETRO_Initialize_3D != NULL) RETRO_Initialize_3D();
+	if (RETRO_Initialize_3D) RETRO_Initialize_3D();
 }
 
 void RETRO_Deinitialize(void)
 {
-	if (RETRO_Deinitialize_3D != NULL) RETRO_Deinitialize_3D();
+	if (RETRO_Deinitialize_3D) RETRO_Deinitialize_3D();
 
 	for (int i = 0; i < RETRO_MAX_IMAGES; i++) {
 		RETRO_FreeImage(i);

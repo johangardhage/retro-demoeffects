@@ -36,8 +36,13 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 // Public variables
 // *******************************************************************
 
+#ifndef RETRO_WIDTH
 #define RETRO_WIDTH 320
+#endif
+#ifndef RETRO_HEIGHT
 #define RETRO_HEIGHT 240
+#endif
+
 #define RETRO_COLORS 256
 
 #define RETRO_MAX_IMAGES 10
@@ -87,6 +92,7 @@ enum { RETRO_MODE_FULLSCREEN, RETRO_MODE_FULLWINDOW, RETRO_MODE_WINDOW };
 struct {
 	int mode;
 	char *basename;
+	bool stretch;
 	bool vsync;
 	bool linear;
 	bool showcursor;
@@ -97,13 +103,14 @@ struct {
 	SDL_Renderer *renderer = NULL;
 	SDL_Texture *renderbuffer = NULL;
 	unsigned char *framebuffer = NULL;
+	int framebuffersize;
 	unsigned int palette[RETRO_COLORS];
 	RETRO_Image *image[RETRO_MAX_IMAGES];
 	int images = 0;
 	const unsigned char *keystate;
 	bool keydown[256];
 	int yoffset[RETRO_HEIGHT];
-} RETRO = { .mode = RETRO_MODE_FULLSCREEN, .vsync = true, .showfps = true };
+} RETRO = { .mode = RETRO_MODE_FULLSCREEN, .stretch = false, .vsync = true, .showfps = true };
 
 // *******************************************************************
 // Public functions
@@ -175,12 +182,12 @@ unsigned char RETRO_GetPixel(int x, int y)
 	return RETRO.framebuffer[RETRO.yoffset[y] + x];
 }
 
-void RETRO_Clear(unsigned char color = 0, int size = RETRO_WIDTH * RETRO_HEIGHT, unsigned char *dest = RETRO.framebuffer)
+void RETRO_Clear(unsigned char color = 0, int size = RETRO.framebuffersize, unsigned char *dest = RETRO.framebuffer)
 {
 	memset(dest, color, size);
 }
 
-void RETRO_Blit(unsigned char *src, int size = RETRO_WIDTH * RETRO_HEIGHT, unsigned char *dest = RETRO.framebuffer)
+void RETRO_Blit(unsigned char *src, int size = RETRO.framebuffersize, unsigned char *dest = RETRO.framebuffer)
 {
 	memcpy(dest, src, size);
 }
@@ -192,12 +199,12 @@ int *RETRO_Yoffset(void)
 
 unsigned char *RETRO_ImageData(int id = 0)
 {
-	return RETRO.image[id] != NULL ? RETRO.image[id]->data : NULL;
+	return RETRO.image[id] ? RETRO.image[id]->data : NULL;
 }
 
 RETRO_Palette *RETRO_ImagePalette(int id = 0)
 {
-	return RETRO.image[id] != NULL ? RETRO.image[id]->palette : NULL;
+	return RETRO.image[id] ? RETRO.image[id]->palette : NULL;
 }
 
 RETRO_Image *RETRO_AllocateImage(void)
@@ -222,7 +229,7 @@ void RETRO_FreeImage(int id = 0)
 	}
 }
 
-RETRO_Image *RETRO_LoadImage(const char *filename)
+RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = false)
 {
 	RETRO_Image *image = RETRO_AllocateImage();
 
@@ -281,6 +288,11 @@ RETRO_Image *RETRO_LoadImage(const char *filename)
 	// Close file
 	fclose(fp);
 
+	// Set palette
+	if (setpalette) {
+		RETRO_SetPalette(image->palette);
+	}
+
 	return image;
 }
 
@@ -289,7 +301,7 @@ void RETRO_Flip(void)
 	// Copy framebuffer
 	unsigned int *pixels, pitch;
 	SDL_LockTexture(RETRO.renderbuffer, NULL, (void **)&pixels, (int *)&pitch);
-	for (int i = 0; i < RETRO_WIDTH * RETRO_HEIGHT; i++) {
+	for (int i = 0; i < RETRO.framebuffersize; i++) {
 		pixels[i] = RETRO.palette[RETRO.framebuffer[i]];
 	}
 	SDL_UnlockTexture(RETRO.renderbuffer);
@@ -337,7 +349,11 @@ void RETRO_Initialize(void)
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 	}
 	RETRO.renderer = SDL_CreateRenderer(RETRO.window, -1, flags);
-	SDL_RenderSetLogicalSize(RETRO.renderer, RETRO_WIDTH, RETRO_HEIGHT);
+
+	// Stretch screen
+	if (RETRO.stretch == false) {
+		SDL_RenderSetLogicalSize(RETRO.renderer, RETRO_WIDTH, RETRO_HEIGHT);
+	}
 
 	// Set fullscreen
 	if (RETRO.mode == RETRO_MODE_FULLSCREEN) {
@@ -348,11 +364,12 @@ void RETRO_Initialize(void)
 	RETRO.renderbuffer = SDL_CreateTexture(RETRO.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
 
 	// Create framebuffer
-	RETRO.framebuffer = (unsigned char *)malloc(RETRO_WIDTH * RETRO_HEIGHT);
+	RETRO.framebuffersize = RETRO_WIDTH * RETRO_HEIGHT;
+	RETRO.framebuffer = (unsigned char *)malloc(RETRO.framebuffersize);
 	if (RETRO.framebuffer == NULL) {
 		RETRO_RageQuit("Cannot allocate framebuffer memory\n");
 	}
-	memset(RETRO.framebuffer, 0, RETRO_WIDTH * RETRO_HEIGHT);
+	memset(RETRO.framebuffer, 0, RETRO.framebuffersize);
 
 	// Cursor
 	SDL_ShowCursor(RETRO.showcursor);
@@ -423,6 +440,11 @@ bool RETRO_KeyPressed(SDL_Scancode key)
 	return false;
 }
 
+void RETRO_Quit(void)
+{
+	RETRO.quit = true;
+}
+
 bool RETRO_QuitRequested(void)
 {
 	SDL_PumpEvents();
@@ -455,11 +477,11 @@ void RETRO_Mainloop(void)
 
 		// Render scene
 		unsigned long int start = SDL_GetTicks64();
-		if (DEMO_Render != NULL) {
+		if (DEMO_Render) {
 			RETRO_Clear();
 			DEMO_Render(deltatime);
 			RETRO_Flip();
-		} else if (DEMO_Render2 != NULL) {
+		} else if (DEMO_Render2) {
 			DEMO_Render2(deltatime);
 		}
 		unsigned long int stop = SDL_GetTicks64();

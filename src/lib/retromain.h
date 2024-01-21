@@ -17,6 +17,8 @@ void RETRO_ParseArguments(int argc, char *argv[])
 		{"window", no_argument, 0, 'w'},
 		{"fullwindow", no_argument, 0, 0},
 		{"fullscreen", no_argument, 0, 'f'},
+		{"stretch", no_argument, 0, 's'},
+		{"nostretch", no_argument, 0, 0},
 		{"vsync", no_argument, 0, 'v'},
 		{"novsync", no_argument, 0, 0},
 		{"linear", no_argument, 0, 'l'},
@@ -30,11 +32,13 @@ void RETRO_ParseArguments(int argc, char *argv[])
 	bool usage = false;
 	int c;
 	int option_index = 0;
-	while ((c = getopt_long(argc, argv, ":hwflcv", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, ":hwfslcv", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 0:
 			if (strcmp("fullwindow", long_options[option_index].name) == 0) {
 				RETRO.mode = RETRO_MODE_FULLWINDOW;
+			} else if (strcmp("nostretch", long_options[option_index].name) == 0) {
+				RETRO.stretch = false;
 			} else if (strcmp("novsync", long_options[option_index].name) == 0) {
 				RETRO.vsync = false;
 			} else if (strcmp("nolinear", long_options[option_index].name) == 0) {
@@ -57,6 +61,9 @@ void RETRO_ParseArguments(int argc, char *argv[])
 			break;
 		case 'f':
 			RETRO.mode = RETRO_MODE_FULLSCREEN;
+			break;
+		case 's':
+			RETRO.stretch = true;
 			break;
 		case 'v':
 			RETRO.vsync = true;
@@ -91,6 +98,8 @@ void RETRO_ParseArguments(int argc, char *argv[])
 		printf(" -w, --window         Render in a window\n");
 		printf("     --fullwindow     Render in a fullscreen window\n");
 		printf(" -f, --fullscreen     Render in fullscreen\n");
+		printf(" -s, --stretch        Stretch the screen\n");
+		printf("     --nostretch      Use fixed resolution for rendering\n");
 		printf(" -v, --vsync          Enable sync to vertical refresh\n");
 		printf("     --novsync        Disable sync to vertical refresh\n");
 		printf(" -l, --linear         Render using linear filtering\n");

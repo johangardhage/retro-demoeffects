@@ -30,7 +30,7 @@ void DEMO_Initialize(void)
 	}
 
 	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
-	int c[model->faces] = {30, 30, 30, 30, 30, 30};
+	int c[6] = {30, 30, 30, 30, 30, 30};
 	for (int i = 0; i < model->faces; i++) {
 		model->face[i].c = c[i];
 	}

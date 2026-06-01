@@ -8,45 +8,35 @@ Classic demo effects using software rendering
 
 To build the demo programs, you must first install the following tools:
 
-- [GCC](https://gcc.gnu.org/)
+- [Meson](https://mesonbuild.com/)
 - [Ninja](https://ninja-build.org/)
+- [GCC](https://gcc.gnu.org/) or [Clang](https://clang.llvm.org/)
 - [SDL2](https://www.libsdl.org/)
 
 ### Install dependencies
 
 #### openSUSE
 
-`$ sudo zypper install ninja gcc-c++ libSDL2-devel`
+`$ sudo zypper install meson ninja gcc-c++ libSDL2-devel`
 
 #### Ubuntu
 
-`$ sudo apt install ninja-build g++ libsdl2-dev`
+`$ sudo apt install meson ninja-build g++ libsdl2-dev`
 
-#### Windows
+#### macOS
 
-Manually download and install [MSYS2](https://www.msys2.org/).
-
-Run `View advanced system settings` from the Start menu and add a PATH to `C:\msys64\mingw64\bin`.
-
-Run `MSYS2 MSYS` from the Start menu. Update the package database and base packages with `pacman -Syu`.
-
-Run `MSYS2 MSYS` from the Start menu again. Update the rest of the base packages with `pacman -Syu`.
-
-Install the development tools with `pacman -S git mingw-w64-x86_64-gcc mingw-w64-x86_64-ninja mingw-w64-x86_64-SDL2`.
-
-Close the `MSYS2 MSYS` window and run `MSYS MinGW 64-bit` from the Start menu.
-
-Clone the git repository with `git clone https://github.com/johangardhage/retro-demoeffects.git`.
-
-Finally, to be able to build the demos on Windows, edit the file `build.ninja` and uncomment the line [#  command = $cc $in $windows -o $out.](build.ninja#L10).
+`$ brew install meson ninja sdl2`
 
 ## Build instructions
 
 To build the demo programs, run:
 
-`$ ninja`
+```
+$ meson setup build
+$ ninja -C build
+```
 
-A `build` directory will be created, containing the demo programs.
+The `build` directory will contain the demo programs.
 
 ## Usage
 

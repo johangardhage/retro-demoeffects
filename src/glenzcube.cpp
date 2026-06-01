@@ -29,7 +29,7 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(5, 63 * 4, 63 * 4, 63 * 4); // dark white
 
 	Model3D *model = RETRO_Load3DModel("assets/glenz3.obj");
-	int c[model->faces] = { 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2 };
+	int c[24] = { 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2 };
 
 	for (int i = 0; i < model->faces; i++) {
 		model->face[i].c = c[i];

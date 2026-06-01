@@ -7,7 +7,7 @@
 #ifndef _RETRO_H_
 #define _RETRO_H_
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <getopt.h> // getopt_long
 #include <libgen.h> // basename
 #include <limits.h> // INT_MIN

@@ -7,6 +7,7 @@
 #ifndef _RETROMAIN_H_
 #define _RETROMAIN_H_
 
+#include <SDL3/SDL_main.h>
 #include "retro.h"
 
 void RETRO_ParseArguments(int argc, char *argv[])

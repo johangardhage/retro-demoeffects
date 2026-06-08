@@ -1,7 +1,7 @@
 project('retro-demoeffects', 'cpp',
   default_options: ['warning_level=1', 'buildtype=debug'])
 
-sdl2 = dependency('sdl2')
+sdl3 = dependency('sdl3')
 
 link_args = []
 if host_machine.system() == 'darwin'
@@ -73,6 +73,6 @@ demos = [
 
 foreach demo : demos
   executable(demo, 'src' / demo + '.cpp',
-    dependencies: sdl2,
+    dependencies: sdl3,
     link_args: link_args)
 endforeach

@@ -28,8 +28,8 @@ void DEMO_Render2(double deltatime)
 		y = CLAMPHEIGHT(y);
 
 		// Transform logical mouse position to window position and move mouse
-		int realx, realy;
-		SDL_RenderLogicalToWindow(RETRO.renderer, x, y, &realx, &realy);
+		float realx, realy;
+		SDL_RenderCoordinatesToWindow(RETRO.renderer, x, y, &realx, &realy);
 		SDL_WarpMouseInWindow(RETRO.window, realx, realy);
 	}
 
@@ -55,7 +55,7 @@ void DEMO_Initialize(void)
 	RETRO_SetMouseMode(false);
 
 	// Move mouse cursor to middle of screen
-	int realx, realy;
-	SDL_RenderLogicalToWindow(RETRO.renderer, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, &realx, &realy);
+	float realx, realy;
+	SDL_RenderCoordinatesToWindow(RETRO.renderer, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, &realx, &realy);
 	SDL_WarpMouseInWindow(RETRO.window, realx, realy);
 }

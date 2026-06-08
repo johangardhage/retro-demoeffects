@@ -122,6 +122,7 @@ Model3D *RETRO_Load3DModel(const char *filename, int scale = 256)
 	if (model == NULL) {
 		RETRO_RageQuit("Cannot allocate 3D model memory\n");
 	}
+	memset(model, 0, sizeof(Model3D));
 	RETRO_Model.model = model;
 
 	FILE *fp = fopen(filename, "rb");

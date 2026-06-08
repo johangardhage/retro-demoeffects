@@ -11,21 +11,21 @@ To build the demo programs, you must first install the following tools:
 - [Meson](https://mesonbuild.com/)
 - [Ninja](https://ninja-build.org/)
 - [GCC](https://gcc.gnu.org/) or [Clang](https://clang.llvm.org/)
-- [SDL2](https://www.libsdl.org/)
+- [SDL3](https://www.libsdl.org/)
 
 ### Install dependencies
 
 #### openSUSE
 
-`$ sudo zypper install meson ninja gcc-c++ libSDL2-devel`
+`$ sudo zypper install meson ninja gcc-c++ SDL3-devel`
 
 #### Ubuntu
 
-`$ sudo apt install meson ninja-build g++ libsdl2-dev`
+`$ sudo apt install meson ninja-build g++ libsdl3-dev`
 
 #### macOS
 
-`$ brew install meson ninja sdl2`
+`$ brew install meson ninja pkg-config sdl3`
 
 ## Build instructions
 

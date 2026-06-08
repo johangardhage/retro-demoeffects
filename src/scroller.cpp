@@ -12,7 +12,7 @@
 
 #define SCROLL_TEXT "                    HORIZONTAL SCROLLER..."
 
-unsigned char scroll_bitmap[FONT_WIDTH * FONT_HEIGHT * strlen(SCROLL_TEXT)];
+unsigned char scroll_bitmap[FONT_WIDTH * FONT_HEIGHT * (sizeof(SCROLL_TEXT) - 1)];
 
 void DEMO_Render(double deltatime)
 {

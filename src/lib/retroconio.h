@@ -223,7 +223,7 @@ int CONIO_putch(const char c)
 
 int CONIO_cputs(const char *str)
 {
-	printf(str);
+	printf("%s", str);
 	return 0;
 }
 

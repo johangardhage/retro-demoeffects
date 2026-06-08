@@ -53,7 +53,7 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 
 #define RAD2DEG (M_PI / 180)
 #define DEG2RAD (180 / M_PI)
-#define RAND ((float)rand() / RAND_MAX)
+#define RAND ((float)rand() / (float)RAND_MAX)
 #define RANDOM(n) ((int)(RAND * (n)))
 #define RANDOMF(n) ((float)(RAND * (n)))
 #define COS(x) cos(((x) * 2.0 * M_PI) / RETRO_SINCOS_ANGLE)

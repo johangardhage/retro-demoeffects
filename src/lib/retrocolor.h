@@ -88,7 +88,6 @@ void RETRO_ShrinkColorCube(RETRO_Palette *min, RETRO_Palette *max)
 {
 	RETRO_Palette newmin = *max;
 	RETRO_Palette newmax = *min;
-	int colors = 0;
 
 	// printf("Shrink");
 
@@ -99,9 +98,6 @@ void RETRO_ShrinkColorCube(RETRO_Palette *min, RETRO_Palette *max)
 		if (color.r >= min->r && color.r < max->r &&
 			color.g >= min->g && color.g < max->g &&
 			color.b >= min->b && color.b < max->b) {
-
-			// Number of colors in the cube
-			colors++;
 
 			// Does this expand out boundaries?
 			if (color.r < newmin.r) newmin.r = color.r;

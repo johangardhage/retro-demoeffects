@@ -25,8 +25,8 @@ void DEMO_Render(double deltatime)
 	// Draw texture
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int tx = (unsigned int)(( x * cosa - y * sina) * (sina + 1)) % TEXTURE_WIDTH;
-			int ty = (unsigned int)(( x * sina + y * cosa) * (sina + 1)) % TEXTURE_HEIGHT;
+			int tx = WRAP(( x * cosa - y * sina) * (sina + 1), TEXTURE_WIDTH);
+			int ty = WRAP(( x * sina + y * cosa) * (sina + 1), TEXTURE_HEIGHT);
 			int color = image[ty * TEXTURE_WIDTH + tx];
 
 			RETRO_PutPixel(x, y, color);

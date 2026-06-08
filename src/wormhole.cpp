@@ -30,7 +30,7 @@ void DEMO_Render(double deltatime)
 	// Create new image
 	for (int y = 0; y < TEXTURE_HEIGHT; y++) {
 		for (int x = 0; x < TEXTURE_WIDTH; x++) {
-			newimage[TEXTURE_WIDTH * y + x] = image[TEXTURE_WIDTH * ((y + yframe) % TEXTURE_HEIGHT) + ((x + xframe) % TEXTURE_WIDTH)];
+			newimage[TEXTURE_WIDTH * y + x] = image[TEXTURE_WIDTH * WRAP(y + yframe, TEXTURE_HEIGHT) + WRAP(x + xframe, TEXTURE_WIDTH)];
 		}
 	}
 
@@ -66,7 +66,7 @@ void DEMO_Initialize(void)
 			int y = yd * SinTable[s] + RETRO_HEIGHT / 2 - RETRO_HEIGHT / 4 - zd;
 
 			if ((x >= 0) && (x < RETRO_WIDTH) && (y >= 0) && (y < RETRO_HEIGHT)) {
-				unsigned char color = (s / 8) % TEXTURE_WIDTH + (TEXTURE_WIDTH * ((d / 7) % TEXTURE_WIDTH));
+				unsigned char color = WRAP(s / 8, TEXTURE_WIDTH) + (TEXTURE_WIDTH * WRAP(d / 7, TEXTURE_WIDTH));
 				WormHole[y * RETRO_WIDTH + x] = color;
 			}
 		}

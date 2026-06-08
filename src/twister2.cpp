@@ -53,7 +53,7 @@ void DEMO_Render(double deltatime)
 		}
 
 		// Move scroll
-		float om = (x + (amul * 2)) % IMAGE_WIDTH;
+		float om = WRAP(x + (amul * 2), IMAGE_WIDTH);
 		float pm0 = 0;
 		float pm1 = 0;
 

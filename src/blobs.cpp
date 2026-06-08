@@ -59,7 +59,8 @@ void DEMO_Initialize(void)
 
 			if (distance <= BLOB_SRADIUS) {
 				float fraction = distance / BLOB_SRADIUS;
-				Blob[y * BLOB_DRADIUS + x] = (unsigned char) (pow((0.7 - (fraction * fraction)), 3.3) * 255.0);
+				float base = 0.7 - (fraction * fraction);
+				Blob[y * BLOB_DRADIUS + x] = base > 0 ? (unsigned char) (pow(base, 3.3) * 255.0) : 0;
 			} else {
 				Blob[y * BLOB_DRADIUS + x] = 0;
 			}

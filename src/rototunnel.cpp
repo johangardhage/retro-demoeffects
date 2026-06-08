@@ -32,8 +32,8 @@ void DEMO_Render(double deltatime)
 	// Draw tunnel
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int tx = ((unsigned int)DistanceTable[x + dx][y + dy] + sx) % TEXTURE_WIDTH;
-			int ty = ((unsigned int)AngleTable[x + dx][y + dy] + sy) % TEXTURE_HEIGHT;
+			int tx = WRAP(DistanceTable[x + dx][y + dy] + sx, TEXTURE_WIDTH);
+			int ty = WRAP(AngleTable[x + dx][y + dy] + sy, TEXTURE_HEIGHT);
 			unsigned char color = image[ty * TEXTURE_WIDTH + tx];
 
 			RETRO_PutPixel(x, y, color);

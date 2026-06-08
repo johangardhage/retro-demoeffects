@@ -17,7 +17,7 @@ void DEMO_Render(double deltatime)
 	// Draw every pixel again with the shifted palette color
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int color = (Plasma[y][x] + (int)frame) % RETRO_COLORS;
+			int color = WRAP(Plasma[y][x] + (int)frame, RETRO_COLORS);
 			RETRO_PutPixel(x, y, color);
 		}
 	}

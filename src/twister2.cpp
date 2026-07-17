@@ -18,8 +18,9 @@ int visible[8][3] = { {3, 0, 1}, {2, 3, 0}, {2, 3, 0}, {1, 2, 3}, {1, 2, 3}, {0,
 
 void DEMO_Render(double deltatime)
 {
-	static int amul = 0;
-	amul++;
+	static double amul_counter = 0;
+	amul_counter += deltatime * 60;
+	int amul = amul_counter;
 
 	for (int x = 0; x < RETRO_WIDTH; x++) {
 		int angle = WRAP((100 * COS(amul)) + ((80 * SIN(x / 4 + amul * 2)) * COS(SIN(amul))), RETRO_SINCOS_ANGLE);

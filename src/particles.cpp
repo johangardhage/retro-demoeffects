@@ -9,6 +9,7 @@
 
 #define NUM_PARTICLES 6000
 #define PARTICLE_GRAVITY 0.13
+#define SIMULATION_STEP (1.0 / 60.0)
 
 struct Particle {
 	float x, y, xdir, ydir;
@@ -23,8 +24,8 @@ void CreateExplosion(void)
 	for (int i = 0; i < NUM_PARTICLES; i++) {
 		Particles[i].x = x;
 		Particles[i].y = y;
-		Particles[i].xdir = RANDOMF(5) - 1.5;
-		Particles[i].ydir = RANDOMF(5) - 1.5;
+		Particles[i].xdir = RANDOMF(5) - 2.5;
+		Particles[i].ydir = RANDOMF(5) - 2.5;
 		float dist = RANDOMF(5);
 
 		float len = sqrt(Particles[i].xdir * Particles[i].xdir + Particles[i].ydir * Particles[i].ydir);
@@ -36,7 +37,7 @@ void CreateExplosion(void)
 	}
 }
 
-void DrawParticles(void)
+void UpdateParticles(void)
 {
 	for (int i = 0; i < NUM_PARTICLES; i++) {
 		RETRO_PutPixel(Particles[i].x, Particles[i].y, Particles[i].col);
@@ -70,22 +71,23 @@ void DrawParticles(void)
 			Particles[i].col = RANDOM(128) + 128;
 		}
 	}
+
+	RETRO_Blur(RETRO_BLUR_DIFFUSE, 3);
 }
 
 void DEMO_Render2(double deltatime)
 {
-	// Calculate frame
-	static double frame_counter = 0;
-	frame_counter += deltatime * 10;
-	int frame = frame_counter;
+	static double accumulator = 0;
+	static int tick = 0;
 
-	if (frame % 15 == 0) {
-		CreateExplosion();
+	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
+	while (accumulator >= SIMULATION_STEP) {
+		if (tick % 90 == 0) CreateExplosion();
+		UpdateParticles();
+		tick++;
+		accumulator -= SIMULATION_STEP;
 	}
 
-	DrawParticles();
-
-	RETRO_Blur(RETRO_BLUR_4, 3);
 	RETRO_Flip();
 }
 

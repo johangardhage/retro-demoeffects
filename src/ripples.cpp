@@ -7,7 +7,7 @@
 #include "lib/retromain.h"
 
 #define WATER_YPOS 185
-#define WATER_WAVELENGTH 1.5
+#define WATER_WAVES 11
 #define WATER_AMPLITUDE 3
 #define SINE_VALUES 100
 
@@ -39,8 +39,8 @@ void DEMO_Initialize(void)
 	RETRO_LoadImage("assets/monkey_320x240.pcx");
 	RETRO_SetPalette(RETRO_ImagePalette());
 
-	// Init sine table
+	// Init sine table with a whole number of waves, so it wraps smoothly
 	for (int i = 0; i < SINE_VALUES; i++) {
-		SinTable[i] = sin(i / WATER_WAVELENGTH) * WATER_AMPLITUDE;
+		SinTable[i] = sin(2 * M_PI * i * WATER_WAVES / SINE_VALUES) * WATER_AMPLITUDE;
 	}
 }

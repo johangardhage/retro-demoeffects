@@ -31,7 +31,7 @@ void DEMO_Render(double deltatime)
 		int y = Ball[i].sy;
 		int z = -round(Ball[i].rz);
 
-		if (x >= 0 && x <= RETRO_WIDTH && y >= 0 && y <= RETRO_HEIGHT && z > ZMIN && z < ZMAX) {
+		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT && z > ZMIN && z < ZMAX) {
 			int color = floor((z + abs(ZMIN)) * (64.0 / (abs(ZMIN) + ZMAX)));
 			RETRO_PutPixel(x, y, color);
 		}
@@ -48,12 +48,13 @@ void DEMO_Initialize(void)
 	// Generate ball
 	for (float alpha = 2 * M_PI; alpha > 0; alpha -= POINTSTEP) {
 		for (float beta = M_PI; beta > 0; beta -= POINTSTEP) {
+			if (NumPoints >= MAXPOINTS) {
+				RETRO_RageQuit("Too many points\n");
+			}
 			Ball[NumPoints].x = RADIUS * cos(alpha) * sin(beta);
 			Ball[NumPoints].y = RADIUS * cos(beta);
 			Ball[NumPoints].z = RADIUS * sin(alpha) * sin(beta);
-			if (++NumPoints > MAXPOINTS) {
-				RETRO_RageQuit("Too many points\n");
-			}
+			NumPoints++;
 		}
 	}
 }

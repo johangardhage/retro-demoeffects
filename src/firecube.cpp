@@ -7,18 +7,30 @@
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 
-void DEMO_Render2(double deltatime)
+#define SIMULATION_STEP (1.0 / 60.0)
+
+void UpdateFireCube(void)
 {
 	static float ax, ay, az;
-	ax += deltatime * 2;
-	ay += deltatime * 2;
-	az += deltatime * 2;
+	ax += SIMULATION_STEP * 2;
+	ay += SIMULATION_STEP * 2;
+	az += SIMULATION_STEP * 2;
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
 	RETRO_RenderModel(RETRO_POLY_WIREFRAME, RETRO_SHADE_WIREFIRE);
 
-	RETRO_Blur(RETRO_BLUR_8, 3);
+	RETRO_Blur(RETRO_BLUR_FIRE, 3);
+}
+
+void DEMO_Render2(double deltatime)
+{
+	static double accumulator = 0;
+	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
+	while (accumulator >= SIMULATION_STEP) {
+		UpdateFireCube();
+		accumulator -= SIMULATION_STEP;
+	}
 	RETRO_Flip();
 }
 

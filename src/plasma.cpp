@@ -9,7 +9,7 @@
 #define PLASMA_FRAMES 720
 #define SINE_VALUES (RETRO_WIDTH + PLASMA_FRAMES * 2)
 
-float SinTable[SINE_VALUES];
+float CosTable[SINE_VALUES];
 
 void DEMO_Render(double deltatime)
 {
@@ -20,12 +20,13 @@ void DEMO_Render(double deltatime)
 
 	// Generate plasma
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		float yc = 75 + SinTable[y + frame * 2] * 2 + SinTable[y * 2 + frame / 2] + SinTable[y + frame] * 2;
+		float yc = 75 + CosTable[y + frame * 2] * 2 + CosTable[y * 2 + frame / 2] + CosTable[y + frame] * 2;
 
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			float xc = 75 + SinTable[x * 2 + frame / 2] + SinTable[x + frame * 2] + SinTable[x / 2 + frame] * 2;
+			float xc = 75 + CosTable[x * 2 + frame / 2] + CosTable[x + frame * 2] + CosTable[x / 2 + frame] * 2;
 
-			unsigned char color = xc * yc;
+			// Wrap into the 252-entry palette cycle
+			unsigned char color = (int)(xc * yc) % 252;
 			RETRO_PutPixel(x, y, color);
 		}
 	}
@@ -65,6 +66,6 @@ void DEMO_Initialize(void)
 
 	// Init sine table
 	for (int i = 0; i < SINE_VALUES; i++) {
-		SinTable[i] = cos(i * M_PI / 180);
+		CosTable[i] = cos(i * M_PI / 180);
 	}
 }

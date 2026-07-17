@@ -53,7 +53,7 @@ void DEMO_Initialize(void)
 
 	// Init circle points
 	for (int i = 0; i < NUMPOINTS; i++) {
-		Circle[i].x = RADIUS * cos(i * POINTSTEP * 2.0 * M_PI / MAXDEGREES) * DIVD / (DIVD - 20);
-		Circle[i].y = RADIUS * sin(i * POINTSTEP * 2.0 * M_PI / MAXDEGREES) * DIVD / (DIVD);
+		Circle[i].x = RADIUS * cos(i * POINTSTEP * 2.0 * M_PI / MAXDEGREES);
+		Circle[i].y = RADIUS * sin(i * POINTSTEP * 2.0 * M_PI / MAXDEGREES);
 	}
 }

@@ -29,9 +29,9 @@ void RETRO_RotateVertices(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->vertices; i++) {
-		model->vertex[i].rx = model->vertex[i].x * model->matrix[0][0] + model->vertex[i].y * model->matrix[1][0] + model->vertex[i].z * model->matrix[2][0];
-		model->vertex[i].ry = model->vertex[i].x * model->matrix[0][1] + model->vertex[i].y * model->matrix[1][1] + model->vertex[i].z * model->matrix[2][1];
-		model->vertex[i].rz = model->vertex[i].x * model->matrix[0][2] + model->vertex[i].y * model->matrix[1][2] + model->vertex[i].z * model->matrix[2][2];
+		model->vertex[i].rx = model->vertex[i].x * model->matrix[0][0] + model->vertex[i].y * model->matrix[0][1] + model->vertex[i].z * model->matrix[0][2];
+		model->vertex[i].ry = model->vertex[i].x * model->matrix[1][0] + model->vertex[i].y * model->matrix[1][1] + model->vertex[i].z * model->matrix[1][2];
+		model->vertex[i].rz = model->vertex[i].x * model->matrix[2][0] + model->vertex[i].y * model->matrix[2][1] + model->vertex[i].z * model->matrix[2][2];
 	}
 }
 
@@ -40,9 +40,9 @@ void RETRO_RotateVertexNormals(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->normals; i++) {
-		model->normal[i].rnx = model->normal[i].nx * model->matrix[0][0] + model->normal[i].ny * model->matrix[1][0] + model->normal[i].nz * model->matrix[2][0];
-		model->normal[i].rny = model->normal[i].nx * model->matrix[0][1] + model->normal[i].ny * model->matrix[1][1] + model->normal[i].nz * model->matrix[2][1];
-		model->normal[i].rnz = model->normal[i].nx * model->matrix[0][2] + model->normal[i].ny * model->matrix[1][2] + model->normal[i].nz * model->matrix[2][2];
+		model->normal[i].rnx = model->normal[i].nx * model->matrix[0][0] + model->normal[i].ny * model->matrix[0][1] + model->normal[i].nz * model->matrix[0][2];
+		model->normal[i].rny = model->normal[i].nx * model->matrix[1][0] + model->normal[i].ny * model->matrix[1][1] + model->normal[i].nz * model->matrix[1][2];
+		model->normal[i].rnz = model->normal[i].nx * model->matrix[2][0] + model->normal[i].ny * model->matrix[2][1] + model->normal[i].nz * model->matrix[2][2];
 	}
 }
 
@@ -51,9 +51,9 @@ void RETRO_RotateFaceNormals(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->faces; i++) {
-		model->face[i].facenormal.rnx = model->face[i].facenormal.nx * model->matrix[0][0] + model->face[i].facenormal.ny * model->matrix[1][0] + model->face[i].facenormal.nz * model->matrix[2][0];
-		model->face[i].facenormal.rny = model->face[i].facenormal.nx * model->matrix[0][1] + model->face[i].facenormal.ny * model->matrix[1][1] + model->face[i].facenormal.nz * model->matrix[2][1];
-		model->face[i].facenormal.rnz = model->face[i].facenormal.nx * model->matrix[0][2] + model->face[i].facenormal.ny * model->matrix[1][2] + model->face[i].facenormal.nz * model->matrix[2][2];
+		model->face[i].facenormal.rnx = model->face[i].facenormal.nx * model->matrix[0][0] + model->face[i].facenormal.ny * model->matrix[0][1] + model->face[i].facenormal.nz * model->matrix[0][2];
+		model->face[i].facenormal.rny = model->face[i].facenormal.nx * model->matrix[1][0] + model->face[i].facenormal.ny * model->matrix[1][1] + model->face[i].facenormal.nz * model->matrix[1][2];
+		model->face[i].facenormal.rnz = model->face[i].facenormal.nx * model->matrix[2][0] + model->face[i].facenormal.ny * model->matrix[2][1] + model->face[i].facenormal.nz * model->matrix[2][2];
 	}
 }
 
@@ -179,11 +179,14 @@ void RETRO_SortVisibleFaces(Model3D *model = NULL, bool all = false)
 			for (int j = 0; j < model->face[i].vertices; j++) {
 				model->face[i].z += model->vertex[model->face[i].vertex[j]].rz;
 			}
+			model->face[i].z /= model->face[i].vertices;
 			model->visibleface[model->visiblefaces] = i;
 			model->visiblefaces++;
 		}
 	}
-	RETRO_QuickSort(model, 0, model->visiblefaces - 1);
+	if (model->visiblefaces > 1) {
+		RETRO_QuickSort(model, 0, model->visiblefaces - 1);
+	}
 }
 
 void RETRO_SortAllFaces(Model3D *model = NULL)

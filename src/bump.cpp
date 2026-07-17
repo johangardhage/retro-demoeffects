@@ -38,7 +38,7 @@ void DEMO_Render(double deltatime)
 			int offset = y * RETRO_WIDTH + x;
 
 			int bx = (image[offset + 1] - image[offset - 1]) * LIGHT_DEPTH - (x - lx);
-			int by = (image[offset + 1] - image[offset - 1]) * LIGHT_DEPTH - (y - ly);
+			int by = (image[offset + RETRO_WIDTH] - image[offset - RETRO_WIDTH]) * LIGHT_DEPTH - (y - ly);
 
 			bx = bx < 0 ? 0 : (bx > LIGHTMAP_WIDTH-1 ? LIGHTMAP_WIDTH-1 : bx);
 			by = by < 0 ? 0 : (by > LIGHTMAP_HEIGHT-1 ? LIGHTMAP_HEIGHT-1 : by);

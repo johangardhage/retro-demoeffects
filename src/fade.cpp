@@ -13,33 +13,33 @@
 void DEMO_Render(double deltatime)
 {
 	static bool fadein = true;
-	static int delay = 30;
+	static double delay = 0.5;
 	static double step = 0;
 
 	RETRO_Blit(RETRO_ImageData());
 
-	if (fadein && !delay) {
+	if (fadein && delay <= 0) {
 		if (RETRO_FadeIn(FADEINSTEPS, step, RETRO_ImagePalette())) {
 			fadein = false;
 			step = 0;
-			delay = 60;
+			delay = 1.0;
 		} else {
 			step += deltatime * 200;
 		}
 	}
 
-	if (!fadein && !delay) {
+	if (!fadein && delay <= 0) {
 		if (RETRO_FadeOut(FADEOUTSTEPS, step, RETRO_ImagePalette())) {
 			fadein = true;
 			step = 0;
-			delay = 30;
+			delay = 0.5;
 		} else {
 			step += deltatime * 200;
 		}
 	}
 
-	if (delay) {
-		delay--;
+	if (delay > 0) {
+		delay -= deltatime;
 	}
 }
 

@@ -14,6 +14,7 @@
 #define NUM_COLORS 163
 #define SCALE 1
 #define SINE_VALUES 720
+#define SIMULATION_STEP (1.0 / 60.0)
 
 // Big 5x5 torus block
 unsigned char Form[NUM_TORUS][NUM_TORUS] = {
@@ -27,11 +28,10 @@ unsigned char Form[NUM_TORUS][NUM_TORUS] = {
 float SinTable[SINE_VALUES];
 float CosTable[SINE_VALUES];
 
-void DEMO_Render2(double deltatime)
+void UpdateDotTorus(void)
 {
-	// Calculate frame
 	static double frame_counter = 0;
-	frame_counter += deltatime * 200;
+	frame_counter = fmod(frame_counter + 200 * SIMULATION_STEP, SINE_VALUES);
 	int frame = frame_counter;
 
 	Model3D *model = RETRO_Get3DModel();
@@ -45,19 +45,35 @@ void DEMO_Render2(double deltatime)
 
 			for (int y = 0; y < NUM_TORUS; y++) {
 				for (int x = 0; x < NUM_TORUS; x++) {
-					unsigned char color = RETRO_GetPixel(vertex[p].sx + x, model->vertex[p].sy + y) + Form[x][y];
-
-					if (color > NUM_COLORS) {
-						color = NUM_COLORS;
+					int px = vertex[p].sx + x;
+					int py = vertex[p].sy + y;
+					if (px < 0 || px >= RETRO_WIDTH || py < 0 || py >= RETRO_HEIGHT) {
+						continue;
 					}
 
-					RETRO_PutPixel(vertex[p].sx + x, vertex[p].sy + y, color);
+					unsigned char color = RETRO_GetPixel(px, py) + Form[x][y];
+
+					if (color >= NUM_COLORS) {
+						color = NUM_COLORS - 1;
+					}
+
+					RETRO_PutPixel(px, py, color);
 				}
 			}
 		}
 	}
 
-	RETRO_Blur(RETRO_BLUR_4, 3);
+	RETRO_Blur(RETRO_BLUR_DIFFUSE, 3);
+}
+
+void DEMO_Render2(double deltatime)
+{
+	static double accumulator = 0;
+	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
+	while (accumulator >= SIMULATION_STEP) {
+		UpdateDotTorus();
+		accumulator -= SIMULATION_STEP;
+	}
 	RETRO_Flip();
 }
 

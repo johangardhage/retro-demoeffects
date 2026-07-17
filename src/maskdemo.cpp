@@ -169,14 +169,14 @@ void DEMO_Render(double deltatime)
 		RETRO_PutString("r to toggle rotation", 0, 30, 255);
 		RETRO_PutString(", and . to change object distance", 0, 40, 255);
 		RETRO_PutString("i and k to change x rotation", 0, 50, 255);
-		RETRO_PutString("j and l to change y rotation", 0, 60, 255);
-		RETRO_PutString("z and x to change z rotation", 0, 70, 255);
+		RETRO_PutString("x and z to change y rotation", 0, 60, 255);
+		RETRO_PutString("j and l to change z rotation", 0, 70, 255);
 		RETRO_PutString("d to use dots", 0, 90, 255);
 		RETRO_PutString("w to use wireframe", 0, 100, 255);
 		RETRO_PutString("t to use texture mapping", 0, 110, 255);
 		RETRO_PutString("1 to use flat shaded texture mapping", 0, 120, 255);
 		RETRO_PutString("2 to use gouraud shaded texture mapping", 0, 130, 255);
-		RETRO_PutString("3 to use phong shaded texture mapping", 0, 140, 255);
+		RETRO_PutString("3 to use env shaded texture mapping", 0, 140, 255);
 		RETRO_PutString("m to use metal environment mapping", 0, 150, 255);
 		RETRO_PutString("p to use phong environment mapping", 0, 160, 255);
 		RETRO_PutString("b to toggle bumpmapping", 0, 170, 255);
@@ -194,7 +194,7 @@ void DEMO_Initialize(void)
 	RETRO_LoadImage("assets/mask_bumpmap_256x256.pcx");
 
 	// Create optimal palette from texture palette
-	RETRO_CreateOptimalPaletteAndShadeTable(RETRO_ImagePalette(ASSET_TEXMAP), 32);
+	RETRO_CreateOptimalPaletteAndShadeTable(RETRO_ImagePalette(ASSET_TEXMAP), RETRO_SHADE_COLORS);
 	RETRO_Set6bitPalette(RETRO_OptimalPalette());
 
 	// Load model

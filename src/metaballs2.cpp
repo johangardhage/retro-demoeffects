@@ -45,7 +45,7 @@ void DEMO_Render(double deltatime)
 			for (int i = 0; i < NUM_BALLS; i++) {
 				float a = x - Balls[i].x;
 				float b = y - Balls[i].y;
-				float d = (a * a + b * b); // calculate pixel distance from metaball position
+				float d = MAX(a * a + b * b, 0.0001f); // squared pixel distance from metaball position
 				sum += Balls[i].r / d;
 			}
 			RETRO_PutPixel(x, y, CLAMP256(20 * sum));

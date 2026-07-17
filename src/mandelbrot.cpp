@@ -21,8 +21,9 @@ void DEMO_Render(double deltatime)
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			// Calculate the initial real and imaginary part of z, based on the pixel location and zoom and position values
+			// Use the same scale on both axes to keep the aspect ratio square
 			double pr = 1.5 * (x - RETRO_WIDTH / 2) / (0.5 * zoom * RETRO_WIDTH) + moveX;
-			double pi = (y - RETRO_HEIGHT / 2) / (0.5 * zoom * RETRO_HEIGHT) + moveY;
+			double pi = 1.5 * (y - RETRO_HEIGHT / 2) / (0.5 * zoom * RETRO_WIDTH) + moveY;
 
 			double newRe = 0;
 			double newIm = 0;
@@ -53,9 +54,9 @@ void DEMO_Render(double deltatime)
 		}
 	}
 
-	zoom += zoomSpd;
-	zoomSpd *= 1.005;
-	moveX -= 0.0050109f / zoom;
+	zoom += zoomSpd * deltatime * 60;
+	zoomSpd *= pow(1.005, deltatime * 60);
+	moveX -= 0.0050109f * deltatime * 60 / zoom;
 }
 
 void DEMO_Initialize(void)

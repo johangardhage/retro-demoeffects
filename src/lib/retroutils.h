@@ -9,6 +9,7 @@
 
 #include "retro.h"
 
+#pragma pack(push, 1)
 struct {
 	unsigned char Identifier = 10;            // PCX Id Number (Always 0x0A)
 	unsigned char Version = 5;                // Version Number
@@ -29,6 +30,7 @@ struct {
 	unsigned short int VertScreenSize = 0;    // Vertical Screen Size
 	unsigned char Reserved2[54];              // Reserved (Always 0)
 } RETRO_PcxHead;
+#pragma pack(pop)
 
 void RETRO_SaveImage(const char *filename, unsigned char *image, RETRO_Palette *palette, int width, int height)
 {

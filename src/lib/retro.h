@@ -51,9 +51,9 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 
 #define RETRO_SINCOS_ANGLE 256
 
-#define RAD2DEG (M_PI / 180)
-#define DEG2RAD (180 / M_PI)
-#define RAND ((float)rand() / (float)RAND_MAX)
+#define RAD2DEG (180 / M_PI)
+#define DEG2RAD (M_PI / 180)
+#define RAND ((double)rand() / ((double)RAND_MAX + 1))
 #define RANDOM(n) ((int)(RAND * (n)))
 #define RANDOMF(n) ((float)(RAND * (n)))
 #define COS(x) cos(((x) * 2.0 * M_PI) / RETRO_SINCOS_ANGLE)
@@ -243,8 +243,7 @@ RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = false)
 
 	// Read header
 	unsigned char header[128];
-	fread(header, 128, 1, fp);
-	if (header[0] != 10) {
+	if (fread(header, 128, 1, fp) != 1 || header[0] != 10) {
 		RETRO_RageQuit("Cannot read file: %s\n", filename);
 	}
 
@@ -265,15 +264,22 @@ RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = false)
 	}
 
 	// Unpack image
+	int size = image->width * image->height;
 	int index = 0;
-	while (index < image->width * image->height) {
-		unsigned char data = getc(fp);
+	while (index < size) {
+		int data = getc(fp);
+		if (data == EOF) {
+			RETRO_RageQuit("Cannot read file: %s\n", filename);
+		}
 		if (data < 192) {
 			image->data[index++] = data;
 		} else {
-			unsigned char num = data - 192;
+			int num = data - 192;
 			data = getc(fp);
-			while (num-- > 0) {
+			if (data == EOF) {
+				RETRO_RageQuit("Cannot read file: %s\n", filename);
+			}
+			while (num-- > 0 && index < size) {
 				image->data[index++] = data;
 			}
 		}

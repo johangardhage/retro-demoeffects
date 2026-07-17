@@ -24,7 +24,7 @@ void DEMO_Render(double deltatime)
 
 	// Calculate angle
 	static double angle = 0.0;
-	angle = angle < 2 * M_PI ? angle + deltatime * 100 * M_PI / 180.0 : 0.0;
+	angle = fmod(angle + deltatime * 100 * M_PI / 180.0, 2 * M_PI);
 
 	// Transform the torus into a sphere
 	if (frame < 256) {
@@ -50,11 +50,15 @@ void DEMO_Render(double deltatime)
 		RETRO_RotateVertex(&Morph[i], 0, angle, angle);
 		RETRO_ProjectVertex(&Morph[i], SCALE);
 
-		unsigned char color = ceil(SCALE * (Morph[i].rz / -8.6)) + 230;
-		RETRO_PutPixel(Morph[i].sx, Morph[i].sy, color);
+		int x = Morph[i].sx;
+		int y = Morph[i].sy;
+		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+			unsigned char color = ceil(SCALE * (Morph[i].rz / -8.6)) + 230;
+			RETRO_PutPixel(x, y, color);
+		}
 	}
 
-	RETRO_Blur(RETRO_BLUR_3);
+	RETRO_Blur(RETRO_BLUR_VERTICAL);
 }
 
 void DEMO_Initialize(void)
@@ -64,13 +68,14 @@ void DEMO_Initialize(void)
 		RETRO_SetColor(i, i, i, i);
 	}
 
-	// Create Sphere
+	// Create Sphere (uniform sampling, no clustering at the poles)
 	for (int i = 0; i < POINTS; i++) {
-		float theta = RANDOMF(2 * M_PI);
+		float z = 1 - RANDOMF(2);
+		float r = sqrt(1 - z * z);
 		float phi = RANDOMF(2 * M_PI);
-		Sphere[i].x = cos(phi) * sin(theta);
-		Sphere[i].y = sin(phi) * sin(theta);
-		Sphere[i].z = cos(theta);
+		Sphere[i].x = r * cos(phi);
+		Sphere[i].y = r * sin(phi);
+		Sphere[i].z = z;
 	}
 
 	// Create torus

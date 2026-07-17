@@ -27,9 +27,9 @@ void DEMO_Initialize(void)
 {
 	// Init palette
 	for (int i = 0; i < RETRO_COLORS; i++) {
-		int r = 128.0 + 128 * sin((float)M_PI * i / 32.0);
-		int g = 128.0 + 128 * sin((float)M_PI * i / 64.0);
-		int b = 128.0 + 128 * sin((float)M_PI * i / 128.0);
+		int r = 127.5 + 127.5 * sin((float)M_PI * i / 32.0);
+		int g = 127.5 + 127.5 * sin((float)M_PI * i / 64.0);
+		int b = 127.5 + 127.5 * sin((float)M_PI * i / 128.0);
 		RETRO_SetColor(i, r, g, b);
 	}
 

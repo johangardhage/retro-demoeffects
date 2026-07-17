@@ -137,7 +137,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 				float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
 				int cmin = model->c;
 				int cmax = model->c + face->c + model->cintensity;
-				color = CLAMP(model->c + face->c + lint * model->cintensity - model->c, cmin, cmax);
+				color = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
 			}
 
 			RETRO_DrawFlatPolygon(points, face->vertices, color);
@@ -307,7 +307,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 void RETRO_Initialize_3D(void)
 {
-	// Create arc cosine correction lookup
+	// Create arc sine correction lookup
 	for (int i = -128; i < 128; i++) {
 		RETRO_Render.uvlookup[i + 128] = 255.0 * asin(i / 128.0) / M_PI + 127;
 	}

@@ -27,21 +27,22 @@ void DEMO_Render(double deltatime)
 	click -= deltatime * 20;
 
 	if (move <= 0) {
-		move += (dadd * 2);
-		click -= (dadd * 59);
+		double periods = floor(-move / (dadd * 2)) + 1;
+		move += periods * (dadd * 2);
+		click -= periods * (dadd * 59);
 	}
 
 	// Draw tunnel
 	for (int i = 0; i < NUM_RINGS; i++) {
-		double xsine = 260 * sin((add + i * 15) * RAD2DEG);
-		double ysine = 260 * cos((add + i * 15) * RAD2DEG);
+		double xsine = 260 * sin((add + i * 15) * DEG2RAD);
+		double ysine = 260 * cos((add + i * 15) * DEG2RAD);
 
 		for (int j = 0; j < 360 / RING_STEP; j++ ) {
 			int x = (XCoords[j] + xsine) / (depth - i * dadd) + RETRO_WIDTH / 2;
 			int y = (YCoords[j] + ysine) / (depth - i * dadd) + RETRO_HEIGHT / 2;
 
-			if (x > 0 && x < RETRO_WIDTH && y > 0 && y < RETRO_HEIGHT) {
-				RETRO_PutPixel(x, y, (i + 1) * 7);
+			if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+				RETRO_PutPixel(x, y, MIN((i + 1) * 7, 255));
 			}
 		}
 	}
@@ -56,10 +57,10 @@ void DEMO_Initialize(void)
 
 	// Init rings
 	double yadd0 = 75;
-	double yadd1 = RING_RADIUS + 300 * sin((yadd0 * 4) * RAD2DEG);
-	double yadd2 = RING_RADIUS + 300 * cos((yadd0 * 3) * RAD2DEG);
+	double yadd1 = RING_RADIUS + 300 * sin((yadd0 * 4) * DEG2RAD);
+	double yadd2 = RING_RADIUS + 300 * cos((yadd0 * 3) * DEG2RAD);
 	for (int i = 0; i < 360 / RING_STEP; i++) {
-		XCoords[i] = sin((i * RING_STEP + yadd0 * 2) * RAD2DEG) * yadd1;
-		YCoords[i] = cos((i * RING_STEP + yadd0 * 2) * RAD2DEG) * yadd2;
+		XCoords[i] = sin((i * RING_STEP + yadd0 * 2) * DEG2RAD) * yadd1;
+		YCoords[i] = cos((i * RING_STEP + yadd0 * 2) * DEG2RAD) * yadd2;
 	}
 }

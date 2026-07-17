@@ -21,31 +21,32 @@ struct {
 
 void DEMO_Render(double deltatime)
 {
+	float speed = deltatime * 60;
 	if (RETRO_KeyState(SDL_SCANCODE_LEFT)) {
-		camera.angle += 0.02f;
+		camera.angle += 0.02f * speed;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_RIGHT)) {
-		camera.angle -= 0.02f;
+		camera.angle -= 0.02f * speed;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_UP)) {
-		camera.x -= (float)sin(camera.angle) * 1.1f;
-		camera.y -= (float)cos(camera.angle) * 1.1f;
+		camera.x -= (float)sin(camera.angle) * 1.1f * speed;
+		camera.y -= (float)cos(camera.angle) * 1.1f * speed;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_DOWN)) {
-		camera.x += (float)sin(camera.angle) * 0.75f;
-		camera.y += (float)cos(camera.angle) * 0.75f;
+		camera.x += (float)sin(camera.angle) * 0.75f * speed;
+		camera.y += (float)cos(camera.angle) * 0.75f * speed;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_R)) {
-		camera.height += 0.5f;
+		camera.height += 0.5f * speed;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_F)) {
-		camera.height -= 0.5f;
+		camera.height -= 0.5f * speed;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_A)) {
-		camera.horizon += 1.5f;
+		camera.horizon += 1.5f * speed;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_S)) {
-		camera.horizon -= 1.5f;
+		camera.horizon -= 1.5f * speed;
 	}
 
 	unsigned char *colormap = RETRO_ImageData(0);
@@ -89,7 +90,7 @@ void DEMO_Render(double deltatime)
 			if (heightonscreen < 0) {
 				heightonscreen = 0;
 			}
-			char color = colormap[mapoffset];
+			unsigned char color = colormap[mapoffset];
 			for (int y = heightonscreen; y < hiddeny[x]; y++) {
 				buffer[y * RETRO_WIDTH + x] = color;
 			}

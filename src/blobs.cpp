@@ -11,16 +11,21 @@
 #define BLOB_RADIUS 20
 #define BLOB_DRADIUS (BLOB_RADIUS * 2)
 #define BLOB_SRADIUS (BLOB_RADIUS * BLOB_RADIUS)
+#define SIMULATION_STEP (1.0 / 60.0)
 
 unsigned char Blob[BLOB_DRADIUS * BLOB_DRADIUS];
 Point2D Blobs[NUM_BLOBS];
 
 void DEMO_Render(double deltatime)
 {
-	// Calculate movement
-	for (int i = 0; i < NUM_BLOBS; i++) {
-		Blobs[i].x += RANDOM(5) - 2;
-		Blobs[i].y += RANDOM(5) - 2;
+	static double accumulator = 0;
+	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
+	while (accumulator >= SIMULATION_STEP) {
+		for (int i = 0; i < NUM_BLOBS; i++) {
+			Blobs[i].x += RANDOM(5) - 2;
+			Blobs[i].y += RANDOM(5) - 2;
+		}
+		accumulator -= SIMULATION_STEP;
 	}
 
 	// Draw blobs

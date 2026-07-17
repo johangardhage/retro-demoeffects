@@ -26,8 +26,8 @@ void DEMO_Render(double deltatime)
 			for (int i = 0; i < NUM_BALLS; i++) {
 				float a = x - Balls[i].pos.x;
 				float b = y - Balls[i].pos.y;
-				float d = sqrt(a * a + b * b); // calculate pixel distance from metaball position
-				sum += 50 * Balls[i].radius / d;
+				float d = MAX(a * a + b * b, 0.0001f); // squared pixel distance from metaball position
+				sum += THRESHOLD * Balls[i].radius * Balls[i].radius / d;
 			}
 			// Threshold
 			if (sum >= THRESHOLD) {
@@ -38,14 +38,18 @@ void DEMO_Render(double deltatime)
 
 	// Move balls
 	for (int i = 0; i < NUM_BALLS; i++) {
-		if (Balls[i].pos.x < 0 || Balls[i].pos.x > RETRO_WIDTH) {
-			Balls[i].vel.x *= -1;
+		Balls[i].pos.x += Balls[i].vel.x * deltatime;
+		Balls[i].pos.y += Balls[i].vel.y * deltatime;
+		while (Balls[i].pos.x < 0 || Balls[i].pos.x > RETRO_WIDTH - 1) {
+			if (Balls[i].pos.x < 0) Balls[i].pos.x = -Balls[i].pos.x;
+			else Balls[i].pos.x = 2 * (RETRO_WIDTH - 1) - Balls[i].pos.x;
+			Balls[i].vel.x = -Balls[i].vel.x;
 		}
-		if (Balls[i].pos.y < 0 || Balls[i].pos.y > RETRO_HEIGHT) {
-			Balls[i].vel.y *= -1;
+		while (Balls[i].pos.y < 0 || Balls[i].pos.y > RETRO_HEIGHT - 1) {
+			if (Balls[i].pos.y < 0) Balls[i].pos.y = -Balls[i].pos.y;
+			else Balls[i].pos.y = 2 * (RETRO_HEIGHT - 1) - Balls[i].pos.y;
+			Balls[i].vel.y = -Balls[i].vel.y;
 		}
-		Balls[i].pos.x += Balls[i].vel.x;
-		Balls[i].pos.y += Balls[i].vel.y;
 	}
 }
 
@@ -58,8 +62,8 @@ void DEMO_Initialize(void)
 	for (int i = 0; i < NUM_BALLS; i++) {
 		Balls[i].pos.x = RANDOM(RETRO_WIDTH);
 		Balls[i].pos.y = RANDOM(RETRO_HEIGHT);
-		Balls[i].vel.x = RANDOMF(2);
-		Balls[i].vel.y = RANDOMF(2);
+		Balls[i].vel.x = RANDOMF(240) - 120;
+		Balls[i].vel.y = RANDOMF(240) - 120;
 		Balls[i].radius = RANDOM(10) + 10;
 	}
 }

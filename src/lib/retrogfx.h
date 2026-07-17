@@ -9,14 +9,19 @@
 
 #include "retro.h"
 
-enum {
+enum RETRO_BLUR_PATTERN {
+	RETRO_BLUR_VERTICAL,	// 3 taps in a vertical line, softens into slight vertical streaks
+	RETRO_BLUR_DIFFUSE,	// 4 neighbors without center, fading halo diffusion
+	RETRO_BLUR_FLAME,	// 7 weighted taps below, tall narrow rising flames
+	RETRO_BLUR_FIRE,	// 8 taps beside and below, classic rising fire
+	RETRO_BLUR_SMOOTH,	// Plus-with-center, isotropic softening
+	RETRO_BLUR_RING		// All 8 neighbors without center, symmetric melt
+};
+
+enum RETRO_BLUR_MODE {
 	RETRO_BLUR_CLAMP,
 	RETRO_BLUR_WRAP,
-	RETRO_BLUR_OVERFLOW,
-	RETRO_BLUR_3,
-	RETRO_BLUR_4,
-	RETRO_BLUR_7,
-	RETRO_BLUR_8
+	RETRO_BLUR_OVERFLOW
 };
 
 struct Point2D {
@@ -37,7 +42,7 @@ struct Point3Df {
 
 bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 {
-	if (step >= steps) return true;
+	step = CLAMP(step, 0, steps + 1);
 
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		unsigned char r = (float)palette[i].r / steps * step;
@@ -46,12 +51,12 @@ bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 		RETRO_SetColor(i, r, g, b);
 	}
 
-	return false;
+	return step >= steps;
 }
 
 bool RETRO_FadeOut(int steps, int step, RETRO_Palette *palette)
 {
-	if (step >= steps) return true;
+	step = CLAMP(step, 0, steps + 1);
 
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		unsigned char r = (float)palette[i].r / steps * (steps - step);
@@ -60,7 +65,7 @@ bool RETRO_FadeOut(int steps, int step, RETRO_Palette *palette)
 		RETRO_SetColor(i, r, g, b);
 	}
 
-	return false;
+	return step >= steps;
 }
 
 void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
@@ -160,54 +165,83 @@ void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *
 	}
 }
 
-void RETRO_Blur(int blur, int decay = 0, int mode = RETRO_BLUR_CLAMP, unsigned char *buffer = NULL)
+void RETRO_Blur(RETRO_BLUR_PATTERN blur, int decay = 0, RETRO_BLUR_MODE mode = RETRO_BLUR_CLAMP, unsigned char *buffer = NULL)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 
 	typedef int pattern_ptr[2];
-	static int pattern3[][2] = {{0, -1}, {0, 0}, {0, 1}};
-	static int pattern4[][2] = {{0, -1}, {-1, 0}, {1, 0}, {0, 1}};
-	static int pattern7[][2] = {{0, 1}, {0, 1}, {0, 1}, {0, 2}, {-1, 3}, {0, 3}, {1, 3}};
-	static int pattern8[][2] = {{-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}, {-1, 2}, {0, 2}, {1, 2}};
+	static int patternvertical[][2] = {{0, -1}, {0, 0}, {0, 1}};
+	static int patterndiffuse[][2] = {{0, -1}, {-1, 0}, {1, 0}, {0, 1}};
+	static int patternflame[][2] = {{0, 1}, {0, 1}, {0, 1}, {0, 2}, {-1, 3}, {0, 3}, {1, 3}};
+	static int patternfire[][2] = {{-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}, {-1, 2}, {0, 2}, {1, 2}};
+	static int patternsmooth[][2] = {{0, 0}, {0, -1}, {-1, 0}, {1, 0}, {0, 1}};
+	static int patternring[][2] = {{-1, -1}, {0, -1}, {1, -1}, {-1, 0}, {1, 0}, {-1, 1}, {0, 1}, {1, 1}};
 
 	int pixels;
 	pattern_ptr *pattern;
-	if (blur == RETRO_BLUR_3) {
+	switch (blur) {
+	case RETRO_BLUR_VERTICAL:
 		pixels = 3;
-		pattern = pattern3;
-	} else if (blur == RETRO_BLUR_4) {
-		pixels = 4;
-		pattern = pattern4;
-	} else if (blur == RETRO_BLUR_7) {
+		pattern = patternvertical;
+		break;
+	case RETRO_BLUR_FLAME:
 		pixels = 7;
-		pattern = pattern7;
-	} else if (blur == RETRO_BLUR_8) {
+		pattern = patternflame;
+		break;
+	case RETRO_BLUR_FIRE:
 		pixels = 8;
-		pattern = pattern8;
+		pattern = patternfire;
+		break;
+	case RETRO_BLUR_SMOOTH:
+		pixels = 5;
+		pattern = patternsmooth;
+		break;
+	case RETRO_BLUR_RING:
+		pixels = 8;
+		pattern = patternring;
+		break;
+	case RETRO_BLUR_DIFFUSE:
+	default:
+		pixels = 4;
+		pattern = patterndiffuse;
+		break;
+	}
+
+	// Pattern extents, used to skip edge handling for interior pixels
+	int xmin = 0, xmax = 0, ymin = 0, ymax = 0;
+	for (int i = 0; i < pixels; i++) {
+		xmin = MIN(xmin, pattern[i][0]);
+		xmax = MAX(xmax, pattern[i][0]);
+		ymin = MIN(ymin, pattern[i][1]);
+		ymax = MAX(ymax, pattern[i][1]);
 	}
 
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		bool yinside = (y + ymin >= 0 && y + ymax < RETRO_HEIGHT);
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int color = 0;
-			for (int i = 0; i < pixels; i++) {
-				if (mode == RETRO_BLUR_WRAP) {
-					color += buffer[RETRO.yoffset[WRAPHEIGHT(y + pattern[i][1])] + WRAPWIDTH(x + pattern[i][0])];
-				} else if (mode == RETRO_BLUR_CLAMP) {
-					color += buffer[RETRO.yoffset[CLAMPHEIGHT(y + pattern[i][1])] + CLAMPWIDTH(x + pattern[i][0])];
-				} else if (mode == RETRO_BLUR_OVERFLOW) {
-					int x2 = x + pattern[i][0];
-					int y2 = y + pattern[i][1];
-					if (y2 >= 0 && y2 < RETRO_HEIGHT && x2 >= 0 && x2 < RETRO_WIDTH) {
-						color += buffer[RETRO.yoffset[y2] + x2];
+			if (yinside && x + xmin >= 0 && x + xmax < RETRO_WIDTH) {
+				for (int i = 0; i < pixels; i++) {
+					color += buffer[RETRO.yoffset[y + pattern[i][1]] + x + pattern[i][0]];
+				}
+			} else {
+				for (int i = 0; i < pixels; i++) {
+					if (mode == RETRO_BLUR_WRAP) {
+						color += buffer[RETRO.yoffset[WRAPHEIGHT(y + pattern[i][1])] + WRAPWIDTH(x + pattern[i][0])];
+					} else if (mode == RETRO_BLUR_CLAMP) {
+						color += buffer[RETRO.yoffset[CLAMPHEIGHT(y + pattern[i][1])] + CLAMPWIDTH(x + pattern[i][0])];
+					} else if (mode == RETRO_BLUR_OVERFLOW) {
+						int x2 = x + pattern[i][0];
+						int y2 = y + pattern[i][1];
+						if (y2 >= 0 && y2 < RETRO_HEIGHT && x2 >= 0 && x2 < RETRO_WIDTH) {
+							color += buffer[RETRO.yoffset[y2] + x2];
+						}
 					}
 				}
 			}
 
 			color /= pixels;
-
-			if (color > decay) {
-				color -= decay;
-			}
+			color = MAX(color - decay, 0);
 
 			buffer[RETRO.yoffset[y] + x] = (unsigned char)color;
 		}

@@ -27,7 +27,7 @@ void DEMO_Render(double deltatime)
 			int tx = x + SinTable[(y + frame) % SINE_VALUES];
 			int ty = y + SinTable[(x + frame) % SINE_VALUES] / 2;
 
-			if (tx >= 0 && tx < IMAGE_HEIGHT && ty >= 0 && ty < IMAGE_HEIGHT) {
+			if (tx >= 0 && tx < IMAGE_WIDTH && ty >= 0 && ty < IMAGE_HEIGHT) {
 				unsigned char col = image[ty * IMAGE_WIDTH + tx];
 				RETRO_PutPixel(x, y, col);
 			}

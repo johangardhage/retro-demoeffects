@@ -26,7 +26,7 @@ void DEMO_Render(double deltatime)
 	// Draw scroller
 	for (int i = 0; i < FONT_HEIGHT; i++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			char color = scroll_bitmap[i * scroll_bitmap_width + (x + frame) % scroll_bitmap_width];
+			unsigned char color = scroll_bitmap[i * scroll_bitmap_width + (x + frame) % scroll_bitmap_width];
 			if (color != 0) {
 				RETRO_PutPixel(x, i + 112, color);
 			}

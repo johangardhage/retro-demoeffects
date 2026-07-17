@@ -21,10 +21,10 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// 8-128 purple
+	// 8-255 purple, covers overlapping glenz faces summing past 128
 	float p = 0.8;
 	float d = 10, r = d;
-	for (int i = 8; i < 128; i++) {
+	for (int i = 8; i < 256; i++) {
 		RETRO_SetColor(i, r - 15, 0, r);
 		r += p;
 	}

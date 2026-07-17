@@ -16,9 +16,9 @@ void DEMO_Render(double deltatime)
 	float c = a + M_PI;
 	float d = a + (M_PI / 2) * 3;
 
-	angle += 0.02;
+	angle += deltatime * 1.2;
 
-	for (int i = 0; i < RETRO_WIDTH; i++) {
+	for (int i = 0; i < RETRO_HEIGHT; i++) {
 		float v = (float)i / RETRO_HEIGHT * 2;
 
 		Point2Df points[4];

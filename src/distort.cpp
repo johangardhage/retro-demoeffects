@@ -51,8 +51,8 @@ void DEMO_Initialize(void)
 	int offset = 0;
 	for (int y = 0; y < (RETRO_HEIGHT * 2); y++) {
 		for (int x = 0; x < (RETRO_WIDTH * 2); x++) {
-			DistortTableX[offset] = sin(x / 20) + sin(x * y / 2000) + sin((x + y) / 100) + sin((y - x) / 70) + sin((x + 4 * y) / 70) + sin(hypot(256 - x, (150 - y / 8)) / 40);
-			DistortTableY[offset] = cos(x / 31) + cos(x * y / 1783) + cos((x + y) / 137) + cos((y - x) / 55) + cos((x + 8 * y) / 57) + sin(hypot(384 - x, (274 - y / 9)) / 51);
+			DistortTableX[offset] = sin(x / 20.0) + sin(x * y / 2000.0) + sin((x + y) / 100.0) + sin((y - x) / 70.0) + sin((x + 4 * y) / 70.0) + sin(hypot(256 - x, (150 - y / 8.0)) / 40.0);
+			DistortTableY[offset] = cos(x / 31.0) + cos(x * y / 1783.0) + cos((x + y) / 137.0) + cos((y - x) / 55.0) + cos((x + 8 * y) / 57.0) + sin(hypot(384 - x, (274 - y / 9.0)) / 51.0);
 			offset++;
 		}
 	}

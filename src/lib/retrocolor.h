@@ -13,7 +13,8 @@
 // Private variables
 // *******************************************************************
 
-#define RETRO_BASECOLORS 4096		// 32 colors * 128 shades
+#define RETRO_SHADE_COLORS 32
+#define RETRO_BASECOLORS (RETRO_SHADE_COLORS * 128)
 
 #define RETRO_PAL_SIZE 255
 #define RETRO_PAL_OFFSET 1
@@ -363,9 +364,9 @@ void RETRO_CreateRandomPhongPalette(RETRO_Palette *palette, int colors = 64, int
 		unsigned char g = gdiff * cos(angle) + gspec * pow(cos(angle), exp);
 		unsigned char b = bdiff * cos(angle) + bspec * pow(cos(angle), exp);
 
-		if (r > 31) r = 31;
+		if (r > 63) r = 63;
 		if (g > 63) g = 63;
-		if (b > 31) b = 31;
+		if (b > 63) b = 63;
 
 		palette[i].r = r;
 		palette[i].g = g;

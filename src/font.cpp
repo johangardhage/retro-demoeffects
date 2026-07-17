@@ -10,7 +10,7 @@
 void DEMO_Render(double deltatime)
 {
 	char str1[] = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };
-	char str2[] = { "abcdefgjijklmnopqrstuvwzyz" };
+	char str2[] = { "abcdefghijklmnopqrstuvwxyz" };
 	char str3[] = { "0123456789" };
 	char str4[] = { "!\"#$%&\'()*+,-./:;<=>?@[\\]^_`" };
 	RETRO_PutString(str1, 10, 10, 255);

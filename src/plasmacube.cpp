@@ -18,7 +18,7 @@ unsigned char image[TEXTURE_WIDTH * TEXTURE_HEIGHT];
 void DEMO_Render(double deltatime)
 {
 	static float framecounter = 0;
-	framecounter += deltatime * 200;
+	framecounter += deltatime * 80;
 	int frame = WRAP(framecounter, PLASMA_FRAMES);
 
 	// Generate plasma
@@ -28,7 +28,8 @@ void DEMO_Render(double deltatime)
 		for (int x = 0; x < TEXTURE_WIDTH; x++) {
 			float xc = 75 + SinTable[x * 2 + frame / 2] + SinTable[x + frame * 2] + SinTable[x / 2 + frame] * 2;
 
-			unsigned char color = yc * xc;
+			// Wrap into the 252-entry palette cycle
+			unsigned char color = (int)(yc * xc) % 252;
 			image[y * TEXTURE_WIDTH + x] = color;
 		}
 	}

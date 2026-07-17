@@ -36,7 +36,7 @@ struct Face {
 	int c;								// Color
 	Normal facenormal;					// Face normal
 	bool visible;						// Is the face visible?
-	int z;								// Z center, used for Quicksort
+	float z;							// Z center, used for Quicksort
 };
 
 struct Model3D {

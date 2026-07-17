@@ -9,35 +9,42 @@
 
 #define FIRE_HEIGHT 6
 #define FIRE_CHAOS 6
+#define SIMULATION_STEP (1.0 / 60.0)
 
-void DEMO_Render(double deltatime)
+unsigned char FireBuffer[RETRO_HEIGHT*RETRO_WIDTH];
+
+void UpdateFire(unsigned char *image)
 {
-	static unsigned char firebuffer[RETRO_HEIGHT*RETRO_WIDTH];
-	unsigned char *buffer = RETRO_FrameBuffer();
-	unsigned char *image = RETRO_ImageData();
-
-	// Create flaming logo
 	for (int y = 100; y < 130; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int offset = y * RETRO_WIDTH + x;
-			if (image[offset] > buffer[offset]) {
-				firebuffer[offset] = RANDOM(image[offset]);
-			}
+			if (image[offset] > 0) FireBuffer[offset] = RANDOM(image[offset]);
 		}
 	}
-
-	// Create flame at the bottom of the screen
 	for (int x = 0; x < RETRO_WIDTH; x++) {
 		if (RANDOM(FIRE_CHAOS) == 0) {
 			for (int y = RETRO_HEIGHT - FIRE_HEIGHT; y < RETRO_HEIGHT; y++) {
-				firebuffer[y * RETRO_WIDTH + x] = 255;
+				FireBuffer[y * RETRO_WIDTH + x] = 255;
 			}
 		}
 	}
+	RETRO_Blur(RETRO_BLUR_FIRE, 3, RETRO_BLUR_WRAP, FireBuffer);
+}
 
-	RETRO_Blur(RETRO_BLUR_8, 3, RETRO_BLUR_WRAP, firebuffer);
+void DEMO_Render(double deltatime)
+{
+	static double accumulator = 0;
+	unsigned char *buffer = RETRO_FrameBuffer();
+	unsigned char *image = RETRO_ImageData();
+
+	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
+	while (accumulator >= SIMULATION_STEP) {
+		UpdateFire(image);
+		accumulator -= SIMULATION_STEP;
+	}
+
 	// Only render the top part of the flame
-	RETRO_Blit(firebuffer, (RETRO_HEIGHT - FIRE_HEIGHT) * RETRO_WIDTH, buffer + (FIRE_HEIGHT * RETRO_WIDTH));
+	RETRO_Blit(FireBuffer, (RETRO_HEIGHT - FIRE_HEIGHT) * RETRO_WIDTH, buffer + (FIRE_HEIGHT * RETRO_WIDTH));
 }
 
 void Gradient(int s, int e, int r1, int g1, int b1, int r2, int g2, int b2)

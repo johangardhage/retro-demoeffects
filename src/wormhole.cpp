@@ -22,8 +22,8 @@ void DEMO_Render(double deltatime)
 	// Calculate frame
 	static double frame_counter = 0;
 	frame_counter += deltatime * 100;
-	unsigned int xframe = frame_counter * WORM_XDIR;
-	unsigned int yframe = frame_counter * WORM_YDIR;
+	int xframe = (int)frame_counter * WORM_XDIR;
+	int yframe = (int)frame_counter * WORM_YDIR;
 
 	unsigned char newimage[TEXTURE_WIDTH * TEXTURE_HEIGHT];
 
@@ -55,8 +55,8 @@ void DEMO_Initialize(void)
 		SinTable[i] = sin(2 * M_PI * i / WORM_SPOKES);
 	}
 
-	// Init wormhole
-	for (int d = 0; d < WORM_DIVS; d++) {
+	// Init wormhole (skip d = 0, where log(0) is undefined)
+	for (int d = 1; d < WORM_DIVS; d++) {
 		float xd = RETRO_WIDTH * d / WORM_DIVS;
 		float yd = RETRO_HEIGHT * d / WORM_DIVS;
 		float zd = -10 + log(2.0 * d / WORM_DIVS) * 11;

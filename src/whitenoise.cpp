@@ -16,7 +16,7 @@ void DEMO_Render(double deltatime)
 		}
 	}
 
-	RETRO_Blur(RETRO_BLUR_3);
+	RETRO_Blur(RETRO_BLUR_SMOOTH);
 }
 
 void DEMO_Initialize(void)

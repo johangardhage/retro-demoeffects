@@ -7,7 +7,7 @@
 #ifndef _RETROPOLY_H_
 #define _RETROPOLY_H_
 
-#include "retro.h"
+#include "retrocolor.h"
 
 struct PolygonPoint {
 	float x, y;
@@ -149,7 +149,7 @@ void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned ch
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = (int)span[y].p1.x; x < (int)span[y].p2.x; x++) {
 			if (x >= 0 && x < RETRO_WIDTH) {
-				RETRO.framebuffer[y * RETRO_WIDTH + x] += color;
+				RETRO.framebuffer[y * RETRO_WIDTH + x] = MIN(RETRO.framebuffer[y * RETRO_WIDTH + x] + color, 255);
 			}
 		}
 	}
@@ -300,7 +300,7 @@ void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, uns
 				if (x >= 0 && x < RETRO_WIDTH) {
 					unsigned int u = CLAMP256(span[y].p1.u);
 					unsigned int v = CLAMP256(span[y].p1.v);
-					unsigned char texel = CLAMP128(texmap[v * 256 + u]);
+					unsigned char texel = CLAMP(texmap[v * 256 + u], 0, RETRO_SHADE_COLORS);
 					int shade = span[y].p1.c;
 					RETRO.framebuffer[y * RETRO_WIDTH + x] = CLAMP256(shadetable[texel * 128 + shade]);
 				}
@@ -342,7 +342,7 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 				if (x >= 0 && x < RETRO_WIDTH) {
 					unsigned int u = CLAMP256(span[y].p1.u);
 					unsigned int v = CLAMP256(span[y].p1.v);
-					unsigned char texel = CLAMP128(texmap[v * 256 + u]);
+					unsigned char texel = CLAMP(texmap[v * 256 + u], 0, RETRO_SHADE_COLORS);
 					if (envmap != NULL) {
 						unsigned int e = CLAMP256(span[y].p1.e);
 						unsigned int w = CLAMP256(span[y].p1.w);
@@ -377,22 +377,28 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 		RETRO_ScanEdge(*p1, *p2, span);
 	}
 
-	// Calculate ydiff
-	int ymin = RETRO_HEIGHT;
-	int ymax = 0;
-	for (int i = 0; i < numvertices; i++) {
-		ymin = vertices[i].y < ymin ? vertices[i].y : ymin;
-		ymax = vertices[i].y > ymax ? vertices[i].y : ymax;
+	// Calculate constant gradients dudx, dvdx, dudy, dvdy across the polygon face
+	float dudx = 0, dvdx = 0, dudy = 0, dvdy = 0;
+	if (numvertices >= 3) {
+		float x0 = vertices[0].x, y0 = vertices[0].y;
+		float x1 = vertices[1].x, y1 = vertices[1].y;
+		float x2 = vertices[2].x, y2 = vertices[2].y;
+		float u0 = vertices[0].u, v0 = vertices[0].v;
+		float u1 = vertices[1].u, v1 = vertices[1].v;
+		float u2 = vertices[2].u, v2 = vertices[2].v;
+
+		float D = (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0);
+		if (D != 0) {
+			dudx = ((u1 - u0) * (y2 - y0) - (u2 - u0) * (y1 - y0)) / D;
+			dudy = ((u2 - u0) * (x1 - x0) - (u1 - u0) * (x2 - x0)) / D;
+			dvdx = ((v1 - v0) * (y2 - y0) - (v2 - v0) * (y1 - y0)) / D;
+			dvdy = ((v2 - v0) * (x1 - x0) - (v1 - v0) * (x2 - x0)) / D;
+		}
 	}
-	float ydiff = (ymax - ymin) != 0 ? ymax - ymin : 1;
 
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		if (span[y].p1.x <= span[y].p2.x) {
 			float xdiff = (span[y].p2.x - span[y].p1.x) != 0 ? span[y].p2.x - span[y].p1.x : 1;
-			float dudx = (span[y].p2.u - span[y].p1.u) / xdiff;
-			float dvdx = (span[y].p2.v - span[y].p1.v) / xdiff;
-			float dudy = (span[y].p2.u - span[y].p1.u) / ydiff;
-			float dvdy = (span[y].p2.v - span[y].p1.v) / ydiff;
 			float de = (span[y].p2.e - span[y].p1.e) / xdiff;
 			float dw = (span[y].p2.w - span[y].p1.w) / xdiff;
 
@@ -403,13 +409,13 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 					int bv1 = CLAMP256((span[y].p1.u + dudy)) + CLAMP256((span[y].p1.v + dvdy)) * 256;
 					int bv2 = CLAMP256((span[y].p1.u - dudy)) + CLAMP256((span[y].p1.v - dvdy)) * 256;
 
-					int bu = CLAMP256(bumpmap[bu1] - bumpmap[bu2] + span[y].p1.e);
-					int bv = CLAMP256(bumpmap[bv1] - bumpmap[bv2] + span[y].p1.w);
+					int bu = bumpmap[bu1] - bumpmap[bu2] + span[y].p1.e;
+					int bv = bumpmap[bv1] - bumpmap[bv2] + span[y].p1.w;
 
 					if (bu >= 0 && bu < 256 && bv >= 0 && bv < 256) {
 						unsigned int u = CLAMP256(span[y].p1.u);
 						unsigned int v = CLAMP256(span[y].p1.v);
-						unsigned char texel = CLAMP128(texmap[v * 256 + u]);
+						unsigned char texel = CLAMP(texmap[v * 256 + u], 0, RETRO_SHADE_COLORS);
 						if (envmap != NULL) {
 							shade = CLAMP128(envmap[bv * 256 + bu]);
 						}
@@ -483,22 +489,28 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 		RETRO_ScanEdge(*p1, *p2, span);
 	}
 
-	// Calculate ydiff
-	int ymin = RETRO_HEIGHT;
-	int ymax = 0;
-	for (int i = 0; i < numvertices; i++) {
-		ymin = vertices[i].y < ymin ? vertices[i].y : ymin;
-		ymax = vertices[i].y > ymax ? vertices[i].y : ymax;
+	// Calculate constant gradients dudx, dvdx, dudy, dvdy across the polygon face
+	float dudx = 0, dvdx = 0, dudy = 0, dvdy = 0;
+	if (numvertices >= 3) {
+		float x0 = vertices[0].x, y0 = vertices[0].y;
+		float x1 = vertices[1].x, y1 = vertices[1].y;
+		float x2 = vertices[2].x, y2 = vertices[2].y;
+		float u0 = vertices[0].u, v0 = vertices[0].v;
+		float u1 = vertices[1].u, v1 = vertices[1].v;
+		float u2 = vertices[2].u, v2 = vertices[2].v;
+
+		float D = (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0);
+		if (D != 0) {
+			dudx = ((u1 - u0) * (y2 - y0) - (u2 - u0) * (y1 - y0)) / D;
+			dudy = ((u2 - u0) * (x1 - x0) - (u1 - u0) * (x2 - x0)) / D;
+			dvdx = ((v1 - v0) * (y2 - y0) - (v2 - v0) * (y1 - y0)) / D;
+			dvdy = ((v2 - v0) * (x1 - x0) - (v1 - v0) * (x2 - x0)) / D;
+		}
 	}
-	float ydiff = (ymax - ymin) != 0 ? ymax - ymin : 1;
 
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		if (span[y].p1.x <= span[y].p2.x) {
 			float xdiff = (span[y].p2.x - span[y].p1.x) != 0 ? (span[y].p2.x - span[y].p1.x) : 1;
-			float dudx = (span[y].p2.u - span[y].p1.u) / xdiff;
-			float dvdx = (span[y].p2.v - span[y].p1.v) / xdiff;
-			float dudy = (span[y].p2.u - span[y].p1.u) / ydiff;
-			float dvdy = (span[y].p2.v - span[y].p1.v) / ydiff;
 			float de = (span[y].p2.e - span[y].p1.e) / xdiff;
 			float dw = (span[y].p2.w - span[y].p1.w) / xdiff;
 
@@ -509,8 +521,8 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 					int bv1 = CLAMP256((span[y].p1.u + dudy)) + CLAMP256((span[y].p1.v + dvdy)) * 256;
 					int bv2 = CLAMP256((span[y].p1.u - dudy)) + CLAMP256((span[y].p1.v - dvdy)) * 256;
 
-					int bu = CLAMP256(bumpmap[bu1] - bumpmap[bu2] + span[y].p1.e);
-					int bv = CLAMP256(bumpmap[bv1] - bumpmap[bv2] + span[y].p1.w);
+					int bu = bumpmap[bu1] - bumpmap[bu2] + span[y].p1.e;
+					int bv = bumpmap[bv1] - bumpmap[bv2] + span[y].p1.w;
 
 					if (bu >= 0 && bu < 256 && bv >= 0 && bv < 256) {
 						unsigned char texel = CLAMP256(envmap[bv * 256 + bu]);

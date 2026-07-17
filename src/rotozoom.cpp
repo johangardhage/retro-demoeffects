@@ -22,14 +22,22 @@ void DEMO_Render(double deltatime)
 	float sina = sin(angle * M_PI / 180.0f);
 	float cosa = cos(angle * M_PI / 180.0f);
 
-	// Draw texture
+	float scale = sina + 1.0f;
+	float dtx = cosa * scale;
+	float dty = sina * scale;
+
+	// Draw texture using DDA (Digital Differential Analyzer) algorithm
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		float tx = (-y * sina) * scale;
+		float ty = (y * cosa) * scale;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int tx = WRAP(( x * cosa - y * sina) * (sina + 1), TEXTURE_WIDTH);
-			int ty = WRAP(( x * sina + y * cosa) * (sina + 1), TEXTURE_HEIGHT);
-			int color = image[ty * TEXTURE_WIDTH + tx];
+			int itx = WRAP(tx, TEXTURE_WIDTH);
+			int ity = WRAP(ty, TEXTURE_HEIGHT);
+			int color = image[ity * TEXTURE_WIDTH + itx];
 
 			RETRO_PutPixel(x, y, color);
+			tx += dtx;
+			ty += dty;
 		}
 	}
 }

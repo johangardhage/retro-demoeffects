@@ -7,7 +7,8 @@
 #include "lib/retromain.h"
 #include "lib/retromath.h"
 
-#define RADIUS 75
+#define RING_RADIUS 50
+#define TUBE_RADIUS 25
 #define MAXPOINTS 2020
 #define POINTSTEP 0.1
 #define ZMIN (-80)
@@ -31,7 +32,7 @@ void DEMO_Render(double deltatime)
 		int y = Torus[i].sy;
 		int z = -round(Torus[i].rz);
 
-		if (x >= 0 && x <= RETRO_WIDTH && y >= 0 && y <= RETRO_HEIGHT)  {
+		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT)  {
 			int color = floor((z + abs(ZMIN)) * (64.0 / (abs(ZMIN) + ZMAX)));
 			RETRO_PutPixel(x, y, color);
 		}
@@ -47,14 +48,15 @@ void DEMO_Initialize(void)
 
 	// Generate torus
 	for (float alpha = 2 * M_PI; alpha > 0; alpha -= POINTSTEP) {
-		for (float beta = M_PI; beta > 0; beta -= POINTSTEP) {
-			float r = RADIUS * sin(beta);
-			Torus[NumPoints].x = r * cos(alpha) * sin(beta);
-			Torus[NumPoints].y = 0.8333 * r * cos(beta);
-			Torus[NumPoints].z = r * sin(alpha) * sin(beta);
-			if (++NumPoints > MAXPOINTS) {
+		for (float beta = 2 * M_PI; beta > 0; beta -= POINTSTEP * 2) {
+			if (NumPoints >= MAXPOINTS) {
 				RETRO_RageQuit("Too many points\n");
 			}
+			float r = RING_RADIUS + TUBE_RADIUS * cos(beta);
+			Torus[NumPoints].x = r * cos(alpha);
+			Torus[NumPoints].y = TUBE_RADIUS * sin(beta);
+			Torus[NumPoints].z = r * sin(alpha);
+			NumPoints++;
 		}
 	}
 }

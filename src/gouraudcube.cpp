@@ -30,8 +30,8 @@ void DEMO_Initialize(void)
 	for (int i = 64; i < 96; i++) {
 		RETRO_SetColor(i, r, g, b);
 		r++;
-		g += 11;
-		b += 11;
+		g = MIN(g + 11, 255);
+		b = MIN(b + 11, 255);
 	}
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");

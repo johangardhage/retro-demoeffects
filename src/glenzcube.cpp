@@ -25,8 +25,8 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(1, 0, 0, 0);
 	RETRO_SetColor(2, 40 * 4, 15 * 4, 15 * 4); // dark red
 	RETRO_SetColor(3, 60 * 4, 24 * 4, 24 * 4); // light red
-	RETRO_SetColor(4, 60 * 4, 60 * 4, 60 * 4); // light white
-	RETRO_SetColor(5, 63 * 4, 63 * 4, 63 * 4); // dark white
+	RETRO_SetColor(4, 60 * 4, 60 * 4, 60 * 4); // dark white
+	RETRO_SetColor(5, 63 * 4, 63 * 4, 63 * 4); // light white
 
 	Model3D *model = RETRO_Load3DModel("assets/glenz3.obj");
 	int c[24] = { 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2 };

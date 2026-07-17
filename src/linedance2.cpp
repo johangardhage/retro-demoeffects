@@ -8,8 +8,8 @@
 
 void DEMO_Render(double deltatime)
 {
-	static int a1 = 0;
-	a1 += 1;
+	static double a1 = 0;
+	a1 += deltatime * 60;
 
 	for (int b1 = 0; b1 < 360; b1++) {
 		float a2 = a1 * M_PI / 180;
@@ -35,7 +35,7 @@ void DEMO_Initialize(void)
 		g++;
 	}
 	for (int i = 135; i < 200; i++) {
-		RETRO_SetColor(i, r * 4, 55 * 4, b * 4);
+		RETRO_SetColor(i, r * 4, 55 * 4, MIN(b, 63) * 4);
 		b++;
 	}
 }

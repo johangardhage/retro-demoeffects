@@ -15,8 +15,17 @@ struct Lens {
 	double y = 16;
 	int xspeed = 100;
 	int yspeed = 100;
-	unsigned int buffer[LENS_WIDTH * LENS_HEIGHT];
+	int buffer[LENS_WIDTH * LENS_HEIGHT];
 } Lens1;
+
+void ReflectPosition(double *position, int *speed, double minimum, double maximum)
+{
+	while (*position < minimum || *position > maximum) {
+		if (*position < minimum) *position = 2 * minimum - *position;
+		else *position = 2 * maximum - *position;
+		*speed = -*speed;
+	}
+}
 
 void DrawLens(Lens *lens, unsigned char *image)
 {
@@ -37,12 +46,8 @@ void DEMO_Render(double deltatime)
 	// Calculate movement
 	Lens1.x += Lens1.xspeed * deltatime;
 	Lens1.y += Lens1.yspeed * deltatime;
-	if (Lens1.x > (RETRO_WIDTH - LENS_WIDTH - 3) || Lens1.x < 3) {
-		Lens1.xspeed = -Lens1.xspeed;
-	}
-	if (Lens1.y > (RETRO_HEIGHT - LENS_HEIGHT - 3) || Lens1.y < 3) {
-		Lens1.yspeed = -Lens1.yspeed;
-	}
+	ReflectPosition(&Lens1.x, &Lens1.xspeed, 3, RETRO_WIDTH - LENS_WIDTH - 3);
+	ReflectPosition(&Lens1.y, &Lens1.yspeed, 3, RETRO_HEIGHT - LENS_HEIGHT - 3);
 
 	// Draw background
 	RETRO_Blit(image);

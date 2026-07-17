@@ -8,6 +8,7 @@
 #include "lib/retrogfx.h"
 
 #define POINTS 170
+#define SIMULATION_STEP (1.0 / 60.0)
 
 Point2Df Points[POINTS];
 
@@ -32,11 +33,10 @@ void DrawLines(int x, int y, float k)
 	}
 }
 
-void DEMO_Render2(double deltatime)
+void UpdateLineDance(void)
 {
-	// Calculate frame
 	static double frame = 0;
-	frame += deltatime * 2.5;
+	frame += SIMULATION_STEP * 2.5;
 
 	// Calculate movement
 	float aa = frame / 1.37;
@@ -52,7 +52,17 @@ void DEMO_Render2(double deltatime)
 	// Draw lines
 	DrawLines(x, y, k);
 
-	RETRO_Blur(RETRO_BLUR_8, sin(aa / 8.0) * 4 + 5);
+	RETRO_Blur(RETRO_BLUR_FIRE, sin(aa / 8.0) * 4 + 5);
+}
+
+void DEMO_Render2(double deltatime)
+{
+	static double accumulator = 0;
+	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
+	while (accumulator >= SIMULATION_STEP) {
+		UpdateLineDance();
+		accumulator -= SIMULATION_STEP;
+	}
 	RETRO_Flip();
 }
 

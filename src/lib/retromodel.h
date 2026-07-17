@@ -16,7 +16,7 @@
 struct Vertex {
 	float x, y, z;				// Original coordinates
 	float rx, ry, rz;			// Rotated coordinates
-	float sx, sy;				// Screen coordinates
+	float sx, sy, q;			// Screen coordinates and reciprocal projection depth
 };
 
 struct UV {

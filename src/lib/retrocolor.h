@@ -324,7 +324,7 @@ void RETRO_CreateOptimalPaletteAndShadeTable(RETRO_Palette *palette, int colors)
 	}
 }
 
-void RETRO_CreatePlasticPhongPalette(RETRO_Palette *palette)
+void RETRO_CreatePlasticPhongPalette(RETRO_Palette *palette, float falloff = RETRO_K_FALLOFF, int colorMax = 63, float faceR = RETRO_FACE_R, float faceG = RETRO_FACE_G, float faceB = RETRO_FACE_B)
 {
 	// Create phong palette
 	palette[0].r = 0;
@@ -332,47 +332,28 @@ void RETRO_CreatePlasticPhongPalette(RETRO_Palette *palette)
 	palette[0].b = 0;
 
 	for (int i = 0; i < RETRO_PAL_SIZE; i++) {
-		// what is the incedent angle that we are calculating a color for?
-		// Scale loop to 0 to 1, flip then scale it up to 0 to 90 degrees.
-		// I say degrees but remember that the computer works in radians.
 		float incedent = ((float)(RETRO_PAL_SIZE - (i + 1)) / RETRO_PAL_SIZE) * (M_PI / 2);
 		int baseindex = (i + RETRO_PAL_OFFSET);
 
-		// Determine the rgb components
-		palette[baseindex].r = 63 * RETRO_PhongIllumination(RETRO_FACE_R, 1.0, RETRO_LIGHT_R, RETRO_AMBIENT_R, incedent);
-		palette[baseindex].g = 63 * RETRO_PhongIllumination(RETRO_FACE_G, 1.0, RETRO_LIGHT_G, RETRO_AMBIENT_G, incedent);
-		palette[baseindex].b = 63 * RETRO_PhongIllumination(RETRO_FACE_B, 1.0, RETRO_LIGHT_B, RETRO_AMBIENT_B, incedent);
-	}
-}
+		float cosine = cos(incedent);
+		float specCos = MAX(cos(incedent * 2.0f), 0.0f);
+		float specular = RETRO_K_SPECULAR * pow(specCos, falloff);
 
-void RETRO_CreateRandomPhongPalette(RETRO_Palette *palette, int colors = 64, int exp = 12)
-{
-	float angle = M_PI / 2;
-	float angledelta = M_PI / 2 / colors;
+		float rdiffuse = RETRO_K_DIFFUSE * faceR * cosine;
+		float gdiffuse = RETRO_K_DIFFUSE * faceG * cosine;
+		float bdiffuse = RETRO_K_DIFFUSE * faceB * cosine;
 
-	srand(time(NULL));
+		float rambient = RETRO_K_AMBIENT * faceR * RETRO_AMBIENT_R;
+		float gambient = RETRO_K_AMBIENT * faceG * RETRO_AMBIENT_G;
+		float bambient = RETRO_K_AMBIENT * faceB * RETRO_AMBIENT_B;
 
-	float rdiff = rand() % 20;
-	float rspec = rand() % 50;
-	float gdiff = rand() % 20;
-	float gspec = rand() % 50;
-	float bdiff = rand() % 20;
-	float bspec = rand() % 50;
+		int r = colorMax * ((rdiffuse + specular) * RETRO_K_ATTENUATION * RETRO_LIGHT_R + rambient);
+		int g = colorMax * ((gdiffuse + specular) * RETRO_K_ATTENUATION * RETRO_LIGHT_G + gambient);
+		int b = colorMax * ((bdiffuse + specular) * RETRO_K_ATTENUATION * RETRO_LIGHT_B + bambient);
 
-	for (int i = 0; i < colors; i++) {
-		unsigned char r = rdiff * cos(angle) + rspec * pow(cos(angle), exp);
-		unsigned char g = gdiff * cos(angle) + gspec * pow(cos(angle), exp);
-		unsigned char b = bdiff * cos(angle) + bspec * pow(cos(angle), exp);
-
-		if (r > 63) r = 63;
-		if (g > 63) g = 63;
-		if (b > 63) b = 63;
-
-		palette[i].r = r;
-		palette[i].g = g;
-		palette[i].b = b;
-
-		angle -= angledelta;
+		palette[baseindex].r = CLAMP(r, 0, colorMax + 1);
+		palette[baseindex].g = CLAMP(g, 0, colorMax + 1);
+		palette[baseindex].b = CLAMP(b, 0, colorMax + 1);
 	}
 }
 

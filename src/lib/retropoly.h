@@ -193,41 +193,82 @@ void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices)
 //
 void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSourcePoint light)
 {
-	EdgeSpan span[RETRO_HEIGHT];
+	const float epsilon = 1.0e-12f;
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		span[y].p1.x = RETRO_WIDTH;
-		span[y].p2.x = 0;
-	}
+	float inverseLightLength = light.nn > 0.0f ? 1.0f / light.nn : 0.0f;
+	float lx = light.nx * inverseLightLength;
+	float ly = light.ny * inverseLightLength;
+	float lz = light.nz * inverseLightLength;
+	int cmin = light.c;
+	int cmax = light.c + light.cintensity;
 
-	for (int i = 0; i < numvertices; i++) {
-		PolygonPoint *p1 = vertices + i;
-		PolygonPoint *p2 = vertices + (i + 1) % numvertices;
-		RETRO_ScanEdge(*p1, *p2, span);
-	}
+	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
+		PolygonPoint *p0 = &vertices[0];
+		PolygonPoint *p1 = &vertices[triangle];
+		PolygonPoint *p2 = &vertices[triangle + 1];
+		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
+		if (fabs(area) <= epsilon) continue;
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		if (span[y].p1.x <= span[y].p2.x) {
-			float xdiff = (span[y].p2.x - span[y].p1.x) != 0 ? span[y].p2.x - span[y].p1.x : 1;
-			float dnx = (span[y].p2.nx - span[y].p1.nx) / xdiff;
-			float dny = (span[y].p2.ny - span[y].p1.ny) / xdiff;
-			float dnz = (span[y].p2.nz - span[y].p1.nz) / xdiff;
+		EdgeSpan span[RETRO_HEIGHT];
+		for (int y = 0; y < RETRO_HEIGHT; y++) {
+			span[y].p1.x = RETRO_WIDTH;
+			span[y].p2.x = 0;
+		}
 
-			for (int x = (int)span[y].p1.x; x < (int)span[y].p2.x; x++) {
-				if (x >= 0 && x < RETRO_WIDTH) {
-					float angle = (span[y].p1.nx * light.nx +
-								   span[y].p1.ny * light.ny +
-								   span[y].p1.nz * light.nz) / (sqrt(span[y].p1.nx * span[y].p1.nx +
-																	 span[y].p1.ny * span[y].p1.ny +
-																	 span[y].p1.nz * span[y].p1.nz) * light.nn);
-					int cmin = light.c;
-					int cmax = light.c + light.cintensity;
-					int color = light.c + light.cintensity * angle;
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = CLAMP(color, cmin, cmax);
+		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
+		for (int edge = 0; edge < 3; edge++) {
+			PolygonPoint a = *edgevertices[edge];
+			PolygonPoint b = *edgevertices[edge + 1];
+			if (b.y < a.y) SWAP(a, b);
+
+			float ydiff = b.y - a.y;
+			if (ydiff == 0.0f) continue;
+
+			float dxdy = (b.x - a.x) / ydiff;
+			int ystart = ceil(a.y - 0.5f);
+			int yend = ceil(b.y - 0.5f);
+			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
+
+			for (int y = ystart; y < yend; y++, x += dxdy) {
+				if (y < 0 || y >= RETRO_HEIGHT) continue;
+				span[y].p1.x = MIN(span[y].p1.x, x);
+				span[y].p2.x = MAX(span[y].p2.x, x);
+			}
+		}
+
+		float dnxdx, dnxdy, dnydx, dnydy, dnzdx, dnzdy;
+		dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / area;
+		dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / area;
+		dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / area;
+		dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / area;
+		dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / area;
+		dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
+
+		for (int y = 0; y < RETRO_HEIGHT; y++) {
+			if (span[y].p1.x > span[y].p2.x) continue;
+			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			float px = xstart + 0.5f;
+			float py = y + 0.5f;
+			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
+			float ny = p0->ny + dnydx * (px - p0->x) + dnydy * (py - p0->y);
+			float nz = p0->nz + dnzdx * (px - p0->x) + dnzdy * (py - p0->y);
+
+			for (int x = xstart; x < xend; x++) {
+				float normalLengthSquared = nx * nx + ny * ny + nz * nz;
+				float intensity = 0.0f;
+
+				if (normalLengthSquared > epsilon && inverseLightLength > 0.0f) {
+					float inverseNormalLength = 1.0f / sqrt(normalLengthSquared);
+					intensity = MAX((nx * lx + ny * ly + nz * lz) * inverseNormalLength, 0.0f);
 				}
-				span[y].p1.nx += dnx;
-				span[y].p1.ny += dny;
-				span[y].p1.nz += dnz;
+
+				float paletteIntensity = asin(MIN(intensity, 1.0f)) / (M_PI / 2);
+				int color = light.c + light.cintensity * paletteIntensity;
+				RETRO.framebuffer[y * RETRO_WIDTH + x] = CLAMP(color, cmin, cmax);
+				nx += dnxdx;
+				ny += dnydx;
+				nz += dnzdx;
 			}
 		}
 	}

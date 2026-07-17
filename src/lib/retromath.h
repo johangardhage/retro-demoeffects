@@ -62,8 +62,9 @@ void RETRO_ProjectModel(float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RE
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->vertices; i++) {
-		model->vertex[i].sx = x + (scale * model->vertex[i].rx * eye) / (scale * model->vertex[i].rz + eye);
-		model->vertex[i].sy = y + (scale * model->vertex[i].ry * eye) / (scale * model->vertex[i].rz + eye);
+		model->vertex[i].q = 1.0f / (scale * model->vertex[i].rz + eye);
+		model->vertex[i].sx = x + scale * model->vertex[i].rx * eye * model->vertex[i].q;
+		model->vertex[i].sy = y + scale * model->vertex[i].ry * eye * model->vertex[i].q;
 	}
 }
 
@@ -77,8 +78,9 @@ void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 
 void RETRO_ProjectVertex(Vertex *vertex, float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), int eye = 250)
 {
-	vertex->sx = x + (scale * vertex->rx * eye) / (scale * vertex->rz + eye);
-	vertex->sy = y + (scale * vertex->ry * eye) / (scale * vertex->rz + eye);
+	vertex->q = 1.0f / (scale * vertex->rz + eye);
+	vertex->sx = x + scale * vertex->rx * eye * vertex->q;
+	vertex->sy = y + scale * vertex->ry * eye * vertex->q;
 }
 
 void RETRO_RotateVertex(Vertex *vertex, float cosa, float sina)

@@ -37,7 +37,6 @@ enum RETRO_POLY_SHADE {
 
 struct {
 	Normal lightsource;
-	int uvlookup[256];
 } RETRO_Render;
 
 void RETRO_InitializeLightSource(float x, float y, float z)
@@ -53,9 +52,27 @@ void RETRO_InitializeLightSource(float x, float y, float z)
 	RETRO_RotateNormal(&RETRO_Render.lightsource, 0, 0, 0);
 }
 
+void RETRO_PrepareMappedFace(Model3D *model, Face *face, PolygonPoint *points)
+{
+	for (int i = 0; i < face->vertices; i++) {
+		Vertex *vertex = &model->vertex[face->vertex[i]];
+		Normal *normal = &model->normal[face->normal[i]];
+		float inverseNormalLength = normal->nn > 0.0f ? 1.0f / normal->nn : 0.0f;
+
+		points[i].x = vertex->sx;
+		points[i].y = vertex->sy;
+		points[i].q = vertex->q;
+		points[i].u = model->uv[face->uv[i]].u;
+		points[i].v = model->uv[face->uv[i]].v;
+		points[i].e = model->c + model->cintensity * normal->rnx * inverseNormalLength;
+		points[i].w = model->c + model->cintensity * normal->rny * inverseNormalLength;
+	}
+}
+
 void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE, Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
+	if (model == NULL) return;
 
 	// Render with dots
 	if (rendertype == RETRO_POLY_DOT) {
@@ -66,56 +83,26 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 		}
 	}
 
-	// Render with wireframe
-	else if (rendertype == RETRO_POLY_WIREFRAME) {
-		RETRO_SortAllFaces();
-
-		for (int i = 0; i < model->visiblefaces; i++) {
-			Face *face = &model->face[model->visibleface[i]];
-
-			PolygonPoint points[RETRO_MAX_FACEVERTICES];
-			for (int j = 0; j < face->vertices; j++) {
-				points[j].x = model->vertex[face->vertex[j]].sx;
-				points[j].y = model->vertex[face->vertex[j]].sy;
-			}
-
-			int color = model->c + face->c;
-
-			for (int j = 0; j < face->vertices; j++) {
-				PolygonPoint *p1 = points + j;
-				PolygonPoint *p2 = points + (j + 1) % face->vertices;
-
-				if (shadertype == RETRO_SHADE_WIREFIRE) {
-					RETRO_DrawFireLine(p1->x, p1->y, p2->x, p2->y, color, model->cintensity);
-				} else {
-					RETRO_DrawLine(p1->x, p1->y, p2->x, p2->y, color);
-				}
-			}
+	// Render with wireframe or hidden lines
+	else if (rendertype == RETRO_POLY_WIREFRAME || rendertype == RETRO_POLY_HIDDENLINE) {
+		if (rendertype == RETRO_POLY_WIREFRAME) {
+			RETRO_SortAllFaces(model);
+		} else {
+			RETRO_SortVisibleFaces(model);
 		}
-	}
-
-	// Render with hidden line
-	else if (rendertype == RETRO_POLY_HIDDENLINE) {
-		RETRO_SortVisibleFaces();
 
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
-			PolygonPoint points[RETRO_MAX_FACEVERTICES];
-			for (int j = 0; j < face->vertices; j++) {
-				points[j].x = model->vertex[face->vertex[j]].sx;
-				points[j].y = model->vertex[face->vertex[j]].sy;
-			}
-
 			int color = model->c + face->c;
 			for (int j = 0; j < face->vertices; j++) {
-				PolygonPoint *p1 = points + j;
-				PolygonPoint *p2 = points + (j + 1) % face->vertices;
+				Vertex *p1 = &model->vertex[face->vertex[j]];
+				Vertex *p2 = &model->vertex[face->vertex[(j + 1) % face->vertices]];
 
 				if (shadertype == RETRO_SHADE_WIREFIRE) {
-					RETRO_DrawFireLine(p1->x, p1->y, p2->x, p2->y, color, model->cintensity);
+					RETRO_DrawFireLine(p1->sx, p1->sy, p2->sx, p2->sy, color, model->cintensity);
 				} else {
-					RETRO_DrawLine(p1->x, p1->y, p2->x, p2->y, color);
+					RETRO_DrawLine(p1->sx, p1->sy, p2->sx, p2->sy, color);
 				}
 			}
 		}
@@ -123,7 +110,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 	// Render with flat shading
 	else if (rendertype == RETRO_POLY_FLAT) {
-		RETRO_SortVisibleFaces();
+		RETRO_SortVisibleFaces(model);
 
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
@@ -148,7 +135,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 	// Render with glenz shading
 	else if (rendertype == RETRO_POLY_GLENZ) {
-		RETRO_SortAllFaces();
+		RETRO_SortAllFaces(model);
 
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
@@ -176,18 +163,18 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 	// Render with gouraud shading
 	else if (rendertype == RETRO_POLY_GOURAUD) {
-		RETRO_SortVisibleFaces();
+		RETRO_SortVisibleFaces(model);
 
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
+			int cmin = model->c;
+			int cmax = model->c + face->c + model->cintensity;
 
 			PolygonPoint points[RETRO_MAX_FACEVERTICES];
 			for (int j = 0; j < face->vertices; j++) {
 				points[j].x = model->vertex[face->vertex[j]].sx;
 				points[j].y = model->vertex[face->vertex[j]].sy;
 
-				int cmin = model->c;
-				int cmax = model->c + face->c + model->cintensity;
 				float lint = RETRO_DotProduct(model->normal[face->normal[j]], RETRO_Render.lightsource);
 				points[j].c = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
 			}
@@ -198,7 +185,15 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 	// Render with phong shading
 	else if (rendertype == RETRO_POLY_PHONG) {
-		RETRO_SortVisibleFaces();
+		RETRO_SortVisibleFaces(model);
+
+		LightSourcePoint light;
+		light.nx = RETRO_Render.lightsource.rnx;
+		light.ny = RETRO_Render.lightsource.rny;
+		light.nz = RETRO_Render.lightsource.rnz;
+		light.nn = RETRO_Render.lightsource.nn;
+		light.c = model->c;
+		light.cintensity = model->cintensity;
 
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
@@ -213,37 +208,19 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 				points[j].nz = model->normal[face->normal[j]].rnz * vertex->q;
 			}
 
-			LightSourcePoint light;
-			light.nx = RETRO_Render.lightsource.rnx;
-			light.ny = RETRO_Render.lightsource.rny;
-			light.nz = RETRO_Render.lightsource.rnz;
-			light.nn = RETRO_Render.lightsource.nn;
-			light.c = model->c;
-			light.cintensity = model->cintensity;
 			RETRO_DrawPhongPolygon(points, face->vertices, light);
 		}
 	}
 
 	// Render with texture mapping
 	else if (rendertype == RETRO_POLY_TEXTURE) {
-		RETRO_SortVisibleFaces();
+		RETRO_SortVisibleFaces(model);
 
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
 			PolygonPoint points[RETRO_MAX_FACEVERTICES];
-			for (int j = 0; j < face->vertices; j++) {
-				Vertex *vertex = &model->vertex[face->vertex[j]];
-				points[j].x = vertex->sx;
-				points[j].y = vertex->sy;
-				points[j].u = model->uv[face->uv[j]].u;
-				points[j].v = model->uv[face->uv[j]].v;
-				points[j].q = vertex->q;
-				Normal *normal = &model->normal[face->normal[j]];
-				float inverseNormalLength = normal->nn > 0.0f ? 1.0f / normal->nn : 0.0f;
-				points[j].e = model->c + model->cintensity * normal->rnx * inverseNormalLength;
-				points[j].w = model->c + model->cintensity * normal->rny * inverseNormalLength;
-			}
+			RETRO_PrepareMappedFace(model, face, points);
 
 			int shade = model->c + face->c;
 
@@ -268,7 +245,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 			else if (shadertype == RETRO_SHADE_GOURAUD) {
 				for (int j = 0; j < face->vertices; j++) {
 					float lint = RETRO_DotProduct(model->normal[face->normal[j]], RETRO_Render.lightsource);
-					points[j].c = CLAMP128(model->c + face->c + lint * 128);;
+					points[j].c = CLAMP128(model->c + face->c + lint * 128);
 				}
 				RETRO_DrawTexMapGouraudPolygon(points, face->vertices, model->texmap, RETRO_Color.shadetable);
 			}
@@ -287,40 +264,19 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 	// Render with environment mapping
 	else if (rendertype == RETRO_POLY_ENVIRONMENT) {
-		RETRO_SortVisibleFaces();
+		RETRO_SortVisibleFaces(model);
 
 		for (int i = 0; i < model->visiblefaces; i++) {
 			Face *face = &model->face[model->visibleface[i]];
 
 			PolygonPoint points[RETRO_MAX_FACEVERTICES];
-			for (int j = 0; j < face->vertices; j++) {
-				Vertex *vertex = &model->vertex[face->vertex[j]];
-				points[j].x = vertex->sx;
-				points[j].y = vertex->sy;
-				points[j].q = vertex->q;
-				points[j].u = model->uv[face->uv[j]].u;
-				points[j].v = model->uv[face->uv[j]].v;
-				Normal *normal = &model->normal[face->normal[j]];
-				float inverseNormalLength = normal->nn > 0.0f ? 1.0f / normal->nn : 0.0f;
-				points[j].e = model->c + model->cintensity * normal->rnx * inverseNormalLength;
-				points[j].w = model->c + model->cintensity * normal->rny * inverseNormalLength;
-//				points[j].e = RETRO_Render.uvlookup[(int)(model->normal[face->normal[j]].rnx + 256) / 2];
-//				points[j].w = RETRO_Render.uvlookup[(int)(model->normal[face->normal[j]].rny + 256) / 2];
-			}
+			RETRO_PrepareMappedFace(model, face, points);
 			if (model->bumpmap) {
 				RETRO_DrawEnvMapBumpPolygon(points, face->vertices, model->envmap, model->bumpmap);
 			} else {
 				RETRO_DrawEnvMapPolygon(points, face->vertices, model->envmap);
 			}
 		}
-	}
-}
-
-void RETRO_Initialize_3D(void)
-{
-	// Create arc sine correction lookup
-	for (int i = -128; i < 128; i++) {
-		RETRO_Render.uvlookup[i + 128] = 255.0 * asin(i / 128.0) / M_PI + 127;
 	}
 }
 

@@ -231,10 +231,12 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 			PolygonPoint points[RETRO_MAX_FACEVERTICES];
 			for (int j = 0; j < face->vertices; j++) {
-				points[j].x = model->vertex[face->vertex[j]].sx;
-				points[j].y = model->vertex[face->vertex[j]].sy;
+				Vertex *vertex = &model->vertex[face->vertex[j]];
+				points[j].x = vertex->sx;
+				points[j].y = vertex->sy;
 				points[j].u = model->uv[face->uv[j]].u;
 				points[j].v = model->uv[face->uv[j]].v;
+				points[j].q = vertex->q;
 				points[j].e = model->c + model->cintensity * model->normal[face->normal[j]].rnx / model->normal[face->normal[j]].nn;
 				points[j].w = model->c + model->cintensity * model->normal[face->normal[j]].rny / model->normal[face->normal[j]].nn;
 			}

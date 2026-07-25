@@ -13,6 +13,7 @@ struct PolygonPoint {
 	float x, y;
 	float c;
 	float u, v;				// Texture UV coordinates
+	float q;				// Reciprocal projection depth
 	float e, w;				// Environment map UV coordinates
 	float nx, ny, nz;
 };
@@ -279,34 +280,71 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 //
 void RETRO_DrawTexMapPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap)
 {
-	EdgeSpan span[RETRO_HEIGHT];
+	const float epsilon = 1.0e-12f;
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		span[y].p1.x = RETRO_WIDTH;
-		span[y].p2.x = 0;
-	}
+	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
+		PolygonPoint *p0 = &vertices[0];
+		PolygonPoint *p1 = &vertices[triangle];
+		PolygonPoint *p2 = &vertices[triangle + 1];
+		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
+		if (fabs(area) <= epsilon) continue;
 
-	for (int i = 0; i < numvertices; i++) {
-		PolygonPoint *p1 = vertices + i;
-		PolygonPoint *p2 = vertices + (i + 1) % numvertices;
-		RETRO_ScanEdge(*p1, *p2, span);
-	}
+		EdgeSpan span[RETRO_HEIGHT];
+		for (int y = 0; y < RETRO_HEIGHT; y++) {
+			span[y].p1.x = RETRO_WIDTH;
+			span[y].p2.x = 0;
+		}
 
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		if (span[y].p1.x <= span[y].p2.x) {
-			float xdiff = (span[y].p2.x - span[y].p1.x) != 0 ? span[y].p2.x - span[y].p1.x : 1;
-			float du = (span[y].p2.u - span[y].p1.u) / xdiff;
-			float dv = (span[y].p2.v - span[y].p1.v) / xdiff;
+		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
+		for (int edge = 0; edge < 3; edge++) {
+			PolygonPoint a = *edgevertices[edge];
+			PolygonPoint b = *edgevertices[edge + 1];
+			if (b.y < a.y) SWAP(a, b);
 
-			for (int x = (int)span[y].p1.x; x < (int)span[y].p2.x; x++) {
-				if (x >= 0 && x < RETRO_WIDTH) {
-					unsigned int u = CLAMP256(span[y].p1.u);
-					unsigned int v = CLAMP256(span[y].p1.v);
-					unsigned char texel = CLAMP256(texmap[v * 256 + u]);
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = texel;
+			float ydiff = b.y - a.y;
+			if (ydiff == 0.0f) continue;
+
+			float dxdy = (b.x - a.x) / ydiff;
+			int ystart = ceil(a.y - 0.5f);
+			int yend = ceil(b.y - 0.5f);
+			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
+
+			for (int y = ystart; y < yend; y++, x += dxdy) {
+				if (y < 0 || y >= RETRO_HEIGHT) continue;
+				span[y].p1.x = MIN(span[y].p1.x, x);
+				span[y].p2.x = MAX(span[y].p2.x, x);
+			}
+		}
+
+		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
+		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
+		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / area;
+		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / area;
+		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / area;
+		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / area;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+
+		for (int y = 0; y < RETRO_HEIGHT; y++) {
+			if (span[y].p1.x > span[y].p2.x) continue;
+			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			float px = xstart + 0.5f;
+			float py = y + 0.5f;
+			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
+			float vq = v0 + dvqdx * (px - p0->x) + dvqdy * (py - p0->y);
+			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+
+			for (int x = xstart; x < xend; x++) {
+				if (fabs(q) > epsilon) {
+					float inverseQ = 1.0f / q;
+					unsigned int u = CLAMP256(uq * inverseQ);
+					unsigned int v = CLAMP256(vq * inverseQ);
+					RETRO.framebuffer[y * RETRO_WIDTH + x] = texmap[v * 256 + u];
 				}
-				span[y].p1.u += du;
-				span[y].p1.v += dv;
+				uq += duqdx;
+				vq += dvqdx;
+				q += dqdx;
 			}
 		}
 	}

@@ -44,19 +44,6 @@ void DEMO_Render(double deltatime)
 		}
 	}
 
-	// Draw square
-	RETRO_DrawLine(0, 0, IMAGE_WIDTH-1, 0, 60, image, IMAGE_WIDTH); // top row
-	RETRO_DrawLine(0, IMAGE_HEIGHT-1, IMAGE_WIDTH-1, IMAGE_HEIGHT-1, 60, image, IMAGE_WIDTH); // bottom row
-	RETRO_DrawLine(0, 0, 0, IMAGE_HEIGHT-1, 60, image, IMAGE_WIDTH); // left side
-	RETRO_DrawLine(IMAGE_WIDTH-1, 0, IMAGE_WIDTH-1, IMAGE_HEIGHT-1, 60, image, IMAGE_WIDTH); // right side
-#if 1
-	// Draw second square
-	RETRO_DrawLine(0, 1, IMAGE_WIDTH-1, 1, 60, image, IMAGE_WIDTH); // top row
-	RETRO_DrawLine(0, IMAGE_HEIGHT-2, IMAGE_WIDTH-1, IMAGE_HEIGHT-2, 60, image, IMAGE_WIDTH); // bottom row
-	RETRO_DrawLine(1, 0, 1, IMAGE_HEIGHT-1, 60, image, IMAGE_WIDTH); // left side
-	RETRO_DrawLine(IMAGE_WIDTH-2, 0, IMAGE_WIDTH-2, IMAGE_HEIGHT-1, 60, image, IMAGE_WIDTH); // right side
-#endif
-
 	static float ax, ay, az;
 	ax += deltatime * 2;
 	ay += deltatime * 2;
@@ -65,6 +52,29 @@ void DEMO_Render(double deltatime)
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
 	RETRO_RenderModel(RETRO_POLY_TEXTURE);
+
+	// Keep the cube outline visible when the texture border becomes subpixel
+	Model3D *model = RETRO_Get3DModel();
+	for (int i = 0; i < model->visiblefaces; i++) {
+		Face *face = &model->face[model->visibleface[i]];
+		for (int j = 0; j < face->vertices; j++) {
+			Vertex *v1 = &model->vertex[face->vertex[j]];
+			Vertex *v2 = &model->vertex[face->vertex[(j + 1) % face->vertices]];
+			int changedCoordinates = (v1->x != v2->x) + (v1->y != v2->y) + (v1->z != v2->z);
+			if (changedCoordinates == 1) {
+				float dx = v2->sx - v1->sx;
+				float dy = v2->sy - v1->sy;
+				float length = sqrt(dx * dx + dy * dy);
+				if (length == 0.0f) continue;
+				float ox = -dy / length;
+				float oy = dx / length;
+				for (int offset = 0; offset <= 1; offset++) {
+					RETRO_DrawLine(round(v1->sx + ox * offset), round(v1->sy + oy * offset),
+								   round(v2->sx + ox * offset), round(v2->sy + oy * offset), 60);
+				}
+			}
+		}
+	}
 }
 
 void DEMO_Initialize(void)

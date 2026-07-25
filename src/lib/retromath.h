@@ -62,9 +62,16 @@ void RETRO_ProjectModel(float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RE
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->vertices; i++) {
-		model->vertex[i].q = 1.0f / (scale * model->vertex[i].rz + eye);
-		model->vertex[i].sx = x + scale * model->vertex[i].rx * eye * model->vertex[i].q;
-		model->vertex[i].sy = y + scale * model->vertex[i].ry * eye * model->vertex[i].q;
+		float depth = scale * model->vertex[i].rz + eye;
+		if (depth <= 1.0f) {
+			model->vertex[i].q = 0.0f;
+			model->vertex[i].sx = x;
+			model->vertex[i].sy = y;
+		} else {
+			model->vertex[i].q = 1.0f / depth;
+			model->vertex[i].sx = x + scale * model->vertex[i].rx * eye * model->vertex[i].q;
+			model->vertex[i].sy = y + scale * model->vertex[i].ry * eye * model->vertex[i].q;
+		}
 	}
 }
 
@@ -78,9 +85,16 @@ void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 
 void RETRO_ProjectVertex(Vertex *vertex, float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), int eye = 250)
 {
-	vertex->q = 1.0f / (scale * vertex->rz + eye);
-	vertex->sx = x + scale * vertex->rx * eye * vertex->q;
-	vertex->sy = y + scale * vertex->ry * eye * vertex->q;
+	float depth = scale * vertex->rz + eye;
+	if (depth <= 1.0f) {
+		vertex->q = 0.0f;
+		vertex->sx = x;
+		vertex->sy = y;
+	} else {
+		vertex->q = 1.0f / depth;
+		vertex->sx = x + scale * vertex->rx * eye * vertex->q;
+		vertex->sy = y + scale * vertex->ry * eye * vertex->q;
+	}
 }
 
 void RETRO_RotateVertex(Vertex *vertex, float cosa, float sina)
@@ -133,7 +147,9 @@ void RETRO_RotateNormal(Normal *normal, float ax, float ay, float az)
 
 float RETRO_DotProduct(Normal n1, Normal n2)
 {
-	return (n1.rnx * n2.rnx + n1.rny * n2.rny + n1.rnz * n2.rnz) / (n1.nn * n2.nn);
+	float lengths = n1.nn * n2.nn;
+	if (lengths <= 0.0f) return 0.0f;
+	return (n1.rnx * n2.rnx + n1.rny * n2.rny + n1.rnz * n2.rnz) / lengths;
 }
 
 void RETRO_QuickSort(Model3D *model, int lo, int hi)
@@ -171,6 +187,18 @@ void RETRO_SortVisibleFaces(Model3D *model = NULL, bool all = false)
 
 	model->visiblefaces = 0;
 	for (int i = 0; i < model->faces; i++) {
+		bool infront = true;
+		for (int j = 0; j < model->face[i].vertices; j++) {
+			if (model->vertex[model->face[i].vertex[j]].q <= 0.0f) {
+				infront = false;
+				break;
+			}
+		}
+		if (!infront) {
+			model->face[i].visible = false;
+			continue;
+		}
+
 		float visible = (model->vertex[model->face[i].vertex[1]].sx - model->vertex[model->face[i].vertex[0]].sx) *
 						(model->vertex[model->face[i].vertex[0]].sy - model->vertex[model->face[i].vertex[2]].sy) -
 						(model->vertex[model->face[i].vertex[1]].sy - model->vertex[model->face[i].vertex[0]].sy) *

@@ -60,7 +60,9 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 	// Render with dots
 	if (rendertype == RETRO_POLY_DOT) {
 		for (int i = 0; i < model->vertices; i++) {
-			RETRO_PutPixel(model->vertex[i].sx, model->vertex[i].sy, model->c);
+			if (model->vertex[i].q > 0.0f) {
+				RETRO_PutPixel(model->vertex[i].sx, model->vertex[i].sy, model->c);
+			}
 		}
 	}
 
@@ -237,8 +239,10 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 				points[j].u = model->uv[face->uv[j]].u;
 				points[j].v = model->uv[face->uv[j]].v;
 				points[j].q = vertex->q;
-				points[j].e = model->c + model->cintensity * model->normal[face->normal[j]].rnx / model->normal[face->normal[j]].nn;
-				points[j].w = model->c + model->cintensity * model->normal[face->normal[j]].rny / model->normal[face->normal[j]].nn;
+				Normal *normal = &model->normal[face->normal[j]];
+				float inverseNormalLength = normal->nn > 0.0f ? 1.0f / normal->nn : 0.0f;
+				points[j].e = model->c + model->cintensity * normal->rnx * inverseNormalLength;
+				points[j].w = model->c + model->cintensity * normal->rny * inverseNormalLength;
 			}
 
 			int shade = model->c + face->c;
@@ -290,12 +294,16 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 			PolygonPoint points[RETRO_MAX_FACEVERTICES];
 			for (int j = 0; j < face->vertices; j++) {
-				points[j].x = model->vertex[face->vertex[j]].sx;
-				points[j].y = model->vertex[face->vertex[j]].sy;
+				Vertex *vertex = &model->vertex[face->vertex[j]];
+				points[j].x = vertex->sx;
+				points[j].y = vertex->sy;
+				points[j].q = vertex->q;
 				points[j].u = model->uv[face->uv[j]].u;
 				points[j].v = model->uv[face->uv[j]].v;
-				points[j].e = model->c + model->cintensity * model->normal[face->normal[j]].rnx / model->normal[face->normal[j]].nn;
-				points[j].w = model->c + model->cintensity * model->normal[face->normal[j]].rny / model->normal[face->normal[j]].nn;
+				Normal *normal = &model->normal[face->normal[j]];
+				float inverseNormalLength = normal->nn > 0.0f ? 1.0f / normal->nn : 0.0f;
+				points[j].e = model->c + model->cintensity * normal->rnx * inverseNormalLength;
+				points[j].w = model->c + model->cintensity * normal->rny * inverseNormalLength;
 //				points[j].e = RETRO_Render.uvlookup[(int)(model->normal[face->normal[j]].rnx + 256) / 2];
 //				points[j].w = RETRO_Render.uvlookup[(int)(model->normal[face->normal[j]].rny + 256) / 2];
 			}

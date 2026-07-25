@@ -23,130 +23,68 @@ struct LightSourcePoint {
 	int c, cintensity;		// Min, max color
 };
 
-struct EdgeSpan {
-	PolygonPoint p1;
-	PolygonPoint p2;
+struct TriangleSpan {
+	float x1, x2;
 };
 
-void RETRO_ScanEdge(PolygonPoint p1, PolygonPoint p2, EdgeSpan *span)
+//
+// Find the horizontal coverage of a triangle at pixel centers.
+// The returned signed area is also used to calculate attribute gradients.
+//
+float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, const PolygonPoint *p2, TriangleSpan *span)
 {
-	if (p2.y < p1.y) {
-		SWAP(p1.x, p2.x);
-		SWAP(p1.y, p2.y);
-		SWAP(p1.c, p2.c);
-		SWAP(p1.u, p2.u);
-		SWAP(p1.v, p2.v);
-		SWAP(p1.e, p2.e);
-		SWAP(p1.w, p2.w);
-		SWAP(p1.nx, p2.nx);
-		SWAP(p1.ny, p2.ny);
-		SWAP(p1.nz, p2.nz);
+	const float epsilon = 1.0e-12f;
+	float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
+	if (fabs(area) <= epsilon) return 0.0f;
+
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		span[y].x1 = RETRO_WIDTH;
+		span[y].x2 = 0;
 	}
 
-	float ydiff = (p2.y - p1.y) != 0 ? p2.y - p1.y : 1;
+	const PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
+	for (int edge = 0; edge < 3; edge++) {
+		const PolygonPoint *a = edgevertices[edge];
+		const PolygonPoint *b = edgevertices[edge + 1];
+		if (b->y < a->y) SWAP(a, b);
 
-	float dx = (p2.x - p1.x) / ydiff;
-	float dc = (p2.c - p1.c) / ydiff;
-	float du = (p2.u - p1.u) / ydiff;
-	float dv = (p2.v - p1.v) / ydiff;
-	float de = (p2.e - p1.e) / ydiff;
-	float dw = (p2.w - p1.w) / ydiff;
-	float dnx = (p2.nx - p1.nx) / ydiff;
-	float dny = (p2.ny - p1.ny) / ydiff;
-	float dnz = (p2.nz - p1.nz) / ydiff;
+		float ydiff = b->y - a->y;
+		if (ydiff == 0.0f) continue;
 
-	float x = p1.x;
-	float c = p1.c;
-	float u = p1.u;
-	float v = p1.v;
-	float e = p1.e;
-	float w = p1.w;
-	float nx = p1.nx;
-	float ny = p1.ny;
-	float nz = p1.nz;
+		float dxdy = (b->x - a->x) / ydiff;
+		// Include scanlines whose pixel center lies within the half-open edge.
+		int ystart = ceil(a->y - 0.5f);
+		int yend = ceil(b->y - 0.5f);
+		float x = a->x + ((ystart + 0.5f) - a->y) * dxdy;
 
-	for (int y = (int)p1.y; y < (int)p2.y; y++) {
-		if (y >= 0 && y < RETRO_HEIGHT) {
-			if (x < span[y].p1.x) {
-				span[y].p1.x = x;
-				span[y].p1.c = c;
-				span[y].p1.u = u;
-				span[y].p1.v = v;
-				span[y].p1.e = e;
-				span[y].p1.w = w;
-				span[y].p1.nx = nx;
-				span[y].p1.ny = ny;
-				span[y].p1.nz = nz;
-			}
-			if (x > span[y].p2.x) {
-				span[y].p2.x = x;
-				span[y].p2.c = c;
-				span[y].p2.u = u;
-				span[y].p2.v = v;
-				span[y].p2.e = e;
-				span[y].p2.w = w;
-				span[y].p2.nx = nx;
-				span[y].p2.ny = ny;
-				span[y].p2.nz = nz;
-			}
+		for (int y = ystart; y < yend; y++, x += dxdy) {
+			if (y < 0 || y >= RETRO_HEIGHT) continue;
+			span[y].x1 = MIN(span[y].x1, x);
+			span[y].x2 = MAX(span[y].x2, x);
 		}
-		x += dx;
-		c += dc;
-		u += du;
-		v += dv;
-		e += de;
-		w += dw;
-		nx += dnx;
-		ny += dny;
-		nz += dnz;
 	}
+
+	return area;
 }
 
 //
 // Flat shaded polygon
+// Split a convex polygon into a triangle fan and fill it with one color.
 //
 void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned char color)
 {
-	const float epsilon = 1.0e-12f;
-
 	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
 		PolygonPoint *p0 = &vertices[0];
 		PolygonPoint *p1 = &vertices[triangle];
 		PolygonPoint *p2 = &vertices[triangle + 1];
-		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-		if (fabs(area) <= epsilon) continue;
-
-		EdgeSpan span[RETRO_HEIGHT];
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			span[y].p1.x = RETRO_WIDTH;
-			span[y].p2.x = 0;
-		}
-
-		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
-		for (int edge = 0; edge < 3; edge++) {
-			PolygonPoint a = *edgevertices[edge];
-			PolygonPoint b = *edgevertices[edge + 1];
-			if (b.y < a.y) SWAP(a, b);
-
-			float ydiff = b.y - a.y;
-			if (ydiff == 0.0f) continue;
-
-			float dxdy = (b.x - a.x) / ydiff;
-			int ystart = ceil(a.y - 0.5f);
-			int yend = ceil(b.y - 0.5f);
-			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
-
-			for (int y = ystart; y < yend; y++, x += dxdy) {
-				if (y < 0 || y >= RETRO_HEIGHT) continue;
-				span[y].p1.x = MIN(span[y].p1.x, x);
-				span[y].p2.x = MAX(span[y].p2.x, x);
-			}
-		}
+		TriangleSpan span[RETRO_HEIGHT];
+		float area = RETRO_ScanTriangle(p0, p1, p2, span);
+		if (area == 0.0f) continue;
 
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			if (span[y].p1.x > span[y].p2.x) continue;
-			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
 			for (int x = xstart; x < xend; x++) {
 				RETRO.framebuffer[y * RETRO_WIDTH + x] = color;
 			}
@@ -156,49 +94,22 @@ void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned cha
 
 //
 // Glenz shaded polygon
+// Add one color to the framebuffer, allowing sorted polygons to show through.
 //
 void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned char color)
 {
-	const float epsilon = 1.0e-12f;
-
 	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
 		PolygonPoint *p0 = &vertices[0];
 		PolygonPoint *p1 = &vertices[triangle];
 		PolygonPoint *p2 = &vertices[triangle + 1];
-		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-		if (fabs(area) <= epsilon) continue;
-
-		EdgeSpan span[RETRO_HEIGHT];
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			span[y].p1.x = RETRO_WIDTH;
-			span[y].p2.x = 0;
-		}
-
-		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
-		for (int edge = 0; edge < 3; edge++) {
-			PolygonPoint a = *edgevertices[edge];
-			PolygonPoint b = *edgevertices[edge + 1];
-			if (b.y < a.y) SWAP(a, b);
-
-			float ydiff = b.y - a.y;
-			if (ydiff == 0.0f) continue;
-
-			float dxdy = (b.x - a.x) / ydiff;
-			int ystart = ceil(a.y - 0.5f);
-			int yend = ceil(b.y - 0.5f);
-			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
-
-			for (int y = ystart; y < yend; y++, x += dxdy) {
-				if (y < 0 || y >= RETRO_HEIGHT) continue;
-				span[y].p1.x = MIN(span[y].p1.x, x);
-				span[y].p2.x = MAX(span[y].p2.x, x);
-			}
-		}
+		TriangleSpan span[RETRO_HEIGHT];
+		float area = RETRO_ScanTriangle(p0, p1, p2, span);
+		if (area == 0.0f) continue;
 
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			if (span[y].p1.x > span[y].p2.x) continue;
-			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
 			for (int x = xstart; x < xend; x++) {
 				RETRO.framebuffer[y * RETRO_WIDTH + x] = MIN(RETRO.framebuffer[y * RETRO_WIDTH + x] + color, 255);
 			}
@@ -208,52 +119,26 @@ void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned ch
 
 //
 // Gouraud shaded polygon
+// Interpolate palette indices affinely in screen space to keep shared
+// triangle edges continuous.
 //
 void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices)
 {
-	const float epsilon = 1.0e-12f;
-
 	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
 		PolygonPoint *p0 = &vertices[0];
 		PolygonPoint *p1 = &vertices[triangle];
 		PolygonPoint *p2 = &vertices[triangle + 1];
-		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-		if (fabs(area) <= epsilon) continue;
-
-		EdgeSpan span[RETRO_HEIGHT];
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			span[y].p1.x = RETRO_WIDTH;
-			span[y].p2.x = 0;
-		}
-
-		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
-		for (int edge = 0; edge < 3; edge++) {
-			PolygonPoint a = *edgevertices[edge];
-			PolygonPoint b = *edgevertices[edge + 1];
-			if (b.y < a.y) SWAP(a, b);
-
-			float ydiff = b.y - a.y;
-			if (ydiff == 0.0f) continue;
-
-			float dxdy = (b.x - a.x) / ydiff;
-			int ystart = ceil(a.y - 0.5f);
-			int yend = ceil(b.y - 0.5f);
-			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
-
-			for (int y = ystart; y < yend; y++, x += dxdy) {
-				if (y < 0 || y >= RETRO_HEIGHT) continue;
-				span[y].p1.x = MIN(span[y].p1.x, x);
-				span[y].p2.x = MAX(span[y].p2.x, x);
-			}
-		}
+		TriangleSpan span[RETRO_HEIGHT];
+		float area = RETRO_ScanTriangle(p0, p1, p2, span);
+		if (area == 0.0f) continue;
 
 		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / area;
 		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / area;
 
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			if (span[y].p1.x > span[y].p2.x) continue;
-			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float c = p0->c + dcdx * (px - p0->x) + dcdy * (py - p0->y);
@@ -268,6 +153,7 @@ void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices)
 
 //
 // Phong shaded polygon
+// Interpolate vertex normals and evaluate diffuse lighting for every pixel.
 //
 void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSourcePoint light)
 {
@@ -284,35 +170,9 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 		PolygonPoint *p0 = &vertices[0];
 		PolygonPoint *p1 = &vertices[triangle];
 		PolygonPoint *p2 = &vertices[triangle + 1];
-		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-		if (fabs(area) <= epsilon) continue;
-
-		EdgeSpan span[RETRO_HEIGHT];
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			span[y].p1.x = RETRO_WIDTH;
-			span[y].p2.x = 0;
-		}
-
-		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
-		for (int edge = 0; edge < 3; edge++) {
-			PolygonPoint a = *edgevertices[edge];
-			PolygonPoint b = *edgevertices[edge + 1];
-			if (b.y < a.y) SWAP(a, b);
-
-			float ydiff = b.y - a.y;
-			if (ydiff == 0.0f) continue;
-
-			float dxdy = (b.x - a.x) / ydiff;
-			int ystart = ceil(a.y - 0.5f);
-			int yend = ceil(b.y - 0.5f);
-			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
-
-			for (int y = ystart; y < yend; y++, x += dxdy) {
-				if (y < 0 || y >= RETRO_HEIGHT) continue;
-				span[y].p1.x = MIN(span[y].p1.x, x);
-				span[y].p2.x = MAX(span[y].p2.x, x);
-			}
-		}
+		TriangleSpan span[RETRO_HEIGHT];
+		float area = RETRO_ScanTriangle(p0, p1, p2, span);
+		if (area == 0.0f) continue;
 
 		float dnxdx, dnxdy, dnydx, dnydy, dnzdx, dnzdy;
 		dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / area;
@@ -323,9 +183,9 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 		dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
 
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			if (span[y].p1.x > span[y].p2.x) continue;
-			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
@@ -336,6 +196,7 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 				float normalLengthSquared = nx * nx + ny * ny + nz * nz;
 				float intensity = 0.0f;
 
+				// Interpolated normals must be normalized before lighting.
 				if (normalLengthSquared > epsilon && inverseLightLength > 0.0f) {
 					float inverseNormalLength = 1.0f / sqrt(normalLengthSquared);
 					intensity = MAX((nx * lx + ny * ly + nz * lz) * inverseNormalLength, 0.0f);
@@ -354,6 +215,7 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 
 //
 // Texture mapped polygon
+// Interpolate u/z, v/z and 1/z to remove affine texture distortion.
 //
 void RETRO_DrawTexMapPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap)
 {
@@ -365,35 +227,9 @@ void RETRO_DrawTexMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 		PolygonPoint *p0 = &vertices[0];
 		PolygonPoint *p1 = &vertices[triangle];
 		PolygonPoint *p2 = &vertices[triangle + 1];
-		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-		if (fabs(area) <= epsilon) continue;
-
-		EdgeSpan span[RETRO_HEIGHT];
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			span[y].p1.x = RETRO_WIDTH;
-			span[y].p2.x = 0;
-		}
-
-		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
-		for (int edge = 0; edge < 3; edge++) {
-			PolygonPoint a = *edgevertices[edge];
-			PolygonPoint b = *edgevertices[edge + 1];
-			if (b.y < a.y) SWAP(a, b);
-
-			float ydiff = b.y - a.y;
-			if (ydiff == 0.0f) continue;
-
-			float dxdy = (b.x - a.x) / ydiff;
-			int ystart = ceil(a.y - 0.5f);
-			int yend = ceil(b.y - 0.5f);
-			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
-
-			for (int y = ystart; y < yend; y++, x += dxdy) {
-				if (y < 0 || y >= RETRO_HEIGHT) continue;
-				span[y].p1.x = MIN(span[y].p1.x, x);
-				span[y].p2.x = MAX(span[y].p2.x, x);
-			}
-		}
+		TriangleSpan span[RETRO_HEIGHT];
+		float area = RETRO_ScanTriangle(p0, p1, p2, span);
+		if (area == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
@@ -405,9 +241,9 @@ void RETRO_DrawTexMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
 
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			if (span[y].p1.x > span[y].p2.x) continue;
-			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -430,7 +266,9 @@ void RETRO_DrawTexMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 }
 
 //
-// Texture mapped polygon
+// Gouraud shaded texture mapped polygon
+// Texture coordinates are perspective-correct; shade is affine so adjacent
+// triangles agree along their shared edge.
 //
 void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *shadetable = NULL)
 {
@@ -442,35 +280,9 @@ void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, uns
 		PolygonPoint *p0 = &vertices[0];
 		PolygonPoint *p1 = &vertices[triangle];
 		PolygonPoint *p2 = &vertices[triangle + 1];
-		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-		if (fabs(area) <= epsilon) continue;
-
-		EdgeSpan span[RETRO_HEIGHT];
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			span[y].p1.x = RETRO_WIDTH;
-			span[y].p2.x = 0;
-		}
-
-		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
-		for (int edge = 0; edge < 3; edge++) {
-			PolygonPoint a = *edgevertices[edge];
-			PolygonPoint b = *edgevertices[edge + 1];
-			if (b.y < a.y) SWAP(a, b);
-
-			float ydiff = b.y - a.y;
-			if (ydiff == 0.0f) continue;
-
-			float dxdy = (b.x - a.x) / ydiff;
-			int ystart = ceil(a.y - 0.5f);
-			int yend = ceil(b.y - 0.5f);
-			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
-
-			for (int y = ystart; y < yend; y++, x += dxdy) {
-				if (y < 0 || y >= RETRO_HEIGHT) continue;
-				span[y].p1.x = MIN(span[y].p1.x, x);
-				span[y].p2.x = MAX(span[y].p2.x, x);
-			}
-		}
+		TriangleSpan span[RETRO_HEIGHT];
+		float area = RETRO_ScanTriangle(p0, p1, p2, span);
+		if (area == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
@@ -484,9 +296,9 @@ void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, uns
 		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
 
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			if (span[y].p1.x > span[y].p2.x) continue;
-			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -513,7 +325,9 @@ void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, uns
 }
 
 //
-// Texture mapped polygon
+// Environment shaded texture mapped polygon
+// Texture coordinates are perspective-correct. Environment coordinates are
+// affine because they are derived from view-space normals rather than geometry.
 //
 void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *envmap = NULL, unsigned char *shadetable = NULL, unsigned char shade = 0)
 {
@@ -525,35 +339,9 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 		PolygonPoint *p0 = &vertices[0];
 		PolygonPoint *p1 = &vertices[triangle];
 		PolygonPoint *p2 = &vertices[triangle + 1];
-		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-		if (fabs(area) <= epsilon) continue;
-
-		EdgeSpan span[RETRO_HEIGHT];
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			span[y].p1.x = RETRO_WIDTH;
-			span[y].p2.x = 0;
-		}
-
-		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
-		for (int edge = 0; edge < 3; edge++) {
-			PolygonPoint a = *edgevertices[edge];
-			PolygonPoint b = *edgevertices[edge + 1];
-			if (b.y < a.y) SWAP(a, b);
-
-			float ydiff = b.y - a.y;
-			if (ydiff == 0.0f) continue;
-
-			float dxdy = (b.x - a.x) / ydiff;
-			int ystart = ceil(a.y - 0.5f);
-			int yend = ceil(b.y - 0.5f);
-			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
-
-			for (int y = ystart; y < yend; y++, x += dxdy) {
-				if (y < 0 || y >= RETRO_HEIGHT) continue;
-				span[y].p1.x = MIN(span[y].p1.x, x);
-				span[y].p2.x = MAX(span[y].p2.x, x);
-			}
-		}
+		TriangleSpan span[RETRO_HEIGHT];
+		float area = RETRO_ScanTriangle(p0, p1, p2, span);
+		if (area == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
@@ -569,9 +357,9 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
 
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			if (span[y].p1.x > span[y].p2.x) continue;
-			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -605,7 +393,9 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 }
 
 //
-// Texture mapped polygon
+// Bump and environment shaded texture mapped polygon
+// Use perspective-correct coordinates for the texture and bump map, while
+// environment coordinates remain affine.
 //
 void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *envmap = NULL, unsigned char *bumpmap = NULL, unsigned char *shadetable = NULL, unsigned char shade = 0)
 {
@@ -617,35 +407,9 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 		PolygonPoint *p0 = &vertices[0];
 		PolygonPoint *p1 = &vertices[triangle];
 		PolygonPoint *p2 = &vertices[triangle + 1];
-		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-		if (fabs(area) <= epsilon) continue;
-
-		EdgeSpan span[RETRO_HEIGHT];
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			span[y].p1.x = RETRO_WIDTH;
-			span[y].p2.x = 0;
-		}
-
-		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
-		for (int edge = 0; edge < 3; edge++) {
-			PolygonPoint a = *edgevertices[edge];
-			PolygonPoint b = *edgevertices[edge + 1];
-			if (b.y < a.y) SWAP(a, b);
-
-			float ydiff = b.y - a.y;
-			if (ydiff == 0.0f) continue;
-
-			float dxdy = (b.x - a.x) / ydiff;
-			int ystart = ceil(a.y - 0.5f);
-			int yend = ceil(b.y - 0.5f);
-			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
-
-			for (int y = ystart; y < yend; y++, x += dxdy) {
-				if (y < 0 || y >= RETRO_HEIGHT) continue;
-				span[y].p1.x = MIN(span[y].p1.x, x);
-				span[y].p2.x = MAX(span[y].p2.x, x);
-			}
-		}
+		TriangleSpan span[RETRO_HEIGHT];
+		float area = RETRO_ScanTriangle(p0, p1, p2, span);
+		if (area == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
@@ -661,9 +425,9 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
 
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			if (span[y].p1.x > span[y].p2.x) continue;
-			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -677,12 +441,16 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 					float inverseQ = 1.0f / q;
 					float u = uq * inverseQ;
 					float v = vq * inverseQ;
+					// A one-texel central difference gives a stable texture-space
+					// height gradient. The sign makes bright texels protrude.
 					int bu1 = CLAMP256(u + 1.0f) + CLAMP256(v) * 256;
 					int bu2 = CLAMP256(u - 1.0f) + CLAMP256(v) * 256;
 					int bv1 = CLAMP256(u) + CLAMP256(v + 1.0f) * 256;
 					int bv2 = CLAMP256(u) + CLAMP256(v - 1.0f) * 256;
 					int bu = bumpmap[bu2] - bumpmap[bu1] + e;
 					int bv = bumpmap[bv2] - bumpmap[bv1] + w;
+					// Outside the environment map, use the undisplaced lookup
+					// instead of introducing black pixels.
 					unsigned int environmentU = bu >= 0 && bu < 256 ? bu : CLAMP256(e);
 					unsigned int environmentV = bv >= 0 && bv < 256 ? bv : CLAMP256(w);
 					unsigned int textureU = CLAMP256(u);
@@ -705,47 +473,20 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 }
 
 //
-// Texture mapped polygon
+// Environment mapped polygon
+// Environment coordinates are interpolated affinely in screen space.
 //
 void RETRO_DrawEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned char *envmap)
 {
 	if (envmap == NULL) return;
 
-	const float epsilon = 1.0e-12f;
-
 	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
 		PolygonPoint *p0 = &vertices[0];
 		PolygonPoint *p1 = &vertices[triangle];
 		PolygonPoint *p2 = &vertices[triangle + 1];
-		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-		if (fabs(area) <= epsilon) continue;
-
-		EdgeSpan span[RETRO_HEIGHT];
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			span[y].p1.x = RETRO_WIDTH;
-			span[y].p2.x = 0;
-		}
-
-		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
-		for (int edge = 0; edge < 3; edge++) {
-			PolygonPoint a = *edgevertices[edge];
-			PolygonPoint b = *edgevertices[edge + 1];
-			if (b.y < a.y) SWAP(a, b);
-
-			float ydiff = b.y - a.y;
-			if (ydiff == 0.0f) continue;
-
-			float dxdy = (b.x - a.x) / ydiff;
-			int ystart = ceil(a.y - 0.5f);
-			int yend = ceil(b.y - 0.5f);
-			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
-
-			for (int y = ystart; y < yend; y++, x += dxdy) {
-				if (y < 0 || y >= RETRO_HEIGHT) continue;
-				span[y].p1.x = MIN(span[y].p1.x, x);
-				span[y].p2.x = MAX(span[y].p2.x, x);
-			}
-		}
+		TriangleSpan span[RETRO_HEIGHT];
+		float area = RETRO_ScanTriangle(p0, p1, p2, span);
+		if (area == 0.0f) continue;
 
 		float dedx = ((p1->e - p0->e) * (p2->y - p0->y) - (p2->e - p0->e) * (p1->y - p0->y)) / area;
 		float dedy = ((p1->x - p0->x) * (p2->e - p0->e) - (p2->x - p0->x) * (p1->e - p0->e)) / area;
@@ -753,9 +494,9 @@ void RETRO_DrawEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 		float dwdy = ((p1->x - p0->x) * (p2->w - p0->w) - (p2->x - p0->x) * (p1->w - p0->w)) / area;
 
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			if (span[y].p1.x > span[y].p2.x) continue;
-			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float e = p0->e + dedx * (px - p0->x) + dedy * (py - p0->y);
@@ -773,7 +514,8 @@ void RETRO_DrawEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 }
 
 //
-// Texture mapped polygon
+// Bump-mapped environment polygon
+// The bump gradient displaces an affine environment-map lookup.
 //
 void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *envmap, unsigned char *bumpmap)
 {
@@ -785,35 +527,9 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 		PolygonPoint *p0 = &vertices[0];
 		PolygonPoint *p1 = &vertices[triangle];
 		PolygonPoint *p2 = &vertices[triangle + 1];
-		float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-		if (fabs(area) <= epsilon) continue;
-
-		EdgeSpan span[RETRO_HEIGHT];
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			span[y].p1.x = RETRO_WIDTH;
-			span[y].p2.x = 0;
-		}
-
-		PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
-		for (int edge = 0; edge < 3; edge++) {
-			PolygonPoint a = *edgevertices[edge];
-			PolygonPoint b = *edgevertices[edge + 1];
-			if (b.y < a.y) SWAP(a, b);
-
-			float ydiff = b.y - a.y;
-			if (ydiff == 0.0f) continue;
-
-			float dxdy = (b.x - a.x) / ydiff;
-			int ystart = ceil(a.y - 0.5f);
-			int yend = ceil(b.y - 0.5f);
-			float x = a.x + ((ystart + 0.5f) - a.y) * dxdy;
-
-			for (int y = ystart; y < yend; y++, x += dxdy) {
-				if (y < 0 || y >= RETRO_HEIGHT) continue;
-				span[y].p1.x = MIN(span[y].p1.x, x);
-				span[y].p2.x = MAX(span[y].p2.x, x);
-			}
-		}
+		TriangleSpan span[RETRO_HEIGHT];
+		float area = RETRO_ScanTriangle(p0, p1, p2, span);
+		if (area == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
@@ -829,9 +545,9 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 		float dwdy = ((p1->x - p0->x) * (p2->w - p0->w) - (p2->x - p0->x) * (p1->w - p0->w)) / area;
 
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			if (span[y].p1.x > span[y].p2.x) continue;
-			int xstart = MAX((int)ceil(span[y].p1.x - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].p2.x - 0.5f), RETRO_WIDTH);
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -846,6 +562,7 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 					float u = uq * inverseQ;
 					float v = vq * inverseQ;
 
+					// Sample the height gradient one texel away in each axis.
 					int bu1 = CLAMP256(u + 1.0f) + CLAMP256(v) * 256;
 					int bu2 = CLAMP256(u - 1.0f) + CLAMP256(v) * 256;
 					int bv1 = CLAMP256(u) + CLAMP256(v + 1.0f) * 256;

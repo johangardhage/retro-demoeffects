@@ -351,55 +351,33 @@ void RETRO_CreatePlasticPhongPalette(RETRO_Palette *palette, float falloff = RET
 		int g = colorMax * ((gdiffuse + specular) * RETRO_K_ATTENUATION * RETRO_LIGHT_G + gambient);
 		int b = colorMax * ((bdiffuse + specular) * RETRO_K_ATTENUATION * RETRO_LIGHT_B + bambient);
 
-		palette[baseindex].r = CLAMP(r, 0, colorMax + 1);
-		palette[baseindex].g = CLAMP(g, 0, colorMax + 1);
-		palette[baseindex].b = CLAMP(b, 0, colorMax + 1);
+		palette[baseindex].r = CLAMP(r, 0, colorMax);
+		palette[baseindex].g = CLAMP(g, 0, colorMax);
+		palette[baseindex].b = CLAMP(b, 0, colorMax);
 	}
 }
 
 void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 {
-	// clear the map
-	memset(buffer, 0, width * height);
+	float centerX = (width - 1) * 0.5f;
+	float centerY = (height - 1) * 0.5f;
 
-	// calculate the top left quadrant of the phong enviroment map
-	for (int x = 0; x < 128; x++) {
-		for (int y = 0; y < 128; y++) {
-			// determine the angle that will have this pixel mapped to
-			// it in radian.
-			float xcomp = (127.5 - x) / 127.5 * (M_PI / 2);
-			float ycomp = (127.5 - y) / 127.5 * (M_PI / 2);
+	for (int y = 0; y < height; y++) {
+		float ny = (y - centerY) / centerY;
+		for (int x = 0; x < width; x++) {
+			float nx = (x - centerX) / centerX;
+			float radiusSquared = nx * nx + ny * ny;
 
-			// lets find "1 - (x^2 + y^2)" from above.
-			float temp = 1.0 - (pow(sin(xcomp), 2) + pow(sin(ycomp), 2));
-
-			// we can only that the sqrt if temp is positive.  Also if temp is negative
-			//	the pixel in question will never be mapped onto the object so we don't
-			// care about it.
-			if (temp >= 0.0) {
-				// we now get the z component of the normal vector
-				float zcomp = sqrt(temp);
-
-				// find the angle
-				float incedent = asin(zcomp);
-
-				// now that we have the angle lets scale down to 0 to 1 since it is
-				// an angle between 0 and 90 except it's in radians.
-				// Then scale it up the be a palette index
-				unsigned char paletteindex = (unsigned char)(incedent / (M_PI / 2) * RETRO_PAL_SIZE + RETRO_PAL_OFFSET);
-
-				// put the index into the phongmap
-				buffer[y * 256 + x] = paletteindex;
+			// The environment lookup stores the lighting of the front-facing
+			// hemisphere. Outside its unit disk, retain the darkest material
+			// shade rather than introducing transparent-looking black holes.
+			int paletteindex = RETRO_PAL_OFFSET;
+			if (radiusSquared <= 1.0f) {
+				float nz = sqrt(1.0f - radiusSquared);
+				float paletteIntensity = asin(nz) / (M_PI / 2);
+				paletteindex += paletteIntensity * RETRO_PAL_SIZE;
 			}
-		}
-	}
-
-	// copy the quadrant we just calculated to the other three (we flip)
-	for (int x = 0; x < 128; x++) {
-		for (int y = 0; y < 128; y++) {
-			buffer[y * 256 + (255 - x)] = buffer[y * 256 + x]; // top right
-			buffer[(255 - y) * 256 + x] = buffer[y * 256 + x]; // bottom left
-			buffer[(255 - y) * 256 + (255 - x)] = buffer[y * 256 + x]; // bottom right
+			buffer[y * width + x] = MIN(paletteindex, RETRO_COLORS - 1);
 		}
 	}
 }

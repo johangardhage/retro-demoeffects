@@ -6,6 +6,11 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
+#include "lib/retrocolor.h"
+
+#define PHONGMAP_SIZE 512
+
+static unsigned char PhongMap[PHONGMAP_SIZE * PHONGMAP_SIZE];
 
 void DEMO_Render(double deltatime)
 {
@@ -16,16 +21,20 @@ void DEMO_Render(double deltatime)
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
-	RETRO_RenderModel(RETRO_POLY_ENVIRONMENT);
+	RETRO_RenderModel(RETRO_POLY_ENVIRONMENT, RETRO_SHADE_PHONG);
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/mask_phongmap_256x256.pcx");
-	RETRO_Set6bitPalette(RETRO_ImagePalette());
+	RETRO_Palette PhongPalette[RETRO_COLORS] = { { 0, 0, 0 } };
+	RETRO_CreatePlasticPhongPalette(PhongPalette, 30, 255);
+	RETRO_SetPalette(PhongPalette);
+	RETRO_CreatePhongMap(PhongMap, PHONGMAP_SIZE, PHONGMAP_SIZE);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
-	model->envmap = RETRO_ImageData();
-	model->c = 128;
-	model->cintensity = 90;
+	model->envmap = PhongMap;
+	model->envmapwidth = PHONGMAP_SIZE;
+	model->envmapheight = PHONGMAP_SIZE;
+	model->c = PHONGMAP_SIZE / 2;
+	model->cintensity = PHONGMAP_SIZE / 2;
 }

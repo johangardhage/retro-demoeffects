@@ -55,6 +55,8 @@ struct Model3D {
 	int cintensity;							// Color intensity
 	unsigned char *texmap = NULL;			// Texture
 	unsigned char *envmap = NULL;			// Environment texture
+	int envmapwidth = 256;					// Environment texture width
+	int envmapheight = 256;					// Environment texture height
 	unsigned char *bumpmap = NULL;			// Bump texture
 };
 
@@ -123,6 +125,8 @@ Model3D *RETRO_Load3DModel(const char *filename, int scale = 256)
 		RETRO_RageQuit("Cannot allocate 3D model memory\n");
 	}
 	memset(model, 0, sizeof(Model3D));
+	model->envmapwidth = 256;
+	model->envmapheight = 256;
 	RETRO_Model.model = model;
 
 	FILE *fp = fopen(filename, "rb");

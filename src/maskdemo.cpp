@@ -68,7 +68,7 @@ void DEMO_Render(double deltatime)
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_3)) {
 		rendertype = RETRO_POLY_TEXTURE;
-		shadertype = RETRO_SHADE_ENVIRONMENT;
+		shadertype = RETRO_SHADE_PHONG;
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
@@ -95,6 +95,7 @@ void DEMO_Render(double deltatime)
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
 		rendertype = RETRO_POLY_ENVIRONMENT;
+		shadertype = RETRO_SHADE_PHONG;
 		envmap = RETRO_ImageData(ASSET_PHONGMAP);
 		color = 128;
 		colorintensity = 90;
@@ -102,6 +103,7 @@ void DEMO_Render(double deltatime)
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_O)) {
 		rendertype = RETRO_POLY_ENVIRONMENT;
+		shadertype = RETRO_SHADE_PHONG;
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
 		colorintensity = 90;
@@ -109,6 +111,7 @@ void DEMO_Render(double deltatime)
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_M)) {
 		rendertype = RETRO_POLY_ENVIRONMENT;
+		shadertype = RETRO_SHADE_ENVIRONMENT;
 		envmap = RETRO_ImageData(ASSET_ENVMAP);
 		color = 128;
 		colorintensity = 90;

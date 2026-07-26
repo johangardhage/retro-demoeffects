@@ -31,7 +31,8 @@ enum RETRO_POLY_SHADE {
 	RETRO_SHADE_WIREFIRE,
 	RETRO_SHADE_FLAT,
 	RETRO_SHADE_GOURAUD,
-	RETRO_SHADE_ENVIRONMENT
+	RETRO_SHADE_ENVIRONMENT,
+	RETRO_SHADE_PHONG
 };
 
 struct {
@@ -182,49 +183,56 @@ void RETRO_RenderPhongModel(Model3D *model)
 void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
 	RETRO_SortVisibleFaces(model);
+	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
+	bool environmentShading = shadertype == RETRO_SHADE_ENVIRONMENT || lightingmap;
 
 	for (int i = 0; i < model->visiblefaces; i++) {
 		Face *face = &model->face[model->visibleface[i]];
 		PolygonPoint points[RETRO_MAX_FACEVERTICES];
 		for (int j = 0; j < face->vertices; j++) {
 			Vertex *vertex = &model->vertex[face->vertex[j]];
-			Normal *normal = &model->normal[face->normal[j]];
-			float inverseNormalLength = normal->nn > 0.0f ? 1.0f / normal->nn : 0.0f;
 			points[j].x = vertex->sx;
 			points[j].y = vertex->sy;
 			points[j].q = vertex->q;
 			points[j].u = model->uv[face->uv[j]].u;
 			points[j].v = model->uv[face->uv[j]].v;
-			points[j].e = model->c + model->cintensity * normal->rnx * inverseNormalLength;
-			points[j].w = model->c + model->cintensity * normal->rny * inverseNormalLength;
+			if (environmentShading) {
+				Normal *normal = &model->normal[face->normal[j]];
+				float normalScale = lightingmap ? vertex->q : (normal->nn > 0.0f ? 1.0f / normal->nn : 0.0f);
+				points[j].nx = normal->rnx * normalScale;
+				points[j].ny = normal->rny * normalScale;
+				points[j].nz = normal->rnz * normalScale;
+			}
 		}
-		int shade = model->c + face->c;
-
 		if (shadertype == RETRO_SHADE_NONE) {
 			RETRO_DrawTexMapPolygon(points, face->vertices, model->texmap);
 		} else if (shadertype == RETRO_SHADE_TABLE) {
-			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade);
+			int shade = model->c + face->c;
+			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade, false, model->c, model->cintensity);
 		} else if (shadertype == RETRO_SHADE_FLAT) {
+			int shade = model->c + face->c;
 			float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
 			shade = CLAMP128(shade + lint * 128);
-			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade);
+			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade, false, model->c, model->cintensity);
 		} else if (shadertype == RETRO_SHADE_GOURAUD) {
 			for (int j = 0; j < face->vertices; j++) {
 				float lint = RETRO_DotProduct(model->normal[face->normal[j]], RETRO_Render.lightsource);
 				points[j].c = CLAMP128(model->c + face->c + lint * 128);
 			}
 			RETRO_DrawTexMapGouraudPolygon(points, face->vertices, model->texmap, RETRO_Color.shadetable);
-		} else if (shadertype == RETRO_SHADE_ENVIRONMENT && model->bumpmap == NULL) {
-			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable);
-		} else if (shadertype == RETRO_SHADE_ENVIRONMENT) {
-			RETRO_DrawTexMapEnvMapBumpPolygon(points, face->vertices, model->texmap, model->envmap, model->bumpmap, RETRO_Color.shadetable);
+		} else if (environmentShading && model->bumpmap == NULL) {
+			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, 0, lightingmap, model->c, model->cintensity);
+		} else if (environmentShading) {
+			RETRO_DrawTexMapEnvMapBumpPolygon(points, face->vertices, model->texmap, model->envmap, model->bumpmap, RETRO_Color.shadetable, lightingmap, model->c, model->cintensity);
 		}
 	}
 }
 
-void RETRO_RenderEnvironmentModel(Model3D *model)
+void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
 	RETRO_SortVisibleFaces(model);
+	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
+	bool bumpmapping = model->bumpmap != NULL;
 
 	for (int i = 0; i < model->visiblefaces; i++) {
 		Face *face = &model->face[model->visibleface[i]];
@@ -232,19 +240,22 @@ void RETRO_RenderEnvironmentModel(Model3D *model)
 		for (int j = 0; j < face->vertices; j++) {
 			Vertex *vertex = &model->vertex[face->vertex[j]];
 			Normal *normal = &model->normal[face->normal[j]];
-			float inverseNormalLength = normal->nn > 0.0f ? 1.0f / normal->nn : 0.0f;
 			points[j].x = vertex->sx;
 			points[j].y = vertex->sy;
-			points[j].q = vertex->q;
-			points[j].u = model->uv[face->uv[j]].u;
-			points[j].v = model->uv[face->uv[j]].v;
-			points[j].e = model->c + model->cintensity * normal->rnx * inverseNormalLength;
-			points[j].w = model->c + model->cintensity * normal->rny * inverseNormalLength;
+			if (bumpmapping) {
+				points[j].q = vertex->q;
+				points[j].u = model->uv[face->uv[j]].u;
+				points[j].v = model->uv[face->uv[j]].v;
+			}
+			float normalScale = lightingmap ? vertex->q : (normal->nn > 0.0f ? 1.0f / normal->nn : 0.0f);
+			points[j].nx = normal->rnx * normalScale;
+			points[j].ny = normal->rny * normalScale;
+			points[j].nz = normal->rnz * normalScale;
 		}
-		if (model->bumpmap) {
-			RETRO_DrawEnvMapBumpPolygon(points, face->vertices, model->envmap, model->bumpmap);
+		if (bumpmapping) {
+			RETRO_DrawEnvMapBumpPolygon(points, face->vertices, model->envmap, model->bumpmap, lightingmap, model->c, model->cintensity);
 		} else {
-			RETRO_DrawEnvMapPolygon(points, face->vertices, model->envmap);
+			RETRO_DrawEnvMapPolygon(points, face->vertices, model->envmap, lightingmap, model->c, model->cintensity, model->envmapwidth, model->envmapheight);
 		}
 	}
 }
@@ -280,7 +291,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 		RETRO_RenderTextureModel(model, shadertype);
 		break;
 	case RETRO_POLY_ENVIRONMENT:
-		RETRO_RenderEnvironmentModel(model);
+		RETRO_RenderEnvironmentModel(model, shadertype);
 		break;
 	}
 }

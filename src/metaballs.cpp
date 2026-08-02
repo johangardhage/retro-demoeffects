@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
+#include "lib/retrocolor.h"
 
 #define NUM_BALLS 5
 #define THRESHOLD 50
@@ -56,7 +57,7 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_SetColor(255, 255, 255, 255);
+	RETRO_SetColor(255, RETRO_WHITE);
 
 	// Init balls
 	for (int i = 0; i < NUM_BALLS; i++) {

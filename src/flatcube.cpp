@@ -22,11 +22,12 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// 0-32 green
-	RETRO_CreateGradientPalette(0, 32, {0, 4, 0}, {0, 94, 0});
+	// Init palette
+	RETRO_CreatePlasticPhongPalette(30);
 
+	// The faces are not shaded, so spread their colors over the palette
 	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
 	for (int i = 0; i < model->faces; i++) {
-		model->face[i].c = i + 15;
+		model->face[i].c = (i + 1) * 234 / model->faces;
 	}
 }

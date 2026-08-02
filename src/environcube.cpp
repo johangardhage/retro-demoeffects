@@ -26,9 +26,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_Palette PhongPalette[RETRO_COLORS] = { { 0, 0, 0 } };
-	RETRO_CreatePlasticPhongPalette(PhongPalette, 30, 255);
-	RETRO_SetPalette(PhongPalette);
+	RETRO_CreatePlasticPhongPalette(30);
 	RETRO_CreatePhongMap(PhongMap, PHONGMAP_SIZE, PHONGMAP_SIZE);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");

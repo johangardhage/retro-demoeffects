@@ -33,9 +33,10 @@ struct Face {
 	int vertex[RETRO_MAX_FACEVERTICES];	// Index of vertices in face
 	int uv[RETRO_MAX_FACEVERTICES];		// Index of UV coordinates in face
 	int normal[RETRO_MAX_FACEVERTICES];	// Index of normals in face
-	int c;								// Color
+	int c;								// Front-facing color
+	int backc;							// Back-facing color; zero makes that side transparent
 	Normal facenormal;					// Face normal
-	bool visible;						// Is the face visible?
+	bool visible;						// Passes the near-plane and front-facing tests
 	float z;							// Z center, used for Quicksort
 };
 

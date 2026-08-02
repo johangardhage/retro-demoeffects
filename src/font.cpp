@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
+#include "lib/retrocolor.h"
 
 void DEMO_Render(double deltatime)
 {
@@ -22,5 +23,5 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_SetColor(255, 255, 255, 255);
+	RETRO_SetColor(255, RETRO_WHITE);
 }

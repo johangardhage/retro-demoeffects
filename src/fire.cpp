@@ -37,10 +37,10 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette
-	RETRO_CreateGradientPalette(0, 16, RETRO_BLACK, {20, 0, 20});
-	RETRO_CreateGradientPalette(16, 32, {20, 0, 20}, {0, 0, 48});
-	RETRO_CreateGradientPalette(32, 64, {0, 0, 48}, RETRO_RED);
+	// Init palette. The flame heats up from a cool blue smoke through red and
+	// yellow into white as the blur carries the sparks upwards
+	RETRO_CreateGradientPalette(0, 32, RETRO_BLACK, RETRO_BLUEBLACK);
+	RETRO_CreateGradientPalette(32, 64, RETRO_BLUEBLACK, RETRO_RED);
 	RETRO_CreateGradientPalette(64, 128, RETRO_RED, RETRO_YELLOW);
-	RETRO_CreateGradientPalette(128, RETRO_COLORS, RETRO_WHITE, RETRO_WHITE);
+	RETRO_CreateGradientPalette(128, RETRO_COLORS, RETRO_YELLOW, RETRO_WHITE);
 }

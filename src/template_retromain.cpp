@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropoly.h"
+#include "lib/retrocolor.h"
 
 void DEMO_Render2(double deltatime)
 {
@@ -25,7 +26,7 @@ void DEMO_Render2(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_SetColor(0, 0, 0, 0);
+	RETRO_SetColor(0, RETRO_BLACK);
 	for (int i = 1; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS));
 	}

@@ -5,6 +5,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrocolor.h"
 
 #define IMAGE_WIDTH 640
 
@@ -36,8 +37,9 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette
+	// Init palette. The image is black and white, so the xor of the two
+	// circles only ever picks color 0 or 255
 	RETRO_LoadImage("assets/xorcircles_640x480.pcx");
-	RETRO_SetColor(0, 155, 20, 147);
-	RETRO_SetColor(255, 255, 102, 204);
+	RETRO_SetColor(0, RETRO_DARKMAGENTA);
+	RETRO_SetColor(255, RETRO_HOTPINK);
 }

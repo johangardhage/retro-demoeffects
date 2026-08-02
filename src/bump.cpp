@@ -51,6 +51,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
+	// The image is a height map, only its gradients are read
 	RETRO_LoadImage("assets/bump_320x240.pcx");
 
 	// Init sin table
@@ -59,10 +60,10 @@ void DEMO_Initialize(void)
 		SinTable[i] = sin(i * M_PI / 180) * LIGHTMAP_WIDTH / 2;
 	}
 
-	// Init palette. The light ramps from black through red toward white,
-	// the image supplies the colors from 128 and up
-	RETRO_CreateGradientPalette(0, 100, RETRO_BLACK, {150, 0, 0});
-	RETRO_CreateGradientPalette(100, 128, {150, 0, 0}, {192, 84, 84});
+	// Init palette. The light map only indexes the first LIGHT_COLORS entries,
+	// where the light ramps from black through red into a white core
+	RETRO_CreateGradientPalette(0, LIGHT_COLORS * 3 / 4, RETRO_BLACK, RETRO_RED);
+	RETRO_CreateGradientPalette(LIGHT_COLORS * 3 / 4, LIGHT_COLORS, RETRO_RED, RETRO_WHITE);
 
 	// Init light map
 	for (int y = 0; y < LIGHTMAP_HEIGHT; y++) {

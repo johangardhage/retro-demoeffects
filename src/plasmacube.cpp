@@ -47,15 +47,15 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette. The 252 cycling colors ramp one channel at a time, up to
-	// two thirds intensity, and back down again
+	// Init palette. The 252 cycling colors ramp one channel at a time, from
+	// black through red, yellow, white, cyan and blue, and back to black
 	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_BLACK);
-	RETRO_CreateGradientPalette(0, 42, RETRO_BLACK, {168, 0, 0});
-	RETRO_CreateGradientPalette(42, 84, {168, 0, 0}, {168, 168, 0});
-	RETRO_CreateGradientPalette(84, 126, {168, 168, 0}, {168, 168, 168});
-	RETRO_CreateGradientPalette(126, 168, {168, 168, 168}, {0, 168, 168});
-	RETRO_CreateGradientPalette(168, 210, {0, 168, 168}, {0, 0, 168});
-	RETRO_CreateGradientPalette(210, 252, {0, 0, 168}, RETRO_BLACK);
+	RETRO_CreateGradientPalette(0, 42, RETRO_BLACK, RETRO_RED);
+	RETRO_CreateGradientPalette(42, 84, RETRO_RED, RETRO_YELLOW);
+	RETRO_CreateGradientPalette(84, 126, RETRO_YELLOW, RETRO_WHITE);
+	RETRO_CreateGradientPalette(126, 168, RETRO_WHITE, RETRO_CYAN);
+	RETRO_CreateGradientPalette(168, 210, RETRO_CYAN, RETRO_BLUE);
+	RETRO_CreateGradientPalette(210, 252, RETRO_BLUE, RETRO_BLACK);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->texmap = image;

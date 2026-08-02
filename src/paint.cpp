@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retromouse.h"
+#include "lib/retrocolor.h"
 
 void DEMO_Render2(double deltatime)
 {
@@ -48,8 +49,8 @@ void DEMO_Render2(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_SetColor(0, 0, 0, 0);
-	RETRO_SetColor(255, 255, 255, 255);
+	RETRO_SetColor(0, RETRO_BLACK);
+	RETRO_SetColor(255, RETRO_WHITE);
 
 	// Set relative mouse mode
 	RETRO_SetMouseMode(false);

@@ -108,7 +108,7 @@ void RETRO_RenderFlatModel(Model3D *model, bool shaded)
 	}
 }
 
-void RETRO_RenderGlenzModel(Model3D *model, bool shaded)
+void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
 	RETRO_SortAllFaces(model);
 
@@ -119,14 +119,21 @@ void RETRO_RenderGlenzModel(Model3D *model, bool shaded)
 			points[j].x = model->vertex[face->vertex[j]].sx;
 			points[j].y = model->vertex[face->vertex[j]].sy;
 		}
-
-		int shade = model->c + face->c;
-		if (shaded) {
+		int shade;
+		if (shadertype == RETRO_SHADE_FLAT) {
 			float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
 			if (face->visible == false) lint /= 2;
 			int cmin = model->c;
 			int cmax = model->c + face->c + model->cintensity;
 			shade = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
+		} else {
+			// Unshaded Glenz draws both sides of every face. The winding test stored
+			// in visible selects the front or back palette contribution, and zero
+			// makes that side fully transparent. Each contribution is added to the
+			// framebuffer by RETRO_DrawGlenzPolygon.
+			int color = face->visible ? face->c : face->backc;
+			if (color == 0) continue;
+			shade = model->c + color;
 		}
 		RETRO_DrawGlenzPolygon(points, face->vertices, shade);
 	}
@@ -279,7 +286,7 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 		RETRO_RenderFlatModel(model, shadertype == RETRO_SHADE_FLAT);
 		break;
 	case RETRO_POLY_GLENZ:
-		RETRO_RenderGlenzModel(model, shadertype == RETRO_SHADE_FLAT);
+		RETRO_RenderGlenzModel(model, shadertype);
 		break;
 	case RETRO_POLY_GOURAUD:
 		RETRO_RenderGouraudModel(model);

@@ -5,13 +5,14 @@
 //
 #include "lib/retro.h"
 #include "lib/retropoly.h"
+#include "lib/retrocolor.h"
 
 int main(int argc, char *argv[])
 {
 	RETRO_Initialize();
 
 	// Init palette
-	RETRO_SetColor(0, 0, 0, 0);
+	RETRO_SetColor(0, RETRO_BLACK);
 	for (int i = 1; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS));
 	}

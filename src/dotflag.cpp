@@ -5,6 +5,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrocolor.h"
 
 #define FLAG_CURVE 125
 #define FLAG_SIZE 4
@@ -65,7 +66,7 @@ void DEMO_Initialize(void)
 	}
 
 	// Init palette
-	RETRO_SetColor(0, 0, 0, 0);
-	RETRO_SetColor(1, 0, 0, 255);
-	RETRO_SetColor(2, 255, 255, 0);
+	RETRO_SetColor(0, RETRO_BLACK);
+	RETRO_SetColor(1, RETRO_BLUE);
+	RETRO_SetColor(2, RETRO_YELLOW);
 }

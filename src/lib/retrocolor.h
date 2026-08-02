@@ -58,13 +58,19 @@
 #define RETRO_MAGENTA RETRO_Palette{ 255, 0, 255 }
 #define RETRO_YELLOW RETRO_Palette{ 255, 255, 0 }
 #define RETRO_ORANGE RETRO_Palette{ 255, 128, 0 }
+#define RETRO_TAN RETRO_Palette{ 210, 180, 140 }
 #define RETRO_PURPLE RETRO_Palette{ 128, 0, 255 }
 #define RETRO_PINK RETRO_Palette{ 255, 128, 192 }
+#define RETRO_HOTPINK RETRO_Palette{ 255, 105, 180 }
 #define RETRO_AZURE RETRO_Palette{ 0, 128, 255 }
+#define RETRO_MEDIUMRED RETRO_Palette{ 187, 0, 0 }
+#define RETRO_LIGHTRED RETRO_Palette{ 255, 204, 204 }
 #define RETRO_LIGHTBLUE RETRO_Palette{ 102, 170, 255 }
 #define RETRO_DARKRED RETRO_Palette{ 128, 0, 0 }
 #define RETRO_DARKGREEN RETRO_Palette{ 0, 128, 0 }
 #define RETRO_DARKBLUE RETRO_Palette{ 0, 0, 128 }
+#define RETRO_DARKMAGENTA RETRO_Palette{ 139, 0, 139 }
+#define RETRO_BLUEBLACK RETRO_Palette{ 0, 0, 48 }
 
 struct {
 	unsigned char shadetable[RETRO_BASECOLORS];
@@ -374,12 +380,19 @@ void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, RETRO_P
 	}
 }
 
-void RETRO_CreatePlasticPhongPalette(RETRO_Palette *palette, float falloff = RETRO_K_FALLOFF, int colorMax = 63, float faceR = RETRO_FACE_R, float faceG = RETRO_FACE_G, float faceB = RETRO_FACE_B)
+//
+// Fill the palette with a plastic phong material, shading the face color from
+// black up to a specular highlight. Without a palette the colors are set
+// directly, otherwise the components are copied as they are given
+//
+void RETRO_CreatePlasticPhongPalette(float falloff = RETRO_K_FALLOFF, int colorMax = 255, float faceR = RETRO_FACE_R, float faceG = RETRO_FACE_G, float faceB = RETRO_FACE_B, RETRO_Palette *palette = NULL)
 {
 	// Create phong palette
-	palette[0].r = 0;
-	palette[0].g = 0;
-	palette[0].b = 0;
+	if (palette) {
+		palette[0] = RETRO_BLACK;
+	} else {
+		RETRO_SetColor(0, 0, 0, 0);
+	}
 
 	for (int i = 0; i < RETRO_PAL_SIZE; i++) {
 		float incedent = ((float)(RETRO_PAL_SIZE - (i + 1)) / RETRO_PAL_SIZE) * (M_PI / 2);
@@ -401,9 +414,16 @@ void RETRO_CreatePlasticPhongPalette(RETRO_Palette *palette, float falloff = RET
 		int g = colorMax * ((gdiffuse + specular) * RETRO_K_ATTENUATION * RETRO_LIGHT_G + gambient);
 		int b = colorMax * ((bdiffuse + specular) * RETRO_K_ATTENUATION * RETRO_LIGHT_B + bambient);
 
-		palette[baseindex].r = CLAMP(r, 0, colorMax);
-		palette[baseindex].g = CLAMP(g, 0, colorMax);
-		palette[baseindex].b = CLAMP(b, 0, colorMax);
+		RETRO_Palette color;
+		color.r = CLAMP(r, 0, colorMax);
+		color.g = CLAMP(g, 0, colorMax);
+		color.b = CLAMP(b, 0, colorMax);
+
+		if (palette) {
+			palette[baseindex] = color;
+		} else {
+			RETRO_SetColor(baseindex, color.r, color.g, color.b);
+		}
 	}
 }
 

@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
+#include "lib/retrocolor.h"
 
 #define POINTS 170
 
@@ -63,7 +64,7 @@ void DEMO_Initialize(void)
 {
 	// Init palette. Blue rises evenly across the palette, while a narrow white
 	// flare peaks halfway up and a glow washes in the last quarter
-	RETRO_SetColor(0, 0, 0, 0);
+	RETRO_SetColor(0, RETRO_BLACK);
 	for (int i = 1; i < RETRO_COLORS; i++) {
 		float flare = pow(sin(M_PI * i / 511.0), 16) * 128;
 		float glow = 32.0 * pow((float) i / 256.0, 3);

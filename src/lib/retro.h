@@ -159,6 +159,11 @@ void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b
 	RETRO.palette[color] = 0xff000000 | (r << 16) | (g << 8) | (b);
 }
 
+void RETRO_SetColor(int color, RETRO_Palette palette)
+{
+	RETRO_SetColor(color, palette.r, palette.g, palette.b);
+}
+
 void RETRO_Set6bitColor(int color, unsigned char r, unsigned char g, unsigned char b)
 {
 	r = (r & 63) << 2;

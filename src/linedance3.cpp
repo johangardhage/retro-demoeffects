@@ -8,7 +8,6 @@
 #include "lib/retrogfx.h"
 
 #define POINTS 170
-#define SIMULATION_STEP (1.0 / 60.0)
 
 Point2Df Points[POINTS];
 
@@ -33,35 +32,29 @@ void DrawLines(int x, int y, float k)
 	}
 }
 
-void UpdateLineDance(void)
-{
-	static double frame = 0;
-	frame += SIMULATION_STEP * 2.5;
-
-	// Calculate movement
-	float aa = frame / 1.37;
-	float rx = fabs(sin(sin(frame / 4.1) * M_PI) * 90) + 9;
-	float ry = fabs(cos(cos(frame / 1.3) * M_PI) * 90) + 9;
-	float xx = cos(cos(frame / 2.0) * M_PI) * rx;
-	float yy = sin(cos(frame / 2.7) * M_PI) * ry;
-
-	int x = (RETRO_WIDTH/2) + xx * cos(aa) + yy * sin(aa);
-	int y = (RETRO_HEIGHT/2) + xx * -sin(aa) + yy * cos(-aa);
-	float k = sin(frame / 15.0) * 1.0 + 0.75;
-
-	// Draw lines
-	DrawLines(x, y, k);
-
-	RETRO_Blur(RETRO_BLUR_FIRE, sin(aa / 8.0) * 4 + 5);
-}
-
 void DEMO_Render2(double deltatime)
 {
-	static double accumulator = 0;
-	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
-	while (accumulator >= SIMULATION_STEP) {
-		UpdateLineDance();
-		accumulator -= SIMULATION_STEP;
+	// Advance the trails in fixed steps. Lines are drawn into a framebuffer that is never
+	// cleared and blurred once per step, so how long they linger follows the step rate.
+	while (RETRO_PerformSimulation()) {
+		static double frame = 0;
+		frame += RETRO_SIMULATION_STEP * 2.5;
+
+		// Calculate movement
+		float aa = frame / 1.37;
+		float rx = fabs(sin(sin(frame / 4.1) * M_PI) * 90) + 9;
+		float ry = fabs(cos(cos(frame / 1.3) * M_PI) * 90) + 9;
+		float xx = cos(cos(frame / 2.0) * M_PI) * rx;
+		float yy = sin(cos(frame / 2.7) * M_PI) * ry;
+
+		int x = (RETRO_WIDTH/2) + xx * cos(aa) + yy * sin(aa);
+		int y = (RETRO_HEIGHT/2) + xx * -sin(aa) + yy * cos(-aa);
+		float k = sin(frame / 15.0) * 1.0 + 0.75;
+
+		// Draw lines
+		DrawLines(x, y, k);
+
+		RETRO_Blur(RETRO_BLUR_FIRE, sin(aa / 8.0) * 4 + 5);
 	}
 	RETRO_Flip();
 }

@@ -9,7 +9,6 @@
 
 #define NUM_PARTICLES 6000
 #define PARTICLE_GRAVITY 0.13
-#define SIMULATION_STEP (1.0 / 60.0)
 
 struct Particle {
 	float x, y, xdir, ydir;
@@ -37,55 +36,50 @@ void CreateExplosion(void)
 	}
 }
 
-void UpdateParticles(void)
-{
-	for (int i = 0; i < NUM_PARTICLES; i++) {
-		RETRO_PutPixel(Particles[i].x, Particles[i].y, Particles[i].col);
-
-		Particles[i].x += Particles[i].xdir;
-		Particles[i].y += Particles[i].ydir;
-
-		if (Particles[i].y > RETRO_HEIGHT-1) {
-			Particles[i].y = RETRO_HEIGHT-1;
-			Particles[i].xdir /= 4;
-			Particles[i].ydir = -Particles[i].ydir / 2;
-		} else if (Particles[i].y < 1) {
-			Particles[i].y = 1;
-			Particles[i].xdir /= 4;
-			Particles[i].ydir = -Particles[i].ydir / 2;
-		} else {
-			Particles[i].ydir += PARTICLE_GRAVITY;
-		}
-
-		if (Particles[i].x < 0) {
-			Particles[i].x = 1;
-			Particles[i].xdir = -Particles[i].xdir / 2;
-			Particles[i].ydir /= 4;
-		} else if (Particles[i].x > RETRO_WIDTH-1) {
-			Particles[i].x = RETRO_WIDTH-1;
-			Particles[i].xdir = -Particles[i].xdir / 2;
-			Particles[i].ydir /= 4;
-		}
-
-		if (Particles[i].y >= 219) {
-			Particles[i].col = RANDOM(128) + 128;
-		}
-	}
-
-	RETRO_Blur(RETRO_BLUR_DIFFUSE, 3);
-}
-
 void DEMO_Render2(double deltatime)
 {
-	static double accumulator = 0;
 	static int tick = 0;
 
-	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
-	while (accumulator >= SIMULATION_STEP) {
+	// Advance the particles in fixed steps. Velocities are integrated once per step with
+	// PARTICLE_GRAVITY measured in pixels per step, and the explosion timer counts steps,
+	// so both are tied to the step rate.
+	while (RETRO_PerformSimulation()) {
 		if (tick % 90 == 0) CreateExplosion();
-		UpdateParticles();
+		for (int i = 0; i < NUM_PARTICLES; i++) {
+			RETRO_PutPixel(Particles[i].x, Particles[i].y, Particles[i].col);
+
+			Particles[i].x += Particles[i].xdir;
+			Particles[i].y += Particles[i].ydir;
+
+			if (Particles[i].y > RETRO_HEIGHT-1) {
+				Particles[i].y = RETRO_HEIGHT-1;
+				Particles[i].xdir /= 4;
+				Particles[i].ydir = -Particles[i].ydir / 2;
+			} else if (Particles[i].y < 1) {
+				Particles[i].y = 1;
+				Particles[i].xdir /= 4;
+				Particles[i].ydir = -Particles[i].ydir / 2;
+			} else {
+				Particles[i].ydir += PARTICLE_GRAVITY;
+			}
+
+			if (Particles[i].x < 0) {
+				Particles[i].x = 1;
+				Particles[i].xdir = -Particles[i].xdir / 2;
+				Particles[i].ydir /= 4;
+			} else if (Particles[i].x > RETRO_WIDTH-1) {
+				Particles[i].x = RETRO_WIDTH-1;
+				Particles[i].xdir = -Particles[i].xdir / 2;
+				Particles[i].ydir /= 4;
+			}
+
+			if (Particles[i].y >= 219) {
+				Particles[i].col = RANDOM(128) + 128;
+			}
+		}
+
+		RETRO_Blur(RETRO_BLUR_DIFFUSE, 3);
 		tick++;
-		accumulator -= SIMULATION_STEP;
 	}
 
 	RETRO_Flip();

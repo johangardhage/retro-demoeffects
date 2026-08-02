@@ -9,7 +9,6 @@
 
 #define maxdegrees 256
 #define divd 128
-#define SIMULATION_STEP (1.0 / 60.0)
 
 unsigned char Image[] = {
 	 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
@@ -45,41 +44,37 @@ void DrawShadebob(int x, int y, int imagewidth, int imageheight, unsigned char* 
 	}
 }
 
-void UpdateShadebobs(void)
-{
-	static float xadd1 = 60, xadd2 = 100, yadd1 = 55, yadd2 = 200;
-
-	xadd1 += 200 * SIMULATION_STEP;
-	xadd2 += 300 * SIMULATION_STEP;
-	yadd1 += 300 * SIMULATION_STEP;
-	yadd2 += 200 * SIMULATION_STEP;
-
-	int x, y;
-
-	x = sin(xadd1 * 2.0 * M_PI / maxdegrees) * divd / 2 + sin(xadd2 * 2.0 * M_PI / maxdegrees) * divd / 2;
-	y = sin(yadd1 * 2.0 * M_PI / maxdegrees) * divd / 3 + sin(yadd2 * 2.0 * M_PI / maxdegrees) * divd / 3;
-	DrawShadebob(160 + x, 120 + y, 16, 16, Image);
-
-	x = sin((xadd1 + 2) * 2.0 * M_PI / maxdegrees) * divd / 2 + sin((xadd2 + 3) * 2.0 * M_PI / maxdegrees) * divd / 2;
-	y = sin((yadd1 + 2) * 2.0 * M_PI / maxdegrees) * divd / 3 + sin((yadd2 + 3) * 2.0 * M_PI / maxdegrees) * divd / 3;
-	DrawShadebob(160 + x, 120 + y, 16, 16, Image);
-
-	x = sin(xadd1 * 2.0 * M_PI / maxdegrees) * divd / 2 + sin((xadd2 + 3) * 2.0 * M_PI / maxdegrees) * divd / 2;
-	y = sin(yadd1 * 2.0 * M_PI / maxdegrees) * divd / 3 + sin((yadd2 + 2) * 2.0 * M_PI / maxdegrees) * divd / 3;
-	DrawShadebob(160 + x, 120 + y, 16, 16, Image);
-
-	x = sin((xadd1 + 2) * 2.0 * M_PI / maxdegrees) * divd / 2 + sin(xadd2 * 2.0 * M_PI / maxdegrees) * divd / 2;
-	y = sin(yadd1 * 2.0 * M_PI / maxdegrees) * divd / 3 + sin((yadd2 + 2) * 2.0 * M_PI / maxdegrees) * divd / 3;
-	DrawShadebob(160 + x, 120 + y, 16, 16, Image);
-}
-
 void DEMO_Render2(double deltatime)
 {
-	static double accumulator = 0;
-	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
-	while (accumulator >= SIMULATION_STEP) {
-		UpdateShadebobs();
-		accumulator -= SIMULATION_STEP;
+	// Advance the bobs in fixed steps. DrawShadebob adds into a framebuffer that is never
+	// cleared and wraps at 256 rather than saturating, so the colour banding is a function
+	// of how many bobs have been drawn. At 60 Hz a pixel under the path cycles the palette
+	// every 256 draws.
+	while (RETRO_PerformSimulation()) {
+		static float xadd1 = 60, xadd2 = 100, yadd1 = 55, yadd2 = 200;
+
+		xadd1 += 200 * RETRO_SIMULATION_STEP;
+		xadd2 += 300 * RETRO_SIMULATION_STEP;
+		yadd1 += 300 * RETRO_SIMULATION_STEP;
+		yadd2 += 200 * RETRO_SIMULATION_STEP;
+
+		int x, y;
+
+		x = sin(xadd1 * 2.0 * M_PI / maxdegrees) * divd / 2 + sin(xadd2 * 2.0 * M_PI / maxdegrees) * divd / 2;
+		y = sin(yadd1 * 2.0 * M_PI / maxdegrees) * divd / 3 + sin(yadd2 * 2.0 * M_PI / maxdegrees) * divd / 3;
+		DrawShadebob(160 + x, 120 + y, 16, 16, Image);
+
+		x = sin((xadd1 + 2) * 2.0 * M_PI / maxdegrees) * divd / 2 + sin((xadd2 + 3) * 2.0 * M_PI / maxdegrees) * divd / 2;
+		y = sin((yadd1 + 2) * 2.0 * M_PI / maxdegrees) * divd / 3 + sin((yadd2 + 3) * 2.0 * M_PI / maxdegrees) * divd / 3;
+		DrawShadebob(160 + x, 120 + y, 16, 16, Image);
+
+		x = sin(xadd1 * 2.0 * M_PI / maxdegrees) * divd / 2 + sin((xadd2 + 3) * 2.0 * M_PI / maxdegrees) * divd / 2;
+		y = sin(yadd1 * 2.0 * M_PI / maxdegrees) * divd / 3 + sin((yadd2 + 2) * 2.0 * M_PI / maxdegrees) * divd / 3;
+		DrawShadebob(160 + x, 120 + y, 16, 16, Image);
+
+		x = sin((xadd1 + 2) * 2.0 * M_PI / maxdegrees) * divd / 2 + sin(xadd2 * 2.0 * M_PI / maxdegrees) * divd / 2;
+		y = sin(yadd1 * 2.0 * M_PI / maxdegrees) * divd / 3 + sin((yadd2 + 2) * 2.0 * M_PI / maxdegrees) * divd / 3;
+		DrawShadebob(160 + x, 120 + y, 16, 16, Image);
 	}
 	RETRO_Flip();
 }

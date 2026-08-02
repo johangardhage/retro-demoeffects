@@ -7,29 +7,21 @@
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 
-#define SIMULATION_STEP (1.0 / 60.0)
-
-void UpdateFireCube(void)
-{
-	static float ax, ay, az;
-	ax += SIMULATION_STEP * 2;
-	ay += SIMULATION_STEP * 2;
-	az += SIMULATION_STEP * 2;
-
-	RETRO_RotateModel(ax, ay, az);
-	RETRO_ProjectModel();
-	RETRO_RenderModel(RETRO_POLY_WIREFRAME, RETRO_SHADE_WIREFIRE);
-
-	RETRO_Blur(RETRO_BLUR_FIRE, 3);
-}
-
 void DEMO_Render2(double deltatime)
 {
-	static double accumulator = 0;
-	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
-	while (accumulator >= SIMULATION_STEP) {
-		UpdateFireCube();
-		accumulator -= SIMULATION_STEP;
+	// Advance the trail in fixed steps. It is one blur pass per step into a framebuffer
+	// that is never cleared, so its length follows the step rate.
+	while (RETRO_PerformSimulation()) {
+		static float ax, ay, az;
+		ax += RETRO_SIMULATION_STEP * 2;
+		ay += RETRO_SIMULATION_STEP * 2;
+		az += RETRO_SIMULATION_STEP * 2;
+
+		RETRO_RotateModel(ax, ay, az);
+		RETRO_ProjectModel();
+		RETRO_RenderModel(RETRO_POLY_WIREFRAME, RETRO_SHADE_WIREFIRE);
+
+		RETRO_Blur(RETRO_BLUR_FIRE, 3);
 	}
 	RETRO_Flip();
 }

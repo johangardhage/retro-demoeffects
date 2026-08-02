@@ -9,7 +9,6 @@
 
 #define NUM_BLOBS 5
 #define BLOB_RADIUS 4
-#define SIMULATION_STEP (1.0 / 60.0)
 
 void DrawBlob(int xc, int yc, unsigned char color)
 {
@@ -26,29 +25,23 @@ void DrawBlob(int xc, int yc, unsigned char color)
 	}
 }
 
-void UpdateMelt(void)
-{
-	static double t = 0;
-	t += SIMULATION_STEP;
-
-	// Draw orbiting blobs
-	for (int i = 0; i < NUM_BLOBS; i++) {
-		int x = (RETRO_WIDTH / 2) + cos(t * (0.6 + i * 0.23) + i * 1.3) * (40 + i * 22);
-		int y = (RETRO_HEIGHT / 2) + sin(t * (0.9 + i * 0.31) + i * 2.1) * (30 + i * 16);
-		DrawBlob(x, y, 255);
-	}
-
-	// Melt the trails outwards
-	RETRO_Blur(RETRO_BLUR_RING, 1);
-}
-
 void DEMO_Render2(double deltatime)
 {
-	static double accumulator = 0;
-	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
-	while (accumulator >= SIMULATION_STEP) {
-		UpdateMelt();
-		accumulator -= SIMULATION_STEP;
+	// Advance the melt in fixed steps. It is one ring blur per step into a framebuffer that
+	// is never cleared, so how far the trails spread follows the step rate, not the orbits.
+	while (RETRO_PerformSimulation()) {
+		static double t = 0;
+		t += RETRO_SIMULATION_STEP;
+
+		// Draw orbiting blobs
+		for (int i = 0; i < NUM_BLOBS; i++) {
+			int x = (RETRO_WIDTH / 2) + cos(t * (0.6 + i * 0.23) + i * 1.3) * (40 + i * 22);
+			int y = (RETRO_HEIGHT / 2) + sin(t * (0.9 + i * 0.31) + i * 2.1) * (30 + i * 16);
+			DrawBlob(x, y, 255);
+		}
+
+		// Melt the trails outwards
+		RETRO_Blur(RETRO_BLUR_RING, 1);
 	}
 	RETRO_Flip();
 }

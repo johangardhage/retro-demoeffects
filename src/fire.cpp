@@ -9,31 +9,25 @@
 
 #define FIRE_HEIGHT 10
 #define FIRE_CHAOS 6
-#define SIMULATION_STEP (1.0 / 60.0)
 
 unsigned char FireBuffer[RETRO_HEIGHT*RETRO_WIDTH];
 
-void UpdateFire(void)
-{
-	for (int x = 0; x < RETRO_WIDTH; x++) {
-		if (RANDOM(FIRE_CHAOS) == 0) {
-			for (int y = RETRO_HEIGHT - FIRE_HEIGHT; y < RETRO_HEIGHT; y++) {
-				FireBuffer[y * RETRO_WIDTH + x] = 255;
-			}
-		}
-	}
-	RETRO_Blur(RETRO_BLUR_FIRE, 3, RETRO_BLUR_WRAP, FireBuffer);
-}
-
 void DEMO_Render(double deltatime)
 {
-	static double accumulator = 0;
 	unsigned char *buffer = RETRO_FrameBuffer();
 
-	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
-	while (accumulator >= SIMULATION_STEP) {
-		UpdateFire();
-		accumulator -= SIMULATION_STEP;
+	// Advance the flame in fixed steps. It rises one blur pass at a time through a buffer
+	// that is never cleared, and sparks are seeded once per step, so the step rate sets
+	// both speeds.
+	while (RETRO_PerformSimulation()) {
+		for (int x = 0; x < RETRO_WIDTH; x++) {
+			if (RANDOM(FIRE_CHAOS) == 0) {
+				for (int y = RETRO_HEIGHT - FIRE_HEIGHT; y < RETRO_HEIGHT; y++) {
+					FireBuffer[y * RETRO_WIDTH + x] = 255;
+				}
+			}
+		}
+		RETRO_Blur(RETRO_BLUR_FIRE, 3, RETRO_BLUR_WRAP, FireBuffer);
 	}
 
 	// Only render the top part of the flame

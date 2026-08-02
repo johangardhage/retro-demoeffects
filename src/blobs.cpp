@@ -1,5 +1,9 @@
 //
-// blobs.cpp
+// Blobs
+//
+// A swarm of additive blobs performing a random walk. Every blob is the same
+// precalculated, radially symmetric shape. Where blobs overlap their intensities
+// add up, so dense clusters glow brighter and eventually saturate.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -9,37 +13,50 @@
 
 #define NUM_BLOBS 160
 #define BLOB_RADIUS 20
-#define BLOB_DRADIUS (BLOB_RADIUS * 2)
-#define BLOB_SRADIUS (BLOB_RADIUS * BLOB_RADIUS)
-#define SIMULATION_STEP (1.0 / 60.0)
+#define BLOB_SIZE (BLOB_RADIUS * 2 + 1) // odd, so the peak lands on an exact center pixel
+#define BLOB_PEAK 80 // peak value of a single blob, ~255/80 blobs must overlap to reach white
+#define BLOB_STEP 2 // maximum random walk displacement per axis and simulation step
 
-unsigned char Blob[BLOB_DRADIUS * BLOB_DRADIUS];
-Point2D Blobs[NUM_BLOBS];
+unsigned char BlobShape[BLOB_SIZE * BLOB_SIZE];
+Point2D BlobPositions[NUM_BLOBS];
 
 void DEMO_Render(double deltatime)
 {
-	static double accumulator = 0;
-	accumulator = MIN(accumulator + deltatime, SIMULATION_STEP * 15);
-	while (accumulator >= SIMULATION_STEP) {
+	// Advance the walk in fixed steps. A random walk accumulates variance per step, so its
+	// spread is set by steps per second.
+	while (RETRO_PerformSimulation()) {
 		for (int i = 0; i < NUM_BLOBS; i++) {
-			Blobs[i].x += RANDOM(5) - 2;
-			Blobs[i].y += RANDOM(5) - 2;
+			BlobPositions[i].x += RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP;
+			BlobPositions[i].y += RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP;
+
+			// Respawn blobs once they have drifted completely off screen and stopped
+			// contributing anything. The blob covers [center - BLOB_RADIUS, center + BLOB_RADIUS].
+			if (BlobPositions[i].x + BLOB_RADIUS < 0 || BlobPositions[i].x - BLOB_RADIUS >= RETRO_WIDTH ||
+				BlobPositions[i].y + BLOB_RADIUS < 0 || BlobPositions[i].y - BLOB_RADIUS >= RETRO_HEIGHT) {
+				BlobPositions[i].x = RETRO_WIDTH / 2;
+				BlobPositions[i].y = RETRO_HEIGHT / 2;
+			}
 		}
-		accumulator -= SIMULATION_STEP;
 	}
 
 	// Draw blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {
-		if (Blobs[i].x > 0 && Blobs[i].x < RETRO_WIDTH - BLOB_DRADIUS && Blobs[i].y > 0 && Blobs[i].y < RETRO_HEIGHT - BLOB_DRADIUS) {
-			for (int y = 0; y < BLOB_DRADIUS; y++) {
-				for (int x = 0; x < BLOB_DRADIUS; x++) {
-					unsigned char color = CLAMP256(RETRO_GetPixel(Blobs[i].x + x, Blobs[i].y + y) + Blob[y * BLOB_DRADIUS + x]);
-					RETRO_PutPixel(Blobs[i].x + x, Blobs[i].y + y, color);
-				}
+		int left = BlobPositions[i].x - BLOB_RADIUS;
+		int top = BlobPositions[i].y - BLOB_RADIUS;
+
+		// Clip the blob against the screen so blobs slide off the edges instead of
+		// disappearing. Clipping the loop bounds once is cheaper than testing every pixel.
+		int xstart = MAX(0, -left);
+		int xend = MIN(BLOB_SIZE, RETRO_WIDTH - left);
+		int ystart = MAX(0, -top);
+		int yend = MIN(BLOB_SIZE, RETRO_HEIGHT - top);
+
+		// Draw the blob, saturating at white
+		for (int y = ystart; y < yend; y++) {
+			for (int x = xstart; x < xend; x++) {
+				unsigned char color = CLAMP256(RETRO_GetPixel(left + x, top + y) + BlobShape[y * BLOB_SIZE + x]);
+				RETRO_PutPixel(left + x, top + y, color);
 			}
-		} else {
-			Blobs[i].x = (RETRO_WIDTH / 2) - BLOB_RADIUS;
-			Blobs[i].y = (RETRO_HEIGHT / 2) - BLOB_RADIUS;
 		}
 	}
 }
@@ -53,21 +70,32 @@ void DEMO_Initialize(void)
 
 	// Init blob positions
 	for (int i = 0; i < NUM_BLOBS; i++) {
-		Blobs[i].x = (RETRO_WIDTH / 2) - BLOB_RADIUS;
-		Blobs[i].y = (RETRO_HEIGHT / 2) - BLOB_RADIUS;
+		BlobPositions[i].x = RETRO_WIDTH / 2;
+		BlobPositions[i].y = RETRO_HEIGHT / 2;
 	}
 
 	// Init blob shape
-	for (int y = 0; y < BLOB_DRADIUS; y++) {
-		for (int x = 0; x < BLOB_DRADIUS; x++) {
-			float distance = (y - BLOB_RADIUS) * (y - BLOB_RADIUS) + (x - BLOB_RADIUS) * (x - BLOB_RADIUS);
+	//
+	// The falloff is Wyvill's soft object function of the normalized squared distance
+	// s = r^2 / BLOB_RADIUS^2, a cubic in s that closely approximates a Gaussian:
+	//
+	//   f(s) = 1 - (22/9)s + (17/9)s^2 - (4/9)s^3
+	//
+	// f(0) = 1 and f(1) = f'(1) = 0, so the blob fades out to nothing at the radius
+	// without leaving a visible rim. Beyond the radius the polynomial curves upwards
+	// again, so those pixels are cleared instead of evaluated.
+	for (int y = 0; y < BLOB_SIZE; y++) {
+		for (int x = 0; x < BLOB_SIZE; x++) {
+			float dx = x - BLOB_RADIUS;
+			float dy = y - BLOB_RADIUS;
+			float distancesquared = dx * dx + dy * dy;
 
-			if (distance <= BLOB_SRADIUS) {
-				float fraction = distance / BLOB_SRADIUS;
-				float base = 0.7 - (fraction * fraction);
-				Blob[y * BLOB_DRADIUS + x] = base > 0 ? (unsigned char) (pow(base, 3.3) * 255.0) : 0;
+			if (distancesquared <= BLOB_RADIUS * BLOB_RADIUS) {
+				float s = distancesquared / (BLOB_RADIUS * BLOB_RADIUS);
+				float density = 1 - (22.0 / 9.0) * s + (17.0 / 9.0) * pow(s, 2) - (4.0 / 9.0) * pow(s, 3);
+				BlobShape[y * BLOB_SIZE + x] = density * BLOB_PEAK + 0.5;
 			} else {
-				Blob[y * BLOB_DRADIUS + x] = 0;
+				BlobShape[y * BLOB_SIZE + x] = 0;
 			}
 		}
 	}

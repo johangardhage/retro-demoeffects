@@ -44,6 +44,12 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #ifndef RETRO_HEIGHT
 #define RETRO_HEIGHT 240
 #endif
+#ifndef RETRO_SIMULATION_STEP
+#define RETRO_SIMULATION_STEP (1.0 / 60.0)
+#endif
+#ifndef RETRO_MAX_SIMULATION_STEPS
+#define RETRO_MAX_SIMULATION_STEPS 15
+#endif
 
 #define RETRO_COLORS 256
 
@@ -112,6 +118,7 @@ struct {
 	const bool *keystate;
 	bool keydown[256];
 	int yoffset[RETRO_HEIGHT];
+	double accumulator = 0;
 } RETRO = { .mode = RETRO_MODE_FULLSCREEN, .stretch = false, .vsync = true, .showfps = true };
 
 // *******************************************************************
@@ -454,6 +461,36 @@ double RETRO_DeltaTime(void)
 	return (double)(now - old) / SDL_GetPerformanceFrequency();
 }
 
+//
+// Consumes one fixed simulation step, to be used as the condition of a while loop:
+//
+//   while (RETRO_PerformSimulation()) {
+//       // advance the effect by exactly RETRO_SIMULATION_STEP seconds
+//   }
+//
+// The mainloop hands each frame's elapsed time to the accumulator, and every call here
+// takes one fixed step back out of it until less than a whole step is left. Stepping at a
+// fixed rate rather than once per frame keeps an effect running at the same speed whatever
+// the display does, and lets effects that advance in discrete units - integer positions,
+// table indices, palette entries - stay exact instead of accumulating rounding error.
+//
+// Time left over stays in the accumulator and carries into the next frame, so the
+// simulation keeps up with the wall clock without drifting. The accumulator is capped at
+// RETRO_MAX_SIMULATION_STEPS so a long stall cannot demand an unbounded burst of catch-up
+// steps, which would only make the next frame later still. Past that limit the simulation
+// runs slow instead.
+//
+bool RETRO_PerformSimulation(void)
+{
+	if (RETRO.accumulator < RETRO_SIMULATION_STEP) {
+		return false;
+	}
+
+	RETRO.accumulator -= RETRO_SIMULATION_STEP;
+
+	return true;
+}
+
 bool RETRO_KeyState(SDL_Scancode key)
 {
 	return RETRO.keystate[key];
@@ -508,6 +545,10 @@ void RETRO_Mainloop(void)
 		if (RETRO.keystate[SDL_SCANCODE_SPACE]) {
 			continue;
 		}
+
+		// Feed the fixed step accumulator that RETRO_PerformSimulation drains. Done after
+		// the pause check, so time spent paused is discarded rather than caught up on.
+		RETRO.accumulator = MIN(RETRO.accumulator + deltatime, RETRO_SIMULATION_STEP * RETRO_MAX_SIMULATION_STEPS);
 
 		// Render scene
 		unsigned long int start = SDL_GetTicks();

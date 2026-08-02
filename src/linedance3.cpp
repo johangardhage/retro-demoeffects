@@ -61,11 +61,13 @@ void DEMO_Render2(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette
+	// Init palette. Blue rises evenly across the palette, while a narrow white
+	// flare peaks halfway up and a glow washes in the last quarter
 	RETRO_SetColor(0, 0, 0, 0);
 	for (int i = 1; i < RETRO_COLORS; i++) {
-		float k = pow(sin(M_PI / 511.0 * i), 16) * 128 + (32.0 * pow((float) i / 256.0, 3));
-		k = k > 63 ? 63 : k;
-		RETRO_SetColor(i, k * 4, k * 4, i);
+		float flare = pow(sin(M_PI * i / 511.0), 16) * 128;
+		float glow = 32.0 * pow((float) i / 256.0, 3);
+		unsigned char white = MIN(flare + glow, 63) * 4;
+		RETRO_SetColor(i, white, white, i);
 	}
 }

@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
+#include "lib/retrocolor.h"
 
 #define TEXT_HEIGHT 5
 #define TEXT_WIDTH 77
@@ -79,9 +80,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	for (int i = 0; i < RETRO_COLORS; i++) {
-		RETRO_SetColor(i, i, i, i);
-	}
+	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_WHITE);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube3.obj");
 	model->texmap = image;

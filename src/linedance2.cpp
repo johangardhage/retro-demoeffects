@@ -5,6 +5,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrocolor.h"
 
 void DEMO_Render(double deltatime)
 {
@@ -22,20 +23,10 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	unsigned char r = 10, g = 0, b = 0;
-	for (int i = 0; i < 256; i++) {
-		RETRO_SetColor(i, 0, 0, 0);
-	}
-	for (int i = 50; i < 95; i++) {
-		RETRO_SetColor(i, r * 4, 0, 0);
-		r++;
-	}
-	for (int i = 95; i < 135; i++) {
-		RETRO_SetColor(i, 55 * 4, g * 4, 0);
-		g++;
-	}
-	for (int i = 135; i < 200; i++) {
-		RETRO_SetColor(i, r * 4, 55 * 4, MIN(b, 63) * 4);
-		b++;
-	}
+	// Init palette. The lines pick their color from their x position, so they
+	// heat up from red through orange into white from left to right
+	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_BLACK);
+	RETRO_CreateGradientPalette(50, 95, RETRO_BLACK, RETRO_RED);
+	RETRO_CreateGradientPalette(95, 135, RETRO_RED, RETRO_ORANGE);
+	RETRO_CreateGradientPalette(135, 200, RETRO_ORANGE, RETRO_WHITE);
 }

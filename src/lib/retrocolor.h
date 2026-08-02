@@ -43,6 +43,29 @@
 #define RETRO_COLOR_GREEN 1
 #define RETRO_COLOR_BLUE 2
 
+// Named colors, with 8-bit components as used by RETRO_SetPalette. A demo can
+// name its own colors the same way, for example #define EMBER RETRO_RGB(0x140014)
+
+#define RETRO_RGB(hex) RETRO_Palette{ ((hex) >> 16) & 0xff, ((hex) >> 8) & 0xff, (hex) & 0xff }
+
+#define RETRO_BLACK RETRO_Palette{ 0, 0, 0 }
+#define RETRO_GRAY RETRO_Palette{ 128, 128, 128 }
+#define RETRO_WHITE RETRO_Palette{ 255, 255, 255 }
+#define RETRO_RED RETRO_Palette{ 255, 0, 0 }
+#define RETRO_GREEN RETRO_Palette{ 0, 255, 0 }
+#define RETRO_BLUE RETRO_Palette{ 0, 0, 255 }
+#define RETRO_CYAN RETRO_Palette{ 0, 255, 255 }
+#define RETRO_MAGENTA RETRO_Palette{ 255, 0, 255 }
+#define RETRO_YELLOW RETRO_Palette{ 255, 255, 0 }
+#define RETRO_ORANGE RETRO_Palette{ 255, 128, 0 }
+#define RETRO_PURPLE RETRO_Palette{ 128, 0, 255 }
+#define RETRO_PINK RETRO_Palette{ 255, 128, 192 }
+#define RETRO_AZURE RETRO_Palette{ 0, 128, 255 }
+#define RETRO_LIGHTBLUE RETRO_Palette{ 102, 170, 255 }
+#define RETRO_DARKRED RETRO_Palette{ 128, 0, 0 }
+#define RETRO_DARKGREEN RETRO_Palette{ 0, 128, 0 }
+#define RETRO_DARKBLUE RETRO_Palette{ 0, 0, 128 }
+
 struct {
 	unsigned char shadetable[RETRO_BASECOLORS];
 	RETRO_Palette basecolor[RETRO_BASECOLORS];
@@ -321,6 +344,33 @@ void RETRO_CreateOptimalPaletteAndShadeTable(RETRO_Palette *palette, int colors)
 
 	for (int i = 0; i < RETRO_Color.basecolors; i++) {
 		RETRO_Color.shadetable[i] = RETRO_ColorMatch(RETRO_Color.basecolor[i]);
+	}
+}
+
+//
+// Fill the colors start..end with a linear interpolation from one color to
+// another. The end color is not written, so consecutive gradients can be
+// chained without repeating the shared color. Without a palette the colors
+// are set directly, otherwise the components are copied as they are given,
+// which allows both 6-bit and 8-bit palettes
+//
+void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, RETRO_Palette to, RETRO_Palette *palette = NULL)
+{
+	int steps = end - start;
+
+	for (int i = 0; i < steps; i++) {
+		float k = (float)i / steps;
+
+		RETRO_Palette color;
+		color.r = from.r + (to.r - from.r) * k;
+		color.g = from.g + (to.g - from.g) * k;
+		color.b = from.b + (to.b - from.b) * k;
+
+		if (palette) {
+			palette[start + i] = color;
+		} else {
+			RETRO_SetColor(start + i, color.r, color.g, color.b);
+		}
 	}
 }
 

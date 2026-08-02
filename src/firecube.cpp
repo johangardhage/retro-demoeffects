@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
+#include "lib/retrocolor.h"
 
 void DEMO_Render2(double deltatime)
 {
@@ -29,22 +30,10 @@ void DEMO_Render2(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	unsigned char r = 0, g = 0, b = 0;
-	for (int i = 0; i < 256; i++) {
-		RETRO_SetColor(i, 0, 0, 0);
-	}
-	for (int i = 0; i < 63; i++) {
-		RETRO_SetColor(i, r * 4, 0, 0);
-		r++;
-	}
-	for (int i = 63; i < 127; i++) {
-		RETRO_SetColor(i, 63 * 4, g * 4, 0);
-		g++;
-	}
-	for (int i = 127; i < 190; i++) {
-		RETRO_SetColor(i, 63 * 4, 63 * 4, b * 4);
-		b++;
-	}
+	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_BLACK);
+	RETRO_CreateGradientPalette(0, 63, RETRO_BLACK, RETRO_RED);
+	RETRO_CreateGradientPalette(63, 127, RETRO_RED, RETRO_YELLOW);
+	RETRO_CreateGradientPalette(127, 190, RETRO_YELLOW, RETRO_WHITE);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
 	model->c = 80;

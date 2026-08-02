@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
+#include "lib/retrocolor.h"
 
 #define MAXDEGREES		256
 #define POINTSTEP       5
@@ -47,9 +48,7 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	for (int i = 0; i < 64; i++) {
-		RETRO_SetColor(i, i * 4, i * 4, i * 4);
-	}
+	RETRO_CreateGradientPalette(0, 64, RETRO_BLACK, RETRO_WHITE);
 
 	// Init circle points
 	for (int i = 0; i < NUMPOINTS; i++) {

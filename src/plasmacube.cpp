@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
+#include "lib/retrocolor.h"
 
 #define PLASMA_FRAMES 720
 #define SINE_VALUES 1800
@@ -46,34 +47,15 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	unsigned char r = 0, g = 0, b = 0;
-	for (int i = 0; i < RETRO_COLORS; i++) {
-		RETRO_SetColor(i, 0, 0, 0);
-	}
-	for (int i = 0; i < 42; i++) {
-		RETRO_SetColor(i, r * 4, g * 4, b * 4);
-		r++;
-	}
-	for (int i = 42; i < 84; i++) {
-		RETRO_SetColor(i, r * 4, g * 4, b * 4);
-		g++;
-	}
-	for (int i = 84; i < 126; i++) {
-		RETRO_SetColor(i, r * 4, g * 4, b * 4);
-		b++;
-	}
-	for (int i = 126; i < 168; i++) {
-		RETRO_SetColor(i, r * 4, g * 4, b * 4);
-		r--;
-	}
-	for (int i = 168; i < 210; i++) {
-		RETRO_SetColor(i, r * 4, g * 4, b * 4);
-		g--;
-	}
-	for (int i = 210; i < 252; i++) {
-		RETRO_SetColor(i, r * 4, g * 4, b * 4);
-		b--;
-	}
+	// Init palette. The 252 cycling colors ramp one channel at a time, up to
+	// two thirds intensity, and back down again
+	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_BLACK);
+	RETRO_CreateGradientPalette(0, 42, RETRO_BLACK, {168, 0, 0});
+	RETRO_CreateGradientPalette(42, 84, {168, 0, 0}, {168, 168, 0});
+	RETRO_CreateGradientPalette(84, 126, {168, 168, 0}, {168, 168, 168});
+	RETRO_CreateGradientPalette(126, 168, {168, 168, 168}, {0, 168, 168});
+	RETRO_CreateGradientPalette(168, 210, {0, 168, 168}, {0, 0, 168});
+	RETRO_CreateGradientPalette(210, 252, {0, 0, 168}, RETRO_BLACK);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->texmap = image;

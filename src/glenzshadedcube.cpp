@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
+#include "lib/retrocolor.h"
 
 void DEMO_Render(double deltatime)
 {
@@ -21,13 +22,10 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// 8-255 purple, covers overlapping glenz faces summing past 128
-	float p = 0.8;
-	float d = 10, r = d;
-	for (int i = 8; i < 256; i++) {
-		RETRO_SetColor(i, r - 15, 0, r);
-		r += p;
-	}
+	// Single faces shade from black into purple, only where three glenz faces
+	// sum on top of each other does the purple wash out into almost white
+	RETRO_CreateGradientPalette(8, 190, RETRO_BLACK, RETRO_MAGENTA);
+	RETRO_CreateGradientPalette(190, RETRO_COLORS, RETRO_MAGENTA, RETRO_WHITE);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
 	int c[6] = {30, 30, 30, 30, 30, 30};

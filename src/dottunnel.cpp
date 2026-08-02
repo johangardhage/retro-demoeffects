@@ -5,6 +5,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrocolor.h"
 
 #define NUM_RINGS 40
 #define RING_STEP 6
@@ -51,9 +52,7 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	for (int i = 0; i < RETRO_COLORS; i++) {
-		RETRO_SetColor(i, i, i, i);
-	}
+	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_WHITE);
 
 	// Init rings
 	double yadd0 = 75;

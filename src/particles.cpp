@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
+#include "lib/retrocolor.h"
 
 #define NUM_PARTICLES 6000
 #define PARTICLE_GRAVITY 0.13
@@ -88,13 +89,7 @@ void DEMO_Render2(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	for (int i = 0; i < 64; i++) {
-		RETRO_SetColor(i, i * 4, 0, 0);
-	}
-	for (int i = 64; i < 128; i++) {
-		RETRO_SetColor(i, 63 * 4, (i - 64) * 4, 0);
-	}
-	for (int i = 128; i < 256; i++) {
-		RETRO_SetColor(i, 63 * 4, 63 * 4, ((i - 128) >> 1) * 4);
-	}
+	RETRO_CreateGradientPalette(0, 64, RETRO_BLACK, RETRO_RED);
+	RETRO_CreateGradientPalette(64, 128, RETRO_RED, RETRO_YELLOW);
+	RETRO_CreateGradientPalette(128, RETRO_COLORS, RETRO_YELLOW, RETRO_WHITE);
 }

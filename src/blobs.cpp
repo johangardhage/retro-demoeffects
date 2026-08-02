@@ -10,6 +10,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
+#include "lib/retrocolor.h"
 
 #define NUM_BLOBS 160
 #define BLOB_RADIUS 20
@@ -64,9 +65,7 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	for (int i = 0; i < RETRO_COLORS; i++) {
-		RETRO_SetColor(i, i / 2.5, i / 1.5, i);
-	}
+	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_LIGHTBLUE);
 
 	// Init blob positions
 	for (int i = 0; i < NUM_BLOBS; i++) {

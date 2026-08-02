@@ -78,12 +78,13 @@ void DEMO_Initialize(void)
 		CosTable[i] = cos(i * 2 * M_PI / SINE_VALUES);
 	}
 
-	// Init palette
+	// Init palette. Where the dots pile up the color glows from black through
+	// deep red into white, red squared rising long before the steeper white
 	for (int i = 0; i < NUM_COLORS; i++) {
-		unsigned char r = NUM_COLORS * exp(2 * log((double) i / (NUM_COLORS - 10)));
-		unsigned char g = NUM_COLORS * exp(7 * log((double) i / (NUM_COLORS - 10)));
-		unsigned char b = NUM_COLORS * exp(7 * log((double) i / (NUM_COLORS - 10)));
-		RETRO_SetColor(i, r, g, b);
+		double intensity = (double) i / (NUM_COLORS - 10);
+		unsigned char red = NUM_COLORS * pow(intensity, 2);
+		unsigned char white = NUM_COLORS * pow(intensity, 7);
+		RETRO_SetColor(i, red, white, white);
 	}
 
 	RETRO_Load3DModel("assets/torus.obj");

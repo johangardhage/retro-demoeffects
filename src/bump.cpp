@@ -5,6 +5,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrocolor.h"
 
 #define LIGHTMAP_WIDTH 256
 #define LIGHTMAP_HEIGHT 256
@@ -58,18 +59,10 @@ void DEMO_Initialize(void)
 		SinTable[i] = sin(i * M_PI / 180) * LIGHTMAP_WIDTH / 2;
 	}
 
-	// Init palette
-	float r = 0, g = 0, b = 0;
-	for (int i = 0; i < 100; i++) {
-		RETRO_SetColor(i, r, 0, 0);
-		r += 1.5;
-	}
-	for (int i = 100; i < 128; i++) {
-		RETRO_SetColor(i, r, g, b);
-		r += 1.5;
-		g += 3;
-		b += 3;
-	}
+	// Init palette. The light ramps from black through red toward white,
+	// the image supplies the colors from 128 and up
+	RETRO_CreateGradientPalette(0, 100, RETRO_BLACK, {150, 0, 0});
+	RETRO_CreateGradientPalette(100, 128, {150, 0, 0}, {192, 84, 84});
 
 	// Init light map
 	for (int y = 0; y < LIGHTMAP_HEIGHT; y++) {

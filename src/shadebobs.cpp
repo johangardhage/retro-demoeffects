@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
+#include "lib/retrocolor.h"
 
 #define maxdegrees 256
 #define divd 128
@@ -81,18 +82,9 @@ void DEMO_Render2(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette
-	unsigned char r = 0, g = 0, b = 0;
-	for(int i = 0; i < 64; i++) {
-		RETRO_SetColor(i, r, 0, 0);
-		r += 4;
-	}
-	for(int i = 64; i < 128; i++) {
-		RETRO_SetColor(i, 255, g, 0);
-		g += 4;
-	}
-	for(int i = 128; i < 256; i++) {
-		RETRO_SetColor(i, 255, 255, b);
-		b += 2;
-	}
+	// Init palette. The bobs heat up from red through yellow into white as
+	// they pile on top of each other
+	RETRO_CreateGradientPalette(0, 64, RETRO_BLACK, RETRO_RED);
+	RETRO_CreateGradientPalette(64, 128, RETRO_RED, RETRO_YELLOW);
+	RETRO_CreateGradientPalette(128, RETRO_COLORS, RETRO_YELLOW, RETRO_WHITE);
 }

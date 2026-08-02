@@ -6,6 +6,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retromath.h"
+#include "lib/retrocolor.h"
 
 #define RING_RADIUS 50
 #define TUBE_RADIUS 25
@@ -42,9 +43,7 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	for (int i = 0; i < 64; i++) {
-		RETRO_SetColor(i, i * 4, i * 4, i * 4);
-	}
+	RETRO_CreateGradientPalette(0, 64, RETRO_BLACK, RETRO_WHITE);
 
 	// Generate torus
 	for (float alpha = 2 * M_PI; alpha > 0; alpha -= POINTSTEP) {

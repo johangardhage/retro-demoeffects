@@ -14,12 +14,16 @@
 #define TEXTURE_HEIGHT 256
 
 enum { ASSET_TEXMAP, ASSET_ENVMAP, ASSET_PHONGMAP, ASSET_MINIPHONGMAP, ASSET_BUMPMAP };
+enum { MATERIAL_FLAT, MATERIAL_GOURAUD, MATERIAL_PHONG, MATERIALS };
+
+static unsigned char MaterialShadeTables[MATERIALS][RETRO_MAX_SHADING_COLORS];
 
 void DEMO_Render(double deltatime)
 {
 	static RETRO_POLY_TYPE rendertype = RETRO_POLY_TEXTURE;
-	static RETRO_POLY_SHADE shadertype = RETRO_SHADE_TABLE;
+	static RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE;
 	static unsigned char *texmap = RETRO_ImageData(ASSET_TEXMAP);
+	static unsigned char *shadetable = NULL;
 	static unsigned char *envmap = NULL;
 	static unsigned char *bumpmap = NULL;
 	static unsigned char color = 64;
@@ -41,11 +45,35 @@ void DEMO_Render(double deltatime)
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_T)) {
 		rendertype = RETRO_POLY_TEXTURE;
+		shadertype = RETRO_SHADE_NONE;
+		texmap = RETRO_ImageData(ASSET_TEXMAP);
+		shadetable = NULL;
+		envmap = NULL;
+		color = 0;
+		colorintensity = 0;
+		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_TEXMAP));
+		RETRO_SetColor(0, RETRO_BLACK);
+		RETRO_SetColor(255, RETRO_PERIWINKLE);
+	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_0)) {
+		rendertype = RETRO_POLY_TEXTURE;
 		shadertype = RETRO_SHADE_TABLE;
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = NULL;
-		color = 64;
+		// A fixed light level, with no light source. The texture is drawn through
+		// a material rather than in its own colors
+		//
+		// The level sits at 33 degrees of incidence, on the shoulder of the
+		// material's highlight. Higher would show the material more strongly but
+		// wash the texture out, because the highlight is untinted and adds the
+		// same white to every texel until they stop being distinguishable. Here
+		// it adds under half a level, so the texture keeps all of its detail
+		// while the material is still visibly doing something. Halfway up the
+		// ramp would be 44 degrees, past the cutoff where every specular term is
+		// zero and the material below would make no difference at all
+		color = RETRO_SHADES * 5 / 8;
 		colorintensity = 0;
+		shadetable = MaterialShadeTables[MATERIAL_GOURAUD];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_1)) {
@@ -55,6 +83,7 @@ void DEMO_Render(double deltatime)
 		envmap = NULL;
 		color = 0;
 		colorintensity = 0;
+		shadetable = MaterialShadeTables[MATERIAL_FLAT];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_2)) {
@@ -64,6 +93,7 @@ void DEMO_Render(double deltatime)
 		envmap = NULL;
 		color = 0;
 		colorintensity = 128;
+		shadetable = MaterialShadeTables[MATERIAL_GOURAUD];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_3)) {
@@ -73,12 +103,14 @@ void DEMO_Render(double deltatime)
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
 		colorintensity = 90;
+		shadetable = MaterialShadeTables[MATERIAL_PHONG];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_D)) {
 		rendertype = RETRO_POLY_DOT;
 		shadertype = RETRO_SHADE_NONE;
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
+		shadetable = NULL;
 		envmap = NULL;
 		color = 255;
 		colorintensity = 0;
@@ -88,6 +120,7 @@ void DEMO_Render(double deltatime)
 		rendertype = RETRO_POLY_WIREFRAME;
 		shadertype = RETRO_SHADE_NONE;
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
+		shadetable = NULL;
 		envmap = NULL;
 		color = 255;
 		colorintensity = 0;
@@ -96,6 +129,7 @@ void DEMO_Render(double deltatime)
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
 		rendertype = RETRO_POLY_ENVIRONMENT;
 		shadertype = RETRO_SHADE_PHONG;
+		shadetable = NULL;
 		envmap = RETRO_ImageData(ASSET_PHONGMAP);
 		color = 128;
 		colorintensity = 90;
@@ -104,6 +138,7 @@ void DEMO_Render(double deltatime)
 	if (RETRO_KeyPressed(SDL_SCANCODE_O)) {
 		rendertype = RETRO_POLY_ENVIRONMENT;
 		shadertype = RETRO_SHADE_PHONG;
+		shadetable = NULL;
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
 		colorintensity = 90;
@@ -112,6 +147,7 @@ void DEMO_Render(double deltatime)
 	if (RETRO_KeyPressed(SDL_SCANCODE_M)) {
 		rendertype = RETRO_POLY_ENVIRONMENT;
 		shadertype = RETRO_SHADE_ENVIRONMENT;
+		shadetable = NULL;
 		envmap = RETRO_ImageData(ASSET_ENVMAP);
 		color = 128;
 		colorintensity = 90;
@@ -120,6 +156,7 @@ void DEMO_Render(double deltatime)
 
 	Model3D *model = RETRO_Get3DModel();
 	model->texmap = texmap;
+	model->shadetable = shadetable;
 	model->envmap = envmap;
 	model->bumpmap = bumpmap;
 	model->c = color;
@@ -177,13 +214,15 @@ void DEMO_Render(double deltatime)
 		RETRO_PutString("d to use dots", 0, 90, 255);
 		RETRO_PutString("w to use wireframe", 0, 100, 255);
 		RETRO_PutString("t to use texture mapping", 0, 110, 255);
-		RETRO_PutString("1 to use flat shaded texture mapping", 0, 120, 255);
-		RETRO_PutString("2 to use gouraud shaded texture mapping", 0, 130, 255);
-		RETRO_PutString("3 to use env shaded texture mapping", 0, 140, 255);
-		RETRO_PutString("m to use metal environment mapping", 0, 150, 255);
-		RETRO_PutString("p to use phong environment mapping", 0, 160, 255);
-		RETRO_PutString("b to toggle bumpmapping", 0, 170, 255);
-		RETRO_PutString("h to toggle this help screen", 0, 190, 255);
+		RETRO_PutString("0 to use shade table texture mapping", 0, 120, 255);
+		RETRO_PutString("1 to use flat shaded texture mapping", 0, 130, 255);
+		RETRO_PutString("2 to use gouraud shaded texture mapping", 0, 140, 255);
+		RETRO_PutString("3 to use env shaded texture mapping", 0, 150, 255);
+		RETRO_PutString("m to use metal environment mapping", 0, 160, 255);
+		RETRO_PutString("p to use phong environment mapping", 0, 170, 255);
+		RETRO_PutString("o to use mini phong environment mapping", 0, 180, 255);
+		RETRO_PutString("b to toggle bumpmapping", 0, 190, 255);
+		RETRO_PutString("h to toggle this help screen", 0, 210, 255);
 	}
 }
 
@@ -196,9 +235,18 @@ void DEMO_Initialize(void)
 	RETRO_LoadImage("assets/mask_miniphongmap_256x256.pcx");
 	RETRO_LoadImage("assets/mask_bumpmap_256x256.pcx");
 
-	// Create optimal palette from texture palette
-	RETRO_CreateOptimalPaletteAndShadeTable(RETRO_ImagePalette(ASSET_TEXMAP), RETRO_SHADE_COLORS);
-	RETRO_Set6bitPalette(RETRO_OptimalPalette());
+	// Build a material for each rendering mode. They share a palette optimized
+	// for the broad Gouraud material, but keep separate shade tables. Flat gets a
+	// strong, moderately focused highlight, while Gouraud carries the full
+	// plastic highlight smoothly because it samples lighting at vertices.
+	RETRO_Palette *texturepalette = RETRO_ImagePalette(ASSET_TEXMAP);
+	RETRO_CreateOptimalPalette(texturepalette, RETRO_TEXTURE_COLORS, RETRO_K_SPECULAR, 5.0f);
+	RETRO_CreateShadeTable(texturepalette, RETRO_TEXTURE_COLORS, RETRO_K_SPECULAR, 5.0f, MaterialShadeTables[MATERIAL_GOURAUD]);
+	RETRO_CreateShadeTable(texturepalette, RETRO_TEXTURE_COLORS, 0.6f, 5.0f, MaterialShadeTables[MATERIAL_FLAT]);
+	RETRO_CreateShadeTable(texturepalette, RETRO_TEXTURE_COLORS, RETRO_K_SPECULAR, RETRO_K_FALLOFF, MaterialShadeTables[MATERIAL_PHONG]);
+	RETRO_Set6bitPalette(texturepalette);
+	RETRO_SetColor(0, RETRO_BLACK);
+	RETRO_SetColor(255, RETRO_PERIWINKLE);
 
 	// Load model
 	RETRO_Load3DModel("assets/mask.obj", 1);

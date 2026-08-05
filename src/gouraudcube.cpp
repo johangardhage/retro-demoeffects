@@ -22,12 +22,14 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette
-	RETRO_CreatePlasticPhongPalette(30);
+	// Init palette. A broad highlight, because gouraud samples the lighting
+	// only at the 8 corner normals, 70 degrees apart, and a tight highlight
+	// falls between them and shows up as a glint on one corner
+	RETRO_CreatePlasticPhongPalette(5);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
-	model->c = RETRO_PAL_OFFSET;
-	model->cintensity = RETRO_PAL_SIZE;
+	model->c = RETRO_PHONG_OFFSET;
+	model->cintensity = RETRO_PHONG_SHADES;
 
 	RETRO_InitializeLightSource(0, 0, -1);
 }

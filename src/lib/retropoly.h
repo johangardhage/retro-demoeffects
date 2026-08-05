@@ -240,7 +240,7 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 					intensity = MAX((nx * lx + ny * ly + nz * lz) * inverseNormalLength, 0.0f);
 				}
 
-				float paletteIntensity = asin(MIN(intensity, 1.0f)) / (M_PI / 2);
+				float paletteIntensity = RETRO_ShadeFromLambert(intensity);
 				int color = light.c + light.cintensity * paletteIntensity;
 				RETRO.framebuffer[y * RETRO_WIDTH + x] = CLAMP(color, cmin, cmax);
 				nx += dnxdx;
@@ -351,9 +351,9 @@ void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, uns
 					float inverseQ = 1.0f / q;
 					unsigned int u = CLAMP256(uq * inverseQ);
 					unsigned int v = CLAMP256(vq * inverseQ);
-					unsigned char texel = CLAMP(texmap[v * 256 + u], 0, RETRO_SHADE_COLORS);
+					unsigned char texel = CLAMP(texmap[v * 256 + u], 0, RETRO_TEXTURE_COLORS);
 					int shade = CLAMP128(c);
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * 128 + shade];
+					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * RETRO_SHADES + shade];
 				}
 				uq += duqdx;
 				vq += dvqdx;
@@ -423,7 +423,7 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 					float inverseQ = 1.0f / q;
 					unsigned int u = CLAMP256(uq * inverseQ);
 					unsigned int v = CLAMP256(vq * inverseQ);
-					unsigned char texel = CLAMP(texmap[v * 256 + u], 0, RETRO_SHADE_COLORS);
+					unsigned char texel = CLAMP(texmap[v * 256 + u], 0, RETRO_TEXTURE_COLORS);
 					unsigned char pixelShade = shade;
 					if (environmentShading) {
 						float e, w;
@@ -432,7 +432,7 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 						unsigned int environmentV = CLAMP256(w);
 						pixelShade = CLAMP128(envmap[environmentV * 256 + environmentU]);
 					}
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * 128 + pixelShade];
+					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * RETRO_SHADES + pixelShade];
 				}
 				uq += duqdx;
 				vq += dvqdx;
@@ -516,9 +516,9 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 					// instead of introducing black pixels.
 					unsigned int environmentU = bu >= 0 && bu < 256 ? bu : CLAMP256(e);
 					unsigned int environmentV = bv >= 0 && bv < 256 ? bv : CLAMP256(w);
-					unsigned char texel = CLAMP(texmap[textureV * 256 + textureU], 0, RETRO_SHADE_COLORS);
+					unsigned char texel = CLAMP(texmap[textureV * 256 + textureU], 0, RETRO_TEXTURE_COLORS);
 					unsigned char pixelShade = CLAMP128(envmap[environmentV * 256 + environmentU]);
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * 128 + pixelShade];
+					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * RETRO_SHADES + pixelShade];
 				}
 				uq += duqdx;
 				vq += dvqdx;

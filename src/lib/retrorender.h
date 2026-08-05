@@ -100,9 +100,10 @@ void RETRO_RenderFlatModel(Model3D *model, bool shaded)
 		int color = model->c + face->c;
 		if (shaded) {
 			float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
+			float shade = RETRO_ShadeFromLambert(lint);
 			int cmin = model->c;
 			int cmax = model->c + face->c + model->cintensity;
-			color = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
+			color = CLAMP(model->c + face->c + shade * model->cintensity, cmin, cmax);
 		}
 		RETRO_DrawFlatPolygon(points, face->vertices, color);
 	}
@@ -121,6 +122,11 @@ void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 		}
 		int shade;
 		if (shadertype == RETRO_SHADE_FLAT) {
+			// Glenz shades into a gradient, whose brightness rises linearly with
+			// the color index, so the lambert term is already the shade to use.
+			// No RETRO_ShadeFromLambert here: that only undoes the angle spacing
+			// of a phong ramp, and applying it to a gradient would bend a
+			// correct falloff out of shape
 			float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
 			if (face->visible == false) lint /= 2;
 			int cmin = model->c;
@@ -153,7 +159,7 @@ void RETRO_RenderGouraudModel(Model3D *model)
 			points[j].x = model->vertex[face->vertex[j]].sx;
 			points[j].y = model->vertex[face->vertex[j]].sy;
 			float lint = RETRO_DotProduct(model->normal[face->normal[j]], RETRO_Render.lightsource);
-			points[j].c = CLAMP(model->c + face->c + lint * model->cintensity, cmin, cmax);
+			points[j].c = CLAMP(model->c + face->c + RETRO_ShadeFromLambert(lint) * model->cintensity, cmin, cmax);
 		}
 		RETRO_DrawGouraudPolygon(points, face->vertices);
 	}
@@ -190,6 +196,7 @@ void RETRO_RenderPhongModel(Model3D *model)
 void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
 	RETRO_SortVisibleFaces(model);
+	unsigned char *shadetable = model->shadetable;
 	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
 	bool environmentShading = shadertype == RETRO_SHADE_ENVIRONMENT || lightingmap;
 
@@ -214,23 +221,26 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 		if (shadertype == RETRO_SHADE_NONE) {
 			RETRO_DrawTexMapPolygon(points, face->vertices, model->texmap);
 		} else if (shadertype == RETRO_SHADE_TABLE) {
+			// Texture mapped through the shade table at a fixed light level, with
+			// no light source involved. face->c offsets it per face, so a model
+			// can carry its own baked lighting
 			int shade = model->c + face->c;
-			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade, false, model->c, model->cintensity);
+			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, shadetable, shade, false, model->c, model->cintensity);
 		} else if (shadertype == RETRO_SHADE_FLAT) {
 			int shade = model->c + face->c;
 			float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
-			shade = CLAMP128(shade + lint * 128);
-			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, shade, false, model->c, model->cintensity);
+			shade = CLAMP128(shade + RETRO_ShadeFromLambert(lint) * RETRO_SHADES);
+			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, shadetable, shade, false, model->c, model->cintensity);
 		} else if (shadertype == RETRO_SHADE_GOURAUD) {
 			for (int j = 0; j < face->vertices; j++) {
 				float lint = RETRO_DotProduct(model->normal[face->normal[j]], RETRO_Render.lightsource);
-				points[j].c = CLAMP128(model->c + face->c + lint * 128);
+				points[j].c = CLAMP128(model->c + face->c + RETRO_ShadeFromLambert(lint) * RETRO_SHADES);
 			}
-			RETRO_DrawTexMapGouraudPolygon(points, face->vertices, model->texmap, RETRO_Color.shadetable);
+			RETRO_DrawTexMapGouraudPolygon(points, face->vertices, model->texmap, shadetable);
 		} else if (environmentShading && model->bumpmap == NULL) {
-			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, RETRO_Color.shadetable, 0, lightingmap, model->c, model->cintensity);
+			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, shadetable, 0, lightingmap, model->c, model->cintensity);
 		} else if (environmentShading) {
-			RETRO_DrawTexMapEnvMapBumpPolygon(points, face->vertices, model->texmap, model->envmap, model->bumpmap, RETRO_Color.shadetable, lightingmap, model->c, model->cintensity);
+			RETRO_DrawTexMapEnvMapBumpPolygon(points, face->vertices, model->texmap, model->envmap, model->bumpmap, shadetable, lightingmap, model->c, model->cintensity);
 		}
 	}
 }

@@ -55,6 +55,7 @@ struct Model3D {
 	int c;									// Base color
 	int cintensity;							// Color intensity
 	unsigned char *texmap = NULL;			// Texture
+	unsigned char *shadetable = NULL;		// Texture lighting table
 	unsigned char *envmap = NULL;			// Environment texture
 	int envmapwidth = 256;					// Environment texture width
 	int envmapheight = 256;					// Environment texture height

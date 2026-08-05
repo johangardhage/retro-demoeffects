@@ -139,18 +139,18 @@ unsigned char *RETRO_FrameBuffer(void)
 RETRO_Palette RETRO_GetColor(int color)
 {
 	RETRO_Palette palette;
-	palette.r = RETRO.palette[color] >> 16;
-	palette.g = RETRO.palette[color] >> 8;
-	palette.b = RETRO.palette[color];
+	palette.r = (RETRO.palette[color] >> 16) & 0xff;
+	palette.g = (RETRO.palette[color] >> 8) & 0xff;
+	palette.b = RETRO.palette[color] & 0xff;
 	return palette;
 }
 
 RETRO_Palette RETRO_Get6bitColor(int color)
 {
 	RETRO_Palette palette;
-	palette.r = (RETRO.palette[color] >> 16) >> 2;
-	palette.g = (RETRO.palette[color] >> 8) >> 2;
-	palette.b = (RETRO.palette[color]) >> 2;
+	palette.r = ((RETRO.palette[color] >> 16) & 0xff) >> 2;
+	palette.g = ((RETRO.palette[color] >> 8) & 0xff) >> 2;
+	palette.b = ((RETRO.palette[color]) & 0xff) >> 2;
 	return palette;
 }
 
@@ -159,9 +159,18 @@ void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b
 	RETRO.palette[color] = 0xff000000 | (r << 16) | (g << 8) | (b);
 }
 
-void RETRO_SetColor(int color, RETRO_Palette palette)
+//
+// Set a color in a palette buffer, or in the active palette when no buffer is
+// given. Writing to a buffer copies the components as they are given, which
+// allows both 6-bit and 8-bit palettes
+//
+void RETRO_SetColor(int index, RETRO_Palette color, RETRO_Palette *buffer = NULL)
 {
-	RETRO_SetColor(color, palette.r, palette.g, palette.b);
+	if (buffer) {
+		buffer[index] = color;
+	} else {
+		RETRO_SetColor(index, color.r, color.g, color.b);
+	}
 }
 
 void RETRO_Set6bitColor(int color, unsigned char r, unsigned char g, unsigned char b)

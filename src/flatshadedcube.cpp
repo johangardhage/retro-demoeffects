@@ -22,12 +22,13 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette
-	RETRO_CreatePlasticPhongPalette(30);
+	// Init palette. Matte, because a flat lit face has one normal for all of
+	// it and a specular highlight would flash the whole face at once
+	RETRO_CreateMattePalette();
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
-	model->c = RETRO_PAL_OFFSET;
-	model->cintensity = 234;
+	model->c = RETRO_PHONG_OFFSET;
+	model->cintensity = RETRO_PHONG_SHADES;
 
 	RETRO_InitializeLightSource(0, 0, -1);
 }

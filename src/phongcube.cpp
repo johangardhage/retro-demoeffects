@@ -26,8 +26,8 @@ void DEMO_Initialize(void)
 	RETRO_CreatePlasticPhongPalette(30);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
-	model->c = RETRO_PAL_OFFSET;
-	model->cintensity = RETRO_PAL_SIZE;
+	model->c = RETRO_PHONG_OFFSET;
+	model->cintensity = RETRO_PHONG_SHADES;
 
 	RETRO_InitializeLightSource(0, 0, -1);
 }

@@ -21,9 +21,28 @@
 // Public dynamic functions
 // *******************************************************************
 
+//
+// A demo defines the callbacks it needs and leaves the rest undefined
+//
+// DEMO_Startup runs before the screen is created, so a demo that defines nothing else never
+// opens one. DEMO_Initialize and DEMO_Deinitialize bracket the mainloop, with the
+// framebuffer and the palette in place.
+//
+// DEMO_Update advances the effect by deltatime seconds, always exactly
+// RETRO_SIMULATION_STEP. The mainloop calls it once for every whole step the frame has
+// earned, which can be no times at all on a fast display and several while catching up
+// after a stall, so work that belongs to a single frame does not belong here. See
+// RETRO_AdvanceSimulation.
+//
+// DEMO_Render draws a frame into a cleared framebuffer, which is shown once it returns.
+// DEMO_Render2 is handed the framebuffer as the previous frame left it and shows it itself
+// with RETRO_Flip. A demo that draws in DEMO_Update needs neither, and gets its framebuffer
+// shown as it stands.
+//
 void __attribute__((weak)) DEMO_Startup(void);
 void __attribute__((weak)) DEMO_Initialize(void);
 void __attribute__((weak)) DEMO_Deinitialize(void);
+void __attribute__((weak)) DEMO_Update(double deltatime);
 void __attribute__((weak)) DEMO_Render(double deltatime);
 void __attribute__((weak)) DEMO_Render2(double deltatime);
 
@@ -475,36 +494,6 @@ double RETRO_DeltaTime(void)
 	return (double)(now - old) / SDL_GetPerformanceFrequency();
 }
 
-//
-// Consumes one fixed simulation step, to be used as the condition of a while loop:
-//
-//   while (RETRO_PerformSimulation()) {
-//       // advance the effect by exactly RETRO_SIMULATION_STEP seconds
-//   }
-//
-// The mainloop hands each frame's elapsed time to the accumulator, and every call here
-// takes one fixed step back out of it until less than a whole step is left. Stepping at a
-// fixed rate rather than once per frame keeps an effect running at the same speed whatever
-// the display does, and lets effects that advance in discrete units - integer positions,
-// table indices, palette entries - stay exact instead of accumulating rounding error.
-//
-// Time left over stays in the accumulator and carries into the next frame, so the
-// simulation keeps up with the wall clock without drifting. The accumulator is capped at
-// RETRO_MAX_SIMULATION_STEPS so a long stall cannot demand an unbounded burst of catch-up
-// steps, which would only make the next frame later still. Past that limit the simulation
-// runs slow instead.
-//
-bool RETRO_PerformSimulation(void)
-{
-	if (RETRO.accumulator < RETRO_SIMULATION_STEP) {
-		return false;
-	}
-
-	RETRO.accumulator -= RETRO_SIMULATION_STEP;
-
-	return true;
-}
-
 bool RETRO_KeyState(SDL_Scancode key)
 {
 	return RETRO.keystate[key];
@@ -550,6 +539,33 @@ bool RETRO_QuitRequested(void)
 // Private functions
 // *******************************************************************
 
+//
+// Advance the simulation by as many whole fixed steps as the elapsed time allows
+//
+// Each frame's elapsed time is added to an accumulator, and DEMO_Update is called with a
+// deltatime of RETRO_SIMULATION_STEP once for every whole step the accumulator holds.
+// Stepping at a fixed rate rather than once per frame keeps an effect running at the same
+// speed whatever the display does, and lets effects that advance in discrete units -
+// integer positions, table indices, palette entries - stay exact instead of accumulating
+// rounding error.
+//
+// Time left over stays in the accumulator and carries into the next frame, so the
+// simulation keeps up with the wall clock without drifting. The accumulator is capped at
+// RETRO_MAX_SIMULATION_STEPS so a long stall cannot demand an unbounded burst of catch-up
+// steps, which would only make the next frame later still. Past that limit the simulation
+// runs slow instead.
+//
+void RETRO_AdvanceSimulation(double deltatime)
+{
+	RETRO.accumulator = MIN(RETRO.accumulator + deltatime, RETRO_SIMULATION_STEP * RETRO_MAX_SIMULATION_STEPS);
+
+	while (RETRO.accumulator >= RETRO_SIMULATION_STEP) {
+		RETRO.accumulator -= RETRO_SIMULATION_STEP;
+
+		DEMO_Update(RETRO_SIMULATION_STEP);
+	}
+}
+
 void RETRO_Mainloop(void)
 {
 	while (!RETRO_QuitRequested()) {
@@ -560,18 +576,24 @@ void RETRO_Mainloop(void)
 			continue;
 		}
 
-		// Feed the fixed step accumulator that RETRO_PerformSimulation drains. Done after
-		// the pause check, so time spent paused is discarded rather than caught up on.
-		RETRO.accumulator = MIN(RETRO.accumulator + deltatime, RETRO_SIMULATION_STEP * RETRO_MAX_SIMULATION_STEPS);
+		// Time the whole frame, for the FPS cap below
+		unsigned long int start = SDL_GetTicks();
+
+		// Advance simulation. Done after the pause check, so time spent paused is
+		// discarded rather than caught up on.
+		if (DEMO_Update) RETRO_AdvanceSimulation(deltatime);
 
 		// Render scene
-		unsigned long int start = SDL_GetTicks();
 		if (DEMO_Render) {
 			RETRO_Clear();
 			DEMO_Render(deltatime);
 			RETRO_Flip();
 		} else if (DEMO_Render2) {
 			DEMO_Render2(deltatime);
+		} else {
+			// A demo that only updates has drawn straight into the framebuffer, which is
+			// left standing between frames, so all that remains is to show it
+			RETRO_Flip();
 		}
 		unsigned long int stop = SDL_GetTicks();
 

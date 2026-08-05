@@ -27,47 +27,46 @@ unsigned char Form[NUM_TORUS][NUM_TORUS] = {
 float SinTable[SINE_VALUES];
 float CosTable[SINE_VALUES];
 
-void DEMO_Render2(double deltatime)
+//
+// Advance the trail in fixed steps. Dots accumulate into a framebuffer that is never
+// cleared and are blurred once per step, so the trail length follows the step rate.
+//
+void DEMO_Update(double deltatime)
 {
-	// Advance the trail in fixed steps. Dots accumulate into a framebuffer that is never
-	// cleared and are blurred once per step, so the trail length follows the step rate.
-	while (RETRO_PerformSimulation()) {
-		static double frame_counter = 0;
-		frame_counter = fmod(frame_counter + 200 * RETRO_SIMULATION_STEP, SINE_VALUES);
-		int frame = frame_counter;
+	static double frame_counter = 0;
+	frame_counter = fmod(frame_counter + 200 * deltatime, SINE_VALUES);
+	int frame = frame_counter;
 
-		Model3D *model = RETRO_Get3DModel();
-		Vertex *vertex = model->vertex;
+	Model3D *model = RETRO_Get3DModel();
+	Vertex *vertex = model->vertex;
 
-		// Draw blob
-		for (int b = 0; b < BLUR; b++) {
-			for (int p = 0; p < model->vertices; p++) {
-				RETRO_RotateVertex(&vertex[p], CosTable[(frame + b) % SINE_VALUES], SinTable[(frame + b) % SINE_VALUES]);
-				RETRO_ProjectVertex(&vertex[p], SCALE);
+	// Draw blob
+	for (int b = 0; b < BLUR; b++) {
+		for (int p = 0; p < model->vertices; p++) {
+			RETRO_RotateVertex(&vertex[p], CosTable[(frame + b) % SINE_VALUES], SinTable[(frame + b) % SINE_VALUES]);
+			RETRO_ProjectVertex(&vertex[p], SCALE);
 
-				for (int y = 0; y < NUM_TORUS; y++) {
-					for (int x = 0; x < NUM_TORUS; x++) {
-						int px = vertex[p].sx + x;
-						int py = vertex[p].sy + y;
-						if (px < 0 || px >= RETRO_WIDTH || py < 0 || py >= RETRO_HEIGHT) {
-							continue;
-						}
-
-						unsigned char color = RETRO_GetPixel(px, py) + Form[x][y];
-
-						if (color >= NUM_COLORS) {
-							color = NUM_COLORS - 1;
-						}
-
-						RETRO_PutPixel(px, py, color);
+			for (int y = 0; y < NUM_TORUS; y++) {
+				for (int x = 0; x < NUM_TORUS; x++) {
+					int px = vertex[p].sx + x;
+					int py = vertex[p].sy + y;
+					if (px < 0 || px >= RETRO_WIDTH || py < 0 || py >= RETRO_HEIGHT) {
+						continue;
 					}
+
+					unsigned char color = RETRO_GetPixel(px, py) + Form[x][y];
+
+					if (color >= NUM_COLORS) {
+						color = NUM_COLORS - 1;
+					}
+
+					RETRO_PutPixel(px, py, color);
 				}
 			}
 		}
-
-		RETRO_Blur(RETRO_BLUR_DIFFUSE, 3);
 	}
-	RETRO_Flip();
+
+	RETRO_Blur(RETRO_BLUR_DIFFUSE, 3);
 }
 
 void DEMO_Initialize(void)

@@ -21,25 +21,28 @@
 unsigned char BlobShape[BLOB_SIZE * BLOB_SIZE];
 Point2D BlobPositions[NUM_BLOBS];
 
-void DEMO_Render(double deltatime)
+//
+// Advance the walk in fixed steps. A random walk accumulates variance per step, so its
+// spread is set by steps per second.
+//
+void DEMO_Update(double deltatime)
 {
-	// Advance the walk in fixed steps. A random walk accumulates variance per step, so its
-	// spread is set by steps per second.
-	while (RETRO_PerformSimulation()) {
-		for (int i = 0; i < NUM_BLOBS; i++) {
-			BlobPositions[i].x += RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP;
-			BlobPositions[i].y += RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP;
+	for (int i = 0; i < NUM_BLOBS; i++) {
+		BlobPositions[i].x += RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP;
+		BlobPositions[i].y += RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP;
 
-			// Respawn blobs once they have drifted completely off screen and stopped
-			// contributing anything. The blob covers [center - BLOB_RADIUS, center + BLOB_RADIUS].
-			if (BlobPositions[i].x + BLOB_RADIUS < 0 || BlobPositions[i].x - BLOB_RADIUS >= RETRO_WIDTH ||
-				BlobPositions[i].y + BLOB_RADIUS < 0 || BlobPositions[i].y - BLOB_RADIUS >= RETRO_HEIGHT) {
-				BlobPositions[i].x = RETRO_WIDTH / 2;
-				BlobPositions[i].y = RETRO_HEIGHT / 2;
-			}
+		// Respawn blobs once they have drifted completely off screen and stopped
+		// contributing anything. The blob covers [center - BLOB_RADIUS, center + BLOB_RADIUS].
+		if (BlobPositions[i].x + BLOB_RADIUS < 0 || BlobPositions[i].x - BLOB_RADIUS >= RETRO_WIDTH ||
+			BlobPositions[i].y + BLOB_RADIUS < 0 || BlobPositions[i].y - BLOB_RADIUS >= RETRO_HEIGHT) {
+			BlobPositions[i].x = RETRO_WIDTH / 2;
+			BlobPositions[i].y = RETRO_HEIGHT / 2;
 		}
 	}
+}
 
+void DEMO_Render(double deltatime)
+{
 	// Draw blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {
 		int left = BlobPositions[i].x - BLOB_RADIUS;

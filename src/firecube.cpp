@@ -8,23 +8,22 @@
 #include "lib/retrorender.h"
 #include "lib/retrocolor.h"
 
-void DEMO_Render2(double deltatime)
+//
+// Advance the trail in fixed steps. It is one blur pass per step into a framebuffer
+// that is never cleared, so its length follows the step rate.
+//
+void DEMO_Update(double deltatime)
 {
-	// Advance the trail in fixed steps. It is one blur pass per step into a framebuffer
-	// that is never cleared, so its length follows the step rate.
-	while (RETRO_PerformSimulation()) {
-		static float ax, ay, az;
-		ax += RETRO_SIMULATION_STEP * 2;
-		ay += RETRO_SIMULATION_STEP * 2;
-		az += RETRO_SIMULATION_STEP * 2;
+	static float ax, ay, az;
+	ax += deltatime * 2;
+	ay += deltatime * 2;
+	az += deltatime * 2;
 
-		RETRO_RotateModel(ax, ay, az);
-		RETRO_ProjectModel();
-		RETRO_RenderModel(RETRO_POLY_WIREFRAME, RETRO_SHADE_WIREFIRE);
+	RETRO_RotateModel(ax, ay, az);
+	RETRO_ProjectModel();
+	RETRO_RenderModel(RETRO_POLY_WIREFRAME, RETRO_SHADE_WIREFIRE);
 
-		RETRO_Blur(RETRO_BLUR_FIRE, 3);
-	}
-	RETRO_Flip();
+	RETRO_Blur(RETRO_BLUR_FIRE, 3);
 }
 
 void DEMO_Initialize(void)

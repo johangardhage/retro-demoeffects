@@ -13,51 +13,54 @@
 float Water[RETRO_WIDTH * RETRO_HEIGHT];
 float Water2[RETRO_WIDTH * RETRO_HEIGHT];
 
-void DEMO_Render(double deltatime)
+//
+// Advance the water in fixed steps. This is a finite difference wave equation, so the
+// step is baked into the scheme - a ripple travels one cell per step and WATER_DAMP is
+// applied per step. The step rate is the wave speed, and the droplet timer counts steps.
+//
+void DEMO_Update(double deltatime)
 {
-	// Advance the water in fixed steps. This is a finite difference wave equation, so the
-	// step is baked into the scheme - a ripple travels one cell per step and WATER_DAMP is
-	// applied per step. The step rate is the wave speed, and the droplet timer counts steps.
-	while (RETRO_PerformSimulation()) {
-		static int tick = 0;
-		if (tick % 36 == 0) {
-			int x = RANDOM(RETRO_WIDTH);
-			int y = RANDOM(RETRO_HEIGHT);
+	static int tick = 0;
+	if (tick % 36 == 0) {
+		int x = RANDOM(RETRO_WIDTH);
+		int y = RANDOM(RETRO_HEIGHT);
 
-			if (x > 0 && x < RETRO_WIDTH - 1 && y > 1 && y < RETRO_HEIGHT - 1) {
-				Water[y * RETRO_WIDTH + x] -= WATER_DEPTH;
-			}
+		if (x > 0 && x < RETRO_WIDTH - 1 && y > 1 && y < RETRO_HEIGHT - 1) {
+			Water[y * RETRO_WIDTH + x] -= WATER_DEPTH;
 		}
-		tick++;
+	}
+	tick++;
 
-		// Water physics & 1st buffer copy pass
-		for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
-			for (int x = 1; x < RETRO_WIDTH - 1; x++) {
-				int i = y * RETRO_WIDTH + x;
+	// Water physics & 1st buffer copy pass
+	for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
+		for (int x = 1; x < RETRO_WIDTH - 1; x++) {
+			int i = y * RETRO_WIDTH + x;
 
-				Water2[i] = ((Water[i - 1] + Water[i + 1] + Water[i - RETRO_WIDTH] + Water[i + RETRO_WIDTH]) * .5f - Water2[i]) * WATER_DAMP;
-			}
-		}
-
-		// 2nd buffer copy pass
-		for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
-			for (int x = 1; x < RETRO_WIDTH - 1; x++) {
-				int i = y * RETRO_WIDTH + x;
-				float w = Water2[i];
-				Water2[i] = Water[i];
-				Water[i] = w;
-			}
-		}
-
-		// Blur pass
-		for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
-			for (int x = 1; x < RETRO_WIDTH - 1; x++) {
-				int i = y * RETRO_WIDTH + x;
-				Water[i] = (Water[i] + Water[i - 1] + Water[i + 1] + Water[i - RETRO_WIDTH] + Water[i + RETRO_WIDTH]) * .2f;
-			}
+			Water2[i] = ((Water[i - 1] + Water[i + 1] + Water[i - RETRO_WIDTH] + Water[i + RETRO_WIDTH]) * .5f - Water2[i]) * WATER_DAMP;
 		}
 	}
 
+	// 2nd buffer copy pass
+	for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
+		for (int x = 1; x < RETRO_WIDTH - 1; x++) {
+			int i = y * RETRO_WIDTH + x;
+			float w = Water2[i];
+			Water2[i] = Water[i];
+			Water[i] = w;
+		}
+	}
+
+	// Blur pass
+	for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
+		for (int x = 1; x < RETRO_WIDTH - 1; x++) {
+			int i = y * RETRO_WIDTH + x;
+			Water[i] = (Water[i] + Water[i - 1] + Water[i + 1] + Water[i - RETRO_WIDTH] + Water[i + RETRO_WIDTH]) * .2f;
+		}
+	}
+}
+
+void DEMO_Render(double deltatime)
+{
 	unsigned char *image = RETRO_ImageData();
 	for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
 		for (int x = 1; x < RETRO_WIDTH - 1; x++) {

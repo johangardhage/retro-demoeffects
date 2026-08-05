@@ -28,6 +28,7 @@ void DEMO_Render(double deltatime)
 	static unsigned char *bumpmap = NULL;
 	static unsigned char color = 64;
 	static unsigned char colorintensity = 0;
+	static int bumpheight = RETRO_BUMP_HEIGHT;
 
 	static bool bumpmapping = false;
 	static bool rotate = true;
@@ -51,6 +52,7 @@ void DEMO_Render(double deltatime)
 		envmap = NULL;
 		color = 0;
 		colorintensity = 0;
+		bumpheight = RETRO_BUMP_HEIGHT;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_TEXMAP));
 		RETRO_SetColor(0, RETRO_BLACK);
 		RETRO_SetColor(255, RETRO_PERIWINKLE);
@@ -73,6 +75,7 @@ void DEMO_Render(double deltatime)
 		// zero and the material below would make no difference at all
 		color = RETRO_SHADES * 5 / 8;
 		colorintensity = 0;
+		bumpheight = RETRO_BUMP_HEIGHT;
 		shadetable = MaterialShadeTables[MATERIAL_GOURAUD];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
@@ -83,6 +86,7 @@ void DEMO_Render(double deltatime)
 		envmap = NULL;
 		color = 0;
 		colorintensity = 0;
+		bumpheight = RETRO_BUMP_HEIGHT;
 		shadetable = MaterialShadeTables[MATERIAL_FLAT];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
@@ -93,6 +97,7 @@ void DEMO_Render(double deltatime)
 		envmap = NULL;
 		color = 0;
 		colorintensity = 128;
+		bumpheight = RETRO_BUMP_HEIGHT;
 		shadetable = MaterialShadeTables[MATERIAL_GOURAUD];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
@@ -103,6 +108,7 @@ void DEMO_Render(double deltatime)
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
 		colorintensity = 90;
+		bumpheight = RETRO_BUMP_HEIGHT;
 		shadetable = MaterialShadeTables[MATERIAL_PHONG];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
@@ -114,6 +120,7 @@ void DEMO_Render(double deltatime)
 		envmap = NULL;
 		color = 255;
 		colorintensity = 0;
+		bumpheight = RETRO_BUMP_HEIGHT;
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_W)) {
@@ -124,6 +131,7 @@ void DEMO_Render(double deltatime)
 		envmap = NULL;
 		color = 255;
 		colorintensity = 0;
+		bumpheight = RETRO_BUMP_HEIGHT;
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
@@ -133,6 +141,12 @@ void DEMO_Render(double deltatime)
 		envmap = RETRO_ImageData(ASSET_PHONGMAP);
 		color = 128;
 		colorintensity = 90;
+		// A bare phong map shows the material and nothing else, so a bump has
+		// only the sheen to spend: roughening scatters the lookup away from the
+		// bright center of the map and the plastic turns matte. It carries the
+		// same bumps at two thirds the depth of a textured surface, where the
+		// texture holds the image and the shading only modulates it
+		bumpheight = RETRO_BUMP_HEIGHT * 3 / 2;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_PHONGMAP));
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_O)) {
@@ -142,6 +156,8 @@ void DEMO_Render(double deltatime)
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
 		colorintensity = 90;
+		// The same plastic, and the same shallower bump it takes
+		bumpheight = RETRO_BUMP_HEIGHT * 3 / 2;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_PHONGMAP));
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_M)) {
@@ -151,6 +167,12 @@ void DEMO_Render(double deltatime)
 		envmap = RETRO_ImageData(ASSET_ENVMAP);
 		color = 128;
 		colorintensity = 90;
+		// The metal map answers a bump with far more contrast than a lighting
+		// map does, since the tilt lands on a different part of the reflection
+		// rather than a neighbouring shade. It carries the same bumps at half
+		// the depth, and at the default depth they read as beaten rather than
+		// crumpled
+		bumpheight = RETRO_BUMP_HEIGHT * 2;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_ENVMAP));
 	}
 
@@ -161,6 +183,7 @@ void DEMO_Render(double deltatime)
 	model->bumpmap = bumpmap;
 	model->c = color;
 	model->cintensity = colorintensity;
+	model->bumpheight = bumpheight;
 
 	static float ax = 145, ay = 90, az = 90, distance = 0.5;
 	if (rotate) {

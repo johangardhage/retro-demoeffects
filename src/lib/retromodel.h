@@ -7,6 +7,19 @@
 #ifndef _RETROMODEL_H_
 #define _RETROMODEL_H_
 
+// A bump map holds its heights as 8-bit levels, and a gradient is read as the
+// difference across two texels. A model's bumpheight is the difference steep
+// enough to tilt a normal all the way to grazing, so it sets how deep that
+// model's bumps read, and RETRO_BUMP_HEIGHT is the depth a model loads with
+//
+// How much of that depth shows is the map's business as much as the tilt's: a
+// metal environment map turns a small displacement into a completely different
+// color, while a shade table has only the material's own ramp to spend. The
+// default is what the shallowest of them needs, so a model reflecting a map
+// with more contrast to spend wants a shallower one. Below about 24 the mask's
+// bump map starts breaking up a specular highlight rather than roughening it
+#define RETRO_BUMP_HEIGHT 32
+
 #define RETRO_MAX_VERTICES 1000
 #define RETRO_MAX_UVS 1000
 #define RETRO_MAX_NORMALS 1000
@@ -60,6 +73,7 @@ struct Model3D {
 	int envmapwidth = 256;					// Environment texture width
 	int envmapheight = 256;					// Environment texture height
 	unsigned char *bumpmap = NULL;			// Bump texture
+	int bumpheight = RETRO_BUMP_HEIGHT;		// Height difference that tilts a normal to grazing
 };
 
 struct {
@@ -129,6 +143,7 @@ Model3D *RETRO_Load3DModel(const char *filename, int scale = 256)
 	memset(model, 0, sizeof(Model3D));
 	model->envmapwidth = 256;
 	model->envmapheight = 256;
+	model->bumpheight = RETRO_BUMP_HEIGHT;
 	RETRO_Model.model = model;
 
 	FILE *fp = fopen(filename, "rb");

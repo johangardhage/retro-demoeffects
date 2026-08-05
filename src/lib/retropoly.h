@@ -365,6 +365,144 @@ void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, uns
 }
 
 //
+// The lighting a bump takes, as the lambert term of the perturbed normal.
+//
+// A bump map is a height field, and its gradient tilts the surface normal away
+// from the climb. The tilt is applied to the normal's x and y, and its z
+// follows from keeping the normal on the unit sphere:
+//
+//   N' = (nx - dh/du, ny - dh/dv, +-sqrt(1 - nx'^2 - ny'^2))
+//
+// with the sign of z kept from the normal the surface came in with, since the
+// tilt turns a normal but never moves it to the hemisphere behind the surface.
+// A gradient steep enough to carry it past the horizon leaves it with no z at
+// all, grazing the surface, which is as far as a tilt can go
+//
+// This is the tilt the environment bump mappers apply. There the gradient
+// displaces a lookup, and since an environment map is indexed by the normal's
+// x and y with the z of that normal baked into what the map holds, displacing
+// the lookup tilts the normal in exactly this way. Both paths therefore read a
+// bump map at the same depth
+//
+// Both the perturbed normal and the light are unit, so the lambert term of the
+// bump is their dot product.
+//
+float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float dhy, float lightx, float lighty, float lightz)
+{
+	nx += dhx;
+	ny += dhy;
+
+	float radiusSquared = nx * nx + ny * ny;
+	if (radiusSquared > 1.0f) {
+		float inverseRadius = 1.0f / sqrt(radiusSquared);
+		nx *= inverseRadius;
+		ny *= inverseRadius;
+		nz = 0.0f;
+	} else {
+		nz = copysign(sqrt(1.0f - radiusSquared), nz);
+	}
+
+	return nx * lightx + ny * lighty + nz * lightz;
+}
+
+//
+// Bump mapped shaded texture mapped polygon
+// Texture coordinates are perspective-correct; the shade is affine, as in
+// RETRO_DrawTexMapGouraudPolygon, and the normals the bump is tilted from
+// retain the affine interpolation of the environment mappers. Handing every
+// vertex the same shade and normal draws a flat shaded face, one of each per
+// vertex a gouraud shaded one.
+//
+void RETRO_DrawTexMapGouraudBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *bumpmap, int bumpheight, unsigned char *shadetable, float lightx, float lighty, float lightz)
+{
+	if (texmap == NULL || bumpmap == NULL || shadetable == NULL) return;
+
+	const float epsilon = 1.0e-12f;
+
+	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
+		PolygonPoint *p0 = &vertices[0];
+		PolygonPoint *p1 = &vertices[triangle];
+		PolygonPoint *p2 = &vertices[triangle + 1];
+		TriangleSpan span[RETRO_HEIGHT];
+		int ystart, yend;
+		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (area == 0.0f) continue;
+
+		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
+		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
+		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / area;
+		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / area;
+		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / area;
+		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / area;
+		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / area;
+		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / area;
+		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / area;
+		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / area;
+		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / area;
+		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / area;
+		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / area;
+		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+
+		for (int y = ystart; y < yend; y++) {
+			if (span[y].x1 > span[y].x2) continue;
+			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			float px = xstart + 0.5f;
+			float py = y + 0.5f;
+			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
+			float vq = v0 + dvqdx * (px - p0->x) + dvqdy * (py - p0->y);
+			float c = p0->c + dcdx * (px - p0->x) + dcdy * (py - p0->y);
+			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
+			float ny = p0->ny + dnydx * (px - p0->x) + dnydy * (py - p0->y);
+			float nz = p0->nz + dnzdx * (px - p0->x) + dnzdy * (py - p0->y);
+			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+
+			for (int x = xstart; x < xend; x++) {
+				if (fabs(q) > epsilon) {
+					float inverseQ = 1.0f / q;
+					float u = uq * inverseQ;
+					float v = vq * inverseQ;
+					unsigned int textureU = CLAMP256(u);
+					unsigned int textureV = CLAMP256(v);
+					// A one-texel central difference gives a stable texture-space
+					// height gradient. The sign makes bright texels protrude.
+					int bu1 = CLAMP256(u + 1.0f) + textureV * 256;
+					int bu2 = CLAMP256(u - 1.0f) + textureV * 256;
+					int bv1 = textureU + CLAMP256(v + 1.0f) * 256;
+					int bv2 = textureU + CLAMP256(v - 1.0f) * 256;
+					float dhx = (float)(bumpmap[bu2] - bumpmap[bu1]) / bumpheight;
+					float dhy = (float)(bumpmap[bv2] - bumpmap[bv1]) / bumpheight;
+					// Interpolated normals must be normalized before lighting.
+					float normalLengthSquared = nx * nx + ny * ny + nz * nz;
+					float inverseNormalLength = normalLengthSquared > epsilon ? 1.0f / sqrt(normalLengthSquared) : 0.0f;
+					float unitnx = nx * inverseNormalLength;
+					float unitny = ny * inverseNormalLength;
+					float unitnz = nz * inverseNormalLength;
+					// The shade moves by as much as the tilt changes the lighting
+					// here, so a flat patch of the bump map is left shaded exactly
+					// as it was drawn without one.
+					float lambert = unitnx * lightx + unitny * lighty + unitnz * lightz;
+					float bumpedlambert = RETRO_BumpedLambert(unitnx, unitny, unitnz, dhx, dhy, lightx, lighty, lightz);
+					float bumpshade = (RETRO_ShadeFromLambert(bumpedlambert) - RETRO_ShadeFromLambert(lambert)) * RETRO_SHADES;
+					unsigned char texel = CLAMP(texmap[textureV * 256 + textureU], 0, RETRO_TEXTURE_COLORS);
+					int shade = CLAMP128(c + bumpshade);
+					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * RETRO_SHADES + shade];
+				}
+				uq += duqdx;
+				vq += dvqdx;
+				c += dcdx;
+				nx += dnxdx;
+				ny += dnydx;
+				nz += dnzdx;
+				q += dqdx;
+			}
+		}
+	}
+}
+
+//
 // Environment shaded texture mapped polygon
 // Texture coordinates and lighting normals are perspective-correct;
 // reflection normals retain the original affine interpolation.
@@ -452,11 +590,16 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 // The texture-space height gradient displaces the selected lighting or
 // reflection lookup.
 //
-void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, unsigned char *shadetable, bool lightingmap, int environmentCenter, int environmentIntensity)
+void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpheight, unsigned char *shadetable, bool lightingmap, int environmentCenter, int environmentIntensity)
 {
 	if (texmap == NULL || envmap == NULL || bumpmap == NULL || shadetable == NULL) return;
 
 	const float epsilon = 1.0e-12f;
+
+	// A height difference of RETRO_BUMP_HEIGHT tilts a normal all the way to
+	// grazing, and grazing is the rim of the map, environmentIntensity away from
+	// its center. That is what turns a height gradient into a lookup displacement
+	float bumpScale = (float)environmentIntensity / bumpheight;
 
 	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
 		PolygonPoint *p0 = &vertices[0];
@@ -510,8 +653,8 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 					int bu2 = CLAMP256(u - 1.0f) + textureV * 256;
 					int bv1 = textureU + CLAMP256(v + 1.0f) * 256;
 					int bv2 = textureU + CLAMP256(v - 1.0f) * 256;
-					int bu = bumpmap[bu2] - bumpmap[bu1] + e;
-					int bv = bumpmap[bv2] - bumpmap[bv1] + w;
+					int bu = (bumpmap[bu2] - bumpmap[bu1]) * bumpScale + e;
+					int bv = (bumpmap[bv2] - bumpmap[bv1]) * bumpScale + w;
 					// Outside the environment map, use the undisplaced lookup
 					// instead of introducing black pixels.
 					unsigned int environmentU = bu >= 0 && bu < 256 ? bu : CLAMP256(e);
@@ -584,11 +727,16 @@ void RETRO_DrawEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 // Bump-mapped environment polygon
 // The bump gradient displaces the selected lighting or reflection lookup.
 //
-void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *envmap, unsigned char *bumpmap, bool lightingmap, int environmentCenter, int environmentIntensity)
+void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *envmap, unsigned char *bumpmap, int bumpheight, bool lightingmap, int environmentCenter, int environmentIntensity)
 {
 	if (envmap == NULL || bumpmap == NULL) return;
 
 	const float epsilon = 1.0e-12f;
+
+	// A height difference of RETRO_BUMP_HEIGHT tilts a normal all the way to
+	// grazing, and grazing is the rim of the map, environmentIntensity away from
+	// its center. That is what turns a height gradient into a lookup displacement
+	float bumpScale = (float)environmentIntensity / bumpheight;
 
 	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
 		PolygonPoint *p0 = &vertices[0];
@@ -642,8 +790,8 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 					int bu2 = CLAMP256(u - 1.0f) + textureV * 256;
 					int bv1 = textureU + CLAMP256(v + 1.0f) * 256;
 					int bv2 = textureU + CLAMP256(v - 1.0f) * 256;
-					int bu = bumpmap[bu2] - bumpmap[bu1] + e;
-					int bv = bumpmap[bv2] - bumpmap[bv1] + w;
+					int bu = (bumpmap[bu2] - bumpmap[bu1]) * bumpScale + e;
+					int bv = (bumpmap[bv2] - bumpmap[bv1]) * bumpScale + w;
 					unsigned int environmentU = bu >= 0 && bu < 256 ? bu : CLAMP256(e);
 					unsigned int environmentV = bv >= 0 && bv < 256 ? bv : CLAMP256(w);
 					RETRO.framebuffer[y * RETRO_WIDTH + x] = envmap[environmentV * 256 + environmentU];

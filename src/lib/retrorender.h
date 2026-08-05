@@ -199,6 +199,14 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 	unsigned char *shadetable = model->shadetable;
 	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
 	bool environmentShading = shadertype == RETRO_SHADE_ENVIRONMENT || lightingmap;
+	bool bumpmapping = model->bumpmap != NULL;
+
+	// A bump is lit by the dot product of a tilted normal with the light, so the
+	// light is needed as a direction rather than as the shade it lands on
+	float inverseLightLength = RETRO_Render.lightsource.nn > 0.0f ? 1.0f / RETRO_Render.lightsource.nn : 0.0f;
+	float lightx = RETRO_Render.lightsource.rnx * inverseLightLength;
+	float lighty = RETRO_Render.lightsource.rny * inverseLightLength;
+	float lightz = RETRO_Render.lightsource.rnz * inverseLightLength;
 
 	for (int i = 0; i < model->visiblefaces; i++) {
 		Face *face = &model->face[model->visibleface[i]];
@@ -230,17 +238,41 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 			int shade = model->c + face->c;
 			float lint = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
 			shade = CLAMP128(shade + RETRO_ShadeFromLambert(lint) * RETRO_SHADES);
-			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, shadetable, shade, false, model->c, model->cintensity);
+			if (bumpmapping) {
+				// A flat shaded face carries one shade and one normal over all of
+				// it, which the bump mapper draws as every vertex holding both
+				float inverseFaceNormalLength = face->facenormal.nn > 0.0f ? 1.0f / face->facenormal.nn : 0.0f;
+				for (int j = 0; j < face->vertices; j++) {
+					points[j].c = shade;
+					points[j].nx = face->facenormal.rnx * inverseFaceNormalLength;
+					points[j].ny = face->facenormal.rny * inverseFaceNormalLength;
+					points[j].nz = face->facenormal.rnz * inverseFaceNormalLength;
+				}
+				RETRO_DrawTexMapGouraudBumpPolygon(points, face->vertices, model->texmap, model->bumpmap, model->bumpheight, shadetable, lightx, lighty, lightz);
+			} else {
+				RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, shadetable, shade, false, model->c, model->cintensity);
+			}
 		} else if (shadertype == RETRO_SHADE_GOURAUD) {
 			for (int j = 0; j < face->vertices; j++) {
-				float lint = RETRO_DotProduct(model->normal[face->normal[j]], RETRO_Render.lightsource);
+				Normal *normal = &model->normal[face->normal[j]];
+				float lint = RETRO_DotProduct(*normal, RETRO_Render.lightsource);
 				points[j].c = CLAMP128(model->c + face->c + RETRO_ShadeFromLambert(lint) * RETRO_SHADES);
+				if (bumpmapping) {
+					float inverseNormalLength = normal->nn > 0.0f ? 1.0f / normal->nn : 0.0f;
+					points[j].nx = normal->rnx * inverseNormalLength;
+					points[j].ny = normal->rny * inverseNormalLength;
+					points[j].nz = normal->rnz * inverseNormalLength;
+				}
 			}
-			RETRO_DrawTexMapGouraudPolygon(points, face->vertices, model->texmap, shadetable);
-		} else if (environmentShading && model->bumpmap == NULL) {
+			if (bumpmapping) {
+				RETRO_DrawTexMapGouraudBumpPolygon(points, face->vertices, model->texmap, model->bumpmap, model->bumpheight, shadetable, lightx, lighty, lightz);
+			} else {
+				RETRO_DrawTexMapGouraudPolygon(points, face->vertices, model->texmap, shadetable);
+			}
+		} else if (environmentShading && !bumpmapping) {
 			RETRO_DrawTexMapEnvMapPolygon(points, face->vertices, model->texmap, model->envmap, shadetable, 0, lightingmap, model->c, model->cintensity);
 		} else if (environmentShading) {
-			RETRO_DrawTexMapEnvMapBumpPolygon(points, face->vertices, model->texmap, model->envmap, model->bumpmap, shadetable, lightingmap, model->c, model->cintensity);
+			RETRO_DrawTexMapEnvMapBumpPolygon(points, face->vertices, model->texmap, model->envmap, model->bumpmap, model->bumpheight, shadetable, lightingmap, model->c, model->cintensity);
 		}
 	}
 }
@@ -270,7 +302,7 @@ void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 			points[j].nz = normal->rnz * normalScale;
 		}
 		if (bumpmapping) {
-			RETRO_DrawEnvMapBumpPolygon(points, face->vertices, model->envmap, model->bumpmap, lightingmap, model->c, model->cintensity);
+			RETRO_DrawEnvMapBumpPolygon(points, face->vertices, model->envmap, model->bumpmap, model->bumpheight, lightingmap, model->c, model->cintensity);
 		} else {
 			RETRO_DrawEnvMapPolygon(points, face->vertices, model->envmap, lightingmap, model->c, model->cintensity, model->envmapwidth, model->envmapheight);
 		}

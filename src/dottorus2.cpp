@@ -1,5 +1,31 @@
 //
-// dottorus.cpp
+// Dot torus, glowing
+//
+// The vertices of assets/torus.obj, each stamping a 5×5 blob into a
+// framebuffer that is never cleared. Blobs add where they overlap. After
+// the stamps, a 4-neighbour diffuse blur (no self) subtracts TRAIL_DECAY,
+// so each vertex leaves a trail that fades over a fixed number of steps.
+//
+// The mesh is a 10×10 torus whose hole sits well left of the origin; the
+// right-hand tube passes through it. The turn is about a point on the
+// tube, not the hole, so the body sweeps a wide orbit.
+//
+// The turn is not in SO(3). A table of 720 pairs
+//
+//   (cos θ,  SQUASH sin θ),   θ = 2π i / 720
+//
+// is fed to sequential Rx, Ry, Rz. Each plane map scales that plane by
+//
+//   r(θ) = √(cos²θ + SQUASH² sin²θ)   ∈ [SQUASH, 1]
+//
+// and leaves its axis alone, so the composition is not in SO(3) except
+// at θ = 0, π (where r = 1). The model is squashed as it turns and the
+// trails swell and shrink instead of tracing the same path.
+//
+// DEMO_Update is a fixed 1/60 s step, so a step crosses speed/60 = 10/3
+// table slots. Every integer slot from ceil(10/3) = 4 behind the new
+// phase through the phase is stamped, so the 1/3 leftover does not leave
+// a gap. The table itself divides 2π evenly.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -8,81 +34,86 @@
 #include "lib/retromath.h"
 #include "lib/retrogfx.h"
 
-#define NUM_TORUS 5
-#define K 15
-#define BLUR 2
-#define NUM_COLORS 163
-#define SCALE 1
+#define BLOB_SIZE 5 // the blob stamped at each vertex, in pixels
+#define BLOB_LEVEL 15 // brightness of one level of the blob
+#define GLOW_COLORS 163 // palette entries the glow ramps over
+#define TRAIL_DECAY 3 // brightness the blur takes off each step, so the trail fades
+#define SQUASH 0.7 // how far the turn departs from a rotation
+#define ROTATION_SPEED 200 // table entries travelled per second
+#define PROJECTION_SCALE 1 // the model is built in pixels, so the projection adds no scale
 #define SINE_VALUES 720
 
-// Big 5x5 torus block
-unsigned char Form[NUM_TORUS][NUM_TORUS] = {
-	{K * 0, K * 3, K * 3, K * 3, K * 0},
-	{K * 2, K * 4, K * 4, K * 4, K * 2},
-	{K * 3, K * 4, K * 5, K * 4, K * 3},
-	{K * 2, K * 4, K * 4, K * 4, K * 2},
-	{K * 0, K * 3, K * 3, K * 3, K * 0}
+unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
+	{BLOB_LEVEL * 0, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 0},
+	{BLOB_LEVEL * 2, BLOB_LEVEL * 4, BLOB_LEVEL * 4, BLOB_LEVEL * 4, BLOB_LEVEL * 2},
+	{BLOB_LEVEL * 3, BLOB_LEVEL * 4, BLOB_LEVEL * 5, BLOB_LEVEL * 4, BLOB_LEVEL * 3},
+	{BLOB_LEVEL * 2, BLOB_LEVEL * 4, BLOB_LEVEL * 4, BLOB_LEVEL * 4, BLOB_LEVEL * 2},
+	{BLOB_LEVEL * 0, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 0}
 };
 
 float SinTable[SINE_VALUES];
 float CosTable[SINE_VALUES];
 
-//
-// Advance the trail in fixed steps. Dots accumulate into a framebuffer that is never
-// cleared and are blurred once per step, so the trail length follows the step rate.
-//
 void DEMO_Update(double deltatime)
 {
-	static double frame_counter = 0;
-	frame_counter = fmod(frame_counter + 200 * deltatime, SINE_VALUES);
-	int frame = frame_counter;
+	// Calculate phase
+	static double phase = 0;
+	double moved = deltatime * ROTATION_SPEED;
+	phase = fmod(phase + moved, SINE_VALUES);
+	int iphase = phase;
+
+	// Stamp every table slot crossed this step so the trail has no gaps.
+	int slots = (int)ceil(moved);
+	if (slots < 1) {
+		slots = 1;
+	}
 
 	Model3D *model = RETRO_Get3DModel();
 	Vertex *vertex = model->vertex;
 
-	// Draw blob
-	for (int b = 0; b < BLUR; b++) {
-		for (int p = 0; p < model->vertices; p++) {
-			RETRO_RotateVertex(&vertex[p], CosTable[(frame + b) % SINE_VALUES], SinTable[(frame + b) % SINE_VALUES]);
-			RETRO_ProjectVertex(&vertex[p], SCALE);
+	// Draw blobs
+	for (int step = 0; step < slots; step++) {
+		int turn = (iphase - slots + 1 + step + SINE_VALUES) % SINE_VALUES;
 
-			for (int y = 0; y < NUM_TORUS; y++) {
-				for (int x = 0; x < NUM_TORUS; x++) {
+		for (int p = 0; p < model->vertices; p++) {
+			RETRO_RotateVertex(&vertex[p], CosTable[turn], SinTable[turn]);
+			RETRO_ProjectVertex(&vertex[p], PROJECTION_SCALE);
+
+			for (int y = 0; y < BLOB_SIZE; y++) {
+				for (int x = 0; x < BLOB_SIZE; x++) {
 					int px = vertex[p].sx + x;
 					int py = vertex[p].sy + y;
+
 					if (px < 0 || px >= RETRO_WIDTH || py < 0 || py >= RETRO_HEIGHT) {
 						continue;
 					}
 
-					unsigned char color = RETRO_GetPixel(px, py) + Form[x][y];
+					int color = RETRO_GetPixel(px, py) + Blob[y][x];
 
-					if (color >= NUM_COLORS) {
-						color = NUM_COLORS - 1;
-					}
-
-					RETRO_PutPixel(px, py, color);
+					RETRO_PutPixel(px, py, CLAMP(color, 0, GLOW_COLORS));
 				}
 			}
 		}
 	}
 
-	RETRO_Blur(RETRO_BLUR_DIFFUSE, 3);
+	// Blur trail
+	RETRO_Blur(RETRO_BLUR_DIFFUSE, TRAIL_DECAY);
 }
 
 void DEMO_Initialize(void)
 {
-	// Init sine table
+	// Init tables
 	for (int i = 0; i < SINE_VALUES; i++) {
-		SinTable[i] = sin(i * 2 * M_PI / SINE_VALUES) * 0.7;
+		SinTable[i] = sin(i * 2 * M_PI / SINE_VALUES) * SQUASH;
 		CosTable[i] = cos(i * 2 * M_PI / SINE_VALUES);
 	}
 
-	// Init palette. Where the dots pile up the color glows from black through
-	// deep red into white, red squared rising long before the steeper white
-	for (int i = 0; i < NUM_COLORS; i++) {
-		double intensity = (double) i / (NUM_COLORS - 10);
-		unsigned char red = NUM_COLORS * pow(intensity, 2);
-		unsigned char white = NUM_COLORS * pow(intensity, 7);
+	// Init palette. Where the dots pile up, red ~ intensity² and white ~ intensity⁷, so the
+	// glow stays red for a long time and only the hottest pile-ups go white.
+	for (int i = 0; i < GLOW_COLORS; i++) {
+		double intensity = (double) i / (GLOW_COLORS - 10);
+		unsigned char red = GLOW_COLORS * pow(intensity, 2);
+		unsigned char white = GLOW_COLORS * pow(intensity, 7);
 		RETRO_SetColor(i, red, white, white);
 	}
 

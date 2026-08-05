@@ -1,5 +1,17 @@
 //
-// Glenz filled cube
+// Glenz cube
+//
+// Additive palette indices, both sides of every face. A pixel that
+// several faces cover becomes
+//
+//   C' = min(C + c_face, 255)
+//
+// The mesh is a cube with a four-triangle pyramid on each side. Opposite
+// pairs on a pyramid have opposite winding, so one pair contributes 1
+// from the front and the other contributes 2 (and 4 from the back). The
+// intended overlaps therefore land on palette entries 1, 3, 4 and 6 —
+// the crossed Glenz look. A zero back color makes group 1 invisible
+// from behind. Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -8,13 +20,17 @@
 #include "lib/retrorender.h"
 #include "lib/retrocolor.h"
 
+#define ROTATION_SPEED 2 // radians a second, about each axis
+
 void DEMO_Render(double deltatime)
 {
+	// Rotate
 	static float ax, ay, az;
-	ax += deltatime * 2;
-	ay += deltatime * 2;
-	az += deltatime * 2;
+	ax = fmod(ax + deltatime * ROTATION_SPEED, 2 * M_PI);
+	ay = fmod(ay + deltatime * ROTATION_SPEED, 2 * M_PI);
+	az = fmod(az + deltatime * ROTATION_SPEED, 2 * M_PI);
 
+	// Draw cube
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
 	RETRO_RenderModel(RETRO_POLY_GLENZ);

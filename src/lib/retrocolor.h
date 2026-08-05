@@ -47,6 +47,7 @@ enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 #define RETRO_MAGENTA RETRO_Palette{ 255, 0, 255 }
 #define RETRO_YELLOW RETRO_Palette{ 255, 255, 0 }
 #define RETRO_ORANGE RETRO_Palette{ 255, 128, 0 }
+#define RETRO_GOLD RETRO_Palette{ 254, 204, 0 }
 #define RETRO_TAN RETRO_Palette{ 210, 180, 140 }
 #define RETRO_PURPLE RETRO_Palette{ 128, 0, 255 }
 #define RETRO_PINK RETRO_Palette{ 255, 128, 192 }
@@ -54,6 +55,7 @@ enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 #define RETRO_DEEPPINK RETRO_Palette{ 219, 59, 150 }
 #define RETRO_PERIWINKLE RETRO_Palette{ 160, 168, 252 }
 #define RETRO_AZURE RETRO_Palette{ 0, 128, 255 }
+#define RETRO_CERULEAN RETRO_Palette{ 0, 106, 167 }
 #define RETRO_MEDIUMRED RETRO_Palette{ 187, 0, 0 }
 #define RETRO_LIGHTRED RETRO_Palette{ 255, 204, 204 }
 #define RETRO_LIGHTBLUE RETRO_Palette{ 102, 170, 255 }
@@ -124,24 +126,23 @@ float RETRO_IncidenceAngle(int shade, int shades)
 // Undoes the angle spacing that RETRO_IncidenceAngle lays down, so that a
 // surface lands on the shade actually built for its lighting
 //
-//   cos(theta) -> asin(cos(theta)) / (pi / 2) = 1 - theta / (pi / 2)
+//   N·L = cos(theta)  ->  1 - acos(N·L) / (pi / 2)  =  1 - theta / (pi / 2)
 //
 float RETRO_ShadeFromLambert(float lambert)
 {
-	// Clip the lambert term to between 0.0 and 1.0
-	if (lambert > 1.0) lambert = 1.0;
-	if (lambert < 0.0) lambert = 0.0;
-
-	return asin(lambert) / (M_PI / 2);
+	// theta = acos(N·L) in [0, π/2], then 1 - theta/(π/2) so face-on is 1.
+	return 1.0f - acos(CLAMP01(lambert)) / (M_PI / 2);
 }
 
 //
 // The phong reflection model for one color channel, as an intensity between 0.0
 // and 1.0
 //
-//   diffuse   = Kd * face * cos(theta)
-//   specular  = Ks * max(cos(2 * theta), 0)^falloff
-//   ambient   = ambient * Ka * face
+//   N·L       = cos(theta)
+//   R·V       = 2(N·L)^2 - 1          (V = L)
+//   diffuse   = Kd * face * max(N·L, 0)
+//   specular  = Ks * max(R·V, 0)^n
+//   ambient   = Ka * ambient * face
 //   intensity = (diffuse + specular) * Katt * light + ambient
 //
 // This is textbook Phong, specialised to a viewer sitting at the light. Phong
@@ -158,16 +159,17 @@ float RETRO_ShadeFromLambert(float lambert)
 //
 float RETRO_PhongIntensity(float facecolor, float lightcolor, float ambientcolor, float theta, float specularity, float falloff)
 {
-	float diffuse = RETRO_K_DIFFUSE * facecolor * cos(theta);
-	float specular = specularity * pow(MAX(cos(theta * 2), 0.0), falloff);
+	// Viewer sits at the light, so V = L and R · V = 2(N·L)^2 - 1 = cos(2 theta).
+	float ndotl = cos(theta);
+	float rdotv = 2.0f * ndotl * ndotl - 1.0f;
+
+	float diffuse = RETRO_K_DIFFUSE * facecolor * MAX(ndotl, 0.0f);
+	float specular = specularity * pow(MAX(rdotv, 0.0f), falloff);
 	float ambient = ambientcolor * RETRO_K_AMBIENT * facecolor;
 
 	float intensity = (diffuse + specular) * RETRO_K_ATTENUATION * lightcolor + ambient;
 
-	// Clip the intensity to between 0.0 and 1.0
-	if (intensity > 1.0) return 1.0;
-	if (intensity < 0.0) return 0.0;
-	return intensity;
+	return CLAMP01(intensity);
 }
 
 //
@@ -362,8 +364,7 @@ void RETRO_SubdivideColorCube(RETRO_Palette min, RETRO_Palette max, int level)
 }
 
 //
-// Find the palette entry closest to a color, by squared distance in RGB space
-//
+// Nearest palette entry in RGB, by d² = Δr² + Δg² + Δb².
 int RETRO_NearestPaletteIndex(RETRO_Palette targetcolor)
 {
 	int match = 0;
@@ -454,6 +455,7 @@ void RETRO_CreateOptimalPalette(RETRO_Palette *texturepalette, int texturecolors
 // are set directly, otherwise the components are copied as they are given,
 // which allows both 6-bit and 8-bit palettes
 //
+// Linear blend C(i) = from + (i / (end - start)) * (to - from), i in [0, end).
 void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, RETRO_Palette to, RETRO_Palette *palette = NULL)
 {
 	int steps = end - start;
@@ -475,7 +477,7 @@ void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, RETRO_P
 // black up to a specular highlight. The highlight is white whatever the face
 // color, which is what makes the material read as plastic, and a lower falloff
 // spreads it over more of the palette. Without a palette the colors are set
-// directly, otherwise they are written to it, in both cases scaled to colorMax
+// directly, otherwise they are written to it, in both cases scaled to colormax
 // so that a 6-bit palette can be filled as readily as an 8-bit one
 //
 void RETRO_CreatePlasticPhongPalette(float falloff = RETRO_K_FALLOFF, RETRO_Palette face = RETRO_DEEPPINK, RETRO_Palette *palette = NULL, int colormax = 255)
@@ -508,28 +510,36 @@ void RETRO_CreateMattePalette(RETRO_Palette face = RETRO_DEEPPINK, RETRO_Palette
 // cos(theta) = nz, that is a lambert term, and it goes through the same
 // RETRO_ShadeFromLambert conversion a renderer applies before picking a shade
 //
+// Pixel (x, y) of the unit disk is the front of the unit sphere:
+//
+//   (nx, ny) = ((x - cx)/cx, (y - cy)/cy)
+//   nz = sqrt(1 - nx^2 - ny^2)
+//   shade = ShadeFromLambert(nz)
+//
+// Outside the disk the darkest material shade is kept, so a grazing lookup
+// never punches a black hole.
 void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 {
-	float centerX = (width - 1) * 0.5f;
-	float centerY = (height - 1) * 0.5f;
+	float centerx = (width - 1) * 0.5f;
+	float centery = (height - 1) * 0.5f;
 
 	for (int y = 0; y < height; y++) {
-		float ny = (y - centerY) / centerY;
+		float ny = (y - centery) / centery;
 		for (int x = 0; x < width; x++) {
-			float nx = (x - centerX) / centerX;
-			float radiusSquared = nx * nx + ny * ny;
+			float nx = (x - centerx) / centerx;
+			float radiussquared = nx * nx + ny * ny;
 
 			// The environment lookup stores the lighting of the front-facing
 			// hemisphere. Outside its unit disk, retain the darkest material
 			// shade rather than introducing transparent-looking black holes.
-			int paletteIndex = RETRO_PHONG_OFFSET;
-			if (radiusSquared <= 1.0f) {
-				float nz = sqrt(1.0f - radiusSquared);
-				paletteIndex += RETRO_ShadeFromLambert(nz) * RETRO_PHONG_SHADES;
+			int paletteindex = RETRO_PHONG_OFFSET;
+			if (radiussquared <= 1.0f) {
+				float nz = sqrt(1.0f - radiussquared);
+				paletteindex += RETRO_ShadeFromLambert(nz) * RETRO_PHONG_SHADES;
 			}
 			// A pixel landing dead center on an odd-sized map has nz of exactly
 			// 1, one past the last shade, so the index still needs clamping
-			buffer[y * width + x] = MIN(paletteIndex, RETRO_COLORS - 1);
+			buffer[y * width + x] = MIN(paletteindex, RETRO_COLORS - 1);
 		}
 	}
 }

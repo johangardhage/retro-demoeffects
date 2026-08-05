@@ -9,6 +9,20 @@
 
 #include "retromodel.h"
 
+// Pinhole projection. Depth is s*rz + eye, and the screen point is
+//
+//   q  = 1 / depth
+//   sx = cx + s * rx * eye * q
+//   sy = cy + s * ry * eye * q
+//
+// A demo that works out a projected vertex itself has to use the same eye.
+#define RETRO_PROJECTION_EYE 250
+
+// Pixels per model unit when the model does not say. A model built in pixels
+// passes 1; one built at unit size passes the size it wants to appear.
+#define RETRO_PROJECTION_SCALE 50
+
+// R = Rz(az) * Ry(ay) * Rx(ax). Applied to column vectors as p' = R p.
 void RETRO_InitializeRotationMatrix(float ax, float ay, float az, Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
@@ -57,7 +71,7 @@ void RETRO_RotateFaceNormals(Model3D *model = NULL)
 	}
 }
 
-void RETRO_ProjectModel(float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), Model3D *model = NULL, int eye = 250)
+void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), Model3D *model = NULL, int eye = RETRO_PROJECTION_EYE)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -83,7 +97,7 @@ void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 	RETRO_RotateFaceNormals(model);
 }
 
-void RETRO_ProjectVertex(Vertex *vertex, float scale = 50, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), int eye = 250)
+void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_SCALE, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), int eye = RETRO_PROJECTION_EYE)
 {
 	float depth = scale * vertex->rz + eye;
 	if (depth <= 1.0f) {
@@ -97,6 +111,9 @@ void RETRO_ProjectVertex(Vertex *vertex, float scale = 50, int x = (RETRO_WIDTH 
 	}
 }
 
+// Sequential Rx, Ry, Rz by the same (cos, sin) pair. Each plane map scales
+// that plane by r = √(cos²+sin²) and leaves its axis alone. When r ≠ 1
+// (dottorus2's SQUASH) the composition is not in SO(3).
 void RETRO_RotateVertex(Vertex *vertex, float cosa, float sina)
 {
 	// Rotate around x axis
@@ -145,6 +162,7 @@ void RETRO_RotateNormal(Normal *normal, float ax, float ay, float az)
 	normal->rnx = tmpx;
 }
 
+// (N1 · N2) / (|N1| |N2|), the cosine of the angle between the rotated normals.
 float RETRO_DotProduct(Normal n1, Normal n2)
 {
 	float lengths = n1.nn * n2.nn;
@@ -181,6 +199,13 @@ void RETRO_QuickSort(Model3D *model, int lo, int hi)
 	}
 }
 
+// Drop faces behind the near plane (any vertex with q <= 0). Front-facing is
+// the screen-space cross product (s1 - s0) × (s2 - s0). The projection keeps
+// view x and y, and the frame is y down with +z away from the viewer, so this
+// product carries the sign of the face normal's z: it is negative exactly when
+// the outward normal (the right-hand rule on the same winding that
+// RETRO_InitializeFaceNormals uses) points back at the viewer.
+// Painter's algorithm: sort remaining faces by mean rz, far to near.
 void RETRO_SortVisibleFaces(Model3D *model = NULL, bool all = false)
 {
 	model = model ? model : RETRO_Get3DModel();
@@ -199,11 +224,16 @@ void RETRO_SortVisibleFaces(Model3D *model = NULL, bool all = false)
 			continue;
 		}
 
-		float visible = (model->vertex[model->face[i].vertex[1]].sx - model->vertex[model->face[i].vertex[0]].sx) *
-						(model->vertex[model->face[i].vertex[0]].sy - model->vertex[model->face[i].vertex[2]].sy) -
-						(model->vertex[model->face[i].vertex[1]].sy - model->vertex[model->face[i].vertex[0]].sy) *
-						(model->vertex[model->face[i].vertex[0]].sx - model->vertex[model->face[i].vertex[2]].sx);
-		model->face[i].visible = visible > 0 ? true : false;
+		float s0x = model->vertex[model->face[i].vertex[0]].sx;
+		float s0y = model->vertex[model->face[i].vertex[0]].sy;
+		float s1x = model->vertex[model->face[i].vertex[1]].sx;
+		float s1y = model->vertex[model->face[i].vertex[1]].sy;
+		float s2x = model->vertex[model->face[i].vertex[2]].sx;
+		float s2y = model->vertex[model->face[i].vertex[2]].sy;
+		// (s1 - s0) × (s2 - s0). Same sign as the face normal's z in this
+		// y-down, +z-away frame, so front faces come out negative.
+		float cross = (s1x - s0x) * (s2y - s0y) - (s1y - s0y) * (s2x - s0x);
+		model->face[i].visible = cross < 0;
 		if (model->face[i].visible || all) {
 			model->face[i].z = 0;
 			for (int j = 0; j < model->face[i].vertices; j++) {

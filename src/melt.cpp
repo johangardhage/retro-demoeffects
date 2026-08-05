@@ -1,5 +1,20 @@
 //
-// melt.cpp
+// Melt
+//
+// Orbiting discs painted into a framebuffer that is never cleared, then
+// one ring blur per step. Blob i follows
+//
+//   x = W/2 + (40 + 22 i) cos(phase (0.6 + 0.23 i) + 1.3 i)
+//   y = H/2 + (30 + 16 i) sin(phase (0.9 + 0.31 i) + 2.1 i)
+//
+// phase lives on 200π (every rate is a multiple of 1/100). The discs seed
+// 255; the blur is
+//
+//   T' = max(0, mean(8 neighbours) − 1)
+//
+// with no self term (RETRO_BLUR_RING), so heat spreads outward and the
+// seed itself is replaced. The −1 is extra cooling. How far the trails
+// travel follows the step rate, not the orbital speed.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -10,6 +25,7 @@
 
 #define NUM_BLOBS 5
 #define BLOB_RADIUS 4
+#define MELT_PERIOD (200 * M_PI)
 
 void DrawBlob(int xc, int yc, unsigned char color)
 {
@@ -32,13 +48,14 @@ void DrawBlob(int xc, int yc, unsigned char color)
 //
 void DEMO_Update(double deltatime)
 {
-	static double t = 0;
-	t += deltatime;
+	// Calculate phase
+	static double phase = 0;
+	phase = fmod(phase + deltatime, MELT_PERIOD);
 
 	// Draw orbiting blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {
-		int x = (RETRO_WIDTH / 2) + cos(t * (0.6 + i * 0.23) + i * 1.3) * (40 + i * 22);
-		int y = (RETRO_HEIGHT / 2) + sin(t * (0.9 + i * 0.31) + i * 2.1) * (30 + i * 16);
+		int x = RETRO_WIDTH / 2 + cos(phase * (0.6 + i * 0.23) + i * 1.3) * (40 + i * 22);
+		int y = RETRO_HEIGHT / 2 + sin(phase * (0.9 + i * 0.31) + i * 2.1) * (30 + i * 16);
 		DrawBlob(x, y, 255);
 	}
 

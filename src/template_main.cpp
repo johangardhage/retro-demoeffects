@@ -1,5 +1,11 @@
 //
-// template_main.cpp
+// Template (main)
+//
+// The raw entry point: own main(), RETRO_Initialize / Flip /
+// Deinitialize, no DEMO_* callbacks. Each frame stamps a random
+// 3-vertex flat triangle. The framebuffer is never cleared, so the
+// triangles accumulate. SPACE pauses the loop the same way the
+// library's own main loop does.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

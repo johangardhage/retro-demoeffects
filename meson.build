@@ -1,5 +1,5 @@
 project('retro-demoeffects', 'cpp',
-  default_options: ['warning_level=1', 'buildtype=debug'])
+  default_options: ['warning_level=1', 'buildtype=debugoptimized'])
 
 sdl3 = dependency('sdl3')
 fs = import('fs')

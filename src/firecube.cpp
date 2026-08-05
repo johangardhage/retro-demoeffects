@@ -1,12 +1,19 @@
 //
 // Burning wireframe cube
 //
+// The cube is drawn as wireframe into a framebuffer that is never cleared,
+// then the same 8-tap fire blur as fire.cpp runs once per step. Shade
+// SHADE_WIREFIRE writes color + random(intensity) along each edge, so the
+// edges seed the flame and the blur lifts it. Euler angles live on 2π.
+//
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 #include "lib/retrocolor.h"
+
+#define ROTATION_SPEED 2 // radians a second, about each axis
 
 //
 // Advance the trail in fixed steps. It is one blur pass per step into a framebuffer
@@ -15,9 +22,9 @@
 void DEMO_Update(double deltatime)
 {
 	static float ax, ay, az;
-	ax += deltatime * 2;
-	ay += deltatime * 2;
-	az += deltatime * 2;
+	ax = fmod(ax + deltatime * ROTATION_SPEED, 2 * M_PI);
+	ay = fmod(ay + deltatime * ROTATION_SPEED, 2 * M_PI);
+	az = fmod(az + deltatime * ROTATION_SPEED, 2 * M_PI);
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();

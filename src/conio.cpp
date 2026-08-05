@@ -1,5 +1,10 @@
 //
-// conio.cpp
+// Conio
+//
+// Not the SDL framebuffer. This is the DOS conio shim: a 1-based text
+// cell grid (gotoxy(1, 1) is the top-left), 16 palette colors, gotoxy /
+// cprintf / getch. DEMO_Startup runs once, prints a color chart (one
+// row per color 0..15), and waits for a key. There is no render loop.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -24,6 +29,6 @@ void DEMO_Startup(void)
 	gotoxy(30, 10);
 	cprintf("Press any key to continue");
 	getch();
-	gotoxy(0, 18);
+	gotoxy(1, 18);
 	reset();
 }

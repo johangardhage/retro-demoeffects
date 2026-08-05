@@ -76,28 +76,67 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 
 #define RETRO_SINCOS_ANGLE 256
 
+#define RETRO_DEGREES_PER_TURN 360
+
 #define RAD2DEG (180 / M_PI)
 #define DEG2RAD (M_PI / 180)
-#define RAND ((double)rand() / ((double)RAND_MAX + 1))
-#define RANDOM(n) ((int)(RAND * (n)))
-#define RANDOMF(n) ((float)(RAND * (n)))
-#define COS(x) cos(((x) * 2.0 * M_PI) / RETRO_SINCOS_ANGLE)
-#define SIN(x) sin(((x) * 2.0 * M_PI) / RETRO_SINCOS_ANGLE)
-#define CLAMP(n, l, h) ((n) < (l) ? (l) : ((n) > ((h) - 1) ? ((h) - 1) : (int)(n)))
-#define CLAMP64(n) ((n) < 0 ? 0 : ((n) > 63 ? 63 : (int)(n)))
-#define CLAMP128(n) ((n) < 0 ? 0 : ((n) > 127 ? 127 : (int)(n)))
-#define CLAMP256(n) ((n) < 0 ? 0 : ((n) > 255 ? 255 : (int)(n)))
-#define CLAMPWIDTH(n) ((n) < 0 ? 0 : ((n) > RETRO_WIDTH - 1 ? RETRO_WIDTH - 1 : (int)(n)))
-#define CLAMPHEIGHT(n) ((n) < 0 ? 0 : ((n) > RETRO_HEIGHT - 1 ? RETRO_HEIGHT - 1 : (int)(n)))
-#define WRAP(n, h) (((int)(n) % (h) + (h)) % (h))
-#define WRAP64(n) ((int)(n) & 63)
-#define WRAP128(n) ((int)(n) & 127)
-#define WRAP256(n) ((int)(n) & 255)
-#define WRAPWIDTH(n) (((int)(n) % RETRO_WIDTH + RETRO_WIDTH) % RETRO_WIDTH)
-#define WRAPHEIGHT(n) (((int)(n) % RETRO_HEIGHT + RETRO_HEIGHT) % RETRO_HEIGHT)
-#define SWAP(x, y) do { typeof(x) _SWAP = x; x = y; y = _SWAP; } while (0)
-#define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
-#define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
+
+#define SWAP(a, b) do { __typeof__(a) _swap = (a); (a) = (b); (b) = _swap; } while (0)
+#define MIN(a, b) ({ __typeof__(a) _a = (a); __typeof__(b) _b = (b); _a < _b ? _a : _b; })
+#define MAX(a, b) ({ __typeof__(a) _a = (a); __typeof__(b) _b = (b); _a > _b ? _a : _b; })
+
+// A random number in [0, 1), and the same scaled to [0, n) as an int or a float
+inline double RAND() { return (double)rand() / ((double)RAND_MAX + 1); }
+inline int RANDOM(double n) { return (int)(RAND() * n); }
+inline float RANDOMF(double n) { return (float)(RAND() * n); }
+
+// Cosine and sine over RETRO_SINCOS_ANGLE units per turn rather than 2*pi radians
+inline double COS(double x) { return cos((x * 2.0 * M_PI) / RETRO_SINCOS_ANGLE); }
+inline double SIN(double x) { return sin((x * 2.0 * M_PI) / RETRO_SINCOS_ANGLE); }
+
+// Clamp n into [l, h - 1], so h is one past the highest value the result can take.
+//
+// The integer overload keeps integer effects free of floating point. The floating point
+// one truncates toward zero, which matches flooring because every lower bound in use is
+// non-negative, so a value that would round the wrong way is clamped to l first.
+// float uses that path. unsigned and long forward to the integer path so those call
+// sites are not ambiguous.
+inline int CLAMP(int n, int l, int h) { return n < l ? l : (n > h - 1 ? h - 1 : n); }
+inline int CLAMP(double n, int l, int h) { return n < l ? l : (n > h - 1 ? h - 1 : (int)n); }
+inline int CLAMP(float n, int l, int h) { return CLAMP((double)n, l, h); }
+inline int CLAMP(unsigned n, int l, int h) { return CLAMP((int)n, l, h); }
+inline int CLAMP(long n, int l, int h) { return CLAMP((int)n, l, h); }
+inline int CLAMP(unsigned long n, int l, int h) { return CLAMP((int)n, l, h); }
+#define CLAMP64(n) CLAMP((n), 0, 64)
+#define CLAMP128(n) CLAMP((n), 0, 128)
+#define CLAMP256(n) CLAMP((n), 0, 256)
+#define CLAMP360(n) CLAMP((n), 0, 360)
+#define CLAMPWIDTH(n) CLAMP((n), 0, RETRO_WIDTH)
+#define CLAMPHEIGHT(n) CLAMP((n), 0, RETRO_HEIGHT)
+
+// Clamp n into [0, 1], keeping the argument's own precision rather than widening it
+inline float CLAMP01(float n) { return n < 0 ? 0 : (n > 1 ? 1 : n); }
+inline double CLAMP01(double n) { return n < 0 ? 0 : (n > 1 ? 1 : n); }
+
+// Wrap n into [0, h). Negative input wraps from the top, so WRAP(-1, 64) is 63.
+//
+// The integer overload keeps integer effects free of floating point. The floating point
+// one floors before taking the remainder, so a negative fraction wraps to the same cell
+// its floor does rather than to the cell above it.
+// float uses that path. unsigned and long forward to the integer path so those call
+// sites are not ambiguous.
+inline int WRAP(int n, int h) { int r = n % h; return r < 0 ? r + h : r; }
+inline int WRAP(double n, int h) { int r = (int)floor(n) % h; return r < 0 ? r + h : r; }
+inline int WRAP(float n, int h) { return WRAP((double)n, h); }
+inline int WRAP(unsigned n, int h) { return WRAP((int)n, h); }
+inline int WRAP(long n, int h) { return WRAP((int)n, h); }
+inline int WRAP(unsigned long n, int h) { return WRAP((int)n, h); }
+#define WRAP64(n) WRAP((n), 64)
+#define WRAP128(n) WRAP((n), 128)
+#define WRAP256(n) WRAP((n), 256)
+#define WRAP360(n) WRAP((n), 360)
+#define WRAPWIDTH(n) WRAP((n), RETRO_WIDTH)
+#define WRAPHEIGHT(n) WRAP((n), RETRO_HEIGHT)
 
 struct RETRO_Palette {
 	unsigned char r, g, b;
@@ -135,7 +174,7 @@ struct {
 	RETRO_Image *image[RETRO_MAX_IMAGES];
 	int images = 0;
 	const bool *keystate;
-	bool keydown[256];
+	bool keylatched[256];
 	int yoffset[RETRO_HEIGHT];
 	double accumulator = 0;
 } RETRO = { .mode = RETRO_MODE_FULLSCREEN, .stretch = false, .vsync = true, .showfps = true };
@@ -502,15 +541,11 @@ bool RETRO_KeyState(SDL_Scancode key)
 bool RETRO_KeyPressed(SDL_Scancode key)
 {
 	if (key > 255) return false;
-	if (RETRO.keystate[key]) {
-		if (RETRO.keydown[key]) {
-			return false;
-		} else {
-			RETRO.keydown[key] = true;
-			return true;
-		}
+	// Latched on SDL_EVENT_KEY_DOWN so a down+up that lands in one poll still counts.
+	if (RETRO.keylatched[key]) {
+		RETRO.keylatched[key] = false;
+		return true;
 	}
-	RETRO.keydown[key] = false;
 	return false;
 }
 
@@ -521,15 +556,22 @@ void RETRO_Quit(void)
 
 bool RETRO_QuitRequested(void)
 {
-	SDL_PumpEvents();
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		if (event.type == SDL_EVENT_QUIT) {
+			RETRO.quit = true;
+		} else if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
+			if (event.key.scancode < 256) {
+				RETRO.keylatched[event.key.scancode] = true;
+			}
+		}
+	}
 	RETRO.keystate = SDL_GetKeyboardState(NULL);
-	if (SDL_PeepEvents(NULL, 0, SDL_PEEKEVENT, SDL_EVENT_QUIT, SDL_EVENT_QUIT) > 0) {
+	if (RETRO.quit) {
 		return true;
-	} else if (RETRO.quit) {
+	} else if (RETRO.keystate && RETRO.keystate[SDL_SCANCODE_ESCAPE]) {
 		return true;
-	} else if (RETRO.keystate[SDL_SCANCODE_ESCAPE]) {
-		return true;
-	} else if (RETRO.keystate[SDL_SCANCODE_Q]) {
+	} else if (RETRO.keystate && RETRO.keystate[SDL_SCANCODE_Q]) {
 		return true;
 	}
 	return false;
@@ -542,18 +584,12 @@ bool RETRO_QuitRequested(void)
 //
 // Advance the simulation by as many whole fixed steps as the elapsed time allows
 //
-// Each frame's elapsed time is added to an accumulator, and DEMO_Update is called with a
-// deltatime of RETRO_SIMULATION_STEP once for every whole step the accumulator holds.
-// Stepping at a fixed rate rather than once per frame keeps an effect running at the same
-// speed whatever the display does, and lets effects that advance in discrete units -
-// integer positions, table indices, palette entries - stay exact instead of accumulating
-// rounding error.
+//   acc' = min(acc + dt, STEP * MAX_STEPS)
+//   while acc >= STEP:  DEMO_Update(STEP);  acc -= STEP
 //
-// Time left over stays in the accumulator and carries into the next frame, so the
-// simulation keeps up with the wall clock without drifting. The accumulator is capped at
-// RETRO_MAX_SIMULATION_STEPS so a long stall cannot demand an unbounded burst of catch-up
-// steps, which would only make the next frame later still. Past that limit the simulation
-// runs slow instead.
+// The leftover stays in acc, so the simulation keeps the wall clock without
+// drifting. The cap stops a stall from demanding an unbounded burst of
+// catch-up. Past it the simulation runs slow instead.
 //
 void RETRO_AdvanceSimulation(double deltatime)
 {

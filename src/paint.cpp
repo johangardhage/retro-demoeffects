@@ -1,5 +1,13 @@
 //
-// paint.cpp
+// Paint
+//
+// A persistent framebuffer (DEMO_Render2, so nothing is cleared). The
+// mouse is a single-pixel brush: left writes 255, right writes 0.
+// Startup is absolute (the logical point is the window mapping). The
+// relative branch, if enabled, moves by 0.2 · (dx, dy) so a fast flick
+// does not jump the brush; the point is a float so those fractions
+// accumulate. Leaving the 320×240 box clamps the point to the last
+// pixel and warps the OS cursor back.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -8,23 +16,24 @@
 #include "lib/retromouse.h"
 #include "lib/retrocolor.h"
 
+#define MOUSE_ACCEL 0.2 // relative-mode step per window pixel
+
 void DEMO_Render2(double deltatime)
 {
-	static int x = RETRO_WIDTH / 2, y = RETRO_HEIGHT / 2;
-	float acceleration = 0.2;
+	static float x = RETRO_WIDTH / 2, y = RETRO_HEIGHT / 2;
 
 	RETRO_MouseState mouse = RETRO_GetMouseState2();
 
 	if (mouse.isrelative) {
-		x += mouse.xrel * acceleration;
-		y += mouse.yrel * acceleration;
+		x += mouse.xrel * MOUSE_ACCEL;
+		y += mouse.yrel * MOUSE_ACCEL;
 	} else {
 		x = mouse.x;
 		y = mouse.y;
 	}
 
 	// Trap mouse cursor
-	if (x < 0 || x > (RETRO_WIDTH - 1) || y < 0 || y > (RETRO_HEIGHT - 1)) {
+	if (x < 0 || x > RETRO_WIDTH - 1 || y < 0 || y > RETRO_HEIGHT - 1) {
 		x = CLAMPWIDTH(x);
 		y = CLAMPHEIGHT(y);
 
@@ -35,12 +44,10 @@ void DEMO_Render2(double deltatime)
 	}
 
 	// Put pixel
-	if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
-		if (mouse.leftbutton) {
-			RETRO_PutPixel(x, y, 255);
-		} else if (mouse.rightbutton) {
-			RETRO_PutPixel(x, y, 0);
-		}
+	if (mouse.leftbutton) {
+		RETRO_PutPixel(x, y, 255);
+	} else if (mouse.rightbutton) {
+		RETRO_PutPixel(x, y, 0);
 	}
 
 	RETRO_Flip();

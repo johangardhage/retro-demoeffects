@@ -1,42 +1,48 @@
 //
-// distort.cpp
+// Distort
+//
+// An image resampled through a pair of shears. Pixel (x, y) is copied from
+//
+//   I(x + A sin(2pi (y + t) / N),  y + (A/2) sin(2pi (x + t) / N))
+//
+// so a whole row shares its sideways shift and a whole column shares its
+// vertical one. Both travel along the same table as time passes, so the
+// picture ripples. t lives on N. A sample that lands off the image is
+// left as background, and the edges fray.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define IMAGE_WIDTH 320
+#define SINE_VALUES 64 // entries in the sine table, covering one whole turn
+#define DISTORT_AMPLITUDE 5 // pixels a row shifts sideways at the peak
+#define DISTORT_SPEED 100 // table entries travelled per second
 
-char DistortTableX[(RETRO_WIDTH * 2) * (RETRO_HEIGHT * 2)];
-char DistortTableY[(RETRO_WIDTH * 2) * (RETRO_HEIGHT * 2)];
+int ShiftX[SINE_VALUES];
+int ShiftY[SINE_VALUES];
 
 void DEMO_Render(double deltatime)
 {
-	// Calculate frame
-	static double frame = 0;
-	frame += deltatime * 400;
-
 	unsigned char *image = RETRO_ImageData();
 
-	// Calculate movement
-	int x1 = (RETRO_WIDTH / 2) + (RETRO_WIDTH / 2 * cos(frame / 205));
-	int x2 = (RETRO_WIDTH / 2) + (RETRO_WIDTH / 2 * sin(-frame / 197));
-	int y1 = (RETRO_HEIGHT / 2) + (RETRO_HEIGHT / 2 * sin(frame / 231));
-	int y2 = (RETRO_HEIGHT / 2) + (RETRO_HEIGHT / 2 * cos(-frame / 224));
+	// Calculate phase
+	static double phase = 0;
+	phase = fmod(phase + deltatime * DISTORT_SPEED, SINE_VALUES);
+	int iphase = phase;
 
-	// Draw distortion
+	// Draw distort
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		int shiftx = ShiftX[WRAP(y + iphase, SINE_VALUES)];
+
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int xsrc = y2 * (RETRO_WIDTH * 2) + x2 + y * (RETRO_WIDTH * 2) + x;
-			int ysrc = y1 * (RETRO_WIDTH * 2) + x1 + y * (RETRO_WIDTH * 2) + x;
+			int shifty = ShiftY[WRAP(x + iphase, SINE_VALUES)];
 
-			int tx = x + DistortTableX[xsrc];
-			int ty = y + DistortTableY[ysrc];
+			int sourcex = x + shiftx;
+			int sourcey = y + shifty;
 
-			if (ty >= 0 && ty < RETRO_HEIGHT && tx >= 0 && tx < RETRO_WIDTH) {
-				unsigned char col = image[ty * IMAGE_WIDTH + tx];
-				RETRO_PutPixel(x, y, col);
+			if (sourcex >= 0 && sourcex < RETRO_WIDTH && sourcey >= 0 && sourcey < RETRO_HEIGHT) {
+				RETRO_PutPixel(x, y, image[sourcey * RETRO_WIDTH + sourcex]);
 			}
 		}
 	}
@@ -44,16 +50,18 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/flag_320x240.pcx");
+	RETRO_Image *image = RETRO_LoadImage("assets/flag_320x240.pcx");
+	if (image->width != RETRO_WIDTH || image->height != RETRO_HEIGHT) {
+		RETRO_RageQuit("The image must be the size of the screen\n");
+	}
 	RETRO_SetPalette(RETRO_ImagePalette());
 
-	// Init sin table
-	int offset = 0;
-	for (int y = 0; y < (RETRO_HEIGHT * 2); y++) {
-		for (int x = 0; x < (RETRO_WIDTH * 2); x++) {
-			DistortTableX[offset] = sin(x / 20.0) + sin(x * y / 2000.0) + sin((x + y) / 100.0) + sin((y - x) / 70.0) + sin((x + 4 * y) / 70.0) + sin(hypot(256 - x, (150 - y / 8.0)) / 40.0);
-			DistortTableY[offset] = cos(x / 31.0) + cos(x * y / 1783.0) + cos((x + y) / 137.0) + cos((y - x) / 55.0) + cos((x + 8 * y) / 57.0) + sin(hypot(384 - x, (274 - y / 9.0)) / 51.0);
-			offset++;
-		}
+	// Init tables. One whole turn over N entries, so the table meets itself where the index
+	// wraps and the shear has no seam. The vertical shear is A/2, rounded once.
+	for (int i = 0; i < SINE_VALUES; i++) {
+		double angle = 2 * M_PI * i / SINE_VALUES;
+
+		ShiftX[i] = lround(DISTORT_AMPLITUDE * sin(angle));
+		ShiftY[i] = lround(DISTORT_AMPLITUDE * sin(angle) / 2);
 	}
 }

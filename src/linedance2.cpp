@@ -1,5 +1,15 @@
 //
-// linedance.cpp
+// Linedance 2
+//
+// A 360-point Lissajous curve, one pixel per degree. The point is
+//
+//   x = W/2 + 50 sin(b + 2a) + 25 sin(a + 2b) − 50 sin(a + b)
+//   y = H/2 + 20 sin(a + 2b) + 15 sin(b + 2a) + 20 sin(a + b)
+//
+// with a the time phase and b = 2π i / 360. sin(b+2a) has period π in a,
+// the other terms 2π, so a lives on 360°. Color is 50 + x/2, so the
+// stroke heats up from left to right along the palette ramp. The
+// framebuffer is cleared each frame.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -7,16 +17,21 @@
 #include "lib/retromain.h"
 #include "lib/retrocolor.h"
 
+#define LINE_SPEED 60 // degrees of a per second
+
 void DEMO_Render(double deltatime)
 {
-	static double a1 = 0;
-	a1 += deltatime * 60;
+	// Calculate phase
+	static double phase = 0;
+	phase = fmod(phase + deltatime * LINE_SPEED, RETRO_DEGREES_PER_TURN);
+	double a = phase * M_PI / 180;
 
-	for (int b1 = 0; b1 < 360; b1++) {
-		float a2 = a1 * M_PI / 180;
-		float b2 = b1 * M_PI / 180;
-		float x = 160 + 50 * sin(b2 + a2 * 2) + 25 * sin(a2 + b2 * 2) - 50 * sin(a2 + b2);
-		float y = 120 + 20 * sin(a2 + b2 * 2) + 15 * sin(b2 + a2 * 2) + 20 * sin(a2 + b2);
+	// Draw curve
+	for (int i = 0; i < RETRO_DEGREES_PER_TURN; i++) {
+		double b = i * M_PI / 180;
+		double x = RETRO_WIDTH / 2 + 50 * sin(b + a * 2) + 25 * sin(a + b * 2) - 50 * sin(a + b);
+		double y = RETRO_HEIGHT / 2 + 20 * sin(a + b * 2) + 15 * sin(b + a * 2) + 20 * sin(a + b);
+
 		RETRO_PutPixel(x, y, 50 + x / 2);
 	}
 }

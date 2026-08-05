@@ -1,5 +1,13 @@
 //
-// whitenoise.cpp
+// White noise
+//
+// Salt-and-pepper, then a 5-tap plus-with-center blur. Each pixel is
+// independently 0 or 255 (P = 1/2); RETRO_BLUR_SMOOTH replaces it with
+// the mean of itself and its four neighbours. The pass is in place
+// along the scan, so the left and upper taps are already averaged
+// (Gauss–Seidel). The average of a 0/255 field is gray grain, not a
+// snow of hard dots. The framebuffer is cleared and redrawn every
+// frame, so the grain is new each time.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -10,6 +18,7 @@
 
 void DEMO_Render(double deltatime)
 {
+	// Draw noise
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			unsigned char color = RANDOM(2) ? 255 : 0;
@@ -17,6 +26,7 @@ void DEMO_Render(double deltatime)
 		}
 	}
 
+	// Soften
 	RETRO_Blur(RETRO_BLUR_SMOOTH);
 }
 

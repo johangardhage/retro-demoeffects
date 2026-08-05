@@ -1,5 +1,25 @@
 //
-// voxel.cpp
+// Voxel landscape
+//
+// A wrapping height map, drawn front to back one depth slice at a time. The
+// camera looks along (−sin θ, −cos θ). At depth z the 90° frustum meets the
+// ground in a segment whose midpoint is z along that heading and whose half
+// width is also z (tan 45° = 1):
+//
+//   left  = z (−cos θ − sin θ,  sin θ − cos θ)
+//   right = z ( cos θ − sin θ, −sin θ − cos θ)
+//
+// Each column samples the map on that segment. Indices are WRAP (floor,
+// then into [0, 1024)), not a cast toward zero: (−1, 0) is the last texel,
+// not 0. The camera lives on the same torus; θ lives in [0, 2π).
+//
+// A height difference Δh at depth z is a pinhole
+//
+//   y = horizon + Δh · FOCAL / z
+//
+// y grows down, so a peak (Δh < 0) sits above the horizon. Slices are
+// painted down to the highest y already filled (hiddeny), so nearer ground
+// occludes farther ground. Δz grows with z, so far slices are coarser.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -10,17 +30,27 @@
 #define MAP_WIDTH 1024
 #define MAP_SHIFT 10
 
+#define VOXEL_FOCAL 100.0f // pixels of Δh at z = 1
+#define VOXEL_CLEARANCE 10.0f // how far the camera stays above the ground
+#define VOXEL_LOD 0.005f // added to Δz each slice, so far samples thin out
+
 struct {
 	float x;        // x position on the map
 	float y;        // y position on the map
 	float height;   // height of the camera
 	float angle;    // direction of the camera
-	float horizon;  // horizon position (look up and down)
-	float distance; // distance of map
+	float horizon;  // screen row of the look-level
+	float distance; // farthest slice
 } camera = { 512, 800, 78, 0, 100, 800 };
+
+int MapOffset(float x, float y)
+{
+	return (WRAP(y, MAP_HEIGHT) << MAP_SHIFT) + WRAP(x, MAP_WIDTH);
+}
 
 void DEMO_Render(double deltatime)
 {
+	// Move camera
 	float speed = deltatime * 60;
 	if (RETRO_KeyState(SDL_SCANCODE_LEFT)) {
 		camera.angle += 0.02f * speed;
@@ -49,17 +79,27 @@ void DEMO_Render(double deltatime)
 		camera.horizon -= 1.5f * speed;
 	}
 
+	camera.x = fmod(camera.x, MAP_WIDTH);
+	if (camera.x < 0) {
+		camera.x += MAP_WIDTH;
+	}
+	camera.y = fmod(camera.y, MAP_HEIGHT);
+	if (camera.y < 0) {
+		camera.y += MAP_HEIGHT;
+	}
+	camera.angle = fmod(camera.angle, 2 * M_PI);
+	if (camera.angle < 0) {
+		camera.angle += 2 * M_PI;
+	}
+
 	unsigned char *colormap = RETRO_ImageData(0);
 	unsigned char *heightmap = RETRO_ImageData(1);
 	unsigned char *buffer = RETRO_FrameBuffer();
 
-	int mapwidthperiod = MAP_WIDTH - 1;
-	int mapheightperiod = MAP_HEIGHT - 1;
-
 	// Collision detection
-	int cameraoffs = ((((int)camera.y) & mapwidthperiod) << MAP_SHIFT) + (((int)camera.x) & mapheightperiod);
-	if ((heightmap[cameraoffs] + 10.0f) > camera.height) {
-		camera.height = heightmap[cameraoffs] + 10.0f;
+	int cameraoffs = MapOffset(camera.x, camera.y);
+	if (heightmap[cameraoffs] + VOXEL_CLEARANCE > camera.height) {
+		camera.height = heightmap[cameraoffs] + VOXEL_CLEARANCE;
 	}
 
 	float sinang = (float)sin(camera.angle);
@@ -73,7 +113,6 @@ void DEMO_Render(double deltatime)
 
 	// Draw from front to back
 	for (float z = 1.0f; z < camera.distance; z += deltaz) {
-		// 90 degree field of view
 		float plx = -cosang * z - sinang * z;
 		float ply = sinang * z - cosang * z;
 		float prx = cosang * z - sinang * z;
@@ -83,9 +122,9 @@ void DEMO_Render(double deltatime)
 		float dy = (pry - ply) / RETRO_WIDTH;
 		plx += camera.x;
 		ply += camera.y;
-		float invz = 1.0f / z * 100.0f;
+		float invz = VOXEL_FOCAL / z;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int mapoffset = ((((int)ply) & mapwidthperiod) << MAP_SHIFT) + (((int)plx) & mapheightperiod);
+			int mapoffset = MapOffset(plx, ply);
 			int heightonscreen = (int)((camera.height - heightmap[mapoffset]) * invz + camera.horizon);
 			if (heightonscreen < 0) {
 				heightonscreen = 0;
@@ -100,7 +139,7 @@ void DEMO_Render(double deltatime)
 			plx += dx;
 			ply += dy;
 		}
-		deltaz += 0.005f;
+		deltaz += VOXEL_LOD;
 	}
 }
 

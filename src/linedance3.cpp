@@ -1,5 +1,19 @@
 //
-// linedance.cpp
+// Linedance 3
+//
+// A chain of POINTS attractors. Point 0 is a wandering walker; each later
+// point is
+//
+//   p_i' = (p_i + p_{i-1}) / (2 + k / POINTS)
+//
+// k = 0 is the midpoint. k/POINTS is a small shrink (k > 0) or swell
+// (k < 0) toward the origin. k = 0.75 + sin(phase / 15) ∈ [−0.25, 1.75].
+// Segments are drawn in all four mirror quadrants. The framebuffer is
+// never cleared; a fire blur after each step is what fades the trails.
+//
+// The walker is a pair of incommensurate radiuses, rotated by −α
+// (α = phase / 1.37). phase lives on 2π · 2 · 3³ · 5 · 13 · 41 · 137,
+// the shared period of 1.37, 4.1, 1.3, 2, 2.7, 15 and the α/8 blur.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -9,6 +23,8 @@
 #include "lib/retrocolor.h"
 
 #define POINTS 170
+#define LINE_SPEED 2.5
+#define LINE_PERIOD (2 * M_PI * 19715670.0) // 2π · 2 · 3³ · 5 · 13 · 41 · 137
 
 Point2Df Points[POINTS];
 
@@ -27,9 +43,9 @@ void DrawLines(int x, int y, float k)
 		int y2 = CLAMPHEIGHT(Points[i - 1].y);
 
 		RETRO_DrawLine(x1, y1, x2, y2, 255);
-		RETRO_DrawLine(x1, (RETRO_HEIGHT-1) - y1, x2, (RETRO_HEIGHT-1) - y2, 255);
-		RETRO_DrawLine((RETRO_WIDTH-1) - x1, y1, (RETRO_WIDTH-1) - x2, y2, 255);
-		RETRO_DrawLine((RETRO_WIDTH-1) - x1, (RETRO_HEIGHT-1) - y1, (RETRO_WIDTH-1) - x2, (RETRO_HEIGHT-1) - y2, 255);
+		RETRO_DrawLine(x1, (RETRO_HEIGHT - 1) - y1, x2, (RETRO_HEIGHT - 1) - y2, 255);
+		RETRO_DrawLine((RETRO_WIDTH - 1) - x1, y1, (RETRO_WIDTH - 1) - x2, y2, 255);
+		RETRO_DrawLine((RETRO_WIDTH - 1) - x1, (RETRO_HEIGHT - 1) - y1, (RETRO_WIDTH - 1) - x2, (RETRO_HEIGHT - 1) - y2, 255);
 	}
 }
 
@@ -39,19 +55,20 @@ void DrawLines(int x, int y, float k)
 //
 void DEMO_Update(double deltatime)
 {
-	static double frame = 0;
-	frame += deltatime * 2.5;
+	// Calculate phase
+	static double phase = 0;
+	phase = fmod(phase + deltatime * LINE_SPEED, LINE_PERIOD);
 
 	// Calculate movement
-	float aa = frame / 1.37;
-	float rx = fabs(sin(sin(frame / 4.1) * M_PI) * 90) + 9;
-	float ry = fabs(cos(cos(frame / 1.3) * M_PI) * 90) + 9;
-	float xx = cos(cos(frame / 2.0) * M_PI) * rx;
-	float yy = sin(cos(frame / 2.7) * M_PI) * ry;
+	double aa = phase / 1.37;
+	double rx = fabs(sin(sin(phase / 4.1) * M_PI) * 90) + 9;
+	double ry = fabs(cos(cos(phase / 1.3) * M_PI) * 90) + 9;
+	double xx = cos(cos(phase / 2.0) * M_PI) * rx;
+	double yy = sin(cos(phase / 2.7) * M_PI) * ry;
 
-	int x = (RETRO_WIDTH/2) + xx * cos(aa) + yy * sin(aa);
-	int y = (RETRO_HEIGHT/2) + xx * -sin(aa) + yy * cos(-aa);
-	float k = sin(frame / 15.0) * 1.0 + 0.75;
+	int x = RETRO_WIDTH / 2 + xx * cos(aa) + yy * sin(aa);
+	int y = RETRO_HEIGHT / 2 - xx * sin(aa) + yy * cos(aa);
+	float k = sin(phase / 15.0) + 0.75;
 
 	// Draw lines
 	DrawLines(x, y, k);
@@ -66,7 +83,7 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(0, RETRO_BLACK);
 	for (int i = 1; i < RETRO_COLORS; i++) {
 		float flare = pow(sin(M_PI * i / 511.0), 16) * 128;
-		float glow = 32.0 * pow((float) i / 256.0, 3);
+		float glow = 32.0 * pow((float)i / 256.0, 3);
 		unsigned char white = MIN(flare + glow, 63) * 4;
 		RETRO_SetColor(i, white, white, i);
 	}

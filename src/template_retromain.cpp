@@ -1,5 +1,9 @@
 //
-// template_retromain.cpp
+// Template (retromain)
+//
+// Same accumulating random triangles as template_main.cpp, but through
+// the library loop. DEMO_Render2 is handed the framebuffer as the
+// previous frame left it and flips itself, so nothing is cleared.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

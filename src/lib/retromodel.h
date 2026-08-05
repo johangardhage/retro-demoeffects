@@ -7,18 +7,19 @@
 #ifndef _RETROMODEL_H_
 #define _RETROMODEL_H_
 
-// A bump map holds its heights as 8-bit levels, and a gradient is read as the
-// difference across two texels. A model's bumpheight is the difference steep
-// enough to tilt a normal all the way to grazing, so it sets how deep that
-// model's bumps read, and RETRO_BUMP_HEIGHT is the depth a model loads with
-//
-// How much of that depth shows is the map's business as much as the tilt's: a
-// metal environment map turns a small displacement into a completely different
-// color, while a shade table has only the material's own ramp to spend. The
-// default is what the shallowest of them needs, so a model reflecting a map
-// with more contrast to spend wants a shallower one. Below about 24 the mask's
-// bump map starts breaking up a specular highlight rather than roughening it
+// Bump height H is the height difference that tilts a normal all the way to
+// grazing. The gradient across two texels, divided by the surface they span
+// and by H, is the tilt, so a larger H reads shallower. A metal env map turns
+// a small tilt into a different color, so it wants a shallower H; a shade
+// table has only the material ramp to spend, so it takes the deeper default.
+// Below about 24 the mask's bump map breaks a highlight up rather than
+// roughening it.
 #define RETRO_BUMP_HEIGHT 32
+#define RETRO_ENVMAP_SIZE 256
+
+// The loader scales a model's UVs by this, so they come out as texels of a map this
+// wide, and the renderers stride the texture and bump maps by it. All three have to agree.
+#define RETRO_TEXMAP_SIZE 256
 
 #define RETRO_MAX_VERTICES 1000
 #define RETRO_MAX_UVS 1000
@@ -68,11 +69,16 @@ struct Model3D {
 	int c;									// Base color
 	int cintensity;							// Color intensity
 	unsigned char *texmap = NULL;			// Texture
+	int texmapwidth = RETRO_TEXMAP_SIZE;	// Texture width, which is also the space the UVs are in
+	int texmapheight = RETRO_TEXMAP_SIZE;	// Texture height
 	unsigned char *shadetable = NULL;		// Texture lighting table
 	unsigned char *envmap = NULL;			// Environment texture
-	int envmapwidth = 256;					// Environment texture width
-	int envmapheight = 256;					// Environment texture height
+	int envmapwidth = RETRO_ENVMAP_SIZE;		// Environment texture width
+	int envmapheight = RETRO_ENVMAP_SIZE;		// Environment texture height
+	int envmapintensity = 128;				// How far from the texture's middle a grazing normal reaches
 	unsigned char *bumpmap = NULL;			// Bump texture
+	int bumpmapwidth = RETRO_TEXMAP_SIZE;	// Bump texture width, which need not match the texture's
+	int bumpmapheight = RETRO_TEXMAP_SIZE;	// Bump texture height
 	int bumpheight = RETRO_BUMP_HEIGHT;		// Height difference that tilts a normal to grazing
 };
 
@@ -85,23 +91,39 @@ Model3D *RETRO_Get3DModel(void)
 	return RETRO_Model.model;
 }
 
+// Area-weighted average of the adjacent face normals (Hearn & Baker / Foley).
+// The unnormalized face normal has length 2 * area, so adding it weights by area.
+// Needs face normals first. For a cube at the origin this is the same direction
+// as the vertex position; for a general mesh it is not.
 void RETRO_InitializeVertexNormals(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
-	// Use vertex values for normal
 	for (int i = 0; i < model->vertices; i++) {
-		model->normal[i].nx = model->vertex[i].x;
-		model->normal[i].ny = model->vertex[i].y;
-		model->normal[i].nz = model->vertex[i].z;
+		model->normal[i].nx = 0;
+		model->normal[i].ny = 0;
+		model->normal[i].nz = 0;
+	}
 
-		// Calculate the length of the normal (used to scale it to a unit normal)
+	for (int i = 0; i < model->faces; i++) {
+		float nx = model->face[i].facenormal.nx;
+		float ny = model->face[i].facenormal.ny;
+		float nz = model->face[i].facenormal.nz;
+
+		for (int j = 0; j < model->face[i].vertices; j++) {
+			int v = model->face[i].vertex[j];
+			model->normal[v].nx += nx;
+			model->normal[v].ny += ny;
+			model->normal[v].nz += nz;
+		}
+	}
+
+	for (int i = 0; i < model->vertices; i++) {
 		model->normal[i].nn = sqrt(model->normal[i].nx * model->normal[i].nx + model->normal[i].ny * model->normal[i].ny + model->normal[i].nz * model->normal[i].nz);
 	}
 
 	model->normals = model->vertices;
 
-	// Use vertex index for normal
 	for (int i = 0; i < model->faces; i++) {
 		for (int j = 0; j < model->face[i].vertices; j++) {
 			model->face[i].normal[j] = model->face[i].vertex[j];
@@ -109,12 +131,12 @@ void RETRO_InitializeVertexNormals(Model3D *model = NULL)
 	}
 }
 
+// N = (v0 - v1) × (v0 - v2), the geometric normal of the first triangle of the face.
 void RETRO_InitializeFaceNormals(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->faces; i++) {
-		// Calculate vectors
 		float x1 = model->vertex[model->face[i].vertex[0]].x - model->vertex[model->face[i].vertex[1]].x;
 		float y1 = model->vertex[model->face[i].vertex[0]].y - model->vertex[model->face[i].vertex[1]].y;
 		float z1 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[1]].z;
@@ -122,27 +144,37 @@ void RETRO_InitializeFaceNormals(Model3D *model = NULL)
 		float y2 = model->vertex[model->face[i].vertex[0]].y - model->vertex[model->face[i].vertex[2]].y;
 		float z2 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[2]].z;
 
-		// Calculate normal (using cross product)
 		model->face[i].facenormal.nx = y1 * z2 - z1 * y2;
 		model->face[i].facenormal.ny = z1 * x2 - x1 * z2;
 		model->face[i].facenormal.nz = x1 * y2 - y1 * x2;
 
-		// Calculate the length of the normal (used to scale it to a unit normal)
 		model->face[i].facenormal.nn = sqrt(model->face[i].facenormal.nx * model->face[i].facenormal.nx +
 										    model->face[i].facenormal.ny * model->face[i].facenormal.ny +
 											model->face[i].facenormal.nz * model->face[i].facenormal.nz);
 	}
 }
 
-Model3D *RETRO_Load3DModel(const char *filename, int scale = 256)
+//
+// Load a model, scaling its UVs by scale to turn them into texels
+//
+// A model whose UVs run 0 to 1 wants the texture's width here. One that already carries
+// texels wants 1. Either way the texture's own size is texmapwidth, which is a separate
+// fact about the image rather than about the model.
+//
+Model3D *RETRO_Load3DModel(const char *filename, int scale = RETRO_TEXMAP_SIZE)
 {
 	Model3D *model = (Model3D *)malloc(sizeof(Model3D));
 	if (model == NULL) {
 		RETRO_RageQuit("Cannot allocate 3D model memory\n");
 	}
 	memset(model, 0, sizeof(Model3D));
-	model->envmapwidth = 256;
-	model->envmapheight = 256;
+	model->texmapwidth = RETRO_TEXMAP_SIZE;
+	model->texmapheight = RETRO_TEXMAP_SIZE;
+	model->envmapwidth = RETRO_ENVMAP_SIZE;
+	model->envmapheight = RETRO_ENVMAP_SIZE;
+	model->bumpmapwidth = RETRO_TEXMAP_SIZE;
+	model->bumpmapheight = RETRO_TEXMAP_SIZE;
+	model->envmapintensity = RETRO_ENVMAP_SIZE / 2;
 	model->bumpheight = RETRO_BUMP_HEIGHT;
 	RETRO_Model.model = model;
 
@@ -199,13 +231,11 @@ Model3D *RETRO_Load3DModel(const char *filename, int scale = 256)
 
 	fclose(fp);
 
-	// Initialize vertex normals
+	RETRO_InitializeFaceNormals(model);
+
 	if (model->normals == 0) {
 		RETRO_InitializeVertexNormals(model);
 	}
-
-	// Initialize face normals
-	RETRO_InitializeFaceNormals(model);
 
 	return model;
 }

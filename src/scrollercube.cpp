@@ -1,5 +1,12 @@
 //
-// Scroller (texture) mapped cube
+// Scroller cube
+//
+// The same strip idea as scroller.cpp, painted into a 256×256 texture
+// that is mapped onto a cube. Rows of 5×5 block letters scroll right
+// to left; t lives on 5 · 77. The cube is otherwise the stock textured
+// path. Cube edges that are axis-aligned in model space are overstroked
+// so the silhouette stays visible when a face is nearly edge-on. Euler
+// angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -14,6 +21,7 @@
 #define FONT_WIDTH 5
 #define IMAGE_HEIGHT 256
 #define IMAGE_WIDTH 256
+#define ROTATION_SPEED 2 // radians a second, about each axis
 
 int font[FONT_HEIGHT][FONT_WIDTH] = {{10, 30, 30, 30, 10},
 									 {30, 90, 70, 50, 30},
@@ -33,12 +41,12 @@ unsigned char bitmap[FONT_HEIGHT * TEXT_HEIGHT][FONT_WIDTH * TEXT_WIDTH];
 
 void DEMO_Render(double deltatime)
 {
-	static float frame;
-	frame += deltatime * 100;
+	static float phase = 0;
+	phase = fmod(phase + deltatime * 100, FONT_WIDTH * TEXT_WIDTH);
 
 	// Move scroller
 	for (int x = 0; x < IMAGE_WIDTH; x++) {
-		int xsrc = (int)(frame + x) % (FONT_WIDTH * TEXT_WIDTH);
+		int xsrc = WRAP(phase + x, FONT_WIDTH * TEXT_WIDTH);
 		for (int y = 0; y < TEXT_HEIGHT * FONT_HEIGHT; y++) {
 			int ysrc = TEXT_HEIGHT * FONT_HEIGHT - (y + 1);
 			image[(120 + y) * IMAGE_WIDTH + x] = bitmap[ysrc][xsrc];
@@ -46,9 +54,9 @@ void DEMO_Render(double deltatime)
 	}
 
 	static float ax, ay, az;
-	ax += deltatime * 2;
-	ay += deltatime * 2;
-	az += deltatime * 2;
+	ax = fmod(ax + deltatime * ROTATION_SPEED, 2 * M_PI);
+	ay = fmod(ay + deltatime * ROTATION_SPEED, 2 * M_PI);
+	az = fmod(az + deltatime * ROTATION_SPEED, 2 * M_PI);
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();

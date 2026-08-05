@@ -1,5 +1,17 @@
 //
-// Plasma (texture) mapped cube
+// Plasma cube
+//
+// The same product of two travelling-wave sums as plasma.cpp, written
+// into a 256² texture and mapped onto a cube. The table is sine rather
+// than cosine (a 90° phase), one turn in degrees, indices WRAP360.
+// t lives in [0, 720) so the integer t/2 term covers a full period.
+//
+//   X(x, t) = 75 + sin(2x + t/2) + sin(x + 2t) + 2 sin(x/2 + t)
+//   Y(y, t) = 75 + 2 sin(y + 2t) + sin(2y + t/2) + 2 sin(y + t)
+//   color   = (X Y) mod 252
+//
+// The field is regenerated every frame so the cube carries a live
+// plasma. The cube turn is Rz Ry Rx; the Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -9,25 +21,26 @@
 #include "lib/retrocolor.h"
 
 #define PLASMA_FRAMES 720
-#define SINE_VALUES 1800
 #define TEXTURE_WIDTH 256
 #define TEXTURE_HEIGHT 256
+#define ROTATION_SPEED 2 // radians a second, about each axis
 
-float SinTable[SINE_VALUES];
+float SinTable[RETRO_DEGREES_PER_TURN];
 unsigned char image[TEXTURE_WIDTH * TEXTURE_HEIGHT];
 
 void DEMO_Render(double deltatime)
 {
-	static float framecounter = 0;
-	framecounter += deltatime * 80;
-	int frame = WRAP(framecounter, PLASMA_FRAMES);
+	// Calculate phase
+	static double phase = 0;
+	phase = fmod(phase + deltatime * 80, PLASMA_FRAMES);
+	int iphase = (int)phase;
 
 	// Generate plasma
 	for (int y = 0; y < TEXTURE_HEIGHT; y++) {
-		float yc = 75 + SinTable[y + frame * 2] * 2 + SinTable[y * 2 + frame / 2] + SinTable[y + frame] * 2;
+		float yc = 75 + SinTable[WRAP360(y + iphase * 2)] * 2 + SinTable[WRAP360(y * 2 + iphase / 2)] + SinTable[WRAP360(y + iphase)] * 2;
 
 		for (int x = 0; x < TEXTURE_WIDTH; x++) {
-			float xc = 75 + SinTable[x * 2 + frame / 2] + SinTable[x + frame * 2] + SinTable[x / 2 + frame] * 2;
+			float xc = 75 + SinTable[WRAP360(x * 2 + iphase / 2)] + SinTable[WRAP360(x + iphase * 2)] + SinTable[WRAP360(x / 2 + iphase)] * 2;
 
 			// Wrap into the 252-entry palette cycle
 			unsigned char color = (int)(yc * xc) % 252;
@@ -35,10 +48,11 @@ void DEMO_Render(double deltatime)
 		}
 	}
 
+	// Rotate cube
 	static float ax, ay, az;
-	ax += deltatime * 2;
-	ay += deltatime * 2;
-	az += deltatime * 2;
+	ax = fmod(ax + deltatime * ROTATION_SPEED, 2 * M_PI);
+	ay = fmod(ay + deltatime * ROTATION_SPEED, 2 * M_PI);
+	az = fmod(az + deltatime * ROTATION_SPEED, 2 * M_PI);
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
@@ -60,7 +74,8 @@ void DEMO_Initialize(void)
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->texmap = image;
 
-	for (int i = 0; i < SINE_VALUES; i++) {
-		SinTable[i] = sin(i * M_PI / 180);
+	// Init tables
+	for (int i = 0; i < RETRO_DEGREES_PER_TURN; i++) {
+		SinTable[i] = sin(i * DEG2RAD);
 	}
 }

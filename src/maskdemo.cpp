@@ -1,6 +1,23 @@
 //
 // Mask demo
 //
+// One mesh, many materials. Each key selects a renderer and the maps it
+// reads: texture, shade table, phong/env lookup, bump height. The maths of
+// each path live in retropoly.h; this file only chooses the inputs.
+//
+// Shade-table level 0 sits at 33° of incidence, on the shoulder of the
+// highlight: high enough that the material shows, low enough that the
+// untinted specular does not wash the texture out. Halfway up the ramp would
+// be 44°, past the 45° cutoff where every specular term is zero.
+//
+// H is the height difference that tilts to grazing; larger H is shallower.
+// A bare phong map has only the sheen to spend, so a bump uses 3/2 H. A
+// metal environment map is a Blinn/Newell sphere map of the reflection of
+// V about N, so a tilt lands on a different part of the photo rather than
+// a neighbouring shade; that bump uses 2H (half the default tilt). Euler
+// angles live on 2π. The mesh starts at ax = −π/2, az = π so the face
+// is upright.
+//
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
@@ -12,6 +29,7 @@
 
 #define TEXTURE_WIDTH 256
 #define TEXTURE_HEIGHT 256
+#define ROTATION_SPEED 1 // radians a second, about each axis
 
 enum { ASSET_TEXMAP, ASSET_ENVMAP, ASSET_PHONGMAP, ASSET_MINIPHONGMAP, ASSET_BUMPMAP };
 enum { MATERIAL_FLAT, MATERIAL_GOURAUD, MATERIAL_PHONG, MATERIALS };
@@ -34,6 +52,7 @@ void DEMO_Render(double deltatime)
 	static bool rotate = true;
 	static bool usage = true;
 
+	// Handle keys
 	if (RETRO_KeyPressed(SDL_SCANCODE_H)) {
 		usage = (usage == false);
 	}
@@ -62,17 +81,6 @@ void DEMO_Render(double deltatime)
 		shadertype = RETRO_SHADE_TABLE;
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = NULL;
-		// A fixed light level, with no light source. The texture is drawn through
-		// a material rather than in its own colors
-		//
-		// The level sits at 33 degrees of incidence, on the shoulder of the
-		// material's highlight. Higher would show the material more strongly but
-		// wash the texture out, because the highlight is untinted and adds the
-		// same white to every texel until they stop being distinguishable. Here
-		// it adds under half a level, so the texture keeps all of its detail
-		// while the material is still visibly doing something. Halfway up the
-		// ramp would be 44 degrees, past the cutoff where every specular term is
-		// zero and the material below would make no difference at all
 		color = RETRO_SHADES * 5 / 8;
 		colorintensity = 0;
 		bumpheight = RETRO_BUMP_HEIGHT;
@@ -141,11 +149,6 @@ void DEMO_Render(double deltatime)
 		envmap = RETRO_ImageData(ASSET_PHONGMAP);
 		color = 128;
 		colorintensity = 90;
-		// A bare phong map shows the material and nothing else, so a bump has
-		// only the sheen to spend: roughening scatters the lookup away from the
-		// bright center of the map and the plastic turns matte. It carries the
-		// same bumps at two thirds the depth of a textured surface, where the
-		// texture holds the image and the shading only modulates it
 		bumpheight = RETRO_BUMP_HEIGHT * 3 / 2;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_PHONGMAP));
 	}
@@ -156,7 +159,6 @@ void DEMO_Render(double deltatime)
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
 		colorintensity = 90;
-		// The same plastic, and the same shallower bump it takes
 		bumpheight = RETRO_BUMP_HEIGHT * 3 / 2;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_PHONGMAP));
 	}
@@ -167,15 +169,11 @@ void DEMO_Render(double deltatime)
 		envmap = RETRO_ImageData(ASSET_ENVMAP);
 		color = 128;
 		colorintensity = 90;
-		// The metal map answers a bump with far more contrast than a lighting
-		// map does, since the tilt lands on a different part of the reflection
-		// rather than a neighbouring shade. It carries the same bumps at half
-		// the depth, and at the default depth they read as beaten rather than
-		// crumpled
 		bumpheight = RETRO_BUMP_HEIGHT * 2;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_ENVMAP));
 	}
 
+	// Update model
 	Model3D *model = RETRO_Get3DModel();
 	model->texmap = texmap;
 	model->shadetable = shadetable;
@@ -183,39 +181,49 @@ void DEMO_Render(double deltatime)
 	model->bumpmap = bumpmap;
 	model->c = color;
 	model->cintensity = colorintensity;
+
+	// Env-map modes store the lookup reach in colorintensity, not a shade count.
+	model->envmapintensity = colorintensity;
 	model->bumpheight = bumpheight;
 
-	static float ax = 145, ay = 90, az = 90, distance = 0.5;
+	// Start with the mask's authored face upright before rotating all three axes.
+	static float ax = -M_PI / 2, ay = 0, az = M_PI, distance = 0.5;
 	if (rotate) {
-		ax += deltatime * 1;
-		ay += deltatime * 1;
-		az += deltatime * 1;
+		ax += deltatime * ROTATION_SPEED;
+		ay += deltatime * ROTATION_SPEED;
+		az += deltatime * ROTATION_SPEED;
 	}
 
 	if (RETRO_KeyState(SDL_SCANCODE_I)) {
 		rotate = false;
-		ax += 1 * deltatime;
+		ax += ROTATION_SPEED * deltatime;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_K)) {
 		rotate = false;
-		ax -= 1 * deltatime;
+		ax -= ROTATION_SPEED * deltatime;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_X)) {
 		rotate = false;
-		ay += 1 * deltatime;
+		ay += ROTATION_SPEED * deltatime;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_Z)) {
 		rotate = false;
-		ay -= 1 * deltatime;
+		ay -= ROTATION_SPEED * deltatime;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_J)) {
 		rotate = false;
-		az += 1 * deltatime;
+		az += ROTATION_SPEED * deltatime;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_L)) {
 		rotate = false;
-		az -= 1 * deltatime;
+		az -= ROTATION_SPEED * deltatime;
 	}
+	ax = fmod(ax, 2 * M_PI);
+	if (ax < 0) ax += 2 * M_PI;
+	ay = fmod(ay, 2 * M_PI);
+	if (ay < 0) ay += 2 * M_PI;
+	az = fmod(az, 2 * M_PI);
+	if (az < 0) az += 2 * M_PI;
 	if (RETRO_KeyState(SDL_SCANCODE_COMMA)) {
 		distance += 1 * deltatime;
 	}
@@ -223,10 +231,12 @@ void DEMO_Render(double deltatime)
 		distance -= 1 * deltatime;
 	}
 
+	// Draw model
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel(distance);
 	RETRO_RenderModel(rendertype, shadertype);
 
+	// Draw help
 	if (usage) {
 		RETRO_PutString("Runtime controls:", 0, 10, 255);
 		RETRO_PutString("r to toggle rotation", 0, 30, 255);
@@ -258,10 +268,9 @@ void DEMO_Initialize(void)
 	RETRO_LoadImage("assets/mask_miniphongmap_256x256.pcx");
 	RETRO_LoadImage("assets/mask_bumpmap_256x256.pcx");
 
-	// Build a material for each rendering mode. They share a palette optimized
-	// for the broad Gouraud material, but keep separate shade tables. Flat gets a
-	// strong, moderately focused highlight, while Gouraud carries the full
-	// plastic highlight smoothly because it samples lighting at vertices.
+	// Init palette. One palette, three shade tables. Flat: a strong, moderately focused
+	// highlight. Gouraud: the full plastic highlight, sampled at vertices.
+	// Phong: the library's default falloff.
 	RETRO_Palette *texturepalette = RETRO_ImagePalette(ASSET_TEXMAP);
 	RETRO_CreateOptimalPalette(texturepalette, RETRO_TEXTURE_COLORS, RETRO_K_SPECULAR, 5.0f);
 	RETRO_CreateShadeTable(texturepalette, RETRO_TEXTURE_COLORS, RETRO_K_SPECULAR, 5.0f, MaterialShadeTables[MATERIAL_GOURAUD]);

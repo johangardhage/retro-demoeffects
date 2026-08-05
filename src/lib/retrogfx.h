@@ -40,6 +40,7 @@ struct Point3Df {
 	float x, y, z;
 };
 
+// C(step) = (step / steps) * C_loaded. Returns true when step >= steps.
 bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 {
 	step = CLAMP(step, 0, steps + 1);
@@ -54,6 +55,7 @@ bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 	return step >= steps;
 }
 
+// C(step) = ((steps - step) / steps) * C_loaded. Returns true when step >= steps.
 bool RETRO_FadeOut(int steps, int step, RETRO_Palette *palette)
 {
 	step = CLAMP(step, 0, steps + 1);
@@ -165,6 +167,15 @@ void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *
 	}
 }
 
+//
+// In-place box filter. Each pixel is replaced by
+//
+//   T' = max(0, mean(T at the pattern offsets) - decay)
+//
+// FIRE's eight taps sit beside and below the pixel, so scanning top to bottom
+// lifts heat upward. DIFFUSE is the four-neighbour cross. The pass is
+// Gauss-Seidel along the scan (already-written neighbours are reused).
+//
 void RETRO_Blur(RETRO_BLUR_PATTERN blur, int decay = 0, RETRO_BLUR_MODE mode = RETRO_BLUR_CLAMP, unsigned char *buffer = NULL)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;

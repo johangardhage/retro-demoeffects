@@ -1,5 +1,18 @@
 //
-// metaballs.cpp
+// Metaballs
+//
+// An implicit field, the 1/r² cousin of the compact Wyvill kernel in
+// blobs.cpp. Blinn's original used a Gaussian; this is the algebraic
+// form. At pixel p
+//
+//   F(p) = sum_i  T R_i² / |p − c_i|²
+//
+// The solid F ≥ T is drawn (the superlevel set, not only the curve
+// F = T). One ball alone meets T on the circle of radius R_i:
+// T R² / R² = T. Where fields overlap, F exceeds T between them, so
+// the discs merge. |p−c|² is floored at 10⁻⁴ so a sample on a centre
+// does not divide by zero. The balls fly at constant speed and bounce
+// elastically (reflect pos, flip v) off the box.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -9,7 +22,7 @@
 #include "lib/retrocolor.h"
 
 #define NUM_BALLS 5
-#define THRESHOLD 50
+#define THRESHOLD 50 // F = T on the circle of radius R around one ball
 
 struct MetaBall {
 	Point2Df pos;
@@ -27,7 +40,7 @@ void DEMO_Render(double deltatime)
 			for (int i = 0; i < NUM_BALLS; i++) {
 				float a = x - Balls[i].pos.x;
 				float b = y - Balls[i].pos.y;
-				float d = MAX(a * a + b * b, 0.0001f); // squared pixel distance from metaball position
+				float d = MAX(a * a + b * b, 0.0001f);
 				sum += THRESHOLD * Balls[i].radius * Balls[i].radius / d;
 			}
 			// Threshold

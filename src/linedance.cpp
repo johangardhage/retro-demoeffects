@@ -1,5 +1,14 @@
 //
-// linedance.cpp
+// Linedance
+//
+// Each scanline is a horizontal bar whose half-width is
+//
+//   50 + 10 sin(2π (y+phase1)/256) + 15 cos(4π (y+phase2)/256)
+//      + 15 sin(4π (y+phase3)/256)
+//
+// Three travelling waves on a 256-pixel table: phase1 walks +100, phase2 −100,
+// phase3 −200 (pixels a second). The profile is their interference, sliding.
+// phase1, phase2, phase3 live on 256. The framebuffer is cleared each frame.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -8,28 +17,35 @@
 #include "lib/retrogfx.h"
 #include "lib/retrocolor.h"
 
+#define LINE_PERIOD 256
+#define LINE_HALF 50
+#define LINE_SPEED1 100 // pixels of phase1 per second
+#define LINE_SPEED2 100 // pixels of phase2 per second, falling
+#define LINE_SPEED3 200 // pixels of phase3 per second, falling
+
 void DEMO_Render(double deltatime)
 {
-	static float i1 = 10;
-	static float i2 = -20;
-	static float i3 = -30;
+	// Calculate phase
+	static double phase1 = 10;
+	static double phase2 = -20;
+	static double phase3 = -30;
 
-	i1 += deltatime * 100;
-	i2 -= deltatime * 100;
-	i3 -= deltatime * 200;
+	phase1 = fmod(phase1 + deltatime * LINE_SPEED1, LINE_PERIOD);
+	phase2 = fmod(phase2 - deltatime * LINE_SPEED2, LINE_PERIOD);
+	phase3 = fmod(phase3 - deltatime * LINE_SPEED3, LINE_PERIOD);
+	if (phase2 < 0) phase2 += LINE_PERIOD;
+	if (phase3 < 0) phase3 += LINE_PERIOD;
 
-	for (int i = 0; i < RETRO_HEIGHT; i++) {
-		float sin1 = sin((i + i1) * 2 * M_PI / 256) * 10;
-		float sin2 = cos((i + i2) * 4 * M_PI / 256) * 15;
-		float sin3 = sin((i + i3) * 4 * M_PI / 256) * 15;
-		float sum = sin1 + sin2 + sin3;
+	// Draw bars
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		double w = 10 * sin((y + phase1) * 2 * M_PI / LINE_PERIOD)
+			+ 15 * cos((y + phase2) * 4 * M_PI / LINE_PERIOD)
+			+ 15 * sin((y + phase3) * 4 * M_PI / LINE_PERIOD);
 
-		int x1 = (RETRO_WIDTH / 2) - 50 - sum;
-		int x2 = (RETRO_WIDTH / 2) + 50 + sum;
+		int x1 = RETRO_WIDTH / 2 - LINE_HALF - w;
+		int x2 = RETRO_WIDTH / 2 + LINE_HALF + w;
 
-		if (x1 >= 0 && x1 < RETRO_WIDTH && x2 >= 0 && x2 < RETRO_WIDTH) {
-			RETRO_DrawLine(x1, i, x2, i, 255);
-		}
+		RETRO_DrawLine(x1, y, x2, y, 255);
 	}
 }
 

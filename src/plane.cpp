@@ -1,5 +1,18 @@
 //
-// plane.cpp
+// Plane
+//
+// A mode-7 floor: the horizontal plane y = −16, spanned by U = (256, 0, 0)
+// and V = (0, 0, 256), seen from the origin with focal length D = 320.
+// Screen point (sx, sy) is the ray (sx − W/2, sy − H/2, D). Cramer's
+// rule for the intersection bp + s U + t V = λ ray gives
+//
+//   s = a / c,   t = b / c
+//
+// with (a, b, c) linear in (sx, sy). Along a scanline c is constant, so
+// (s, t) is a DDA in 24-bit fixed point (× 2²⁴); the texel is bits 16–23
+// (s · 256). bp = (φ, −16, φ) walks the texture along the diagonal; φ
+// lives on 256, one texture period. Rows above y = 140, near the horizon
+// at y = H/2, are left undrawn.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -8,16 +21,18 @@
 #include "lib/retrogfx.h"
 
 #define PLANE_DISTANCE 320
+#define PLANE_PERIOD 256 // one texture width; U, V and φ share it
+#define PLANE_FIXED (1 << 24) // 24-bit fixed; texel in bits 16–23
 
 void DEMO_Render(double deltatime)
 {
-	// Calculate frame
-	static double frame = 0;
-	frame += deltatime * 20;
+	// Calculate phase
+	static double phase = 0;
+	phase = fmod(phase + deltatime * 20, PLANE_PERIOD);
 
-	Point3Df bp = { (float)frame, -16, (float)frame };
-	Point3Df up = { 256.0f, 0, 0 };
-	Point3Df vp = { 0, 0, 256.0f };
+	Point3Df bp = { (float)phase, -16, (float)phase };
+	Point3Df up = { (float)PLANE_PERIOD, 0, 0 };
+	Point3Df vp = { 0, 0, (float)PLANE_PERIOD };
 
 	unsigned char *image = RETRO_ImageData();
 
@@ -41,10 +56,10 @@ void DEMO_Render(double deltatime)
 
 		float ic = fabs(c) > 65536 ? 1 / c : 1 / 65536;
 
-		int u = (int) (a * 16777216 * ic);
-		int v = (int) (b * 16777216 * ic);
-		int du = (int) (16777216 * ax * ic);
-		int dv = (int) (16777216 * bx * ic);
+		int u = (int)(a * PLANE_FIXED * ic);
+		int v = (int)(b * PLANE_FIXED * ic);
+		int du = (int)(PLANE_FIXED * ax * ic);
+		int dv = (int)(PLANE_FIXED * bx * ic);
 
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			unsigned char color = image[((v >> 8) & 0xff00) + ((u >> 16) & 0xff)];

@@ -1,5 +1,14 @@
 //
-// firelogo.cpp
+// Fire logo
+//
+// Same 8-tap rising heat field as fire.cpp:
+//
+//   T' = max(0, mean(eight taps) − FIRE_DECAY)
+//
+// No self term; six taps sit below, so heat rises. The logo pixels
+// reseed their own heat (a random value in [0, texel)) each step, and
+// the bottom rows still spark at 255. The blit drops the fuel bed so
+// only the risen flame and the logo-shaped heat are visible.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -8,10 +17,11 @@
 #include "lib/retrogfx.h"
 #include "lib/retrocolor.h"
 
-#define FIRE_HEIGHT 6
-#define FIRE_CHAOS 6
+#define FIRE_HEIGHT 6 // rows of fuel along the bottom, cropped off the blit
+#define FIRE_CHAOS 6 // a column is sparked with probability 1 / FIRE_CHAOS
+#define FIRE_DECAY 3 // subtracted after the 8-tap average
 
-unsigned char FireBuffer[RETRO_HEIGHT*RETRO_WIDTH];
+unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 
 //
 // Advance the flame in fixed steps. It rises one blur pass at a time through a buffer
@@ -22,12 +32,17 @@ void DEMO_Update(double deltatime)
 {
 	unsigned char *image = RETRO_ImageData();
 
-	for (int y = 100; y < 130; y++) {
+	// Seed logo
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int offset = y * RETRO_WIDTH + x;
-			if (image[offset] > 0) FireBuffer[offset] = RANDOM(image[offset]);
+			if (image[offset] > 0) {
+				FireBuffer[offset] = RANDOM(image[offset]);
+			}
 		}
 	}
+
+	// Seed bed
 	for (int x = 0; x < RETRO_WIDTH; x++) {
 		if (RANDOM(FIRE_CHAOS) == 0) {
 			for (int y = RETRO_HEIGHT - FIRE_HEIGHT; y < RETRO_HEIGHT; y++) {
@@ -35,9 +50,11 @@ void DEMO_Update(double deltatime)
 			}
 		}
 	}
-	RETRO_Blur(RETRO_BLUR_FIRE, 3, RETRO_BLUR_WRAP, FireBuffer);
 
-	// Only show the top part of the flame
+	// Rise
+	RETRO_Blur(RETRO_BLUR_FIRE, FIRE_DECAY, RETRO_BLUR_WRAP, FireBuffer);
+
+	// Drop the fuel bed
 	RETRO_Blit(FireBuffer, (RETRO_HEIGHT - FIRE_HEIGHT) * RETRO_WIDTH, RETRO_FrameBuffer() + (FIRE_HEIGHT * RETRO_WIDTH));
 }
 

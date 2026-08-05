@@ -1,5 +1,26 @@
 //
-// dotball.cpp
+// Dot ball
+//
+// A sphere of points, rotated and projected. Only the near cap is drawn, shaded by
+// depth, so the ball reads as solid without a surface.
+//
+// Points sit on a latitude/longitude grid, one step of POINTSTEP radians in each
+// angle:
+//
+//   (x, y, z) = R (cos α sin β,  cos β,  sin α sin β)
+//
+// Steps are 2π/n_α and π/n_β so the grid closes (POINTSTEP itself does not
+// divide the circle). That is still even in angle, not over the surface:
+// the area of a band carries a sin(β) that stepping β evenly ignores, so
+// the rings tighten at the poles.
+//
+// Depth toward the viewer is z = -rz. The drawn cap is z > ZMIN, shaded
+//
+//   color = (z - ZMIN) * (SHADES - 1) / (R - ZMIN)
+//
+// so the rim of the cap is dark and the point facing the viewer is white.
+//
+// Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -9,31 +30,38 @@
 #include "lib/retrocolor.h"
 
 #define RADIUS 75
-#define MAXPOINTS 2020
-#define POINTSTEP 0.1
-#define ZMIN 20
-#define ZMAX 80
+#define POINTSTEP 0.1 // radians between points, in both angles
+#define SHADES 64 // palette entries the depth shading ramps over
+#define ZMIN 20 // points nearer the viewer than this are drawn, which hides the far side
+#define ROTATION_SPEED 1 // radians per second, so about a turn every six seconds
+#define PROJECTION_SCALE 1.0 // the ball is built in pixels, so the projection adds no scale
+
+#define ALPHA_STEPS ((int)(2 * M_PI / POINTSTEP + 0.5))
+#define BETA_STEPS ((int)(M_PI / POINTSTEP + 0.5))
 
 int NumPoints = 0;
-Vertex Ball[MAXPOINTS];
+Vertex Ball[ALPHA_STEPS * (BETA_STEPS + 1)];
 
 void DEMO_Render(double deltatime)
 {
-	static float ax, ay, az, distance = 1.0;
-	ax += deltatime * 1;
-	ay += deltatime * 1;
-	az += deltatime * 1;
+	// Calculate rotation
+	static float ax, ay, az;
+	ax = fmod(ax + deltatime * ROTATION_SPEED, 2 * M_PI);
+	ay = fmod(ay + deltatime * ROTATION_SPEED, 2 * M_PI);
+	az = fmod(az + deltatime * ROTATION_SPEED, 2 * M_PI);
 
+	// Draw points
 	for (int i = 0; i < NumPoints; i++) {
 		RETRO_RotateVertex(&Ball[i], ax, ay, az);
-		RETRO_ProjectVertex(&Ball[i], distance);
+		RETRO_ProjectVertex(&Ball[i], PROJECTION_SCALE);
 
 		int x = Ball[i].sx;
 		int y = Ball[i].sy;
 		int z = -round(Ball[i].rz);
 
-		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT && z > ZMIN && z < ZMAX) {
-			int color = floor((z + abs(ZMIN)) * (64.0 / (abs(ZMIN) + ZMAX)));
+		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT && z > ZMIN) {
+			int color = (z - ZMIN) * (SHADES - 1) / (RADIUS - ZMIN);
+
 			RETRO_PutPixel(x, y, color);
 		}
 	}
@@ -42,14 +70,19 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_CreateGradientPalette(0, 64, RETRO_BLACK, RETRO_WHITE);
+	RETRO_CreateGradientPalette(0, SHADES, RETRO_BLACK, RETRO_WHITE);
 
-	// Generate ball
-	for (float alpha = 2 * M_PI; alpha > 0; alpha -= POINTSTEP) {
-		for (float beta = M_PI; beta > 0; beta -= POINTSTEP) {
-			if (NumPoints >= MAXPOINTS) {
-				RETRO_RageQuit("Too many points\n");
-			}
+	// Init points. POINTSTEP does not divide 2π or π, so the step is
+	// 2π/n_α and π/n_β instead: even in angle, both poles included,
+	// no leftover gap and no doubled meridian.
+	float alphastep = 2 * M_PI / ALPHA_STEPS;
+	float betastep = M_PI / BETA_STEPS;
+
+	for (int a = 0; a < ALPHA_STEPS; a++) {
+		for (int b = 0; b <= BETA_STEPS; b++) {
+			float alpha = a * alphastep;
+			float beta = b * betastep;
+
 			Ball[NumPoints].x = RADIUS * cos(alpha) * sin(beta);
 			Ball[NumPoints].y = RADIUS * cos(beta);
 			Ball[NumPoints].z = RADIUS * sin(alpha) * sin(beta);

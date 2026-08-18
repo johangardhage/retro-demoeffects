@@ -23,7 +23,7 @@
 
 #define RETRO_MAX_VERTICES 1000
 #define RETRO_MAX_UVS 1000
-#define RETRO_MAX_NORMALS 1000
+#define RETRO_MAX_NORMALS 1500 // a two sided mesh needs one per side of a vertex
 #define RETRO_MAX_FACES 2000
 #define RETRO_MAX_FACEVERTICES 5
 
@@ -262,6 +262,110 @@ void RETRO_InitializeFaceTangents(Model3D *model = NULL)
 }
 
 //
+// UVs that lay the whole texture over every face, in the face's own frame
+//
+// A model can arrive with its faces sharing one atlas, or with no usable UVs
+// at all. Reparametrising it here hands each face the texture entire, in a
+// frame taken from the face normal rather than from the order the face's
+// corners happen to be listed in:
+//
+//   t = n × up,  b = t × n
+//
+// where up is +y, which is screen down, so v runs down the texture the way
+// its rows do and every face carries the picture the same way up. A face
+// looking along up itself has no such t, no u on it being upright, and falls
+// back to +x. Since b follows from t, no face comes out mirrored.
+//
+// The frame is measured against the model's bounding box rather than against
+// the face, so a face on the side of the box gets the whole texture and a
+// quad keeps one parametrisation after being split into triangles. A face
+// carries its own UVs afterwards, one set per corner, and the tangent frames,
+// which are derived from the UVs, are rebuilt to match.
+//
+void RETRO_InitializeFaceUVs(Model3D *model = NULL)
+{
+	model = model ? model : RETRO_Get3DModel();
+
+	if (model->vertices == 0) {
+		return;
+	}
+
+	int uvs = 0;
+	for (int i = 0; i < model->faces; i++) {
+		uvs += model->face[i].vertices;
+	}
+	if (uvs > RETRO_MAX_UVS) {
+		RETRO_RageQuit("Too many face UV coordinates to fit the UV list\n");
+	}
+
+	// Bounding box centre and half extent
+	float minx = model->vertex[0].x, maxx = minx;
+	float miny = model->vertex[0].y, maxy = miny;
+	float minz = model->vertex[0].z, maxz = minz;
+
+	for (int i = 1; i < model->vertices; i++) {
+		minx = MIN(minx, model->vertex[i].x);
+		maxx = MAX(maxx, model->vertex[i].x);
+		miny = MIN(miny, model->vertex[i].y);
+		maxy = MAX(maxy, model->vertex[i].y);
+		minz = MIN(minz, model->vertex[i].z);
+		maxz = MAX(maxz, model->vertex[i].z);
+	}
+
+	float cx = (minx + maxx) / 2, hx = (maxx - minx) / 2;
+	float cy = (miny + maxy) / 2, hy = (maxy - miny) / 2;
+	float cz = (minz + maxz) / 2, hz = (maxz - minz) / 2;
+
+	model->uvs = 0;
+
+	for (int i = 0; i < model->faces; i++) {
+		Face *face = &model->face[i];
+
+		float inversenormallength = face->facenormal.nn > 0.0f ? 1.0f / face->facenormal.nn : 0.0f;
+		float nx = face->facenormal.nx * inversenormallength;
+		float ny = face->facenormal.ny * inversenormallength;
+		float nz = face->facenormal.nz * inversenormallength;
+
+		// t = n × (0, 1, 0)
+		float tx = -nz, ty = 0, tz = nx;
+		float tlength = sqrt(tx * tx + ty * ty + tz * tz);
+		if (tlength > 1.0e-12f) {
+			tx /= tlength;
+			ty /= tlength;
+			tz /= tlength;
+		} else {
+			tx = 1.0f, ty = 0.0f, tz = 0.0f;
+		}
+
+		// b = t × n
+		float bx = ty * nz - tz * ny;
+		float by = tz * nx - tx * nz;
+		float bz = tx * ny - ty * nx;
+
+		// The box reaches this far along each of them
+		float textent = fabs(tx) * hx + fabs(ty) * hy + fabs(tz) * hz;
+		float bextent = fabs(bx) * hx + fabs(by) * hy + fabs(bz) * hz;
+		float inversetextent = textent > 0.0f ? 1.0f / textent : 0.0f;
+		float inversebextent = bextent > 0.0f ? 1.0f / bextent : 0.0f;
+
+		for (int j = 0; j < face->vertices; j++) {
+			Vertex *vertex = &model->vertex[face->vertex[j]];
+
+			float px = vertex->x - cx, py = vertex->y - cy, pz = vertex->z - cz;
+			float u = ((px * tx + py * ty + pz * tz) * inversetextent + 1) / 2;
+			float v = ((px * bx + py * by + pz * bz) * inversebextent + 1) / 2;
+
+			model->uv[model->uvs].u = u * model->texmapwidth;
+			model->uv[model->uvs].v = v * model->texmapheight;
+			face->uv[j] = model->uvs;
+			model->uvs++;
+		}
+	}
+
+	RETRO_InitializeFaceTangents(model);
+}
+
+//
 // Load a model, scaling its UVs by scale to turn them into texels
 //
 // A model whose UVs run 0 to 1 wants the texture's width here. One that already carries
@@ -355,8 +459,12 @@ void RETRO_Save3DModel(const char *filename, Model3D *model)
 		RETRO_RageQuit("Cannot open file: %s\n", filename);
 	}
 
-	// Save header
-	fprintf(fp, "o %s\n", filename);
+	// Save header. The object name names the object within the file, so it is
+	// the file's stem rather than the path it is being written to
+	const char *stem = strrchr(filename, '/');
+	stem = stem ? stem + 1 : filename;
+	const char *extension = strrchr(stem, '.');
+	fprintf(fp, "o %.*s\n", extension ? (int)(extension - stem) : (int)strlen(stem), stem);
 
 	// Save vertices
 	for (int i = 0; i < model->vertices; i++) {

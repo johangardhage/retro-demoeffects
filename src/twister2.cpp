@@ -1,150 +1,107 @@
 //
 // Twister 2
 //
-// A textured square column, one vertical slice per screen column. The four
-// vertices live on the circle (y, z) = RAD (sin φ, cos φ) at 90°
-// steps (64 units of a 256-angle table). z is toward the viewer. φ is
+// A square column drawn one scanline at a time, as twister.cpp does, but on
+// an axis that will not hold still. At row y the four vertices sit on the
+// circle x = cx(y) + RADIUS sin(θ(y) + k·90°), k = 0..3, and both cx and θ
+// are waves running down the column off one clock:
 //
-//   φ(x, phase) = LEAN cos phase + A(phase) sin(x/4 + 2 phase)
-//   A(phase)    = TWIST_MIN + (TWIST − TWIST_MIN) · (1 + cos(phase/5)) / 2
+//   θ(y)  = TWIST · (1 + sin(phase + y · TWIST_WAVE)) / 2
+//   cx(y) = CX + SWAY · sin(phase + y · SWAY_WAVE)
 //
-// in table units, WRAP256. The twist amplitude breathes over five turns of
-// the table, so it does not lock to the lean and still closes on
-// TWISTER_PERIOD.
-// vs = φ / 32 picks which three vertices are the two visible faces
-// (the front-most of the four). Each face is a y-span of IMAGE_HEIGHT
-// texels with a 1/z shade
+// So the twist is not linear in y the way twister.cpp's is. It is a sine of
+// y whose amplitude is TWIST, two whole turns, which is what lets the column
+// corkscrew back on itself several times over rather than lean through a
+// third of a turn. And the axis itself snakes: SWAY_WAVE runs four times as
+// fast as the twist wave, so the column wanders about half a period of S
+// curve down its length while the twist is still working through an eighth
+// of its own.
 //
-//   c = 63 · ZRATE / (RAD − z + ZRATE)
+// An edge is drawn only when its left x is smaller than its right x, which
+// is the facing test for a 2D silhouette - a back edge has x_left > x_right
+// and covers nothing. Spans are half-open, so two faces sharing a vertex
+// tile exactly.
 //
-// added to the texel (0 or 64). The texture u scrolls with x + 2 phase.
-// phase lives on 1280, the lcm of the 256-table and the 320-wide scroll.
-// The column is centred at y = 159.
+// The shading is the original's, and it is not a lighting model: a face
+// starts at its own base color and steps one entry along the palette per
+// pixel drawn. A face that is nearly edge on gets a short ramp and a face
+// turned toward the viewer a long one, so the sheen stretches and squeezes
+// as the column turns. On the fire ramp that runs each face from a dark red
+// up into orange.
+//
+// phase lives on the 256-unit angle table.
+//
+// Replicated from https://github.com/root42/twister.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retroutils.h"
+#include "lib/retrocolor.h"
 
-#define RAD 40
-#define ZRATE 20
-#define LEAN 100 // table units the column leans as a whole
-#define TWIST 80 // table units of twist from one end of the column to the other
-#define TWIST_MIN 24 // and the least it falls to as the amplitude breathes
-#define TWISTER_CY 159
-#define IMAGE_WIDTH 320
-#define IMAGE_HEIGHT 32
-#define TWISTER_SPEED 60 // table units per second
-#define TWISTER_PERIOD 1280 // lcm(256, 160, 5*256): table, u = x+2t, and the breathing twist
+#define TWISTER_CX (RETRO_WIDTH / 2)
+#define TWISTER_RADIUS 32 // half the column's width
+#define TWISTER_SWAY 32 // how far the axis wanders off centre
+#define TWISTER_TWIST 512 // angle units the twist sweeps between its extremes, two whole turns
+#define TWIST_WAVE 0.125 // angle units the twist wave advances per row
+#define SWAY_WAVE 0.5 // and the axis wave, four times as fast
+#define TWISTER_SPEED 70 // angle units a second, the original's one a frame at the VGA's 70 Hz
 
-int Visible[8][3] = { {3, 0, 1}, {2, 3, 0}, {2, 3, 0}, {1, 2, 3}, {1, 2, 3}, {0, 1, 2}, {0, 1, 2}, {3, 0, 1} };
+#define FACE_COLOR 33 // base color of the first face
+#define FACE_STEP 16 // and the step from one face's base to the next
+
+#define FIRE_EMBER RETRO_RGB(0x080028) // the blue an all but dead ember glows
+
+//
+// One scanline of one face, half-open in x
+//
+// The color starts at the face's base and steps one entry per pixel from where the span
+// would have begun, so clipping the left edge shifts the ramp rather than restarting it.
+// A back-facing edge has left >= right and covers nothing, which is the silhouette test.
+//
+void DrawSpan(int left, int right, int y, unsigned char color)
+{
+	int start = left;
+
+	left = MAX(left, 0);
+	right = MIN(right, RETRO_WIDTH);
+
+	unsigned char *row = RETRO_FrameBuffer() + y * RETRO_WIDTH;
+	for (int x = left; x < right; x++) {
+		row[x] = color + (x - start);
+	}
+}
 
 void DEMO_Render(double deltatime)
 {
 	// Calculate phase
 	static double phase = 0;
-	phase = fmod(phase + deltatime * TWISTER_SPEED, TWISTER_PERIOD);
-	int iphase = (int)phase;
+	phase = fmod(phase + deltatime * TWISTER_SPEED, RETRO_SINCOS_ANGLE);
 
-	unsigned char *image = RETRO_ImageData();
+	// Draw column
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		double twist = TWISTER_TWIST * (1 + SIN(phase + y * TWIST_WAVE)) / 2;
+		double cx = TWISTER_CX + TWISTER_SWAY * SIN(phase + y * SWAY_WAVE);
 
-	// Constant over the column, so worked out once rather than per slice
-	double twist = TWIST_MIN + (TWIST - TWIST_MIN) * (1 + COS(iphase / 5.0)) / 2;
-
-	// Draw column slices
-	for (int x = 0; x < RETRO_WIDTH; x++) {
-		int angle = WRAP(LEAN * COS(iphase) + twist * SIN(x / 4.0 + iphase * 2), RETRO_SINCOS_ANGLE);
-		int vs = angle / (RETRO_SINCOS_ANGLE / 8);
-
-		int i0 = Visible[vs][0];
-		int i1 = Visible[vs][1];
-		int i2 = Visible[vs][2];
-
-		double y0 = RAD * SIN(angle + i0 * 64);
-		double z0 = RAD * COS(angle + i0 * 64);
-		double y1 = RAD * SIN(angle + i1 * 64);
-		double z1 = RAD * COS(angle + i1 * 64);
-		double y2 = RAD * SIN(angle + i2 * 64);
-		double z2 = RAD * COS(angle + i2 * 64);
-
-		int iy0 = y0;
-		int iy1 = y1;
-		int iy2 = y2;
-
-		float c0 = (ZRATE * 63) / (RAD - z0 + ZRATE);
-		float c1 = (ZRATE * 63) / (RAD - z1 + ZRATE);
-		float c2 = (ZRATE * 63) / (RAD - z2 + ZRATE);
-
-		float dm0 = 0;
-		float dc0 = 0;
-		int dh0 = iy1 - iy0;
-		if (dh0 != 0) {
-			dm0 = (float)IMAGE_HEIGHT / dh0;
-			dc0 = (c1 - c0) / dh0;
+		int x[4];
+		for (int j = 0; j < 4; j++) {
+			x[j] = lround(cx + TWISTER_RADIUS * SIN(twist + j * (RETRO_SINCOS_ANGLE / 4)));
 		}
 
-		float dm1 = 0;
-		float dc1 = 0;
-		int dh1 = iy2 - iy1;
-		if (dh1 != 0) {
-			dm1 = (float)IMAGE_HEIGHT / dh1;
-			dc1 = (c2 - c1) / dh1;
-		}
-
-		// Move scroll
-		int u = WRAP(x + iphase * 2, IMAGE_WIDTH);
-		float pm0 = 0;
-		float pm1 = 0;
-		int y = TWISTER_CY + iy0;
-
-		for (int i = 0; i < dh0; i++) {
-			unsigned char color = image[(int)pm0 * IMAGE_WIDTH + u];
-			RETRO_PutPixel(x, y, c0 + color);
-			c0 += dc0;
-			pm0 += dm0;
-			y++;
-		}
-
-		for (int i = 0; i < dh1; i++) {
-			unsigned char color = image[(int)pm1 * IMAGE_WIDTH + u];
-			RETRO_PutPixel(x, y, c1 + color);
-			c1 += dc1;
-			pm1 += dm1;
-			y++;
+		for (int j = 0; j < 4; j++) {
+			DrawSpan(x[j], x[(j + 1) % 4], y, FACE_COLOR + j * FACE_STEP);
 		}
 	}
-}
-
-void PrepareImage(const char *loadfile, const char *savefile)
-{
-	RETRO_LoadImage(loadfile);
-	unsigned char *image = RETRO_ImageData();
-	RETRO_Palette *palette = RETRO_ImagePalette();
-	for (int i = 0; i < IMAGE_WIDTH * IMAGE_HEIGHT; i++) {
-		if (image[i] != 0) {
-			image[i] = 64;
-		} else {
-			image[i] = 0;
-		}
-	}
-	for (int i = 0; i < 64; i++) {
-		palette[i].r = i;
-		palette[i].g = 0;
-		palette[i].b = i;
-	}
-	for (int i = 64; i < 128; i++) {
-		palette[i].r = 0;
-		palette[i].g = i;
-		palette[i].b = i;
-	}
-	RETRO_SaveImage(savefile, image, palette, IMAGE_WIDTH, IMAGE_HEIGHT);
-	RETRO_FreeImage();
 }
 
 void DEMO_Initialize(void)
 {
-	//	PrepareImage("assets/image.pcx", "assets/twister_320x32.pcx");
-	RETRO_LoadImage("assets/twister_320x32.pcx");
-	RETRO_SetPalette(RETRO_ImagePalette());
+	// Init palette. The original's fire ramp: a dying ember glows blue, warms through
+	// dark red into scarlet, then holds red while the green climbs to yellow, and only
+	// the last quarter lets the blue back in to reach white.
+	RETRO_CreateGradientPalette(0, 8, RETRO_BLACK, FIRE_EMBER);
+	RETRO_CreateGradientPalette(8, 24, FIRE_EMBER, RETRO_DARKRED);
+	RETRO_CreateGradientPalette(24, 56, RETRO_DARKRED, RETRO_SCARLET);
+	RETRO_CreateGradientPalette(56, 187, RETRO_SCARLET, RETRO_YELLOW);
+	RETRO_CreateGradientPalette(187, RETRO_COLORS, RETRO_YELLOW, RETRO_WHITE);
 }

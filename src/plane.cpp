@@ -9,10 +9,11 @@
 //   s = a / c,   t = b / c
 //
 // with (a, b, c) linear in (sx, sy). Along a scanline c is constant, so
-// (s, t) is a DDA in 24-bit fixed point (× 2²⁴); the texel is bits 16–23
-// (s · 256). bp = (φ, −16, φ) walks the texture along the diagonal; φ
-// lives on 256, one texture period. Rows above y = 140, near the horizon
-// at y = H/2, are left undrawn.
+// (s, t) advances by a constant floating-point step for each pixel. Multiplying
+// those coordinates by 256 gives the wrapped texture coordinates. bp =
+// (φ, −16, φ) walks the texture along the diagonal; φ lives on 256, one
+// texture period. Rows above y = 140, near the horizon at y = H/2, are left
+// undrawn.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -22,7 +23,6 @@
 
 #define PLANE_DISTANCE 320
 #define PLANE_PERIOD 256 // one texture width; U, V and φ share it
-#define PLANE_FIXED (1 << 24) // 24-bit fixed; texel in bits 16–23
 #define PLANE_EPSILON 65536.0f // closest c gets to the horizon before 1/c is capped
 
 void DEMO_Render(double deltatime)
@@ -58,15 +58,16 @@ void DEMO_Render(double deltatime)
 		// Near the horizon c goes to zero. The guard keeps its sign.
 		float ic = fabs(c) > PLANE_EPSILON ? 1 / c : copysignf(1 / PLANE_EPSILON, c);
 
-		// Wrapped into one texture period before it is fixed-pointed, or a row
-		// near the horizon overflows int
-		int u = (int)(fmod(a * ic, (double)PLANE_PERIOD) * PLANE_FIXED);
-		int v = (int)(fmod(b * ic, (double)PLANE_PERIOD) * PLANE_FIXED);
-		int du = (int)(ax * ic * PLANE_FIXED);
-		int dv = (int)(bx * ic * PLANE_FIXED);
+		// Start within one plane period, then advance linearly across the row.
+		float u = fmodf(a * ic, PLANE_PERIOD);
+		float v = fmodf(b * ic, PLANE_PERIOD);
+		float du = ax * ic;
+		float dv = bx * ic;
 
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			unsigned char color = image[((v >> 8) & 0xff00) + ((u >> 16) & 0xff)];
+			int tx = WRAP(u * PLANE_PERIOD, PLANE_PERIOD);
+			int ty = WRAP(v * PLANE_PERIOD, PLANE_PERIOD);
+			unsigned char color = image[ty * PLANE_PERIOD + tx];
 			RETRO_PutPixel(x, y, color);
 
 			u += du;

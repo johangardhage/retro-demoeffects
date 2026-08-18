@@ -56,7 +56,7 @@ void DEMO_Initialize(void)
 	// pyramid contains two opposite triangle pairs: one pair has outward winding
 	// and contributes 1, while the other has reversed winding and contributes 2.
 	// This intentional winding pattern creates the crossed Glenz appearance.
-	Model3D *model = RETRO_Load3DModel("assets/glenz3.obj");
+	Model3D *model = RETRO_Load3DModel("assets/tetrakishexahedron.obj");
 	int c[24] = { 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 1, 1, 2, 2 };
 
 	// Keep the three nonzero contributions in separate bits: front-facing groups

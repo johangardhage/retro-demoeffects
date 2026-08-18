@@ -1,8 +1,9 @@
 //
 // Lens
 //
-// A circular magnifier bouncing over a still picture. The disc is a spherical
-// cap: the sphere that meets the rim with height LENS_ZOOM has
+// A circular magnifier tracing a Lissajous figure over a still picture. The
+// disc is a spherical cap: the sphere that meets the rim with height
+// LENS_ZOOM has
 //
 //   z(r) = sqrt(LENS_ZOOM² + R² - r²)
 //
@@ -11,7 +12,12 @@
 // undisplaced; at the centre shift < 1, so the picture is pulled inward
 // (magnified). Offsets are lround'ed, packed as iy · WIDTH + ix, and
 // mirrored into the four quadrants. A packed 0 is undisplaced: the blit
-// already shows that pixel. The disc bounces off a LENS_MARGIN inset.
+// already shows that pixel.
+//
+// The disc rides a 2:3 Lissajous figure, x on twice the base rate and y on
+// three times, so the path closes after one turn of the phase. Both swings
+// are cut to leave a LENS_MARGIN inset, which is what keeps the disc on
+// screen - the draw is unclipped and relies on that.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -24,22 +30,18 @@
 #define LENS_ZOOM 20 // sphere height at the rim, in pixels
 #define LENS_MARGIN 3 // kept between the disc and the screen edge
 
+#define LENS_XCENTER ((RETRO_WIDTH - LENS_WIDTH) / 2)
+#define LENS_XAMPLITUDE (LENS_XCENTER - LENS_MARGIN)
+#define LENS_YCENTER ((RETRO_HEIGHT - LENS_HEIGHT) / 2)
+#define LENS_YAMPLITUDE (LENS_YCENTER - LENS_MARGIN)
+#define LENS_XPHASE (RETRO_SINCOS_ANGLE / 16) // offset that keeps the figure from opening on a crossing
+#define LENS_PERIOD 14.6 // seconds for the figure to close
+
 struct Lens {
-	double x = 16;
-	double y = 16;
-	int xspeed = 100;
-	int yspeed = 100;
+	double x;
+	double y;
 	int buffer[LENS_WIDTH * LENS_HEIGHT];
 } Lens1;
-
-void ReflectPosition(double *position, int *speed, double minimum, double maximum)
-{
-	while (*position < minimum || *position > maximum) {
-		if (*position < minimum) *position = 2 * minimum - *position;
-		else *position = 2 * maximum - *position;
-		*speed = -*speed;
-	}
-}
 
 void DrawLens(Lens *lens, unsigned char *image)
 {
@@ -58,10 +60,10 @@ void DEMO_Render(double deltatime)
 	unsigned char *image = RETRO_ImageData();
 
 	// Calculate movement
-	Lens1.x += Lens1.xspeed * deltatime;
-	Lens1.y += Lens1.yspeed * deltatime;
-	ReflectPosition(&Lens1.x, &Lens1.xspeed, LENS_MARGIN, RETRO_WIDTH - LENS_WIDTH - LENS_MARGIN);
-	ReflectPosition(&Lens1.y, &Lens1.yspeed, LENS_MARGIN, RETRO_HEIGHT - LENS_HEIGHT - LENS_MARGIN);
+	static double phase = 0;
+	phase = fmod(phase + deltatime * RETRO_SINCOS_ANGLE / LENS_PERIOD, RETRO_SINCOS_ANGLE);
+	Lens1.x = LENS_XCENTER + LENS_XAMPLITUDE * COS(2 * phase + LENS_XPHASE);
+	Lens1.y = LENS_YCENTER + LENS_YAMPLITUDE * COS(3 * phase);
 
 	// Draw background
 	RETRO_Blit(image);

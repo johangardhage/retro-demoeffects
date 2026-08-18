@@ -41,7 +41,7 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(63, 127, RETRO_RED, RETRO_YELLOW);
 	RETRO_CreateGradientPalette(127, 190, RETRO_YELLOW, RETRO_WHITE);
 
-	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
+	Model3D *model = RETRO_Load3DModel("assets/cubequads.obj");
 	model->c = 80;
 	model->cintensity = 100;
 }

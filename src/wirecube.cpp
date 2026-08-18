@@ -36,6 +36,6 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(0, RETRO_BLACK);
 	RETRO_SetColor(1, RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS));
 
-	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
+	Model3D *model = RETRO_Load3DModel("assets/cubequads.obj");
 	model->c = 1;
 }

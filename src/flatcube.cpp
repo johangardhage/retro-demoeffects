@@ -39,7 +39,7 @@ void DEMO_Initialize(void)
 	RETRO_CreatePlasticPhongPalette(30);
 
 	// The faces are not shaded, so spread their colors over the palette
-	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
+	Model3D *model = RETRO_Load3DModel("assets/cubequads.obj");
 	for (int i = 0; i < model->faces; i++) {
 		model->face[i].c = (i + 1) * 234 / model->faces;
 	}

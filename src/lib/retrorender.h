@@ -177,11 +177,13 @@ void RETRO_RenderPhongModel(Model3D *model)
 	light.ny = RETRO_Render.lightsource.rny;
 	light.nz = RETRO_Render.lightsource.rnz;
 	light.nn = RETRO_Render.lightsource.nn;
-	light.c = model->c;
 	light.cintensity = model->cintensity;
 
 	for (int i = 0; i < model->visiblefaces; i++) {
 		Face *face = &model->face[model->visibleface[i]];
+		// The ramp the face is shaded in, as in the flat and gouraud renderers,
+		// so one model can carry a material per face
+		light.c = model->c + face->c;
 		PolygonPoint points[RETRO_MAX_FACEVERTICES];
 
 		for (int j = 0; j < face->vertices; j++) {
@@ -242,8 +244,9 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 		} else if (shadertype == RETRO_SHADE_TABLE) {
 			// Texture mapped through the shade table at a fixed light level, with
 			// no light source involved. face->c offsets it per face, so a model
-			// can carry its own baked lighting
-			int shade = model->c + face->c;
+			// can carry its own baked lighting, and the sum is a shade like any
+			// other, so it is held to the ramp
+			int shade = CLAMP128(model->c + face->c);
 			if (bumpmapping) {
 				// Same drawer as flat+bump: one shade and one face normal. The
 				// tilt only moves the baked shade, so a flat patch stays at that
@@ -336,14 +339,19 @@ void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 	}
 }
 
-void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE, Model3D *model = NULL)
+// One model, one depth range, so the depth buffer is cleared here by default.
+// A demo drawing several models that interleave passes cleardepth false and
+// clears once a frame itself, or each model would erase the depth of the ones
+// before it. Glenz is exempt either way: it adds palette indices, so it
+// depends on the order the sort gives it.
+void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE, Model3D *model = NULL, bool cleardepth = true)
 {
 	model = model ? model : RETRO_Get3DModel();
 	if (model == NULL) return;
 
-	// One model, one depth range. Glenz is exempt: it adds palette indices, so
-	// it depends on the order the sort gives it.
-	RETRO_ClearDepthBuffer();
+	if (cleardepth) {
+		RETRO_ClearDepthBuffer();
+	}
 
 	switch (rendertype) {
 	case RETRO_POLY_DOT:

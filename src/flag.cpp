@@ -39,8 +39,9 @@
 #define CROSS_TOP (FLAG_HEIGHT * 4 / 10)
 #define CROSS_BOTTOM (FLAG_HEIGHT * 6 / 10)
 
-// A shade ramp per color of the flag
-#define FLAG_COLORS 120
+// A shade ramp per color of the flag, the two splitting the palette evenly so
+// that every entry carries a shade
+#define FLAG_COLORS (RETRO_COLORS / 2)
 #define BLUE_SHADES 0
 #define YELLOW_SHADES FLAG_COLORS
 

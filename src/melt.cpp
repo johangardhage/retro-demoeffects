@@ -1,72 +1,83 @@
 //
 // Melt
 //
-// Orbiting discs painted into a framebuffer that is never cleared, then
-// one ring blur per step. Blob i follows
+// Two vertical melting effects applied to a still picture.
 //
-//   x = W/2 + (40 + 22 i) cos(phase (0.6 + 0.23 i) + 1.3 i)
-//   y = H/2 + (30 + 16 i) sin(phase (0.9 + 0.31 i) + 2.1 i)
+// The first repeats every row of the picture an increasing number of times.
+// The image is progressively crushed toward the top while the rows that remain
+// visible stretch into thick horizontal bands, then it smoothly expands back
+// to its original shape.
 //
-// phase lives on 200π (every rate is a multiple of 1/100). The discs seed
-// 255; the blur is
+// The second displays the picture normally down to a moving horizontal line,
+// then fills everything below it by repeating the row at that line. As the
+// boundary travels down and back up, the repeated strip pours over and uncovers
+// the picture like a vertical curtain.
 //
-//   T' = max(0, mean(8 neighbours) − 1)
-//
-// with no self term (RETRO_BLUR_RING), so heat spreads outward and the
-// seed itself is replaced. Every tap reads the previous step, so the ring
-// stays symmetric. The −1 is extra cooling. How far the trails travel
-// follows the step rate, not the orbital speed.
+// Space resets the animation and switches between the two effects.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
 
-#define NUM_BLOBS 5
-#define BLOB_RADIUS 4
-#define MELT_PERIOD (200 * M_PI)
+#define MSL_MAX 31
+#define SCANLINES (RETRO_HEIGHT * 2)
+#define MSL_STEPS_PER_SECOND 35.0
+#define FREEZE_STEPS_PER_SECOND 70.0
 
-void DrawBlob(int xc, int yc, unsigned char color)
+enum MeltMode { MELT_MAXIMUM_SCAN_LINE, MELT_FREEZE_LINE_OFFSET };
+
+MeltMode Mode = MELT_FREEZE_LINE_OFFSET;
+double MeltPosition = 0;
+int MeltDirection = 1;
+
+void DEMO_Update(double deltatime)
 {
-	for (int y = -BLOB_RADIUS; y <= BLOB_RADIUS; y++) {
-		for (int x = -BLOB_RADIUS; x <= BLOB_RADIUS; x++) {
-			if (x * x + y * y <= BLOB_RADIUS * BLOB_RADIUS) {
-				int px = xc + x;
-				int py = yc + y;
-				if (px >= 0 && px < RETRO_WIDTH && py >= 0 && py < RETRO_HEIGHT) {
-					RETRO_PutPixel(px, py, color);
-				}
-			}
+	if (RETRO_KeyPressed(SDL_SCANCODE_SPACE)) {
+		Mode = Mode == MELT_MAXIMUM_SCAN_LINE ? MELT_FREEZE_LINE_OFFSET : MELT_MAXIMUM_SCAN_LINE;
+		MeltPosition = 0;
+		MeltDirection = 1;
+	}
+
+	double maximum = Mode == MELT_MAXIMUM_SCAN_LINE ? MSL_MAX : SCANLINES;
+	double speed = Mode == MELT_MAXIMUM_SCAN_LINE ? MSL_STEPS_PER_SECOND : FREEZE_STEPS_PER_SECOND;
+	MeltPosition += MeltDirection * speed * deltatime;
+
+	// Reflect overshoot at an endpoint so motion stays smooth if a frame catches up.
+	while (MeltPosition < 0 || MeltPosition > maximum) {
+		if (MeltPosition > maximum) {
+			MeltPosition = 2 * maximum - MeltPosition;
+			MeltDirection = -1;
+		} else {
+			MeltPosition = -MeltPosition;
+			MeltDirection = 1;
 		}
 	}
 }
 
-//
-// Advance the melt in fixed steps. It is one ring blur per step into a framebuffer that
-// is never cleared, so how far the trails spread follows the step rate, not the orbits.
-//
-void DEMO_Update(double deltatime)
+void DEMO_Render(double deltatime)
 {
-	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime, MELT_PERIOD);
+	unsigned char *image = RETRO_ImageData();
+	unsigned char *buffer = RETRO_FrameBuffer();
 
-	// Draw orbiting blobs
-	for (int i = 0; i < NUM_BLOBS; i++) {
-		int x = RETRO_WIDTH / 2 + cos(phase * (0.6 + i * 0.23) + i * 1.3) * (40 + i * 22);
-		int y = RETRO_HEIGHT / 2 + sin(phase * (0.9 + i * 0.31) + i * 2.1) * (30 + i * 16);
-		DrawBlob(x, y, 255);
+	if (Mode == MELT_MAXIMUM_SCAN_LINE) {
+		int repeat = (int)MeltPosition + 1;
+		for (int y = 0; y < RETRO_HEIGHT; y++) {
+			memcpy(buffer + y * RETRO_WIDTH, image + (y / repeat) * RETRO_WIDTH, RETRO_WIDTH);
+		}
+	} else {
+		// The animation has two scanline steps for each image row. Once the
+		// moving boundary reaches a row, that row repeats below it.
+		int freezeRow = MIN((int)MeltPosition / 2, RETRO_HEIGHT - 1);
+		for (int y = 0; y < RETRO_HEIGHT; y++) {
+			int sourceRow = MIN(y, freezeRow);
+			memcpy(buffer + y * RETRO_WIDTH, image + sourceRow * RETRO_WIDTH, RETRO_WIDTH);
+		}
 	}
-
-	// Melt the trails outwards
-	RETRO_Blur(RETRO_BLUR_RING, 1);
 }
 
 void DEMO_Initialize(void)
 {
-	// Init palette
-	RETRO_CreateGradientPalette(0, 128, RETRO_BLACK, RETRO_AZURE);
-	RETRO_CreateGradientPalette(128, RETRO_COLORS, RETRO_AZURE, RETRO_WHITE);
+	RETRO_LoadImage("assets/monkey_320x240.pcx");
+	RETRO_SetPalette(RETRO_ImagePalette());
 }

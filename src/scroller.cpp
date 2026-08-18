@@ -18,7 +18,7 @@
 #define FONT_WIDTH 16
 #define FONT_HEIGHT 16
 #define IMAGE_WIDTH 944 // atlas pitch; 59 glyphs × 16
-#define SCROLL_TEXT "                    HORIZONTAL SCROLLER..."
+#define SCROLL_TEXT "                    RETRO DEMOEFFECTS..."
 #define SCROLL_LENGTH (sizeof(SCROLL_TEXT) - 1)
 #define SCROLL_WIDTH (FONT_WIDTH * SCROLL_LENGTH)
 #define SCROLL_SPEED 400 // texels per second

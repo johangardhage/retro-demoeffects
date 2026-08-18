@@ -106,6 +106,25 @@ void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 	RETRO_RotateFaceNormals(model);
 }
 
+// p' = R p + t, the translation half of a model's placement. It goes on the
+// rotated coordinates, so the model turns about its own centre and is then
+// carried to where it stands. Added to the model's own vertices instead it
+// would be rotated too, and the model would swing around the origin.
+//
+// RETRO_ProjectModel's screen centre cannot stand in for this. That offset is
+// in pixels, applied after the divide, so it neither shrinks with distance nor
+// moves the model in z at all.
+void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = NULL)
+{
+	model = model ? model : RETRO_Get3DModel();
+
+	for (int i = 0; i < model->vertices; i++) {
+		model->vertex[i].rx += tx;
+		model->vertex[i].ry += ty;
+		model->vertex[i].rz += tz;
+	}
+}
+
 void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_SCALE, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), int eye = RETRO_PROJECTION_EYE)
 {
 	float depth = scale * vertex->rz + eye;

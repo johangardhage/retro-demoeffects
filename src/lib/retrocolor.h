@@ -39,6 +39,7 @@ enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 
 #define RETRO_BLACK RETRO_Palette{ 0, 0, 0 }
 #define RETRO_GRAY RETRO_Palette{ 128, 128, 128 }
+#define RETRO_LIGHTGRAY RETRO_Palette{ 200, 200, 200 }
 #define RETRO_WHITE RETRO_Palette{ 255, 255, 255 }
 #define RETRO_RED RETRO_Palette{ 255, 0, 0 }
 #define RETRO_GREEN RETRO_Palette{ 0, 255, 0 }
@@ -46,10 +47,14 @@ enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 #define RETRO_CYAN RETRO_Palette{ 0, 255, 255 }
 #define RETRO_MAGENTA RETRO_Palette{ 255, 0, 255 }
 #define RETRO_YELLOW RETRO_Palette{ 255, 255, 0 }
+#define RETRO_SCARLET RETRO_Palette{ 255, 36, 0 }
 #define RETRO_ORANGE RETRO_Palette{ 255, 128, 0 }
+#define RETRO_AMBER RETRO_Palette{ 255, 191, 0 }
 #define RETRO_GOLD RETRO_Palette{ 254, 204, 0 }
 #define RETRO_TAN RETRO_Palette{ 210, 180, 140 }
 #define RETRO_PURPLE RETRO_Palette{ 128, 0, 255 }
+#define RETRO_INDIGO RETRO_Palette{ 75, 0, 130 }
+#define RETRO_VIOLET RETRO_Palette{ 148, 0, 211 }
 #define RETRO_PINK RETRO_Palette{ 255, 128, 192 }
 #define RETRO_HOTPINK RETRO_Palette{ 255, 105, 180 }
 #define RETRO_DEEPPINK RETRO_Palette{ 219, 59, 150 }
@@ -61,6 +66,7 @@ enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 #define RETRO_LIGHTBLUE RETRO_Palette{ 102, 170, 255 }
 #define RETRO_DARKRED RETRO_Palette{ 128, 0, 0 }
 #define RETRO_DARKGREEN RETRO_Palette{ 0, 128, 0 }
+#define RETRO_SPRINGGREEN RETRO_Palette{ 30, 230, 90 }
 #define RETRO_DARKBLUE RETRO_Palette{ 0, 0, 128 }
 #define RETRO_DARKMAGENTA RETRO_Palette{ 139, 0, 139 }
 #define RETRO_BLUEBLACK RETRO_Palette{ 0, 0, 48 }
@@ -190,6 +196,22 @@ void RETRO_CreatePhongRamp(RETRO_Palette *ramp, int shades, RETRO_Palette face, 
 }
 
 //
+// Lay one material's ramp over the colors start..end, the phong counterpart of
+// RETRO_CreateGradientPalette. The end color is not written, so a palette can
+// carry a material per range and a model can pick between them per face
+//
+void RETRO_CreatePhongPalette(int start, int end, RETRO_Palette face, float specularity = RETRO_K_SPECULAR, float falloff = RETRO_K_FALLOFF, RETRO_Palette *palette = NULL, int colormax = 255)
+{
+	int shades = MIN(end - start, RETRO_PHONG_SHADES);
+	RETRO_Palette ramp[RETRO_PHONG_SHADES];
+	RETRO_CreatePhongRamp(ramp, shades, face, specularity, falloff, colormax);
+
+	for (int i = 0; i < shades; i++) {
+		RETRO_SetColor(start + i, ramp[i], palette);
+	}
+}
+
+//
 // Fill a palette with one material, keeping entry 0 black and laying the ramp
 // over the rest. Without a palette the colors are set directly, otherwise they
 // are written to it, in both cases scaled to colormax so that a 6-bit palette
@@ -197,14 +219,8 @@ void RETRO_CreatePhongRamp(RETRO_Palette *ramp, int shades, RETRO_Palette face, 
 //
 void RETRO_CreateMaterialPalette(RETRO_Palette face, float specularity, float falloff, RETRO_Palette *palette, int colormax)
 {
-	RETRO_Palette ramp[RETRO_PHONG_SHADES];
-	RETRO_CreatePhongRamp(ramp, RETRO_PHONG_SHADES, face, specularity, falloff, colormax);
-
 	RETRO_SetColor(0, RETRO_BLACK, palette);
-
-	for (int i = 0; i < RETRO_PHONG_SHADES; i++) {
-		RETRO_SetColor(RETRO_PHONG_OFFSET + i, ramp[i], palette);
-	}
+	RETRO_CreatePhongPalette(RETRO_PHONG_OFFSET, RETRO_PHONG_OFFSET + RETRO_PHONG_SHADES, face, specularity, falloff, palette, colormax);
 }
 
 //
@@ -540,6 +556,48 @@ void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 			// A pixel landing dead center on an odd-sized map has nz of exactly
 			// 1, one past the last shade, so the index still needs clamping
 			buffer[y * width + x] = MIN(paletteindex, RETRO_COLORS - 1);
+		}
+	}
+}
+
+//
+// A ball sprite: the front of a lit sphere, on a ramp of its own.
+//
+// The disk is the hemisphere facing the viewer, shaded by N·L into ramp
+// entries [color, color + shades), and everything outside it is entry 0,
+// which the sprite drawers read as transparent. RETRO_CreatePhongMap fills
+// that outside with the darkest material shade instead, because a lookup has
+// to answer everywhere it is asked; a sprite has to stop at its own edge.
+//
+// depthmap, if it is given, takes the front hemisphere itself: nz over the
+// disk and zero outside it. That is what RETRO_DrawDepthSprite reads to write
+// each pixel at the depth of the sphere's surface, with the ball's radius as
+// its thickness.
+//
+// The light needs no normalizing by the caller. Several of these on ramps of
+// their own, and one map per ramp, is how a demo dims a ball by depth without
+// touching its shading.
+//
+void RETRO_CreateBallMap(unsigned char *buffer, float *depthmap, int size, int color, int shades, float lightx = -0.4f, float lighty = -0.4f, float lightz = 0.82f)
+{
+	float centre = (size - 1) * 0.5f;
+	float length = sqrt(lightx * lightx + lighty * lighty + lightz * lightz);
+
+	for (int y = 0; y < size; y++) {
+		float ny = (y - centre) / centre;
+		for (int x = 0; x < size; x++) {
+			float nx = (x - centre) / centre;
+			float radiussquared = nx * nx + ny * ny;
+
+			int paletteindex = 0;
+			float nz = 0.0f;
+			if (radiussquared <= 1.0f) {
+				nz = sqrt(1.0f - radiussquared);
+				float lambert = (nx * lightx + ny * lighty + nz * lightz) / length;
+				paletteindex = color + MIN((int)(RETRO_ShadeFromLambert(lambert) * shades), shades - 1);
+			}
+			buffer[y * size + x] = MIN(paletteindex, RETRO_COLORS - 1);
+			if (depthmap) depthmap[y * size + x] = nz;
 		}
 	}
 }

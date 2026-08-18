@@ -1048,4 +1048,59 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 	}
 }
 
+//
+// A sprite, depth tested against a surface of its own.
+//
+// The map is flat; what it stands for need not be. A second map gives, per
+// texel, how far in front of the sprite's own depth that texel's surface
+// sits, as a fraction of thickness, so the pixel is written at
+//
+//   q' = 1 / (1 / q - thickness * depthmap)
+//
+// and not at the depth the sprite was placed at. Two sprites then resolve on
+// the curve where the surfaces they stand for meet, and that curve moves as
+// they move. Ordering whole sprites by their placed depth instead hands the
+// entire overlap to whichever is nearer, so the moment two of them cross it
+// flips over in a single frame.
+//
+// A ball is the obvious case: RETRO_CreateBallMap fills the depth map with
+// the front hemisphere and thickness is the ball's radius. Anything else with
+// a front surface works the same way, and a depth map of zeroes is a flat
+// sprite standing square on at the depth it was given.
+//
+// thickness is in the units depth is measured in, which is a length in the
+// model times whatever scale the projection was given. Transparency is the
+// alpha entry, as in RETRO_DrawSprite, not the shape of the map.
+//
+void RETRO_DrawDepthSprite(float sx, float sy, float q, float size, float thickness, unsigned char *map, float *depthmap, int mapsize, unsigned char alpha = 0, unsigned char *buffer = RETRO.framebuffer)
+{
+	if (q <= 0.0f || size <= 0.0f) return;
+
+	float half = size / 2;
+	int xstart = MAX((int)ceil(sx - half - 0.5f), 0);
+	int xend = MIN((int)ceil(sx + half - 0.5f), RETRO_WIDTH);
+	int ystart = MAX((int)ceil(sy - half - 0.5f), 0);
+	int yend = MIN((int)ceil(sy + half - 0.5f), RETRO_HEIGHT);
+	float spritedepth = 1.0f / q;
+
+	for (int y = ystart; y < yend; y++) {
+		int v = CLAMP((int)(((y + 0.5f) - sy + half) * mapsize / size), 0, mapsize - 1);
+		for (int x = xstart; x < xend; x++) {
+			int u = CLAMP((int)(((x + 0.5f) - sx + half) * mapsize / size), 0, mapsize - 1);
+
+			unsigned char color = map[v * mapsize + u];
+			if (color == alpha) continue;
+
+			// The surface the texel stands for, not the depth the sprite was placed at
+			float pixeldepth = spritedepth - thickness * depthmap[v * mapsize + u];
+			if (pixeldepth <= 1.0f) continue;
+
+			int offset = y * RETRO_WIDTH + x;
+			if (RETRO_DepthTest(offset, 1.0f / pixeldepth)) {
+				buffer[offset] = color;
+			}
+		}
+	}
+}
+
 #endif

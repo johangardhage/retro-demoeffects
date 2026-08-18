@@ -42,7 +42,7 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(8, 190, RETRO_BLACK, RETRO_MAGENTA);
 	RETRO_CreateGradientPalette(190, RETRO_COLORS, RETRO_MAGENTA, RETRO_WHITE);
 
-	Model3D *model = RETRO_Load3DModel("assets/cube4.obj");
+	Model3D *model = RETRO_Load3DModel("assets/cubequads.obj");
 	int c[6] = {30, 30, 30, 30, 30, 30};
 	for (int i = 0; i < model->faces; i++) {
 		model->face[i].c = c[i];

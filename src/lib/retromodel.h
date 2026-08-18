@@ -50,6 +50,8 @@ struct Face {
 	int c;								// Front-facing color
 	int backc;							// Back-facing color; zero makes that side transparent
 	Normal facenormal;					// Face normal
+	Normal tangent;						// Surface direction of +u, for bump mapping
+	Normal bitangent;					// and of +v
 	bool visible;						// Passes the near-plane and front-facing tests
 	float z;							// Z center, used for Quicksort
 };
@@ -155,6 +157,111 @@ void RETRO_InitializeFaceNormals(Model3D *model = NULL)
 }
 
 //
+// Tangent frame of each face, from its UV parametrisation
+//
+// A bump map is a height field over (u, v), so its gradient tilts along dP/du
+// and dP/dv. Both come from the two edges of the face and the UVs at its
+// corners (Lengyel):
+//
+//   e1 = P1 - P0,  e2 = P2 - P0
+//   T  = ( e1 dv2 - e2 dv1) / (du1 dv2 - du2 dv1)
+//   B  = ( e2 du1 - e1 du2) / (du1 dv2 - du2 dv1)
+//
+// then Gram-Schmidt against the face normal, so a skewed UV layout does not
+// shear the tilt. A face with no usable UVs falls back to any frame
+// orthogonal to its normal.
+//
+void RETRO_InitializeFaceTangents(Model3D *model = NULL)
+{
+	model = model ? model : RETRO_Get3DModel();
+
+	for (int i = 0; i < model->faces; i++) {
+		Face *face = &model->face[i];
+
+		float inversenormallength = face->facenormal.nn > 0.0f ? 1.0f / face->facenormal.nn : 0.0f;
+		float nx = face->facenormal.nx * inversenormallength;
+		float ny = face->facenormal.ny * inversenormallength;
+		float nz = face->facenormal.nz * inversenormallength;
+
+		float tx = 0, ty = 0, tz = 0, bx = 0, by = 0, bz = 0;
+		bool derived = false;
+
+		if (model->uvs > 0 && face->vertices >= 3) {
+			Vertex *p0 = &model->vertex[face->vertex[0]];
+			Vertex *p1 = &model->vertex[face->vertex[1]];
+			Vertex *p2 = &model->vertex[face->vertex[2]];
+			UV *t0 = &model->uv[face->uv[0]];
+			UV *t1 = &model->uv[face->uv[1]];
+			UV *t2 = &model->uv[face->uv[2]];
+
+			float e1x = p1->x - p0->x, e1y = p1->y - p0->y, e1z = p1->z - p0->z;
+			float e2x = p2->x - p0->x, e2y = p2->y - p0->y, e2z = p2->z - p0->z;
+			float du1 = t1->u - t0->u, dv1 = t1->v - t0->v;
+			float du2 = t2->u - t0->u, dv2 = t2->v - t0->v;
+
+			float determinant = du1 * dv2 - du2 * dv1;
+			if (fabs(determinant) > 1.0e-12f) {
+				float r = 1.0f / determinant;
+				tx = (e1x * dv2 - e2x * dv1) * r;
+				ty = (e1y * dv2 - e2y * dv1) * r;
+				tz = (e1z * dv2 - e2z * dv1) * r;
+				bx = (e2x * du1 - e1x * du2) * r;
+				by = (e2y * du1 - e1y * du2) * r;
+				bz = (e2z * du1 - e1z * du2) * r;
+				derived = true;
+			}
+		}
+
+		if (!derived) {
+			// Any direction not parallel to the normal
+			tx = fabs(nx) < 0.9f ? 1.0f : 0.0f;
+			ty = fabs(nx) < 0.9f ? 0.0f : 1.0f;
+			tz = 0.0f;
+			bx = ny * tz - nz * ty;
+			by = nz * tx - nx * tz;
+			bz = nx * ty - ny * tx;
+		}
+
+		// Gram-Schmidt: drop the part of T along N, then of B along both
+		float nt = nx * tx + ny * ty + nz * tz;
+		tx -= nx * nt;
+		ty -= ny * nt;
+		tz -= nz * nt;
+		float tlength = sqrt(tx * tx + ty * ty + tz * tz);
+		if (tlength > 1.0e-12f) {
+			tx /= tlength;
+			ty /= tlength;
+			tz /= tlength;
+		}
+
+		float nb = nx * bx + ny * by + nz * bz;
+		float tb = tx * bx + ty * by + tz * bz;
+		bx -= nx * nb + tx * tb;
+		by -= ny * nb + ty * tb;
+		bz -= nz * nb + tz * tb;
+		float blength = sqrt(bx * bx + by * by + bz * bz);
+		if (blength > 1.0e-12f) {
+			bx /= blength;
+			by /= blength;
+			bz /= blength;
+		} else {
+			bx = ny * tz - nz * ty;
+			by = nz * tx - nx * tz;
+			bz = nx * ty - ny * tx;
+		}
+
+		face->tangent.nx = tx;
+		face->tangent.ny = ty;
+		face->tangent.nz = tz;
+		face->tangent.nn = 1.0f;
+		face->bitangent.nx = bx;
+		face->bitangent.ny = by;
+		face->bitangent.nz = bz;
+		face->bitangent.nn = 1.0f;
+	}
+}
+
+//
 // Load a model, scaling its UVs by scale to turn them into texels
 //
 // A model whose UVs run 0 to 1 wants the texture's width here. One that already carries
@@ -232,6 +339,7 @@ Model3D *RETRO_Load3DModel(const char *filename, int scale = RETRO_TEXMAP_SIZE)
 	fclose(fp);
 
 	RETRO_InitializeFaceNormals(model);
+	RETRO_InitializeFaceTangents(model);
 
 	if (model->normals == 0) {
 		RETRO_InitializeVertexNormals(model);

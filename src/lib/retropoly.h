@@ -18,6 +18,14 @@ struct PolygonPoint {
 	float nx, ny, nz;
 };
 
+// The surface directions +u and +v run in, in view space. A bump map is a
+// height field over (u, v), so its gradient tilts the normal along these and
+// not along the screen axes.
+struct TangentFrame {
+	float tx, ty, tz;
+	float bx, by, bz;
+};
+
 struct LightSourcePoint {
 	float nx, ny, nz, nn;	// Normal coordinates
 	int c, cintensity;		// Min, max color
@@ -31,10 +39,8 @@ struct TriangleSpan {
 // Depth buffer, in q = 1 / depth
 //
 // The drawers already carry q per pixel for perspective-correct texturing,
-// and larger q is nearer, so the same number resolves depth. The painter's
-// sort on mean rotated z cannot: it is exact only for convex,
-// similarly-sized, non-interpenetrating faces. Cleared to 0, infinitely far,
-// once per model.
+// and larger q is nearer, so the same number resolves depth. Cleared to 0,
+// infinitely far, once per model.
 //
 float RETRO_DepthBuffer[RETRO_WIDTH * RETRO_HEIGHT];
 
@@ -468,41 +474,101 @@ void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, uns
 }
 
 //
-// Tilt a unit normal by a height-field gradient. The climb pushes N away
-// in xy; z stays on the unit sphere with the incoming sign:
+// Tilt a unit normal by a height-field gradient, in the surface's own frame
 //
-//   N' = (Nx + dhx, Ny + dhy,  sign(Nz) * sqrt(1 - Nx'^2 - Ny'^2))
+//   N' = normalize(N + dhx T + dhy B)
 //
-// A tilt past the horizon leaves Nz' = 0 (grazing). Lighting env maps
-// look this N' up on the disk. Photographic env maps still displace the
-// already-chosen lookup, which is the same first-order tilt in UV.
-// Gouraud bump lights N' directly, so every path reads a given height
-// at the same depth.
+// T and B are the directions +u and +v run on the surface, rotated with the
+// model, so the relief turns with it. The stored frame belongs to the
+// geometric face; project it onto the interpolated shading normal here so it
+// is also a tangent frame for Gouraud and environment-mapped normals.
 //
-void RETRO_BumpNormal(float nx, float ny, float nz, float dhx, float dhy, float *outnx, float *outny, float *outnz)
+void RETRO_BumpNormal(float nx, float ny, float nz, float dhx, float dhy, const TangentFrame &frame, float *outnx, float *outny, float *outnz)
 {
-	nx += dhx;
-	ny += dhy;
-
-	float radiussquared = nx * nx + ny * ny;
-	if (radiussquared > 1.0f) {
-		float inverseradius = 1.0f / sqrt(radiussquared);
-		nx *= inverseradius;
-		ny *= inverseradius;
-		nz = 0.0f;
-	} else {
-		nz = copysign(sqrt(1.0f - radiussquared), nz);
+	if (dhx == 0.0f && dhy == 0.0f) {
+		*outnx = nx;
+		*outny = ny;
+		*outnz = nz;
+		return;
 	}
 
-	*outnx = nx;
-	*outny = ny;
-	*outnz = nz;
+	const float epsilon = 1.0e-12f;
+
+	float tx = frame.tx, ty = frame.ty, tz = frame.tz;
+	float nt = nx * tx + ny * ty + nz * tz;
+	tx -= nx * nt;
+	ty -= ny * nt;
+	tz -= nz * nt;
+	float tlengthsquared = tx * tx + ty * ty + tz * tz;
+	if (tlengthsquared > epsilon) {
+		float inversetlength = 1.0f / sqrt(tlengthsquared);
+		tx *= inversetlength;
+		ty *= inversetlength;
+		tz *= inversetlength;
+	} else {
+		// If +u is parallel to N, recover it from projected +v. Keep the sign
+		// that is closest to the face's original +u direction.
+		float bx = frame.bx, by = frame.by, bz = frame.bz;
+		float nb = nx * bx + ny * by + nz * bz;
+		bx -= nx * nb;
+		by -= ny * nb;
+		bz -= nz * nb;
+		float blengthsquared = bx * bx + by * by + bz * bz;
+		if (blengthsquared <= epsilon) {
+			*outnx = nx;
+			*outny = ny;
+			*outnz = nz;
+			return;
+		}
+		float inverseblength = 1.0f / sqrt(blengthsquared);
+		bx *= inverseblength;
+		by *= inverseblength;
+		bz *= inverseblength;
+		tx = by * nz - bz * ny;
+		ty = bz * nx - bx * nz;
+		tz = bx * ny - by * nx;
+		if (tx * frame.tx + ty * frame.ty + tz * frame.tz < 0.0f) {
+			tx = -tx;
+			ty = -ty;
+			tz = -tz;
+		}
+	}
+
+	// N and T are unit and perpendicular, so their cross product is already a
+	// unit +v candidate. Choose its sign to retain mirrored UV handedness.
+	float bx = ny * tz - nz * ty;
+	float by = nz * tx - nx * tz;
+	float bz = nx * ty - ny * tx;
+	if (bx * frame.bx + by * frame.by + bz * frame.bz < 0.0f) {
+		bx = -bx;
+		by = -by;
+		bz = -bz;
+	}
+
+	// With T and B perpendicular to N, this sum approaches grazing as the
+	// gradient grows but cannot cross to the back of the surface.
+	float bumpedx = nx + dhx * tx + dhy * bx;
+	float bumpedy = ny + dhx * ty + dhy * by;
+	float bumpedz = nz + dhx * tz + dhy * bz;
+
+	float lengthsquared = bumpedx * bumpedx + bumpedy * bumpedy + bumpedz * bumpedz;
+	if (lengthsquared <= epsilon) {
+		*outnx = nx;
+		*outny = ny;
+		*outnz = nz;
+		return;
+	}
+
+	float inverselength = 1.0f / sqrt(lengthsquared);
+	*outnx = bumpedx * inverselength;
+	*outny = bumpedy * inverselength;
+	*outnz = bumpedz * inverselength;
 }
 
 // L and N' are unit, so the term is N' · L.
-float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float dhy, float lightx, float lighty, float lightz)
+float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float dhy, const TangentFrame &frame, float lightx, float lighty, float lightz)
 {
-	RETRO_BumpNormal(nx, ny, nz, dhx, dhy, &nx, &ny, &nz);
+	RETRO_BumpNormal(nx, ny, nz, dhx, dhy, frame, &nx, &ny, &nz);
 	return nx * lightx + ny * lighty + nz * lightz;
 }
 
@@ -514,7 +580,7 @@ float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float dhy, fl
 // vertex the same shade and normal draws a flat shaded face, one of each per
 // vertex a gouraud shaded one.
 //
-void RETRO_DrawTexMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *bumpmap, int bumpheight, unsigned char *shadetable, float lightx, float lighty, float lightz, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+void RETRO_DrawTexMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *bumpmap, int bumpheight, unsigned char *shadetable, float lightx, float lighty, float lightz, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
 	if (texmap == NULL || bumpmap == NULL || shadetable == NULL) return;
 
@@ -525,6 +591,11 @@ void RETRO_DrawTexMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 	// one of its texels covers. Resampling the map changes its detail, not its depth
 	float bumptexelu = (float)bumpmapwidth / texmapwidth;
 	float bumptexelv = (float)bumpmapheight / texmapheight;
+
+	// The Sobel weights sum to 4, and bumpheight is the height difference that
+	// tilts to grazing
+	float bumptiltu = bumptexelu / (4 * bumpheight);
+	float bumptiltv = bumptexelv / (4 * bumpheight);
 
 	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
 		PolygonPoint *p0 = &vertices[0];
@@ -589,8 +660,8 @@ void RETRO_DrawTexMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 							 (bumpmap[up + vm] + 2 * bumpmap[up + vc] + bumpmap[up + vp]);
 					int gy = (bumpmap[um + vm] + 2 * bumpmap[bumpmapu + vm] + bumpmap[up + vm]) -
 							 (bumpmap[um + vp] + 2 * bumpmap[bumpmapu + vp] + bumpmap[up + vp]);
-					float dhx = gx * bumptexelu / (4 * bumpheight);
-					float dhy = gy * bumptexelv / (4 * bumpheight);
+					float dhx = gx * bumptiltu;
+					float dhy = gy * bumptiltv;
 					// Interpolated normals must be normalized before lighting.
 					float normallengthsquared = nx * nx + ny * ny + nz * nz;
 					float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
@@ -601,7 +672,7 @@ void RETRO_DrawTexMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 					// here, so a flat patch of the bump map is left shaded exactly
 					// as it was drawn without one.
 					float lambert = unitnx * lightx + unitny * lighty + unitnz * lightz;
-					float bumpedlambert = RETRO_BumpedLambert(unitnx, unitny, unitnz, dhx, dhy, lightx, lighty, lightz);
+					float bumpedlambert = RETRO_BumpedLambert(unitnx, unitny, unitnz, dhx, dhy, frame, lightx, lighty, lightz);
 					float bumpshade = (RETRO_ShadeFromLambert(bumpedlambert) - RETRO_ShadeFromLambert(lambert)) * RETRO_SHADES;
 					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, RETRO_TEXTURE_COLORS);
 					int shade = CLAMP128(c + bumpshade);
@@ -710,12 +781,12 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 
 //
 // Bump and environment shaded texture mapped polygon
-// A lighting disk is read at the tilted unit normal N'. A reflection
-// map is still displaced in UV. The bump map is addressed by the
-// texture's UVs, so a map with a size of its own is stepped through at
-// its own rate. Resampling the map changes its detail, not its depth.
+// Lighting and reflection maps are read at the tilted unit normal N'. The
+// bump map is addressed by the texture's UVs, so a map with a size of its
+// own is stepped through at its own rate. Resampling the map changes its
+// detail, not its depth.
 //
-void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpheight, unsigned char *shadetable, bool lightingmap, int envmapintensity, int envmapwidth, int envmapheight, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpheight, unsigned char *shadetable, bool lightingmap, const TangentFrame &frame, int envmapintensity, int envmapwidth, int envmapheight, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
 	if (texmap == NULL || envmap == NULL || bumpmap == NULL || shadetable == NULL) return;
 
@@ -723,8 +794,11 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 
 	float bumptexelu = (float)bumpmapwidth / texmapwidth;
 	float bumptexelv = (float)bumpmapheight / texmapheight;
-	float bumpscaleu = (float)envmapintensity / (4 * bumpheight) * bumptexelu;
-	float bumpscalev = (float)envmapintensity / (4 * bumpheight) * bumptexelv;
+
+	// The Sobel weights sum to 4, and bumpheight is the height difference that
+	// tilts to grazing
+	float bumptiltu = bumptexelu / (4 * bumpheight);
+	float bumptiltv = bumptexelv / (4 * bumpheight);
 
 	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
 		PolygonPoint *p0 = &vertices[0];
@@ -787,26 +861,14 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 					int gy = (bumpmap[um + vm] + 2 * bumpmap[bumpmapu + vm] + bumpmap[up + vm]) -
 							 (bumpmap[um + vp] + 2 * bumpmap[bumpmapu + vp] + bumpmap[up + vp]);
 					float e, w;
-					if (lightingmap) {
-						// Disk is a function of unit N. Tilt to N' and look up; do
-						// not slide the already-chosen (e, w).
-						float normallengthsquared = nx * nx + ny * ny + nz * nz;
-						float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
-						float bnx, bny, bnz;
-						RETRO_BumpNormal(nx * inversenormallength, ny * inversenormallength, nz * inversenormallength,
-										 gx * bumptexelu / (4 * bumpheight),
-										 gy * bumptexelv / (4 * bumpheight),
-										 &bnx, &bny, &bnz);
-						RETRO_GetEnvMapCoordinates(bnx, bny, bnz, true, envmapwidth, envmapheight, envmapintensity, e, w);
-					} else {
-						// Out of the image, keep the undisplaced sample. Authored
-						// chrome-ball maps are black off the disk.
-						RETRO_GetEnvMapCoordinates(nx, ny, nz, false, envmapwidth, envmapheight, envmapintensity, e, w);
-						int bu = gx * bumpscaleu + e;
-						int bv = gy * bumpscalev + w;
-						e = bu >= 0 && bu < envmapwidth ? bu : e;
-						w = bv >= 0 && bv < envmapheight ? bv : w;
-					}
+					// Both maps are functions of the unit normal, so both tilt N and
+					// look the result up. A unit N' always lands inside either map.
+					float normallengthsquared = nx * nx + ny * ny + nz * nz;
+					float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
+					float bnx, bny, bnz;
+					RETRO_BumpNormal(nx * inversenormallength, ny * inversenormallength, nz * inversenormallength,
+									 gx * bumptiltu, gy * bumptiltv, frame, &bnx, &bny, &bnz);
+					RETRO_GetEnvMapCoordinates(bnx, bny, bnz, lightingmap, envmapwidth, envmapheight, envmapintensity, e, w);
 					unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 					unsigned int envmapv = CLAMP(w, 0, envmapheight);
 					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, RETRO_TEXTURE_COLORS);
@@ -885,10 +947,9 @@ void RETRO_DrawEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 
 //
 // Bump-mapped environment polygon
-// A lighting disk is read at the tilted unit normal N'. A reflection
-// map is still displaced in UV.
+// Lighting and reflection maps are read at the tilted unit normal N'.
 //
-void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *envmap, unsigned char *bumpmap, int bumpheight, bool lightingmap, int envmapintensity, int envmapwidth, int envmapheight, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *envmap, unsigned char *bumpmap, int bumpheight, bool lightingmap, const TangentFrame &frame, int envmapintensity, int envmapwidth, int envmapheight, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
 	if (envmap == NULL || bumpmap == NULL) return;
 
@@ -896,8 +957,11 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 
 	float bumptexelu = (float)bumpmapwidth / texmapwidth;
 	float bumptexelv = (float)bumpmapheight / texmapheight;
-	float bumpscaleu = (float)envmapintensity / (4 * bumpheight) * bumptexelu;
-	float bumpscalev = (float)envmapintensity / (4 * bumpheight) * bumptexelv;
+
+	// The Sobel weights sum to 4, and bumpheight is the height difference that
+	// tilts to grazing
+	float bumptiltu = bumptexelu / (4 * bumpheight);
+	float bumptiltv = bumptexelv / (4 * bumpheight);
 
 	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
 		PolygonPoint *p0 = &vertices[0];
@@ -958,24 +1022,14 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 					int gy = (bumpmap[um + vm] + 2 * bumpmap[bumpmapu + vm] + bumpmap[up + vm]) -
 							 (bumpmap[um + vp] + 2 * bumpmap[bumpmapu + vp] + bumpmap[up + vp]);
 					float e, w;
-					if (lightingmap) {
-						float normallengthsquared = nx * nx + ny * ny + nz * nz;
-						float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
-						float bnx, bny, bnz;
-						RETRO_BumpNormal(nx * inversenormallength, ny * inversenormallength, nz * inversenormallength,
-										 gx * bumptexelu / (4 * bumpheight),
-										 gy * bumptexelv / (4 * bumpheight),
-										 &bnx, &bny, &bnz);
-						RETRO_GetEnvMapCoordinates(bnx, bny, bnz, true, envmapwidth, envmapheight, envmapintensity, e, w);
-					} else {
-						// Out of the image, keep the undisplaced sample. Authored
-						// chrome-ball maps are black off the disk.
-						RETRO_GetEnvMapCoordinates(nx, ny, nz, false, envmapwidth, envmapheight, envmapintensity, e, w);
-						int bu = gx * bumpscaleu + e;
-						int bv = gy * bumpscalev + w;
-						e = bu >= 0 && bu < envmapwidth ? bu : e;
-						w = bv >= 0 && bv < envmapheight ? bv : w;
-					}
+					// Both maps are functions of the unit normal, so both tilt N and
+					// look the result up. A unit N' always lands inside either map.
+					float normallengthsquared = nx * nx + ny * ny + nz * nz;
+					float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
+					float bnx, bny, bnz;
+					RETRO_BumpNormal(nx * inversenormallength, ny * inversenormallength, nz * inversenormallength,
+									 gx * bumptiltu, gy * bumptiltv, frame, &bnx, &bny, &bnz);
+					RETRO_GetEnvMapCoordinates(bnx, bny, bnz, lightingmap, envmapwidth, envmapheight, envmapintensity, e, w);
 					unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 					unsigned int envmapv = CLAMP(w, 0, envmapheight);
 					int offset = y * RETRO_WIDTH + x;

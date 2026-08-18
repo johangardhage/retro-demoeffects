@@ -60,11 +60,20 @@ void RETRO_RotateVertexNormals(Model3D *model = NULL)
 	}
 }
 
+// Face normals and the tangent frame the bump gradient is applied in. The
+// frame has to turn with the model, or the relief stays keyed to the screen.
 void RETRO_RotateFaceNormals(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->faces; i++) {
+		Normal *frame[2] = { &model->face[i].tangent, &model->face[i].bitangent };
+		for (int j = 0; j < 2; j++) {
+			frame[j]->rnx = frame[j]->nx * model->matrix[0][0] + frame[j]->ny * model->matrix[0][1] + frame[j]->nz * model->matrix[0][2];
+			frame[j]->rny = frame[j]->nx * model->matrix[1][0] + frame[j]->ny * model->matrix[1][1] + frame[j]->nz * model->matrix[1][2];
+			frame[j]->rnz = frame[j]->nx * model->matrix[2][0] + frame[j]->ny * model->matrix[2][1] + frame[j]->nz * model->matrix[2][2];
+		}
+
 		model->face[i].facenormal.rnx = model->face[i].facenormal.nx * model->matrix[0][0] + model->face[i].facenormal.ny * model->matrix[0][1] + model->face[i].facenormal.nz * model->matrix[0][2];
 		model->face[i].facenormal.rny = model->face[i].facenormal.nx * model->matrix[1][0] + model->face[i].facenormal.ny * model->matrix[1][1] + model->face[i].facenormal.nz * model->matrix[1][2];
 		model->face[i].facenormal.rnz = model->face[i].facenormal.nx * model->matrix[2][0] + model->face[i].facenormal.ny * model->matrix[2][1] + model->face[i].facenormal.nz * model->matrix[2][2];

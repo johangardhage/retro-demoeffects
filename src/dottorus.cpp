@@ -1,19 +1,21 @@
 //
 // Dot torus
 //
-// A torus of points, rotated and projected, each shaded by depth. Nothing is
-// hidden: the far side is drawn too, and only its shade sets it apart.
+// A torus of points, rotated and projected, each shaded by depth. The far
+// side is drawn too, and only its shade sets it apart. That shade is
+// monotone in depth, so keeping the brighter of two dots on one pixel is an
+// exact depth test.
 //
 // Points sit on a grid of the two angles. DOT_SPACING does not divide
-// either circumference, so the steps are 2π/n_α and 2π/n_β: even arc
-// on each generating circle, both close, no leftover gap.
+// either circumference, so the steps are 2π/n_α and 2π/n_β: even arc on
+// each generating circle, both close, no leftover gap.
 //
 //   (x, y, z) = ((R + r cos β) cos α,  r sin β,  (R + r cos β) sin α)
 //
 // That is even in arc length on those circles, not in area. The area
-// element carries (R + r cos β), so the rings crowd toward the hole —
-// three times as densely at the inner rim as at the outer one, since
-// R = 2r here.
+// element carries (R + r cos β), so the rings crowd toward the hole - three
+// times as densely at the inner rim, since R = 2r here. That crowding is the
+// intended shape, not an error.
 //
 // Depth toward the viewer is z = -rz. No point is further from the centre
 // than R+r, so the ramp covers [-R-r, R+r]:
@@ -64,7 +66,9 @@ void DEMO_Render(double deltatime)
 		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
 			int color = (z + furthest) * (SHADES - 1) / (2 * furthest);
 
-			RETRO_PutPixel(x, y, color);
+			if (color > RETRO_GetPixel(x, y)) {
+				RETRO_PutPixel(x, y, color);
+			}
 		}
 	}
 }

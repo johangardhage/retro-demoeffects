@@ -5,10 +5,12 @@
 // vertices live on the circle (y, z) = RAD (sin φ, cos φ) at 90°
 // steps (64 units of a 256-angle table). z is toward the viewer. φ is
 //
-//   φ(x, phase) = 100 cos phase + 80 sin(x/4 + 2 phase) · COS(SIN phase)
+//   φ(x, phase) = LEAN cos phase + A(phase) sin(x/4 + 2 phase)
+//   A(phase)    = TWIST_MIN + (TWIST − TWIST_MIN) · (1 + cos(phase/5)) / 2
 //
-// in table units, WRAP256. COS(SIN phase) is the 256-unit cosine of a
-// geometric sine, so it stays ≈ 1 and the twist amplitude is 80.
+// in table units, WRAP256. The twist amplitude breathes over five turns of
+// the table, so it does not lock to the lean and still closes on
+// TWISTER_PERIOD.
 // vs = φ / 32 picks which three vertices are the two visible faces
 // (the front-most of the four). Each face is a y-span of IMAGE_HEIGHT
 // texels with a 1/z shade
@@ -27,11 +29,14 @@
 
 #define RAD 40
 #define ZRATE 20
+#define LEAN 100 // table units the column leans as a whole
+#define TWIST 80 // table units of twist from one end of the column to the other
+#define TWIST_MIN 24 // and the least it falls to as the amplitude breathes
 #define TWISTER_CY 159
 #define IMAGE_WIDTH 320
 #define IMAGE_HEIGHT 32
 #define TWISTER_SPEED 60 // table units per second
-#define TWISTER_PERIOD 1280 // lcm(256, 160): table period and u = x+2t
+#define TWISTER_PERIOD 1280 // lcm(256, 160, 5*256): table, u = x+2t, and the breathing twist
 
 int Visible[8][3] = { {3, 0, 1}, {2, 3, 0}, {2, 3, 0}, {1, 2, 3}, {1, 2, 3}, {0, 1, 2}, {0, 1, 2}, {3, 0, 1} };
 
@@ -44,9 +49,12 @@ void DEMO_Render(double deltatime)
 
 	unsigned char *image = RETRO_ImageData();
 
+	// Constant over the column, so worked out once rather than per slice
+	double twist = TWIST_MIN + (TWIST - TWIST_MIN) * (1 + COS(iphase / 5.0)) / 2;
+
 	// Draw column slices
 	for (int x = 0; x < RETRO_WIDTH; x++) {
-		int angle = WRAP(100 * COS(iphase) + 80 * SIN(x / 4.0 + iphase * 2) * COS(SIN(iphase)), RETRO_SINCOS_ANGLE);
+		int angle = WRAP(LEAN * COS(iphase) + twist * SIN(x / 4.0 + iphase * 2), RETRO_SINCOS_ANGLE);
 		int vs = angle / (RETRO_SINCOS_ANGLE / 8);
 
 		int i0 = Visible[vs][0];

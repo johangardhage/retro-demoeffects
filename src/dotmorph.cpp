@@ -6,9 +6,16 @@
 //
 //   p(t) = (1 − t) p_from + t p_to,   t ∈ [0, 1]
 //
+// The two shapes are sampled independently, so point i is not the same place
+// on both and a point crosses the interior rather than sliding over a
+// surface. That scatter is the effect, not an error in it.
+//
 // The cycle is morph, hold, morph back, hold (256 + 512 + 256 + 512).
 // t = phase / (MORPH_STEPS − 1) reaches exactly 1, so each change arrives
 // on its shape rather than just short of it. The phase lives on the cycle.
+//
+// The shade is monotone in depth, so keeping the brighter of two dots on one
+// pixel is an exact depth test.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -74,7 +81,9 @@ void DEMO_Render(double deltatime)
 		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
 			unsigned char color = CLAMP256((RETRO_COLORS - 1) * (furthest - Morph[i].rz) / (2 * furthest));
 
-			RETRO_PutPixel(x, y, color);
+			if (color > RETRO_GetPixel(x, y)) {
+				RETRO_PutPixel(x, y, color);
+			}
 		}
 	}
 }

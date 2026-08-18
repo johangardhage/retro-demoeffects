@@ -74,41 +74,44 @@ void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, unsigne
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 
-	int x = 0;
-	int y = 0;
-	int dx = x2 - x1;
-	int dy = y2 - y1;
-	int sdx = (dx < 0) ? -1 : 1;
-	int sdy = (dy < 0) ? -1 : 1;
+	// Draw from whichever end comes first, so a segment and its reverse run the
+	// identical loop and light the same pixels.
+	if (y1 > y2 || (y1 == y2 && x1 > x2)) {
+		SWAP(x1, x2);
+		SWAP(y1, y2);
+	}
+
+	int dx = x2 > x1 ? x2 - x1 : x1 - x2;
+	int dy = y2 > y1 ? y2 - y1 : y1 - y2;
+	int sdx = x2 > x1 ? 1 : -1;
+	int sdy = y2 > y1 ? 1 : -1;
 	int px = x1;
 	int py = y1;
 
-	dx = sdx * dx + 1;
-	dy = sdy * dy + 1;
+	// Midpoint Bresenham: the error starts at half the major delta, so the minor
+	// axis steps where the ideal line crosses a pixel centre.
+	int steps = MAX(dx, dy);
+	int error = steps;
 
-	if (dx >= dy) {
-		for (x = 0; x < dx; x++) {
-			if (px >= 0 && px < width && py >= 0 && py < height) {
-				buffer[py * width + px] = color;
-			}
-			y += dy;
-			if (y >= dx) {
-				y -= dx;
+	for (int i = 0; i <= steps; i++) {
+		if (px >= 0 && px < width && py >= 0 && py < height) {
+			buffer[py * width + px] = color;
+		}
+		// Doubled, so the half is exact for an odd delta
+		if (dx >= dy) {
+			px += sdx;
+			error += 2 * dy;
+			if (error >= 2 * steps) {
+				error -= 2 * steps;
 				py += sdy;
 			}
-			px += sdx;
-		}
-	} else {
-		for (y = 0; y < dy; y++) {
-			if (px >= 0 && px < width && py >= 0 && py < height) {
-				buffer[py * width + px] = color;
-			}
-			x += dx;
-			if (x >= dy) {
-				x -= dy;
+		} else {
+			py += sdy;
+			error += 2 * dx;
+			if (error >= 2 * steps) {
+				error -= 2 * steps;
 				px += sdx;
 			}
-			py += sdy;
 		}
 	}
 }
@@ -117,41 +120,44 @@ void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char color, uns
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 
-	int x = 0;
-	int y = 0;
-	int dx = x2 - x1;
-	int dy = y2 - y1;
-	int sdx = (dx < 0) ? -1 : 1;
-	int sdy = (dy < 0) ? -1 : 1;
+	// Draw from whichever end comes first, so a segment and its reverse run the
+	// identical loop and light the same pixels.
+	if (y1 > y2 || (y1 == y2 && x1 > x2)) {
+		SWAP(x1, x2);
+		SWAP(y1, y2);
+	}
+
+	int dx = x2 > x1 ? x2 - x1 : x1 - x2;
+	int dy = y2 > y1 ? y2 - y1 : y1 - y2;
+	int sdx = x2 > x1 ? 1 : -1;
+	int sdy = y2 > y1 ? 1 : -1;
 	int px = x1;
 	int py = y1;
 
-	dx = sdx * dx + 1;
-	dy = sdy * dy + 1;
+	// Midpoint Bresenham: the error starts at half the major delta, so the minor
+	// axis steps where the ideal line crosses a pixel centre.
+	int steps = MAX(dx, dy);
+	int error = steps;
 
-	if (dx >= dy) {
-		for (x = 0; x < dx; x++) {
-			if (px >= 0 && px < width && py >= 0 && py < height) {
-				buffer[py * width + px] = color + RANDOM(intensity);
-			}
-			y += dy;
-			if (y >= dx) {
-				y -= dx;
+	for (int i = 0; i <= steps; i++) {
+		if (px >= 0 && px < width && py >= 0 && py < height) {
+			buffer[py * width + px] = color + RANDOM(intensity);
+		}
+		// Doubled, so the half is exact for an odd delta
+		if (dx >= dy) {
+			px += sdx;
+			error += 2 * dy;
+			if (error >= 2 * steps) {
+				error -= 2 * steps;
 				py += sdy;
 			}
-			px += sdx;
-		}
-	} else {
-		for (y = 0; y < dy; y++) {
-			if (px >= 0 && px < width && py >= 0 && py < height) {
-				buffer[py * width + px] = color + RANDOM(intensity);
-			}
-			x += dx;
-			if (x >= dy) {
-				x -= dy;
+		} else {
+			py += sdy;
+			error += 2 * dx;
+			if (error >= 2 * steps) {
+				error -= 2 * steps;
 				px += sdx;
 			}
-			py += sdy;
 		}
 	}
 }
@@ -175,6 +181,21 @@ void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *
 // FIRE's eight taps sit beside and below the pixel, so scanning top to bottom
 // lifts heat upward. DIFFUSE is the four-neighbour cross. The pass is
 // Gauss-Seidel along the scan (already-written neighbours are reused).
+//
+// Replace every pixel with the mean of a pattern of neighbours, less decay
+//
+// Every tap reads the field as it was before the pass, not as the pass has
+// left it: a Jacobi update, so the result has no direction. No pattern
+// reaches more than one row above, so two row buffers hold everything the
+// pass has overwritten; the rows below are still untouched.
+//
+// RETRO_BLUR_DIFFUSE is the exception and stays in place. Four edge
+// neighbours with no self term have symbol (cos kx + cos ky) / 2, which is
+// -1 at the checkerboard: that mode is undamped and inverts every step, so
+// reading the previous state would let it stand forever as dither. The
+// in-place sweep's already-written left and upper taps couple the two
+// sublattices and kill it. Every other pattern here damps the checkerboard
+// on its own (RING to 0, FIRE to 1/4, SMOOTH to 3/5).
 //
 void RETRO_Blur(RETRO_BLUR_PATTERN blur, int decay = 0, RETRO_BLUR_MODE mode = RETRO_BLUR_CLAMP, unsigned char *buffer = NULL)
 {
@@ -227,27 +248,39 @@ void RETRO_Blur(RETRO_BLUR_PATTERN blur, int decay = 0, RETRO_BLUR_MODE mode = R
 		ymax = MAX(ymax, pattern[i][1]);
 	}
 
+	// What the pass has already written over
+	static unsigned char rowabove[RETRO_WIDTH];
+	static unsigned char rowcurrent[RETRO_WIDTH];
+	bool previousstate = blur != RETRO_BLUR_DIFFUSE;
+
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		memcpy(rowcurrent, buffer + RETRO.yoffset[y], RETRO_WIDTH);
+
 		bool yinside = (y + ymin >= 0 && y + ymax < RETRO_HEIGHT);
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int color = 0;
 			if (yinside && x + xmin >= 0 && x + xmax < RETRO_WIDTH) {
 				for (int i = 0; i < pixels; i++) {
-					color += buffer[RETRO.yoffset[y + pattern[i][1]] + x + pattern[i][0]];
+					int x2 = x + pattern[i][0];
+					int y2 = y + pattern[i][1];
+					color += !previousstate ? buffer[RETRO.yoffset[y2] + x2]
+						: (y2 == y ? rowcurrent[x2] : (y2 == y - 1 ? rowabove[x2] : buffer[RETRO.yoffset[y2] + x2]));
 				}
 			} else {
 				for (int i = 0; i < pixels; i++) {
+					int x2 = x + pattern[i][0];
+					int y2 = y + pattern[i][1];
 					if (mode == RETRO_BLUR_WRAP) {
-						color += buffer[RETRO.yoffset[WRAPHEIGHT(y + pattern[i][1])] + WRAPWIDTH(x + pattern[i][0])];
+						x2 = WRAPWIDTH(x2);
+						y2 = WRAPHEIGHT(y2);
 					} else if (mode == RETRO_BLUR_CLAMP) {
-						color += buffer[RETRO.yoffset[CLAMPHEIGHT(y + pattern[i][1])] + CLAMPWIDTH(x + pattern[i][0])];
-					} else if (mode == RETRO_BLUR_OVERFLOW) {
-						int x2 = x + pattern[i][0];
-						int y2 = y + pattern[i][1];
-						if (y2 >= 0 && y2 < RETRO_HEIGHT && x2 >= 0 && x2 < RETRO_WIDTH) {
-							color += buffer[RETRO.yoffset[y2] + x2];
-						}
+						x2 = CLAMPWIDTH(x2);
+						y2 = CLAMPHEIGHT(y2);
+					} else if (y2 < 0 || y2 >= RETRO_HEIGHT || x2 < 0 || x2 >= RETRO_WIDTH) {
+						continue; // RETRO_BLUR_OVERFLOW contributes nothing off the edge
 					}
+					color += !previousstate ? buffer[RETRO.yoffset[y2] + x2]
+						: (y2 == y ? rowcurrent[x2] : (y2 == y - 1 ? rowabove[x2] : buffer[RETRO.yoffset[y2] + x2]));
 				}
 			}
 
@@ -256,6 +289,8 @@ void RETRO_Blur(RETRO_BLUR_PATTERN blur, int decay = 0, RETRO_BLUR_MODE mode = R
 
 			buffer[RETRO.yoffset[y] + x] = (unsigned char)color;
 		}
+
+		memcpy(rowabove, rowcurrent, RETRO_WIDTH);
 	}
 }
 

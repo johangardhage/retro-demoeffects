@@ -13,8 +13,9 @@
 //   T' = max(0, mean(8 neighbours) − 1)
 //
 // with no self term (RETRO_BLUR_RING), so heat spreads outward and the
-// seed itself is replaced. The −1 is extra cooling. How far the trails
-// travel follows the step rate, not the orbital speed.
+// seed itself is replaced. Every tap reads the previous step, so the ring
+// stays symmetric. The −1 is extra cooling. How far the trails travel
+// follows the step rate, not the orbital speed.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

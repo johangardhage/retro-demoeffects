@@ -253,13 +253,27 @@ void RETRO_Set6bitPalette(RETRO_Palette *palette, int colors = RETRO_COLORS)
 	}
 }
 
+//
+// Plot and read a pixel, unclipped. A caller that can leave the screen has to
+// say so itself. Building with -DRETRO_DEBUG_BOUNDS aborts at the offending
+// call instead; off by default, so the release path keeps no test.
+//
+#ifdef RETRO_DEBUG_BOUNDS
+#include <assert.h>
+#define RETRO_ASSERT_PIXEL(x, y) assert((x) >= 0 && (x) < RETRO_WIDTH && (y) >= 0 && (y) < RETRO_HEIGHT)
+#else
+#define RETRO_ASSERT_PIXEL(x, y) ((void)0)
+#endif
+
 void RETRO_PutPixel(int x, int y, unsigned char color)
 {
+	RETRO_ASSERT_PIXEL(x, y);
 	RETRO.framebuffer[RETRO.yoffset[y] + x] = color;
 }
 
 unsigned char RETRO_GetPixel(int x, int y)
 {
+	RETRO_ASSERT_PIXEL(x, y);
 	return RETRO.framebuffer[RETRO.yoffset[y] + x];
 }
 

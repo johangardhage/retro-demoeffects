@@ -3,11 +3,11 @@
 //
 // Salt-and-pepper, then a 5-tap plus-with-center blur. Each pixel is
 // independently 0 or 255 (P = 1/2); RETRO_BLUR_SMOOTH replaces it with
-// the mean of itself and its four neighbours. The pass is in place
-// along the scan, so the left and upper taps are already averaged
-// (Gauss–Seidel). The average of a 0/255 field is gray grain, not a
-// snow of hard dots. The framebuffer is cleared and redrawn every
-// frame, so the grain is new each time.
+// the mean of itself and its four neighbours, every tap read from the
+// field before the pass, so the softening has no direction. Averaging
+// five independent ±127.5 draws leaves a standard deviation of
+// 127.5/√5, so the result is gray grain rather than hard dots. The
+// framebuffer is cleared and redrawn every frame.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

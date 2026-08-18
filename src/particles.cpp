@@ -3,19 +3,21 @@
 //
 // Point masses under gravity, bouncing off the walls, floor and ceiling.
 // y grows down, so g = (0, +PARTICLE_GRAVITY). Each step is symplectic
-// (semi-implicit) Euler
+// (semi-implicit) Euler, with no exceptions:
 //
-//   v' = v + (0, g)     unless on the floor and not rising (v_y ≥ 0)
+//   v' = v + (0, g)
 //   x' = x + v'
 //
-// A bounce only when moving into the wall. It reverses the normal
-// component and damps both:
+// A bounce reflects the overshoot about the wall, rather than clamping to
+// it, and reverses the normal component, damping both:
 //
+//   x_n' = 2 wall − x_n
 //   v_n' = −BOUNCE_RESTITUTION · v_n
 //   v_t' =  BOUNCE_FRICTION    · v_t
 //
-// Skipping g on the floor stops a rest particle accelerating through it.
-// That is not a contact constraint; a leftover |v| of order g can remain.
+// Below a bounce that cannot clear one step of gravity the normal velocity is
+// zeroed and the particle placed on the wall, so it settles rather than buzz.
+//
 // The explosion is uniform in angle and speed, not in a square (a square
 // sample favours the corners). The framebuffer is never cleared; a
 // 4-neighbour diffuse blur (no self) subtracts TRAIL_DECAY each step.
@@ -84,30 +86,38 @@ void DEMO_Update(double deltatime)
 	for (int i = 0; i < NUM_PARTICLES; i++) {
 		RETRO_PutPixel(Particles[i].x, Particles[i].y, Particles[i].color);
 
-		// On the floor and not rising: skip g so they settle. Then x' = x + v'.
-		if (!(Particles[i].y >= RETRO_HEIGHT - 1 && Particles[i].ydir >= 0)) {
-			Particles[i].ydir += PARTICLE_GRAVITY;
-		}
+		// Symplectic Euler: v' = v + g, then x' = x + v'
+		Particles[i].ydir += PARTICLE_GRAVITY;
 
 		Particles[i].x += Particles[i].xdir;
 		Particles[i].y += Particles[i].ydir;
 
-		if (Particles[i].y > RETRO_HEIGHT - 1 && Particles[i].ydir > 0) {
-			Particles[i].y = RETRO_HEIGHT - 1;
-			Particles[i].xdir *= BOUNCE_FRICTION;
+		// Floor and ceiling
+		bool onfloor = false;
+		while (Particles[i].y < 0 || Particles[i].y > RETRO_HEIGHT - 1) {
+			if (Particles[i].y < 0) {
+				Particles[i].y = -Particles[i].y;
+			} else {
+				Particles[i].y = 2 * (RETRO_HEIGHT - 1) - Particles[i].y;
+				onfloor = true;
+			}
 			Particles[i].ydir *= -BOUNCE_RESTITUTION;
-		} else if (Particles[i].y < 0 && Particles[i].ydir < 0) {
-			Particles[i].y = 0;
 			Particles[i].xdir *= BOUNCE_FRICTION;
-			Particles[i].ydir *= -BOUNCE_RESTITUTION;
 		}
 
-		if (Particles[i].x < 0 && Particles[i].xdir < 0) {
-			Particles[i].x = 0;
-			Particles[i].xdir *= -BOUNCE_RESTITUTION;
-			Particles[i].ydir *= BOUNCE_FRICTION;
-		} else if (Particles[i].x > RETRO_WIDTH - 1 && Particles[i].xdir > 0) {
-			Particles[i].x = RETRO_WIDTH - 1;
+		// Resting contact: a bounce this small cannot clear one step of gravity
+		if (onfloor && fabsf(Particles[i].ydir) < 2 * PARTICLE_GRAVITY) {
+			Particles[i].ydir = 0;
+			Particles[i].y = RETRO_HEIGHT - 1;
+		}
+
+		// Side walls
+		while (Particles[i].x < 0 || Particles[i].x > RETRO_WIDTH - 1) {
+			if (Particles[i].x < 0) {
+				Particles[i].x = -Particles[i].x;
+			} else {
+				Particles[i].x = 2 * (RETRO_WIDTH - 1) - Particles[i].x;
+			}
 			Particles[i].xdir *= -BOUNCE_RESTITUTION;
 			Particles[i].ydir *= BOUNCE_FRICTION;
 		}

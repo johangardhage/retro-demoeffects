@@ -31,15 +31,20 @@ void DEMO_Render(double deltatime)
 	phase = fmod(phase + deltatime * DISTORT_SPEED, SINE_VALUES);
 	int iphase = phase;
 
+	// A column's vertical shift depends only on x, so it is the same for every
+	// row: worked out once per frame rather than once per pixel.
+	int columnshift[RETRO_WIDTH];
+	for (int x = 0; x < RETRO_WIDTH; x++) {
+		columnshift[x] = ShiftY[WRAP(x + iphase, SINE_VALUES)];
+	}
+
 	// Draw distort
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		int shiftx = ShiftX[WRAP(y + iphase, SINE_VALUES)];
 
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int shifty = ShiftY[WRAP(x + iphase, SINE_VALUES)];
-
 			int sourcex = x + shiftx;
-			int sourcey = y + shifty;
+			int sourcey = y + columnshift[x];
 
 			if (sourcex >= 0 && sourcex < RETRO_WIDTH && sourcey >= 0 && sourcey < RETRO_HEIGHT) {
 				RETRO_PutPixel(x, y, image[sourcey * RETRO_WIDTH + sourcex]);

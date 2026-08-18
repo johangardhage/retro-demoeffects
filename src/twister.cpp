@@ -11,6 +11,9 @@
 // a 2D silhouette (a back edge has x_left > x_right). Each face has its
 // own color. angle lives on 2π.
 //
+// Vertices are rounded once and the spans are half-open, [x_left, x_right),
+// so two faces that share a vertex tile exactly.
+//
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
@@ -23,6 +26,21 @@
 #define TWISTER_SPEED 1.2 // radians per second
 #define TWISTER_PERIOD (2 * M_PI)
 
+//
+// One scanline of one face, half-open in x. A back-facing edge has
+// left >= right and covers nothing, which is the silhouette test.
+//
+void DrawSpan(int left, int right, int y, unsigned char color)
+{
+	left = MAX(left, 0);
+	right = MIN(right, RETRO_WIDTH);
+
+	unsigned char *row = RETRO_FrameBuffer() + y * RETRO_WIDTH;
+	for (int x = left; x < right; x++) {
+		row[x] = color;
+	}
+}
+
 void DEMO_Render(double deltatime)
 {
 	// Calculate angle
@@ -32,22 +50,13 @@ void DEMO_Render(double deltatime)
 	// Draw column
 	for (int i = 0; i < RETRO_HEIGHT; i++) {
 		double theta = angle + TWISTER_TWIST * i / RETRO_HEIGHT;
-		double x0 = TWISTER_CX + TWISTER_RADIUS * sin(theta);
-		double x1 = TWISTER_CX + TWISTER_RADIUS * sin(theta + M_PI / 2);
-		double x2 = TWISTER_CX + TWISTER_RADIUS * sin(theta + M_PI);
-		double x3 = TWISTER_CX + TWISTER_RADIUS * sin(theta + 3 * M_PI / 2);
+		int x[4];
+		for (int j = 0; j < 4; j++) {
+			x[j] = lround(TWISTER_CX + TWISTER_RADIUS * sin(theta + j * M_PI / 2));
+		}
 
-		if (x0 < x1) {
-			RETRO_DrawLine(x0, i, x1, i, 1);
-		}
-		if (x1 < x2) {
-			RETRO_DrawLine(x1, i, x2, i, 2);
-		}
-		if (x2 < x3) {
-			RETRO_DrawLine(x2, i, x3, i, 3);
-		}
-		if (x3 < x0) {
-			RETRO_DrawLine(x3, i, x0, i, 4);
+		for (int j = 0; j < 4; j++) {
+			DrawSpan(x[j], x[(j + 1) % 4], i, j + 1);
 		}
 	}
 }

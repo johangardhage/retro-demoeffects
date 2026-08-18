@@ -31,17 +31,24 @@
 #define MAP_SHIFT 10
 
 #define VOXEL_FOCAL 100.0f // pixels of Δh at z = 1
-#define VOXEL_CLEARANCE 10.0f // how far the camera stays above the ground
+#define VOXEL_CLEARANCE 10.0f // closest the camera may come to the ground
+#define VOXEL_EYE 49.0f // and how far above it the camera rides
+#define VOXEL_FOLLOW 0.10f // seconds the eye takes to close most of a step in the ground
 #define VOXEL_LOD 0.005f // added to Δz each slice, so far samples thin out
 
+// The camera rides a set distance above the ground rather than at a set height,
+// so walking follows the terrain up as well as down. R and F change that
+// distance. The eye lags it: the ground steps at a cliff edge, and putting the
+// eye there in one frame throws the whole view with it.
 struct {
-	float x;        // x position on the map
-	float y;        // y position on the map
-	float height;   // height of the camera
-	float angle;    // direction of the camera
-	float horizon;  // screen row of the look-level
-	float distance; // farthest slice
-} camera = { 512, 800, 78, 0, 100, 800 };
+	float x;         // x position on the map
+	float y;         // y position on the map
+	float height;    // height of the eye, lagging the ground it follows
+	float clearance; // how far above the ground it settles
+	float angle;     // direction of the camera
+	float horizon;   // screen row of the look-level
+	float distance;  // farthest slice
+} camera = { 512, 800, 0, VOXEL_EYE, 0, 100, 800 };
 
 int MapOffset(float x, float y)
 {
@@ -67,10 +74,13 @@ void DEMO_Render(double deltatime)
 		camera.y += (float)cos(camera.angle) * 0.75f * speed;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_R)) {
-		camera.height += 0.5f * speed;
+		camera.clearance += 0.5f * speed;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_F)) {
-		camera.height -= 0.5f * speed;
+		camera.clearance -= 0.5f * speed;
+	}
+	if (camera.clearance < VOXEL_CLEARANCE) {
+		camera.clearance = VOXEL_CLEARANCE;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_A)) {
 		camera.horizon += 1.5f * speed;
@@ -96,10 +106,13 @@ void DEMO_Render(double deltatime)
 	unsigned char *heightmap = RETRO_ImageData(1);
 	unsigned char *buffer = RETRO_FrameBuffer();
 
-	// Collision detection
-	int cameraoffs = MapOffset(camera.x, camera.y);
-	if (heightmap[cameraoffs] + VOXEL_CLEARANCE > camera.height) {
-		camera.height = heightmap[cameraoffs] + VOXEL_CLEARANCE;
+	// Follow the terrain, both up and down, closing a fixed fraction of the gap
+	// per second. The floor still holds, so lagging cannot leave the eye inside
+	// the ground.
+	float ground = heightmap[MapOffset(camera.x, camera.y)];
+	camera.height += (ground + camera.clearance - camera.height) * (1.0f - expf(-deltatime / VOXEL_FOLLOW));
+	if (camera.height < ground + VOXEL_CLEARANCE) {
+		camera.height = ground + VOXEL_CLEARANCE;
 	}
 
 	float sinang = (float)sin(camera.angle);
@@ -149,4 +162,7 @@ void DEMO_Initialize(void)
 	RETRO_LoadImage("assets/voxel_height_1024x1024.pcx"); // height
 	RETRO_SetPalette(RETRO_ImagePalette(0));
 	RETRO_SetColor(0, 36, 36, 56);
+
+	// Start on the ground rather than lagging up to it
+	camera.height = RETRO_ImageData(1)[MapOffset(camera.x, camera.y)] + camera.clearance;
 }

@@ -6,7 +6,7 @@
 // to left; t lives on 5 · 77. The cube is otherwise the stock textured
 // path. Cube edges that are axis-aligned in model space are overstroked
 // so the silhouette stays visible when a face is nearly edge-on. Euler
-// angles live on 2π.
+// angles live on 2π. The stroke is centred on the edge.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -77,7 +77,8 @@ void DEMO_Render(double deltatime)
 				if (length == 0.0f) continue;
 				float ox = -dy / length;
 				float oy = dx / length;
-				for (int offset = 0; offset <= 1; offset++) {
+				// Centred, since which way (-dy, dx) points follows the winding
+				for (int offset = -1; offset <= 1; offset++) {
 					RETRO_DrawLine(round(v1->sx + ox * offset), round(v1->sy + oy * offset),
 								   round(v2->sx + ox * offset), round(v2->sy + oy * offset), 60);
 				}

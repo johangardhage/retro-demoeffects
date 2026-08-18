@@ -8,7 +8,9 @@
 //   F(p) = sum_i  T R_i² / |p − c_i|²
 //
 // The solid F ≥ T is drawn (the superlevel set, not only the curve
-// F = T). One ball alone meets T on the circle of radius R_i:
+// F = T). |p − c_i|² is a quadratic in x, so along a scanline it is
+// stepped by forward differences rather than recomputed.
+// One ball alone meets T on the circle of radius R_i:
 // T R² / R² = T. Where fields overlap, F exceeds T between them, so
 // the discs merge. |p−c|² is floored at 10⁻⁴ so a sample on a centre
 // does not divide by zero. The balls fly at constant speed and bounce
@@ -32,16 +34,32 @@ struct MetaBall {
 
 void DEMO_Render(double deltatime)
 {
-	// Draw balls
-	for (int x = 0; x < RETRO_WIDTH; x++) {
-		for (int y = 0; y < RETRO_HEIGHT; y++) {
+	// Charge of each ball
+	float charge[NUM_BALLS];
+	for (int i = 0; i < NUM_BALLS; i++) {
+		charge[i] = THRESHOLD * Balls[i].radius * Balls[i].radius;
+	}
+
+	// Draw balls, rows outside so the framebuffer is walked in order. |p - c|² is
+	// a quadratic in x, so it is stepped by forward differences:
+	// d(x+1) - d(x) = 2(x - cx) + 1, which itself grows by 2 each pixel.
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		float distancesquared[NUM_BALLS];
+		float slope[NUM_BALLS];
+		for (int i = 0; i < NUM_BALLS; i++) {
+			float a = -Balls[i].pos.x;
+			float b = y - Balls[i].pos.y;
+			distancesquared[i] = a * a + b * b;
+			slope[i] = 2 * a + 1;
+		}
+
+		for (int x = 0; x < RETRO_WIDTH; x++) {
 			float sum = 0;
 			// Calculate iso-surface
 			for (int i = 0; i < NUM_BALLS; i++) {
-				float a = x - Balls[i].pos.x;
-				float b = y - Balls[i].pos.y;
-				float d = MAX(a * a + b * b, 0.0001f);
-				sum += THRESHOLD * Balls[i].radius * Balls[i].radius / d;
+				sum += charge[i] / MAX(distancesquared[i], 0.0001f);
+				distancesquared[i] += slope[i];
+				slope[i] += 2;
 			}
 			// Threshold
 			if (sum >= THRESHOLD) {

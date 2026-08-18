@@ -10,15 +10,18 @@
 //   (x, y, z) = R (cos α sin β,  cos β,  sin α sin β)
 //
 // Steps are 2π/n_α and π/n_β so the grid closes (POINTSTEP itself does not
-// divide the circle). That is still even in angle, not over the surface:
-// the area of a band carries a sin(β) that stepping β evenly ignores, so
-// the rings tighten at the poles.
+// divide the circle). That is even in angle, not over the surface: the area
+// of a band carries a sin(β) that stepping β evenly ignores, so the rings
+// tighten at the poles. That crowding is the intended shape, not an error.
 //
 // Depth toward the viewer is z = -rz. The drawn cap is z > ZMIN, shaded
 //
 //   color = (z - ZMIN) * (SHADES - 1) / (R - ZMIN)
 //
 // so the rim of the cap is dark and the point facing the viewer is white.
+// That shade is strictly increasing in depth, so the framebuffer doubles as
+// a depth buffer: where two dots land on one pixel, keeping the brighter is
+// an exact depth test.
 //
 // Euler angles live on 2π.
 //
@@ -62,7 +65,11 @@ void DEMO_Render(double deltatime)
 		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT && z > ZMIN) {
 			int color = (z - ZMIN) * (SHADES - 1) / (RADIUS - ZMIN);
 
-			RETRO_PutPixel(x, y, color);
+			// Grid order is fixed at startup in model space and depth is the
+			// rotated z, so no draw order can be back to front
+			if (color > RETRO_GetPixel(x, y)) {
+				RETRO_PutPixel(x, y, color);
+			}
 		}
 	}
 }

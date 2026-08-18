@@ -13,11 +13,21 @@
 //
 //   z' = z² + c
 //
-// until |z| > 2 (tested as Re² + Im² > 4) or MAX_ITERATIONS. The
-// color is the escape count + 32, so 0..31 stay unused. Counts 223–255
-// and the interior (never escapes) share 255 — 223 + 32 lands on it and
-// higher counts clamp — which is black in the default 8-bit palette. zoom grows and zoomSpd compounds, so the
-// window tightens around (moveX, moveY).
+// until |z|² > BAILOUT or MAX_ITERATIONS.
+//
+// The colour is the normalised iteration count, the continuous potential
+// estimate
+//
+//   mu = n + 1 − log2(log |z|)
+//
+// which needs a bailout well past 2 for the logarithm; 16 (BAILOUT = 256) is
+// the usual choice. Offset by 32, so 0..31 stay unused. Counts past 223 and
+// the interior share 255, black in the default 8-bit palette.
+//
+// The zoom is exponential and pixel spacing is 3 / (zoom W), so the dive
+// lives on the phase that reaches ZOOM_LIMIT, past which double no longer
+// separates neighbouring pixels, and then restarts. zoom = RATE^phase is a
+// closed form, so it is frame-rate independent.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -26,27 +36,35 @@
 #include "lib/retrogfx.h"
 
 #define MAX_ITERATIONS 255
+#define BAILOUT 256.0 // |z|², far enough out for the smooth escape estimate
 #define CONST_RE -0.7 // real part of c, which selects the Julia set
 #define CONST_IM 0.27015 // imaginary part of c
+#define CENTER_X 0.01101 // the point the dive closes on
+#define CENTER_Y 0.0101
+#define ZOOM_RATE 3.281 // zoom per second
+#define ZOOM_LIMIT 1.0e12 // as deep as double carries a distinct pixel spacing
 
 void DEMO_Render(double deltatime)
 {
-	// Each iteration: z' = z² + c. c is fixed; z starts at the pixel.
-	static double zoom = 1;
-	static double zoomSpd = 0.002f;
-	static double moveX = 0.01101;
-	static double moveY = 0.0101;
+	// Calculate phase. One dive, then back to the top.
+	static double phase = 0;
+	phase = fmod(phase + deltatime, log(ZOOM_LIMIT) / log(ZOOM_RATE));
+
+	double zoom = pow(ZOOM_RATE, phase);
+	double scale = 3.0 / (zoom * RETRO_WIDTH);
 
 	// Map pixel
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		for (int x = 0; x < RETRO_WIDTH; x++) {
-			// z0 from the pixel centre, zoom and pan. Both axes divide by W so
-			// the lattice is square (using H for Im would stretch the set).
-			double pr = 3.0 * (x + 0.5 - RETRO_WIDTH / 2.0) / (zoom * RETRO_WIDTH) + moveX;
-			double pi = 3.0 * (y + 0.5 - RETRO_HEIGHT / 2.0) / (zoom * RETRO_WIDTH) + moveY;
+		// z0 from the pixel centre. Both axes use the same scale, so the
+		// lattice is square.
+		double pi0 = scale * (y + 0.5 - RETRO_HEIGHT / 2.0) + CENTER_Y;
 
-			double newRe = pr;
-			double newIm = pi;
+		for (int x = 0; x < RETRO_WIDTH; x++) {
+			double pr0 = scale * (x + 0.5 - RETRO_WIDTH / 2.0) + CENTER_X;
+
+			double newRe = pr0;
+			double newIm = pi0;
+			double lengthsquared = newRe * newRe + newIm * newIm;
 
 			int iterations = 0;
 
@@ -59,23 +77,26 @@ void DEMO_Render(double deltatime)
 				newRe = oldRe * oldRe - oldIm * oldIm + CONST_RE;
 				newIm = 2 * oldRe * oldIm + CONST_IM;
 
-				// Outside the circle of radius 2: |z|² > 4
-				if ((newRe * newRe + newIm * newIm) > 4) {
+				lengthsquared = newRe * newRe + newIm * newIm;
+
+				// Outside the bailout circle
+				if (lengthsquared > BAILOUT) {
 					break;
 				}
 
 				iterations++;
 			}
 
-			// Color is the escape count, offset 32
-			int color = CLAMP(iterations + 32, 32, 256);
+			// The interior never escapes and keeps the raw count
+			double smooth = iterations;
+			if (iterations < MAX_ITERATIONS && lengthsquared > 1.0) {
+				smooth += 1.0 - log2(0.5 * log(lengthsquared));
+			}
+
+			int color = CLAMP(smooth + 32, 32, 256);
 			RETRO_PutPixel(x, y, color);
 		}
 	}
-
-	// Zoom
-	zoom += zoomSpd * deltatime * 60;
-	zoomSpd *= pow(1.02, deltatime * 60);
 }
 
 void DEMO_Initialize(void)

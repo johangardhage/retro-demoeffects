@@ -8,8 +8,8 @@
 //
 // k = 0 is the midpoint. k/POINTS is a small shrink (k > 0) or swell
 // (k < 0) toward the origin. k = 0.75 + sin(phase / 15) ∈ [−0.25, 1.75].
-// Segments are drawn in all four mirror quadrants. The framebuffer is
-// never cleared; a fire blur after each step is what fades the trails.
+// Segments are drawn in all four mirror quadrants. The framebuffer is never
+// cleared; a fire blur after each step is what fades the trails.
 //
 // The walker is a pair of incommensurate radiuses, rotated by −α
 // (α = phase / 1.37). phase lives on 2π · 2 · 3³ · 5 · 13 · 41 · 137,
@@ -37,10 +37,11 @@ void DrawLines(int x, int y, float k)
 		Points[i].x = (Points[i].x + Points[i - 1].x) / (2.0 + k / POINTS);
 		Points[i].y = (Points[i].y + Points[i - 1].y) / (2.0 + k / POINTS);
 
-		int x1 = CLAMPWIDTH(Points[i].x);
-		int x2 = CLAMPWIDTH(Points[i - 1].x);
-		int y1 = CLAMPHEIGHT(Points[i].y);
-		int y2 = CLAMPHEIGHT(Points[i - 1].y);
+		// Not clamped: clamping x and y apart bends the segment. DrawLine clips.
+		int x1 = lround(Points[i].x);
+		int x2 = lround(Points[i - 1].x);
+		int y1 = lround(Points[i].y);
+		int y2 = lround(Points[i - 1].y);
 
 		RETRO_DrawLine(x1, y1, x2, y2, 255);
 		RETRO_DrawLine(x1, (RETRO_HEIGHT - 1) - y1, x2, (RETRO_HEIGHT - 1) - y2, 255);

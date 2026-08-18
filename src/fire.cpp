@@ -11,9 +11,9 @@
 // Taps: left/right on this row, and the three cells one and two rows
 // below. No self, so a cell keeps none of its own heat. Six of the
 // eight sit below it (y grows down), so each step lifts heat from
-// y+1, y+2 onto y. The pass is in place, top to bottom, left to
-// right: Gauss–Seidel in x, Jacobi in y. Out-of-range taps wrap on
-// both axes: the x wrap joins the flame's left and right edges. The
+// y+1, y+2 onto y. Every tap reads the previous step. Out-of-range
+// taps wrap on both axes: the x wrap joins the flame's left and right
+// edges. The
 // y wrap only hits the last two hidden rows, and those taps land on
 // buffer rows 0 and 1. A spark writes 255
 // into the bottom FIRE_HEIGHT rows of a column with probability
@@ -51,10 +51,8 @@ unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 // smear a column into its neighbours, and wrapping those in x lets a flame at the
 // edge continue on the other side.
 //
-// The pass runs top to bottom, left to right, in place. When T'(x, y) is formed the
-// rows below still hold the previous step, which is the heat being lifted, but the
-// left neighbour on this row is already T'. That is a Gauss-Seidel update along x
-// and a Jacobi update along y.
+// RETRO_Blur keeps the rows it has already written, so every tap reads the previous
+// step: a Jacobi update on both axes, and the flame rises straight.
 //
 // A uniform column that only decayed would fall from 255 to 0 in 255 / FIRE_DECAY
 // steps, about eighty-five here. Averaging with cooler neighbours kills a flame

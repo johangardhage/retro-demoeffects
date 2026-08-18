@@ -39,15 +39,10 @@
 #define CROSS_TOP (FLAG_HEIGHT * 4 / 10)
 #define CROSS_BOTTOM (FLAG_HEIGHT * 6 / 10)
 
-#define SKY_LOW RETRO_Palette{ 4, 6, 12 }
-#define SKY_HIGH RETRO_Palette{ 34, 42, 60 }
-
-// A shade ramp per color of the flag, and what is left over for the sky behind it
+// A shade ramp per color of the flag
 #define FLAG_COLORS 120
-#define SKY_COLORS (RETRO_COLORS - 2 * FLAG_COLORS)
 #define BLUE_SHADES 0
 #define YELLOW_SHADES FLAG_COLORS
-#define SKY_SHADES (2 * FLAG_COLORS)
 
 #define CLOTH_AMPLITUDE 22.0 // fold depth at the fly, in pixels
 #define CLOTH_SPEED 85 // pixels of wave travel per second
@@ -72,7 +67,7 @@
 #define MATERIAL_AMBIENT 0.34 // cloth is lit by the whole sky, not only by the sun
 #define MATERIAL_DIFFUSE 0.60
 #define MATERIAL_SPECULAR 0.16 // cloth has a broad sheen, not a highlight
-#define MATERIAL_SHININESS 12
+#define MATERIAL_SHININESS 12 // fixed: the specular is unrolled as x⁴·x⁴·x⁴
 
 //
 // One mode of the surface
@@ -110,6 +105,12 @@ struct ClothPhasor {
 double ClothStepSin[CLOTH_WAVES];
 double ClothStepCos[CLOTH_WAVES];
 
+// 2π / λ for each mode, along the flag and across it. Constant, and the inner
+// loop runs once per mode per pixel, so they are divided out once at startup
+// rather than 2 · CLOTH_WAVES times for every pixel of every frame.
+double ClothTurnX[CLOTH_WAVES];
+double ClothTurnY[CLOTH_WAVES];
+
 // The envelope A(x) and its first two derivatives, which depend only on the distance from
 // the mast and so are the same in every row and every frame
 double ClothEnvelope[FLAG_WIDTH];
@@ -133,11 +134,9 @@ void DEMO_Render(double deltatime)
 	// Rigid swing about the mast: up = y - swing * A(x)/AMPLITUDE. Lighting is unchanged.
 	double swing = CLOTH_SWAY * sin(2 * M_PI * sway / CLOTH_SWAYPERIOD);
 
-	// Draw flag
+	// Draw flag. The background is the cleared framebuffer: both ramps start at
+	// black, so index 0 is black and nothing has to be painted behind the cloth.
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		// Sky behind the flag, so the flag's own edges are visible against something
-		memset(buffer + y * RETRO_WIDTH, SKY_SHADES + y * SKY_COLORS / RETRO_HEIGHT, RETRO_WIDTH);
-
 		int across = y - FLAG_TOP;
 
 		// Start each mode at the left edge of the flag, then turn it pixel by pixel
@@ -164,12 +163,12 @@ void DEMO_Render(double deltatime)
 			double slopey = 0;
 
 			for (int i = 0; i < CLOTH_WAVES; i++) {
-				double turn = 2 * M_PI / ClothWaves[i].wavelengthx;
+				double turn = ClothTurnX[i];
 
 				waves += ClothWaves[i].amplitude * phasor[i].sine;
 				waveslope += ClothWaves[i].amplitude * turn * phasor[i].cosine;
 				wavecurve -= ClothWaves[i].amplitude * turn * turn * phasor[i].sine;
-				slopey += ClothWaves[i].amplitude * (2 * M_PI / ClothWaves[i].wavelengthy) * phasor[i].cosine;
+				slopey += ClothWaves[i].amplitude * ClothTurnY[i] * phasor[i].cosine;
 
 				double sine = phasor[i].sine * ClothStepCos[i] + phasor[i].cosine * ClothStepSin[i];
 				double cosine = phasor[i].cosine * ClothStepCos[i] - phasor[i].sine * ClothStepSin[i];
@@ -187,7 +186,7 @@ void DEMO_Render(double deltatime)
 			material += sqrt(1 + slopex * slopex);
 
 			// Past the fly the flag has run out, and the swing can carry a row off the top
-			// or the bottom. Either way the sky already drawn stands.
+			// or the bottom. Either way the background stands.
 			double height = ClothEnvelope[x] * waves;
 			double up = across - swing * ClothEnvelope[x] / CLOTH_AMPLITUDE - CLOTH_TILT * height;
 			if (along >= FLAG_WIDTH || up < 0 || up >= FLAG_HEIGHT) {
@@ -205,9 +204,13 @@ void DEMO_Render(double deltatime)
 			// Blinn-Phong. L and V are fixed, so H = normalize(L + V) is formed once.
 			double specular = 0;
 			if (lambert > 0) {
-				double normalhalfway = normalx * HalfwayX + normaly * HalfwayY + normalz * HalfwayZ;
+				double normalhalfway = CLAMP01(normalx * HalfwayX + normaly * HalfwayY + normalz * HalfwayZ);
 
-				specular = pow(CLAMP01(normalhalfway), MATERIAL_SHININESS);
+				// (N·H)^12 by squaring: x², x⁴, x⁸ · x⁴. Four multiplies rather
+				// than a call to pow for an exponent known at compile time.
+				double squared = normalhalfway * normalhalfway;
+				double fourth = squared * squared;
+				specular = fourth * fourth * fourth;
 			}
 
 			// Ambient occlusion from curvature: only the sky is shut out, not the sun.
@@ -228,12 +231,10 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette, a shade ramp per color of the flag and one for the sky. Shade is
-	// reflected light, so the flag ramps start at black and an unlit fold goes dark rather
-	// than merely desaturated.
+	// Init palette, a shade ramp per color of the flag. Shade is reflected light, so
+	// the ramps start at black and an unlit fold goes dark rather than merely desaturated.
 	RETRO_CreateGradientPalette(BLUE_SHADES, BLUE_SHADES + FLAG_COLORS, RETRO_BLACK, RETRO_CERULEAN);
 	RETRO_CreateGradientPalette(YELLOW_SHADES, YELLOW_SHADES + FLAG_COLORS, RETRO_BLACK, RETRO_GOLD);
-	RETRO_CreateGradientPalette(SKY_SHADES, RETRO_COLORS, SKY_LOW, SKY_HIGH);
 
 	// A(x) = AMPLITUDE sin(π x / 2 W) and its first two derivatives. Fundamental
 	// mode of a membrane held at x=0 and free at x=W.
@@ -246,12 +247,13 @@ void DEMO_Initialize(void)
 		ClothEnvelopeCurve[x] = -CLOTH_AMPLITUDE * turn * turn * sin(along);
 	}
 
-	// Init the turn each mode makes over one pixel along the flag
+	// Init the turn each mode makes over one pixel, along the flag and across it
 	for (int i = 0; i < CLOTH_WAVES; i++) {
-		double turn = 2 * M_PI / ClothWaves[i].wavelengthx;
+		ClothTurnX[i] = 2 * M_PI / ClothWaves[i].wavelengthx;
+		ClothTurnY[i] = 2 * M_PI / ClothWaves[i].wavelengthy;
 
-		ClothStepSin[i] = sin(turn);
-		ClothStepCos[i] = cos(turn);
+		ClothStepSin[i] = sin(ClothTurnX[i]);
+		ClothStepCos[i] = cos(ClothTurnX[i]);
 	}
 
 	// Init halfway vector, H = normalize(L + V), with the viewer at (0, 0, 1)

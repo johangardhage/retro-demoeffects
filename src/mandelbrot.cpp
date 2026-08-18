@@ -7,12 +7,20 @@
 //   z0 = 0
 //   z' = z² + p
 //
-// p is the same square-aspect map as Julia (both axes divide by W, pixel
-// centres, 3 / (zoom W)). The color is the escape count + 32; 223–255
-// and the interior share 255 (black in the default 8-bit palette). The
-// window zooms toward the left cusp while moveX tracks the feature under
-// the centre (divided by zoom, so the pan is in pixels of the plane, not
-// a fixed world speed).
+// p is the same square-aspect map as Julia. The colour is the normalised
+// iteration count mu = n + 1 − log2(log |z|), offset by 32; the interior and
+// counts past 223 share 255, black in the default 8-bit palette.
+//
+// Points inside the main cardioid and the period-2 bulb never escape, and
+// both regions have a closed form:
+//
+//   cardioid: q = (x − 1/4)² + y²,  q (q + x − 1/4) ≤ y² / 4
+//   bulb:     (x + 1)² + y² ≤ 1/16
+//
+// The window dives toward the left cusp while the centre pans onto the
+// feature underneath it. zoom is RATE^phase and the pan is its integral, so
+// both are frame-rate independent. The phase lives on the dive that reaches
+// ZOOM_LIMIT, past which double no longer separates neighbouring pixels.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -21,25 +29,45 @@
 #include "lib/retrogfx.h"
 
 #define MAX_ITERATIONS 255
+#define BAILOUT 256.0 // |z|², far enough out for the smooth escape estimate
+#define CENTER_X (-0.5) // where the dive starts
+#define CENTER_Y 0.0
+#define PAN_SPEED 0.300654 // plane units a second at zoom 1, so the pan holds the feature
+#define ZOOM_RATE 1.34885 // zoom per second
+#define ZOOM_LIMIT 1.0e12 // as deep as double carries a distinct pixel spacing
 
 void DEMO_Render(double deltatime)
 {
-	// Each iteration: z' = z² + p. p is the pixel; z starts at 0.
-	static double zoom = 1;
-	static double zoomSpd = 0.005f;
-	static double moveX = -0.5;
-	static double moveY = 0;
+	// Calculate phase. One dive, then back to the top.
+	static double phase = 0;
+	phase = fmod(phase + deltatime, log(ZOOM_LIMIT) / log(ZOOM_RATE));
+
+	double zoom = pow(ZOOM_RATE, phase);
+	double scale = 3.0 / (zoom * RETRO_WIDTH);
+
+	// The integral of PAN_SPEED / zoom
+	double moveX = CENTER_X - PAN_SPEED * (1.0 - 1.0 / zoom) / log(ZOOM_RATE);
+	double moveY = CENTER_Y;
 
 	// Map pixel
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		double pi = scale * (y + 0.5 - RETRO_HEIGHT / 2.0) + moveY;
+
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			// p from the pixel centre, zoom and pan. Both axes divide by W so
-			// the lattice is square (using H for Im would stretch the set).
-			double pr = 3.0 * (x + 0.5 - RETRO_WIDTH / 2.0) / (zoom * RETRO_WIDTH) + moveX;
-			double pi = 3.0 * (y + 0.5 - RETRO_HEIGHT / 2.0) / (zoom * RETRO_WIDTH) + moveY;
+			double pr = scale * (x + 0.5 - RETRO_WIDTH / 2.0) + moveX;
+
+			// Inside the cardioid or the period-2 bulb the orbit is bounded
+			double cardioidx = pr - 0.25;
+			double q = cardioidx * cardioidx + pi * pi;
+			if (q * (q + cardioidx) <= 0.25 * pi * pi ||
+				(pr + 1) * (pr + 1) + pi * pi <= 0.0625) {
+				RETRO_PutPixel(x, y, 255);
+				continue;
+			}
 
 			double newRe = 0;
 			double newIm = 0;
+			double lengthsquared = 0;
 
 			int iterations = 0;
 
@@ -52,24 +80,26 @@ void DEMO_Render(double deltatime)
 				newRe = oldRe * oldRe - oldIm * oldIm + pr;
 				newIm = 2 * oldRe * oldIm + pi;
 
-				// Outside the circle of radius 2: |z|² > 4
-				if ((newRe * newRe + newIm * newIm) > 4) {
+				lengthsquared = newRe * newRe + newIm * newIm;
+
+				// Outside the bailout circle
+				if (lengthsquared > BAILOUT) {
 					break;
 				}
 
 				iterations++;
 			}
 
-			// Color is the escape count, offset 32
-			int color = CLAMP(iterations + 32, 32, 256);
+			// The interior never escapes and keeps the raw count
+			double smooth = iterations;
+			if (iterations < MAX_ITERATIONS && lengthsquared > 1.0) {
+				smooth += 1.0 - log2(0.5 * log(lengthsquared));
+			}
+
+			int color = CLAMP(smooth + 32, 32, 256);
 			RETRO_PutPixel(x, y, color);
 		}
 	}
-
-	// Zoom
-	zoom += zoomSpd * deltatime * 60;
-	zoomSpd *= pow(1.005, deltatime * 60);
-	moveX -= 0.0050109f * deltatime * 60 / zoom;
 }
 
 void DEMO_Initialize(void)

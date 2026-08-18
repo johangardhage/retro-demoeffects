@@ -23,6 +23,7 @@
 #define PLANE_DISTANCE 320
 #define PLANE_PERIOD 256 // one texture width; U, V and φ share it
 #define PLANE_FIXED (1 << 24) // 24-bit fixed; texel in bits 16–23
+#define PLANE_EPSILON 65536.0f // closest c gets to the horizon before 1/c is capped
 
 void DEMO_Render(double deltatime)
 {
@@ -54,12 +55,15 @@ void DEMO_Render(double deltatime)
 		float b = bz + by * (y - (RETRO_HEIGHT / 2)) + bx * -(RETRO_WIDTH / 2);
 		float c = cz + cy * (y - (RETRO_HEIGHT / 2)) + cx * -(RETRO_WIDTH / 2);
 
-		float ic = fabs(c) > 65536 ? 1 / c : 1 / 65536;
+		// Near the horizon c goes to zero. The guard keeps its sign.
+		float ic = fabs(c) > PLANE_EPSILON ? 1 / c : copysignf(1 / PLANE_EPSILON, c);
 
-		int u = (int)(a * PLANE_FIXED * ic);
-		int v = (int)(b * PLANE_FIXED * ic);
-		int du = (int)(PLANE_FIXED * ax * ic);
-		int dv = (int)(PLANE_FIXED * bx * ic);
+		// Wrapped into one texture period before it is fixed-pointed, or a row
+		// near the horizon overflows int
+		int u = (int)(fmod(a * ic, (double)PLANE_PERIOD) * PLANE_FIXED);
+		int v = (int)(fmod(b * ic, (double)PLANE_PERIOD) * PLANE_FIXED);
+		int du = (int)(ax * ic * PLANE_FIXED);
+		int dv = (int)(bx * ic * PLANE_FIXED);
 
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			unsigned char color = image[((v >> 8) & 0xff00) + ((u >> 16) & 0xff)];

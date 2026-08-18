@@ -34,10 +34,13 @@
 
 unsigned char LightMap[LIGHTMAP_HEIGHT * LIGHTMAP_WIDTH];
 
+// The height map never changes, so neither do its slopes
+int SlopeX[RETRO_HEIGHT * RETRO_WIDTH];
+int SlopeY[RETRO_HEIGHT * RETRO_WIDTH];
+
 void DEMO_Render(double deltatime)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
-	unsigned char *image = RETRO_ImageData();
 
 	// Calculate light. Lissajous: twice around vertically for every turn horizontally.
 	static double angle = 0;
@@ -54,11 +57,8 @@ void DEMO_Render(double deltatime)
 		for (int x = 1; x < RETRO_WIDTH-1; x++) {
 			int offset = y * RETRO_WIDTH + x;
 
-			int slopex = (image[offset + 1] - image[offset - 1]) * LIGHT_DEPTH;
-			int slopey = (image[offset + RETRO_WIDTH] - image[offset - RETRO_WIDTH]) * LIGHT_DEPTH;
-
-			int mapx = maporiginx - x + slopex;
-			int mapy = maporiginy - y + slopey;
+			int mapx = maporiginx - x + SlopeX[offset];
+			int mapy = maporiginy - y + SlopeY[offset];
 
 			mapx = CLAMP(mapx, 0, LIGHTMAP_WIDTH);
 			mapy = CLAMP(mapy, 0, LIGHTMAP_HEIGHT);
@@ -71,6 +71,16 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadImage("assets/bump_320x240.pcx");
+
+	// Init slopes. The picture never changes, so neither do they.
+	unsigned char *image = RETRO_ImageData();
+	for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
+		for (int x = 1; x < RETRO_WIDTH - 1; x++) {
+			int offset = y * RETRO_WIDTH + x;
+			SlopeX[offset] = (image[offset + 1] - image[offset - 1]) * LIGHT_DEPTH;
+			SlopeY[offset] = (image[offset + RETRO_WIDTH] - image[offset - RETRO_WIDTH]) * LIGHT_DEPTH;
+		}
+	}
 
 	// Init palette
 	RETRO_CreateGradientPalette(0, LIGHT_COLORS * 3 / 4, RETRO_BLACK, RETRO_RED);

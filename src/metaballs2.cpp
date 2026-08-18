@@ -9,9 +9,9 @@
 //
 // r_i is the charge T R_i². One ball of strength r meets color 20 on
 // the circle of radius √r, where 20 r / (√r)² = 20. |p−c|² is floored at 10⁻⁴
-// as in metaballs.cpp. The four centres ride a shared (cos t, sin t)
-// (the table is in degrees) at different amplitudes, so the orbits
-// share a phase.
+// as in metaballs.cpp. Each centre rides its own (cos, sin) at its own whole
+// multiple of the phase and its own offset, so the four do not move as one.
+// Whole multiples keep every orbit closed on the same 360-entry table.
 //
 // The palette is not a Phong of ∇F. Density is treated as a Lambert
 // term I = cos(π (255 − i) / 512), then
@@ -27,7 +27,7 @@
 
 #define NUM_BALLS 4
 #define SINE_VALUES 360
-#define ORBIT_SPEED 100 // degrees of the shared orbit per second
+#define ORBIT_SPEED 40 // degrees of the base orbit per second; the rates below multiply it
 
 struct MetaBall {
 	float x, y, r;
@@ -44,18 +44,18 @@ void DEMO_Render(double deltatime)
 	int iphase = WRAP(phase, SINE_VALUES);
 
 	// Move balls
-	Balls[0].r = 1000;
-	Balls[0].x = CosTable[iphase] * -100 + (RETRO_WIDTH / 2);
-	Balls[0].y = SinTable[iphase] * -10 + (RETRO_HEIGHT / 2);
-	Balls[1].r = 4000;
-	Balls[1].x = CosTable[iphase] * 10 + (RETRO_WIDTH / 2);
-	Balls[1].y = SinTable[iphase] * 60 + (RETRO_HEIGHT / 2);
-	Balls[2].r = 7000;
-	Balls[2].x = CosTable[iphase] * -130 + (RETRO_WIDTH / 2);
-	Balls[2].y = SinTable[iphase] * -80 + (RETRO_HEIGHT / 2);
-	Balls[3].r = 10000;
-	Balls[3].x = CosTable[iphase] * -80 + (RETRO_WIDTH / 2);
-	Balls[3].y = SinTable[iphase] * 70 + (RETRO_HEIGHT / 2);
+	static const int rate[NUM_BALLS] = { 4, 3, 1, 2 };
+	static const int offset[NUM_BALLS] = { 0, 90, 210, 300 };
+	static const float charge[NUM_BALLS] = { 1000, 4000, 7000, 10000 };
+	static const float amplitudex[NUM_BALLS] = { -100, 10, -130, -80 };
+	static const float amplitudey[NUM_BALLS] = { -10, 60, -80, 70 };
+
+	for (int i = 0; i < NUM_BALLS; i++) {
+		int p = WRAP(iphase * rate[i] + offset[i], SINE_VALUES);
+		Balls[i].r = charge[i];
+		Balls[i].x = CosTable[p] * amplitudex[i] + (RETRO_WIDTH / 2);
+		Balls[i].y = SinTable[p] * amplitudey[i] + (RETRO_HEIGHT / 2);
+	}
 
 	// Draw balls
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

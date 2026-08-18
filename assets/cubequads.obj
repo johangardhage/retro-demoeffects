@@ -1,4 +1,14 @@
-o assets/cube4.obj
+#
+# cubequads.obj - Unit cube, quad faces, no UVs
+#
+# Geometry:   unit cube centred on the origin, corners at ±1.
+# Components: 8 vertices, no UV coordinates, 8 vertex normals along the
+#             corner diagonals, unnormalized, and 6 quad faces. The faces
+#             still carry a 1/1/1 index triple, whose UV index refers to
+#             nothing.
+# Used by:    wirecube, hiddenlinecube, flatcube, firecube, glenzshadedcube.
+#
+o cubequads
 v 1.000000 1.000000 1.000000
 v 1.000000 1.000000 -1.000000
 v 1.000000 -1.000000 1.000000

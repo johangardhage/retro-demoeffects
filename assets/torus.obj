@@ -1,4 +1,12 @@
-o assets/torus.obj
+#
+# torus.obj - Torus point cloud
+#
+# Geometry:   a 10 × 10 torus, 10 rings of 10 points, whose hole sits well
+#             left of the origin, so the right-hand tube passes through it.
+# Components: 100 vertices, no UV coordinates, no normals, no faces.
+# Used by:    dottorus2, which stamps a blob at each vertex.
+#
+o torus
 v 19.000000 0.000000 -13.000000
 v 8.000000 0.000000 -21.000000
 v -7.000000 0.000000 -22.000000

@@ -1,5 +1,15 @@
-# Blender v3.6.2 OBJ File: ''
-# www.blender.org
+#
+# cube.obj - Unit cube, cross atlas UVs
+#
+# Geometry:   unit cube centred on the origin, corners at ±1.
+# Components: 8 vertices, 14 UV coordinates laid out as a cross atlas, so
+#             every face takes its own quarter of the texture, 8 vertex
+#             normals along the corner diagonals, and 12 triangular faces,
+#             listed as 6 quads split (0, 1, 2) and (0, 2, 3).
+# Used by:    gouraudcube, phongcube, flatshadedcube, texturecube,
+#             environcube, plasmacube, and scrollercube, which replaces the
+#             atlas with a full-face mapping of its own.
+#
 o cube
 v 1.000000 1.000000 -1.000000
 v 1.000000 1.000000 1.000000

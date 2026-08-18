@@ -28,6 +28,30 @@ struct TriangleSpan {
 };
 
 //
+// Depth buffer, in q = 1 / depth
+//
+// The drawers already carry q per pixel for perspective-correct texturing,
+// and larger q is nearer, so the same number resolves depth. The painter's
+// sort on mean rotated z cannot: it is exact only for convex,
+// similarly-sized, non-interpenetrating faces. Cleared to 0, infinitely far,
+// once per model.
+//
+float RETRO_DepthBuffer[RETRO_WIDTH * RETRO_HEIGHT];
+
+void RETRO_ClearDepthBuffer(void)
+{
+	memset(RETRO_DepthBuffer, 0, sizeof(RETRO_DepthBuffer));
+}
+
+// True, and claims the pixel, when q is nearer than what is there.
+inline bool RETRO_DepthTest(int offset, float q)
+{
+	if (q <= RETRO_DepthBuffer[offset]) return false;
+	RETRO_DepthBuffer[offset] = q;
+	return true;
+}
+
+//
 // Environment-map lookup from a view-space normal.
 //
 // A lighting map (CreatePhongMap) is the front disk of a sphere:
@@ -150,12 +174,23 @@ void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned cha
 		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (area == 0.0f) continue;
 
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].x1 > span[y].x2) continue;
 			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
 			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			float px = xstart + 0.5f;
+			float py = y + 0.5f;
+			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+
 			for (int x = xstart; x < xend; x++) {
-				RETRO.framebuffer[y * RETRO_WIDTH + x] = color;
+				int offset = y * RETRO_WIDTH + x;
+				if (RETRO_DepthTest(offset, q)) {
+					RETRO.framebuffer[offset] = color;
+				}
+				q += dqdx;
 			}
 		}
 	}
@@ -205,6 +240,8 @@ void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices)
 
 		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / area;
 		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / area;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].x1 > span[y].x2) continue;
@@ -213,10 +250,15 @@ void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices)
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float c = p0->c + dcdx * (px - p0->x) + dcdy * (py - p0->y);
+			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
 
 			for (int x = xstart; x < xend; x++) {
-				RETRO.framebuffer[y * RETRO_WIDTH + x] = CLAMP256(c);
+				int offset = y * RETRO_WIDTH + x;
+				if (RETRO_DepthTest(offset, q)) {
+					RETRO.framebuffer[offset] = CLAMP256(c);
+				}
 				c += dcdx;
+				q += dqdx;
 			}
 		}
 	}
@@ -259,6 +301,8 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 		dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / area;
 		dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / area;
 		dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].x1 > span[y].x2) continue;
@@ -269,6 +313,7 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
 			float ny = p0->ny + dnydx * (px - p0->x) + dnydy * (py - p0->y);
 			float nz = p0->nz + dnzdx * (px - p0->x) + dnzdy * (py - p0->y);
+			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
 
 			for (int x = xstart; x < xend; x++) {
 				float normallengthsquared = nx * nx + ny * ny + nz * nz;
@@ -282,10 +327,14 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 
 				float paletteintensity = RETRO_ShadeFromLambert(intensity);
 				int color = light.c + light.cintensity * paletteintensity;
-				RETRO.framebuffer[y * RETRO_WIDTH + x] = CLAMP(color, cmin, cmax);
+				int offset = y * RETRO_WIDTH + x;
+				if (RETRO_DepthTest(offset, q)) {
+					RETRO.framebuffer[offset] = CLAMP(color, cmin, cmax);
+				}
 				nx += dnxdx;
 				ny += dnydx;
 				nz += dnzdx;
+				q += dqdx;
 			}
 		}
 	}
@@ -342,7 +391,10 @@ void RETRO_DrawTexMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 					float inverseq = 1.0f / q;
 					unsigned int u = CLAMP(uq * inverseq, 0, texmapwidth);
 					unsigned int v = CLAMP(vq * inverseq, 0, texmapheight);
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = texmap[v * texmapwidth + u];
+					int offset = y * RETRO_WIDTH + x;
+					if (RETRO_DepthTest(offset, q)) {
+						RETRO.framebuffer[offset] = texmap[v * texmapwidth + u];
+					}
 				}
 				uq += duqdx;
 				vq += dvqdx;
@@ -401,7 +453,10 @@ void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, uns
 					unsigned int v = CLAMP(vq * inverseq, 0, texmapheight);
 					unsigned char texel = CLAMP(texmap[v * texmapwidth + u], 0, RETRO_TEXTURE_COLORS);
 					int shade = CLAMP128(c);
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * RETRO_SHADES + shade];
+					int offset = y * RETRO_WIDTH + x;
+					if (RETRO_DepthTest(offset, q)) {
+						RETRO.framebuffer[offset] = shadetable[texel * RETRO_SHADES + shade];
+					}
 				}
 				uq += duqdx;
 				vq += dvqdx;
@@ -550,7 +605,10 @@ void RETRO_DrawTexMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 					float bumpshade = (RETRO_ShadeFromLambert(bumpedlambert) - RETRO_ShadeFromLambert(lambert)) * RETRO_SHADES;
 					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, RETRO_TEXTURE_COLORS);
 					int shade = CLAMP128(c + bumpshade);
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * RETRO_SHADES + shade];
+					int offset = y * RETRO_WIDTH + x;
+					if (RETRO_DepthTest(offset, q)) {
+						RETRO.framebuffer[offset] = shadetable[texel * RETRO_SHADES + shade];
+					}
 				}
 				uq += duqdx;
 				vq += dvqdx;
@@ -632,7 +690,10 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 						unsigned int envmapv = CLAMP(w, 0, envmapheight);
 						pixelshade = CLAMP128(envmap[envmapv * envmapwidth + envmapu]);
 					}
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * RETRO_SHADES + pixelshade];
+					int offset = y * RETRO_WIDTH + x;
+					if (RETRO_DepthTest(offset, q)) {
+						RETRO.framebuffer[offset] = shadetable[texel * RETRO_SHADES + pixelshade];
+					}
 				}
 				uq += duqdx;
 				vq += dvqdx;
@@ -750,7 +811,10 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 					unsigned int envmapv = CLAMP(w, 0, envmapheight);
 					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, RETRO_TEXTURE_COLORS);
 					unsigned char pixelshade = CLAMP128(envmap[envmapv * envmapwidth + envmapu]);
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = shadetable[texel * RETRO_SHADES + pixelshade];
+					int offset = y * RETRO_WIDTH + x;
+					if (RETRO_DepthTest(offset, q)) {
+						RETRO.framebuffer[offset] = shadetable[texel * RETRO_SHADES + pixelshade];
+					}
 				}
 				uq += duqdx;
 				vq += dvqdx;
@@ -787,6 +851,8 @@ void RETRO_DrawEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / area;
 		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / area;
 		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].x1 > span[y].x2) continue;
@@ -797,16 +863,21 @@ void RETRO_DrawEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
 			float ny = p0->ny + dnydx * (px - p0->x) + dnydy * (py - p0->y);
 			float nz = p0->nz + dnzdx * (px - p0->x) + dnzdy * (py - p0->y);
+			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
 
 			for (int x = xstart; x < xend; x++) {
 				float e, w;
 				RETRO_GetEnvMapCoordinates(nx, ny, nz, lightingmap, envmapwidth, envmapheight, envmapintensity, e, w);
 				unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 				unsigned int envmapv = CLAMP(w, 0, envmapheight);
-				RETRO.framebuffer[y * RETRO_WIDTH + x] = envmap[envmapv * envmapwidth + envmapu];
+				int offset = y * RETRO_WIDTH + x;
+				if (RETRO_DepthTest(offset, q)) {
+					RETRO.framebuffer[offset] = envmap[envmapv * envmapwidth + envmapu];
+				}
 				nx += dnxdx;
 				ny += dnydx;
 				nz += dnzdx;
+				q += dqdx;
 			}
 		}
 	}
@@ -907,7 +978,10 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 					}
 					unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 					unsigned int envmapv = CLAMP(w, 0, envmapheight);
-					RETRO.framebuffer[y * RETRO_WIDTH + x] = envmap[envmapv * envmapwidth + envmapu];
+					int offset = y * RETRO_WIDTH + x;
+					if (RETRO_DepthTest(offset, q)) {
+						RETRO.framebuffer[offset] = envmap[envmapv * envmapwidth + envmapu];
+					}
 				}
 				uq += duqdx;
 				vq += dvqdx;

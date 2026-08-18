@@ -95,6 +95,7 @@ void RETRO_RenderFlatModel(Model3D *model, bool shaded)
 		for (int j = 0; j < face->vertices; j++) {
 			points[j].x = model->vertex[face->vertex[j]].sx;
 			points[j].y = model->vertex[face->vertex[j]].sy;
+			points[j].q = model->vertex[face->vertex[j]].q;
 		}
 
 		int color = model->c + face->c;
@@ -159,6 +160,7 @@ void RETRO_RenderGouraudModel(Model3D *model)
 		for (int j = 0; j < face->vertices; j++) {
 			points[j].x = model->vertex[face->vertex[j]].sx;
 			points[j].y = model->vertex[face->vertex[j]].sy;
+			points[j].q = model->vertex[face->vertex[j]].q;
 			float lint = RETRO_DotProduct(model->normal[face->normal[j]], RETRO_Render.lightsource);
 			points[j].c = CLAMP(model->c + face->c + RETRO_ShadeFromLambert(lint) * model->cintensity, cmin, cmax);
 		}
@@ -186,6 +188,7 @@ void RETRO_RenderPhongModel(Model3D *model)
 			Vertex *vertex = &model->vertex[face->vertex[j]];
 			points[j].x = vertex->sx;
 			points[j].y = vertex->sy;
+			points[j].q = vertex->q;
 			// n * q; interpolating and renormalising is the same direction as /q.
 			points[j].nx = model->normal[face->normal[j]].rnx * vertex->q;
 			points[j].ny = model->normal[face->normal[j]].rny * vertex->q;
@@ -310,8 +313,8 @@ void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 			Normal *normal = &model->normal[face->normal[j]];
 			points[j].x = vertex->sx;
 			points[j].y = vertex->sy;
+			points[j].q = vertex->q;
 			if (bumpmapping) {
-				points[j].q = vertex->q;
 				points[j].u = model->uv[face->uv[j]].u;
 				points[j].v = model->uv[face->uv[j]].v;
 			}
@@ -332,6 +335,10 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 {
 	model = model ? model : RETRO_Get3DModel();
 	if (model == NULL) return;
+
+	// One model, one depth range. Glenz is exempt: it adds palette indices, so
+	// it depends on the order the sort gives it.
+	RETRO_ClearDepthBuffer();
 
 	switch (rendertype) {
 	case RETRO_POLY_DOT:

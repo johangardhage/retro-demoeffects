@@ -61,11 +61,10 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_Image *image = RETRO_LoadImage("assets/flag_320x240.pcx");
+	RETRO_Image *image = RETRO_LoadImage("assets/flag_320x240.pcx", true);
 	if (image->width != RETRO_WIDTH || image->height != RETRO_HEIGHT) {
 		RETRO_RageQuit("The image must be the size of the screen\n");
 	}
-	RETRO_SetPalette(RETRO_ImagePalette());
 
 	// Init tables. Each table is a sum of six unit-amplitude sinusoids: four plane waves,
 	// one hyperbolic term in x*y, and one ripple about a point far off the

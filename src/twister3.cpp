@@ -1,150 +1,166 @@
 //
 // Twister 3
 //
-// A textured square column, one vertical slice per screen column. The four
-// vertices live on the circle (y, z) = RAD (sin φ, cos φ) at 90°
-// steps (64 units of a 256-angle table). z is toward the viewer. φ is
+// A square column drawn one scanline at a time, wrapped in the flowers
+// picture, which climbs the two faces that are turned toward the viewer.
 //
-//   φ(x, phase) = LEAN cos phase + A(phase) sin(x/4 + 2 phase)
-//   A(phase)    = TWIST_MIN + (TWIST − TWIST_MIN) · (1 + cos(phase/5)) / 2
+// The cross section is a square whose four corners ride a circle of radius
+// R = RADIUS, so the column measures 2R across corner on and R sqrt 2 face
+// on. With the viewer at +z, corner k of the cross section at phase position i
+// sits at
 //
-// in table units, WRAP256. The twist amplitude breathes over five turns of
-// the table, so it does not lock to the lean and still closes on
-// TWISTER_PERIOD.
-// vs = φ / 32 picks which three vertices are the two visible faces
-// (the front-most of the four). Each face is a y-span of IMAGE_HEIGHT
-// texels with a 1/z shade
+//   a_k = i * TURNS * CYCLE + k * 64      (angle table units)
+//   x_k = W/2 - R cos a_k
+//   z_k = R sin a_k
 //
-//   c = 63 · ZRATE / (RAD − z + ZRATE)
+// Only x is stored, because z decides the rest on its own. The leftmost
+// corner is the one whose angle is nearest 0, so the corner a quarter turn
+// on has the largest sine and is the one nearest the viewer, the corner
+// half a turn on is the rightmost, and the fourth is hidden behind the
+// other three. The two visible faces are therefore always
 //
-// added to the texel (0 or 64). The texture u scrolls with x + 2 phase.
-// phase lives on 1280, the lcm of the 256-table and the 320-wide scroll.
-// The column is centred at y = 159.
+//   leftmost -> nearest -> rightmost
+//
+// and three x values per scanline describe the whole silhouette. No depth
+// test or sort is needed, and no face is ever drawn over another.
+//
+// The square turns TURNS = 1.5 times over the period. Three half turns is six
+// quarter turns, and a quarter turn maps the square onto itself, so the shape
+// wraps without a seam.
+//
+// A scanline evaluates the shape at
+//
+//   index = y * torsion(phase) + phase
+//
+// so torsion is the table units of twist per scanline. It is a wave in the
+// phase rather than in y, seven cycles over the period under an envelope
+// that closes once,
+//
+//   torsion(i) = TORSION * sin(2 pi * WAVE * i / N) * cos(2 pi * i / N)
+//
+// which is what makes the column wind up tight, unwind to a straight prism
+// where the wave crosses zero, and then corkscrew the other way.
+//
+// The surface is the flowers picture, TWISTER_IMAGE_SIZE square. It is wrapped once
+// around the column rather than repeated on every face: a side carries
+// TWISTER_IMAGE_FACE = TWISTER_IMAGE_SIZE / 4 texels, and which quarter of the picture a face
+// carries is named by the corner it starts at,
+//
+//   u = corner * IMAGE_FACE .. + IMAGE_FACE   around the column
+//   v = y + TWISTER_IMAGE_SCROLL * phase
+//                                             along it, wrapped on TWISTER_IMAGE_SIZE
+//
+// so the picture runs on across the crease and turns with the column, rather
+// than the same quarter appearing twice over on the two visible faces. That is
+// what the leftmost corner's own number is kept for. A face carries its quarter
+// however wide it is on screen, so the picture squeezes as the face turns
+// away. That stretch is what reads as perspective, there being none in the
+// projection. The twist travels too, since a row holds its place in the shape
+// only where y * torsion + phase stays put, but torsion changes sign with its
+// wave and that motion turns around with it. The scroll is the one thing on
+// the column that only ever goes up.
+//
+// The picture is a photograph and uses all RETRO_COLORS entries of its own
+// palette, so there is no ramp left over to shade a texel along and the column
+// is drawn flat. Its form comes from the silhouette and the squeeze.
+//
+// phase lives on TWISTER_PERIOD and advances TWISTER_SPEED table units a
+// second.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retroutils.h"
 
-#define RAD 40
-#define ZRATE 20
-#define LEAN 100 // table units the column leans as a whole
-#define TWIST 80 // table units of twist from one end of the column to the other
-#define TWIST_MIN 24 // and the least it falls to as the amplitude breathes
-#define TWISTER_CY 159
-#define IMAGE_WIDTH 320
-#define IMAGE_HEIGHT 32
-#define TWISTER_SPEED 60 // table units per second
-#define TWISTER_PERIOD 1280 // lcm(256, 160, 5*256): table, u = x+2t, and the breathing twist
+#define TWISTER_PERIOD 512 // one whole cycle of the column and four picture scrolls
+#define TWISTER_CYCLE ((double)RETRO_SINCOS_ANGLE / TWISTER_PERIOD) // angle units a once-round wave advances per phase unit
+#define TWISTER_CENTER_X (RETRO_WIDTH / 2)
+#define TWISTER_RADIUS 60 // the circle the four corners ride, half the column's width corner on
+#define TWISTER_TURNS 1.5 // turns of the square over the period, a whole number of quarter turns
+#define TWISTER_TORSION 1.2 // table units the column twists per scanline where the torsion wave peaks
+#define TWISTER_TORSION_WAVE 7 // cycles of that wave over the period, under an envelope that closes once
+#define TWISTER_SPEED 30.0 // table units per second, half the original's one a frame
 
-int Visible[8][3] = { {3, 0, 1}, {2, 3, 0}, {2, 3, 0}, {1, 2, 3}, {1, 2, 3}, {0, 1, 2}, {0, 1, 2}, {3, 0, 1} };
+#define TWISTER_IMAGE_SIZE 256 // the picture is square and wraps both ways
+#define TWISTER_IMAGE_FACE (TWISTER_IMAGE_SIZE / 4) // texels a face carries, the picture going once round the four
+#define TWISTER_IMAGE_SCROLL 2.0 // texels the picture climbs per table unit, four whole pictures over the period
+
+//
+// One scanline of one face, half-open in x
+//
+// texels is the picture row the scanline reads, and base the first of the IMAGE_FACE texels
+// this face carries. The face carries all of them whatever it measures on screen, so u steps
+// by IMAGE_FACE / (right - left) per pixel. Clipping the left edge advances u to the texel
+// that pixel would have had rather than restarting the span, though the column is narrower
+// than the screen and the clamp does not bite. A face turned edge on has right <= left and
+// covers nothing, which is the silhouette test.
+//
+// base is a whole quarter of the picture and u runs less than a quarter past it, so the walk
+// stays inside the row and needs no wrapping of its own.
+//
+void DrawSpan(int left, int right, int y, unsigned char *texels, int base)
+{
+	if (right <= left) {
+		return;
+	}
+
+	float du = (float)TWISTER_IMAGE_FACE / (right - left);
+
+	int x0 = MAX(left, 0);
+	int x1 = MIN(right, RETRO_WIDTH);
+	float u = base + (x0 - left) * du;
+
+	unsigned char *row = RETRO_FrameBuffer() + y * RETRO_WIDTH;
+	for (int x = x0; x < x1; x++, u += du) {
+		row[x] = texels[(int)u];
+	}
+}
 
 void DEMO_Render(double deltatime)
 {
 	// Calculate phase
 	static double phase = 0;
 	phase = fmod(phase + deltatime * TWISTER_SPEED, TWISTER_PERIOD);
-	int iphase = (int)phase;
+	double torsion = TWISTER_TORSION * SIN(phase * TWISTER_TORSION_WAVE * TWISTER_CYCLE) * COS(phase * TWISTER_CYCLE);
+
+	// Move scroll
+	double scroll = phase * TWISTER_IMAGE_SCROLL;
 
 	unsigned char *image = RETRO_ImageData();
 
-	// Constant over the column, so worked out once rather than per slice
-	double twist = TWIST_MIN + (TWIST - TWIST_MIN) * (1 + COS(iphase / 5.0)) / 2;
+	// Draw column
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		double index = y * torsion + phase;
+		int v = WRAP(y + scroll, TWISTER_IMAGE_SIZE);
+		unsigned char *texels = image + v * TWISTER_IMAGE_SIZE;
 
-	// Draw column slices
-	for (int x = 0; x < RETRO_WIDTH; x++) {
-		int angle = WRAP(LEAN * COS(iphase) + twist * SIN(x / 4.0 + iphase * 2), RETRO_SINCOS_ANGLE);
-		int vs = angle / (RETRO_SINCOS_ANGLE / 8);
+		double angle = index * TWISTER_TURNS * TWISTER_CYCLE;
+		double sin_radius = TWISTER_RADIUS * SIN(angle);
+		double cos_radius = TWISTER_RADIUS * COS(angle);
+		int corner_x[4] = {
+			(int)lround(TWISTER_CENTER_X - cos_radius),
+			(int)lround(TWISTER_CENTER_X + sin_radius),
+			(int)lround(TWISTER_CENTER_X + cos_radius),
+			(int)lround(TWISTER_CENTER_X - sin_radius),
+		};
 
-		int i0 = Visible[vs][0];
-		int i1 = Visible[vs][1];
-		int i2 = Visible[vs][2];
-
-		double y0 = RAD * SIN(angle + i0 * 64);
-		double z0 = RAD * COS(angle + i0 * 64);
-		double y1 = RAD * SIN(angle + i1 * 64);
-		double z1 = RAD * COS(angle + i1 * 64);
-		double y2 = RAD * SIN(angle + i2 * 64);
-		double z2 = RAD * COS(angle + i2 * 64);
-
-		int iy0 = y0;
-		int iy1 = y1;
-		int iy2 = y2;
-
-		float c0 = (ZRATE * 63) / (RAD - z0 + ZRATE);
-		float c1 = (ZRATE * 63) / (RAD - z1 + ZRATE);
-		float c2 = (ZRATE * 63) / (RAD - z2 + ZRATE);
-
-		float dm0 = 0;
-		float dc0 = 0;
-		int dh0 = iy1 - iy0;
-		if (dh0 != 0) {
-			dm0 = (float)IMAGE_HEIGHT / dh0;
-			dc0 = (c1 - c0) / dh0;
+		int face = 0;
+		for (int corner = 1; corner < 4; corner++) {
+			if (corner_x[corner] < corner_x[face]) {
+				face = corner;
+			}
 		}
 
-		float dm1 = 0;
-		float dc1 = 0;
-		int dh1 = iy2 - iy1;
-		if (dh1 != 0) {
-			dm1 = (float)IMAGE_HEIGHT / dh1;
-			dc1 = (c2 - c1) / dh1;
-		}
-
-		// Move scroll
-		int u = WRAP(x + iphase * 2, IMAGE_WIDTH);
-		float pm0 = 0;
-		float pm1 = 0;
-		int y = TWISTER_CY + iy0;
-
-		for (int i = 0; i < dh0; i++) {
-			unsigned char color = image[(int)pm0 * IMAGE_WIDTH + u];
-			RETRO_PutPixel(x, y, c0 + color);
-			c0 += dc0;
-			pm0 += dm0;
-			y++;
-		}
-
-		for (int i = 0; i < dh1; i++) {
-			unsigned char color = image[(int)pm1 * IMAGE_WIDTH + u];
-			RETRO_PutPixel(x, y, c1 + color);
-			c1 += dc1;
-			pm1 += dm1;
-			y++;
-		}
+		// The two faces turned toward the viewer, leftmost to nearest to rightmost, each
+		// carrying the quarter of the picture that its own corner starts
+		DrawSpan(corner_x[face], corner_x[(face + 1) & 3], y, texels, face * TWISTER_IMAGE_FACE);
+		DrawSpan(corner_x[(face + 1) & 3], corner_x[(face + 2) & 3], y, texels, ((face + 1) & 3) * TWISTER_IMAGE_FACE);
 	}
-}
-
-void PrepareImage(const char *loadfile, const char *savefile)
-{
-	RETRO_LoadImage(loadfile);
-	unsigned char *image = RETRO_ImageData();
-	RETRO_Palette *palette = RETRO_ImagePalette();
-	for (int i = 0; i < IMAGE_WIDTH * IMAGE_HEIGHT; i++) {
-		if (image[i] != 0) {
-			image[i] = 64;
-		} else {
-			image[i] = 0;
-		}
-	}
-	for (int i = 0; i < 64; i++) {
-		palette[i].r = i;
-		palette[i].g = 0;
-		palette[i].b = i;
-	}
-	for (int i = 64; i < 128; i++) {
-		palette[i].r = 0;
-		palette[i].g = i;
-		palette[i].b = i;
-	}
-	RETRO_SaveImage(savefile, image, palette, IMAGE_WIDTH, IMAGE_HEIGHT);
-	RETRO_FreeImage();
 }
 
 void DEMO_Initialize(void)
 {
-	//	PrepareImage("assets/image.pcx", "assets/twister_320x32.pcx");
-	RETRO_LoadImage("assets/twister_320x32.pcx");
-	RETRO_SetPalette(RETRO_ImagePalette());
+	// Init image, and take its palette. The picture is drawn as it is, so the palette
+	// it was quantized against is the only one that gives back the picture
+	RETRO_LoadImage("assets/flowers_256x256.pcx", true);
 }

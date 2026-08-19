@@ -73,8 +73,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/wormhole_15x15.pcx");
-	RETRO_SetPalette(RETRO_ImagePalette());
+	RETRO_LoadImage("assets/wormhole_15x15.pcx", true);
 
 	// Init wormhole. One solve per screen pixel; see the note at the top.
 	double k = (double)WORM_ZLOG / RETRO_HEIGHT;

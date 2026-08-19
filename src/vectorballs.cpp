@@ -83,7 +83,7 @@ void DEMO_Render(double deltatime)
 	for (int i = 0; i < BALLS; i++) {
 		Vertex *ball = &Balls[i];
 		float size = BALL_SIZE * RETRO_PROJECTION_EYE * ball->q;
-		int level = CLAMP((BALL_DEPTH + ball->rz) * BALL_LEVELS / (2 * BALL_DEPTH), 0, BALL_LEVELS - 1);
+		int level = CLAMP((BALL_DEPTH + ball->rz) * BALL_LEVELS / (2 * BALL_DEPTH), 0, BALL_LEVELS);
 
 		RETRO_DrawDepthSprite(ball->sx, ball->sy, ball->q, size, BALL_SIZE / 2.0f, BallMap[level], BallDepth, BALL_MAP);
 	}

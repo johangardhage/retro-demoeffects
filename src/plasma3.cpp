@@ -1,5 +1,5 @@
 //
-// Plasma 4
+// Plasma 3
 //
 // Three moving sine waves are averaged into a low-resolution color field. One
 // wave travels horizontally, another vertically, and a third crosses the image
@@ -61,7 +61,7 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(56, 192, RETRO_SCARLET, RETRO_YELLOW);
 	RETRO_CreateGradientPalette(192, 256, RETRO_YELLOW, RETRO_WHITE);
 
-	// Init taables
+	// Init tables
 	for (int i = 0; i < 256; i++) {
 		Sin256[i] = 255 * (sin(2 * M_PI * i / 255.0) + 1) / 2;
 	}

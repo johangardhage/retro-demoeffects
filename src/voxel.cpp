@@ -1,168 +1,233 @@
 //
-// Voxel landscape
+// Voxel 2
 //
-// A wrapping height map, drawn front to back one depth slice at a time. The
-// camera looks along (−sin θ, −cos θ). At depth z the 90° frustum meets the
-// ground in a segment whose midpoint is z along that heading and whose half
-// width is also z (tan 45° = 1):
+// A 256×256 wrapping height map, drawn as a front-to-back fan of depth
+// slices. Slice i is a line from heading − FOV to heading + FOV, stepped
+// across the screen. Height and colour are sampled with bilinear filtering:
 //
-//   left  = z (−cos θ − sin θ,  sin θ − cos θ)
-//   right = z ( cos θ − sin θ, −sin θ − cos θ)
+//   sample = lerp_v(lerp_u(s00, s10), lerp_u(s01, s11))
 //
-// Each column samples the map on that segment. Indices are WRAP (floor,
-// then into [0, 1024)), not a cast toward zero: (−1, 0) is the last texel,
-// not 0. The camera lives on the same torus; θ lives in [0, 2π).
+// A height difference at depth i is a pinhole
 //
-// A height difference Δh at depth z is a pinhole
+//   y = H/2 + (h − hy) · scale / (i + 1)
 //
-//   y = horizon + Δh · FOCAL / z
-//
-// y grows down, so a peak (Δh < 0) sits above the horizon. Slices are
-// painted down to the highest y already filled (hiddeny), so nearer ground
-// occludes farther ground. Δz grows with z, so far slices are coarser.
+// painted down to the highest y already filled, so nearer ground occludes.
+// The arrow keys steer and move the camera across the wrapping terrain. By
+// default the camera follows the ground; Space toggles a flycam in which R
+// and F move vertically. Colour is an 8-bit grey ramp.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrocolor.h"
 
-#define MAP_HEIGHT 1024
-#define MAP_WIDTH 1024
-#define MAP_SHIFT 10
+#define MAP_WIDTH 256
+#define MAP_HEIGHT 256
+#define VOXEL_FOV ((float)(M_PI / 3.5))
+#define VOXEL_DISTANCE 120
+#define VOXEL_MIN_CLEARANCE 10.0f
+#define VOXEL_CLEARANCE 30.0f
+#define VOXEL_FOLLOW 0.1f // seconds to close most of a step in the ground
+#define VOXEL_HEIGHT_SCALE 15.0f
+#define VOXEL_MOVE_SPEED 14.0f // map units per second
+#define VOXEL_TURN_SPEED 1.2f // radians per second
+#define VOXEL_FLY_SPEED 20.0f // height units per second
 
-#define VOXEL_FOCAL 100.0f // pixels of Δh at z = 1
-#define VOXEL_CLEARANCE 10.0f // closest the camera may come to the ground
-#define VOXEL_EYE 49.0f // and how far above it the camera rides
-#define VOXEL_FOLLOW 0.10f // seconds the eye takes to close most of a step in the ground
-#define VOXEL_LOD 0.005f // added to Δz each slice, so far samples thin out
+unsigned char HeightMap[MAP_WIDTH * MAP_HEIGHT];
+unsigned char ColorMap[MAP_WIDTH * MAP_HEIGHT];
 
-// The camera rides a set distance above the ground rather than at a set height,
-// so walking follows the terrain up as well as down. R and F change that
-// distance. The eye lags it: the ground steps at a cliff edge, and putting the
-// eye there in one frame throws the whole view with it.
 struct {
-	float x;         // x position on the map
-	float y;         // y position on the map
-	float height;    // height of the eye, lagging the ground it follows
-	float clearance; // how far above the ground it settles
-	float angle;     // direction of the camera
-	float horizon;   // screen row of the look-level
-	float distance;  // farthest slice
-} camera = { 512, 800, 0, VOXEL_EYE, 0, 100, 800 };
+	float x;
+	float y;
+	float height;
+	float heading;
+	bool flycam;
+} Camera = { 0, 0, 0, 0, false };
 
-int MapOffset(float x, float y)
+float BilinearSample(const unsigned char *map, float x, float y)
 {
-	return (WRAP(y, MAP_HEIGHT) << MAP_SHIFT) + WRAP(x, MAP_WIDTH);
+	int ix = floorf(x);
+	int iy = floorf(y);
+	int u0 = WRAP256(ix);
+	int v0 = WRAP256(iy);
+	int u1 = WRAP256(ix + 1);
+	int v1 = WRAP256(iy + 1);
+	float ufraction = x - ix;
+	float vfraction = y - iy;
+
+	float top = map[v0 * MAP_WIDTH + u0] + ufraction * (map[v0 * MAP_WIDTH + u1] - map[v0 * MAP_WIDTH + u0]);
+	float bottom = map[v1 * MAP_WIDTH + u0] + ufraction * (map[v1 * MAP_WIDTH + u1] - map[v1 * MAP_WIDTH + u0]);
+	return top + vfraction * (bottom - top);
+}
+
+void DrawVoxelLine(float x0, float y0, float x1, float y1, float cameraheight, float scale, int *lasty, float *lastcolor)
+{
+	unsigned char *buffer = RETRO_FrameBuffer();
+
+	float sx = (x1 - x0) / RETRO_WIDTH;
+	float sy = (y1 - y0) / RETRO_WIDTH;
+
+	for (int x = 0; x < RETRO_WIDTH; x++) {
+		float height = BilinearSample(HeightMap, x0, y0);
+		float color = BilinearSample(ColorMap, x0, y0);
+		int screeny = (int)((height - cameraheight) * scale + (RETRO_HEIGHT / 2));
+
+		if (screeny < lasty[x]) {
+			int bottom = lasty[x];
+			if (lastcolor[x] == -1) {
+				lastcolor[x] = color;
+			}
+
+			float colorstep = (color - lastcolor[x]) / (bottom - screeny);
+			float currentcolor = lastcolor[x];
+
+			if (bottom > RETRO_HEIGHT - 1) {
+				currentcolor += (bottom - (RETRO_HEIGHT - 1)) * colorstep;
+				bottom = RETRO_HEIGHT - 1;
+			}
+
+			if (screeny < 0) {
+				screeny = 0;
+			}
+
+			unsigned char *pixel = buffer + bottom * RETRO_WIDTH + x;
+			while (screeny < bottom) {
+				*pixel = CLAMP256((int)currentcolor);
+				currentcolor += colorstep;
+				pixel -= RETRO_WIDTH;
+				bottom--;
+			}
+
+			lasty[x] = screeny;
+		}
+
+		lastcolor[x] = color;
+
+		x0 += sx;
+		y0 += sy;
+	}
+}
+
+void DEMO_Update(double deltatime)
+{
+	float timestep = (float)deltatime;
+	float distance = timestep * VOXEL_MOVE_SPEED;
+	float rotation = timestep * VOXEL_TURN_SPEED;
+
+	if (RETRO_KeyPressed(SDL_SCANCODE_SPACE)) {
+		Camera.flycam = !Camera.flycam;
+	}
+	if (RETRO_KeyState(SDL_SCANCODE_LEFT)) {
+		Camera.heading -= rotation;
+	}
+	if (RETRO_KeyState(SDL_SCANCODE_RIGHT)) {
+		Camera.heading += rotation;
+	}
+	if (RETRO_KeyState(SDL_SCANCODE_UP)) {
+		Camera.x += cosf(Camera.heading) * distance;
+		Camera.y += sinf(Camera.heading) * distance;
+	}
+	if (RETRO_KeyState(SDL_SCANCODE_DOWN)) {
+		Camera.x -= cosf(Camera.heading) * distance;
+		Camera.y -= sinf(Camera.heading) * distance;
+	}
+	if (Camera.flycam && RETRO_KeyState(SDL_SCANCODE_R)) {
+		Camera.height -= timestep * VOXEL_FLY_SPEED;
+	}
+	if (Camera.flycam && RETRO_KeyState(SDL_SCANCODE_F)) {
+		Camera.height += timestep * VOXEL_FLY_SPEED;
+	}
+
+	Camera.x = fmodf(Camera.x, MAP_WIDTH);
+	if (Camera.x < 0) {
+		Camera.x += MAP_WIDTH;
+	}
+	Camera.y = fmodf(Camera.y, MAP_HEIGHT);
+	if (Camera.y < 0) {
+		Camera.y += MAP_HEIGHT;
+	}
+	Camera.heading = fmodf(Camera.heading, (float)(2 * M_PI));
+	if (Camera.heading < 0) {
+		Camera.heading += (float)(2 * M_PI);
+	}
+
+	if (!Camera.flycam) {
+		float ground = BilinearSample(HeightMap, Camera.x, Camera.y);
+		float targetheight = ground - VOXEL_CLEARANCE;
+		Camera.height += (targetheight - Camera.height) * (1.0f - expf(-timestep / VOXEL_FOLLOW));
+		if (Camera.height > ground - VOXEL_MIN_CLEARANCE) {
+			Camera.height = ground - VOXEL_MIN_CLEARANCE;
+		}
+	}
 }
 
 void DEMO_Render(double deltatime)
 {
-	// Move camera
-	float speed = deltatime * 60;
-	if (RETRO_KeyState(SDL_SCANCODE_LEFT)) {
-		camera.angle += 0.02f * speed;
-	}
-	if (RETRO_KeyState(SDL_SCANCODE_RIGHT)) {
-		camera.angle -= 0.02f * speed;
-	}
-	if (RETRO_KeyState(SDL_SCANCODE_UP)) {
-		camera.x -= (float)sin(camera.angle) * 1.1f * speed;
-		camera.y -= (float)cos(camera.angle) * 1.1f * speed;
-	}
-	if (RETRO_KeyState(SDL_SCANCODE_DOWN)) {
-		camera.x += (float)sin(camera.angle) * 0.75f * speed;
-		camera.y += (float)cos(camera.angle) * 0.75f * speed;
-	}
-	if (RETRO_KeyState(SDL_SCANCODE_R)) {
-		camera.clearance += 0.5f * speed;
-	}
-	if (RETRO_KeyState(SDL_SCANCODE_F)) {
-		camera.clearance -= 0.5f * speed;
-	}
-	if (camera.clearance < VOXEL_CLEARANCE) {
-		camera.clearance = VOXEL_CLEARANCE;
-	}
-	if (RETRO_KeyState(SDL_SCANCODE_A)) {
-		camera.horizon += 1.5f * speed;
-	}
-	if (RETRO_KeyState(SDL_SCANCODE_S)) {
-		camera.horizon -= 1.5f * speed;
-	}
-
-	camera.x = fmod(camera.x, MAP_WIDTH);
-	if (camera.x < 0) {
-		camera.x += MAP_WIDTH;
-	}
-	camera.y = fmod(camera.y, MAP_HEIGHT);
-	if (camera.y < 0) {
-		camera.y += MAP_HEIGHT;
-	}
-	camera.angle = fmod(camera.angle, 2 * M_PI);
-	if (camera.angle < 0) {
-		camera.angle += 2 * M_PI;
-	}
-
-	unsigned char *colormap = RETRO_ImageData(0);
-	unsigned char *heightmap = RETRO_ImageData(1);
-	unsigned char *buffer = RETRO_FrameBuffer();
-
-	// Follow the terrain, both up and down, closing a fixed fraction of the gap
-	// per second. The floor still holds, so lagging cannot leave the eye inside
-	// the ground.
-	float ground = heightmap[MapOffset(camera.x, camera.y)];
-	camera.height += (ground + camera.clearance - camera.height) * (1.0f - expf(-deltatime / VOXEL_FOLLOW));
-	if (camera.height < ground + VOXEL_CLEARANCE) {
-		camera.height = ground + VOXEL_CLEARANCE;
-	}
-
-	float sinang = (float)sin(camera.angle);
-	float cosang = (float)cos(camera.angle);
-
-	int hiddeny[RETRO_WIDTH];
+	// Clear voxels
+	int lasty[RETRO_WIDTH];
+	float lastcolor[RETRO_WIDTH];
 	for (int i = 0; i < RETRO_WIDTH; i++) {
-		hiddeny[i] = RETRO_HEIGHT;
+		lasty[i] = RETRO_HEIGHT;
+		lastcolor[i] = -1;
 	}
-	float deltaz = 1.0f;
 
-	// Draw from front to back
-	for (float z = 1.0f; z < camera.distance; z += deltaz) {
-		float plx = -cosang * z - sinang * z;
-		float ply = sinang * z - cosang * z;
-		float prx = cosang * z - sinang * z;
-		float pry = -sinang * z - cosang * z;
-
-		float dx = (prx - plx) / RETRO_WIDTH;
-		float dy = (pry - ply) / RETRO_WIDTH;
-		plx += camera.x;
-		ply += camera.y;
-		float invz = VOXEL_FOCAL / z;
-		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int mapoffset = MapOffset(plx, ply);
-			int heightonscreen = (int)((camera.height - heightmap[mapoffset]) * invz + camera.horizon);
-			if (heightonscreen < 0) {
-				heightonscreen = 0;
-			}
-			unsigned char color = colormap[mapoffset];
-			for (int y = heightonscreen; y < hiddeny[x]; y++) {
-				buffer[y * RETRO_WIDTH + x] = color;
-			}
-			if (heightonscreen < hiddeny[x]) {
-				hiddeny[x] = heightonscreen;
-			}
-			plx += dx;
-			ply += dy;
-		}
-		deltaz += VOXEL_LOD;
+	// Draw voxel
+	for (int depth = 0; depth < VOXEL_DISTANCE; depth += 1 + (depth / 64)) {
+		float x1 = Camera.x + depth * cosf(Camera.heading - VOXEL_FOV);
+		float y1 = Camera.y + depth * sinf(Camera.heading - VOXEL_FOV);
+		float x2 = Camera.x + depth * cosf(Camera.heading + VOXEL_FOV);
+		float y2 = Camera.y + depth * sinf(Camera.heading + VOXEL_FOV);
+		DrawVoxelLine(x1, y1, x2, y2, Camera.height, VOXEL_HEIGHT_SCALE / (depth + 1), lasty, lastcolor);
 	}
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/voxel_color_1024x1024.pcx"); // color
-	RETRO_LoadImage("assets/voxel_height_1024x1024.pcx"); // height
-	RETRO_SetPalette(RETRO_ImagePalette(0));
-	RETRO_SetColor(0, 36, 36, 56);
+	// Init palette
+	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_WHITE);
 
-	// Start on the ground rather than lagging up to it
-	camera.height = RETRO_ImageData(1)[MapOffset(camera.x, camera.y)] + camera.clearance;
+	// Init height map
+	for (int p = 256; p > 1; p /= 2) {
+		int p2 = p / 2;
+		int k = p * 8 + 20;
+		int k2 = k / 2;
+
+		for (int y = 0; y < MAP_HEIGHT; y += p) {
+			for (int x = 0; x < MAP_WIDTH; x += p) {
+				int a = HeightMap[y * MAP_WIDTH + x];
+				int b = HeightMap[WRAP256(y + p) * MAP_WIDTH + x];
+				int c = HeightMap[y * MAP_WIDTH + WRAP256(x + p)];
+				int d = HeightMap[WRAP256(y + p) * MAP_WIDTH + WRAP256(x + p)];
+
+				HeightMap[y * MAP_WIDTH + WRAP256(x + p2)] = CLAMP256(((a + c) / 2) + (RANDOM(k) - k2));
+				HeightMap[WRAP256(y + p2) * MAP_WIDTH + WRAP256(x + p2)] = CLAMP256(((a + b + c + d) / 4) + (RANDOM(k) - k2));
+				HeightMap[WRAP256(y + p2) * MAP_WIDTH + x] = CLAMP256(((a + b) / 2) + (RANDOM(k) - k2));
+			}
+		}
+	}
+
+	// Smooth height map
+	for (int k = 0; k < 5; k++) {
+		for (int y = 0; y < MAP_HEIGHT; y++) {
+			for (int x = 0; x < MAP_WIDTH; x++) {
+				HeightMap[y * MAP_WIDTH + x] = (
+					HeightMap[WRAP256(y + 1) * MAP_WIDTH + x] +
+					HeightMap[y * MAP_WIDTH + WRAP256(x + 1)] +
+					HeightMap[WRAP256(y - 1) * MAP_WIDTH + x] +
+					HeightMap[y * MAP_WIDTH + WRAP256(x - 1)]
+				) / 4;
+			}
+		}
+	}
+
+	// Init color map
+	for (int y = 0; y < MAP_HEIGHT; y++) {
+		for (int x = 0; x < MAP_WIDTH; x++) {
+			ColorMap[y * MAP_WIDTH + x] = CLAMP256(128 + (HeightMap[WRAP256(y + 1) * MAP_WIDTH + WRAP256(x + 1)] - HeightMap[y * MAP_WIDTH + x]) * 6);
+		}
+	}
+
+	// Begin at the default clearance instead of flying in from height zero
+	Camera.height = BilinearSample(HeightMap, Camera.x, Camera.y) - VOXEL_CLEARANCE;
 }

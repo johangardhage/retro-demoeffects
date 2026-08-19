@@ -1,83 +1,95 @@
 //
 // Plane
 //
-// A mode-7 floor: the horizontal plane y = −16, spanned by U = (256, 0, 0)
-// and V = (0, 0, 256), seen from the origin with focal length D = 320.
-// Screen point (sx, sy) is the ray (sx − W/2, sy − H/2, D). Cramer's
-// rule for the intersection bp + s U + t V = λ ray gives
+// A mode-7 floor. The camera sits a height PLANE_EYE above the plane.
+// Row y is counted up from the bottom of the screen, so the pixel is
+// written at HEIGHT − y. Screen point (x, y) looks at the plane at
 //
-//   s = a / c,   t = b / c
+//   u = PLANE_EYE · (W/2) / P · (x − W/2) / (y − H/2)
+//   v = PLANE_EYE · (H/2) / (y − H/2)
 //
-// with (a, b, c) linear in (sx, sy). Along a scanline c is constant, so
-// (s, t) advances by a constant floating-point step for each pixel. Multiplying
-// those coordinates by 256 gives the wrapped texture coordinates. bp =
-// (φ, −16, φ) walks the texture along the diagonal; φ lives on 256, one
-// texture period. Rows above y = 140, near the horizon at y = H/2, are left
-// undrawn.
+// with P = PLANE_PERIOD. u and v are already texels: the (W/2) / P in u
+// maps a half-screen of pixels onto one texture period at unit depth.
+// v is the forward texel and is constant on a scanline; u is linear in x.
+// The horizon is y = H/2, where the denominator is zero and the row is
+// left undrawn. The loop runs y = 1 … PLANE_VIEW − 1, so it never hits it.
+//
+// Yaw about the vertical by θ = ang is a 2D rotation of that (u, v), then
+// the camera walks (xd, yd) in texture space:
+//
+//   unew = xd + u cos θ − v sin θ
+//   vnew = yd + u sin θ + v cos θ
+//
+// xd and yd are not wrapped; WRAP at the sample is one texture period.
+// ang lives on 360°. The texture is a generated P×P wrapping checker of
+// FIELD_TILE-texel squares. Color 0 is the sky (the cleared upper half).
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
+#include "lib/retrocolor.h"
 
-#define PLANE_DISTANCE 320
-#define PLANE_PERIOD 256 // one texture width; U, V and φ share it
-#define PLANE_EPSILON 65536.0f // closest c gets to the horizon before 1/c is capped
+#define PLANE_VIEW (RETRO_HEIGHT / 2)
+#define PLANE_EYE 100 // camera height in world units
+#define PLANE_YAW_SPEED 24.0 // degrees per second
+#define PLANE_WALK_SPEED 80.0 // texels per second
+#define PLANE_PERIOD 256 // one texture width; u, v, xd and yd share it
+#define FIELD_TILE 64
+
+unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
 
 void DEMO_Render(double deltatime)
 {
-	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * 20, PLANE_PERIOD);
+	unsigned char *dest = RETRO_FrameBuffer();
 
-	Point3Df bp = { (float)phase, -16, (float)phase };
-	Point3Df up = { (float)PLANE_PERIOD, 0, 0 };
-	Point3Df vp = { 0, 0, (float)PLANE_PERIOD };
+	// Yaw the sampled (u, v) in the plane, and walk (xd, yd) in texture
+	// space. WRAP at the sample is one texture period.
+	static float ang = 0;
+	ang = fmod(ang + deltatime * PLANE_YAW_SPEED, 360.0);
+	float cosa = cos(ang * DEG2RAD);
+	float sina = sin(ang * DEG2RAD);
 
-	unsigned char *image = RETRO_ImageData();
+	static float xd, yd;
+	xd += deltatime * PLANE_WALK_SPEED;
+	yd += deltatime * PLANE_WALK_SPEED;
 
-	// Draw a perspective correct textured plane
-	float cx = up.y * vp.z - vp.y * up.z;
-	float cy = vp.x * up.z - up.x * vp.z;
-	float cz = (up.x * vp.y - vp.x * up.y) * PLANE_DISTANCE;
-	float ax = vp.y * bp.z - bp.y * vp.z;
-	float ay = bp.x * vp.z - vp.x * bp.z;
-	float az = (vp.x * bp.y - bp.x * vp.y) * PLANE_DISTANCE;
-	float bx = bp.y * up.z - up.y * bp.z;
-	float by = up.x * bp.z - bp.x * up.z;
-	float bz = (bp.x * up.y - up.x * bp.y) * PLANE_DISTANCE;
+	// Perspective scales. v is the forward texel at this depth and does
+	// not depend on x. u stretches about the screen centre with a factor
+	// (W/2) / P so a half-width of pixels is one texture period at unit
+	// depth. midx, midy are the vanishing point (the horizon is midy).
+	float xscale = PLANE_EYE * (RETRO_WIDTH / 2.0f) / PLANE_PERIOD;
+	float yscale = PLANE_EYE * (RETRO_HEIGHT / 2.0f);
+	float midx = RETRO_WIDTH / 2.0f;
+	float midy = RETRO_HEIGHT / 2.0f;
 
-	// Only render the lower part of the plane
-	for (int y = 140; y < RETRO_HEIGHT; y++) {
-		// Compute the (U,V) coordinates and the interpolation
-		float a = az + ay * (y - (RETRO_HEIGHT / 2)) + ax * -(RETRO_WIDTH / 2);
-		float b = bz + by * (y - (RETRO_HEIGHT / 2)) + bx * -(RETRO_WIDTH / 2);
-		float c = cz + cy * (y - (RETRO_HEIGHT / 2)) + cx * -(RETRO_WIDTH / 2);
-
-		// Near the horizon c goes to zero. The guard keeps its sign.
-		float ic = fabs(c) > PLANE_EPSILON ? 1 / c : copysignf(1 / PLANE_EPSILON, c);
-
-		// Start within one plane period, then advance linearly across the row.
-		float u = fmodf(a * ic, PLANE_PERIOD);
-		float v = fmodf(b * ic, PLANE_PERIOD);
-		float du = ax * ic;
-		float dv = bx * ic;
-
+	// Draw the floor. y is distance up from the bottom; the pixel sits at
+	// HEIGHT − y. Each pixel divides by (y − midy) and then yaws.
+	for (int y = 1; y < PLANE_VIEW; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int tx = WRAP(u * PLANE_PERIOD, PLANE_PERIOD);
-			int ty = WRAP(v * PLANE_PERIOD, PLANE_PERIOD);
-			unsigned char color = image[ty * PLANE_PERIOD + tx];
-			RETRO_PutPixel(x, y, color);
+			float u = (xscale * (x - midx)) / (y - midy);
+			float v = yscale / (y - midy);
 
-			u += du;
-			v += dv;
+			float unew = xd + u * cosa - v * sina;
+			float vnew = yd + u * sina + v * cosa;
+
+			dest[(RETRO_HEIGHT - y) * RETRO_WIDTH + x] = Field[WRAP(vnew, PLANE_PERIOD) * PLANE_PERIOD + WRAP(unew, PLANE_PERIOD)];
 		}
 	}
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/flowers_256x256.pcx");
-	RETRO_SetPalette(RETRO_ImagePalette());
+	// Init palette. Color 0 fills the uncleared sky. 1 and 2 are the checker.
+	RETRO_SetColor(0, RETRO_SPACECADET);
+	RETRO_SetColor(1, RETRO_HUNTERGREEN);
+	RETRO_SetColor(2, RETRO_MOSSGREEN);
+
+	// Init field
+	for (int y = 0; y < PLANE_PERIOD; y++) {
+		for (int x = 0; x < PLANE_PERIOD; x++) {
+			int checker = ((x / FIELD_TILE) ^ (y / FIELD_TILE)) & 1;
+			Field[y * PLANE_PERIOD + x] = checker ? 1 : 2;
+		}
+	}
 }

@@ -18,7 +18,7 @@
 #             The mesh is flat and carries no wave. A demo writes z per vertex
 #             and takes the normals again, so what is stored here is the sheet's
 #             own, square on.
-# Used by:    flatshadedflag, gouraudshadedflag.
+# Used by:    flatflag, flatshadedflag, gouraudflag, phongflag.
 #
 o flag
 v -0.800000 -0.500000 0.000000

@@ -1,7 +1,7 @@
 //
 // Waving flag, phong shaded
 //
-// The same flag and the same analytic normals as gouraudshadedflag.cpp, but the
+// The same flag and the same analytic normals as gouraudflag.cpp, but the
 // normal is interpolated across a face and lit at every pixel instead of being
 // lit at the corners and the shade interpolated. Cloth is where that difference
 // shows: a sheen sits on the crest of a fold, which is inside a quad and not on

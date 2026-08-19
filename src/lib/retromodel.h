@@ -26,6 +26,7 @@
 #define RETRO_MAX_NORMALS 1500 // a two sided mesh needs one per side of a vertex
 #define RETRO_MAX_FACES 2000
 #define RETRO_MAX_FACEVERTICES 5
+#define RETRO_MAX_MODELS 10 // a demo can hold several models at once, as it can images
 
 struct Vertex {
 	float x, y, z;				// Original coordinates
@@ -85,12 +86,69 @@ struct Model3D {
 };
 
 struct {
-	Model3D *model = NULL;
+	Model3D *model[RETRO_MAX_MODELS];
+	int models = 0;
 } RETRO_Model;
 
-Model3D *RETRO_Get3DModel(void)
+//
+// The model a library call uses when it is handed none
+//
+// Model 0 is that model, so a demo holding one never has to name it and every
+// call that takes a Model3D * can go on leaving it out. A demo holding several
+// keeps the pointers its loads returned and passes the one it means, or asks
+// for it here by id.
+//
+Model3D *RETRO_Get3DModel(int id = 0)
 {
-	return RETRO_Model.model;
+	return id >= 0 && id < RETRO_MAX_MODELS ? RETRO_Model.model[id] : NULL;
+}
+
+//
+// Allocate a model and register it
+//
+// A model built in code rather than read from a file is allocated here too, so
+// it is reached and released like any other. Defaults are assigned by hand
+// because malloc and memset go around the member initializers Model3D declares.
+//
+Model3D *RETRO_Allocate3DModel(void)
+{
+	// First free slot. Ids are slot numbers and are recycled: free(0) then
+	// load reuses 0 even if a later model still holds a higher id.
+	int id = 0;
+	while (id < RETRO_MAX_MODELS && RETRO_Model.model[id]) {
+		id++;
+	}
+	if (id == RETRO_MAX_MODELS) {
+		RETRO_RageQuit("Too many 3D models to fit the model list\n");
+	}
+
+	Model3D *model = (Model3D *)malloc(sizeof(Model3D));
+	if (model == NULL) {
+		RETRO_RageQuit("Cannot allocate 3D model memory\n");
+	}
+	memset(model, 0, sizeof(Model3D));
+	model->texmapwidth = RETRO_TEXMAP_SIZE;
+	model->texmapheight = RETRO_TEXMAP_SIZE;
+	model->envmapwidth = RETRO_ENVMAP_SIZE;
+	model->envmapheight = RETRO_ENVMAP_SIZE;
+	model->bumpmapwidth = RETRO_TEXMAP_SIZE;
+	model->bumpmapheight = RETRO_TEXMAP_SIZE;
+	model->envmapintensity = RETRO_ENVMAP_SIZE / 2;
+	model->bumpheight = RETRO_BUMP_HEIGHT;
+
+	RETRO_Model.model[id] = model;
+	RETRO_Model.models++;
+
+	return model;
+}
+
+void RETRO_Free3DModel(int id = 0)
+{
+	if (id >= 0 && id < RETRO_MAX_MODELS && RETRO_Model.model[id]) {
+		free(RETRO_Model.model[id]);
+		RETRO_Model.model[id] = NULL;
+		RETRO_Model.models--;
+	}
 }
 
 // Area-weighted average of the adjacent face normals (Hearn & Baker / Foley).
@@ -374,20 +432,7 @@ void RETRO_InitializeFaceUVs(Model3D *model = NULL)
 //
 Model3D *RETRO_Load3DModel(const char *filename, int scale = RETRO_TEXMAP_SIZE)
 {
-	Model3D *model = (Model3D *)malloc(sizeof(Model3D));
-	if (model == NULL) {
-		RETRO_RageQuit("Cannot allocate 3D model memory\n");
-	}
-	memset(model, 0, sizeof(Model3D));
-	model->texmapwidth = RETRO_TEXMAP_SIZE;
-	model->texmapheight = RETRO_TEXMAP_SIZE;
-	model->envmapwidth = RETRO_ENVMAP_SIZE;
-	model->envmapheight = RETRO_ENVMAP_SIZE;
-	model->bumpmapwidth = RETRO_TEXMAP_SIZE;
-	model->bumpmapheight = RETRO_TEXMAP_SIZE;
-	model->envmapintensity = RETRO_ENVMAP_SIZE / 2;
-	model->bumpheight = RETRO_BUMP_HEIGHT;
-	RETRO_Model.model = model;
+	Model3D *model = RETRO_Allocate3DModel();
 
 	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL) {
@@ -396,26 +441,53 @@ Model3D *RETRO_Load3DModel(const char *filename, int scale = RETRO_TEXMAP_SIZE)
 
 	int vertices = 0, uvs = 0, normals = 0, faces = 0;
 
+	// Check before writing: overflow walks into the next list in this struct.
 	char row[128];
-	while (fscanf(fp, "%s", row) != EOF) {
+	while (fscanf(fp, "%127s", row) != EOF) {
 		if (strcmp(row, "v") == 0) { // Load vertices
-			fscanf(fp, "%f %f %f\n", &model->vertex[vertices].x, &model->vertex[vertices].y, &model->vertex[vertices].z);
+			if (vertices >= RETRO_MAX_VERTICES) {
+				RETRO_RageQuit("Too many vertices to fit the vertex list: %s\n", filename);
+			}
+			if (fscanf(fp, "%f %f %f\n", &model->vertex[vertices].x, &model->vertex[vertices].y, &model->vertex[vertices].z) != 3) {
+				RETRO_RageQuit("Cannot read vertex, expected three floats: %s\n", filename);
+			}
 			vertices++;
 		} else if (strcmp(row, "vt") == 0) { // Load UV coordinates
-			fscanf(fp, "%f %f\n", &model->uv[uvs].u, &model->uv[uvs].v);
+			if (uvs >= RETRO_MAX_UVS) {
+				RETRO_RageQuit("Too many UV coordinates to fit the UV list: %s\n", filename);
+			}
+			if (fscanf(fp, "%f %f\n", &model->uv[uvs].u, &model->uv[uvs].v) != 2) {
+				RETRO_RageQuit("Cannot read UV coordinate, expected two floats: %s\n", filename);
+			}
 			model->uv[uvs].u *= scale;
 			model->uv[uvs].v *= scale;
 			uvs++;
 		} else if (strcmp(row, "vn") == 0) { // Load normals
-			fscanf(fp, "%f %f %f\n", &model->normal[normals].nx, &model->normal[normals].ny, &model->normal[normals].nz);
+			if (normals >= RETRO_MAX_NORMALS) {
+				RETRO_RageQuit("Too many normals to fit the normal list: %s\n", filename);
+			}
+			if (fscanf(fp, "%f %f %f\n", &model->normal[normals].nx, &model->normal[normals].ny, &model->normal[normals].nz) != 3) {
+				RETRO_RageQuit("Cannot read normal, expected three floats: %s\n", filename);
+			}
 			// Calculate normal length
 			model->normal[normals].nn = sqrt(model->normal[normals].nx * model->normal[normals].nx +
 											 model->normal[normals].ny * model->normal[normals].ny +
 											 model->normal[normals].nz * model->normal[normals].nz);
 			normals++;
 		} else if (strcmp(row, "f") == 0) {
+			if (faces >= RETRO_MAX_FACES) {
+				RETRO_RageQuit("Too many faces to fit the face list: %s\n", filename);
+			}
+
 			unsigned int vertex[4], uv[4], normal[4];
 			int matches = fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n", &vertex[0], &uv[0], &normal[0], &vertex[1], &uv[1], &normal[1], &vertex[2], &uv[2], &normal[2], &vertex[3], &uv[3], &normal[3]);
+
+			// Whole triples only: matches / 3 would keep a short face whose leftover
+			// zeros pass the bounds check.
+			if (matches != 9 && matches != 12) {
+				RETRO_RageQuit("Cannot read face, expected three or four v/uv/n triples: %s\n", filename);
+			}
+
 			model->face[faces].vertices = matches / 3;
 
 			// Store vertex indices to face
@@ -434,6 +506,23 @@ Model3D *RETRO_Load3DModel(const char *filename, int scale = RETRO_TEXMAP_SIZE)
 	model->uvs = uvs;
 	model->normals = normals;
 	model->faces = faces;
+
+	// Indices are 1-based into this file; skip UV/normal checks when those
+	// lists are empty, because faces still write dummy 1/1/1 triples that
+	// are never followed.
+	for (int i = 0; i < faces; i++) {
+		for (int j = 0; j < model->face[i].vertices; j++) {
+			if (model->face[i].vertex[j] < 0 || model->face[i].vertex[j] >= vertices) {
+				RETRO_RageQuit("Face names a vertex the file does not define: %s\n", filename);
+			}
+			if (uvs > 0 && (model->face[i].uv[j] < 0 || model->face[i].uv[j] >= uvs)) {
+				RETRO_RageQuit("Face names a UV coordinate the file does not define: %s\n", filename);
+			}
+			if (normals > 0 && (model->face[i].normal[j] < 0 || model->face[i].normal[j] >= normals)) {
+				RETRO_RageQuit("Face names a normal the file does not define: %s\n", filename);
+			}
+		}
+	}
 
 //	printf("Vertices: %i\n", vertices);
 //	printf("Vertex UV coords: %i\n", uvs);

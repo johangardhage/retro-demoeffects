@@ -13,7 +13,7 @@
 // boundary travels down and back up, the repeated strip pours over and uncovers
 // the picture like a vertical curtain.
 //
-// Space resets the animation and switches between the two effects.
+// Tab resets the animation and switches between the two effects.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -33,7 +33,7 @@ int MeltDirection = 1;
 
 void DEMO_Update(double deltatime)
 {
-	if (RETRO_KeyPressed(SDL_SCANCODE_SPACE)) {
+	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
 		Mode = Mode == MELT_MAXIMUM_SCAN_LINE ? MELT_FREEZE_LINE_OFFSET : MELT_MAXIMUM_SCAN_LINE;
 		MeltPosition = 0;
 		MeltDirection = 1;
@@ -78,6 +78,5 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/monkey_320x240.pcx");
-	RETRO_SetPalette(RETRO_ImagePalette());
+	RETRO_LoadImage("assets/monkey_320x240.pcx", true);
 }

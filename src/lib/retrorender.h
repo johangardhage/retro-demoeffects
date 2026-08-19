@@ -386,7 +386,9 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 
 void RETRO_Deinitialize_3D(void)
 {
-	if (RETRO_Model.model) free(RETRO_Model.model);
+	for (int i = 0; i < RETRO_MAX_MODELS; i++) {
+		RETRO_Free3DModel(i);
+	}
 }
 
 #endif

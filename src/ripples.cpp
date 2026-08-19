@@ -49,8 +49,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/monkey_320x240.pcx");
-	RETRO_SetPalette(RETRO_ImagePalette());
+	RETRO_LoadImage("assets/monkey_320x240.pcx", true);
 
 	// Init sine table with a whole number of waves, so it wraps smoothly
 	for (int i = 0; i < SINE_VALUES; i++) {

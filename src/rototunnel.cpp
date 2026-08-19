@@ -61,8 +61,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/flowers_256x256.pcx");
-	RETRO_SetPalette(RETRO_ImagePalette());
+	RETRO_LoadImage("assets/flowers_256x256.pcx", true);
 
 	// Init tables
 	for (int y = 0; y < RETRO_HEIGHT * 2; y++) {

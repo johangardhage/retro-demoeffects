@@ -40,6 +40,46 @@ struct Point3Df {
 	float x, y, z;
 };
 
+// Nearest entry in an explicit palette, by squared RGB distance.
+unsigned char RETRO_ClosestPaletteColor(RETRO_Palette target, RETRO_Palette *palette, int colors = RETRO_COLORS)
+{
+	int match = 0;
+	int min_distance = 3 * 255 * 255 + 1;
+
+	for (int color = 0; color < colors; color++) {
+		int dr = (int)palette[color].r - target.r;
+		int dg = (int)palette[color].g - target.g;
+		int db = (int)palette[color].b - target.b;
+		int distance = dr * dr + dg * dg + db * db;
+		if (distance < min_distance) {
+			min_distance = distance;
+			match = color;
+		}
+	}
+
+	return match;
+}
+
+// Build shadetable[color * shades + shade] by scaling every source color from
+// black through full brightness, then finding the nearest entry in the same
+// palette. This lets an indexed image use shading without reserving palette
+// entries for separate color ramps.
+void RETRO_CreatePaletteShadeTable(RETRO_Palette *palette, int colors, int shades, unsigned char *shadetable)
+{
+	for (int source = 0; source < colors; source++) {
+		for (int shade = 0; shade < shades; shade++) {
+			float brightness = shades > 1 ? (float)shade / (shades - 1) : 1;
+			RETRO_Palette target = {
+				(unsigned char)(palette[source].r * brightness),
+				(unsigned char)(palette[source].g * brightness),
+				(unsigned char)(palette[source].b * brightness),
+			};
+			shadetable[source * shades + shade] =
+				RETRO_ClosestPaletteColor(target, palette, colors);
+		}
+	}
+}
+
 // C(step) = (step / steps) * C_loaded. Returns true when step >= steps.
 bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 {
@@ -162,14 +202,51 @@ void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char color, uns
 	}
 }
 
+// Inclusive on y1 and y2, so DrawVline(x, y1, y2) lights the same pixels as DrawLine(x, y1, x, y2).
 void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 
-	for (int y = y1; y < y2; y++) {
+	if (y1 > y2) {
+		SWAP(y1, y2);
+	}
+
+	for (int y = y1; y <= y2; y++) {
 		if (x >= 0 && x < width && y >= 0 && y < height) {
 			buffer[y * width + x] = color;
 		}
+	}
+}
+
+//
+// Filled axis-aligned ellipse, (x − cx)² / ra² + (y − cy)² / rb² ≤ 1.
+// Each scanline is the span between the two roots in x, inclusive, clipped
+// to the buffer. ra or rb below 1 is empty.
+//
+void RETRO_DrawEllipse(float cx, float cy, float ra, float rb, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+{
+	buffer = buffer ? buffer : RETRO.framebuffer;
+
+	if (ra < 1.0f || rb < 1.0f) {
+		return;
+	}
+
+	int y0 = MAX((int)ceil(cy - rb), 0);
+	int y1 = MIN((int)floor(cy + rb), height - 1);
+
+	for (int y = y0; y <= y1; y++) {
+		float fy = (y + 0.5f - cy) / rb;
+		float inner = 1.0f - fy * fy;
+		if (inner <= 0.0f) {
+			continue;
+		}
+		float xoff = ra * sqrt(inner);
+		int x0 = MAX((int)ceil(cx - xoff), 0);
+		int x1 = MIN((int)floor(cx + xoff), width - 1);
+		if (x0 > x1) {
+			continue;
+		}
+		memset(buffer + y * width + x0, color, x1 - x0 + 1);
 	}
 }
 

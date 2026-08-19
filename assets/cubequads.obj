@@ -6,7 +6,8 @@
 #             corner diagonals, unnormalized, and 6 quad faces. The faces
 #             still carry a 1/1/1 index triple, whose UV index refers to
 #             nothing.
-# Used by:    wirecube, hiddenlinecube, flatcube, firecube, glenzshadedcube.
+# Used by:    wirecube, hiddenlinecube, flatcube, firecube, glenzshadedcube,
+#             rubbervector.
 #
 o cubequads
 v 1.000000 1.000000 1.000000

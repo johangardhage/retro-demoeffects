@@ -71,8 +71,7 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/font_16x16.pcx");
-	RETRO_SetPalette(RETRO_ImagePalette());
+	RETRO_LoadImage("assets/font_16x16.pcx", true);
 
 	// Init scroll bitmap
 	unsigned char *image = RETRO_ImageData();

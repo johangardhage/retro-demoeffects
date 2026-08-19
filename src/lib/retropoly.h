@@ -1084,9 +1084,9 @@ void RETRO_DrawDepthSprite(float sx, float sy, float q, float size, float thickn
 	float spritedepth = 1.0f / q;
 
 	for (int y = ystart; y < yend; y++) {
-		int v = CLAMP((int)(((y + 0.5f) - sy + half) * mapsize / size), 0, mapsize - 1);
+		int v = CLAMP((int)(((y + 0.5f) - sy + half) * mapsize / size), 0, mapsize);
 		for (int x = xstart; x < xend; x++) {
-			int u = CLAMP((int)(((x + 0.5f) - sx + half) * mapsize / size), 0, mapsize - 1);
+			int u = CLAMP((int)(((x + 0.5f) - sx + half) * mapsize / size), 0, mapsize);
 
 			unsigned char color = map[v * mapsize + u];
 			if (color == alpha) continue;

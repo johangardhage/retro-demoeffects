@@ -40,6 +40,7 @@ enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 #define RETRO_BLACK RETRO_Palette{ 0, 0, 0 }
 #define RETRO_GRAY RETRO_Palette{ 128, 128, 128 }
 #define RETRO_LIGHTGRAY RETRO_Palette{ 200, 200, 200 }
+#define RETRO_HAZE RETRO_Palette{ 168, 188, 196 }
 #define RETRO_WHITE RETRO_Palette{ 255, 255, 255 }
 #define RETRO_RED RETRO_Palette{ 255, 0, 0 }
 #define RETRO_GREEN RETRO_Palette{ 0, 255, 0 }
@@ -48,16 +49,26 @@ enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 #define RETRO_MAGENTA RETRO_Palette{ 255, 0, 255 }
 #define RETRO_YELLOW RETRO_Palette{ 255, 255, 0 }
 #define RETRO_SCARLET RETRO_Palette{ 255, 36, 0 }
+#define RETRO_BRICK RETRO_Palette{ 116, 48, 52 }
 #define RETRO_ORANGE RETRO_Palette{ 255, 128, 0 }
+#define RETRO_CARROT RETRO_Palette{ 240, 132, 20 }
+#define RETRO_SIENNA RETRO_Palette{ 180, 80, 44 }
 #define RETRO_AMBER RETRO_Palette{ 255, 191, 0 }
+#define RETRO_SAFFRON RETRO_Palette{ 252, 168, 56 }
 #define RETRO_GOLD RETRO_Palette{ 254, 204, 0 }
+#define RETRO_JASMINE RETRO_Palette{ 252, 212, 120 }
 #define RETRO_TAN RETRO_Palette{ 210, 180, 140 }
+#define RETRO_SADDLEBROWN RETRO_Palette{ 139, 69, 19 }
+#define RETRO_SAGE RETRO_Palette{ 164, 164, 140 }
 #define RETRO_PURPLE RETRO_Palette{ 128, 0, 255 }
 #define RETRO_INDIGO RETRO_Palette{ 75, 0, 130 }
+#define RETRO_DARKINDIGO RETRO_Palette{ 8, 0, 40 }
 #define RETRO_VIOLET RETRO_Palette{ 148, 0, 211 }
 #define RETRO_PINK RETRO_Palette{ 255, 128, 192 }
 #define RETRO_HOTPINK RETRO_Palette{ 255, 105, 180 }
 #define RETRO_DEEPPINK RETRO_Palette{ 219, 59, 150 }
+#define RETRO_ROSE RETRO_Palette{ 172, 92, 132 }
+#define RETRO_PINKLACE RETRO_Palette{ 252, 212, 252 }
 #define RETRO_PERIWINKLE RETRO_Palette{ 160, 168, 252 }
 #define RETRO_AZURE RETRO_Palette{ 0, 128, 255 }
 #define RETRO_CERULEAN RETRO_Palette{ 0, 106, 167 }
@@ -66,10 +77,24 @@ enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 #define RETRO_LIGHTBLUE RETRO_Palette{ 102, 170, 255 }
 #define RETRO_DARKRED RETRO_Palette{ 128, 0, 0 }
 #define RETRO_DARKGREEN RETRO_Palette{ 0, 128, 0 }
+#define RETRO_HUNTERGREEN RETRO_Palette{ 42, 86, 36 }
+#define RETRO_SEAGREEN RETRO_Palette{ 46, 139, 87 }
+#define RETRO_MEDIUMSEAGREEN RETRO_Palette{ 60, 179, 113 }
 #define RETRO_SPRINGGREEN RETRO_Palette{ 30, 230, 90 }
+#define RETRO_MOSSGREEN RETRO_Palette{ 148, 176, 70 }
+#define RETRO_TEAL RETRO_Palette{ 0, 128, 128 }
+#define RETRO_DARKCYAN RETRO_Palette{ 0, 139, 139 }
+#define RETRO_DARKSLATEGRAY RETRO_Palette{ 47, 79, 79 }
+#define RETRO_STEELBLUE RETRO_Palette{ 70, 130, 180 }
+#define RETRO_GLAUCOUS RETRO_Palette{ 92, 124, 160 }
+#define RETRO_LIGHTSKYBLUE RETRO_Palette{ 135, 206, 250 }
 #define RETRO_DARKBLUE RETRO_Palette{ 0, 0, 128 }
+#define RETRO_SPACECADET RETRO_Palette{ 28, 40, 88 }
+#define RETRO_MIDNIGHTBLUE RETRO_Palette{ 25, 25, 112 }
 #define RETRO_DARKMAGENTA RETRO_Palette{ 139, 0, 139 }
+#define RETRO_REBECCAPURPLE RETRO_Palette{ 102, 51, 153 }
 #define RETRO_BLUEBLACK RETRO_Palette{ 0, 0, 48 }
+#define RETRO_WINE RETRO_Palette{ 44, 24, 36 }
 
 // Coefficients of the phong reflection model
 #define RETRO_K_AMBIENT 0.2
@@ -110,8 +135,10 @@ unsigned char &RETRO_ColorComponent(RETRO_Palette &color, int axis)
 }
 
 //
-// The angle of incidence a shade stands for, running from a grazing 90 degrees
-// at the first shade to face on 0 degrees at the last
+// The angle of incidence a shade stands for. The last shade is face on (0);
+// the first is one step short of grazing, so theta lives on [0, π/2):
+//
+//   theta = (shades − (shade + 1)) / shades * (π / 2)
 //
 // Shades are spaced evenly in the angle, not in cos(theta). Spacing them in
 // cos(theta) would look like the obvious choice, since a renderer finds a
@@ -196,9 +223,11 @@ void RETRO_CreatePhongRamp(RETRO_Palette *ramp, int shades, RETRO_Palette face, 
 }
 
 //
-// Lay one material's ramp over the colors start..end, the phong counterpart of
-// RETRO_CreateGradientPalette. The end color is not written, so a palette can
-// carry a material per range and a model can pick between them per face
+// Lay one material's ramp over [start, end), the phong counterpart of
+// RETRO_CreateGradientPalette. Index end is not written, so a palette can
+// carry a material per range and a model can pick between them per face.
+// There is no color at end: the last written entry is the face-on highlight.
+// A last range with end = RETRO_COLORS therefore writes that highlight at 255.
 //
 void RETRO_CreatePhongPalette(int start, int end, RETRO_Palette face, float specularity = RETRO_K_SPECULAR, float falloff = RETRO_K_FALLOFF, RETRO_Palette *palette = NULL, int colormax = 255)
 {
@@ -465,13 +494,15 @@ void RETRO_CreateOptimalPalette(RETRO_Palette *texturepalette, int texturecolors
 }
 
 //
-// Fill the colors start..end with a linear interpolation from one color to
-// another. The end color is not written, so consecutive gradients can be
-// chained without repeating the shared color. Without a palette the colors
-// are set directly, otherwise the components are copied as they are given,
-// which allows both 6-bit and 8-bit palettes
+// Fill [start, end) with a linear interpolation from one color toward another.
+// to is the color at end, which is not written, so the next ramp can start
+// there and write the knot as its from without both touching it. A last ramp
+// with end = RETRO_COLORS therefore leaves 255 one step short of to: that
+// index is off the palette. That is the range, not a missing write.
+// Without a palette the colors are set directly, otherwise the components are
+// copied as they are given, which allows both 6-bit and 8-bit palettes
 //
-// Linear blend C(i) = from + (i / (end - start)) * (to - from), i in [0, end).
+//   C(i) = from + ((i - start) / (end - start)) * (to - from),  i ∈ [start, end)
 void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, RETRO_Palette to, RETRO_Palette *palette = NULL)
 {
 	int steps = end - start;

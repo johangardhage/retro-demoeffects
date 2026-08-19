@@ -33,8 +33,6 @@
 // only come back into step after five, and iphase counts the phase in
 // rings, which is the unit the bands are laid out in.
 //
-// Replicated from https://github.com/root42/dostunnl.
-//
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"

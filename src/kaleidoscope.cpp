@@ -58,7 +58,7 @@ void DEMO_Render(double deltatime)
 			int radius = RadiusTable[y][x] * zoom >> ZOOM_SHIFT;
 			int tx = TEXTURE_WIDTH / 2 + panx + (radius * CosTable[sourceangle] >> TRIG_SHIFT);
 			int ty = TEXTURE_HEIGHT / 2 + pany + (radius * SinTable[sourceangle] >> TRIG_SHIFT);
-			unsigned char color = image[WRAP256(ty) * TEXTURE_WIDTH + WRAP256(tx)];
+			unsigned char color = image[WRAP(ty, TEXTURE_HEIGHT) * TEXTURE_WIDTH + WRAP(tx, TEXTURE_WIDTH)];
 
 			RETRO_PutPixel(x, y, color);
 		}
@@ -67,11 +67,10 @@ void DEMO_Render(double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_Image *image = RETRO_LoadImage("assets/flowers_256x256.pcx");
+	RETRO_Image *image = RETRO_LoadImage("assets/flowers_256x256.pcx", true);
 	if (image->width != TEXTURE_WIDTH || image->height != TEXTURE_HEIGHT) {
 		RETRO_RageQuit("The image must be 256x256\n");
 	}
-	RETRO_SetPalette(RETRO_ImagePalette());
 
 	for (int i = 0; i < ANGLE_STEPS; i++) {
 		double angle = i * 2 * M_PI / ANGLE_STEPS;

@@ -22,8 +22,8 @@
 // picture. SUBDIV quads cover each cell exactly, so a face is only ever wholly
 // blue or wholly gold and the cross stays sharp however coarse the mesh is.
 // Each color owns a ramp: the flat renderer places a face at c + face->c +
-// shade * cintensity, so the face color picks the ramp and the Lambert term
-// picks the entry within it.
+// ShadeFromLambert(N . L) * shades, so the face color picks the ramp and the
+// Lambert term picks the entry within it.
 //
 // The asset carries each quad twice, once in each winding, because the
 // renderer culls back faces and a flag is seen from both sides. Without the
@@ -94,7 +94,7 @@ void DEMO_Initialize(void)
 
 	Model3D *model = RETRO_Load3DModel("assets/flag.obj");
 	model->c = FLAG_BLUE;
-	model->cintensity = FLAG_SHADES - 1;
+	model->shades = FLAG_SHADES;
 
 	// The faces come in pairs, the two sides of one quad, in row major order
 	for (int i = 0; i < model->faces; i++) {

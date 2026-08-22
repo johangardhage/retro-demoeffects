@@ -61,14 +61,23 @@ unsigned char RETRO_ClosestPaletteColor(RETRO_Palette target, RETRO_Palette *pal
 }
 
 // Build shadetable[color * shades + shade] by scaling every source color from
-// black through full brightness, then finding the nearest entry in the same
-// palette. This lets an indexed image use shading without reserving palette
-// entries for separate color ramps.
-void RETRO_CreatePaletteShadeTable(RETRO_Palette *palette, int colors, int shades, unsigned char *shadetable)
+// the ambient level through full brightness, then finding the nearest entry in
+// the same palette. This lets an indexed image use shading without reserving
+// palette entries for separate color ramps.
+//
+// The ambient level is where the darkest shade starts, and by default it is
+// black. A palette holding one picture's colors rather than ramps is the case
+// for raising it: an entry with no dark relatives of its own is matched to the
+// nearest thing the palette does have, and towards black that is whichever few
+// dark colors the picture happened to contain, whatever the entry started as.
+// Lighting off the bottom of such a palette turns faces into holes. A floor
+// under the darkening keeps every shade among colors it has plenty of.
+void RETRO_CreatePaletteShadeTable(RETRO_Palette *palette, int colors, int shades, unsigned char *shadetable, float ambient = 0.0f)
 {
 	for (int source = 0; source < colors; source++) {
 		for (int shade = 0; shade < shades; shade++) {
-			float brightness = shades > 1 ? (float)shade / (shades - 1) : 1;
+			float level = shades > 1 ? (float)shade / (shades - 1) : 1;
+			float brightness = ambient + (1.0f - ambient) * level;
 			RETRO_Palette target = {
 				(unsigned char)(palette[source].r * brightness),
 				(unsigned char)(palette[source].g * brightness),

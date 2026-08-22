@@ -83,18 +83,17 @@ void DEMO_Render(double deltatime)
 
 		float dx = amp * (wave + u * FLAG_RADIAN * (FLAG_RATEU * COS(a) + FLAG_HALF * FLAG_RATEU2 * COS(b))) / FLAG_SPAN;
 		float dy = amp * u * FLAG_RADIAN * FLAG_RATEV * COS(a) / FLAG_DROP;
-		float length = sqrt(dx * dx + dy * dy + 1);
+		// The slope is (dx, dy, -1) before scaling, so the length is never zero
+		float inverselength = 1.0f / sqrt(dx * dx + dy * dy + 1);
 
 		// The front of the sheet faces the viewer, which is -z, and the back is
-		// the same normal turned around
-		model->normal[i].nx = dx;
-		model->normal[i].ny = dy;
-		model->normal[i].nz = -1;
-		model->normal[i].nn = length;
-		model->normal[model->vertices + i].nx = -dx;
-		model->normal[model->vertices + i].ny = -dy;
-		model->normal[model->vertices + i].nz = 1;
-		model->normal[model->vertices + i].nn = length;
+		// the same normal turned around. Both go in unit, as every Direction is
+		model->normal[i].x = dx * inverselength;
+		model->normal[i].y = dy * inverselength;
+		model->normal[i].z = -inverselength;
+		model->normal[model->vertices + i].x = -dx * inverselength;
+		model->normal[model->vertices + i].y = -dy * inverselength;
+		model->normal[model->vertices + i].z = inverselength;
 	}
 
 	// Draw flag
@@ -113,7 +112,7 @@ void DEMO_Initialize(void)
 
 	Model3D *model = RETRO_Load3DModel("assets/flag.obj");
 	model->c = FLAG_BLUE;
-	model->cintensity = FLAG_SHADES - 1;
+	model->shades = FLAG_SHADES;
 
 	// The faces come in pairs, the two sides of one quad, in row major order
 	for (int i = 0; i < model->faces; i++) {

@@ -76,7 +76,7 @@ void DEMO_Update(double deltatime)
 		int turn = (iphase - slots + 1 + step + SINE_VALUES) % SINE_VALUES;
 
 		for (int p = 0; p < model->vertices; p++) {
-			RETRO_RotateVertex(&vertex[p], CosTable[turn], SinTable[turn]);
+			RETRO_SpinVertex(&vertex[p], CosTable[turn], SinTable[turn]);
 			RETRO_ProjectVertex(&vertex[p], PROJECTION_SCALE);
 
 			for (int y = 0; y < BLOB_SIZE; y++) {

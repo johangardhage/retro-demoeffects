@@ -155,13 +155,13 @@ void DEMO_Initialize(void)
 
 	Cube = RETRO_Load3DModel("assets/cubequads.obj");
 	Cube->c = RUBBER_RAMP;
-	Cube->cintensity = RUBBER_SHADES - 1;
+	Cube->shades = RUBBER_SHADES;
 
 	// The ramp a face is shaded in is the one of the axis it faces
 	for (int i = 0; i < Cube->faces; i++) {
-		float x = fabs(Cube->face[i].facenormal.nx);
-		float y = fabs(Cube->face[i].facenormal.ny);
-		float z = fabs(Cube->face[i].facenormal.nz);
+		float x = fabs(Cube->face[i].facenormal.x);
+		float y = fabs(Cube->face[i].facenormal.y);
+		float z = fabs(Cube->face[i].facenormal.z);
 		Cube->face[i].c = (x > y && x > z ? 0 : (y > z ? 1 : 2)) * RUBBER_SHADES;
 	}
 

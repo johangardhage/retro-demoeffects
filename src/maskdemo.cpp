@@ -45,8 +45,8 @@ void DEMO_Render(double deltatime)
 	static unsigned char *envmap = NULL;
 	static unsigned char *bumpmap = NULL;
 	static unsigned char color = 64;
-	static unsigned char colorintensity = 0;
-	static int bumpheight = RETRO_BUMP_HEIGHT;
+	static int envmapradius = 0;
+	static int bumpgrazing = RETRO_BUMP_GRAZING;
 
 	static bool bumpmapping = false;
 	static bool rotate = true;
@@ -70,8 +70,8 @@ void DEMO_Render(double deltatime)
 		shadetable = NULL;
 		envmap = NULL;
 		color = 0;
-		colorintensity = 0;
-		bumpheight = RETRO_BUMP_HEIGHT;
+		envmapradius = 0;
+		bumpgrazing = RETRO_BUMP_GRAZING;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_TEXMAP));
 		RETRO_SetColor(0, RETRO_BLACK);
 		RETRO_SetColor(255, RETRO_PERIWINKLE);
@@ -82,8 +82,8 @@ void DEMO_Render(double deltatime)
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = NULL;
 		color = RETRO_SHADES * 5 / 8;
-		colorintensity = 0;
-		bumpheight = RETRO_BUMP_HEIGHT;
+		envmapradius = 0;
+		bumpgrazing = RETRO_BUMP_GRAZING;
 		shadetable = MaterialShadeTables[MATERIAL_GOURAUD];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
@@ -93,8 +93,8 @@ void DEMO_Render(double deltatime)
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = NULL;
 		color = 0;
-		colorintensity = 0;
-		bumpheight = RETRO_BUMP_HEIGHT;
+		envmapradius = 0;
+		bumpgrazing = RETRO_BUMP_GRAZING;
 		shadetable = MaterialShadeTables[MATERIAL_FLAT];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
@@ -104,8 +104,8 @@ void DEMO_Render(double deltatime)
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = NULL;
 		color = 0;
-		colorintensity = 128;
-		bumpheight = RETRO_BUMP_HEIGHT;
+		envmapradius = 0;
+		bumpgrazing = RETRO_BUMP_GRAZING;
 		shadetable = MaterialShadeTables[MATERIAL_GOURAUD];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
@@ -115,8 +115,8 @@ void DEMO_Render(double deltatime)
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
-		colorintensity = 90;
-		bumpheight = RETRO_BUMP_HEIGHT;
+		envmapradius = 90;
+		bumpgrazing = RETRO_BUMP_GRAZING;
 		shadetable = MaterialShadeTables[MATERIAL_PHONG];
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
@@ -127,8 +127,8 @@ void DEMO_Render(double deltatime)
 		shadetable = NULL;
 		envmap = NULL;
 		color = 255;
-		colorintensity = 0;
-		bumpheight = RETRO_BUMP_HEIGHT;
+		envmapradius = 0;
+		bumpgrazing = RETRO_BUMP_GRAZING;
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_W)) {
@@ -138,8 +138,8 @@ void DEMO_Render(double deltatime)
 		shadetable = NULL;
 		envmap = NULL;
 		color = 255;
-		colorintensity = 0;
-		bumpheight = RETRO_BUMP_HEIGHT;
+		envmapradius = 0;
+		bumpgrazing = RETRO_BUMP_GRAZING;
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
@@ -148,8 +148,8 @@ void DEMO_Render(double deltatime)
 		shadetable = NULL;
 		envmap = RETRO_ImageData(ASSET_PHONGMAP);
 		color = 128;
-		colorintensity = 90;
-		bumpheight = RETRO_BUMP_HEIGHT * 3 / 2;
+		envmapradius = 90;
+		bumpgrazing = RETRO_BUMP_GRAZING * 3 / 2;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_PHONGMAP));
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_O)) {
@@ -158,8 +158,8 @@ void DEMO_Render(double deltatime)
 		shadetable = NULL;
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
-		colorintensity = 90;
-		bumpheight = RETRO_BUMP_HEIGHT * 3 / 2;
+		envmapradius = 90;
+		bumpgrazing = RETRO_BUMP_GRAZING * 3 / 2;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_PHONGMAP));
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_M)) {
@@ -168,8 +168,8 @@ void DEMO_Render(double deltatime)
 		shadetable = NULL;
 		envmap = RETRO_ImageData(ASSET_ENVMAP);
 		color = 128;
-		colorintensity = 90;
-		bumpheight = RETRO_BUMP_HEIGHT * 2;
+		envmapradius = 90;
+		bumpgrazing = RETRO_BUMP_GRAZING * 2;
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_ENVMAP));
 	}
 
@@ -180,11 +180,8 @@ void DEMO_Render(double deltatime)
 	model->envmap = envmap;
 	model->bumpmap = bumpmap;
 	model->c = color;
-	model->cintensity = colorintensity;
-
-	// Env-map modes store the lookup reach in colorintensity, not a shade count.
-	model->envmapintensity = colorintensity;
-	model->bumpheight = bumpheight;
+	model->envmapradius = envmapradius;
+	model->bumpgrazing = bumpgrazing;
 
 	// Start with the mask's authored face upright before rotating all three axes.
 	static float ax = -M_PI / 2, ay = 0, az = M_PI, distance = 0.5;
@@ -281,7 +278,7 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(255, RETRO_PERIWINKLE);
 
 	// Load model
-	RETRO_Load3DModel("assets/mask.obj", 1);
+	RETRO_Load3DModel("assets/mask.obj");
 
 	// Set up light source
 	RETRO_InitializeLightSource(0, 0, -1);

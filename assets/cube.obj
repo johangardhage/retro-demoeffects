@@ -7,7 +7,7 @@
 #             normals along the corner diagonals, and 12 triangular faces,
 #             listed as 6 quads split (0, 1, 2) and (0, 2, 3).
 # Used by:    gouraudcube, gouraudcubes, phongcube, flatshadedcube,
-#             texturecube, environcube, plasmacube, and scrollercube, which
+#             texturecube, environcube, plasmacube, and scroller7, which
 #             replaces the atlas with a full-face mapping of its own.
 #
 o cube

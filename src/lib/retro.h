@@ -294,26 +294,38 @@ int *RETRO_Yoffset(void)
 
 unsigned char *RETRO_ImageData(int id = 0)
 {
-	return RETRO.image[id] ? RETRO.image[id]->data : NULL;
+	return id >= 0 && id < RETRO_MAX_IMAGES && RETRO.image[id] ? RETRO.image[id]->data : NULL;
 }
 
 RETRO_Palette *RETRO_ImagePalette(int id = 0)
 {
-	return RETRO.image[id] ? RETRO.image[id]->palette : NULL;
+	return id >= 0 && id < RETRO_MAX_IMAGES && RETRO.image[id] ? RETRO.image[id]->palette : NULL;
 }
 
 RETRO_Image *RETRO_AllocateImage(void)
 {
-	RETRO.image[RETRO.images] = (RETRO_Image *)malloc(sizeof(RETRO_Image));
-	if (RETRO.image[RETRO.images] == NULL) {
+	int id = 0;
+	while (id < RETRO_MAX_IMAGES && RETRO.image[id]) {
+		id++;
+	}
+	if (id == RETRO_MAX_IMAGES) {
+		RETRO_RageQuit("Too many images to fit the image list\n");
+	}
+
+	RETRO_Image *image = (RETRO_Image *)malloc(sizeof(RETRO_Image));
+	if (image == NULL) {
 		RETRO_RageQuit("Cannot allocate image memory\n");
 	}
-	return RETRO.image[RETRO.images++];
+
+	RETRO.image[id] = image;
+	RETRO.images++;
+
+	return image;
 }
 
 void RETRO_FreeImage(int id = 0)
 {
-	if (RETRO.image[id]) {
+	if (id >= 0 && id < RETRO_MAX_IMAGES && RETRO.image[id]) {
 		if (RETRO.image[id]->data) {
 			free(RETRO.image[id]->data);
 			RETRO.image[id]->data = NULL;

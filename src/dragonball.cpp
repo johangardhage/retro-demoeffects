@@ -63,7 +63,7 @@
 #define BALL_SPEEDY 1.75f
 #define BALL_SPEEDZ -2.62f
 #define BALL_CX (RETRO_WIDTH / 2)
-#define BALL_EYE 3.2f // closer than RETRO_PROJECTION_EYE so the sphere bulges
+#define BALL_EYE 3.2f // closer than RETRO_PROJECTION_EYEDISTANCE so the sphere bulges
 
 #define STAR_COUNT 6
 #define STAR_POINTS 5
@@ -247,16 +247,18 @@ void DEMO_Render(double deltatime)
 		Vertex star[STAR_VERTS];
 		BuildStar(star, axis, antipode, spin);
 
-		Vertex normal;
-		normal.x = (axis == 0) ? STAR_OFFSET : 0.0f;
-		normal.y = (axis == 1) ? -STAR_OFFSET : 0.0f;
-		normal.z = (axis == 2) ? STAR_OFFSET : 0.0f;
+		// Which way that star's plane faces: the axis and sign BuildStar offsets
+		// along, as a unit direction, since only the side it lands on is read
+		Direction normal;
+		normal.x = (axis == 0) ? 1.0f : 0.0f;
+		normal.y = (axis == 1) ? -1.0f : 0.0f;
+		normal.z = (axis == 2) ? 1.0f : 0.0f;
 		if (antipode) {
 			normal.x = -normal.x;
 			normal.y = -normal.y;
 			normal.z = -normal.z;
 		}
-		RETRO_RotateVertex(&normal, ax, ay, az);
+		RETRO_RotateDirection(&normal, ax, ay, az);
 
 		Point2D pts[STAR_VERTS];
 		for (int i = 0; i < STAR_VERTS; i++) {

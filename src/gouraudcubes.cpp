@@ -63,11 +63,11 @@ void DEMO_Initialize(void)
 	// and uses its own Gouraud palette range.
 	Cube1 = RETRO_Load3DModel("assets/cube.obj");
 	Cube1->c = 1;
-	Cube1->cintensity = 126;
+	Cube1->shades = 127;
 
 	Cube2 = RETRO_Load3DModel("assets/cube.obj");
 	Cube2->c = 128;
-	Cube2->cintensity = 126;
+	Cube2->shades = 127;
 
 	RETRO_InitializeLightSource(0, 0, -1);
 }

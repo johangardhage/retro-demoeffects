@@ -71,7 +71,7 @@ void DEMO_Initialize(void)
 
 	Rubber = RETRO_Load3DModel("assets/rubbercubequads.obj");
 	Rubber->c = RETRO_PHONG_OFFSET;
-	Rubber->cintensity = RETRO_PHONG_SHADES;
+	Rubber->shades = RETRO_PHONG_SHADES;
 	for (int i = 0; i < Rubber->vertices; i++) RestVertex[i] = Rubber->vertex[i];
 
 	RETRO_InitializeLightSource(0, 0, -1);

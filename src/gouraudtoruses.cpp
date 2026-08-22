@@ -52,23 +52,23 @@ void PlaceTorusInLink(Model3D *model, float angle, float tx)
 		model->vertex[i].y = c * y - s * z;
 		model->vertex[i].z = s * y + c * z;
 
-		y = model->normal[i].ny;
-		z = model->normal[i].nz;
-		model->normal[i].ny = c * y - s * z;
-		model->normal[i].nz = s * y + c * z;
+		y = model->normal[i].y;
+		z = model->normal[i].z;
+		model->normal[i].y = c * y - s * z;
+		model->normal[i].z = s * y + c * z;
 	}
 
 	for (int i = 0; i < model->faces; i++) {
-		Normal *directions[] = {
+		Direction *directions[] = {
 			&model->face[i].facenormal,
 			&model->face[i].tangent,
 			&model->face[i].bitangent,
 		};
-		for (Normal *direction : directions) {
-			float y = direction->ny;
-			float z = direction->nz;
-			direction->ny = c * y - s * z;
-			direction->nz = s * y + c * z;
+		for (Direction *direction : directions) {
+			float y = direction->y;
+			float z = direction->z;
+			direction->y = c * y - s * z;
+			direction->z = s * y + c * z;
 		}
 	}
 }
@@ -112,11 +112,11 @@ void DEMO_Initialize(void)
 	// vertices and its own end of the palette
 	Torus1 = RETRO_Load3DModel("assets/torusquads.obj");
 	Torus1->c = 1;
-	Torus1->cintensity = 126;
+	Torus1->shades = 127;
 
 	Torus2 = RETRO_Load3DModel("assets/torusquads.obj");
 	Torus2->c = 128;
-	Torus2->cintensity = 126;
+	Torus2->shades = 127;
 
 	// One ring lies in the xy plane and the other in the xz plane. Separating
 	// their centres by the major radius produces a Hopf link.

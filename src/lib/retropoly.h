@@ -10,12 +10,16 @@
 #include "retrocolor.h"
 #include "retromodel.h"
 
+// A corner of a polygon as the drawers take it: where it landed on screen, and
+// what they interpolate across the face from there. Not a Vertex - the
+// projection is already done, so there is no model space here and no z, only
+// the reciprocal depth that perspective correction needs.
 struct PolygonPoint {
-	float x, y;
-	float c;
+	float x, y;				// Screen coordinates
+	float c;				// Palette index, a float because the Gouraud drawers interpolate it
 	float u, v;				// Texture UV coordinates
 	float q;				// Reciprocal projection depth
-	float nx, ny, nz;
+	float nx, ny, nz;		// Normal, in view space; every drawer renormalizes, so any scale will do
 };
 
 // The surface directions +u and +v run in, in view space. A bump map is a
@@ -26,13 +30,19 @@ struct TangentFrame {
 	float bx, by, bz;
 };
 
-struct LightSourcePoint {
-	float nx, ny, nz, nn;	// Normal coordinates
-	int c, cintensity;		// Min, max color
+// What RETRO_DrawPhongPolygon shades a face with: where the light is and
+// which ramp to land on. The light arrives rotated and unit, so unlike a
+// Direction, which also carries the model-space form it was rotated from,
+// there is nothing here but the view-space values.
+struct PhongLight {
+	float x, y, z;			// Light direction, in view space, unit length
+	int c, shades;			// Ramp base, and entries in it: c + shades is one past its last
 };
 
+// One scanline's horizontal extent, in subpixel x. Both ends lie on the
+// triangle, unlike the half-open xstart, xend the drawers derive from them.
 struct TriangleSpan {
-	float x1, x2;
+	float left, right;
 };
 
 //
@@ -60,12 +70,14 @@ inline bool RETRO_DepthTest(int offset, float q)
 //
 // Environment-map lookup from a view-space normal.
 //
-// A lighting map (CreatePhongMap) is the front disk of a sphere:
+// A lighting map (CreatePhongMap) is the front disk of a sphere, sampled over
+// a disk of the given radius, in texels, about the map's middle:
 //
-//   u = W/2 + I * Nx
-//   v = H/2 + I * Ny
+//   u = W/2 + radius * Nx
+//   v = H/2 + radius * Ny
 //
-// The unlit hemisphere (Nz > 0) is folded onto the dark rim.
+// The unlit hemisphere (Nz > 0) is folded onto the dark rim. A radius of W/2
+// sweeps the whole of the map's own disk; less stops short of its rim.
 //
 // A photographic reflection map is Blinn/Newell sphere-mapping of
 // R = 2(N·V)N - V with V = (0, 0, -1). For a unit N that identity
@@ -74,9 +86,9 @@ inline bool RETRO_DepthTest(int offset, float q)
 //   u = W (1/2 - sign(Nz) * Nx / 2)
 //   v = H (1/2 - sign(Nz) * Ny / 2)
 //
-// I is unused on that path: the sphere map already covers the full image.
+// The radius is unused on that path: the sphere map already covers the image.
 //
-void RETRO_GetEnvMapCoordinates(float nx, float ny, float nz, bool lightingmap, int envmapwidth, int envmapheight, int intensity, float &u, float &v)
+void RETRO_GetEnvMapCoordinates(float nx, float ny, float nz, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, float &u, float &v)
 {
 	const float epsilon = 1.0e-12f;
 
@@ -98,8 +110,8 @@ void RETRO_GetEnvMapCoordinates(float nx, float ny, float nz, bool lightingmap, 
 			ny *= inversenormallength;
 		}
 
-		u = envmapwidth / 2 + intensity * nx;
-		v = envmapheight / 2 + intensity * ny;
+		u = envmapwidth / 2 + envmapradius * nx;
+		v = envmapheight / 2 + envmapradius * ny;
 		return;
 	}
 
@@ -109,42 +121,53 @@ void RETRO_GetEnvMapCoordinates(float nx, float ny, float nz, bool lightingmap, 
 	ny *= inversenormallength;
 	nz *= inversenormallength;
 
-	// sign(Nz) < 0 is the front (toward the camera).
-	float half = nz < 0.0f ? 0.5f : -0.5f;
-	u = envmapwidth * (0.5f + half * nx);
-	v = envmapheight * (0.5f + half * ny);
+	// -sign(Nz)/2, which is where the minus of the formula above went. Nz < 0 is
+	// the front, toward the camera, so flipping the sign with it folds the back
+	// hemisphere onto the same disk, mirrored.
+	float signedhalf = nz < 0.0f ? 0.5f : -0.5f;
+	u = envmapwidth * (0.5f + signedhalf * nx);
+	v = envmapheight * (0.5f + signedhalf * ny);
 }
 
 //
 // Horizontal coverage of a triangle at pixel centres (x+1/2, y+1/2).
 //
-// The signed area
+// The value it returns,
 //
-//   A = (p1x - p0x)(p2y - p0y) - (p1y - p0y)(p2x - p0x)
+//   D = (p1x - p0x)(p2y - p0y) - (p1y - p0y)(p2x - p0x)
 //
-// is twice the geometric area, and is the denominator of every screen-space
-// gradient: dF/dx = ((F1-F0)(p2y-p0y) - (F2-F0)(p1y-p0y)) / A.
+// is the determinant of the triangle's two edge vectors, and every screen-space
+// gradient the drawers take is Cramer's rule over it: for a value F known at
+// the three corners,
+//
+//   dF/dx = ((F1-F0)(p2y-p0y) - (F2-F0)(p1y-p0y)) / D
+//
+// Zero means the two edges are parallel, so there is no interior to fill and no
+// gradient to solve for, which is what the callers test before they solve
+// anything. D is also twice the triangle's signed area, but nothing here wants
+// it as one: the factor of two cancels against the numerator, and so does the
+// sign, leaving the same gradient whichever way round the corners are listed.
 // Edges are half-open in y so a shared edge is drawn by exactly one triangle.
 //
 float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, const PolygonPoint *p2, TriangleSpan *span, int &ystart, int &yend)
 {
 	const float epsilon = 1.0e-12f;
-	float area = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
-	if (fabs(area) <= epsilon) return 0.0f;
+	float determinant = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
+	if (fabs(determinant) <= epsilon) return 0.0f;
 
 	ystart = MAX((int)ceil(MIN(p0->y, MIN(p1->y, p2->y)) - 0.5f), 0);
 	yend = MIN((int)ceil(MAX(p0->y, MAX(p1->y, p2->y)) - 0.5f), RETRO_HEIGHT);
 	if (ystart >= yend) return 0.0f;
 
 	for (int y = ystart; y < yend; y++) {
-		span[y].x1 = RETRO_WIDTH;
-		span[y].x2 = 0;
+		span[y].left = RETRO_WIDTH;
+		span[y].right = 0;
 	}
 
-	const PolygonPoint *edgevertices[] = { p0, p1, p2, p0 };
+	const PolygonPoint *edgevertex[] = { p0, p1, p2, p0 };
 	for (int edge = 0; edge < 3; edge++) {
-		const PolygonPoint *a = edgevertices[edge];
-		const PolygonPoint *b = edgevertices[edge + 1];
+		const PolygonPoint *a = edgevertex[edge];
+		const PolygonPoint *b = edgevertex[edge + 1];
 		if (b->y < a->y) SWAP(a, b);
 
 		float ydiff = b->y - a->y;
@@ -157,36 +180,36 @@ float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, const P
 		float x = a->x + ((edgeystart + 0.5f) - a->y) * dxdy;
 
 		for (int y = edgeystart; y < edgeyend; y++, x += dxdy) {
-			span[y].x1 = MIN(span[y].x1, x);
-			span[y].x2 = MAX(span[y].x2, x);
+			span[y].left = MIN(span[y].left, x);
+			span[y].right = MAX(span[y].right, x);
 		}
 	}
 
-	return area;
+	return determinant;
 }
 
 //
 // Flat shaded polygon
 // Split a convex polygon into a triangle fan and fill it with one color.
 //
-void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned char color)
+void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char color)
 {
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
@@ -206,21 +229,21 @@ void RETRO_DrawFlatPolygon(PolygonPoint *vertices, int numvertices, unsigned cha
 // Glenz shaded polygon
 // Add one color to the framebuffer, allowing sorted polygons to show through.
 //
-void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned char color)
+void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned char color)
 {
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			for (int x = xstart; x < xend; x++) {
 				RETRO.framebuffer[y * RETRO_WIDTH + x] = MIN(RETRO.framebuffer[y * RETRO_WIDTH + x] + color, 255);
 			}
@@ -233,26 +256,26 @@ void RETRO_DrawGlenzPolygon(PolygonPoint *vertices, int numvertices, unsigned ch
 // Interpolate palette indices affinely in screen space to keep shared
 // triangle edges continuous.
 //
-void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices)
+void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points)
 {
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
-		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / area;
-		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / area;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / determinant;
+		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float c = p0->c + dcdx * (px - p0->x) + dcdy * (py - p0->y);
@@ -278,42 +301,38 @@ void RETRO_DrawGouraudPolygon(PolygonPoint *vertices, int numvertices)
 // (q > 0 in front of the near plane). The pixel is then
 //
 //   I = ShadeFromLambert(max(N · L, 0))
-//   color = c + cintensity * I
+//   color = c + shades * I
 //
-void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSourcePoint light)
+void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight light)
 {
 	const float epsilon = 1.0e-12f;
 
-	float inverselightlength = light.nn > 0.0f ? 1.0f / light.nn : 0.0f;
-	float lx = light.nx * inverselightlength;
-	float ly = light.ny * inverselightlength;
-	float lz = light.nz * inverselightlength;
-	int cmin = light.c;
-	int cmax = MIN(light.c + light.cintensity, RETRO_COLORS - 1);
+	int cstart = light.c;
+	int cend = MIN(light.c + light.shades, RETRO_COLORS);
 
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
 		float dnxdx, dnxdy, dnydx, dnydy, dnzdx, dnzdy;
-		dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / area;
-		dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / area;
-		dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / area;
-		dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / area;
-		dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / area;
-		dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+		dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
+		dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
+		dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
+		dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
+		dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
+		dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
@@ -326,16 +345,16 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 				float intensity = 0.0f;
 
 				// Interpolated normals must be normalized before lighting.
-				if (normallengthsquared > epsilon && inverselightlength > 0.0f) {
+				if (normallengthsquared > epsilon) {
 					float inversenormallength = 1.0f / sqrt(normallengthsquared);
-					intensity = MAX((nx * lx + ny * ly + nz * lz) * inversenormallength, 0.0f);
+					intensity = MAX((nx * light.x + ny * light.y + nz * light.z) * inversenormallength, 0.0f);
 				}
 
 				float paletteintensity = RETRO_ShadeFromLambert(intensity);
-				int color = light.c + light.cintensity * paletteintensity;
+				int color = light.c + light.shades * paletteintensity;
 				int offset = y * RETRO_WIDTH + x;
 				if (RETRO_DepthTest(offset, q)) {
-					RETRO.framebuffer[offset] = CLAMP(color, cmin, cmax);
+					RETRO.framebuffer[offset] = CLAMP(color, cstart, cend);
 				}
 				nx += dnxdx;
 				ny += dnydx;
@@ -358,34 +377,34 @@ void RETRO_DrawPhongPolygon(PolygonPoint *vertices, int numvertices, LightSource
 // uq, vq and q are linear in screen space, so the divide recovers the
 // perspective-correct texel.
 //
-void RETRO_DrawTexMapPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, int texmapwidth, int texmapheight)
+void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight)
 {
 	if (texmap == NULL) return;
 
 	const float epsilon = 1.0e-12f;
 
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / area;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / area;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / area;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / area;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
+		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
+		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
+		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -415,36 +434,36 @@ void RETRO_DrawTexMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 // Texture coordinates are perspective-correct; shade is affine so adjacent
 // triangles agree along their shared edge.
 //
-void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, int texmapwidth, int texmapheight, unsigned char *shadetable = NULL)
+void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, unsigned char *shadetable = NULL)
 {
 	if (texmap == NULL || shadetable == NULL) return;
 
 	const float epsilon = 1.0e-12f;
 
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / area;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / area;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / area;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / area;
-		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / area;
-		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / area;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
+		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
+		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
+		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
+		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / determinant;
+		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -577,10 +596,10 @@ float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float dhy, co
 // Texture coordinates are perspective-correct; the shade is affine, as in
 // RETRO_DrawTexMapGouraudPolygon, and the normals the bump is tilted from
 // retain the affine interpolation of the environment mappers. Handing every
-// vertex the same shade and normal draws a flat shaded face, one of each per
-// vertex a gouraud shaded one.
+// point the same shade and normal draws a flat shaded face, one of each per
+// point a gouraud shaded one.
 //
-void RETRO_DrawTexMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *bumpmap, int bumpheight, unsigned char *shadetable, float lightx, float lighty, float lightz, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, unsigned char *shadetable, int shades, float lightx, float lighty, float lightz, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
 	if (texmap == NULL || bumpmap == NULL || shadetable == NULL) return;
 
@@ -592,41 +611,41 @@ void RETRO_DrawTexMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 	float bumptexelu = (float)bumpmapwidth / texmapwidth;
 	float bumptexelv = (float)bumpmapheight / texmapheight;
 
-	// The Sobel weights sum to 4, and bumpheight is the height difference that
+	// The Sobel weights sum to 4, and bumpgrazing is the height difference that
 	// tilts to grazing
-	float bumptiltu = bumptexelu / (4 * bumpheight);
-	float bumptiltv = bumptexelv / (4 * bumpheight);
+	float bumptiltu = bumptexelu / (4 * bumpgrazing);
+	float bumptiltv = bumptexelv / (4 * bumpgrazing);
 
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / area;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / area;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / area;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / area;
-		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / area;
-		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / area;
-		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / area;
-		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / area;
-		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / area;
-		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / area;
-		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / area;
-		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
+		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
+		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
+		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
+		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / determinant;
+		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / determinant;
+		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
+		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
+		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
+		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
+		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
+		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -673,7 +692,7 @@ void RETRO_DrawTexMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 					// as it was drawn without one.
 					float lambert = unitnx * lightx + unitny * lighty + unitnz * lightz;
 					float bumpedlambert = RETRO_BumpedLambert(unitnx, unitny, unitnz, dhx, dhy, frame, lightx, lighty, lightz);
-					float bumpshade = (RETRO_ShadeFromLambert(bumpedlambert) - RETRO_ShadeFromLambert(lambert)) * RETRO_SHADES;
+					float bumpshade = (RETRO_ShadeFromLambert(bumpedlambert) - RETRO_ShadeFromLambert(lambert)) * shades;
 					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, RETRO_TEXTURE_COLORS);
 					int shade = CLAMP128(c + bumpshade);
 					int offset = y * RETRO_WIDTH + x;
@@ -698,46 +717,46 @@ void RETRO_DrawTexMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 // Texture coordinates and lighting normals are perspective-correct;
 // reflection normals retain the original affine interpolation.
 //
-void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *envmap, unsigned char *shadetable, unsigned char shade, bool lightingmap, int envmapintensity, int envmapwidth, int envmapheight, int texmapwidth, int texmapheight)
+void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *shadetable, unsigned char shade, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight)
 {
 	if (texmap == NULL || shadetable == NULL) return;
 
 	const float epsilon = 1.0e-12f;
 	bool envmapshading = envmap != NULL;
 
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / area;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / area;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / area;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / area;
+		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
+		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
+		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
+		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
 		float dnxdx = 0.0f, dnxdy = 0.0f;
 		float dnydx = 0.0f, dnydy = 0.0f;
 		float dnzdx = 0.0f, dnzdy = 0.0f;
 		if (envmapshading) {
-			dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / area;
-			dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / area;
-			dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / area;
-			dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / area;
-			dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / area;
-			dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
+			dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
+			dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
+			dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
+			dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
+			dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
+			dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
 		}
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -753,10 +772,10 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 					unsigned int u = CLAMP(uq * inverseq, 0, texmapwidth);
 					unsigned int v = CLAMP(vq * inverseq, 0, texmapheight);
 					unsigned char texel = CLAMP(texmap[v * texmapwidth + u], 0, RETRO_TEXTURE_COLORS);
-					unsigned char pixelshade = shade;
+					unsigned char pixelshade = CLAMP128(shade);
 					if (envmapshading) {
 						float e, w;
-						RETRO_GetEnvMapCoordinates(nx, ny, nz, lightingmap, envmapwidth, envmapheight, envmapintensity, e, w);
+						RETRO_GetEnvMapCoordinates(nx, ny, nz, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 						unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 						unsigned int envmapv = CLAMP(w, 0, envmapheight);
 						pixelshade = CLAMP128(envmap[envmapv * envmapwidth + envmapu]);
@@ -786,7 +805,7 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsi
 // own is stepped through at its own rate. Resampling the map changes its
 // detail, not its depth.
 //
-void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpheight, unsigned char *shadetable, bool lightingmap, const TangentFrame &frame, int envmapintensity, int envmapwidth, int envmapheight, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, unsigned char *shadetable, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
 	if (texmap == NULL || envmap == NULL || bumpmap == NULL || shadetable == NULL) return;
 
@@ -795,39 +814,39 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 	float bumptexelu = (float)bumpmapwidth / texmapwidth;
 	float bumptexelv = (float)bumpmapheight / texmapheight;
 
-	// The Sobel weights sum to 4, and bumpheight is the height difference that
+	// The Sobel weights sum to 4, and bumpgrazing is the height difference that
 	// tilts to grazing
-	float bumptiltu = bumptexelu / (4 * bumpheight);
-	float bumptiltv = bumptexelv / (4 * bumpheight);
+	float bumptiltu = bumptexelu / (4 * bumpgrazing);
+	float bumptiltv = bumptexelv / (4 * bumpgrazing);
 
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / area;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / area;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / area;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / area;
-		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / area;
-		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / area;
-		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / area;
-		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / area;
-		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / area;
-		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
+		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
+		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
+		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
+		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
+		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
+		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
+		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
+		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
+		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -868,7 +887,7 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 					float bnx, bny, bnz;
 					RETRO_BumpNormal(nx * inversenormallength, ny * inversenormallength, nz * inversenormallength,
 									 gx * bumptiltu, gy * bumptiltv, frame, &bnx, &bny, &bnz);
-					RETRO_GetEnvMapCoordinates(bnx, bny, bnz, lightingmap, envmapwidth, envmapheight, envmapintensity, e, w);
+					RETRO_GetEnvMapCoordinates(bnx, bny, bnz, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 					unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 					unsigned int envmapv = CLAMP(w, 0, envmapheight);
 					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, RETRO_TEXTURE_COLORS);
@@ -894,32 +913,32 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, 
 // Lighting normals are perspective-correct and normalized at lookup;
 // reflection normals retain the original affine interpolation.
 //
-void RETRO_DrawEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned char *envmap, bool lightingmap, int envmapintensity, int envmapwidth, int envmapheight)
+void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned char *envmap, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius)
 {
 	if (envmap == NULL) return;
 
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
-		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / area;
-		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / area;
-		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / area;
-		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / area;
-		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / area;
-		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
+		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
+		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
+		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
+		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
+		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
+		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
@@ -929,7 +948,7 @@ void RETRO_DrawEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 
 			for (int x = xstart; x < xend; x++) {
 				float e, w;
-				RETRO_GetEnvMapCoordinates(nx, ny, nz, lightingmap, envmapwidth, envmapheight, envmapintensity, e, w);
+				RETRO_GetEnvMapCoordinates(nx, ny, nz, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 				unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 				unsigned int envmapv = CLAMP(w, 0, envmapheight);
 				int offset = y * RETRO_WIDTH + x;
@@ -949,7 +968,7 @@ void RETRO_DrawEnvMapPolygon(PolygonPoint *vertices, int numvertices, unsigned c
 // Bump-mapped environment polygon
 // Lighting and reflection maps are read at the tilted unit normal N'.
 //
-void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsigned char *envmap, unsigned char *bumpmap, int bumpheight, bool lightingmap, const TangentFrame &frame, int envmapintensity, int envmapwidth, int envmapheight, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
 	if (envmap == NULL || bumpmap == NULL) return;
 
@@ -958,39 +977,39 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 	float bumptexelu = (float)bumpmapwidth / texmapwidth;
 	float bumptexelv = (float)bumpmapheight / texmapheight;
 
-	// The Sobel weights sum to 4, and bumpheight is the height difference that
+	// The Sobel weights sum to 4, and bumpgrazing is the height difference that
 	// tilts to grazing
-	float bumptiltu = bumptexelu / (4 * bumpheight);
-	float bumptiltv = bumptexelv / (4 * bumpheight);
+	float bumptiltu = bumptexelu / (4 * bumpgrazing);
+	float bumptiltv = bumptexelv / (4 * bumpgrazing);
 
-	for (int triangle = 1; triangle < numvertices - 1; triangle++) {
-		PolygonPoint *p0 = &vertices[0];
-		PolygonPoint *p1 = &vertices[triangle];
-		PolygonPoint *p2 = &vertices[triangle + 1];
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float area = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (area == 0.0f) continue;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		if (determinant == 0.0f) continue;
 
 		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
 		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / area;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / area;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / area;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / area;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / area;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / area;
-		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / area;
-		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / area;
-		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / area;
-		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / area;
-		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / area;
-		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / area;
+		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
+		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
+		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
+		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
+		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
+		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
+		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
+		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
+		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
+		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
-			if (span[y].x1 > span[y].x2) continue;
-			int xstart = MAX((int)ceil(span[y].x1 - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].x2 - 0.5f), RETRO_WIDTH);
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
@@ -1029,7 +1048,7 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *vertices, int numvertices, unsign
 					float bnx, bny, bnz;
 					RETRO_BumpNormal(nx * inversenormallength, ny * inversenormallength, nz * inversenormallength,
 									 gx * bumptiltu, gy * bumptiltv, frame, &bnx, &bny, &bnz);
-					RETRO_GetEnvMapCoordinates(bnx, bny, bnz, lightingmap, envmapwidth, envmapheight, envmapintensity, e, w);
+					RETRO_GetEnvMapCoordinates(bnx, bny, bnz, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 					unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 					unsigned int envmapv = CLAMP(w, 0, envmapheight);
 					int offset = y * RETRO_WIDTH + x;

@@ -43,5 +43,5 @@ void DEMO_Initialize(void)
 
 	Model3D *model = RETRO_Load3DModel("assets/cubequads.obj");
 	model->c = 80;
-	model->cintensity = 100;
+	model->shades = 100;
 }

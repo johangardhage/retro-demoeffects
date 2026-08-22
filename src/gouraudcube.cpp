@@ -40,7 +40,7 @@ void DEMO_Initialize(void)
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->c = RETRO_PHONG_OFFSET;
-	model->cintensity = RETRO_PHONG_SHADES;
+	model->shades = RETRO_PHONG_SHADES;
 
 	RETRO_InitializeLightSource(0, 0, -1);
 }

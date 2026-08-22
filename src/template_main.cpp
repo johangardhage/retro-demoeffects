@@ -3,8 +3,9 @@
 //
 // The raw entry point: own main(), RETRO_Initialize / Flip /
 // Deinitialize, no DEMO_* callbacks. Each frame stamps a random
-// 3-vertex flat triangle. The framebuffer is never cleared, so the
-// triangles accumulate. SPACE pauses the loop the same way the
+// 3-vertex flat triangle. Color is never cleared, so the triangles
+// accumulate; the depth buffer is reset each stamp so the new
+// triangle can overwrite. SPACE pauses the loop the same way the
 // library's own main loop does.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
@@ -30,15 +31,20 @@ int main(int argc, char *argv[])
 		}
 
 		// Draw polygons
-		PolygonPoint points[3];
-		points[0].x = RANDOM(RETRO_WIDTH);
-		points[0].y = RANDOM(RETRO_HEIGHT);
-		points[1].x = RANDOM(RETRO_WIDTH);
-		points[1].y = RANDOM(RETRO_HEIGHT);
-		points[2].x = RANDOM(RETRO_WIDTH);
-		points[2].y = RANDOM(RETRO_HEIGHT);
+		PolygonPoint point[3];
+		point[0].x = RANDOM(RETRO_WIDTH);
+		point[0].y = RANDOM(RETRO_HEIGHT);
+		point[0].q = 1.0f;
+		point[1].x = RANDOM(RETRO_WIDTH);
+		point[1].y = RANDOM(RETRO_HEIGHT);
+		point[1].q = 1.0f;
+		point[2].x = RANDOM(RETRO_WIDTH);
+		point[2].y = RANDOM(RETRO_HEIGHT);
+		point[2].q = 1.0f;
 
-		RETRO_DrawFlatPolygon(points, 3, RANDOM(RETRO_COLORS));
+		// Depth is cleared so the new triangle can overwrite; color is not.
+		RETRO_ClearDepthBuffer();
+		RETRO_DrawFlatPolygon(point, 3, RANDOM(RETRO_COLORS));
 		RETRO_Flip();
 	}
 

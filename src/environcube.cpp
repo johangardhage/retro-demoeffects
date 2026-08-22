@@ -49,5 +49,5 @@ void DEMO_Initialize(void)
 	model->envmap = PhongMap;
 	model->envmapwidth = PHONGMAP_SIZE;
 	model->envmapheight = PHONGMAP_SIZE;
-	model->envmapintensity = PHONGMAP_SIZE / 2;
+	model->envmapradius = PHONGMAP_SIZE / 2;
 }

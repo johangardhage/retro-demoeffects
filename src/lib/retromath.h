@@ -9,14 +9,17 @@
 
 #include "retromodel.h"
 
-// Pinhole projection. Depth is s*rz + eye, and the screen point is
+// Pinhole projection. Depth is scale*rz + eyedistance, and the screen point is
 //
 //   q  = 1 / depth
-//   sx = cx + s * rx * eye * q
-//   sy = cy + s * ry * eye * q
+//   sx = cx + scale * rx * eyedistance * q
+//   sy = cy + scale * ry * eyedistance * q
 //
-// A demo that works out a projected vertex itself has to use the same eye.
-#define RETRO_PROJECTION_EYE 250
+// RETRO_ProjectVertex is this, and RETRO_ProjectModel is it over every vertex
+// of a model. The principal point moves with cx, cy. A demo whose camera does
+// not fit the rest - one that wants a focal length per axis, or a depth it
+// works out for itself - writes the three lines above with what it has.
+#define RETRO_PROJECTION_EYEDISTANCE 250
 
 // Pixels per model unit when the model does not say. A model built in pixels
 // passes 1; one built at unit size passes the size it wants to appear.
@@ -54,47 +57,79 @@ void RETRO_RotateVertexNormals(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->normals; i++) {
-		model->normal[i].rnx = model->normal[i].nx * model->matrix[0][0] + model->normal[i].ny * model->matrix[0][1] + model->normal[i].nz * model->matrix[0][2];
-		model->normal[i].rny = model->normal[i].nx * model->matrix[1][0] + model->normal[i].ny * model->matrix[1][1] + model->normal[i].nz * model->matrix[1][2];
-		model->normal[i].rnz = model->normal[i].nx * model->matrix[2][0] + model->normal[i].ny * model->matrix[2][1] + model->normal[i].nz * model->matrix[2][2];
+		model->normal[i].rx = model->normal[i].x * model->matrix[0][0] + model->normal[i].y * model->matrix[0][1] + model->normal[i].z * model->matrix[0][2];
+		model->normal[i].ry = model->normal[i].x * model->matrix[1][0] + model->normal[i].y * model->matrix[1][1] + model->normal[i].z * model->matrix[1][2];
+		model->normal[i].rz = model->normal[i].x * model->matrix[2][0] + model->normal[i].y * model->matrix[2][1] + model->normal[i].z * model->matrix[2][2];
 	}
 }
 
-// Face normals and the tangent frame the bump gradient is applied in. The
-// frame has to turn with the model, or the relief stays keyed to the screen.
-void RETRO_RotateFaceNormals(Model3D *model = NULL)
+// The face's frame - its normal and the tangent and bitangent built on it.
+// All three turn together: T and B are perpendicular to N by construction and
+// only stay so in view space if one matrix carries all of them. N goes to the
+// flat and env shading; T and B reach the drawers as a TangentFrame, and have
+// to turn with the model or the relief stays keyed to the screen.
+void RETRO_RotateFaceFrames(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->faces; i++) {
-		Normal *frame[2] = { &model->face[i].tangent, &model->face[i].bitangent };
+		Direction *direction[2] = { &model->face[i].tangent, &model->face[i].bitangent };
 		for (int j = 0; j < 2; j++) {
-			frame[j]->rnx = frame[j]->nx * model->matrix[0][0] + frame[j]->ny * model->matrix[0][1] + frame[j]->nz * model->matrix[0][2];
-			frame[j]->rny = frame[j]->nx * model->matrix[1][0] + frame[j]->ny * model->matrix[1][1] + frame[j]->nz * model->matrix[1][2];
-			frame[j]->rnz = frame[j]->nx * model->matrix[2][0] + frame[j]->ny * model->matrix[2][1] + frame[j]->nz * model->matrix[2][2];
+			direction[j]->rx = direction[j]->x * model->matrix[0][0] + direction[j]->y * model->matrix[0][1] + direction[j]->z * model->matrix[0][2];
+			direction[j]->ry = direction[j]->x * model->matrix[1][0] + direction[j]->y * model->matrix[1][1] + direction[j]->z * model->matrix[1][2];
+			direction[j]->rz = direction[j]->x * model->matrix[2][0] + direction[j]->y * model->matrix[2][1] + direction[j]->z * model->matrix[2][2];
 		}
 
-		model->face[i].facenormal.rnx = model->face[i].facenormal.nx * model->matrix[0][0] + model->face[i].facenormal.ny * model->matrix[0][1] + model->face[i].facenormal.nz * model->matrix[0][2];
-		model->face[i].facenormal.rny = model->face[i].facenormal.nx * model->matrix[1][0] + model->face[i].facenormal.ny * model->matrix[1][1] + model->face[i].facenormal.nz * model->matrix[1][2];
-		model->face[i].facenormal.rnz = model->face[i].facenormal.nx * model->matrix[2][0] + model->face[i].facenormal.ny * model->matrix[2][1] + model->face[i].facenormal.nz * model->matrix[2][2];
+		model->face[i].facenormal.rx = model->face[i].facenormal.x * model->matrix[0][0] + model->face[i].facenormal.y * model->matrix[0][1] + model->face[i].facenormal.z * model->matrix[0][2];
+		model->face[i].facenormal.ry = model->face[i].facenormal.x * model->matrix[1][0] + model->face[i].facenormal.y * model->matrix[1][1] + model->face[i].facenormal.z * model->matrix[1][2];
+		model->face[i].facenormal.rz = model->face[i].facenormal.x * model->matrix[2][0] + model->face[i].facenormal.y * model->matrix[2][1] + model->face[i].facenormal.z * model->matrix[2][2];
 	}
 }
 
-void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), Model3D *model = NULL, int eye = RETRO_PROJECTION_EYE)
+//
+// Screen point of a vertex whose rotated coordinates are already the ones the
+// camera sees: rx across the screen, ry down it, rz along the view.
+//
+//   depth = scale * rz + eyedistance
+//   q     = 1 / depth
+//   sx    = cx + scale * eyedistance * rx * q
+//   sy    = cy + scale * eyedistance * ry * q
+//
+// The eye's distance from the screen is in pixels, so scale * eyedistance is
+// the focal length and is what sets the field of view. The principal point is
+// taken as floats, so a horizon need not land on a whole one.
+//
+// A vertex at or behind the near plane is given q = 0 and parked at the
+// principal point, for the caller to drop.
+//
+void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2), float cy = (RETRO_HEIGHT / 2), float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
+{
+	float depth = scale * vertex->rz + eyedistance;
+
+	if (depth <= 1.0f) {
+		vertex->q = 0.0f;
+		vertex->sx = cx;
+		vertex->sy = cy;
+	} else {
+		float focal = scale * eyedistance;
+
+		vertex->q = 1.0f / depth;
+		vertex->sx = cx + focal * vertex->rx * vertex->q;
+		vertex->sy = cy + focal * vertex->ry * vertex->q;
+	}
+}
+
+void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2), float cy = (RETRO_HEIGHT / 2), Model3D *model = NULL, float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
 {
 	model = model ? model : RETRO_Get3DModel();
 
+	// The model stands at the origin with the eye that far in front of it, and
+	// its origin lands on the principal point. Moving that shifts every projected
+	// vertex by the same pixels, so a demo can carry the model about the screen
+	// with cx, cy alone. What it cannot do that way is move it in depth, which
+	// is RETRO_TranslateModel's job
 	for (int i = 0; i < model->vertices; i++) {
-		float depth = scale * model->vertex[i].rz + eye;
-		if (depth <= 1.0f) {
-			model->vertex[i].q = 0.0f;
-			model->vertex[i].sx = x;
-			model->vertex[i].sy = y;
-		} else {
-			model->vertex[i].q = 1.0f / depth;
-			model->vertex[i].sx = x + scale * model->vertex[i].rx * eye * model->vertex[i].q;
-			model->vertex[i].sy = y + scale * model->vertex[i].ry * eye * model->vertex[i].q;
-		}
+		RETRO_ProjectVertex(&model->vertex[i], scale, cx, cy, eyedistance);
 	}
 }
 
@@ -103,7 +138,7 @@ void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 	RETRO_InitializeRotationMatrix(ax, ay, az, model);
 	RETRO_RotateVertices(model);
 	RETRO_RotateVertexNormals(model);
-	RETRO_RotateFaceNormals(model);
+	RETRO_RotateFaceFrames(model);
 }
 
 // p' = R p + t, the translation half of a model's placement. It goes on the
@@ -125,24 +160,13 @@ void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = NULL)
 	}
 }
 
-void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_SCALE, int x = (RETRO_WIDTH / 2), int y = (RETRO_HEIGHT / 2), int eye = RETRO_PROJECTION_EYE)
-{
-	float depth = scale * vertex->rz + eye;
-	if (depth <= 1.0f) {
-		vertex->q = 0.0f;
-		vertex->sx = x;
-		vertex->sy = y;
-	} else {
-		vertex->q = 1.0f / depth;
-		vertex->sx = x + scale * vertex->rx * eye * vertex->q;
-		vertex->sy = y + scale * vertex->ry * eye * vertex->q;
-	}
-}
-
-// Sequential Rx, Ry, Rz by the same (cos, sin) pair. Each plane map scales
-// that plane by r = √(cos²+sin²) and leaves its axis alone. When r ≠ 1
-// (dottorus2's SQUASH) the composition is not in SO(3).
-void RETRO_RotateVertex(Vertex *vertex, float cosa, float sina)
+// Sequential Rx, Ry, Rz by the same (cos, sin) pair, where RETRO_RotateVertex
+// below takes an angle per axis. The angle arrives already resolved, so a demo
+// can spin from a table. Each plane map scales that plane by r = √(cos²+sin²)
+// and leaves its axis alone, so a pair that is not unit squashes the model as
+// it turns and the composition is not in SO(3), which is why this is not
+// called a rotation.
+void RETRO_SpinVertex(Vertex *vertex, float cosa, float sina)
 {
 	// Rotate around x axis
 	vertex->ry = vertex->y * cosa - vertex->z * sina;
@@ -174,46 +198,45 @@ void RETRO_RotateVertex(Vertex *vertex, float ax, float ay, float az)
 	vertex->rx = tmpx;
 }
 
-void RETRO_RotateNormal(Normal *normal, float ax, float ay, float az)
+void RETRO_RotateDirection(Direction *direction, float ax, float ay, float az)
 {
 	// Rotate around x axis
-	normal->rny = normal->ny * cos(ax) - normal->nz * sin(ax);
-	normal->rnz = normal->ny * sin(ax) + normal->nz * cos(ax);
+	direction->ry = direction->y * cos(ax) - direction->z * sin(ax);
+	direction->rz = direction->y * sin(ax) + direction->z * cos(ax);
 
 	// Rotate around y axis
-	normal->rnx = normal->nx * cos(ay) + normal->rnz * sin(ay);
-	normal->rnz = normal->nx * -sin(ay) + normal->rnz * cos(ay);
+	direction->rx = direction->x * cos(ay) + direction->rz * sin(ay);
+	direction->rz = direction->x * -sin(ay) + direction->rz * cos(ay);
 
 	// Rotate around z axis
-	float tmpx = normal->rnx * cos(az) - normal->rny * sin(az);
-	normal->rny = normal->rnx * sin(az) + normal->rny * cos(az);
-	normal->rnx = tmpx;
+	float tmpx = direction->rx * cos(az) - direction->ry * sin(az);
+	direction->ry = direction->rx * sin(az) + direction->ry * cos(az);
+	direction->rx = tmpx;
 }
 
-// (N1 · N2) / (|N1| |N2|), the cosine of the angle between the rotated normals.
-float RETRO_DotProduct(Normal n1, Normal n2)
+// D1 · D2, taken on the rotated directions. Both are unit, so this is already
+// the cosine of the angle between them and there is nothing to divide out.
+float RETRO_DotProduct(Direction d1, Direction d2)
 {
-	float lengths = n1.nn * n2.nn;
-	if (lengths <= 0.0f) return 0.0f;
-	return (n1.rnx * n2.rnx + n1.rny * n2.rny + n1.rnz * n2.rnz) / lengths;
+	return d1.rx * d2.rx + d1.ry * d2.ry + d1.rz * d2.rz;
 }
 
 void RETRO_QuickSort(Model3D *model, int lo, int hi)
 {
 	int i = lo;
 	int j = hi;
-	float z = model->face[model->visibleface[(lo + hi) / 2]].z;
+	float rz = model->face[model->drawface[(lo + hi) / 2]].rz;
 
 	while (i <= j) {
-		while (model->face[model->visibleface[i]].z > z) {
+		while (model->face[model->drawface[i]].rz > rz) {
 			i++;
 		}
-		while (model->face[model->visibleface[j]].z < z) {
+		while (model->face[model->drawface[j]].rz < rz) {
 			j--;
 		}
 
 		if (i <= j) {
-			SWAP(model->visibleface[i], model->visibleface[j]);
+			SWAP(model->drawface[i], model->drawface[j]);
 			i++;
 			j--;
 		}
@@ -233,12 +256,20 @@ void RETRO_QuickSort(Model3D *model, int lo, int hi)
 // product carries the sign of the face normal's z: it is negative exactly when
 // the outward normal (the right-hand rule on the same winding that
 // RETRO_InitializeFaceNormals uses) points back at the viewer.
-// Painter's algorithm: sort remaining faces by mean rz, far to near.
-void RETRO_SortVisibleFaces(Model3D *model = NULL, bool all = false)
+// Painter's algorithm: the survivors go into drawface sorted by mean rz, far
+// to near, which is the list the renderers draw. With backfaces a face goes in
+// whether it faces the viewer or not, and its Face::frontfacing says which side
+// is showing, so a Glenz or wireframe model can draw both.
+//
+// A face dropped at the near plane never reaches the winding test, so it never
+// reaches drawface either and its frontfacing is left as it stands. There is no
+// answer to give: its corners were parked on the principal point with q = 0, so
+// the cross product would be meaningless.
+void RETRO_SortFaces(Model3D *model = NULL, bool backfaces = false)
 {
 	model = model ? model : RETRO_Get3DModel();
 
-	model->visiblefaces = 0;
+	model->drawfaces = 0;
 	for (int i = 0; i < model->faces; i++) {
 		bool infront = true;
 		for (int j = 0; j < model->face[i].vertices; j++) {
@@ -248,7 +279,6 @@ void RETRO_SortVisibleFaces(Model3D *model = NULL, bool all = false)
 			}
 		}
 		if (!infront) {
-			model->face[i].visible = false;
 			continue;
 		}
 
@@ -261,25 +291,20 @@ void RETRO_SortVisibleFaces(Model3D *model = NULL, bool all = false)
 		// (s1 - s0) × (s2 - s0). Same sign as the face normal's z in this
 		// y-down, +z-away frame, so front faces come out negative.
 		float cross = (s1x - s0x) * (s2y - s0y) - (s1y - s0y) * (s2x - s0x);
-		model->face[i].visible = cross < 0;
-		if (model->face[i].visible || all) {
-			model->face[i].z = 0;
+		model->face[i].frontfacing = cross < 0;
+		if (model->face[i].frontfacing || backfaces) {
+			model->face[i].rz = 0;
 			for (int j = 0; j < model->face[i].vertices; j++) {
-				model->face[i].z += model->vertex[model->face[i].vertex[j]].rz;
+				model->face[i].rz += model->vertex[model->face[i].vertex[j]].rz;
 			}
-			model->face[i].z /= model->face[i].vertices;
-			model->visibleface[model->visiblefaces] = i;
-			model->visiblefaces++;
+			model->face[i].rz /= model->face[i].vertices;
+			model->drawface[model->drawfaces] = i;
+			model->drawfaces++;
 		}
 	}
-	if (model->visiblefaces > 1) {
-		RETRO_QuickSort(model, 0, model->visiblefaces - 1);
+	if (model->drawfaces > 1) {
+		RETRO_QuickSort(model, 0, model->drawfaces - 1);
 	}
-}
-
-void RETRO_SortAllFaces(Model3D *model = NULL)
-{
-	RETRO_SortVisibleFaces(model, true);
 }
 
 #endif

@@ -65,15 +65,15 @@ void DrawShadebob(double xphase1, double xphase2, double yphase1, double yphase2
 // of how many bobs have been drawn. At 60 Hz a pixel under the path cycles the palette
 // every 256 draws.
 //
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	// Calculate phase
 	static double xphase1 = 60, xphase2 = 100, yphase1 = 55, yphase2 = 200;
 
-	xphase1 = fmod(xphase1 + BOB_SPEED1 * deltatime, RETRO_SINCOS_ANGLE);
-	xphase2 = fmod(xphase2 + BOB_SPEED2 * deltatime, RETRO_SINCOS_ANGLE);
-	yphase1 = fmod(yphase1 + BOB_SPEED2 * deltatime, RETRO_SINCOS_ANGLE);
-	yphase2 = fmod(yphase2 + BOB_SPEED1 * deltatime, RETRO_SINCOS_ANGLE);
+	xphase1 = fmod(xphase1 + BOB_SPEED1 * timestep, RETRO_SINCOS_ANGLE);
+	xphase2 = fmod(xphase2 + BOB_SPEED2 * timestep, RETRO_SINCOS_ANGLE);
+	yphase1 = fmod(yphase1 + BOB_SPEED2 * timestep, RETRO_SINCOS_ANGLE);
+	yphase2 = fmod(yphase2 + BOB_SPEED1 * timestep, RETRO_SINCOS_ANGLE);
 
 	// Draw bobs
 	DrawShadebob(xphase1, xphase2, yphase1, yphase2);

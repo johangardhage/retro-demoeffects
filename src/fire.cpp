@@ -62,7 +62,7 @@ unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 // The step is the unit of both the rise and the cooling, which is why the field is
 // advanced at a fixed rate instead of once per frame.
 //
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	// Seed sparks
 	for (int x = 0; x < RETRO_WIDTH; x++) {

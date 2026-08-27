@@ -73,7 +73,7 @@ void CreateExplosion(void)
 	}
 }
 
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	static int step = 0;
 

@@ -28,6 +28,8 @@
 
 static void DrawTriangle(const RETRO_TerrainPoint &a, const RETRO_TerrainPoint &b, const RETRO_TerrainPoint &c, unsigned char color)
 {
+	if (!RETRO_TerrainTriangleProjects(a.q, b.q, c.q)) return;
+
 	PolygonPoint polygon[3] = {
 		{ a.sx, a.sy, 0, 0, 0, a.q, 0, 0, 0 },
 		{ b.sx, b.sy, 0, 0, 0, b.q, 0, 0, 0 },
@@ -51,7 +53,6 @@ void DEMO_Render(double deltatime)
 			RETRO_TerrainPoint p10 = RETRO_ProjectTerrainVertex(x + step, z, mesh.basis);
 			RETRO_TerrainPoint p01 = RETRO_ProjectTerrainVertex(x, z + step, mesh.basis);
 			RETRO_TerrainPoint p11 = RETRO_ProjectTerrainVertex(x + step, z + step, mesh.basis);
-			if (!RETRO_TerrainCellProjects(mesh, p00.q, p10.q, p01.q, p11.q)) continue;
 
 			unsigned char color = RETRO_TerrainColor(x + step / 2.0f, z + step / 2.0f);
 			DrawTriangle(p00, p11, p10, color);
@@ -67,7 +68,7 @@ void DEMO_Initialize(void)
 	RETRO_LoadTerrain("assets/voxel_color_1024x1024.pcx", "assets/voxel_height_1024x1024.pcx");
 
 	// Sky, in an entry the color map never uses
-	RETRO_SetColor(0, 20, 24, 42);
+	RETRO_SetColor(0, RETRO_NIGHTSKY);
 
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

@@ -29,7 +29,7 @@
 //
 //   idx    = (256 − 128 t_x) mod 256
 //   lumel  = tent(idx)
-//   color  = ShadeTable[texel][lumel]
+//   color  = FlubberShadeTable[texel][lumel]
 //
 // tent(i) = 255 − |255 − 2i|, peaking at i = 127 and 128. The LUT is 240
 // diffuse ramps plus 16 specular highlights, 240 + 16 = 256, independent of
@@ -77,7 +77,7 @@ static_assert(SHADE_LUT_WIDTH == 256, "lumel is an 8-bit index into a 256-wide L
 
 long TextureScroll;
 unsigned char LightTable[RETRO_COLORS];
-unsigned char ShadeTable[RETRO_COLORS * SHADE_LUT_WIDTH];
+unsigned char FlubberShadeTable[RETRO_COLORS * SHADE_LUT_WIDTH];
 float ZBuffer[RETRO_WIDTH * RETRO_HEIGHT];
 
 Point3Df EllipsePoints[SPANS];
@@ -92,7 +92,7 @@ Point3Df EllipseTangents[SPANS];
 // not at the off-screen vertex. v is constant on the row: the texture
 // crawls in y only.
 //
-// lumel indexes ShadeTable[texel][0..DIFFUSE_SHADES) diffuse /
+// lumel indexes FlubberShadeTable[texel][0..DIFFUSE_SHADES) diffuse /
 // [DIFFUSE_SHADES..SHADE_LUT_WIDTH) specular. Smaller z is nearer.
 //
 void DrawSpan(int y, int x1, float u1, float l1, float z1, int x2, float u2, float l2, float z2)
@@ -130,7 +130,7 @@ void DrawSpan(int y, int x1, float u1, float l1, float z1, int x2, float u2, flo
 			int texel = image[v + WRAP((int)u1, TEXTURE_WIDTH)];
 			int lumel = LightTable[WRAP256((int)l1)];
 
-			buffer[offs] = ShadeTable[texel * SHADE_LUT_WIDTH + lumel];
+			buffer[offs] = FlubberShadeTable[texel * SHADE_LUT_WIDTH + lumel];
 			ZBuffer[offs] = z1;
 		}
 
@@ -234,14 +234,14 @@ void DEMO_Initialize(void)
 		unsigned char b = palette[i].b;
 
 		for (int s = 0; s < DIFFUSE_SHADES; s++) {
-			ShadeTable[i * SHADE_LUT_WIDTH + s] = ClosestColor(palette,
+			FlubberShadeTable[i * SHADE_LUT_WIDTH + s] = ClosestColor(palette,
 				r * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV,
 				g * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV,
 				b * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV);
 		}
 
 		for (int h = 0; h < SPECULAR_SHADES; h++) {
-			ShadeTable[i * SHADE_LUT_WIDTH + h + DIFFUSE_SHADES] = ClosestColor(palette,
+			FlubberShadeTable[i * SHADE_LUT_WIDTH + h + DIFFUSE_SHADES] = ClosestColor(palette,
 				r + (255 - r) * h / FLUBBER_SPECULAR_DIV,
 				g + (255 - g) * h / FLUBBER_SPECULAR_DIV,
 				b + (255 - b) * h / FLUBBER_SPECULAR_DIV);

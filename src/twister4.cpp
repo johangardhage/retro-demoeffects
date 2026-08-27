@@ -3,7 +3,7 @@
 //
 // The textured horizontal-scanline column from twister3, with depth shading.
 // The flowers picture already owns all 256 palette entries, so shading cannot
-// use separate palette ramps. Instead, ShadeTable maps every source texel and
+// use separate palette ramps. Instead, TwisterShadeTable maps every source texel and
 // one of TWISTER_SHADES brightness levels back to the nearest color in the
 // picture's own palette.
 //

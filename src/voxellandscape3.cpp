@@ -44,6 +44,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrocolor.h"
 #include "lib/retroterrain.h"
 
 #define VOXEL_LOD 0.005f // added to dz each slice, so far samples thin out
@@ -137,7 +138,7 @@ void DEMO_Initialize(void)
 
 	// Sky, in an entry the color map never uses, the same colour the other
 	// photographed landscapes open on
-	RETRO_SetColor(0, 20, 24, 42);
+	RETRO_SetColor(0, RETRO_NIGHTSKY);
 
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

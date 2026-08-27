@@ -248,10 +248,9 @@ RETRO_TerrainCamera RETRO_Camera;
 // and hands back only what deciding a cell needs. The island look has no
 // mesh walk: it is a finite patch drawn as dots.
 //
-// The heading is taken once here rather than per cell, and the draw
-// distance and near plane are kept in the forms the tests want them in:
-// squared, so a cell can be measured without a root, and reciprocal, to
-// compare against the q a projection comes back with.
+// The heading is taken once here rather than per cell, and the draw distance
+// is kept in the form the test wants it in: squared, so a cell can be measured
+// against it without taking a root.
 //
 struct RETRO_TerrainMesh {
 	int step;					// Mesh spacing, in map cells
@@ -259,7 +258,6 @@ struct RETRO_TerrainMesh {
 	int minz, maxz;
 	RETRO_TerrainBasis basis;	// The camera's heading, turned once
 	float distance2;			// Draw distance squared
-	float nearq;				// Reciprocal near plane: a corner above this is too close
 };
 
 //
@@ -729,7 +727,6 @@ RETRO_TerrainMesh RETRO_BuildTerrainMesh(void)
 	mesh.maxz = (int)ceilf((RETRO_Camera.z + distance) / step) * step;
 	mesh.basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
 	mesh.distance2 = (float)distance * distance;
-	mesh.nearq = 1.0f / RETRO_TerrainView.nearplane;
 	return mesh;
 }
 
@@ -753,15 +750,17 @@ bool RETRO_TerrainCellVisible(const RETRO_TerrainMesh &mesh, int x, int z)
 }
 
 //
-// Whether all four corners came back in front of the near plane
+// Whether all three corners came back in front of the eye
 //
-// A cell crossing it is dropped rather than projected through the eye, which
-// would fold it back onto the screen as a plausible-looking shape in the wrong
-// place. Only the row nearest the camera is ever affected.
+// A corner behind it is projected through the eye and folds onto the screen as
+// a plausible-looking shape in the wrong place, so the triangle is dropped. The
+// test is on the triangle and not on the cell it was split from: a cell the eye
+// sits inside has one half in front of it and one behind, and judging the cell
+// would throw both away and leave a hole in the foreground.
 //
-bool RETRO_TerrainCellProjects(const RETRO_TerrainMesh &mesh, float q00, float q10, float q01, float q11)
+bool RETRO_TerrainTriangleProjects(float q0, float q1, float q2)
 {
-	return q00 > 0 && q10 > 0 && q01 > 0 && q11 > 0 && q00 <= mesh.nearq && q10 <= mesh.nearq && q01 <= mesh.nearq && q11 <= mesh.nearq;
+	return q0 > 0 && q1 > 0 && q2 > 0;
 }
 
 //

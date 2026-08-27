@@ -10,6 +10,8 @@
 // giving the effect its deliberately chunky pixels. Color indices run through a
 // fire palette from dark blue and red to orange, yellow and white.
 //
+// Author: Johan Gardhage <johan.gardhage@gmail.com>
+//
 #define RETRO_HEIGHT 200
 
 #include "lib/retro.h"

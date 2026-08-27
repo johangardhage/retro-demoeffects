@@ -25,6 +25,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrocolor.h"
 #include "lib/retroterrain.h"
 
 // The farthest view the arrays below have room for. How far the dots are
@@ -151,7 +152,7 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTerrain("assets/voxel_color_1024x1024.pcx", "assets/voxel_height_1024x1024.pcx");
-	RETRO_SetColor(0, 20, 24, 42);
+	RETRO_SetColor(0, RETRO_NIGHTSKY);
 
 	// The two lists above hold a view reaching WORLD_MAX_DISTANCE. Said here,
 	// where a wider one stops the demo at startup, rather than found out as a

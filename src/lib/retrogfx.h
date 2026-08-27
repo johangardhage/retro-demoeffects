@@ -227,6 +227,22 @@ void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *
 	}
 }
 
+// Filled axis-aligned rectangle with inclusive endpoints, clipped to the buffer.
+void RETRO_DrawRectangle(int x1, int y1, int x2, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+{
+	buffer = buffer ? buffer : RETRO.framebuffer;
+
+	if (x1 > x2) SWAP(x1, x2);
+	if (y1 > y2) SWAP(y1, y2);
+	x1 = MAX(x1, 0);
+	y1 = MAX(y1, 0);
+	x2 = MIN(x2, width - 1);
+	y2 = MIN(y2, height - 1);
+	if (x1 > x2 || y1 > y2) return;
+
+	for (int y = y1; y <= y2; y++) memset(buffer + y * width + x1, color, x2 - x1 + 1);
+}
+
 //
 // Filled axis-aligned ellipse, (x − cx)² / ra² + (y − cy)² / rb² ≤ 1.
 // Each scanline is the span between the two roots in x, inclusive, clipped

@@ -56,7 +56,7 @@ float *WaterScratch = WaterC;   // what the smoothing pass writes into
 //
 // Advance the field one fixed step
 //
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	// Seed droplet
 	static int tick = 0;

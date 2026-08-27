@@ -1,5 +1,5 @@
 //
-// Roto-tunnel
+// Tunnel
 //
 // A polar map of a still texture, looked up as if the screen were the mouth
 // of a tube. A pixel at offset (dx, dy) from the vanishing point has

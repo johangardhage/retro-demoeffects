@@ -12,6 +12,7 @@
 #include <libgen.h> // basename
 #include <limits.h> // INT_MIN
 #include <math.h> // cos, sin, pow
+#include <stdarg.h> // va_list, vprintf
 #include <stdio.h> // FILE
 #include <stdlib.h> // atoi, exit, free, malloc, rand, srand
 #include <string.h> // memcpy, memset
@@ -28,7 +29,7 @@
 // opens one. DEMO_Initialize and DEMO_Deinitialize bracket the mainloop, with the
 // framebuffer and the palette in place.
 //
-// DEMO_Update advances the effect by deltatime seconds, always exactly
+// DEMO_FixedUpdate advances the effect by timestep seconds, always exactly
 // RETRO_SIMULATION_STEP. The mainloop calls it once for every whole step the frame has
 // earned, which can be no times at all on a fast display and several while catching up
 // after a stall, so work that belongs to a single frame does not belong here. See
@@ -36,13 +37,13 @@
 //
 // DEMO_Render draws a frame into a cleared framebuffer, which is shown once it returns.
 // DEMO_Render2 is handed the framebuffer as the previous frame left it and shows it itself
-// with RETRO_Flip. A demo that draws in DEMO_Update needs neither, and gets its framebuffer
+// with RETRO_Flip. A demo that draws in DEMO_FixedUpdate needs neither, and gets its framebuffer
 // shown as it stands.
 //
 void __attribute__((weak)) DEMO_Startup(void);
 void __attribute__((weak)) DEMO_Initialize(void);
 void __attribute__((weak)) DEMO_Deinitialize(void);
-void __attribute__((weak)) DEMO_Update(double deltatime);
+void __attribute__((weak)) DEMO_FixedUpdate(double timestep);
 void __attribute__((weak)) DEMO_Render(double deltatime);
 void __attribute__((weak)) DEMO_Render2(double deltatime);
 
@@ -183,9 +184,12 @@ struct {
 // Public functions
 // *******************************************************************
 
-void RETRO_RageQuit(const char *message, const char *error = "")
+void RETRO_RageQuit(const char *message, ...)
 {
-	printf(message, error);
+	va_list args;
+	va_start(args, message);
+	vprintf(message, args);
+	va_end(args);
 	exit(-1);
 }
 
@@ -209,6 +213,24 @@ RETRO_Palette RETRO_Get6bitColor(int color)
 	palette.r = ((RETRO.palette[color] >> 16) & 0xff) >> 2;
 	palette.g = ((RETRO.palette[color] >> 8) & 0xff) >> 2;
 	palette.b = ((RETRO.palette[color]) & 0xff) >> 2;
+	return palette;
+}
+
+//
+// An 8-bit color on the 6-bit scale the VGA DAC works in. RETRO_Palette carries
+// its components raw, so which scale one is on is the caller's to keep track
+// of, and the two are not interchangeable: a constructor that takes 6-bit input
+// clamps anything above 63, which turns an 8-bit color into a washed out
+// approximation of itself rather than into an error. This is the conversion to
+// put at that boundary, so a color named on the 8-bit scale can be handed to a
+// 6-bit one and be seen to have been converted
+//
+RETRO_Palette RETRO_To6bitColor(RETRO_Palette color)
+{
+	RETRO_Palette palette;
+	palette.r = color.r >> 2;
+	palette.g = color.g >> 2;
+	palette.b = color.b >> 2;
 	return palette;
 }
 
@@ -611,7 +633,7 @@ bool RETRO_QuitRequested(void)
 // Advance the simulation by as many whole fixed steps as the elapsed time allows
 //
 //   acc' = min(acc + dt, STEP * MAX_STEPS)
-//   while acc >= STEP:  DEMO_Update(STEP);  acc -= STEP
+//   while acc >= STEP:  DEMO_FixedUpdate(STEP);  acc -= STEP
 //
 // The leftover stays in acc, so the simulation keeps the wall clock without
 // drifting. The cap stops a stall from demanding an unbounded burst of
@@ -624,7 +646,7 @@ void RETRO_AdvanceSimulation(double deltatime)
 	while (RETRO.accumulator >= RETRO_SIMULATION_STEP) {
 		RETRO.accumulator -= RETRO_SIMULATION_STEP;
 
-		DEMO_Update(RETRO_SIMULATION_STEP);
+		DEMO_FixedUpdate(RETRO_SIMULATION_STEP);
 	}
 }
 
@@ -643,7 +665,7 @@ void RETRO_Mainloop(void)
 
 		// Advance simulation. Done after the pause check, so time spent paused is
 		// discarded rather than caught up on.
-		if (DEMO_Update) RETRO_AdvanceSimulation(deltatime);
+		if (DEMO_FixedUpdate) RETRO_AdvanceSimulation(deltatime);
 
 		// Render scene
 		if (DEMO_Render) {
@@ -653,7 +675,7 @@ void RETRO_Mainloop(void)
 		} else if (DEMO_Render2) {
 			DEMO_Render2(deltatime);
 		} else {
-			// A demo that only updates has drawn straight into the framebuffer, which is
+			// A demo that only runs DEMO_FixedUpdate has drawn straight into the framebuffer, which is
 			// left standing between frames, so all that remains is to show it
 			RETRO_Flip();
 		}

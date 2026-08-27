@@ -31,7 +31,7 @@ MeltMode Mode = MELT_FREEZE_LINE_OFFSET;
 double MeltPosition = 0;
 int MeltDirection = 1;
 
-void DEMO_Update(double deltatime)
+void DEMO_Render(double deltatime)
 {
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
 		Mode = Mode == MELT_MAXIMUM_SCAN_LINE ? MELT_FREEZE_LINE_OFFSET : MELT_MAXIMUM_SCAN_LINE;
@@ -43,7 +43,7 @@ void DEMO_Update(double deltatime)
 	double speed = Mode == MELT_MAXIMUM_SCAN_LINE ? MSL_STEPS_PER_SECOND : FREEZE_STEPS_PER_SECOND;
 	MeltPosition += MeltDirection * speed * deltatime;
 
-	// Reflect overshoot at an endpoint so motion stays smooth if a frame catches up.
+	// Reflect overshoot at an endpoint so a long frame still bounces cleanly.
 	while (MeltPosition < 0 || MeltPosition > maximum) {
 		if (MeltPosition > maximum) {
 			MeltPosition = 2 * maximum - MeltPosition;
@@ -53,10 +53,7 @@ void DEMO_Update(double deltatime)
 			MeltDirection = 1;
 		}
 	}
-}
 
-void DEMO_Render(double deltatime)
-{
 	unsigned char *image = RETRO_ImageData();
 	unsigned char *buffer = RETRO_FrameBuffer();
 

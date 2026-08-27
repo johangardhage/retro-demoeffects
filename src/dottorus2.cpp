@@ -22,7 +22,7 @@
 // at θ = 0, π (where r = 1). The model is squashed as it turns and the
 // trails swell and shrink instead of tracing the same path.
 //
-// DEMO_Update is a fixed 1/60 s step, so a step crosses speed/60 = 10/3
+// DEMO_FixedUpdate is a fixed 1/60 s step, so a step crosses speed/60 = 10/3
 // table slots. Every integer slot from ceil(10/3) = 4 behind the new
 // phase through the phase is stamped, so the 1/3 leftover does not leave
 // a gap. The table itself divides 2π evenly.
@@ -54,11 +54,11 @@ unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 float SinTable[SINE_VALUES];
 float CosTable[SINE_VALUES];
 
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	// Calculate phase
 	static double phase = 0;
-	double moved = deltatime * ROTATION_SPEED;
+	double moved = timestep * ROTATION_SPEED;
 	phase = fmod(phase + moved, SINE_VALUES);
 	int iphase = phase;
 

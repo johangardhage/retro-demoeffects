@@ -259,7 +259,9 @@ void RETRO_QuickSort(Model3D *model, int lo, int hi)
 // Painter's algorithm: the survivors go into drawface sorted by mean rz, far
 // to near, which is the list the renderers draw. With backfaces a face goes in
 // whether it faces the viewer or not, and its Face::frontfacing says which side
-// is showing, so a Glenz or wireframe model can draw both.
+// is showing, so a renderer can draw both: the Glenz and wireframe paths by
+// choosing a palette contribution per side, the shaded ones by reversing the
+// normal of the side that is turned away.
 //
 // A face dropped at the near plane never reaches the winding test, so it never
 // reaches drawface either and its frontfacing is left as it stands. There is no

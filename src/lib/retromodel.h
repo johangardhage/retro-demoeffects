@@ -97,6 +97,20 @@ struct Model3D {
 												// rather than the palette, and falls back to
 												// RETRO_SHADES, the table's full height, for a
 												// model that leaves this zero
+	bool twosided;								// Draw every face from either side, shading the one
+												// turned away by the reverse of its normal. A surface
+												// with no inside - a sheet, an open shell - is otherwise
+												// lost the moment it turns: its normals point away from
+												// the viewer, so the whole of it lands on the dark end of
+												// the ramp. Honoured by the shaded renderers; the Glenz
+												// and wireframe paths draw both sides on their own terms
+	float *frame = NULL;						// Morph targets: frames blocks of vertices model space
+												// x, y, z, the same vertex list posed differently. Only
+												// the positions are held, since the topology, the UVs
+												// and the shading are the model's own and do not move
+												// with the pose. Allocated only when an animation is
+												// loaded, and read through RETRO_MorphModel
+	int frames;									// Morph targets held, or zero for a still model
 	unsigned char *texmap = NULL;				// Texture
 	int texmapwidth = RETRO_TEXMAP_SIZE;		// Texture width, which is also the space the UVs are in
 	int texmapheight = RETRO_TEXMAP_SIZE;		// Texture height
@@ -172,6 +186,7 @@ Model3D *RETRO_Allocate3DModel(void)
 void RETRO_Free3DModel(int id = 0)
 {
 	if (id >= 0 && id < RETRO_MAX_MODELS && RETRO_Model.model[id]) {
+		free(RETRO_Model.model[id]->frame);
 		free(RETRO_Model.model[id]);
 		RETRO_Model.model[id] = NULL;
 		RETRO_Model.models--;
@@ -483,14 +498,121 @@ void RETRO_InitializeFaceUVs(Model3D *model = NULL)
 }
 
 //
-// Load a model, scaling its 0 to 1 UVs into texels
+// Poses of a model that is already loaded, one file per frame, named by a
+// printf pattern taking the frame number: "assets/thing_%02d.obj" for
+// thing_00.obj upward. Only the v lines are read, since a pose differs from the
+// model it poses in nothing but where the vertices are - the faces, the UVs and
+// the normals are the model's own and do not move with it - and a file naming a
+// different number of vertices is not a pose of this model at all
+//
+// Reloading an animation over one already held replaces it, so a model carries
+// at most the one it was last given
+//
+void RETRO_Load3DModelFrames(Model3D *model, const char *pattern, int frames)
+{
+	if (frames <= 0) {
+		RETRO_RageQuit("An animation needs at least one frame: %s\n", pattern);
+	}
+
+	free(model->frame);
+	model->frame = (float *)malloc((size_t)frames * model->vertices * 3 * sizeof(float));
+	if (model->frame == NULL) {
+		RETRO_RageQuit("Cannot allocate animation memory\n");
+	}
+	model->frames = frames;
+
+	for (int frame = 0; frame < frames; frame++) {
+		char filename[128];
+		snprintf(filename, sizeof(filename), pattern, frame);
+
+		FILE *fp = fopen(filename, "rb");
+		if (fp == NULL) {
+			RETRO_RageQuit("Cannot open file: %s\n", filename);
+		}
+
+		float *pose = &model->frame[(size_t)frame * model->vertices * 3];
+		int vertices = 0;
+
+		char row[128];
+		while (fscanf(fp, "%127s", row) != EOF) {
+			if (strcmp(row, "v") == 0) {
+				// Check before writing, as the model loader does: one vertex too
+				// many walks off the end of this pose and into the next
+				if (vertices >= model->vertices) {
+					RETRO_RageQuit("Pose names more vertices than the model it poses: %s\n", filename);
+				}
+				if (fscanf(fp, "%f %f %f\n", &pose[vertices * 3], &pose[vertices * 3 + 1], &pose[vertices * 3 + 2]) != 3) {
+					RETRO_RageQuit("Cannot read vertex, expected three floats: %s\n", filename);
+				}
+				vertices++;
+			} else { // Topology the model already carries, eat up the rest of the line
+				fgets(row, 128, fp);
+			}
+		}
+		fclose(fp);
+
+		if (vertices != model->vertices) {
+			RETRO_RageQuit("Pose names %d vertices, the model it poses has %d: %s\n", vertices, model->vertices, filename);
+		}
+	}
+}
+
+//
+// Pose the model at u along its animation, u in [0, 1] over the whole of it.
+// u * (frames - 1) names the pair of poses it falls between and the fraction s
+// to mix them by,
+//
+//   p(u) = (1 - s) a + s b
+//
+// so u = 0 lands on the first pose exactly and u = 1 on the last. A demo owns
+// the clock: it decides what u does with time, whether that is once through,
+// a loop, or a ping-pong.
+//
+// Only the vertices move. The poses carry no normals, so a model that is
+// shaded needs RETRO_InitializeFaceNormals and RETRO_InitializeVertexNormals
+// run over the result before it is drawn
+//
+void RETRO_MorphModel(float u, Model3D *model = NULL)
+{
+	model = model ? model : RETRO_Get3DModel();
+
+	if (model->frames == 0) {
+		RETRO_RageQuit("RETRO_MorphModel needs an animation, load one with RETRO_Load3DModel\n");
+	}
+
+	float f = CLAMP01(u) * (model->frames - 1);
+	int a = f;
+	// u = 1 lands on the last pose with nothing past it to mix toward, and s is
+	// zero there, so b carries no weight and only has to stay in range
+	int b = MIN(a + 1, model->frames - 1);
+	float s = f - a;
+
+	const float *from = &model->frame[(size_t)a * model->vertices * 3];
+	const float *to = &model->frame[(size_t)b * model->vertices * 3];
+
+	for (int i = 0; i < model->vertices; i++) {
+		model->vertex[i].x = from[i * 3] * (1.0f - s) + to[i * 3] * s;
+		model->vertex[i].y = from[i * 3 + 1] * (1.0f - s) + to[i * 3 + 1] * s;
+		model->vertex[i].z = from[i * 3 + 2] * (1.0f - s) + to[i * 3 + 2] * s;
+	}
+}
+
+//
+// Load a model, scaling its 0 to 1 UVs into texels, and with it the animation
+// that poses it, if it is given one
 //
 // Nothing downstream converts them: a drawer indexes the texture with what UV holds, so
 // they have to be texels by the time it gets there, and this is where that happens. The
 // map they are scaled into is RETRO_TEXMAP_SIZE square, which is what texmapwidth and
 // texmapheight start out as, and no demo has yet given a model a texture of another size.
 //
-Model3D *RETRO_Load3DModel(const char *filename)
+// The animation is a printf pattern and a frame count, handed on to
+// RETRO_Load3DModelFrames, and the file named here is the model those poses are
+// read against: it is what fixes the topology and how many vertices a pose has
+// to name. A model with no animation is loaded exactly as it was before there
+// were any, since the pattern defaults to none
+//
+Model3D *RETRO_Load3DModel(const char *filename, const char *animation = NULL, int frames = 0)
 {
 	Model3D *model = RETRO_Allocate3DModel();
 
@@ -602,6 +724,12 @@ Model3D *RETRO_Load3DModel(const char *filename)
 
 	if (model->normals == 0) {
 		RETRO_InitializeVertexNormals(model);
+	}
+
+	// The poses are read against the vertex list this file just defined, so they
+	// can only be loaded once it stands
+	if (animation) {
+		RETRO_Load3DModelFrames(model, animation, frames);
 	}
 
 	return model;

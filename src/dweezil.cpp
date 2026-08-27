@@ -56,6 +56,9 @@ static_assert(BUFFER_HEIGHT >= RETRO_HEIGHT + 2 * PIECE_SIZE, "The buffer needs 
 
 unsigned char FrameBuffer[BUFFER_SIZE];
 unsigned char TileBuffer[BUFFER_SIZE];
+static int rotation = 1;
+static int zoom = -1;
+static bool doshift = true;
 
 //
 // Copy one 16x16 block out of the previous step into the mosaic being built
@@ -78,22 +81,8 @@ static void CopyTile(int sourcex, int sourcey, int destx, int desty)
 	}
 }
 
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
-	static int rotation = 1;
-	static int zoom = -1;
-	static bool doshift = true;
-
-	if (RETRO_KeyPressed(SDL_SCANCODE_R)) {
-		rotation = rotation < 1 ? rotation + 1 : -1;
-	}
-	if (RETRO_KeyPressed(SDL_SCANCODE_Z)) {
-		zoom = zoom < 1 ? zoom + 1 : -1;
-	}
-	if (RETRO_KeyPressed(SDL_SCANCODE_S)) {
-		doshift = !doshift;
-	}
-
 	// Pick this step's sub-tile shift
 	int shift = doshift ? RANDOM(PIECE_SIZE) : 0;
 
@@ -129,6 +118,16 @@ void DEMO_Update(double deltatime)
 
 void DEMO_Render(double deltatime)
 {
+	if (RETRO_KeyPressed(SDL_SCANCODE_R)) {
+		rotation = rotation < 1 ? rotation + 1 : -1;
+	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_Z)) {
+		zoom = zoom < 1 ? zoom + 1 : -1;
+	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_S)) {
+		doshift = !doshift;
+	}
+
 	// Draw the screen-sized cutout from the middle of the buffer
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		memcpy(RETRO_FrameBuffer() + y * RETRO_WIDTH,

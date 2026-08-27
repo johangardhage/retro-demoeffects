@@ -20,6 +20,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrocolor.h"
 #include "lib/retroterrain.h"
 
 unsigned int DotWorldZBuffer[RETRO_WIDTH * RETRO_HEIGHT];
@@ -67,6 +68,6 @@ void DEMO_Render(double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTerrain("assets/voxel_color_1024x1024.pcx", "assets/voxel_height_1024x1024.pcx");
-	RETRO_SetColor(0, 20, 24, 42);
+	RETRO_SetColor(0, RETRO_NIGHTSKY);
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

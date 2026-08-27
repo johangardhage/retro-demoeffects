@@ -86,9 +86,20 @@ void RETRO_RenderWireModel(Model3D *model, bool hiddenlines, bool fire)
 	}
 }
 
+// The sign a face's normals are shaded with. A model that is not two sided has
+// only front faces in the draw list, so this is 1 for every one of them and the
+// shading is untouched; on a two sided model the face turned away is lit by the
+// reverse of its normal, which is the direction that side of the surface
+// actually points. Reversing the normal is the same as negating the lambert it
+// produces, so a scalar is all that has to be carried
+float RETRO_FaceSide(Face *face)
+{
+	return face->frontfacing ? 1.0f : -1.0f;
+}
+
 void RETRO_RenderFlatModel(Model3D *model, bool shaded)
 {
-	RETRO_SortFaces(model);
+	RETRO_SortFaces(model, model->twosided);
 
 	for (int i = 0; i < model->drawfaces; i++) {
 		Face *face = &model->face[model->drawface[i]];
@@ -102,7 +113,7 @@ void RETRO_RenderFlatModel(Model3D *model, bool shaded)
 		int color = model->c + face->c;
 		if (shaded) {
 			// One lambert per face: color = c + face.c + ShadeFromLambert(N · L) * shades.
-			float lambert = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
+			float lambert = RETRO_FaceSide(face) * RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
 			int cstart = model->c;
 			int cend = model->c + face->c + model->shades;
 			color = CLAMP(model->c + face->c + RETRO_ShadeFromLambert(lambert) * model->shades, cstart, cend);
@@ -153,10 +164,11 @@ void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 
 void RETRO_RenderGouraudModel(Model3D *model)
 {
-	RETRO_SortFaces(model);
+	RETRO_SortFaces(model, model->twosided);
 
 	for (int i = 0; i < model->drawfaces; i++) {
 		Face *face = &model->face[model->drawface[i]];
+		float side = RETRO_FaceSide(face);
 		int cstart = model->c;
 		int cend = model->c + face->c + model->shades;
 		PolygonPoint point[RETRO_MAX_FACEVERTICES];
@@ -165,7 +177,7 @@ void RETRO_RenderGouraudModel(Model3D *model)
 			point[j].x = model->vertex[face->vertex[j]].sx;
 			point[j].y = model->vertex[face->vertex[j]].sy;
 			point[j].q = model->vertex[face->vertex[j]].q;
-			float lambert = RETRO_DotProduct(model->normal[face->vertexnormal[j]], RETRO_Render.lightsource);
+			float lambert = side * RETRO_DotProduct(model->normal[face->vertexnormal[j]], RETRO_Render.lightsource);
 			point[j].c = CLAMP(model->c + face->c + RETRO_ShadeFromLambert(lambert) * model->shades, cstart, cend);
 		}
 		RETRO_DrawGouraudPolygon(point, face->vertices);
@@ -174,7 +186,7 @@ void RETRO_RenderGouraudModel(Model3D *model)
 
 void RETRO_RenderPhongModel(Model3D *model)
 {
-	RETRO_SortFaces(model);
+	RETRO_SortFaces(model, model->twosided);
 
 	PhongLight light;
 	light.x = RETRO_Render.lightsource.rx;
@@ -187,6 +199,7 @@ void RETRO_RenderPhongModel(Model3D *model)
 		// The ramp the face is shaded in, as in the flat and gouraud renderers,
 		// so one model can carry a material per face
 		light.c = model->c + face->c;
+		float side = RETRO_FaceSide(face);
 		PolygonPoint point[RETRO_MAX_FACEVERTICES];
 
 		for (int j = 0; j < face->vertices; j++) {
@@ -195,9 +208,10 @@ void RETRO_RenderPhongModel(Model3D *model)
 			point[j].y = vertex->sy;
 			point[j].q = vertex->q;
 			// n * q; interpolating and renormalising is the same direction as /q.
-			point[j].nx = model->normal[face->vertexnormal[j]].rx * vertex->q;
-			point[j].ny = model->normal[face->vertexnormal[j]].ry * vertex->q;
-			point[j].nz = model->normal[face->vertexnormal[j]].rz * vertex->q;
+			float normalscale = side * vertex->q;
+			point[j].nx = model->normal[face->vertexnormal[j]].rx * normalscale;
+			point[j].ny = model->normal[face->vertexnormal[j]].ry * normalscale;
+			point[j].nz = model->normal[face->vertexnormal[j]].rz * normalscale;
 		}
 		RETRO_DrawPhongPolygon(point, face->vertices, light);
 	}
@@ -205,8 +219,12 @@ void RETRO_RenderPhongModel(Model3D *model)
 
 void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
-	RETRO_SortFaces(model);
-	unsigned char *shadetable = model->shadetable;
+	RETRO_SortFaces(model, model->twosided);
+	// The model's table is the shading-palette shape: a texture drawn from a
+	// palette built for shading, with the whole ramp under each of its colors.
+	// A texture that is a picture in its own palette has the other shape, and
+	// says so; see ShadeTable.
+	ShadeTable shadetable = { model->shadetable, RETRO_TEXTURE_COLORS, RETRO_SHADES };
 	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
 	bool envmapshading = shadertype == RETRO_SHADE_ENVIRONMENT || lightingmap;
 	bool bumpmapping = model->bumpmap != NULL;
@@ -224,7 +242,11 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 
 	for (int i = 0; i < model->drawfaces; i++) {
 		Face *face = &model->face[model->drawface[i]];
-		// Rotated with the model, since the bump tilts along the surface's u and v
+		float side = RETRO_FaceSide(face);
+		// Rotated with the model, since the bump tilts along the surface's u and v.
+		// The frame is left as the front's even on the side turned away, because
+		// RETRO_BumpNormal reprojects the tangent onto whatever normal it is
+		// handed and picks the bitangent that keeps the UV handedness
 		TangentFrame frame = { face->tangent.rx, face->tangent.ry, face->tangent.rz,
 							   face->bitangent.rx, face->bitangent.ry, face->bitangent.rz };
 		PolygonPoint point[RETRO_MAX_FACEVERTICES];
@@ -240,7 +262,7 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 				// A lighting map interpolates n*q (perspective-correct). A
 				// reflection map takes the unit normal as it stands, since the
 				// lookup is of direction, not of a quantity that varies with depth.
-				float normalscale = lightingmap ? vertex->q : 1.0f;
+				float normalscale = side * (lightingmap ? vertex->q : 1.0f);
 				point[j].nx = normal->rx * normalscale;
 				point[j].ny = normal->ry * normalscale;
 				point[j].nz = normal->rz * normalscale;
@@ -260,9 +282,9 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 				// level.
 				for (int j = 0; j < face->vertices; j++) {
 					point[j].c = shade;
-					point[j].nx = face->facenormal.rx;
-					point[j].ny = face->facenormal.ry;
-					point[j].nz = face->facenormal.rz;
+					point[j].nx = side * face->facenormal.rx;
+					point[j].ny = side * face->facenormal.ry;
+					point[j].nz = side * face->facenormal.rz;
 				}
 				RETRO_DrawTexMapBumpPolygon(point, face->vertices, model->texmap, model->bumpmap, model->bumpgrazing, shadetable, shades, lightx, lighty, lightz, frame, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight);
 			} else {
@@ -270,16 +292,16 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 			}
 		} else if (shadertype == RETRO_SHADE_FLAT) {
 			int shade = model->c + face->c;
-			float lambert = RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
+			float lambert = side * RETRO_DotProduct(face->facenormal, RETRO_Render.lightsource);
 			shade = CLAMP128(shade + RETRO_ShadeFromLambert(lambert) * shades);
 			if (bumpmapping) {
 				// A flat shaded face carries one shade and one normal over all of
 				// it, which the bump mapper draws as every vertex holding both
 				for (int j = 0; j < face->vertices; j++) {
 					point[j].c = shade;
-					point[j].nx = face->facenormal.rx;
-					point[j].ny = face->facenormal.ry;
-					point[j].nz = face->facenormal.rz;
+					point[j].nx = side * face->facenormal.rx;
+					point[j].ny = side * face->facenormal.ry;
+					point[j].nz = side * face->facenormal.rz;
 				}
 				RETRO_DrawTexMapBumpPolygon(point, face->vertices, model->texmap, model->bumpmap, model->bumpgrazing, shadetable, shades, lightx, lighty, lightz, frame, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight);
 			} else {
@@ -288,12 +310,12 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 		} else if (shadertype == RETRO_SHADE_GOURAUD) {
 			for (int j = 0; j < face->vertices; j++) {
 				Direction *normal = &model->normal[face->vertexnormal[j]];
-				float lambert = RETRO_DotProduct(*normal, RETRO_Render.lightsource);
+				float lambert = side * RETRO_DotProduct(*normal, RETRO_Render.lightsource);
 				point[j].c = CLAMP128(model->c + face->c + RETRO_ShadeFromLambert(lambert) * shades);
 				if (bumpmapping) {
-					point[j].nx = normal->rx;
-					point[j].ny = normal->ry;
-					point[j].nz = normal->rz;
+					point[j].nx = side * normal->rx;
+					point[j].ny = side * normal->ry;
+					point[j].nz = side * normal->rz;
 				}
 			}
 			if (bumpmapping) {
@@ -311,12 +333,13 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 
 void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
-	RETRO_SortFaces(model);
+	RETRO_SortFaces(model, model->twosided);
 	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
 	bool bumpmapping = model->bumpmap != NULL;
 
 	for (int i = 0; i < model->drawfaces; i++) {
 		Face *face = &model->face[model->drawface[i]];
+		float side = RETRO_FaceSide(face);
 		TangentFrame frame = { face->tangent.rx, face->tangent.ry, face->tangent.rz,
 							   face->bitangent.rx, face->bitangent.ry, face->bitangent.rz };
 		PolygonPoint point[RETRO_MAX_FACEVERTICES];
@@ -330,7 +353,7 @@ void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 				point[j].u = model->uv[face->uv[j]].u;
 				point[j].v = model->uv[face->uv[j]].v;
 			}
-			float normalscale = lightingmap ? vertex->q : 1.0f;
+			float normalscale = side * (lightingmap ? vertex->q : 1.0f);
 			point[j].nx = normal->rx * normalscale;
 			point[j].ny = normal->ry * normalscale;
 			point[j].nz = normal->rz * normalscale;

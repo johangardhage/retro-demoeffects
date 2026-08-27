@@ -9,7 +9,7 @@
 // image contains an ordinary six-face cube.
 //
 // The ring is a number of steps deep rather than a number of seconds, so the
-// cubes are produced in DEMO_Update at the fixed simulation rate.  Producing
+// cubes are produced in DEMO_FixedUpdate at the fixed simulation rate.  Producing
 // one per displayed frame instead would hand the amount of bend to the refresh
 // rate: the same 24 copies span 0.4s at 60Hz and 0.17s at 144Hz, so the cube
 // shreds into disconnected slabs on a slow display and flattens toward a rigid
@@ -102,12 +102,12 @@ static void RetainCubeImage(float ax, float ay, float az, RubberLine *image)
 // Retain one rigid cube image per fixed step, so the ring holds the same
 // stretch of the cube's rotation whatever the display is doing
 //
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	static float ax, ay, az;
-	ax = fmod(ax + deltatime * ROTATION_SPEED, 2 * M_PI);
-	ay = fmod(ay + deltatime * ROTATION_SPEED * 1.17f, 2 * M_PI);
-	az = fmod(az + deltatime * ROTATION_SPEED * 0.61f, 2 * M_PI);
+	ax = fmod(ax + timestep * ROTATION_SPEED, 2 * M_PI);
+	ay = fmod(ay + timestep * ROTATION_SPEED * 1.17f, 2 * M_PI);
+	az = fmod(az + timestep * ROTATION_SPEED * 0.61f, 2 * M_PI);
 
 	// The head is the newest image rather than the next slot to fill, so it
 	// stands still between steps and DEMO_Render can read the ring on a frame

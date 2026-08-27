@@ -91,7 +91,7 @@ void DrawText(const char *text, int y, int xscale, int yscale, int tracking)
 // that is never cleared, and the logo is reseeded once per step, so the step rate sets
 // both speeds.
 //
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	// Seed logo. Half of what a texel puts in is the same every step and half is drawn
 	// fresh, so a letter holds its shape while its heat still boils.

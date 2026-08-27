@@ -54,11 +54,11 @@ void DrawLines(int x, int y, float k)
 // Advance the trails in fixed steps. Lines are drawn into a framebuffer that is never
 // cleared and blurred once per step, so how long they linger follows the step rate.
 //
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	// Calculate phase
 	static double phase = 0;
-	phase = fmod(phase + deltatime * LINE_SPEED, LINE_PERIOD);
+	phase = fmod(phase + timestep * LINE_SPEED, LINE_PERIOD);
 
 	// Calculate movement
 	double aa = phase / 1.37;

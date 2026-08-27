@@ -19,12 +19,12 @@
 // Advance the trail in fixed steps. It is one blur pass per step into a framebuffer
 // that is never cleared, so its length follows the step rate.
 //
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	static float ax, ay, az;
-	ax = fmod(ax + deltatime * ROTATION_SPEED, 2 * M_PI);
-	ay = fmod(ay + deltatime * ROTATION_SPEED, 2 * M_PI);
-	az = fmod(az + deltatime * ROTATION_SPEED, 2 * M_PI);
+	ax = fmod(ax + timestep * ROTATION_SPEED, 2 * M_PI);
+	ay = fmod(ay + timestep * ROTATION_SPEED, 2 * M_PI);
+	az = fmod(az + timestep * ROTATION_SPEED, 2 * M_PI);
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();

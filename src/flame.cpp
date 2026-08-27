@@ -25,7 +25,7 @@
 // then clamp to [0, 255]. Both ends of the bed are watered with a square bias
 // so the fire tapers, and a 3-tap box is run in place (Gauss–Seidel: the left
 // neighbour is already the new value). The step is the unit of the rise, so
-// the field is advanced in DEMO_Update.
+// the field is advanced in DEMO_FixedUpdate.
 //
 // Controls:
 //   Return - strike a match
@@ -63,6 +63,9 @@
 
 int FireBed[RETRO_WIDTH];
 unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
+static int firebias = FIRE_BIAS_START;
+static int ignition = IGNITION_WOOD;
+static bool strikematch = false;
 
 //
 // Advance the field one fixed step
@@ -73,42 +76,13 @@ unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 // row up. The step is the unit of both the rise and the cooling, which is
 // why the field is advanced at a fixed rate instead of once per frame.
 //
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	static int startmatches = MATCH_START_STEPS;
-	static int firebias = FIRE_BIAS_START;
-	static int ignition = IGNITION_WOOD;
-
-	static const SDL_Scancode ignitionkeys[] = {
-		SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3,
-		SDL_SCANCODE_4, SDL_SCANCODE_5, SDL_SCANCODE_6,
-		SDL_SCANCODE_7, SDL_SCANCODE_8, SDL_SCANCODE_9
-	};
-
-	if (RETRO_KeyPressed(SDL_SCANCODE_MINUS)) {
-		if (firebias > FIRE_BIAS_MIN)
-			--firebias;
-	}
-	if (RETRO_KeyPressed(SDL_SCANCODE_EQUALS)) {
-		if (firebias < FIRE_BIAS_MAX)
-			++firebias;
-	}
-	if (RETRO_KeyPressed(SDL_SCANCODE_C)) {
-		memset(FireBed, 0, sizeof(FireBed));
-	}
-	if (RETRO_KeyPressed(SDL_SCANCODE_W)) {
-		for (int i = 0; i < DOUSE_COUNT; i++) {
-			FireBed[BED_LEFT + RANDOM(BED_SPAN)] = 0;
-		}
-	}
-	for (int n = 0; n < 9; n++) {
-		if (RETRO_KeyPressed(ignitionkeys[n])) {
-			ignition = IGNITION_WOOD + n * n;
-		}
-	}
 
 	// Strike a match across MATCH_WIDTH columns of the bed
-	if ((RANDOM(MATCH_CHANCE) == 0) || RETRO_KeyPressed(SDL_SCANCODE_RETURN) || startmatches > 0) {
+	if ((RANDOM(MATCH_CHANCE) == 0) || strikematch || startmatches > 0) {
+		strikematch = false;
 		if (startmatches > 0) {
 			--startmatches;
 		}
@@ -175,6 +149,37 @@ void DEMO_Update(double deltatime)
 
 void DEMO_Render(double deltatime)
 {
+	static const SDL_Scancode ignitionkeys[] = {
+		SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3,
+		SDL_SCANCODE_4, SDL_SCANCODE_5, SDL_SCANCODE_6,
+		SDL_SCANCODE_7, SDL_SCANCODE_8, SDL_SCANCODE_9
+	};
+
+	if (RETRO_KeyPressed(SDL_SCANCODE_MINUS)) {
+		if (firebias > FIRE_BIAS_MIN)
+			--firebias;
+	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_EQUALS)) {
+		if (firebias < FIRE_BIAS_MAX)
+			++firebias;
+	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_C)) {
+		memset(FireBed, 0, sizeof(FireBed));
+	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_W)) {
+		for (int i = 0; i < DOUSE_COUNT; i++) {
+			FireBed[BED_LEFT + RANDOM(BED_SPAN)] = 0;
+		}
+	}
+	for (int n = 0; n < 9; n++) {
+		if (RETRO_KeyPressed(ignitionkeys[n])) {
+			ignition = IGNITION_WOOD + n * n;
+		}
+	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_RETURN)) {
+		strikematch = true;
+	}
+
 	RETRO_Blit(FireBuffer);
 }
 

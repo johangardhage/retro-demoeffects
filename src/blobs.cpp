@@ -52,7 +52,7 @@ Point2D BlobPositions[NUM_BLOBS];
 // does not survive accumulation: many independent equal-variance steps are an
 // isotropic Gaussian by the central limit theorem.
 //
-void DEMO_Update(double deltatime)
+void DEMO_FixedUpdate(double timestep)
 {
 	// Move blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {

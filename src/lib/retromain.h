@@ -120,11 +120,11 @@ int main(int argc, char *argv[])
 
 	if (DEMO_Startup) DEMO_Startup();
 
-	if (DEMO_Initialize || DEMO_Deinitialize || DEMO_Update || DEMO_Render || DEMO_Render2 ) {
+	if (DEMO_Initialize || DEMO_Deinitialize || DEMO_FixedUpdate || DEMO_Render || DEMO_Render2 ) {
 		RETRO_Initialize();
 		if (DEMO_Initialize) DEMO_Initialize();
 
-		if (DEMO_Update || DEMO_Render || DEMO_Render2) RETRO_Mainloop();
+		if (DEMO_FixedUpdate || DEMO_Render || DEMO_Render2) RETRO_Mainloop();
 
 		if (DEMO_Deinitialize) DEMO_Deinitialize();
 		RETRO_Deinitialize();

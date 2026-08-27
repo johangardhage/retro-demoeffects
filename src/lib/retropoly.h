@@ -39,6 +39,19 @@ struct PhongLight {
 	int c, shades;			// Ramp base, and entries in it: c + shades is one past its last
 };
 
+// A shade table and the shape it was read at. The lookup is
+// table[color * shades + shade], which is what RETRO_CreateShadeTable and
+// RETRO_CreatePaletteShadeTable both write. The two dimensions travel with the
+// pointer because they are not the same for every texture: one drawn from a
+// palette built for shading has few colors and a long ramp, one that is a
+// picture in its own palette has all of them and a short ramp, and a table read
+// at the wrong shape is read at the wrong stride.
+struct ShadeTable {
+	unsigned char *table;	// Rows of shades, one row per texture color
+	int colors;				// Texture colors the table has a row for
+	int shades;				// Entries in each row
+};
+
 // One scanline's horizontal extent, in subpixel x. Both ends lie on the
 // triangle, unlike the half-open xstart, xend the drawers derive from them.
 struct TriangleSpan {
@@ -377,7 +390,15 @@ void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight light)
 // uq, vq and q are linear in screen space, so the divide recovers the
 // perspective-correct texel.
 //
-void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight)
+// wrap says what a coordinate outside the map means. A model's are authored
+// inside it and only leave by a rounding error at a face's edge, which clamping
+// puts back on the nearest texel; wrapping would answer that with the texel
+// from the far edge instead. A caller that means the map to tile - one whose
+// faces are laid out over a plane wider than the map, and coordinates run off
+// it by whole multiples - wants those folded back rather than smeared into the
+// edge texel, and says so here.
+//
+void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, bool wrap = false)
 {
 	if (texmap == NULL) return;
 
@@ -414,8 +435,10 @@ void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned char *tex
 			for (int x = xstart; x < xend; x++) {
 				if (fabs(q) > epsilon) {
 					float inverseq = 1.0f / q;
-					unsigned int u = CLAMP(uq * inverseq, 0, texmapwidth);
-					unsigned int v = CLAMP(vq * inverseq, 0, texmapheight);
+					float texmapu = uq * inverseq;
+					float texmapv = vq * inverseq;
+					int u = wrap ? WRAP(texmapu, texmapwidth) : CLAMP(texmapu, 0, texmapwidth);
+					int v = wrap ? WRAP(texmapv, texmapheight) : CLAMP(texmapv, 0, texmapheight);
 					int offset = y * RETRO_WIDTH + x;
 					if (RETRO_DepthTest(offset, q)) {
 						RETRO.framebuffer[offset] = texmap[v * texmapwidth + u];
@@ -431,12 +454,17 @@ void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned char *tex
 
 //
 // Gouraud shaded texture mapped polygon
-// Texture coordinates are perspective-correct; shade is affine so adjacent
-// triangles agree along their shared edge.
 //
-void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, unsigned char *shadetable = NULL)
+// Texture coordinates are perspective-correct; shade is affine so adjacent
+// triangles agree along their shared edge. wrap is as above.
+//
+// The shade table arrives with its own shape rather than assumed to have the
+// shading-palette one, so a texture that is a picture in its own palette is
+// drawn from all of it and not from its first thirty-two entries.
+//
+void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, const ShadeTable &shadetable, bool wrap = false)
 {
-	if (texmap == NULL || shadetable == NULL) return;
+	if (texmap == NULL || shadetable.table == NULL) return;
 
 	const float epsilon = 1.0e-12f;
 
@@ -474,13 +502,15 @@ void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned ch
 			for (int x = xstart; x < xend; x++) {
 				if (fabs(q) > epsilon) {
 					float inverseq = 1.0f / q;
-					unsigned int u = CLAMP(uq * inverseq, 0, texmapwidth);
-					unsigned int v = CLAMP(vq * inverseq, 0, texmapheight);
-					unsigned char texel = CLAMP(texmap[v * texmapwidth + u], 0, RETRO_TEXTURE_COLORS);
-					int shade = CLAMP128(c);
+					float texmapu = uq * inverseq;
+					float texmapv = vq * inverseq;
+					int u = wrap ? WRAP(texmapu, texmapwidth) : CLAMP(texmapu, 0, texmapwidth);
+					int v = wrap ? WRAP(texmapv, texmapheight) : CLAMP(texmapv, 0, texmapheight);
+					unsigned char texel = CLAMP(texmap[v * texmapwidth + u], 0, shadetable.colors);
+					int shade = CLAMP(c, 0, shadetable.shades);
 					int offset = y * RETRO_WIDTH + x;
 					if (RETRO_DepthTest(offset, q)) {
-						RETRO.framebuffer[offset] = shadetable[texel * RETRO_SHADES + shade];
+						RETRO.framebuffer[offset] = shadetable.table[texel * shadetable.shades + shade];
 					}
 				}
 				uq += duqdx;
@@ -599,9 +629,13 @@ float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float dhy, co
 // point the same shade and normal draws a flat shaded face, one of each per
 // point a gouraud shaded one.
 //
-void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, unsigned char *shadetable, int shades, float lightx, float lighty, float lightz, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+// lambertshades is how far up the shade table one unit of lambert carries a face,
+// which a model sets for itself and which is not the table's own height. The
+// bump moves the shade by the difference it makes to the lighting, so it is
+// measured in the same steps the face was already shaded in.
+void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, int lambertshades, float lightx, float lighty, float lightz, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
-	if (texmap == NULL || bumpmap == NULL || shadetable == NULL) return;
+	if (texmap == NULL || bumpmap == NULL || shadetable.table == NULL) return;
 
 	const float epsilon = 1.0e-12f;
 
@@ -692,12 +726,12 @@ void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char 
 					// as it was drawn without one.
 					float lambert = unitnx * lightx + unitny * lighty + unitnz * lightz;
 					float bumpedlambert = RETRO_BumpedLambert(unitnx, unitny, unitnz, dhx, dhy, frame, lightx, lighty, lightz);
-					float bumpshade = (RETRO_ShadeFromLambert(bumpedlambert) - RETRO_ShadeFromLambert(lambert)) * shades;
-					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, RETRO_TEXTURE_COLORS);
-					int shade = CLAMP128(c + bumpshade);
+					float bumpshade = (RETRO_ShadeFromLambert(bumpedlambert) - RETRO_ShadeFromLambert(lambert)) * lambertshades;
+					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, shadetable.colors);
+					int shade = CLAMP(c + bumpshade, 0, shadetable.shades);
 					int offset = y * RETRO_WIDTH + x;
 					if (RETRO_DepthTest(offset, q)) {
-						RETRO.framebuffer[offset] = shadetable[texel * RETRO_SHADES + shade];
+						RETRO.framebuffer[offset] = shadetable.table[texel * shadetable.shades + shade];
 					}
 				}
 				uq += duqdx;
@@ -717,9 +751,11 @@ void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char 
 // Texture coordinates and lighting normals are perspective-correct;
 // reflection normals retain the original affine interpolation.
 //
-void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *shadetable, unsigned char shade, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight)
+// Texture coordinates are clamped, not wrapped: nothing tiles a map through
+// this drawer, and an env map has a rim rather than a seam.
+void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, const ShadeTable &shadetable, unsigned char shade, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight)
 {
-	if (texmap == NULL || shadetable == NULL) return;
+	if (texmap == NULL || shadetable.table == NULL) return;
 
 	const float epsilon = 1.0e-12f;
 	bool envmapshading = envmap != NULL;
@@ -771,18 +807,18 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned cha
 					float inverseq = 1.0f / q;
 					unsigned int u = CLAMP(uq * inverseq, 0, texmapwidth);
 					unsigned int v = CLAMP(vq * inverseq, 0, texmapheight);
-					unsigned char texel = CLAMP(texmap[v * texmapwidth + u], 0, RETRO_TEXTURE_COLORS);
-					unsigned char pixelshade = CLAMP128(shade);
+					unsigned char texel = CLAMP(texmap[v * texmapwidth + u], 0, shadetable.colors);
+					unsigned char pixelshade = CLAMP(shade, 0, shadetable.shades);
 					if (envmapshading) {
 						float e, w;
 						RETRO_GetEnvMapCoordinates(nx, ny, nz, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 						unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 						unsigned int envmapv = CLAMP(w, 0, envmapheight);
-						pixelshade = CLAMP128(envmap[envmapv * envmapwidth + envmapu]);
+						pixelshade = CLAMP(envmap[envmapv * envmapwidth + envmapu], 0, shadetable.shades);
 					}
 					int offset = y * RETRO_WIDTH + x;
 					if (RETRO_DepthTest(offset, q)) {
-						RETRO.framebuffer[offset] = shadetable[texel * RETRO_SHADES + pixelshade];
+						RETRO.framebuffer[offset] = shadetable.table[texel * shadetable.shades + pixelshade];
 					}
 				}
 				uq += duqdx;
@@ -805,9 +841,11 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned cha
 // own is stepped through at its own rate. Resampling the map changes its
 // detail, not its depth.
 //
-void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, unsigned char *shadetable, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+// Texture coordinates are clamped, not wrapped: nothing tiles a map through
+// this drawer, and an env map has a rim rather than a seam.
+void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
-	if (texmap == NULL || envmap == NULL || bumpmap == NULL || shadetable == NULL) return;
+	if (texmap == NULL || envmap == NULL || bumpmap == NULL || shadetable.table == NULL) return;
 
 	const float epsilon = 1.0e-12f;
 
@@ -890,11 +928,11 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned
 					RETRO_GetEnvMapCoordinates(bnx, bny, bnz, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 					unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 					unsigned int envmapv = CLAMP(w, 0, envmapheight);
-					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, RETRO_TEXTURE_COLORS);
-					unsigned char pixelshade = CLAMP128(envmap[envmapv * envmapwidth + envmapu]);
+					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, shadetable.colors);
+					unsigned char pixelshade = CLAMP(envmap[envmapv * envmapwidth + envmapu], 0, shadetable.shades);
 					int offset = y * RETRO_WIDTH + x;
 					if (RETRO_DepthTest(offset, q)) {
-						RETRO.framebuffer[offset] = shadetable[texel * RETRO_SHADES + pixelshade];
+						RETRO.framebuffer[offset] = shadetable.table[texel * shadetable.shades + pixelshade];
 					}
 				}
 				uq += duqdx;

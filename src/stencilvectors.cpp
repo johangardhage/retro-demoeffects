@@ -20,7 +20,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define ROTATION_SPEED 1.1f
 #define METAL_SIZE 256

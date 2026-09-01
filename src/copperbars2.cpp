@@ -29,7 +29,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define COPPER_BARWIDTH 28
 #define COPPER_BARS 8 // colors the bar cycles through down the screen

@@ -34,7 +34,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 #include "lib/retrogfx.h"
 
 #define BOING_MERIDIANS 16 // faces around the ball, and columns of checks

@@ -22,7 +22,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retromath.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define POINTS 4096
 #define PROJECTION_SCALE 80 // the shapes are built at unit size, so the projection scales them to pixels

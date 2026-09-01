@@ -21,7 +21,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define NUM_BALLS 5
 #define THRESHOLD 50 // F = T on the circle of radius R around one ball

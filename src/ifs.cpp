@@ -32,7 +32,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define MAX_TRANSFORMS 4
 #define POINTS_PER_SECOND 240000 // points the chaos game draws a second

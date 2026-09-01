@@ -19,7 +19,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retromath.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define NUM_STARS 1000
 #define SPEED 2 // radians a second, about each axis

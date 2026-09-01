@@ -31,7 +31,7 @@
 #include "lib/retromain.h"
 #include "lib/retromath.h"
 #include "lib/retropoly.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define BALLS 32
 #define BALL_MAP 48 // the lit sphere is drawn once at this size and scaled from it

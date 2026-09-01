@@ -12,7 +12,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retropoly.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 int main(int argc, char *argv[])
 {

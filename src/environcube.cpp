@@ -16,7 +16,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define PHONGMAP_SIZE 512 // the map is square, and this is its side in pixels
 #define PHONG_FALLOFF 30 // how tight the highlight is; the library's own default is far tighter

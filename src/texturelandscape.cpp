@@ -31,6 +31,7 @@
 #include "lib/retromain.h"
 #include "lib/retropoly.h"
 #include "lib/retroterrain.h"
+#include "lib/retropalette.h"
 
 struct WorldVertex {
 	float sx, sy, q;

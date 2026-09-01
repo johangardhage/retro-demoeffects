@@ -30,7 +30,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define RUBBER_COPIES 24     // retained cube images, one per simulation step: 0.4s of rotation
 #define ROTATION_SPEED 1.1f  // cube rotation in radians per second

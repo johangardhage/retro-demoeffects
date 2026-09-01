@@ -18,7 +18,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define NUM_STARS 1400
 #define SPEED 180 // depth travelled per second

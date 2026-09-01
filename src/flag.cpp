@@ -25,7 +25,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 // Flag of Sweden, SFS 1982:269. The proportions are 16:10, divided 5:2:9 along the flag and
 // 4:2:4 across it, which puts the cross off centre towards the hoist and makes both arms the

@@ -81,7 +81,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define POINTS_PER_SECOND 1200000 // points the orbit is followed for a second
 #define DENSITY_MAX 255 // points a pixel counts before it stops counting

@@ -14,7 +14,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retromouse.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define MOUSE_ACCEL 0.2 // relative-mode step per window pixel
 

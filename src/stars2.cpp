@@ -20,7 +20,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define NUM_STARS 1000
 #define SPEED 120 // depth travelled per second

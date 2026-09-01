@@ -35,7 +35,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define SPIN_SPEED 1.1 // radians a second about y
 #define ROCK_SPEED 0.7 // radians a second around the rock

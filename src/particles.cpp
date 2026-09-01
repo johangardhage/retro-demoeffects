@@ -27,7 +27,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define NUM_PARTICLES 6000
 #define PARTICLE_SPEED 5 // pixels a step, at the fastest

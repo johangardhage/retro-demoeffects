@@ -37,7 +37,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define TUNNEL_RINGS 128 // depth slices between the eye and the mouth
 #define RING_DOTS 64 // dots around a ring

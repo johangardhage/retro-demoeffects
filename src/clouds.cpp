@@ -26,7 +26,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define MAP_SIZE 256 // cells on a side, a power of two, and the field wraps
 #define MAP_MASK (MAP_SIZE - 1)

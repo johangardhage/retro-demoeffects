@@ -13,7 +13,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 #include "lib/retroterrain.h"
 
 #define MAP_WIDTH 128

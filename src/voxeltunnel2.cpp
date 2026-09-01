@@ -103,7 +103,7 @@
 
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
+#include "lib/retroshadetable.h"
 
 #define TEXTURE_SIZE 256
 #define TEXTURE_MASK (TEXTURE_SIZE - 1)

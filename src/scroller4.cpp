@@ -52,7 +52,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define FONT_WIDTH 16
 #define FONT_HEIGHT 16

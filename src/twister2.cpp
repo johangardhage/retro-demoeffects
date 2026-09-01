@@ -35,7 +35,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define TWISTER_CENTER_X (RETRO_WIDTH / 2)
 #define TWISTER_RADIUS 32 // half the column's width

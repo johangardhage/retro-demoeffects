@@ -9,7 +9,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 #include "lib/retrogfx.h"
 
 #define PANEL_LEFT 42

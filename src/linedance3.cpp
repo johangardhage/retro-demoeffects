@@ -20,7 +20,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define POINTS 170
 #define LINE_SPEED 2.5

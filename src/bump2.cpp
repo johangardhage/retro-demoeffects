@@ -28,7 +28,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define LIGHT_COLORS 128 // palette entries the shading ramps over
 #define LIGHT_ORBIT 128 // radius of the light's path across the screen, in pixels

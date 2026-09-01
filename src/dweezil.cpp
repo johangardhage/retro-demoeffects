@@ -37,7 +37,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define PIECE_SIZE 16
 #define PIECES_X 23

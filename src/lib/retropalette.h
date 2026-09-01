@@ -4,33 +4,14 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROCOLOR_H_
-#define _RETROCOLOR_H_
+#ifndef _RETROPALETTE_H_
+#define _RETROPALETTE_H_
 
 #include "retro.h"
 
 // *******************************************************************
-// Private variables
+// Public variables
 // *******************************************************************
-
-// Lighting every texture color at every shade gives the shaded colors, so a
-// texture mapper can look up shadetable[texel * RETRO_SHADES + shade]
-#define RETRO_TEXTURE_COLORS 32
-#define RETRO_SHADES 128
-#define RETRO_MAX_SHADING_COLORS (RETRO_TEXTURE_COLORS * RETRO_SHADES)
-
-// A phong palette keeps entry 0 black and ramps the material over the rest, so a
-// renderer shades from RETRO_PHONG_OFFSET across RETRO_PHONG_SHADES entries
-#define RETRO_PHONG_OFFSET 1
-#define RETRO_PHONG_SHADES (RETRO_COLORS - RETRO_PHONG_OFFSET)
-
-// An optimal palette is found by halving a 6-bit color cube once per level, which
-// leaves one cube, and one palette entry, per leaf
-#define RETRO_CUBE_SIZE 64
-#define RETRO_CUBE_LEVELS 8
-static_assert((1 << RETRO_CUBE_LEVELS) == RETRO_COLORS, "The color cube must have one leaf per palette entry");
-
-enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 
 // Named colors, with 8-bit components as used by RETRO_SetPalette. A demo can
 // name its own colors the same way, for example #define EMBER RETRO_RGB(0x140014)
@@ -121,6 +102,15 @@ enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 #define RETRO_DIMGRAY RETRO_Palette{ 66, 66, 74 }
 #define RETRO_PINETREE RETRO_Palette{ 30, 74, 40 }
 
+// *******************************************************************
+// Private variables
+// *******************************************************************
+
+// A phong palette keeps entry 0 black and ramps the material over the rest, so a
+// renderer shades from RETRO_PHONG_OFFSET across RETRO_PHONG_SHADES entries
+#define RETRO_PHONG_OFFSET 1
+#define RETRO_PHONG_SHADES (RETRO_COLORS - RETRO_PHONG_OFFSET)
+
 // Coefficients of the phong reflection model
 #define RETRO_K_AMBIENT 0.2
 #define RETRO_K_DIFFUSE 0.9
@@ -137,27 +127,9 @@ enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 #define RETRO_LIGHT_G 0.83
 #define RETRO_LIGHT_B 0.83
 
-struct {
-	RETRO_Palette shadingramps[RETRO_MAX_SHADING_COLORS];
-	RETRO_Palette palette[RETRO_COLORS];
-	int shadingcolorcount;
-	int palettecolors;
-} RETRO_Color;
-
 // *******************************************************************
 // Private functions
 // *******************************************************************
-
-//
-// One component of a color, selected by axis. Returns a reference so the caller
-// can read or write the component it picked
-//
-unsigned char &RETRO_ColorComponent(RETRO_Palette &color, int axis)
-{
-	if (axis == RETRO_COLOR_RED) return color.r;
-	if (axis == RETRO_COLOR_GREEN) return color.g;
-	return color.b;
-}
 
 //
 // The angle of incidence a shade stands for. The last shade is face on (0);
@@ -277,246 +249,9 @@ void RETRO_CreateMaterialPalette(RETRO_Palette face, float specularity, float fa
 	RETRO_CreatePhongPalette(RETRO_PHONG_OFFSET, RETRO_PHONG_OFFSET + RETRO_PHONG_SHADES, face, specularity, falloff, palette, colormax);
 }
 
-//
-// Light every color of a texture palette across every shade, giving the shaded
-// colors that an optimal palette is then fitted to. The texture palette is
-// taken to be 6-bit, as a palette read from a PCX written by a VGA demo is
-//
-void RETRO_CreateShadingRamps(RETRO_Palette *texturepalette, int texturecolors, float specularity, float falloff)
-{
-	// Only so many texture colors fit in the shade table
-	texturecolors = MIN(texturecolors, RETRO_TEXTURE_COLORS);
-
-	for (int i = 0; i < texturecolors; i++) {
-		RETRO_Palette texcolor = texturepalette[i];
-
-		texcolor.r = CLAMP64(texcolor.r);
-		texcolor.g = CLAMP64(texcolor.g);
-		texcolor.b = CLAMP64(texcolor.b);
-
-		// The ramps are quantised into a RETRO_CUBE_SIZE cube by the median cut,
-		// and RETRO_SplitColorCube indexes a histogram of that size with a raw
-		// component, so a component must never reach RETRO_CUBE_SIZE
-		RETRO_CreatePhongRamp(&RETRO_Color.shadingramps[i * RETRO_SHADES], RETRO_SHADES, texcolor, specularity, falloff, RETRO_CUBE_SIZE - 1);
-	}
-
-	RETRO_Color.shadingcolorcount = texturecolors * RETRO_SHADES;
-}
-
-//
-// A color cube is the half open box [min, max), so a color on the min face is
-// inside it and a color on the max face is not
-//
-bool RETRO_InsideColorCube(RETRO_Palette color, RETRO_Palette min, RETRO_Palette max)
-{
-	return color.r >= min.r && color.r < max.r &&
-		color.g >= min.g && color.g < max.g &&
-		color.b >= min.b && color.b < max.b;
-}
-
-//
-// Shrink a color cube to the tightest box that still holds every shaded color
-// inside it
-//
-void RETRO_ShrinkColorCube(RETRO_Palette *min, RETRO_Palette *max)
-{
-	// Seed the new bounds inside out, so the first color inside sets them both
-	RETRO_Palette newmin = *max;
-	RETRO_Palette newmax = *min;
-
-	for (int i = 0; i < RETRO_Color.shadingcolorcount; i++) {
-		RETRO_Palette color = RETRO_Color.shadingramps[i];
-
-		if (!RETRO_InsideColorCube(color, *min, *max)) continue;
-
-		// Does this color push the bounds out?
-		if (color.r < newmin.r) newmin.r = color.r;
-		if (color.g < newmin.g) newmin.g = color.g;
-		if (color.b < newmin.b) newmin.b = color.b;
-
-		if (color.r >= newmax.r) newmax.r = color.r + 1;
-		if (color.g >= newmax.g) newmax.g = color.g + 1;
-		if (color.b >= newmax.b) newmax.b = color.b + 1;
-	}
-
-	*min = newmin;
-	*max = newmax;
-}
-
-//
-// Split a color cube in two along the given axis, at the median of the shaded
-// colors inside it. The halves come back as [min, minsplit) and [maxsplit, max)
-//
-void RETRO_SplitColorCube(RETRO_Palette min, RETRO_Palette max, int axis, RETRO_Palette *minsplit, RETRO_Palette *maxsplit)
-{
-	// Count the shaded colors inside the cube, by their position along the axis
-	int histogram[RETRO_CUBE_SIZE] = { 0 };
-	int colors = 0;
-
-	for (int i = 0; i < RETRO_Color.shadingcolorcount; i++) {
-		RETRO_Palette color = RETRO_Color.shadingramps[i];
-
-		if (!RETRO_InsideColorCube(color, min, max)) continue;
-
-		histogram[RETRO_ColorComponent(color, axis)]++;
-		colors++;
-	}
-
-	// Walk the histogram until half of the colors are behind us
-	int remaining = colors / 2;
-	int median = 0;
-
-	for (int i = 0; i < RETRO_CUBE_SIZE; i++) {
-		remaining -= histogram[i];
-
-		if (remaining <= 0) {
-			median = i;
-			break;
-		}
-	}
-	median += 1;
-
-	// Both halves keep the cube they came from, cut at the median
-	*minsplit = max;
-	*maxsplit = min;
-	RETRO_ColorComponent(*minsplit, axis) = median;
-	RETRO_ColorComponent(*maxsplit, axis) = median;
-}
-
-//
-// Halve a color cube once per level, and take the center of each leaf as a
-// palette entry
-//
-void RETRO_SubdivideColorCube(RETRO_Palette min, RETRO_Palette max, int level)
-{
-	// Shrink the color cube to contain just the used colors
-	RETRO_ShrinkColorCube(&min, &max);
-
-	// Find the length of the sides of the color cube
-	int deltar = max.r - min.r;
-	int deltag = max.g - min.g;
-	int deltab = max.b - min.b;
-
-	// If this is the last level then stop, and take the center of the box as its
-	// palette entry
-	//
-	// Heckbert takes the mean of the colors inside the box instead. That is the
-	// textbook choice, but it is worth nothing here: RETRO_ShrinkColorCube has
-	// already pulled the box tight around its colors, so its center and its mean
-	// nearly coincide. Measured over the mask texture the mean moves the fit from
-	// rms 1.53 to 1.54 and makes the worst match slightly worse, so the center
-	// stays
-	if (level == 0) {
-		RETRO_Palette color;
-		color.r = CLAMP64(min.r + deltar / 2);
-		color.g = CLAMP64(min.g + deltag / 2);
-		color.b = CLAMP64(min.b + deltab / 2);
-
-		RETRO_Color.palette[RETRO_Color.palettecolors++] = color;
-		return;
-	}
-
-	// Determine which side is the longest, settling a tie on blue then red
-	int longest = RETRO_COLOR_GREEN;
-	if (deltab >= deltar && deltab >= deltag) {
-		longest = RETRO_COLOR_BLUE;
-	} else if (deltar >= deltag && deltar >= deltab) {
-		longest = RETRO_COLOR_RED;
-	}
-
-	// Split the color cube at the median point on the longest side
-	RETRO_Palette minsplit, maxsplit;
-	RETRO_SplitColorCube(min, max, longest, &minsplit, &maxsplit);
-
-	// Subdivide both halves, until they bottom out as palette entries
-	RETRO_SubdivideColorCube(min, minsplit, level - 1);
-	RETRO_SubdivideColorCube(maxsplit, max, level - 1);
-}
-
-//
-// Nearest palette entry in RGB, by d² = Δr² + Δg² + Δb².
-int RETRO_NearestPaletteIndex(RETRO_Palette targetcolor)
-{
-	int match = 0;
-	int mindistance = INT_MAX;
-
-	for (int i = 0; i < RETRO_Color.palettecolors; i++) {
-		RETRO_Palette palettecolor = RETRO_Color.palette[i];
-
-		// Calculate distance to this color
-		int deltar = (int)palettecolor.r - (int)targetcolor.r;
-		int deltag = (int)palettecolor.g - (int)targetcolor.g;
-		int deltab = (int)palettecolor.b - (int)targetcolor.b;
-
-		int distance = deltar * deltar + deltag * deltag + deltab * deltab;
-
-		// Is this distance shorter than the current match
-		if (distance < mindistance) {
-			mindistance = distance;
-			match = i;
-		}
-	}
-
-	return match;
-}
-
 // *******************************************************************
 // Public functions
 // *******************************************************************
-
-RETRO_Palette *RETRO_OptimalPalette(void)
-{
-	return RETRO_Color.palette;
-}
-
-//
-// Build a shade table for a material against the current optimal palette. This
-// lets several materials share one palette while keeping their lighting ramps
-// separate
-//
-// The caller owns the table, one per material, and hands it to a model through
-// Model3D::shadetable. A model without one draws nothing rather than drawing
-// wrong, since the texture mappers stop on a table they were not given
-//
-void RETRO_CreateShadeTable(RETRO_Palette *texturepalette, int texturecolors, float specularity, float falloff, unsigned char *shadetable)
-{
-	// There has to be a palette to match against. Without this the match below
-	// would find nothing, leave every entry pointing at color 0, and the model
-	// would draw solid black with nothing to say why
-	if (RETRO_Color.palettecolors == 0) {
-		RETRO_RageQuit("RETRO_CreateShadeTable needs a palette, call RETRO_CreateOptimalPalette first\n");
-	}
-
-	RETRO_CreateShadingRamps(texturepalette, texturecolors, specularity, falloff);
-
-	for (int i = 0; i < RETRO_Color.shadingcolorcount; i++) {
-		shadetable[i] = RETRO_NearestPaletteIndex(RETRO_Color.shadingramps[i]);
-	}
-}
-
-//
-// Fit a 6-bit palette to a material by median cut: light every texture color at
-// every shade, then halve the cube of the shaded colors until there is one cube
-// per palette entry. At most RETRO_TEXTURE_COLORS colors are taken
-//
-// This is Heckbert's median cut with two simplifications. Heckbert keeps a queue
-// and always splits whichever box currently holds the most colors; here every
-// box is split once per level, so the tree is a fixed RETRO_CUBE_LEVELS deep.
-// And Heckbert takes each box's representative as the mean of the colors inside
-// it, where this takes the center of the box. Both are the cheaper choice and
-// both cost a little accuracy. The fixed depth is also why some leaves come out
-// empty: a box holding one color still gets split, and one half is then empty
-// and spends a palette entry on the center of nothing
-//
-void RETRO_CreateOptimalPalette(RETRO_Palette *texturepalette, int texturecolors, float specularity = RETRO_K_SPECULAR, float falloff = RETRO_K_FALLOFF)
-{
-	RETRO_CreateShadingRamps(texturepalette, texturecolors, specularity, falloff);
-
-	RETRO_Color.palettecolors = 0;
-	RETRO_Palette min = { 0, 0, 0 };
-	RETRO_Palette max = { RETRO_CUBE_SIZE, RETRO_CUBE_SIZE, RETRO_CUBE_SIZE };
-	RETRO_SubdivideColorCube(min, max, RETRO_CUBE_LEVELS);
-}
 
 //
 // Fill [start, end) with a linear interpolation from one color toward another.
@@ -657,5 +392,533 @@ void RETRO_CreateBallMap(unsigned char *buffer, float *depthmap, int size, int c
 		}
 	}
 }
+
+//
+// The palette the VGA BIOS leaves in the DAC in mode 13h: the 16 EGA colors,
+// 16 grays, then 216 entries walking hue, saturation and value, and 8 unused
+// entries left black. A demo that draws with the colors it finds there, rather
+// than setting a palette of its own, is drawing against this
+//
+RETRO_Palette RETRO_Default8bitPalette[256] = {
+	{ 0, 0, 0 },
+	{ 0, 0, 170 },
+	{ 0, 170, 0 },
+	{ 0, 170, 170 },
+	{ 170, 0, 0 },
+	{ 170, 0, 170 },
+	{ 170, 85, 0 },
+	{ 170, 170, 170 },
+	{ 85, 85, 85 },
+	{ 85, 85, 255 },
+	{ 85, 255, 85 },
+	{ 85, 255, 255 },
+	{ 255, 85, 85 },
+	{ 255, 85, 255 },
+	{ 255, 255, 85 },
+	{ 255, 255, 255 },
+	{ 0, 0, 0 },
+	{ 20, 20, 20 },
+	{ 32, 32, 32 },
+	{ 44, 44, 44 },
+	{ 56, 56, 56 },
+	{ 69, 69, 69 },
+	{ 81, 81, 81 },
+	{ 97, 97, 97 },
+	{ 113, 113, 113 },
+	{ 130, 130, 130 },
+	{ 146, 146, 146 },
+	{ 162, 162, 162 },
+	{ 182, 182, 182 },
+	{ 203, 203, 203 },
+	{ 227, 227, 227 },
+	{ 255, 255, 255 },
+	{ 0, 0, 255 },
+	{ 65, 0, 255 },
+	{ 125, 0, 255 },
+	{ 190, 0, 255 },
+	{ 255, 0, 255 },
+	{ 255, 0, 190 },
+	{ 255, 0, 125 },
+	{ 255, 0, 65 },
+	{ 255, 0, 0 },
+	{ 255, 65, 0 },
+	{ 255, 125, 0 },
+	{ 255, 190, 0 },
+	{ 255, 255, 0 },
+	{ 190, 255, 0 },
+	{ 125, 255, 0 },
+	{ 65, 255, 0 },
+	{ 0, 255, 0 },
+	{ 0, 255, 65 },
+	{ 0, 255, 125 },
+	{ 0, 255, 190 },
+	{ 0, 255, 255 },
+	{ 0, 190, 255 },
+	{ 0, 125, 255 },
+	{ 0, 65, 255 },
+	{ 125, 125, 255 },
+	{ 158, 125, 255 },
+	{ 190, 125, 255 },
+	{ 223, 125, 255 },
+	{ 255, 125, 255 },
+	{ 255, 125, 223 },
+	{ 255, 125, 190 },
+	{ 255, 125, 158 },
+	{ 255, 125, 125 },
+	{ 255, 158, 125 },
+	{ 255, 190, 125 },
+	{ 255, 223, 125 },
+	{ 255, 255, 125 },
+	{ 223, 255, 125 },
+	{ 190, 255, 125 },
+	{ 158, 255, 125 },
+	{ 125, 255, 125 },
+	{ 125, 255, 158 },
+	{ 125, 255, 190 },
+	{ 125, 255, 223 },
+	{ 125, 255, 255 },
+	{ 125, 223, 255 },
+	{ 125, 190, 255 },
+	{ 125, 158, 255 },
+	{ 182, 182, 255 },
+	{ 199, 182, 255 },
+	{ 219, 182, 255 },
+	{ 235, 182, 255 },
+	{ 255, 182, 255 },
+	{ 255, 182, 235 },
+	{ 255, 182, 219 },
+	{ 255, 182, 199 },
+	{ 255, 182, 182 },
+	{ 255, 199, 182 },
+	{ 255, 219, 182 },
+	{ 255, 235, 182 },
+	{ 255, 255, 182 },
+	{ 235, 255, 182 },
+	{ 219, 255, 182 },
+	{ 199, 255, 182 },
+	{ 182, 255, 182 },
+	{ 182, 255, 199 },
+	{ 182, 255, 219 },
+	{ 182, 255, 235 },
+	{ 182, 255, 255 },
+	{ 182, 235, 255 },
+	{ 182, 219, 255 },
+	{ 182, 199, 255 },
+	{ 0, 0, 113 },
+	{ 28, 0, 113 },
+	{ 56, 0, 113 },
+	{ 85, 0, 113 },
+	{ 113, 0, 113 },
+	{ 113, 0, 85 },
+	{ 113, 0, 56 },
+	{ 113, 0, 28 },
+	{ 113, 0, 0 },
+	{ 113, 28, 0 },
+	{ 113, 56, 0 },
+	{ 113, 85, 0 },
+	{ 113, 113, 0 },
+	{ 85, 113, 0 },
+	{ 56, 113, 0 },
+	{ 28, 113, 0 },
+	{ 0, 113, 0 },
+	{ 0, 113, 28 },
+	{ 0, 113, 56 },
+	{ 0, 113, 85 },
+	{ 0, 113, 113 },
+	{ 0, 85, 113 },
+	{ 0, 56, 113 },
+	{ 0, 28, 113 },
+	{ 56, 56, 113 },
+	{ 69, 56, 113 },
+	{ 85, 56, 113 },
+	{ 97, 56, 113 },
+	{ 113, 56, 113 },
+	{ 113, 56, 97 },
+	{ 113, 56, 85 },
+	{ 113, 56, 69 },
+	{ 113, 56, 56 },
+	{ 113, 69, 56 },
+	{ 113, 85, 56 },
+	{ 113, 97, 56 },
+	{ 113, 113, 56 },
+	{ 97, 113, 56 },
+	{ 85, 113, 56 },
+	{ 69, 113, 56 },
+	{ 56, 113, 56 },
+	{ 56, 113, 69 },
+	{ 56, 113, 85 },
+	{ 56, 113, 97 },
+	{ 56, 113, 113 },
+	{ 56, 97, 113 },
+	{ 56, 85, 113 },
+	{ 56, 69, 113 },
+	{ 81, 81, 113 },
+	{ 89, 81, 113 },
+	{ 97, 81, 113 },
+	{ 105, 81, 113 },
+	{ 113, 81, 113 },
+	{ 113, 81, 105 },
+	{ 113, 81, 97 },
+	{ 113, 81, 89 },
+	{ 113, 81, 81 },
+	{ 113, 89, 81 },
+	{ 113, 97, 81 },
+	{ 113, 105, 81 },
+	{ 113, 113, 81 },
+	{ 105, 113, 81 },
+	{ 97, 113, 81 },
+	{ 89, 113, 81 },
+	{ 81, 113, 81 },
+	{ 81, 113, 89 },
+	{ 81, 113, 97 },
+	{ 81, 113, 105 },
+	{ 81, 113, 113 },
+	{ 81, 105, 113 },
+	{ 81, 97, 113 },
+	{ 81, 89, 113 },
+	{ 0, 0, 65 },
+	{ 16, 0, 65 },
+	{ 32, 0, 65 },
+	{ 48, 0, 65 },
+	{ 65, 0, 65 },
+	{ 65, 0, 48 },
+	{ 65, 0, 32 },
+	{ 65, 0, 16 },
+	{ 65, 0, 0 },
+	{ 65, 16, 0 },
+	{ 65, 32, 0 },
+	{ 65, 48, 0 },
+	{ 65, 65, 0 },
+	{ 48, 65, 0 },
+	{ 32, 65, 0 },
+	{ 16, 65, 0 },
+	{ 0, 65, 0 },
+	{ 0, 65, 16 },
+	{ 0, 65, 32 },
+	{ 0, 65, 48 },
+	{ 0, 65, 65 },
+	{ 0, 48, 65 },
+	{ 0, 32, 65 },
+	{ 0, 16, 65 },
+	{ 32, 32, 65 },
+	{ 40, 32, 65 },
+	{ 48, 32, 65 },
+	{ 56, 32, 65 },
+	{ 65, 32, 65 },
+	{ 65, 32, 56 },
+	{ 65, 32, 48 },
+	{ 65, 32, 40 },
+	{ 65, 32, 32 },
+	{ 65, 40, 32 },
+	{ 65, 48, 32 },
+	{ 65, 56, 32 },
+	{ 65, 65, 32 },
+	{ 56, 65, 32 },
+	{ 48, 65, 32 },
+	{ 40, 65, 32 },
+	{ 32, 65, 32 },
+	{ 32, 65, 40 },
+	{ 32, 65, 48 },
+	{ 32, 65, 56 },
+	{ 32, 65, 65 },
+	{ 32, 56, 65 },
+	{ 32, 48, 65 },
+	{ 32, 40, 65 },
+	{ 44, 44, 65 },
+	{ 48, 44, 65 },
+	{ 52, 44, 65 },
+	{ 60, 44, 65 },
+	{ 65, 44, 65 },
+	{ 65, 44, 60 },
+	{ 65, 44, 52 },
+	{ 65, 44, 48 },
+	{ 65, 44, 44 },
+	{ 65, 48, 44 },
+	{ 65, 52, 44 },
+	{ 65, 60, 44 },
+	{ 65, 65, 44 },
+	{ 60, 65, 44 },
+	{ 52, 65, 44 },
+	{ 48, 65, 44 },
+	{ 44, 65, 44 },
+	{ 44, 65, 48 },
+	{ 44, 65, 52 },
+	{ 44, 65, 60 },
+	{ 44, 65, 65 },
+	{ 44, 60, 65 },
+	{ 44, 52, 65 },
+	{ 44, 48, 65 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 }
+};
+
+//
+// The same palette on the 6-bit scale the VGA DAC works in, for
+// RETRO_Set6bitPalette
+//
+RETRO_Palette RETRO_Default6bitPalette[256] = {
+	{ 0, 0, 0 },
+	{ 0, 0, 42 },
+	{ 0, 42, 0 },
+	{ 0, 42, 42 },
+	{ 42, 0, 0 },
+	{ 42, 0, 42 },
+	{ 42, 21, 0 },
+	{ 42, 42, 42 },
+	{ 21, 21, 21 },
+	{ 21, 21, 63 },
+	{ 21, 63, 21 },
+	{ 21, 63, 63 },
+	{ 63, 21, 21 },
+	{ 63, 21, 63 },
+	{ 63, 63, 21 },
+	{ 63, 63, 63 },
+	{ 0, 0, 0 },
+	{ 5, 5, 5 },
+	{ 8, 8, 8 },
+	{ 11, 11, 11 },
+	{ 14, 14, 14 },
+	{ 17, 17, 17 },
+	{ 20, 20, 20 },
+	{ 24, 24, 24 },
+	{ 28, 28, 28 },
+	{ 32, 32, 32 },
+	{ 36, 36, 36 },
+	{ 40, 40, 40 },
+	{ 45, 45, 45 },
+	{ 50, 50, 50 },
+	{ 56, 56, 56 },
+	{ 63, 63, 63 },
+	{ 0, 0, 63 },
+	{ 16, 0, 63 },
+	{ 31, 0, 63 },
+	{ 47, 0, 63 },
+	{ 63, 0, 63 },
+	{ 63, 0, 47 },
+	{ 63, 0, 31 },
+	{ 63, 0, 16 },
+	{ 63, 0, 0 },
+	{ 63, 16, 0 },
+	{ 63, 31, 0 },
+	{ 63, 47, 0 },
+	{ 63, 63, 0 },
+	{ 47, 63, 0 },
+	{ 31, 63, 0 },
+	{ 16, 63, 0 },
+	{ 0, 63, 0 },
+	{ 0, 63, 16 },
+	{ 0, 63, 31 },
+	{ 0, 63, 47 },
+	{ 0, 63, 63 },
+	{ 0, 47, 63 },
+	{ 0, 31, 63 },
+	{ 0, 16, 63 },
+	{ 31, 31, 63 },
+	{ 39, 31, 63 },
+	{ 47, 31, 63 },
+	{ 55, 31, 63 },
+	{ 63, 31, 63 },
+	{ 63, 31, 55 },
+	{ 63, 31, 47 },
+	{ 63, 31, 39 },
+	{ 63, 31, 31 },
+	{ 63, 39, 31 },
+	{ 63, 47, 31 },
+	{ 63, 55, 31 },
+	{ 63, 63, 31 },
+	{ 55, 63, 31 },
+	{ 47, 63, 31 },
+	{ 39, 63, 31 },
+	{ 31, 63, 31 },
+	{ 31, 63, 39 },
+	{ 31, 63, 47 },
+	{ 31, 63, 55 },
+	{ 31, 63, 63 },
+	{ 31, 55, 63 },
+	{ 31, 47, 63 },
+	{ 31, 39, 63 },
+	{ 45, 45, 63 },
+	{ 49, 45, 63 },
+	{ 54, 45, 63 },
+	{ 58, 45, 63 },
+	{ 63, 45, 63 },
+	{ 63, 45, 58 },
+	{ 63, 45, 54 },
+	{ 63, 45, 49 },
+	{ 63, 45, 45 },
+	{ 63, 49, 45 },
+	{ 63, 54, 45 },
+	{ 63, 58, 45 },
+	{ 63, 63, 45 },
+	{ 58, 63, 45 },
+	{ 54, 63, 45 },
+	{ 49, 63, 45 },
+	{ 45, 63, 45 },
+	{ 45, 63, 49 },
+	{ 45, 63, 54 },
+	{ 45, 63, 58 },
+	{ 45, 63, 63 },
+	{ 45, 58, 63 },
+	{ 45, 54, 63 },
+	{ 45, 49, 63 },
+	{ 0, 0, 28 },
+	{ 7, 0, 28 },
+	{ 14, 0, 28 },
+	{ 21, 0, 28 },
+	{ 28, 0, 28 },
+	{ 28, 0, 21 },
+	{ 28, 0, 14 },
+	{ 28, 0, 7 },
+	{ 28, 0, 0 },
+	{ 28, 7, 0 },
+	{ 28, 14, 0 },
+	{ 28, 21, 0 },
+	{ 28, 28, 0 },
+	{ 21, 28, 0 },
+	{ 14, 28, 0 },
+	{ 7, 28, 0 },
+	{ 0, 28, 0 },
+	{ 0, 28, 7 },
+	{ 0, 28, 14 },
+	{ 0, 28, 21 },
+	{ 0, 28, 28 },
+	{ 0, 21, 28 },
+	{ 0, 14, 28 },
+	{ 0, 7, 28 },
+	{ 14, 14, 28 },
+	{ 17, 14, 28 },
+	{ 21, 14, 28 },
+	{ 24, 14, 28 },
+	{ 28, 14, 28 },
+	{ 28, 14, 24 },
+	{ 28, 14, 21 },
+	{ 28, 14, 17 },
+	{ 28, 14, 14 },
+	{ 28, 17, 14 },
+	{ 28, 21, 14 },
+	{ 28, 24, 14 },
+	{ 28, 28, 14 },
+	{ 24, 28, 14 },
+	{ 21, 28, 14 },
+	{ 17, 28, 14 },
+	{ 14, 28, 14 },
+	{ 14, 28, 17 },
+	{ 14, 28, 21 },
+	{ 14, 28, 24 },
+	{ 14, 28, 28 },
+	{ 14, 24, 28 },
+	{ 14, 21, 28 },
+	{ 14, 17, 28 },
+	{ 20, 20, 28 },
+	{ 22, 20, 28 },
+	{ 24, 20, 28 },
+	{ 26, 20, 28 },
+	{ 28, 20, 28 },
+	{ 28, 20, 26 },
+	{ 28, 20, 24 },
+	{ 28, 20, 22 },
+	{ 28, 20, 20 },
+	{ 28, 22, 20 },
+	{ 28, 24, 20 },
+	{ 28, 26, 20 },
+	{ 28, 28, 20 },
+	{ 26, 28, 20 },
+	{ 24, 28, 20 },
+	{ 22, 28, 20 },
+	{ 20, 28, 20 },
+	{ 20, 28, 22 },
+	{ 20, 28, 24 },
+	{ 20, 28, 26 },
+	{ 20, 28, 28 },
+	{ 20, 26, 28 },
+	{ 20, 24, 28 },
+	{ 20, 22, 28 },
+	{ 0, 0, 16 },
+	{ 4, 0, 16 },
+	{ 8, 0, 16 },
+	{ 12, 0, 16 },
+	{ 16, 0, 16 },
+	{ 16, 0, 12 },
+	{ 16, 0, 8 },
+	{ 16, 0, 4 },
+	{ 16, 0, 0 },
+	{ 16, 4, 0 },
+	{ 16, 8, 0 },
+	{ 16, 12, 0 },
+	{ 16, 16, 0 },
+	{ 12, 16, 0 },
+	{ 8, 16, 0 },
+	{ 4, 16, 0 },
+	{ 0, 16, 0 },
+	{ 0, 16, 4 },
+	{ 0, 16, 8 },
+	{ 0, 16, 12 },
+	{ 0, 16, 16 },
+	{ 0, 12, 16 },
+	{ 0, 8, 16 },
+	{ 0, 4, 16 },
+	{ 8, 8, 16 },
+	{ 10, 8, 16 },
+	{ 12, 8, 16 },
+	{ 14, 8, 16 },
+	{ 16, 8, 16 },
+	{ 16, 8, 14 },
+	{ 16, 8, 12 },
+	{ 16, 8, 10 },
+	{ 16, 8, 8 },
+	{ 16, 10, 8 },
+	{ 16, 12, 8 },
+	{ 16, 14, 8 },
+	{ 16, 16, 8 },
+	{ 14, 16, 8 },
+	{ 12, 16, 8 },
+	{ 10, 16, 8 },
+	{ 8, 16, 8 },
+	{ 8, 16, 10 },
+	{ 8, 16, 12 },
+	{ 8, 16, 14 },
+	{ 8, 16, 16 },
+	{ 8, 14, 16 },
+	{ 8, 12, 16 },
+	{ 8, 10, 16 },
+	{ 11, 11, 16 },
+	{ 12, 11, 16 },
+	{ 13, 11, 16 },
+	{ 15, 11, 16 },
+	{ 16, 11, 16 },
+	{ 16, 11, 15 },
+	{ 16, 11, 13 },
+	{ 16, 11, 12 },
+	{ 16, 11, 11 },
+	{ 16, 12, 11 },
+	{ 16, 13, 11 },
+	{ 16, 15, 11 },
+	{ 16, 16, 11 },
+	{ 15, 16, 11 },
+	{ 13, 16, 11 },
+	{ 12, 16, 11 },
+	{ 11, 16, 11 },
+	{ 11, 16, 12 },
+	{ 11, 16, 13 },
+	{ 11, 16, 15 },
+	{ 11, 16, 16 },
+	{ 11, 15, 16 },
+	{ 11, 13, 16 },
+	{ 11, 12, 16 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 }
+};
 
 #endif

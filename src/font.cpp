@@ -12,7 +12,7 @@
 #include "lib/retro.h"
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 void DEMO_Render(double deltatime)
 {

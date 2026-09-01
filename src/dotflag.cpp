@@ -21,7 +21,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define FLAG_SUBDIV 4 // dots per cell of the flag, in each direction
 #define DOT_SPACING 4 // pixels between neighbouring dots

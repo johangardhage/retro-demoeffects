@@ -15,7 +15,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define NUM_STARS 1000
 #define SPEED 60 // pixels a second travelled by a star in the furthest layer

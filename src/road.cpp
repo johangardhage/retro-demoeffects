@@ -56,7 +56,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define ROAD_MAX_SEGMENTS 2048
 #define ROAD_SEGMENT_LENGTH 200 // world units of z one segment of track lasts

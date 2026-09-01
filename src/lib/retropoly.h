@@ -7,7 +7,7 @@
 #ifndef _RETROPOLY_H_
 #define _RETROPOLY_H_
 
-#include "retrocolor.h"
+#include "retropalette.h"
 #include "retromodel.h"
 
 // A corner of a polygon as the drawers take it: where it landed on screen, and

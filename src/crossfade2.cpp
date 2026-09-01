@@ -13,6 +13,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
+#include "lib/retroshadetable.h"
 
 #define TIME_FADEIN 1.5 // seconds to fade in the monkey from black at startup
 #define CROSSFADE_SPEED 1.2 // radians of φ per second; a round trip is 2π / this

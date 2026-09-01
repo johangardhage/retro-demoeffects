@@ -24,7 +24,8 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
+#include "lib/retroshadetable.h"
 #include "lib/retrofont.h"
 
 #define TEXTURE_WIDTH 256

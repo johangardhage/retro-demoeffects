@@ -26,7 +26,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define LFSR_TAPS 0x12000 // x^17 + x^14 + 1, the bits fed back when a 1 shifts out
 #define LFSR_STATES ((1 << 17) - 1) // states the register takes before it repeats

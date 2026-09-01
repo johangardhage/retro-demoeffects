@@ -34,7 +34,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define FIRE_HEIGHT 6 // rows of fuel along the bottom, cropped off the blit
 #define FIRE_CHAOS 6 // a column is sparked with probability 1 / FIRE_CHAOS

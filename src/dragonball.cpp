@@ -40,7 +40,7 @@
 #include "lib/retromain.h"
 #include "lib/retromath.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define BALL_RADIUS 70.0f
 #define BALL_APEX 72.0f // centre at the top of the bounce

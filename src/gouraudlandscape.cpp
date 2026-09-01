@@ -31,6 +31,8 @@
 #include "lib/retrogfx.h"
 #include "lib/retropoly.h"
 #include "lib/retroterrain.h"
+#include "lib/retropalette.h"
+#include "lib/retroshadetable.h"
 
 #define LANDSCAPE_SHADES 8
 // How much light a face turned away from the sun still catches, as a fraction

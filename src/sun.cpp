@@ -45,7 +45,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define FLARE_WIDTH RETRO_WIDTH // angular bins, one per column; RETRO_Blur strides a row by RETRO_WIDTH, so the strip is that wide
 #define FLARE_RADII 120 // radial bins, one per row, at most RETRO_HEIGHT

@@ -58,7 +58,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define PLANE_DISTANCE 320
 #define PLANE_PERIOD 256 // one texture width; U, V, xd and yd share it

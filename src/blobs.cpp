@@ -24,7 +24,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define NUM_BLOBS 160
 #define BLOB_RADIUS 20

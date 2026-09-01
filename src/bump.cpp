@@ -22,7 +22,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define LIGHT_SIZE 128 // radius of the light in pixels, which is also the center of the light map
 #define LIGHTMAP_WIDTH (LIGHT_SIZE * 2 + 1) // odd, so the peak lands on an exact center pixel

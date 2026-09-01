@@ -29,7 +29,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retromath.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define RING_RADIUS 50 // from the axis out to the middle of the tube
 #define TUBE_RADIUS 25 // and the radius of the tube itself

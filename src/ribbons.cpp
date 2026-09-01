@@ -18,7 +18,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define RIBBON_COUNT 3
 #define RIBBON_SEGMENTS 80 // samples along t, so this many − 1 quads

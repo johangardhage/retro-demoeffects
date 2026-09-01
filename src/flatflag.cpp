@@ -19,7 +19,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define FLAG_SUBDIV 2 // quads per cell of the flag, as the asset was built
 #define FLAG_COLS (16 * FLAG_SUBDIV) // the flag is 16 cells across, per SFS 1982:269

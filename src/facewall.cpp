@@ -10,7 +10,8 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
+#include "lib/retroshadetable.h"
 
 #define FACE_FRAMES 11
 #define FACE_VERTS 529

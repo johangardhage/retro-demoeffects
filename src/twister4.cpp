@@ -15,7 +15,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
+#include "lib/retroshadetable.h"
 
 #define TWISTER_PERIOD 512
 #define TWISTER_CYCLE ((double)RETRO_SINCOS_ANGLE / TWISTER_PERIOD)

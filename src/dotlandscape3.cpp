@@ -25,7 +25,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 #include "lib/retroterrain.h"
 
 // The farthest view the arrays below have room for. How far the dots are

@@ -10,7 +10,8 @@
 #include "retromodel.h"
 #include "retropoly.h"
 #include "retromath.h"
-#include "retrocolor.h"
+#include "retropalette.h"
+#include "retroshadetable.h"
 #include "retrogfx.h"
 
 enum RETRO_POLY_TYPE {

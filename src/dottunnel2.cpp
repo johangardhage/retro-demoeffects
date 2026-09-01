@@ -21,7 +21,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define POINTSTEP 5 // angle units between the dots around a ring, of the 256 in a whole turn
 #define RING_DOTS (RETRO_SINCOS_ANGLE / POINTSTEP) // 5 does not divide 256; the ring uses 256/n

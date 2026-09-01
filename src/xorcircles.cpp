@@ -18,7 +18,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define IMAGE_WIDTH 640
 #define XOR_SPEED 1.0 // radians of the x-orbit per second

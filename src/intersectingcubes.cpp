@@ -16,7 +16,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define CUBE1_ROTATION_SPEED 1.1f
 #define CUBE2_ROTATION_SPEED -1.7f

@@ -25,6 +25,7 @@
 #include "lib/retromain.h"
 #include "lib/retropoly.h"
 #include "lib/retroterrain.h"
+#include "lib/retropalette.h"
 
 static void DrawTriangle(const RETRO_TerrainPoint &a, const RETRO_TerrainPoint &b, const RETRO_TerrainPoint &c, unsigned char color)
 {

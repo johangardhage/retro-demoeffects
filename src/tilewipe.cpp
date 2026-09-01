@@ -30,7 +30,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define TILE_SIZE 16 // pixels on a side, even, so a box grows symmetrically
 #define TILES_X (RETRO_WIDTH / TILE_SIZE)

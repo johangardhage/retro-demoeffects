@@ -22,7 +22,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define RING_COUNT 40 // rings between the eye and the mouth
 #define RING_STEP 6 // degrees between the dots around a ring

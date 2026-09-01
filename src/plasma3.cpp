@@ -16,7 +16,7 @@
 
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define PLASMA_WIDTH (RETRO_WIDTH / 4)
 #define PLASMA_HEIGHT (RETRO_HEIGHT / 4)

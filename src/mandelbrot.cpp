@@ -26,7 +26,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
+#include "lib/retropalette.h"
 
 #define MAX_ITERATIONS 255
 #define BAILOUT 256.0 // |z|², far enough out for the smooth escape estimate

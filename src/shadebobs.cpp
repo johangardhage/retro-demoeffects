@@ -16,7 +16,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define BOB_SIZE 16
 #define BOB_AMP 128

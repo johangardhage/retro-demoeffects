@@ -30,7 +30,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retromath.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define RADIUS 75
 #define POINTSTEP 0.1 // radians between points, in both angles

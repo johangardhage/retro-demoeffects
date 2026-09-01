@@ -27,7 +27,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define COPPER_BARS 7
 #define COPPER_BARHEIGHT 20

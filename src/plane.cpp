@@ -28,7 +28,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define PLANE_VIEW (RETRO_HEIGHT / 2)
 #define PLANE_EYE 100 // camera height in world units

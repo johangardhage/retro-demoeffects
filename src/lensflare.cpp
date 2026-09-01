@@ -29,7 +29,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define FLARE_SPEED 0.6 // radians of the Lissajous per second
 #define FLARE_MARGIN 40 // inset of the orbit, in pixels, so the glow stays on screen

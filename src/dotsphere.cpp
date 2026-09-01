@@ -49,7 +49,7 @@
 #include "lib/retromain.h"
 #include "lib/retromath.h"
 #include "lib/retrogfx.h"
-#include "lib/retrocolor.h"
+#include "lib/retropalette.h"
 
 #define NUM_POINTS 2048
 #define SPHERE_SCALE 75 // the sphere is built at unit size, so the projection scales it to pixels

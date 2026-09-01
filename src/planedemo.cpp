@@ -10,8 +10,8 @@
 //
 // so a column steps u by (W/2) / w(z). The forward texel is
 //
-//   land:  v = PLANE_LAND_V / (z + 1) + scroll
-//   sky:   v = PLANE_SKY_V / z + scroll / PLANE_SKY_SCROLL
+//   land:  v = PLANE_LAND_V / (z + 1) + phase
+//   sky:   v = PLANE_SKY_V / z + phase / PLANE_SKY_SCROLL
 //
 // The +1 on the land and PLANE_NEAR at the horizon keep 1/z finite, so z
 // may start at 0 on the land and the horizon has no 1-pixel gap. Sky
@@ -22,7 +22,7 @@
 //
 // Land, sky and the ball sprite are one 128×384 atlas (assets/planedemo.pcx),
 // stacked as land, sky, sprite, pitch PLANE_MAP. Palette 0 is black
-// (sprite key and the reflection tint). There is no yaw. scroll lives
+// (sprite key and the reflection tint). There is no yaw. phase lives
 // on the wall clock. A chain of sprites rides a Lissajous above the
 // horizon, with a squashed copy as a reflection on the land.
 //
@@ -44,7 +44,7 @@
 #define ATLAS_SPRITE (2 * PLANE_MAP) // row offset of the sprite tile
 #define SPRITE_ALPHA 0
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 	unsigned char *atlas = RETRO_ImageData();
@@ -52,8 +52,8 @@ void DEMO_Render(double deltatime)
 	unsigned char *sky = atlas + ATLAS_SKY * PLANE_MAP;
 	unsigned char *sprite = atlas + ATLAS_SPRITE * PLANE_MAP;
 
-	static float scroll = 0;
-	scroll += deltatime * PLANE_SCROLL_SPEED;
+	// Calculate phase
+	float phase = time * PLANE_SCROLL_SPEED;
 
 	int midx = RETRO_WIDTH / 2;
 
@@ -67,7 +67,7 @@ void DEMO_Render(double deltatime)
 
 		for (int x = 0; x < midx; x++) {
 			int xsrc = WRAP(u / PLANE_SKY_U, PLANE_MAP);
-			int ysrc = WRAP(PLANE_SKY_V / z + (scroll / PLANE_SKY_SCROLL), PLANE_MAP);
+			int ysrc = WRAP(PLANE_SKY_V / z + (phase / PLANE_SKY_SCROLL), PLANE_MAP);
 			dest[(PLANE_VIEW - z) * RETRO_WIDTH + (midx + x)] = sky[ysrc * PLANE_MAP + (PLANE_MAP - 1 - xsrc)];
 			dest[(PLANE_VIEW - z) * RETRO_WIDTH + (midx - 1 - x)] = sky[ysrc * PLANE_MAP + xsrc];
 			u += du;
@@ -82,7 +82,7 @@ void DEMO_Render(double deltatime)
 
 		for (int x = 0; x < midx; x++) {
 			int xsrc = WRAP(u, PLANE_MAP);
-			int ysrc = WRAP(PLANE_LAND_V / (z + 1) + scroll, PLANE_MAP);
+			int ysrc = WRAP(PLANE_LAND_V / (z + 1) + phase, PLANE_MAP);
 			dest[(PLANE_VIEW + z) * RETRO_WIDTH + (midx + x)] = land[ysrc * PLANE_MAP + (PLANE_MAP - 1 - xsrc)];
 			dest[(PLANE_VIEW + z) * RETRO_WIDTH + (midx - 1 - x)] = land[ysrc * PLANE_MAP + xsrc];
 			u += du;
@@ -92,8 +92,8 @@ void DEMO_Render(double deltatime)
 	// Sprites. A Lissajous chain above the horizon, and a squashed copy
 	// on the land as a reflection (tint 0).
 	for (int b = 0; b < RETRO_HEIGHT; b += 10) {
-		int x = midx + 50 * sin((2 * b + scroll) * 0.01) + 25 * cos((2 * b + scroll) * 0.01);
-		int y = PLANE_VIEW - 20 + 20 * cos((b + scroll) * 0.01) + 15 * sin((4 * b + scroll) * 0.01);
+		int x = midx + 50 * sin((2 * b + phase) * 0.01) + 25 * cos((2 * b + phase) * 0.01);
+		int y = PLANE_VIEW - 20 + 20 * cos((b + phase) * 0.01) + 15 * sin((4 * b + phase) * 0.01);
 
 		RETRO_DrawSprite(x, y, 15, 15, PLANE_MAP, PLANE_MAP, sprite, SPRITE_ALPHA);
 		RETRO_DrawSprite(x, y / 4 + PLANE_VIEW + 15, 12, 5, PLANE_MAP, PLANE_MAP, sprite, SPRITE_ALPHA, 0);

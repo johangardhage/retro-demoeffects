@@ -45,11 +45,10 @@ RETRO_Palette BarColors[COPPER_BARS] = {
 	RETRO_RED, RETRO_ORANGE, RETRO_YELLOW, RETRO_GREEN,
 	RETRO_BLUE, RETRO_INDIGO, RETRO_VIOLET };
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * COPPER_SPEED, RETRO_SINCOS_ANGLE);
+	double phase = fmod(time * COPPER_SPEED, RETRO_SINCOS_ANGLE);
 
 	// Draw bars, back to front, each riding the cosine a lag behind the one before.
 	// Row j of a bar is entry j of that bar's ramp, so the tube shading comes out

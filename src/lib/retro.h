@@ -44,8 +44,8 @@ void __attribute__((weak)) DEMO_Startup(void);
 void __attribute__((weak)) DEMO_Initialize(void);
 void __attribute__((weak)) DEMO_Deinitialize(void);
 void __attribute__((weak)) DEMO_FixedUpdate(double timestep);
-void __attribute__((weak)) DEMO_Render(double deltatime);
-void __attribute__((weak)) DEMO_Render2(double deltatime);
+void __attribute__((weak)) DEMO_Render(double time, double deltatime);
+void __attribute__((weak)) DEMO_Render2(double time, double deltatime);
 
 // *******************************************************************
 // Private dynamic functions
@@ -178,6 +178,7 @@ struct {
 	bool keylatched[256];
 	int yoffset[RETRO_HEIGHT];
 	double accumulator = 0;
+	double time = 0;
 } RETRO = { .mode = RETRO_MODE_FULLSCREEN, .stretch = false, .vsync = true, .showfps = true };
 
 // *******************************************************************
@@ -660,20 +661,24 @@ void RETRO_Mainloop(void)
 			continue;
 		}
 
+		// Advance the displayed clock. Leads the render, so the first frame is
+		// handed its own deltatime rather than zero.
+		RETRO.time += deltatime;
+
 		// Time the whole frame, for the FPS cap below
 		unsigned long int start = SDL_GetTicks();
 
-		// Advance simulation. Done after the pause check, so time spent paused is
-		// discarded rather than caught up on.
+		// Advance simulation. Both clocks are stepped after the pause check, so
+		// time spent paused is discarded rather than caught up on.
 		if (DEMO_FixedUpdate) RETRO_AdvanceSimulation(deltatime);
 
 		// Render scene
 		if (DEMO_Render) {
 			RETRO_Clear();
-			DEMO_Render(deltatime);
+			DEMO_Render(RETRO.time, deltatime);
 			RETRO_Flip();
 		} else if (DEMO_Render2) {
-			DEMO_Render2(deltatime);
+			DEMO_Render2(RETRO.time, deltatime);
 		} else {
 			// A demo that only runs DEMO_FixedUpdate has drawn straight into the framebuffer, which is
 			// left standing between frames, so all that remains is to show it

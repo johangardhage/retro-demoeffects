@@ -22,14 +22,12 @@
 int ShiftX[SINE_VALUES];
 int ShiftY[SINE_VALUES];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *image = RETRO_ImageData();
 
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * DISTORT_SPEED, SINE_VALUES);
-	int iphase = phase;
+	int iphase = (int)fmod(time * DISTORT_SPEED, SINE_VALUES);
 
 	// A column's vertical shift depends only on x, so it is the same for every
 	// row: worked out once per frame rather than once per pixel.

@@ -23,16 +23,12 @@
 #define LINE_SPEED2 100 // pixels of phase2 per second, falling
 #define LINE_SPEED3 200 // pixels of phase3 per second, falling
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase1 = 10;
-	static double phase2 = -20;
-	static double phase3 = -30;
-
-	phase1 = fmod(phase1 + deltatime * LINE_SPEED1, LINE_PERIOD);
-	phase2 = fmod(phase2 - deltatime * LINE_SPEED2, LINE_PERIOD);
-	phase3 = fmod(phase3 - deltatime * LINE_SPEED3, LINE_PERIOD);
+	double phase1 = fmod(10.0 + time * LINE_SPEED1, LINE_PERIOD);
+	double phase2 = fmod(-20.0 - time * LINE_SPEED2, LINE_PERIOD);
+	double phase3 = fmod(-30.0 - time * LINE_SPEED3, LINE_PERIOD);
 	if (phase2 < 0) phase2 += LINE_PERIOD;
 	if (phase3 < 0) phase3 += LINE_PERIOD;
 

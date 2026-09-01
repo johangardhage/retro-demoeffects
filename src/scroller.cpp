@@ -26,11 +26,10 @@
 
 unsigned char scroll_bitmap[FONT_HEIGHT * SCROLL_WIDTH];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * SCROLL_SPEED, SCROLL_WIDTH);
+	double phase = fmod(time * SCROLL_SPEED, SCROLL_WIDTH);
 	int iphase = (int)phase;
 
 	// Draw scroller

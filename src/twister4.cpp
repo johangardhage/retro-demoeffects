@@ -59,11 +59,10 @@ void DrawSpan(int left, int right, int y, unsigned char *texels, int base, float
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase and torsion
-	static double phase = 0;
-	phase = fmod(phase + deltatime * TWISTER_SPEED, TWISTER_PERIOD);
+	double phase = fmod(time * TWISTER_SPEED, TWISTER_PERIOD);
 	double torsion = TWISTER_TORSION * SIN(phase * TWISTER_TORSION_WAVE * TWISTER_CYCLE) * COS(phase * TWISTER_CYCLE);
 	double scroll = phase * TWISTER_IMAGE_SCROLL;
 

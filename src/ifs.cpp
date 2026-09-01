@@ -141,7 +141,7 @@ void StartSystem(void)
 	}
 }
 
-void DEMO_Render2(double deltatime)
+void DEMO_Render2(double time, double deltatime)
 {
 	static double phase = 0;
 

@@ -107,7 +107,7 @@ void DEMO_FixedUpdate(double timestep)
 	RETRO_Blur(RETRO_BLUR_FLAME, FLARE_DECAY, RETRO_BLUR_WRAP, LightMap);
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Draw sun, each pixel reading the bin its angle and radius fall in
 	for (int iy = 0; iy < RETRO_HEIGHT; iy++) {

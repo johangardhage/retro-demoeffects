@@ -64,15 +64,14 @@ double Progress(double phase)
 	return (phase - 2 * TIME_HOLD - TIME_WIPE) / TIME_WIPE;
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
 		Mode = Mode == WIPE_SHUFFLE ? WIPE_CHECKERBOARD : WIPE_SHUFFLE;
 	}
 
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime, TIME_CYCLE);
+	double phase = fmod(time, TIME_CYCLE);
 	double progress = Progress(phase);
 
 	unsigned char *image = RETRO_ImageData();

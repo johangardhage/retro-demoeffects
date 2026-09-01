@@ -37,7 +37,7 @@
 
 enum { DISSOLVE_IN, DISSOLVE_OUT, HOLD };
 
-void DEMO_Render2(double deltatime)
+void DEMO_Render2(double time, double deltatime)
 {
 	static int state = HOLD;
 	static int next = DISSOLVE_IN;

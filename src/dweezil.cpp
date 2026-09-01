@@ -116,7 +116,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	if (RETRO_KeyPressed(SDL_SCANCODE_R)) {
 		rotation = rotation < 1 ? rotation + 1 : -1;

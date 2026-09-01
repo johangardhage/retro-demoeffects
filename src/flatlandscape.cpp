@@ -39,7 +39,7 @@ static void DrawTriangle(const RETRO_TerrainPoint &a, const RETRO_TerrainPoint &
 	RETRO_DrawFlatPolygon(polygon, 3, color);
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	RETRO_UpdateTerrainCamera(deltatime);
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();

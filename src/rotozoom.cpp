@@ -20,11 +20,10 @@
 #define TEXTURE_HEIGHT 256
 #define ROTATION_SPEED 100 // degrees a second
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	// Calculate angle
-	static double angle = 0;
-	angle = fmod(angle + deltatime * ROTATION_SPEED, RETRO_DEGREES_PER_TURN);
+	// Calculate rotation
+	double angle = fmod(time * ROTATION_SPEED, RETRO_DEGREES_PER_TURN);
 
 	unsigned char *image = RETRO_ImageData();
 

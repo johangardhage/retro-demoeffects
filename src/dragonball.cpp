@@ -177,39 +177,38 @@ static void BuildStar(Vertex *out, int axis, bool antipode, float spin)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static double t = 0;
-	t = fmod(t + deltatime, BALL_PERIOD);
+	// Calculate phase
+	double phase = fmod(time, BALL_PERIOD);
 
-	static float ax, ay, az, spin;
-	ax = fmod(ax + deltatime * BALL_SPEEDX, 2 * M_PI);
-	ay = fmod(ay + deltatime * BALL_SPEEDY, 2 * M_PI);
-	az = fmod(az + deltatime * BALL_SPEEDZ, 2 * M_PI);
-	spin = fmod(spin + deltatime * STAR_SPIN, 2 * M_PI);
+	float ax = fmod(time * BALL_SPEEDX, 2 * M_PI);
+	float ay = fmod(time * BALL_SPEEDY, 2 * M_PI);
+	float az = fmod(time * BALL_SPEEDZ, 2 * M_PI);
+	float spin = fmod(time * STAR_SPIN, 2 * M_PI);
 
 	// First fall has no previous takeoff to continue, so the oscillator
 	// only runs after the ball has hit the floor once.
 	static bool launched = false;
-	if (t >= BALL_TDOWN) {
+	if (phase >= BALL_TDOWN) {
 		launched = true;
 	}
 
 	float ra, rb, cy;
-	if (t < BALL_TDOWN) {
-		float tau = (float)t;
+	if (phase < BALL_TDOWN) {
+		float tau = (float)phase;
 		cy = BALL_APEX + 0.5f * BALL_G * tau * tau;
 		float deform = launched ? BallDeform(tau + BALL_TDOWN) : 0.0f;
 		ra = BALL_RADIUS + deform;
 		rb = BALL_RADIUS - deform;
-	} else if (t < BALL_TDOWN + BALL_TCONTACT) {
-		float tau = (float)t - BALL_TDOWN;
+	} else if (phase < BALL_TDOWN + BALL_TCONTACT) {
+		float tau = (float)phase - BALL_TDOWN;
 		float pen = BALL_PENMAX * sin(BALL_OMEGA * tau);
 		ra = BALL_RADIUS + pen;
 		rb = BALL_RADIUS - pen;
 		cy = BALL_FLOOR - rb;
 	} else {
-		float tau = (float)t - BALL_TDOWN - BALL_TCONTACT;
+		float tau = (float)phase - BALL_TDOWN - BALL_TCONTACT;
 		cy = (BALL_FLOOR - BALL_RADIUS) - BALL_VHIT * tau + 0.5f * BALL_G * tau * tau;
 		float deform = BallDeform(tau);
 		ra = BALL_RADIUS + deform;

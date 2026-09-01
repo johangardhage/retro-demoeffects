@@ -36,11 +36,10 @@
 
 Point2Df Circle[RING_DOTS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase - deltatime * SWAY_SPEED, RETRO_SINCOS_ANGLE);
+	double phase = fmod(-time * SWAY_SPEED, RETRO_SINCOS_ANGLE);
 	if (phase < 0) {
 		phase += RETRO_SINCOS_ANGLE;
 	}

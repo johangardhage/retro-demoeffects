@@ -117,7 +117,7 @@ void DEMO_FixedUpdate(double timestep)
 //
 // Draw the field, dropping the fuel bed the way fire.cpp does
 //
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	RETRO_Blit(FireBuffer, (RETRO_HEIGHT - FIRE_HEIGHT) * RETRO_WIDTH, RETRO_FrameBuffer() + (FIRE_HEIGHT * RETRO_WIDTH));
 }

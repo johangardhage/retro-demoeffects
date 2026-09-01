@@ -95,7 +95,7 @@ void DEMO_FixedUpdate(double timestep)
 	WaterScratch = unsmoothed;
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *image = RETRO_ImageData();
 

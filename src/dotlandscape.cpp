@@ -55,7 +55,7 @@ static void DrawTerrainDots(const RETRO_TerrainIslandFrame &frame)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	RETRO_UpdateTerrainIsland(deltatime);
 	memset(DotWorldZBuffer, 0xFF, sizeof(DotWorldZBuffer));

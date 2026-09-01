@@ -37,7 +37,7 @@ enum { MATERIAL_FLAT, MATERIAL_GOURAUD, MATERIAL_PHONG, MATERIALS };
 
 static unsigned char MaterialShadeTables[MATERIALS][RETRO_MAX_SHADING_COLORS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	static RETRO_POLY_TYPE rendertype = RETRO_POLY_TEXTURE;
 	static RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE;

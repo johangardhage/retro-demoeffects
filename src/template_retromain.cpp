@@ -12,7 +12,7 @@
 #include "lib/retropoly.h"
 #include "lib/retropalette.h"
 
-void DEMO_Render2(double deltatime)
+void DEMO_Render2(double time, double deltatime)
 {
 	// Draw polygons
 	PolygonPoint point[3];

@@ -62,7 +62,7 @@ static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const World
 	RETRO_DrawTexMapPolygon(polygon, 3, RETRO_Terrain.colormap, RETRO_Terrain.width, RETRO_Terrain.height, RETRO_Terrain.wrap);
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	RETRO_UpdateTerrainCamera(deltatime);
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();

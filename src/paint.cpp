@@ -18,7 +18,7 @@
 
 #define MOUSE_ACCEL 0.2 // relative-mode step per window pixel
 
-void DEMO_Render2(double deltatime)
+void DEMO_Render2(double time, double deltatime)
 {
 	static float x = RETRO_WIDTH / 2, y = RETRO_HEIGHT / 2;
 

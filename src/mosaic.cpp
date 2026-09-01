@@ -48,11 +48,10 @@ double Coarseness(double phase)
 	return 1 - (phase - 2 * TIME_HOLD - TIME_MOSAIC) / TIME_MOSAIC;
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime, TIME_CYCLE);
+	double phase = fmod(time, TIME_CYCLE);
 	int block = lround(pow(BLOCK_MAX, Coarseness(phase)));
 
 	unsigned char *image = RETRO_ImageData();

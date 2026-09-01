@@ -42,16 +42,14 @@
 
 unsigned char scroll_bitmap[FONT_HEIGHT * SCROLL_WIDTH];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * SCROLL_SPEED, SCROLL_WIDTH);
+	double phase = fmod(time * SCROLL_SPEED, SCROLL_WIDTH);
 	int iphase = (int)phase;
 
 	// Calculate the phase of the wave the columns ride
-	static double wave = 0;
-	wave = fmod(wave + deltatime * WAVE_SPEED, RETRO_SINCOS_ANGLE);
+	double wave = fmod(time * WAVE_SPEED, RETRO_SINCOS_ANGLE);
 
 	// Draw scroller, a column at a time, each dropped by the sine at that column
 	// and its glyph rows clipped to the screen

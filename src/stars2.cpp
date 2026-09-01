@@ -39,7 +39,7 @@ void PlaceStar(Point3Df *star, float depth)
 	star->z = depth;
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Draw stars
 	for (int i = 0; i < NUM_STARS; i++) {

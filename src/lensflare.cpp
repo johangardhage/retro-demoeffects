@@ -113,10 +113,10 @@ void AddHex(float cx, float cy, float radius, int peak)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static double phase = 0;
-	phase = fmod(phase + deltatime * FLARE_SPEED, 2 * M_PI);
+	// Calculate phase
+	double phase = fmod(time * FLARE_SPEED, 2 * M_PI);
 
 	float cx = RETRO_WIDTH / 2.0f;
 	float cy = RETRO_HEIGHT / 2.0f;

@@ -31,11 +31,10 @@
 int DistanceTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
 int AngleTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * TUNNEL_SPEED, TUNNEL_PERIOD);
+	double phase = fmod(time * TUNNEL_SPEED, TUNNEL_PERIOD);
 
 	unsigned char *image = RETRO_ImageData();
 

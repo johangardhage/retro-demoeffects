@@ -26,11 +26,10 @@
 #define XOR_PHASE 1.66 // second window, same orbit
 #define XOR_PERIOD (20 * M_PI)
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * XOR_SPEED, XOR_PERIOD);
+	double phase = fmod(time * XOR_SPEED, XOR_PERIOD);
 
 	unsigned char *image = RETRO_ImageData();
 

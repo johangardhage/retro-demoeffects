@@ -44,13 +44,12 @@
 int NumPoints = 0;
 Vertex Torus[RING_STEPS * TUBE_STEPS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate rotation
-	static float ax, ay, az;
-	ax = fmod(ax + deltatime * ROTATION_SPEED, 2 * M_PI);
-	ay = fmod(ay + deltatime * ROTATION_SPEED, 2 * M_PI);
-	az = fmod(az + deltatime * ROTATION_SPEED, 2 * M_PI);
+	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(time * ROTATION_SPEED, 2 * M_PI);
 
 	int furthest = RING_RADIUS + TUBE_RADIUS;
 

@@ -203,14 +203,13 @@ void DrawSprite(unsigned char *dest, Sprite *sprite, float x, float y, float w, 
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 
 	// Drive. The track loops, so the distance travelled wraps at its length
 	double tracklength = RoadSegments * (double)ROAD_SEGMENT_LENGTH;
-	static double position = 0;
-	position = fmod(position + deltatime * ROAD_SPEED, tracklength);
+	double position = fmod(time * ROAD_SPEED, tracklength);
 
 	// A bend pushes the camera toward the outside of it, and the straight
 	// pulls it back to the middle

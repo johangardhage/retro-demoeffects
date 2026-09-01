@@ -77,13 +77,12 @@ float HeightSlopeY(unsigned char *heightmap, int x, int y)
 	return (heightmap[offset + RETRO_WIDTH] - heightmap[offset - RETRO_WIDTH]) / 2.0;
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Calculate light
-	static double angle = 0;
-	angle = fmod(angle + deltatime * LIGHT_SPEED, RETRO_DEGREES_PER_TURN);
+	double angle = fmod(time * LIGHT_SPEED, RETRO_DEGREES_PER_TURN);
 
 	float lx = RETRO_WIDTH / 2 + LIGHT_ORBIT * cos(angle * DEG2RAD);
 	float ly = RETRO_HEIGHT / 2 + LIGHT_ORBIT * sin(2 * angle * DEG2RAD);

@@ -70,7 +70,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Draw blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {

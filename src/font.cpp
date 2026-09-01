@@ -14,7 +14,7 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Draw charset
 	char str1[] = { "ABCDEFGHIJKLMNOPQRSTUVWXYZ" };

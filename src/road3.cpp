@@ -116,14 +116,13 @@ void DrawSpan(unsigned char *row, float x1, float x2, unsigned char color)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 
 	// Drive. The track loops, so the distance travelled wraps at its length
 	double tracklength = RoadSegments * (double)ROAD_SEGMENT_LENGTH;
-	static double position = 0;
-	position = fmod(position + deltatime * ROAD_SPEED, tracklength);
+	double position = fmod(time * ROAD_SPEED, tracklength);
 
 	// The segment the camera stands on, and how much of it is behind it
 	int base = (int)(position / ROAD_SEGMENT_LENGTH);

@@ -77,7 +77,7 @@ void DEMO_FixedUpdate(double timestep)
 	RETRO_Blur(RETRO_BLUR_FIRE, FIRE_DECAY, RETRO_BLUR_WRAP, FireBuffer);
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Draw fire. The fuel bed is the bottom FIRE_HEIGHT rows. Blitting from the top of the field
 	// onto the screen starting FIRE_HEIGHT rows down hides that bed and leaves a strip

@@ -32,7 +32,7 @@ struct MetaBall {
 	float radius;
 } Balls[NUM_BALLS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Charge of each ball
 	float charge[NUM_BALLS];

@@ -25,14 +25,12 @@
 #define MOUTH_RADIUS 6.2f // texels, before the angular ripple below
 #define MOUTH_RIPPLE 0.8f
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static float time = 0.0f;
-	static float flight = 0.0f;
-	static float roll = 0.0f;
-	time += deltatime;
-	flight += FLIGHT_SPEED * deltatime;
-	roll += ROLL_SPEED * deltatime;
+	// Calculate phase. Both are masked onto the texture, so each wraps on the
+	// size of the axis it scrolls.
+	float flight = fmod(time * FLIGHT_SPEED, TEXTURE_HEIGHT);
+	float roll = fmod(time * ROLL_SPEED, TEXTURE_WIDTH);
 
 	unsigned char *image = RETRO_ImageData();
 

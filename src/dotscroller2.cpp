@@ -31,12 +31,11 @@
 
 unsigned char ScrollBitmap[FONT_HEIGHT * SCROLL_WIDTH];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static double phase = 0;
-	static double depthphase = 0;
-	phase = fmod(phase + deltatime * SCROLL_SPEED, DISPLAY_WIDTH);
-	depthphase = fmod(depthphase + deltatime * DEPTH_SPEED, 2 * M_PI);
+	// Calculate phase
+	double phase = fmod(time * SCROLL_SPEED, DISPLAY_WIDTH);
+	double depthphase = fmod(time * DEPTH_SPEED, 2 * M_PI);
 
 	for (int sy = 0; sy < FONT_HEIGHT; sy++) {
 		for (int sx = 0; sx < SCROLL_WIDTH; sx++) {

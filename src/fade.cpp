@@ -23,7 +23,7 @@
 
 enum { FADEIN, FADEOUT, HOLD };
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	static int state = HOLD;
 	static int next = FADEIN;

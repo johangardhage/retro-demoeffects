@@ -174,7 +174,7 @@ void DEMO_FixedUpdate(double timestep)
 	stalled = reached < ORBIT_STALL;
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Draw attractor
 	unsigned char *buffer = RETRO_FrameBuffer();

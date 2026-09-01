@@ -27,10 +27,10 @@
 
 unsigned char ScrollBitmap[FONT_HEIGHT * SCROLL_WIDTH];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static double phase = 0;
-	phase = fmod(phase + deltatime * SCROLL_SPEED, DISPLAY_WIDTH);
+	// Calculate phase
+	double phase = fmod(time * SCROLL_SPEED, DISPLAY_WIDTH);
 	int iphase = (int)phase;
 
 	// Plot each lit font texel as a dot. Adding DISPLAY_WIDTH wraps the

@@ -107,11 +107,11 @@ static int BarEdge(int y, double phase)
 	return RETRO_WIDTH / 2 + lround(4 * sin(phase + y * 0.018) + 2 * sin(phase * 0.6));
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static double phase = 0, barphase = 0;
-	phase = fmod(phase + deltatime * SCROLL_SPEED, 2 * M_PI);
-	barphase = fmod(barphase + deltatime * 0.8, 2 * M_PI);
+	// Calculate phase
+	double phase = fmod(time * SCROLL_SPEED, 2 * M_PI);
+	double barphase = fmod(time * 0.8, 2 * M_PI);
 
 	// Draw background
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

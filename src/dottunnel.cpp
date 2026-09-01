@@ -38,16 +38,14 @@
 double RingX[RING_DOTS];
 double RingY[RING_DOTS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	double spacing = (double)TUNNEL_DEPTH / RING_COUNT;
 
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * TUNNEL_SPEED, spacing);
+	double phase = fmod(time * TUNNEL_SPEED, spacing);
 
-	static double twist = 0;
-	twist = fmod(twist - deltatime * TWIST_SPEED, RETRO_DEGREES_PER_TURN);
+	double twist = fmod(-time * TWIST_SPEED, RETRO_DEGREES_PER_TURN);
 	if (twist < 0) {
 		twist += RETRO_DEGREES_PER_TURN;
 	}

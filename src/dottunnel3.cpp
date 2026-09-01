@@ -55,11 +55,10 @@ double RingX[RING_DOTS];
 double RingY[RING_DOTS];
 double RingScale[TUNNEL_RINGS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * TUNNEL_SPEED, TUNNEL_PERIOD);
+	double phase = fmod(time * TUNNEL_SPEED, TUNNEL_PERIOD);
 	int iphase = phase / TUNNEL_LAG;
 
 	for (int i = 0; i < TUNNEL_RINGS; i++) {

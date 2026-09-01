@@ -128,7 +128,7 @@ static void CollectTerrainDots(float maxdistance)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	RETRO_UpdateTerrainCamera(deltatime);
 	ProjectedDotCount = 0;

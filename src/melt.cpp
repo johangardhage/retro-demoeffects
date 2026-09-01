@@ -31,7 +31,7 @@ MeltMode Mode = MELT_FREEZE_LINE_OFFSET;
 double MeltPosition = 0;
 int MeltDirection = 1;
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
 		Mode = Mode == MELT_MAXIMUM_SCAN_LINE ? MELT_FREEZE_LINE_OFFSET : MELT_MAXIMUM_SCAN_LINE;

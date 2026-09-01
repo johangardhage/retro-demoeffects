@@ -71,20 +71,18 @@
 
 unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 
 	// Yaw the texture axes about Y, and walk along those axes. Wrapping
 	// (xd, yd) on P is one texture period, so the floor does not jump.
-	static float ang = 0;
-	ang = fmod(ang + deltatime * PLANE_YAW_SPEED, 360.0);
+	float ang = fmod(time * PLANE_YAW_SPEED, 360.0);
 	float cosa = cos(ang * DEG2RAD);
 	float sina = sin(ang * DEG2RAD);
 
-	static float xd, yd;
-	xd = fmod(xd + deltatime * PLANE_WALK_SPEED, PLANE_PERIOD);
-	yd = fmod(yd + deltatime * PLANE_WALK_SPEED, PLANE_PERIOD);
+	float xd = fmod(time * PLANE_WALK_SPEED, PLANE_PERIOD);
+	float yd = fmod(time * PLANE_WALK_SPEED, PLANE_PERIOD);
 
 	// Rotate U = (P, 0, 0) and V = (0, 0, P) by Ry(ang). bp is the
 	// world-space origin of that frame: (xd / P) U + (yd / P) V, sitting

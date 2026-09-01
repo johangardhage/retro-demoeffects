@@ -49,15 +49,13 @@ void MorphShapes(Vertex *from, Vertex *to, float t)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * MORPH_SPEED, CYCLE_STEPS);
+	double phase = fmod(time * MORPH_SPEED, CYCLE_STEPS);
 	int iphase = phase;
 
-	static double angle = 0;
-	angle = fmod(angle + deltatime * ROTATION_SPEED * DEG2RAD, 2 * M_PI);
+	double angle = fmod(time * ROTATION_SPEED * DEG2RAD, 2 * M_PI);
 
 	// Morph shapes
 	if (iphase < MORPH_STEPS) {

@@ -77,11 +77,10 @@
 
 unsigned char strip[FONT_HEIGHT * SCROLL_WIDTH];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate the phase of the text along the strip
-	static double phase = 0;
-	phase = fmod(phase + deltatime * SCROLL_SPEED, SCROLL_WIDTH);
+	double phase = fmod(time * SCROLL_SPEED, SCROLL_WIDTH);
 
 	// Draw the ribbon back to front. Pass 0 is the back (depth > 0), pass 1
 	// is the front, so a later sample that lands on the same pixel wins

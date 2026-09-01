@@ -16,7 +16,7 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Draw noise
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

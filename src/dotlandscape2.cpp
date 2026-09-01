@@ -58,7 +58,7 @@ static void DrawTerrainDots(float maxdistance)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	RETRO_UpdateTerrainCamera(deltatime);
 	memset(DotWorldZBuffer, 0xFF, sizeof(DotWorldZBuffer));

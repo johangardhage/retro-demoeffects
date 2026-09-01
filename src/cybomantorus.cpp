@@ -89,10 +89,10 @@ static int Material(Vec3 p)
 	return triangle ? 2 : 0;
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static float phase = 0.0f;
-	phase = fmodf(phase + deltatime * ROTATION_SPEED, 2.0f * M_PI);
+	// Calculate phase
+	float phase = fmod(time * ROTATION_SPEED, 2 * M_PI);
 
 	// The world-space camera never moves.  It sits on the tube centreline;
 	// looking inward sees across the hole and

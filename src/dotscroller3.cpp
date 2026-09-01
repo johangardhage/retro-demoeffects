@@ -78,11 +78,13 @@ static void DrawTerrainDots(const RETRO_TerrainIslandFrame &frame)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static float scrollphase = 0;
 	RETRO_UpdateTerrainIsland(deltatime);
-	scrollphase = fmodf(scrollphase + deltatime * SCROLL_SPEED, SCROLL_CYCLE);
+
+	// Calculate phase
+	float phase = fmod(time * SCROLL_SPEED, SCROLL_CYCLE);
+
 	memset(DotWorldZBuffer, 0xFF, sizeof(DotWorldZBuffer));
 	RETRO_TerrainIslandFrame frame = RETRO_BuildTerrainIslandFrame();
 	DrawTerrainDots(frame);
@@ -94,7 +96,7 @@ void DEMO_Render(double deltatime)
 		float localz = LETTER_BASE_Z + sy * LETTER_ROW_SPACING;
 		for (int sx = 0; sx < SCROLL_WIDTH; sx++) {
 			if (ScrollBitmap[sy * SCROLL_WIDTH + sx] == 0) continue;
-			float localx = width + sx * LETTER_DOT_SPACING - scrollphase;
+			float localx = width + sx * LETTER_DOT_SPACING - phase;
 			if (localx < 0 || localx >= width) continue;
 			float worldy = RETRO_TerrainHeightLinear(localx, localz) + LETTER_HEIGHT_OFFSET;
 			PlotWorldDot(localx, worldy, localz, LETTER_COLOR_BASE + sy, frame);

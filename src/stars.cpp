@@ -25,7 +25,7 @@
 
 Point3Df Stars[NUM_STARS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Draw stars
 	for (int i = 0; i < NUM_STARS; i++) {

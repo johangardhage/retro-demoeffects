@@ -49,7 +49,7 @@
 
 #define VOXEL_LOD 0.005f // added to dz each slice, so far samples thin out
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	RETRO_UpdateTerrainCamera(deltatime);
 

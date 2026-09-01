@@ -34,10 +34,10 @@ int AngleTable[RETRO_HEIGHT][RETRO_WIDTH];
 int SinTable[ANGLE_STEPS];
 int CosTable[ANGLE_STEPS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static double phase = 0;
-	phase = fmod(phase + deltatime * ANIMATION_SPEED, 2 * M_PI);
+	// Calculate phase
+	double phase = fmod(time * ANIMATION_SPEED, 2 * M_PI);
 
 	unsigned char *image = RETRO_ImageData();
 	int mirrorrotation = phase * ANGLE_STEPS / (2 * M_PI);

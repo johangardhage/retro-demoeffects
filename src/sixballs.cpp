@@ -33,20 +33,18 @@
 
 Vertex Balls[BALLS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	// The flight wraps on the cycle and the tumble on a turn. They are separate
-	// steppers because the two have nothing to do with each other: driving the
-	// angles from the cycle's own time would snap the hexagon back to where it
-	// started every time the flight came round, and only a rate that completed
-	// a whole number of turns in CYCLE seconds would hide it.
-	static double time;
-	static float ax, ay, az;
-	time = fmod(time + deltatime, CYCLE);
-	ax = fmod(ax + deltatime * ROTATEX, 2 * M_PI);
-	ay = fmod(ay + deltatime * ROTATEY, 2 * M_PI);
-	az = fmod(az + deltatime * ROTATEZ, 2 * M_PI);
-	float phase = time * 2.0f * M_PI / CYCLE;
+	// Calculate rotation and phase. The flight wraps on the cycle and the tumble
+	// on a turn, each taken from the clock directly because the two have nothing
+	// to do with each other: driving the angles from the cycle's own wrapped
+	// phase would snap the hexagon back to where it started every time the
+	// flight came round, and only a rate that completed a whole number of turns
+	// in CYCLE seconds would hide it.
+	float ax = fmod(time * ROTATEX, 2 * M_PI);
+	float ay = fmod(time * ROTATEY, 2 * M_PI);
+	float az = fmod(time * ROTATEZ, 2 * M_PI);
+	float phase = fmod(time, CYCLE) * 2.0f * M_PI / CYCLE;
 
 	// Ease at both ends of the trip. The small sideways loop prevents the six
 	// projected centres from expanding forever around one perfectly fixed point.

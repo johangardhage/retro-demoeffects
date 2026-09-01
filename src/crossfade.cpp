@@ -21,15 +21,11 @@ RETRO_Image *PictureA;
 RETRO_Image *PictureB;
 unsigned char ColorLUT[32][32][32];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static double elapsed = 0;
-	static double phase = 0;
-	elapsed += deltatime;
-
-	if (elapsed < TIME_FADEIN) {
+	if (time < TIME_FADEIN) {
 		// Hardware DAC palette fade-in: pure linear dimming without color shifting
-		RETRO_FadeIn(1000, (elapsed / TIME_FADEIN) * 1000, PictureA->palette);
+		RETRO_FadeIn(1000, (time / TIME_FADEIN) * 1000, PictureA->palette);
 		RETRO_Blit(PictureA->data);
 		return;
 	}
@@ -42,7 +38,7 @@ void DEMO_Render(double deltatime)
 	}
 
 	// Crossfade transition
-	phase = fmod(phase + deltatime * CROSSFADE_SPEED, 2 * M_PI);
+	double phase = fmod(time * CROSSFADE_SPEED, 2 * M_PI);
 	float t = 0.5f - 0.5f * cos(phase);
 	float s = 1.0f - t;
 

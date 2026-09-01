@@ -61,11 +61,10 @@
 #define BOING_SHADOW 2 // and 3, the two checks of the shadow, both one color
 #define BOING_BALL 4 // and 5, the white check and the red one
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime / BOING_PERIOD, 1.0);
+	double phase = fmod(time / BOING_PERIOD, 1.0);
 
 	// Cross the room and come back, bouncing on the way
 	double sweep = fmod(phase * BOING_SWEEPS, 1.0);

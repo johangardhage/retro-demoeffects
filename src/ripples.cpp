@@ -27,11 +27,10 @@
 
 int SinTable[SINE_VALUES];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * WATER_SPEED, SINE_VALUES);
+	double phase = fmod(time * WATER_SPEED, SINE_VALUES);
 	int iphase = (int)phase;
 
 	unsigned char *buffer = RETRO_FrameBuffer();

@@ -30,13 +30,12 @@
 
 Vertex Stars[NUM_STARS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate rotation
-	static float ax, ay, az;
-	ax = fmod(ax + deltatime * SPEED, 2 * M_PI);
-	ay = fmod(ay + deltatime * SPEED, 2 * M_PI);
-	az = fmod(az + deltatime * SPEED, 2 * M_PI);
+	float ax = fmod(time * SPEED, 2 * M_PI);
+	float ay = fmod(time * SPEED, 2 * M_PI);
+	float az = fmod(time * SPEED, 2 * M_PI);
 
 	double furthest = sqrt((double)RETRO_WIDTH * RETRO_WIDTH + (double)RETRO_HEIGHT * RETRO_HEIGHT + (double)BOX_DEPTH * BOX_DEPTH);
 

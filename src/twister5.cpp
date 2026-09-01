@@ -65,11 +65,10 @@ void DrawSpan(int top, int bottom, int x, unsigned char *image, int u, float top
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * TWISTER_SPEED, TWISTER_PERIOD);
+	double phase = fmod(time * TWISTER_SPEED, TWISTER_PERIOD);
 
 	unsigned char *image = RETRO_ImageData();
 

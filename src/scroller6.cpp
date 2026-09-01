@@ -31,13 +31,10 @@ static constexpr int PAGE_HEIGHT = PAGE_LINES * LINE_HEIGHT;
 
 unsigned char page[PAGE_WIDTH * PAGE_HEIGHT];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static double phase = -FONT_HEIGHT;
-	phase += deltatime * CRAWL_SPEED;
-	if (phase > PAGE_HEIGHT + 180) {
-		phase = -FONT_HEIGHT;
-	}
+	// Calculate phase
+	double phase = fmod(time * CRAWL_SPEED, PAGE_HEIGHT + 180 + FONT_HEIGHT) - FONT_HEIGHT;
 
 	for (int y = HORIZON_Y + 1; y < BOTTOM_Y; y++) {
 		double distance = y - HORIZON_Y;

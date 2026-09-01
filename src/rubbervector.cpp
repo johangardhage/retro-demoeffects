@@ -117,12 +117,11 @@ void DEMO_FixedUpdate(double timestep)
 	RetainCubeImage(ax, ay, az, LineHistory[HistoryHead]);
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// The selection wave runs on displayed time, so it stays smooth on a fast
 	// display even though the images it selects between arrive at the step rate
-	static float phase;
-	phase = fmod(phase + deltatime * RUBBER_SPEED, 2 * M_PI);
+	float phase = fmod(time * RUBBER_SPEED, 2 * M_PI);
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 

@@ -44,7 +44,7 @@ void PlaceStar(VortexStar *star, float depth)
 	star->z = depth;
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	float cx = RETRO_WIDTH / 2.0f;
 	float cy = RETRO_HEIGHT / 2.0f;

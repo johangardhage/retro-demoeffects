@@ -25,11 +25,10 @@
 
 unsigned char Sin256[256];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * PLASMA_SPEED, 256);
+	double phase = fmod(time * PLASMA_SPEED, 256);
 	int iphase = phase;
 
 	unsigned char *buffer = RETRO_FrameBuffer();

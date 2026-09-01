@@ -86,14 +86,13 @@ void DrawStencilFace(Face *face, Model3D *model, int scroll)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static float ax, ay, az;
-	static double scroll = 0;
-	ax = fmod(ax + deltatime * ROTATION_SPEED, 2 * M_PI);
-	ay = fmod(ay + deltatime * ROTATION_SPEED * 0.83f, 2 * M_PI);
-	az = fmod(az + deltatime * ROTATION_SPEED * 0.61f, 2 * M_PI);
-	scroll = fmod(scroll + deltatime * METAL_SCROLL, METAL_SIZE);
+	// Calculate rotation
+	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time * ROTATION_SPEED * 0.83f, 2 * M_PI);
+	float az = fmod(time * ROTATION_SPEED * 0.61f, 2 * M_PI);
+	double scroll = fmod(time * METAL_SCROLL, METAL_SIZE);
 
 	RETRO_RotateModel(ax, ay, az, Cube);
 	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Cube);

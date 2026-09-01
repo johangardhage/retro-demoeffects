@@ -11,11 +11,11 @@
 // An edge with x_left >= x_right is back-facing and is skipped. Spans are
 // half-open and clipped to [0, WIDTH).
 //
-//   spin(phase)     = SPIN_SPEED · phase
-//   twistCos(phase) = cos(TWIST_OMEGA · phase)
-//   twistMod(phase) = sin(TWIST_MOD_OMEGA · phase)
-//   swayCos(phase)  = cos(SWAY_OMEGA · phase)
-//   scroll(phase)   = SCROLL_SPEED · phase
+//   spin(time)     = SPIN_SPEED · time
+//   twistCos(time) = cos(TWIST_OMEGA · time)
+//   twistMod(time) = sin(TWIST_MOD_OMEGA · time)
+//   swayCos(time)  = cos(SWAY_OMEGA · time)
+//   scroll(time)   = SCROLL_SPEED · time
 //
 //   angle(i) = spin + 3π (twistCos · twistMod · cos(π i / 3H) + 1)
 //   xOffset(i) = CX + SWAY · swayCos · sin(π i / H)
@@ -142,27 +142,24 @@ void DrawSpan(int y, int x1, float u1, float l1, float z1, int x2, float u2, flo
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	float screenX[SPANS];
 	float viewZ[SPANS];
 	float lighting[SPANS];
 
-	// Displayed clock. The three oscillators have incommensurate periods
-	// (20s, 17s, 18s) so the pose does not obviously loop.
-	static double phase = 0;
-	phase += deltatime;
-
 	for (int i = 0; i < RETRO_WIDTH * RETRO_HEIGHT; i++) {
 		ZBuffer[i] = FLUBBER_Z_FAR;
 	}
 
-	TextureScroll = (long)(phase * FLUBBER_SCROLL_SPEED);
+	TextureScroll = (long)(time * FLUBBER_SCROLL_SPEED);
 
-	float spin = (float)(phase * FLUBBER_SPIN_SPEED);
-	float twistCos = cos(phase * FLUBBER_TWIST_OMEGA);
-	float twistMod = sin(phase * FLUBBER_TWIST_MOD_OMEGA);
-	float swayCos = cos(phase * FLUBBER_SWAY_OMEGA);
+	// Calculate phase. The three oscillators have incommensurate periods
+	// (20s, 17s, 18s) so the pose does not obviously loop.
+	float spin = (float)(time * FLUBBER_SPIN_SPEED);
+	float twistCos = cos(time * FLUBBER_TWIST_OMEGA);
+	float twistMod = sin(time * FLUBBER_TWIST_MOD_OMEGA);
+	float swayCos = cos(time * FLUBBER_SWAY_OMEGA);
 
 	for (int i = 0; i < RETRO_HEIGHT; i++) {
 		// Half-sine bow down the column, scaled by the slow sway oscillator

@@ -51,11 +51,10 @@ RETRO_Palette BarColors[COPPER_BARS] = {
 	RETRO_RED, RETRO_ORANGE, RETRO_YELLOW, RETRO_GREEN,
 	RETRO_CYAN, RETRO_AZURE, RETRO_INDIGO, RETRO_VIOLET };
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * COPPER_SPEED, COPPER_PERIOD);
+	double phase = fmod(time * COPPER_SPEED, COPPER_PERIOD);
 
 	// The one line every scanline is a copy of. Cleared once per frame, not once
 	// per row: what a row inherits from the rows above it is the whole effect

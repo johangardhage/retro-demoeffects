@@ -209,11 +209,8 @@ static double IntersectWall(double slope, double theta)
 	return -1.0;
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static double time = 0;
-	time += deltatime;
-
 	unsigned char *buffer = RETRO_FrameBuffer();
 	const unsigned char *texture = Terrain->data;
 

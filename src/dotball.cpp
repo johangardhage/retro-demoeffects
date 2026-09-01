@@ -45,13 +45,12 @@
 int NumPoints = 0;
 Vertex Ball[ALPHA_STEPS * (BETA_STEPS + 1)];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate rotation
-	static float ax, ay, az;
-	ax = fmod(ax + deltatime * ROTATION_SPEED, 2 * M_PI);
-	ay = fmod(ay + deltatime * ROTATION_SPEED, 2 * M_PI);
-	az = fmod(az + deltatime * ROTATION_SPEED, 2 * M_PI);
+	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(time * ROTATION_SPEED, 2 * M_PI);
 
 	// Draw points
 	for (int i = 0; i < NumPoints; i++) {

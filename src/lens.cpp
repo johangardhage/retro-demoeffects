@@ -55,13 +55,12 @@ void DrawLens(Lens *lens, unsigned char *image)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *image = RETRO_ImageData();
 
-	// Calculate movement
-	static double phase = 0;
-	phase = fmod(phase + deltatime * RETRO_SINCOS_ANGLE / LENS_PERIOD, RETRO_SINCOS_ANGLE);
+	// Calculate phase
+	double phase = fmod(time * RETRO_SINCOS_ANGLE / LENS_PERIOD, RETRO_SINCOS_ANGLE);
 	Lens1.x = LENS_XCENTER + LENS_XAMPLITUDE * COS(2 * phase + LENS_XPHASE);
 	Lens1.y = LENS_YCENTER + LENS_YAMPLITUDE * COS(3 * phase);
 

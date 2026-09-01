@@ -44,20 +44,17 @@
 
 unsigned char scroll_bitmap[FONT_HEIGHT * SCROLL_WIDTH];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + deltatime * SCROLL_SPEED, SCROLL_WIDTH);
+	double phase = fmod(time * SCROLL_SPEED, SCROLL_WIDTH);
 	int iphase = (int)phase;
 
 	// Calculate the phase of the wave the columns ride in y
-	static double ywave = 0;
-	ywave = fmod(ywave + deltatime * WAVE_Y_SPEED, RETRO_SINCOS_ANGLE);
+	double ywave = fmod(time * WAVE_Y_SPEED, RETRO_SINCOS_ANGLE);
 
 	// Calculate the phase of the wave the columns ride in x
-	static double xwave = 0;
-	xwave = fmod(xwave + deltatime * WAVE_X_SPEED, RETRO_SINCOS_ANGLE);
+	double xwave = fmod(time * WAVE_X_SPEED, RETRO_SINCOS_ANGLE);
 
 	// Draw scroller, a column at a time, each shifted by the sines at that
 	// column and plotted only where it lands on the screen

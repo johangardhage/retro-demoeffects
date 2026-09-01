@@ -24,11 +24,10 @@
 #define FIRST_SHADE 1
 #define SHADES 32
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static double phase = 0;
-	phase += deltatime;
-	double progress = CLAMP01((phase - TIME_HOLD) / TIME_TRANSITION);
+	// Calculate phase
+	double phase = CLAMP01((time - TIME_HOLD) / TIME_TRANSITION);
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 
@@ -42,7 +41,7 @@ void DEMO_Render(double deltatime)
 		// second time. That second turn is easy to miss in the reference.
 		double delay = (double)(BLINDS - 1 - blind) / (BLINDS - 1)
 			* (1 - PHASE_WINDOW);
-		double rotation = CLAMP01((progress - delay) / PHASE_WINDOW);
+		double rotation = CLAMP01((phase - delay) / PHASE_WINDOW);
 		double fold = fabs(cos(rotation * 1.5 * M_PI));
 
 		// Project the rotating slat about its centre: the visible span is the

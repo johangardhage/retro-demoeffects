@@ -25,13 +25,12 @@
 static Model3D *Wall;
 static unsigned char WallShadeTable[RETRO_MAX_SHADING_COLORS];
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
-	static float time;
-	time += deltatime;
-	float phase = fmodf(time, MORPH_PERIOD) / MORPH_PERIOD;
+	// Calculate phase
+	float phase = fmod(time, MORPH_PERIOD) / MORPH_PERIOD;
 
-	float yaw = time * 0.42f;
+	float yaw = fmod(time * 0.42, 2 * M_PI);
 	float pitch = -0.20f + 0.48f * sinf(time * 0.31f);
 	float roll = 0.06f * sinf(time * 0.19f);
 

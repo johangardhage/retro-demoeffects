@@ -147,7 +147,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double deltatime)
+void DEMO_Render(double time, double deltatime)
 {
 	static const SDL_Scancode ignitionkeys[] = {
 		SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3,

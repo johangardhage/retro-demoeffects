@@ -139,6 +139,10 @@ inline int WRAP(unsigned long n, int h) { return WRAP((int)n, h); }
 #define WRAPWIDTH(n) WRAP((n), RETRO_WIDTH)
 #define WRAPHEIGHT(n) WRAP((n), RETRO_HEIGHT)
 
+// For building an lcm from. Both signs are folded so a non-positive length
+// cannot make a later width / GCD period blow up.
+inline int GCD(int a, int b) { a = abs(a); b = abs(b); return b == 0 ? a : GCD(b, a % b); }
+
 struct RETRO_Palette {
 	unsigned char r, g, b;
 };

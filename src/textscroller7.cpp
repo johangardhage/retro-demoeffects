@@ -1,10 +1,12 @@
 //
 // Scroller, a text hurricane
 //
-// The same 16×16 strip as scroller.cpp, sampled along a vertical sine and
-// plotted a column at a time:
+// A vertical ribbon of the font strip (see FONT below). A letter's width
+// runs along the path and its height across it, so the glyph is carried
+// around the cosine rather than dropped by it. Sampled along that cosine
+// and plotted a column at a time:
 //
-//   color = strip[row][WRAP(arc / ARC + phase, strip_width)] · shade(θ)
+//   color = strip[row][WRAP(arc / ARC + phase, stripwidth)] · shade(θ)
 //   x     = CX + AMP cos(θ)
 //   θ     = START + y · RATE
 //   depth = sin(θ)
@@ -12,11 +14,12 @@
 //   arc   = Σ |d(x, sy)/dy|
 //
 // y is the sample index, not a screen row. SAMPLE_HEIGHT is 3 × HEIGHT, so
-// three samples share a screen row, and each sample draws FONT_HEIGHT
-// pixels centred on sy. Samples run SAMPLE_PAD past both ends so a stamp
-// that begins off-screen still paints the rows it overlaps. A letter
-// stands with its width along the wave and its height across it, and it
-// is never bent sideways, only carried along the cosine.
+// three samples share a screen row, and each sample draws the strip's own
+// height in pixels, centred on sy. Samples run that same height, scaled to
+// sample space, past both ends, so a stamp that begins off-screen still
+// paints the rows it overlaps. A letter stands with its width along the
+// wave and its height across it, and it is never bent sideways, only
+// carried along the cosine.
 //
 // The wave makes TURNS whole turns between the top border and the bottom
 // one, so RATE is 2π · TURNS / SAMPLE_HEIGHT radians per sample and the
@@ -32,8 +35,8 @@
 // turns and stretch them over the crossings, and slide the text at a pace
 // that visibly surges; against the running total a letter keeps its size
 // and its speed all the way round. ARC is screen pixels of path per strip
-// column, so at 1.0 a glyph spans FONT_WIDTH pixels of path wherever it
-// sits, and SCROLL_SPEED · ARC is the text's speed along the ribbon.
+// column, so at 1.0 a glyph spans its own width in pixels of path wherever
+// it sits, and SCROLL_SPEED · ARC is the text's speed along the ribbon.
 //
 // depth is the sine's other component, the one that would be z if the
 // wave were a cylinder. It is in [−1, 1], front-facing when negative.
@@ -46,20 +49,18 @@
 // the offset being trusted, because RETRO_PutPixel does not clip: it
 // asserts in a debug build and writes out of bounds in any other.
 //
-// phase lives on strip_width, in columns per second.
+// phase lives on stripwidth, in columns per second.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
+#include "lib/retrofont.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define FONT_WIDTH 16
-#define FONT_HEIGHT 16
-#define IMAGE_WIDTH 944 // atlas pitch; 59 glyphs × 16
-#define SCROLL_TEXT "RETRO DEMOEFFECTS   "
-#define SCROLL_LENGTH (sizeof(SCROLL_TEXT) - 1)
-#define SCROLL_WIDTH (FONT_WIDTH * SCROLL_LENGTH)
+#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+//#define FONT RETRO_FONT_MINECRAFT_8X8
+
 #define SCROLL_SPEED 120.0 // strip columns per second
 #define ARC_SCALE 1.0 // screen pixels of path per strip column
 #define RIBBON_CX (RETRO_WIDTH / 2)
@@ -69,18 +70,20 @@
 #define WAVE_RATE (2 * M_PI * WAVE_TURNS / SAMPLE_HEIGHT) // radians per sample
 #define WAVE_START (3 * M_PI / 2) // both borders sit at the front of the wave, at full shade
 #define SAMPLE_RISE ((double)RETRO_HEIGHT / SAMPLE_HEIGHT) // screen rows a sample steps down
-#define SAMPLE_PAD (FONT_HEIGHT * SAMPLE_HEIGHT / RETRO_HEIGHT) // stamps that start off-screen still draw on screen
 #define SHADE_MID 100
 #define SHADE_AMP 80 // shade is in [20, 180] as depth runs through [−1, 1]
 #define SHADE_MAX (SHADE_MID + SHADE_AMP) // full shade, so ink · SHADE_MAX / SHADE_MAX is the atlas grey
 #define BACK_DIM 0.4 // extra scale on the back
 
-unsigned char strip[FONT_HEIGHT * SCROLL_WIDTH];
+static const char *const ScrollText[] = { "                                    RETRO DEMOEFFECTS..." };
+
+RETRO_Image *ScrollImage;
 
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate the phase of the text along the strip
-	double phase = fmod(time * SCROLL_SPEED, SCROLL_WIDTH);
+	double phase = fmod(time * SCROLL_SPEED, ScrollImage->width);
+	int samplepad = ScrollImage->height * SAMPLE_HEIGHT / RETRO_HEIGHT; // stamps that start off-screen still draw on screen
 
 	// Draw the ribbon back to front. Pass 0 is the back (depth > 0), pass 1
 	// is the front, so a later sample that lands on the same pixel wins
@@ -92,7 +95,7 @@ void DEMO_Render(double time, double deltatime)
 		// just the drawn ones, so both passes place the text identically
 		double arc = 0;
 
-		for (int y = -SAMPLE_PAD; y < SAMPLE_HEIGHT + SAMPLE_PAD; y++) {
+		for (int y = -samplepad; y < SAMPLE_HEIGHT + samplepad; y++) {
 			double theta = WAVE_START + y * WAVE_RATE;
 			double depth = sin(theta);
 			double run = RIBBON_AMP * WAVE_RATE * depth; // d(AMP cos θ)/dy, up to sign
@@ -103,7 +106,7 @@ void DEMO_Render(double time, double deltatime)
 				continue;
 			}
 
-			int col = WRAP(arc / ARC_SCALE + phase, SCROLL_WIDTH);
+			int col = WRAP(arc / ARC_SCALE + phase, ScrollImage->width);
 			int x = (int)(RIBBON_CX + RIBBON_AMP * cos(theta));
 			int sy = y * RETRO_HEIGHT / SAMPLE_HEIGHT;
 
@@ -114,14 +117,14 @@ void DEMO_Render(double time, double deltatime)
 				shade = (int)(shade * BACK_DIM);
 			}
 
-			for (int i = 0; i < FONT_HEIGHT; i++) {
-				unsigned char ink = strip[i * SCROLL_WIDTH + col];
+			for (int i = 0; i < ScrollImage->height; i++) {
+				unsigned char ink = ScrollImage->data[i * ScrollImage->width + col];
 				if (ink == 0) {
 					continue;
 				}
 
 				int px = x;
-				int py = sy + i - FONT_HEIGHT / 2;
+				int py = sy + i - ScrollImage->height / 2;
 				if (px < 0 || px >= RETRO_WIDTH || py < 0 || py >= RETRO_HEIGHT) {
 					continue;
 				}
@@ -133,26 +136,16 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/font_16x16.pcx", true);
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
 
-	// Init scroll bitmap, and remember the darkest and lightest greys the
-	// atlas actually uses so the shade ramp can be built from them
-	unsigned char *image = RETRO_ImageData();
+	// Remember the darkest and lightest greys the atlas actually uses so the
+	// shade ramp can be built from them
 	int dim = 255, lit = 0;
-
-	for (int i = 0; i < (int)SCROLL_LENGTH; i++) {
-		unsigned char *src = image + ((SCROLL_TEXT[i] - 32) * FONT_WIDTH);
-		unsigned char *dst = strip + (i * FONT_WIDTH);
-
-		for (int y = 0; y < FONT_HEIGHT; y++) {
-			for (int x = 0; x < FONT_WIDTH; x++) {
-				unsigned char ink = src[IMAGE_WIDTH * y + x];
-				dst[SCROLL_WIDTH * y + x] = ink;
-				if (ink != 0) {
-					dim = MIN(dim, (int)ink);
-					lit = MAX(lit, (int)ink);
-				}
-			}
+	for (int i = 0; i < ScrollImage->width * ScrollImage->height; i++) {
+		unsigned char ink = ScrollImage->data[i];
+		if (ink != 0) {
+			dim = MIN(dim, (int)ink);
+			lit = MAX(lit, (int)ink);
 		}
 	}
 
@@ -160,7 +153,7 @@ void DEMO_Initialize(void)
 	// letter, then up to the lightest, then that chrome for the rest. A
 	// texel at full shade is the original colour; a darker shade is the
 	// same chrome, dimmed
-	RETRO_Palette *fontpal = RETRO_ImagePalette();
+	RETRO_Palette *fontpal = ScrollImage->palette;
 	RETRO_CreateGradientPalette(0, dim, RETRO_BLACK, fontpal[dim]);
 	RETRO_CreateGradientPalette(dim, lit + 1, fontpal[dim], fontpal[lit]);
 	RETRO_CreateGradientPalette(lit + 1, RETRO_COLORS, fontpal[lit], fontpal[lit]);

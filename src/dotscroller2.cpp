@@ -1,19 +1,30 @@
 //
 // 3D diagonal dot scroller
 //
-// The 16x16 font atlas is converted to a strip of points. The strip travels
-// from the lower right to the upper left while a sine wave bends it in depth.
+// The font (see FONT below) is packed into one horizontal strip at startup
+// and sampled as a strip of points,
+//
+//   worldx = column · DOT_SPACING − phase
+//   z      = AMP · sin(column · DOT_SPACING · 2π / WAVELENGTH + depthphase)
+//   scale  = CAMERA / (CAMERA + z)
+//   x      = (worldx − WIDTH/2) · scale + WIDTH/2
+//   y      = HEIGHT/2 + (glyphy + worldx · DIAGONAL_RISE) · scale
+//
+// glyphy is the texel's row, centred on the strip. The strip travels from
+// the lower right to the upper left while the sine bends it in depth.
 // Perspective makes the near parts larger and the far parts smaller; every
-// visible font texel is still drawn as one pixel only.
+// visible font texel is still drawn as one pixel only. phase lives on
+// displaywidth = stripwidth · DOT_SPACING, in screen pixels per second. A
+// zero texel is transparent.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
+#include "lib/retrofont.h"
 #include "lib/retromain.h"
 
-#define FONT_WIDTH 16
-#define FONT_HEIGHT 16
-#define IMAGE_WIDTH 944 // atlas pitch; 59 glyphs x 16
+#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+//#define FONT RETRO_FONT_MINECRAFT_8X8
 
 #define DOT_SPACING 3
 #define SCROLL_SPEED 100 // screen pixels per second
@@ -24,22 +35,21 @@
 #define DEPTH_SPEED 2.0 // radians per second
 #define CAMERA_DISTANCE 360
 
-#define SCROLL_TEXT "       RETRO DEMOEFFECTS..."
-#define SCROLL_LENGTH (sizeof(SCROLL_TEXT) - 1)
-#define SCROLL_WIDTH (FONT_WIDTH * SCROLL_LENGTH)
-#define DISPLAY_WIDTH (SCROLL_WIDTH * DOT_SPACING)
+static const char *const ScrollText[] = { "       RETRO DEMOEFFECTS..." };
 
-unsigned char ScrollBitmap[FONT_HEIGHT * SCROLL_WIDTH];
+RETRO_Image *ScrollImage;
 
 void DEMO_Render(double time, double deltatime)
 {
+	int displaywidth = ScrollImage->width * DOT_SPACING;
+
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, DISPLAY_WIDTH);
+	double phase = fmod(time * SCROLL_SPEED, displaywidth);
 	double depthphase = fmod(time * DEPTH_SPEED, 2 * M_PI);
 
-	for (int sy = 0; sy < FONT_HEIGHT; sy++) {
-		for (int sx = 0; sx < SCROLL_WIDTH; sx++) {
-			unsigned char color = ScrollBitmap[sy * SCROLL_WIDTH + sx];
+	for (int sy = 0; sy < ScrollImage->height; sy++) {
+		for (int sx = 0; sx < ScrollImage->width; sx++) {
+			unsigned char color = ScrollImage->data[sy * ScrollImage->width + sx];
 			if (color == 0) {
 				continue;
 			}
@@ -47,7 +57,7 @@ void DEMO_Render(double time, double deltatime)
 			// Scroll the point strip and wrap it after its padded tail.
 			double worldx = sx * DOT_SPACING - phase;
 			if (worldx < 0) {
-				worldx += DISPLAY_WIDTH;
+				worldx += displaywidth;
 			}
 			if (worldx > RETRO_WIDTH + DEPTH_AMPLITUDE) {
 				continue;
@@ -60,7 +70,7 @@ void DEMO_Render(double time, double deltatime)
 			double scale = CAMERA_DISTANCE / (CAMERA_DISTANCE + z);
 
 			double x = (worldx - RETRO_WIDTH / 2.0) * scale + RETRO_WIDTH / 2.0;
-			double glyphy = (sy - (FONT_HEIGHT - 1) / 2.0) * DOT_SPACING;
+			double glyphy = (sy - (ScrollImage->height - 1) / 2.0) * DOT_SPACING;
 			double pathy = (worldx - RETRO_WIDTH / 2.0) * DIAGONAL_RISE;
 			double y = RETRO_HEIGHT / 2.0 + (glyphy + pathy) * scale;
 
@@ -75,17 +85,6 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/font_16x16.pcx", true);
-
-	unsigned char *image = RETRO_ImageData();
-	for (int i = 0; i < (int)SCROLL_LENGTH; i++) {
-		unsigned char *src = image + (SCROLL_TEXT[i] - 32) * FONT_WIDTH;
-		unsigned char *dst = ScrollBitmap + i * FONT_WIDTH;
-
-		for (int y = 0; y < FONT_HEIGHT; y++) {
-			for (int x = 0; x < FONT_WIDTH; x++) {
-				dst[y * SCROLL_WIDTH + x] = src[y * IMAGE_WIDTH + x];
-			}
-		}
-	}
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	RETRO_SetPalette(ScrollImage->palette);
 }

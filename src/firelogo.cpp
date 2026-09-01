@@ -22,27 +22,32 @@
 // The bottom rows still spark at 255, and the blit drops that fuel bed so
 // only the risen flame and the logo-shaped heat are visible.
 //
-// The logo is set from the 16x16 font atlas instead of being loaded as a
-// picture, so the wording is the two strings below. The lockup is the
-// title at double size over a subtitle stretched to the same height but
-// left at single width, which fits the longer word on screen at the
-// weight of the shorter one. Both lines are tracked out, since the atlas
-// glyphs fill their cell and would otherwise burn into each other.
+// The logo is set from RETRO_LoadFont's atlas instead of being loaded as a
+// picture, so the wording is the two strings below. No RETRO_GenerateTextImage
+// strip is built: the subtitle is stretched in y only,
+//
+//   dest(x · xscale + sx, y · yscale + sy) = atlas[row][column] · LOGO_HEAT / 255
+//
+// and GenerateTextImage scales uniformly. The lockup is the title at double
+// size over a subtitle stretched to the same height but left at single width,
+// which fits the longer word on screen at the weight of the shorter one. Both
+// lines are tracked out, since the atlas glyphs fill their cell and would
+// otherwise burn into each other.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
+#include "lib/retrofont.h"
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
+#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+//#define FONT RETRO_FONT_MINECRAFT_8X8
+
 #define FIRE_HEIGHT 6 // rows of fuel along the bottom, cropped off the blit
 #define FIRE_CHAOS 6 // a column is sparked with probability 1 / FIRE_CHAOS
 #define FIRE_DECAY 4 // subtracted after the 7-tap average
-
-#define FONT_WIDTH 16
-#define FONT_HEIGHT 16
-#define IMAGE_WIDTH 944 // atlas pitch; 59 glyphs × 16
 
 #define LOGO_TITLE "RETRO"
 #define LOGO_SUBTITLE "DEMOEFFECTS"
@@ -54,6 +59,7 @@
 
 unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 unsigned char LogoBuffer[RETRO_HEIGHT * RETRO_WIDTH];
+static RETRO_Font Font;
 
 //
 // Set a string from the font atlas into the logo, centred, with every texel grown
@@ -62,27 +68,37 @@ unsigned char LogoBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 //
 void DrawText(const char *text, int y, int xscale, int yscale, int tracking)
 {
-	unsigned char *image = RETRO_ImageData();
-	int length = strlen(text);
-	int advance = FONT_WIDTH * xscale + tracking;
-	int x = (RETRO_WIDTH - (length * advance - tracking)) / 2;
+	int length = (int)strlen(text);
+	int linewidth = 0;
+	for (int i = 0; i < length; i++) {
+		linewidth += RETRO_CharWidth(Font, (unsigned char)text[i]) * xscale;
+		if (i + 1 < length) {
+			linewidth += tracking;
+		}
+	}
+	int x = (RETRO_WIDTH - linewidth) / 2;
 
 	for (int i = 0; i < length; i++) {
-		unsigned char *glyph = image + ((text[i] - 32) * FONT_WIDTH);
-
-		for (int gy = 0; gy < FONT_HEIGHT; gy++) {
-			for (int gx = 0; gx < FONT_WIDTH; gx++) {
-				unsigned char texel = glyph[IMAGE_WIDTH * gy + gx];
-				if (texel == 0) {
-					continue;
-				}
-				for (int sy = 0; sy < yscale; sy++) {
-					for (int sx = 0; sx < xscale; sx++) {
-						LogoBuffer[(y + gy * yscale + sy) * RETRO_WIDTH + (x + i * advance + gx * xscale + sx)] = texel * LOGO_HEAT / 255;
+		unsigned char code = (unsigned char)text[i];
+		int glyph = code - Font.firstcharacter;
+		int sourcex = glyph * Font.width;
+		int copywidth = MIN(Font.width, RETRO_CharWidth(Font, code));
+		if (glyph >= 0 && sourcex + Font.width <= Font.atlas->width) {
+			for (int gy = 0; gy < Font.height; gy++) {
+				for (int gx = 0; gx < copywidth; gx++) {
+					unsigned char texel = Font.atlas->data[gy * Font.atlas->width + sourcex + gx];
+					if (texel == 0) {
+						continue;
+					}
+					for (int sy = 0; sy < yscale; sy++) {
+						for (int sx = 0; sx < xscale; sx++) {
+							LogoBuffer[(y + gy * yscale + sy) * RETRO_WIDTH + (x + gx * xscale + sx)] = texel * LOGO_HEAT / 255;
+						}
 					}
 				}
 			}
 		}
+		x += RETRO_CharWidth(Font, code) * xscale + tracking;
 	}
 }
 
@@ -124,11 +140,11 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/font_16x16.pcx");
+	Font = RETRO_LoadFont(FONT);
 
 	// Init logo
 	DrawText(LOGO_TITLE, LOGO_Y, 2, 2, LOGO_TITLE_TRACKING);
-	DrawText(LOGO_SUBTITLE, LOGO_Y + FONT_HEIGHT * 2 + LOGO_GAP, 1, 2, LOGO_SUBTITLE_TRACKING);
+	DrawText(LOGO_SUBTITLE, LOGO_Y + Font.height * 2 + LOGO_GAP, 1, 2, LOGO_SUBTITLE_TRACKING);
 
 	// Init palette
 	RETRO_CreateGradientPalette(0, 24, RETRO_BLACK, RETRO_DARKBLUE);

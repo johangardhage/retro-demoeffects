@@ -1,9 +1,18 @@
 //
-// Perspective ring scroller
+// Scroller, perspective ring
 //
-// Characters are placed on tangent planes around a horizontal ring. Glyph i
-// sits at ring angle phase + i 2pi/N, and a point (lx, ly) on its own plane is
-// carried out to the ring by
+// Each glyph is a stack of tiny quads on a tangent plane around a
+// horizontal ring, so a letter bends with the ring instead of stamping
+// flat onto it. Glyph pixels are read straight out of RETRO_LoadFont's
+// atlas at render time.
+//
+// Glyph i sits at ring angle phase + column[i] * angle-per-pixel, where
+// column[i] is its running pixel offset into the flattened text. Angle-per-
+// pixel is 2π / (n · WRAP_WIDTH) so n glyphs of that width wrap the ring
+// once. Glyphs narrower than WRAP_WIDTH keep their true spacing instead of
+// being stretched to fill the circle; a shorter total run just leaves the
+// rest of the ring bare. A point (lx, ly) on its own plane is carried out
+// to the ring by
 //
 //   p = Ry(-a) (lx, ly, -RING_RADIUS)
 //
@@ -30,17 +39,16 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
+#include "lib/retrofont.h"
 #include "lib/retromain.h"
 #include "lib/retropoly.h"
 #include "lib/retropalette.h"
 #include "lib/retrogfx.h"
 #include "lib/retromath.h"
 
-#define FONT_WIDTH 16
-#define FONT_HEIGHT 16
-#define FONT_IMAGE_WIDTH 944
-#define SCROLL_TEXT "    RETRO DEMOEFFECTS    "
-#define SCROLL_LENGTH (sizeof(SCROLL_TEXT) - 1)
+#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+//#define FONT RETRO_FONT_MINECRAFT_8X8
+static const char *const ScrollText[] = { "    RETRO DEMOEFFECTS..." };
 
 // Ring geometry and perspective projection.
 #define RING_RADIUS 86.0
@@ -49,12 +57,9 @@
 #define PROJECTION_SCALE 1.53
 #define RING_TILT 0.18
 #define SCROLL_SPEED 0.72
+#define WRAP_WIDTH 16.0
 
-// Each atlas character is reduced to a transparent one-bit glyph mask.
-static unsigned char Glyph[SCROLL_LENGTH][FONT_HEIGHT][FONT_WIDTH];
-
-// Increasing q values make later painter-ordered cells cover earlier cells.
-static float PaintDepth;
+static RETRO_Font Font;
 
 // Transform a point from a character's tangent plane into screen space.
 // Local x follows the ring tangent and local y runs down the character.
@@ -76,29 +81,38 @@ static Vertex Project(double angle, double localx, double localy)
 }
 
 // Project and fill one source-font pixel as a screen-space quadrilateral.
-static void DrawCell(double angle, double x, double y, int color)
+// Increasing paintdepth makes each later cell cover the ones before it.
+static void DrawCell(double angle, double x, double y, int color, float &paintdepth)
 {
 	Vertex p[4] = { Project(angle, x, y), Project(angle, x + 1, y), Project(angle, x + 1, y + 1), Project(angle, x, y + 1) };
 	PolygonPoint poly[4] = {};
-	PaintDepth += 0.0001f;
+	paintdepth += 0.0001f;
 	for (int i = 0; i < 4; i++) {
 		poly[i].x = p[i].sx;
 		poly[i].y = p[i].sy;
-		poly[i].q = PaintDepth;
+		poly[i].q = paintdepth;
 	}
 	RETRO_DrawFlatPolygon(poly, 4, color);
 }
 
-static void DrawGlyph(int letter, double angle, bool shadow)
+static void DrawGlyph(int letter, double angle, bool shadow, float &paintdepth)
 {
 	// The far half uses muted colors while the near half uses bright colors.
 	bool back = cos(angle) < 0;
 	int color = back ? (shadow ? 4 : 3) : (shadow ? 5 : 6);
-	double yoff = shadow ? 2.0 : 0.0;
-	for (int y = 0; y < FONT_HEIGHT; y++)
-		for (int x = 0; x < FONT_WIDTH; x++)
-			if (Glyph[letter][y][x])
-				DrawCell(angle, x - FONT_WIDTH / 2.0, y - FONT_HEIGHT / 2.0 + yoff, color);
+	double yoff = shadow ? Font.height / 8.0 : 0.0;
+	unsigned char code = (unsigned char)ScrollText[0][letter];
+	int width = RETRO_CharWidth(Font, code);
+	int glyph = code - Font.firstcharacter;
+	int sourcex = glyph * Font.width;
+	int copywidth = MIN(Font.width, width);
+	if (glyph < 0 || sourcex + Font.width > Font.atlas->width) {
+		return;
+	}
+	for (int y = 0; y < Font.height; y++)
+		for (int x = 0; x < copywidth; x++)
+			if (Font.atlas->data[y * Font.atlas->width + sourcex + x])
+				DrawCell(angle, x - width / 2.0, y - Font.height / 2.0 + yoff, color, paintdepth);
 }
 
 static int BarEdge(int y, double phase)
@@ -122,14 +136,19 @@ void DEMO_Render(double time, double deltatime)
 
 	// Draw scroller
 	RETRO_ClearDepthBuffer();
-	PaintDepth = 1.0f;
-	int order[SCROLL_LENGTH];
-	double angle[SCROLL_LENGTH];
-	for (int i = 0; i < (int)SCROLL_LENGTH; i++) {
+	float paintdepth = 1.0f;
+	int length = (int)strlen(ScrollText[0]);
+	double angleperpixel = 2 * M_PI / (length * WRAP_WIDTH);
+	int order[256];
+	double angle[256];
+	int cursor = 0;
+	for (int i = 0; i < length; i++) {
 		order[i] = i;
-		angle[i] = phase + i * (2 * M_PI / SCROLL_LENGTH);
+		int width = RETRO_CharWidth(Font, (unsigned char)ScrollText[0][i]);
+		angle[i] = phase + (cursor + width / 2.0) * angleperpixel;
+		cursor += width;
 	}
-	for (int i = 1; i < (int)SCROLL_LENGTH; i++) {
+	for (int i = 1; i < length; i++) {
 		int item = order[i], j = i;
 		while (j > 0 && cos(angle[order[j - 1]]) > cos(angle[item])) {
 			order[j] = order[j - 1];
@@ -137,10 +156,10 @@ void DEMO_Render(double time, double deltatime)
 		}
 		order[j] = item;
 	}
-	for (int n = 0; n < (int)SCROLL_LENGTH; n++) {
+	for (int n = 0; n < length; n++) {
 		int i = order[n];
-		DrawGlyph(i, angle[i], true);
-		DrawGlyph(i, angle[i], false);
+		DrawGlyph(i, angle[i], true, paintdepth);
+		DrawGlyph(i, angle[i], false, paintdepth);
 	}
 
 	// Draw neon seam
@@ -170,14 +189,5 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(11, RETRO_DEEPDARKVIOLET);
 
 	// Init font
-	RETRO_LoadImage("assets/font_16x16.pcx");
-	unsigned char *font = RETRO_ImageData();
-	for (int i = 0; i < (int)SCROLL_LENGTH; i++) {
-		unsigned char c = SCROLL_TEXT[i];
-		if (c < 32 || c >= 91) continue;
-		unsigned char *src = font + (c - 32) * FONT_WIDTH;
-		for (int y = 0; y < FONT_HEIGHT; y++)
-			for (int x = 0; x < FONT_WIDTH; x++)
-				Glyph[i][y][x] = src[y * FONT_IMAGE_WIDTH + x] != 0;
-	}
+	Font = RETRO_LoadFont(FONT);
 }

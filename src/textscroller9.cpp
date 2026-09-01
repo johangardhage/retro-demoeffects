@@ -1,56 +1,63 @@
 //
-// Scroller cube, using the shared 16x16 font
+// Scroller, on a cube
 //
-// Text from font_16x16.pcx is assembled into a horizontal strip and copied
-// into the middle of a 256x256 texture. The texture is mapped in full onto
-// every face of a rotating cube, so the same scroller wraps around it.
+// The font is packed into a horizontal strip, copied each frame into the
+// middle of a 256×256 texture, and mapped in full onto every face of a
+// rotating cube, so the same scroller wraps around it. The cube is drawn
+// with RETRO_POLY_TEXTURE; the scroller itself is still
+//
+//   color = strip[row][(x + phase) mod stripwidth]
+//
+// Font greys are remapped onto the cube's colour ramp rather than driven
+// into white: the darkest atlas ink becomes the low end of the ramp and
+// the lightest the high end. Model-space cube edges are overstroked after
+// the textured faces so the silhouette stays visible when a face is
+// nearly edge-on. phase lives on stripwidth, in columns per second; the
+// cube turns about each axis at ROTATION_SPEED.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
+#include "lib/retrofont.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define FONT_WIDTH 16
-#define FONT_HEIGHT 16
+#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+//#define FONT RETRO_FONT_MINECRAFT_8X8
 #define FONT_SCALE 4
-#define GLYPH_WIDTH (FONT_WIDTH * FONT_SCALE)
-#define GLYPH_HEIGHT (FONT_HEIGHT * FONT_SCALE)
-#define GLYPH_ADVANCE (GLYPH_WIDTH + 2 * FONT_SCALE) // proportional inter-letter space
-#define FONT_IMAGE_WIDTH 944
+#define FONT_SPACING 2 // proportional inter-letter space, in unscaled font pixels
 #define IMAGE_WIDTH 256
 #define IMAGE_HEIGHT 256
-#define SCROLL_TEXT "       RETRO DEMOEFFECTS...   "
-#define SCROLL_LENGTH (sizeof(SCROLL_TEXT) - 1)
-#define SCROLL_WIDTH (GLYPH_ADVANCE * SCROLL_LENGTH)
 #define SCROLL_SPEED 200.0 // strip columns per second
-#define SCROLL_Y ((IMAGE_HEIGHT - GLYPH_HEIGHT) / 2)
 #define ROTATION_SPEED 2.0 // radians per second, about each axis
 
-unsigned char image[IMAGE_WIDTH * IMAGE_HEIGHT];
-unsigned char scroll_bitmap[GLYPH_HEIGHT * SCROLL_WIDTH];
-int font_dim = 255;
-int font_lit = 0;
+static const char *const ScrollText[] = { "     RETRO DEMOEFFECTS..." };
+
+RETRO_Image *ScrollImage;
+unsigned char Image[IMAGE_WIDTH * IMAGE_HEIGHT];
+int ScrollY;
+int FontDim = 255;
+int FontLit = 0;
 
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, SCROLL_WIDTH);
+	double phase = fmod(time * SCROLL_SPEED, ScrollImage->width);
 	int iphase = (int)phase;
 
-	memset(image, 0, sizeof(image));
-	for (int y = 0; y < GLYPH_HEIGHT; y++) {
+	memset(Image, 0, sizeof(Image));
+	for (int y = 0; y < ScrollImage->height; y++) {
 		for (int x = 0; x < IMAGE_WIDTH; x++) {
-			unsigned char color = scroll_bitmap[y * SCROLL_WIDTH + WRAP(x + iphase, SCROLL_WIDTH)];
+			unsigned char color = ScrollImage->data[y * ScrollImage->width + WRAP(x + iphase, ScrollImage->width)];
 			if (color != 0) {
 				// Spread the shades used by the font across the cube's colored
 				// palette instead of driving them all into white.
 				unsigned char texel = 40;
-				if (font_lit > font_dim) {
-					texel += (color - font_dim) * 200 / (font_lit - font_dim);
+				if (FontLit > FontDim) {
+					texel += (color - FontDim) * 200 / (FontLit - FontDim);
 				}
-				image[(SCROLL_Y + y) * IMAGE_WIDTH + x] = texel;
+				Image[(ScrollY + y) * IMAGE_WIDTH + x] = texel;
 			}
 		}
 	}
@@ -95,26 +102,14 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/font_16x16.pcx", true);
-	unsigned char *font = RETRO_ImageData();
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]), FONT_SCALE, FONT_SPACING);
+	ScrollY = (IMAGE_HEIGHT - ScrollImage->height) / 2;
 
-	for (int i = 0; i < (int)SCROLL_LENGTH; i++) {
-		unsigned char *src = font + (SCROLL_TEXT[i] - 32) * FONT_WIDTH;
-		unsigned char *dst = scroll_bitmap + i * GLYPH_ADVANCE;
-		for (int y = 0; y < FONT_HEIGHT; y++) {
-			for (int x = 0; x < FONT_WIDTH; x++) {
-				unsigned char color = src[y * FONT_IMAGE_WIDTH + x];
-				for (int dy = 0; dy < FONT_SCALE; dy++) {
-					for (int dx = 0; dx < FONT_SCALE; dx++) {
-						dst[(y * FONT_SCALE + dy) * SCROLL_WIDTH
-							+ x * FONT_SCALE + dx] = color;
-					}
-				}
-				if (color != 0) {
-					font_dim = MIN(font_dim, (int)color);
-					font_lit = MAX(font_lit, (int)color);
-				}
-			}
+	for (int i = 0; i < ScrollImage->width * ScrollImage->height; i++) {
+		unsigned char color = ScrollImage->data[i];
+		if (color != 0) {
+			FontDim = MIN(FontDim, (int)color);
+			FontLit = MAX(FontLit, (int)color);
 		}
 	}
 
@@ -123,6 +118,6 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(0, RETRO_BLACK);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
-	model->texmap = image;
+	model->texmap = Image;
 	RETRO_InitializeFaceUVs(model);
 }

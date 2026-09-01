@@ -277,6 +277,7 @@ void DEMO_Initialize(void)
 	RETRO_Set6bitPalette(texturepalette);
 	RETRO_SetColor(0, RETRO_BLACK);
 	RETRO_SetColor(255, RETRO_PERIWINKLE);
+	RETRO_SetFont(RETRO_FONT_VGA_8X8);
 
 	// Load model
 	RETRO_Load3DModel("assets/mask.obj");

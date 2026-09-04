@@ -29,6 +29,8 @@ void RETRO_ParseArguments(int argc, char *argv[])
 		{"showfps", no_argument, 0, 0},
 		{"nofps", no_argument, 0, 0},
 		{"capfps", required_argument, 0, 0},
+		{"dumpfile", required_argument, 0, 0},
+		{"dumptime", required_argument, 0, 0},
 		{0, 0, 0, 0} };
 	bool usage = false;
 	int c;
@@ -52,6 +54,13 @@ void RETRO_ParseArguments(int argc, char *argv[])
 				RETRO.showfps = false;
 			} else if (strcmp("capfps", long_options[option_index].name) == 0) {
 				RETRO.fpscap = atoi(optarg);
+			} else if (strcmp("dumpfile", long_options[option_index].name) == 0) {
+				RETRO.dumpfile = optarg;
+			} else if (strcmp("dumptime", long_options[option_index].name) == 0) {
+				RETRO.dumptime = atof(optarg);
+				if (RETRO.dumptime < 0) {
+					RETRO.dumptime = 0;
+				}
 			}
 			break;
 		case 'h':
@@ -110,6 +119,8 @@ void RETRO_ParseArguments(int argc, char *argv[])
 		printf("     --showfps        Show frame rate in window title\n");
 		printf("     --nofps          Hide frame rate\n");
 		printf("     --capfps=VALUE   Limit frame rate to the specified VALUE\n");
+		printf("     --dumpfile=FILE  Write a PPM of the current frame and exit\n");
+		printf("     --dumptime=VALUE Wait VALUE seconds of demo time before --dumpfile\n");
 		exit(1);
 	}
 }

@@ -169,6 +169,8 @@ struct {
 	bool showcursor;
 	bool showfps;
 	int fpscap;
+	const char *dumpfile = NULL;	// --dumpfile writes this PPM after dumptime, then quits
+	double dumptime = 0;			// demo seconds to wait before that write
 	bool quit;
 	SDL_Window *window = NULL;
 	SDL_Renderer *renderer = NULL;
@@ -455,8 +457,40 @@ void RETRO_Flip(void)
 	SDL_RenderPresent(RETRO.renderer);
 }
 
+//
+// Write the palettized framebuffer as a binary PPM
+//
+// Flip shows ARGB from RETRO.palette; this writes the same three bytes per
+// pixel, without the window. The index buffer is not stored: a dump is a
+// picture of the frame, not an asset.
+//
+void RETRO_DumpFrame(const char *filename)
+{
+	FILE *fp = fopen(filename, "wb");
+	if (fp == NULL) {
+		RETRO_RageQuit("Cannot open file: %s\n", filename);
+	}
+
+	fprintf(fp, "P6\n%d %d\n255\n", RETRO_WIDTH, RETRO_HEIGHT);
+	for (int i = 0; i < RETRO.framebuffersize; i++) {
+		RETRO_Palette color = RETRO_GetColor(RETRO.framebuffer[i]);
+		fputc(color.r, fp);
+		fputc(color.g, fp);
+		fputc(color.b, fp);
+	}
+
+	fclose(fp);
+}
+
 void RETRO_Initialize(void)
 {
+	// --dumpfile never shows a window; render on the dummy driver instead of the real display.
+	// Fullscreen mode-setting fails on the dummy driver, so fall back to windowed too.
+	if (RETRO.dumpfile) {
+		SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
+		RETRO.mode = RETRO_MODE_WINDOW;
+	}
+
 	// Initialize SDL
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
 		RETRO_RageQuit("SDL_Init failed: %s\n", SDL_GetError());
@@ -689,6 +723,14 @@ void RETRO_Mainloop(void)
 			RETRO_Flip();
 		}
 		unsigned long int stop = SDL_GetTicks();
+
+		// --dumpfile writes once the displayed clock has reached dumptime, then
+		// quits so Deinitialize still runs. The write is after the frame, so
+		// the file is the picture Flip just showed.
+		if (RETRO.dumpfile && RETRO.time >= RETRO.dumptime) {
+			RETRO_DumpFrame(RETRO.dumpfile);
+			RETRO_Quit();
+		}
 
 		// Limit FPS
 		if (RETRO.fpscap && ((stop - start) < 1000UL / RETRO.fpscap)) {

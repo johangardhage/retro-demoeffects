@@ -241,9 +241,14 @@ void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char color)
 //
 // Glenz shaded polygon
 // Add one color to the framebuffer, allowing sorted polygons to show through.
+// colormax is the top of the add; a model opts into a lower one (see
+// Model3D::colormax) so a triple overlap fills a chosen shade instead
+// of walking into white. RETRO_COLORS - 1 is the unsigned char ceiling.
 //
-void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned char color)
+void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned char color, int colormax = RETRO_COLORS - 1)
 {
+	colormax = CLAMP(colormax, 0, RETRO_COLORS);
+
 	for (int triangle = 1; triangle < points - 1; triangle++) {
 		PolygonPoint *p0 = &point[0];
 		PolygonPoint *p1 = &point[triangle];
@@ -258,7 +263,8 @@ void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned char color
 			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			for (int x = xstart; x < xend; x++) {
-				RETRO.framebuffer[y * RETRO_WIDTH + x] = MIN(RETRO.framebuffer[y * RETRO_WIDTH + x] + color, 255);
+				int pixel = RETRO.framebuffer[y * RETRO_WIDTH + x] + color;
+				RETRO.framebuffer[y * RETRO_WIDTH + x] = MIN(pixel, colormax);
 			}
 		}
 	}

@@ -27,7 +27,8 @@
 #define RETRO_MAX_NORMALS 1500 // a two sided mesh needs one per side of a vertex
 #define RETRO_MAX_FACES 2000
 #define RETRO_MAX_FACEVERTICES 5
-#define RETRO_MAX_MODELS 10 // a demo can hold several models at once, as it can images
+#define RETRO_MAX_MODELS 32 // a demo can hold several models at once, as it can images; a
+									// per-character glyph cache is the heaviest current user
 
 struct Vertex {
 	float x, y, z;				// Model space coordinates
@@ -124,6 +125,12 @@ struct Model3D {
 	int bumpmapwidth = RETRO_TEXMAP_SIZE;		// Bump texture width, which need not match the texture's
 	int bumpmapheight = RETRO_TEXMAP_SIZE;		// Bump texture height
 	int bumpgrazing = RETRO_BUMP_GRAZING;		// Height difference that tilts a normal to grazing
+	int colormax = RETRO_COLORS - 1;			// Top of the Glenz add (see RETRO_RenderGlenzModel),
+												// so a triple overlap fills a chosen shade instead of
+												// walking into white. RETRO_COLORS - 1 leaves the
+												// framebuffer's own ceiling; a model that wants to cap
+												// lower opts in explicitly, since the cap depends on that
+												// model's own palette layout, not on shades alone
 };
 
 struct {
@@ -176,6 +183,7 @@ Model3D *RETRO_Allocate3DModel(void)
 	model->bumpmapheight = RETRO_TEXMAP_SIZE;
 	model->envmapradius = RETRO_ENVMAP_SIZE / 2;
 	model->bumpgrazing = RETRO_BUMP_GRAZING;
+	model->colormax = RETRO_COLORS - 1;
 
 	RETRO_Model.model[id] = model;
 	RETRO_Model.models++;
@@ -191,6 +199,44 @@ void RETRO_Free3DModel(int id = 0)
 		RETRO_Model.model[id] = NULL;
 		RETRO_Model.models--;
 	}
+}
+
+//
+// Append one vertex to a model built procedurally rather than loaded
+//
+int RETRO_AddModelVertex(Model3D *model, float x, float y, float z)
+{
+	if (model->vertices >= RETRO_MAX_VERTICES) {
+		RETRO_RageQuit("Too many model vertices\n");
+	}
+
+	int i = model->vertices++;
+	model->vertex[i].x = x;
+	model->vertex[i].y = y;
+	model->vertex[i].z = z;
+	return i;
+}
+
+//
+// Append one quad face, referencing vertices already added
+//
+// facec is the face's own offset from the model's c (see Model3D::c); it
+// defaults to 0, which is every renderer's neutral value.
+//
+void RETRO_AddModelQuad(Model3D *model, int a, int b, int c, int d, int facec = 0)
+{
+	if (model->faces >= RETRO_MAX_FACES) {
+		RETRO_RageQuit("Too many model faces\n");
+	}
+
+	Face *face = &model->face[model->faces++];
+	memset(face, 0, sizeof(Face));
+	face->vertices = 4;
+	face->vertex[0] = a;
+	face->vertex[1] = b;
+	face->vertex[2] = c;
+	face->vertex[3] = d;
+	face->c = facec;
 }
 
 // Area-weighted average of the adjacent face normals (Hearn & Baker / Foley).

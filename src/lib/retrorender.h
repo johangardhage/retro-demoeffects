@@ -159,7 +159,7 @@ void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 			if (offset == 0) continue;
 			color = model->c + offset;
 		}
-		RETRO_DrawGlenzPolygon(point, face->vertices, color);
+		RETRO_DrawGlenzPolygon(point, face->vertices, color, model->colormax);
 	}
 }
 

@@ -57,6 +57,8 @@ Options:
      --showfps        Show frame rate in window title
      --nofps          Hide frame rate
      --capfps=VALUE   Limit frame rate to the specified VALUE
+     --dumpfile=FILE  Write a PPM of the current frame and exit
+     --dumptime=VALUE Wait VALUE seconds of demo time before --dumpfile
 ```
 
 ## License

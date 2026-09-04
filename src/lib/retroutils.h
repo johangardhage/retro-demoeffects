@@ -102,6 +102,84 @@ void RETRO_SaveImage(const char *filename, unsigned char *image, RETRO_Palette *
 	fclose(fp);
 }
 
+struct RETRO_Image24 {
+	unsigned char *data; // width * height * 3, R, G, B per pixel
+	int width;
+	int height;
+};
+
+//
+// Read a 24-bit PCX: three 8-bit planes (red, green, blue, in that order) per
+// scanline rather than one indexed plane, so no trailing palette. A plane's
+// scanline is its own RLE run - encoders do not carry a run across the
+// plane or scanline boundary - and may be padded past width to BytesPerLine,
+// which this discards rather than folding into the image
+//
+RETRO_Image24 RETRO_LoadImage24(const char *filename)
+{
+	FILE *fp = fopen(filename, "rb");
+	if (fp == NULL) {
+		RETRO_RageQuit("Cannot open file: %s\n", filename);
+	}
+
+	unsigned char header[128];
+	if (fread(header, 128, 1, fp) != 1 || header[0] != 10) {
+		RETRO_RageQuit("Cannot read file: %s\n", filename);
+	}
+	if (header[3] != 8 || header[65] != 3) {
+		RETRO_RageQuit("Not a 24-bit PCX, expected 3 planes of 8 bits: %s\n", filename);
+	}
+
+	int xmin = header[4] + (header[5] << 8);
+	int ymin = header[6] + (header[7] << 8);
+	int xmax = header[8] + (header[9] << 8);
+	int ymax = header[10] + (header[11] << 8);
+	int width = xmax - xmin + 1;
+	int height = ymax - ymin + 1;
+	int bytesperline = header[66] + (header[67] << 8);
+
+	unsigned char *data = (unsigned char *)malloc(width * height * 3);
+	if (data == NULL) {
+		RETRO_RageQuit("Cannot allocate image data memory\n");
+	}
+	unsigned char *scanline = (unsigned char *)malloc(bytesperline);
+	if (scanline == NULL) {
+		RETRO_RageQuit("Cannot allocate scanline memory\n");
+	}
+
+	for (int y = 0; y < height; y++) {
+		for (int plane = 0; plane < 3; plane++) {
+			int index = 0;
+			while (index < bytesperline) {
+				int value = getc(fp);
+				if (value == EOF) {
+					RETRO_RageQuit("Cannot read file: %s\n", filename);
+				}
+				if (value < 192) {
+					scanline[index++] = value;
+				} else {
+					int num = value - 192;
+					value = getc(fp);
+					if (value == EOF) {
+						RETRO_RageQuit("Cannot read file: %s\n", filename);
+					}
+					while (num-- > 0 && index < bytesperline) {
+						scanline[index++] = value;
+					}
+				}
+			}
+			for (int x = 0; x < width; x++) {
+				data[(y * width + x) * 3 + plane] = scanline[x];
+			}
+		}
+	}
+
+	free(scanline);
+	fclose(fp);
+
+	return RETRO_Image24{ data, width, height };
+}
+
 void RETRO_LoadAsset(const char *filename, void *buffer, int size = 0, int number = 1)
 {
 	FILE *fp = fopen(filename, "rb");

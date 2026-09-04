@@ -637,6 +637,23 @@ inline int RETRO_CharWidth(const RETRO_Font &font, unsigned char character)
 	return (font.widths && character < 128) ? font.widths[character] : font.width;
 }
 
+// Ink at one atlas pixel of a glyph, laid out one glyph-width cell per
+// character starting at font.firstcharacter. False off the glyph's own cell
+// or off the atlas, so a caller building a mesh from the mask need not
+// bounds-check a neighbor itself.
+inline bool RETRO_FontInk(const RETRO_Font &font, unsigned char character, int x, int y)
+{
+	int cell = (int)character - font.firstcharacter;
+	int sourcex = cell * font.width + x;
+	if (cell < 0 || x < 0 || x >= font.width || y < 0 || y >= font.height) {
+		return false;
+	}
+	if (sourcex < 0 || sourcex >= font.atlas->width || y >= font.atlas->height) {
+		return false;
+	}
+	return font.atlas->data[y * font.atlas->width + sourcex] != 0;
+}
+
 void RETRO_PutChar(unsigned char character, int x, int y, unsigned char color)
 {
 	const unsigned char *glyph = RETRO_Glyph(character);

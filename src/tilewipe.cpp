@@ -99,7 +99,7 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_Image *image = RETRO_LoadImage("assets/flag_320x240.pcx", true);
+	RETRO_Image *image = RETRO_LoadImage("assets/monkey_320x240.pcx", true);
 	if (image->width != RETRO_WIDTH || image->height != RETRO_HEIGHT) {
 		RETRO_RageQuit("The image must be the size of the screen\n");
 	}

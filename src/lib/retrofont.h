@@ -562,7 +562,7 @@ struct RETRO_FontData {
 	int width;
 	int height;
 	int bytesperrow;
-	const unsigned char *widths = nullptr; // per-character advance; null means fixed-width
+	const unsigned char *widths = NULL; // per-character advance; null means fixed-width
 };
 
 struct RETRO_FontAsset {
@@ -581,7 +581,7 @@ struct RETRO_Font {
 	int width;
 	int height;
 	int firstcharacter;
-	const unsigned char *widths = nullptr;
+	const unsigned char *widths = NULL;
 };
 
 static const RETRO_FontData RETRO_FONT_VGA_8X8 = {
@@ -597,9 +597,9 @@ static const RETRO_FontData RETRO_FONT_MINECRAFT_8X8 = {
 	&RETRO_FONT_MINECRAFT_8X8_DATA[0][0][0], 8, 8, 1, &RETRO_FONT_MINECRAFT_8X8_WIDTHS[0]
 };
 
-static RETRO_FontData RETRO_CurrentFont = RETRO_FONT_VGA_8X8;
+inline RETRO_FontData RETRO_CurrentFont = RETRO_FONT_VGA_8X8;
 
-void RETRO_SetFont(const RETRO_FontData &font)
+inline void RETRO_SetFont(const RETRO_FontData &font)
 {
 	RETRO_CurrentFont = font;
 }
@@ -654,7 +654,7 @@ inline bool RETRO_FontInk(const RETRO_Font &font, unsigned char character, int x
 	return font.atlas->data[y * font.atlas->width + sourcex] != 0;
 }
 
-void RETRO_PutChar(unsigned char character, int x, int y, unsigned char color)
+inline void RETRO_PutChar(unsigned char character, int x, int y, unsigned char color)
 {
 	const unsigned char *glyph = RETRO_Glyph(character);
 	if (glyph == NULL) {
@@ -670,7 +670,7 @@ void RETRO_PutChar(unsigned char character, int x, int y, unsigned char color)
 	}
 }
 
-void RETRO_PutString(const char *text, int x, int y, unsigned char color)
+inline void RETRO_PutString(const char *text, int x, int y, unsigned char color)
 {
 	while (*text != 0) {
 		unsigned char character = *text++;
@@ -683,7 +683,7 @@ void RETRO_PutString(const char *text, int x, int y, unsigned char color)
 // covering all 128 character slots, one width-wide cell per code, unpacked
 // from the source's 1-bit rows into 0/255 texels. Palette index 0 is black,
 // 255 is white, and every other index is copied from the active palette.
-RETRO_Font RETRO_LoadFont(const RETRO_FontData &font)
+inline RETRO_Font RETRO_LoadFont(const RETRO_FontData &font)
 {
 	const int glyphs = 128;
 
@@ -718,10 +718,10 @@ RETRO_Font RETRO_LoadFont(const RETRO_FontData &font)
 // Normalize a horizontal PCX font atlas into a RETRO_Font. The atlas is
 // used as loaded, palette and all nonzero texel values preserved verbatim;
 // index zero remains transparent.
-RETRO_Font RETRO_LoadFont(const RETRO_FontAsset &font)
+inline RETRO_Font RETRO_LoadFont(const RETRO_FontAsset &font)
 {
 	RETRO_Image *atlas = RETRO_LoadImage(font.filename);
-	return RETRO_Font{ atlas, font.width, font.height, font.firstcharacter, nullptr };
+	return RETRO_Font{ atlas, font.width, font.height, font.firstcharacter, NULL };
 }
 
 // Pixel size of one line as RETRO_GenerateTextImage would pack it: each
@@ -759,7 +759,7 @@ inline int RETRO_TextImageHeight(const RETRO_Font &font, int rows, int scale = 1
 // remains transparent. spacing adds unscaled font pixels of gap after every
 // glyph, including the last, so a caller can wrap the width the same way
 // regardless of spacing.
-RETRO_Image *RETRO_GenerateTextImage(const RETRO_Font &font, const char *const *lines, int rows, int scale = 1, int spacing = 0)
+inline RETRO_Image *RETRO_GenerateTextImage(const RETRO_Font &font, const char *const *lines, int rows, int scale = 1, int spacing = 0)
 {
 	int width = RETRO_TextImageWidth(font, lines, rows, scale, spacing);
 	int height = RETRO_TextImageHeight(font, rows, scale);

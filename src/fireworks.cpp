@@ -49,7 +49,7 @@ struct FireParticle {
 	unsigned char kind;
 } Particles[NUM_PARTICLES];
 
-int AllocParticle(void)
+static int AllocParticle(void)
 {
 	for (int i = 0; i < NUM_PARTICLES; i++) {
 		if (Particles[i].kind == DEAD) {
@@ -59,7 +59,7 @@ int AllocParticle(void)
 	return -1;
 }
 
-void LaunchRocket(void)
+static void LaunchRocket(void)
 {
 	int i = AllocParticle();
 	if (i < 0) {
@@ -75,7 +75,7 @@ void LaunchRocket(void)
 	Particles[i].life = 0;
 }
 
-void Explode(float x, float y)
+static void Explode(float x, float y)
 {
 	for (int n = 0; n < SPARKS; n++) {
 		int i = AllocParticle();

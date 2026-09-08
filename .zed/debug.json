@@ -1,0 +1,15 @@
+[
+  {
+    "label": "Debug current demo",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "build": {
+      "command": "meson",
+      "args": ["compile", "-C", "build", "$ZED_STEM"],
+      "cwd": "$ZED_WORKTREE_ROOT"
+    },
+    "program": "$ZED_WORKTREE_ROOT/build/$ZED_STEM",
+    "args": ["--window"],
+    "cwd": "$ZED_WORKTREE_ROOT"
+  }
+]

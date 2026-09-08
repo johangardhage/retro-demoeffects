@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug current demo",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/${fileBasenameNoExtension}",
+      "args": ["--window"],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "meson compile current demo"
+    }
+  ]
+}

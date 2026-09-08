@@ -133,7 +133,7 @@ struct Model3D {
 												// model's own palette layout, not on shades alone
 };
 
-struct {
+inline struct {
 	Model3D *model[RETRO_MAX_MODELS];
 	int models = 0;
 } RETRO_Model;
@@ -146,7 +146,7 @@ struct {
 // keeps the pointers its loads returned and passes the one it means, or asks
 // for it here by id.
 //
-Model3D *RETRO_Get3DModel(int id = 0)
+inline Model3D *RETRO_Get3DModel(int id = 0)
 {
 	return id >= 0 && id < RETRO_MAX_MODELS ? RETRO_Model.model[id] : NULL;
 }
@@ -158,7 +158,7 @@ Model3D *RETRO_Get3DModel(int id = 0)
 // it is reached and released like any other. Defaults are assigned by hand
 // because malloc and memset go around the member initializers Model3D declares.
 //
-Model3D *RETRO_Allocate3DModel(void)
+inline Model3D *RETRO_Allocate3DModel(void)
 {
 	// First free slot. Ids are slot numbers and are recycled: free(0) then
 	// load reuses 0 even if a later model still holds a higher id.
@@ -191,7 +191,7 @@ Model3D *RETRO_Allocate3DModel(void)
 	return model;
 }
 
-void RETRO_Free3DModel(int id = 0)
+inline void RETRO_Free3DModel(int id = 0)
 {
 	if (id >= 0 && id < RETRO_MAX_MODELS && RETRO_Model.model[id]) {
 		free(RETRO_Model.model[id]->frame);
@@ -204,7 +204,7 @@ void RETRO_Free3DModel(int id = 0)
 //
 // Append one vertex to a model built procedurally rather than loaded
 //
-int RETRO_AddModelVertex(Model3D *model, float x, float y, float z)
+inline int RETRO_AddModelVertex(Model3D *model, float x, float y, float z)
 {
 	if (model->vertices >= RETRO_MAX_VERTICES) {
 		RETRO_RageQuit("Too many model vertices\n");
@@ -223,7 +223,7 @@ int RETRO_AddModelVertex(Model3D *model, float x, float y, float z)
 // facec is the face's own offset from the model's c (see Model3D::c); it
 // defaults to 0, which is every renderer's neutral value.
 //
-void RETRO_AddModelQuad(Model3D *model, int a, int b, int c, int d, int facec = 0)
+inline void RETRO_AddModelQuad(Model3D *model, int a, int b, int c, int d, int facec = 0)
 {
 	if (model->faces >= RETRO_MAX_FACES) {
 		RETRO_RageQuit("Too many model faces\n");
@@ -244,7 +244,7 @@ void RETRO_AddModelQuad(Model3D *model, int a, int b, int c, int d, int facec = 
 // harder on the vertices it meets than a small one does. Needs face normals
 // first. For a cube at the origin this comes out along the vertex position; for
 // a general mesh it does not.
-void RETRO_InitializeVertexNormals(Model3D *model = NULL)
+inline void RETRO_InitializeVertexNormals(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -292,7 +292,7 @@ void RETRO_InitializeVertexNormals(Model3D *model = NULL)
 // Face::area is the whole face either way, since it is a weight rather than a
 // direction: the first triangle is half a quad only when the quad is a
 // parallelogram, and the quads of a lat-long mesh are trapezoids.
-void RETRO_InitializeFaceNormals(Model3D *model = NULL)
+inline void RETRO_InitializeFaceNormals(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -353,7 +353,7 @@ void RETRO_InitializeFaceNormals(Model3D *model = NULL)
 // shear the tilt. A face with no usable UVs falls back to any frame
 // orthogonal to its normal.
 //
-void RETRO_InitializeFaceTangents(Model3D *model = NULL)
+inline void RETRO_InitializeFaceTangents(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -461,7 +461,7 @@ void RETRO_InitializeFaceTangents(Model3D *model = NULL)
 // carries its own UVs afterwards, one set per corner, and the tangent frames,
 // which are derived from the UVs, are rebuilt to match.
 //
-void RETRO_InitializeFaceUVs(Model3D *model = NULL)
+inline void RETRO_InitializeFaceUVs(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -554,7 +554,7 @@ void RETRO_InitializeFaceUVs(Model3D *model = NULL)
 // Reloading an animation over one already held replaces it, so a model carries
 // at most the one it was last given
 //
-void RETRO_Load3DModelFrames(Model3D *model, const char *pattern, int frames)
+inline void RETRO_Load3DModelFrames(Model3D *model, const char *pattern, int frames)
 {
 	if (frames <= 0) {
 		RETRO_RageQuit("An animation needs at least one frame: %s\n", pattern);
@@ -618,7 +618,7 @@ void RETRO_Load3DModelFrames(Model3D *model, const char *pattern, int frames)
 // shaded needs RETRO_InitializeFaceNormals and RETRO_InitializeVertexNormals
 // run over the result before it is drawn
 //
-void RETRO_MorphModel(float u, Model3D *model = NULL)
+inline void RETRO_MorphModel(float u, Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -658,7 +658,7 @@ void RETRO_MorphModel(float u, Model3D *model = NULL)
 // to name. A model with no animation is loaded exactly as it was before there
 // were any, since the pattern defaults to none
 //
-Model3D *RETRO_Load3DModel(const char *filename, const char *animation = NULL, int frames = 0)
+inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = NULL, int frames = 0)
 {
 	Model3D *model = RETRO_Allocate3DModel();
 
@@ -781,7 +781,7 @@ Model3D *RETRO_Load3DModel(const char *filename, const char *animation = NULL, i
 	return model;
 }
 
-void RETRO_Save3DModel(const char *filename, Model3D *model)
+inline void RETRO_Save3DModel(const char *filename, Model3D *model)
 {
 	FILE *fp = fopen(filename, "wb");
 	if (fp == NULL) {

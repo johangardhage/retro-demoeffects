@@ -36,7 +36,7 @@
 // One scanline of one face, half-open in x. A back-facing edge has
 // left >= right and covers nothing, which is the silhouette test.
 //
-void DrawSpan(int left, int right, int y, unsigned char color)
+static void DrawSpan(int left, int right, int y, unsigned char color)
 {
 	left = MAX(left, 0);
 	right = MIN(right, RETRO_WIDTH);

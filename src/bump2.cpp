@@ -53,7 +53,7 @@ SurfaceNormal SurfaceNormals[RETRO_HEIGHT * RETRO_WIDTH];
 // Interior: (h[x+1] - h[x-1]) / 2. On the border the same order, one-sided:
 // (-3 h0 + 4 h1 - h2) / 2 forwards, and its mirror backwards.
 //
-float HeightSlopeX(unsigned char *heightmap, int x, int y)
+static float HeightSlopeX(unsigned char *heightmap, int x, int y)
 {
 	int offset = y * RETRO_WIDTH + x;
 
@@ -65,7 +65,7 @@ float HeightSlopeX(unsigned char *heightmap, int x, int y)
 	return (heightmap[offset + 1] - heightmap[offset - 1]) / 2.0;
 }
 
-float HeightSlopeY(unsigned char *heightmap, int x, int y)
+static float HeightSlopeY(unsigned char *heightmap, int x, int y)
 {
 	int offset = y * RETRO_WIDTH + x;
 

@@ -40,7 +40,7 @@ unsigned char Field[MAP_SIZE * MAP_SIZE];
 //
 // The field's value at a wrapped cell
 //
-inline float Cell(float *field, int x, int y)
+static float Cell(float *field, int x, int y)
 {
 	return field[(y & MAP_MASK) * MAP_SIZE + (x & MAP_MASK)];
 }
@@ -48,7 +48,7 @@ inline float Cell(float *field, int x, int y)
 //
 // Diamond-square over a torus, normalized into the byte range
 //
-void BuildField(void)
+static void BuildField(void)
 {
 	static float field[MAP_SIZE * MAP_SIZE];
 	float amplitude = MAP_SIZE / 2;

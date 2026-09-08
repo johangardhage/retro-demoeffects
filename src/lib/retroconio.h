@@ -52,36 +52,36 @@
 #define CONIO_WHITE        15
 #define CONIO_BLINK        128
 
-struct {
+inline struct {
 	int bgc = 40;
 } CONIO;
 
-void CONIO_clreol(void)
+inline void CONIO_clreol(void)
 {
 	printf("\033[K");
 }
 
-void CONIO_insline(void)
+inline void CONIO_insline(void)
 {
 	printf("\x1b[1L");
 }
 
-void CONIO_delline(void)
+inline void CONIO_delline(void)
 {
 	printf("\033[1M");
 }
 
-void CONIO_gotoxy(int x, int y)
+inline void CONIO_gotoxy(int x, int y)
 {
 	printf("\033[%d;%df", y, x);
 }
 
-void CONIO_clrscr(void)
+inline void CONIO_clrscr(void)
 {
 	printf("\033[%dm\033[2J\033[1;1f", CONIO.bgc);
 }
 
-void CONIO_textbackground(int color)
+inline void CONIO_textbackground(int color)
 {
 	switch (color % 16) {
 	case CONIO_BLACK:          CONIO.bgc = 40; break;
@@ -103,7 +103,7 @@ void CONIO_textbackground(int color)
 	}
 }
 
-void CONIO_textcolor(short color)
+inline void CONIO_textcolor(short color)
 {
 	switch (color % 16) {
 	case CONIO_BLACK:          printf("\033[0;%d;%dm", 30, CONIO.bgc); break;
@@ -125,12 +125,12 @@ void CONIO_textcolor(short color)
 	}
 }
 
-int CONIO_ungetch(int ch)
+inline int CONIO_ungetch(int ch)
 {
 	return ungetc(ch, stdin);
 }
 
-int CONIO_getch_echo(bool echo = true)
+inline int CONIO_getch_echo(bool echo = true)
 {
 	struct termios oldt, newt;
 	tcgetattr(STDIN_FILENO, &oldt);
@@ -147,17 +147,17 @@ int CONIO_getch_echo(bool echo = true)
 	return ch;
 }
 
-int CONIO_getch(void)
+inline int CONIO_getch(void)
 {
 	return CONIO_getch_echo(false);
 }
 
-int CONIO_getche(void)
+inline int CONIO_getche(void)
 {
 	return CONIO_getch_echo(true);
 }
 
-int CONIO_wherexy(int &x, int &y)
+inline int CONIO_wherexy(int &x, int &y)
 {
 	printf("\033[6n");
 	if (getch() != '\x1B') {
@@ -180,7 +180,7 @@ int CONIO_wherexy(int &x, int &y)
 	return 0;
 }
 
-int CONIO_wherex(void)
+inline int CONIO_wherex(void)
 {
 	int x = 0;
 	int y = 0;
@@ -188,7 +188,7 @@ int CONIO_wherex(void)
 	return x;
 }
 
-int CONIO_wherey(void)
+inline int CONIO_wherey(void)
 {
 	int x = 0;
 	int y = 0;
@@ -196,7 +196,7 @@ int CONIO_wherey(void)
 	return y;
 }
 
-int CONIO_kbhit(void)
+inline int CONIO_kbhit(void)
 {
 	struct termios oldt, newt;
 	tcgetattr(STDIN_FILENO, &oldt);
@@ -215,24 +215,24 @@ int CONIO_kbhit(void)
 	return 0;
 }
 
-int CONIO_putch(const char c)
+inline int CONIO_putch(const char c)
 {
 	printf("%c", c);
 	return (int)c;
 }
 
-int CONIO_cputs(const char *str)
+inline int CONIO_cputs(const char *str)
 {
 	printf("%s", str);
 	return 0;
 }
 
-int CONIO_gettext(int l, int t, int r, int b, void *destination)
+inline int CONIO_gettext(int l, int t, int r, int b, void *destination)
 {
 	return 0;
 }
 
-void CONIO_reset(void)
+inline void CONIO_reset(void)
 {
 	CONIO.bgc = 40;
 	printf("\033[m");

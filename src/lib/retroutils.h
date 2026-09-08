@@ -10,7 +10,7 @@
 #include "retro.h"
 
 #pragma pack(push, 1)
-struct {
+inline struct {
 	unsigned char Identifier = 10;            // PCX Id Number (Always 0x0A)
 	unsigned char Version = 5;                // Version Number
 	unsigned char Encoding = 1;               // Encoding Format
@@ -32,7 +32,7 @@ struct {
 } RETRO_PcxHead;
 #pragma pack(pop)
 
-void RETRO_SaveImage(const char *filename, unsigned char *image, RETRO_Palette *palette, int width, int height)
+inline void RETRO_SaveImage(const char *filename, unsigned char *image, RETRO_Palette *palette, int width, int height)
 {
 	// Populate header
 	RETRO_PcxHead.XEnd = width - 1;
@@ -115,7 +115,7 @@ struct RETRO_Image24 {
 // plane or scanline boundary - and may be padded past width to BytesPerLine,
 // which this discards rather than folding into the image
 //
-RETRO_Image24 RETRO_LoadImage24(const char *filename)
+inline RETRO_Image24 RETRO_LoadImage24(const char *filename)
 {
 	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL) {
@@ -180,7 +180,7 @@ RETRO_Image24 RETRO_LoadImage24(const char *filename)
 	return RETRO_Image24{ data, width, height };
 }
 
-void RETRO_LoadAsset(const char *filename, void *buffer, int size = 0, int number = 1)
+inline void RETRO_LoadAsset(const char *filename, void *buffer, int size = 0, int number = 1)
 {
 	FILE *fp = fopen(filename, "rb");
 	if (fp == NULL) {

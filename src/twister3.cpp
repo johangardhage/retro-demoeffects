@@ -98,7 +98,7 @@
 // base is a whole quarter of the picture and u runs less than a quarter past it, so the walk
 // stays inside the row and needs no wrapping of its own.
 //
-void DrawSpan(int left, int right, int y, unsigned char *texels, int base)
+static void DrawSpan(int left, int right, int y, unsigned char *texels, int base)
 {
 	if (right <= left) {
 		return;

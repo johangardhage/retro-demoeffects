@@ -27,7 +27,7 @@ static_assert((1 << RETRO_CUBE_LEVELS) == RETRO_COLORS, "The color cube must hav
 
 enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
 
-struct {
+inline struct {
 	RETRO_Palette shadingramps[RETRO_MAX_SHADING_COLORS];
 	RETRO_Palette palette[RETRO_COLORS];
 	int shadingcolorcount;
@@ -42,7 +42,7 @@ struct {
 // One component of a color, selected by axis. Returns a reference so the caller
 // can read or write the component it picked
 //
-unsigned char &RETRO_ColorComponent(RETRO_Palette &color, int axis)
+inline unsigned char &RETRO_ColorComponent(RETRO_Palette &color, int axis)
 {
 	if (axis == RETRO_COLOR_RED) return color.r;
 	if (axis == RETRO_COLOR_GREEN) return color.g;
@@ -54,7 +54,7 @@ unsigned char &RETRO_ColorComponent(RETRO_Palette &color, int axis)
 // colors that an optimal palette is then fitted to. The texture palette is
 // taken to be 6-bit, as a palette read from a PCX written by a VGA demo is
 //
-void RETRO_CreateShadingRamps(RETRO_Palette *texturepalette, int texturecolors, float specularity, float falloff)
+inline void RETRO_CreateShadingRamps(const RETRO_Palette *texturepalette, int texturecolors, float specularity, float falloff)
 {
 	// Only so many texture colors fit in the shade table
 	texturecolors = MIN(texturecolors, RETRO_TEXTURE_COLORS);
@@ -79,7 +79,7 @@ void RETRO_CreateShadingRamps(RETRO_Palette *texturepalette, int texturecolors, 
 // A color cube is the half open box [min, max), so a color on the min face is
 // inside it and a color on the max face is not
 //
-bool RETRO_InsideColorCube(RETRO_Palette color, RETRO_Palette min, RETRO_Palette max)
+inline bool RETRO_InsideColorCube(RETRO_Palette color, RETRO_Palette min, RETRO_Palette max)
 {
 	return color.r >= min.r && color.r < max.r &&
 		color.g >= min.g && color.g < max.g &&
@@ -90,7 +90,7 @@ bool RETRO_InsideColorCube(RETRO_Palette color, RETRO_Palette min, RETRO_Palette
 // Shrink a color cube to the tightest box that still holds every shaded color
 // inside it
 //
-void RETRO_ShrinkColorCube(RETRO_Palette *min, RETRO_Palette *max)
+inline void RETRO_ShrinkColorCube(RETRO_Palette *min, RETRO_Palette *max)
 {
 	// Seed the new bounds inside out, so the first color inside sets them both
 	RETRO_Palette newmin = *max;
@@ -119,7 +119,7 @@ void RETRO_ShrinkColorCube(RETRO_Palette *min, RETRO_Palette *max)
 // Split a color cube in two along the given axis, at the median of the shaded
 // colors inside it. The halves come back as [min, minsplit) and [maxsplit, max)
 //
-void RETRO_SplitColorCube(RETRO_Palette min, RETRO_Palette max, int axis, RETRO_Palette *minsplit, RETRO_Palette *maxsplit)
+inline void RETRO_SplitColorCube(RETRO_Palette min, RETRO_Palette max, int axis, RETRO_Palette *minsplit, RETRO_Palette *maxsplit)
 {
 	// Count the shaded colors inside the cube, by their position along the axis
 	int histogram[RETRO_CUBE_SIZE] = { 0 };
@@ -159,7 +159,7 @@ void RETRO_SplitColorCube(RETRO_Palette min, RETRO_Palette max, int axis, RETRO_
 // Halve a color cube once per level, and take the center of each leaf as a
 // palette entry
 //
-void RETRO_SubdivideColorCube(RETRO_Palette min, RETRO_Palette max, int level)
+inline void RETRO_SubdivideColorCube(RETRO_Palette min, RETRO_Palette max, int level)
 {
 	// Shrink the color cube to contain just the used colors
 	RETRO_ShrinkColorCube(&min, &max);
@@ -207,7 +207,7 @@ void RETRO_SubdivideColorCube(RETRO_Palette min, RETRO_Palette max, int level)
 
 //
 // Nearest palette entry in RGB, by d² = Δr² + Δg² + Δb².
-int RETRO_NearestPaletteIndex(RETRO_Palette targetcolor)
+inline int RETRO_NearestPaletteIndex(RETRO_Palette targetcolor)
 {
 	int match = 0;
 	int mindistance = INT_MAX;
@@ -233,7 +233,7 @@ int RETRO_NearestPaletteIndex(RETRO_Palette targetcolor)
 }
 
 // Nearest entry in an explicit palette, by squared RGB distance.
-unsigned char RETRO_ClosestPaletteColor(RETRO_Palette target, RETRO_Palette *palette, int colors = RETRO_COLORS)
+inline unsigned char RETRO_ClosestPaletteColor(RETRO_Palette target, const RETRO_Palette *palette, int colors = RETRO_COLORS)
 {
 	int match = 0;
 	int min_distance = 3 * 255 * 255 + 1;
@@ -256,7 +256,7 @@ unsigned char RETRO_ClosestPaletteColor(RETRO_Palette target, RETRO_Palette *pal
 // Public functions
 // *******************************************************************
 
-RETRO_Palette *RETRO_OptimalPalette(void)
+inline RETRO_Palette *RETRO_OptimalPalette(void)
 {
 	return RETRO_Color.palette;
 }
@@ -270,7 +270,7 @@ RETRO_Palette *RETRO_OptimalPalette(void)
 // Model3D::shadetable. A model without one draws nothing rather than drawing
 // wrong, since the texture mappers stop on a table they were not given
 //
-void RETRO_CreateShadeTable(RETRO_Palette *texturepalette, int texturecolors, float specularity, float falloff, unsigned char *shadetable)
+inline void RETRO_CreateShadeTable(const RETRO_Palette *texturepalette, int texturecolors, float specularity, float falloff, unsigned char *shadetable)
 {
 	// There has to be a palette to match against. Without this the match below
 	// would find nothing, leave every entry pointing at color 0, and the model
@@ -300,7 +300,7 @@ void RETRO_CreateShadeTable(RETRO_Palette *texturepalette, int texturecolors, fl
 // empty: a box holding one color still gets split, and one half is then empty
 // and spends a palette entry on the center of nothing
 //
-void RETRO_CreateOptimalPalette(RETRO_Palette *texturepalette, int texturecolors, float specularity = RETRO_K_SPECULAR, float falloff = RETRO_K_FALLOFF)
+inline void RETRO_CreateOptimalPalette(const RETRO_Palette *texturepalette, int texturecolors, float specularity = RETRO_K_SPECULAR, float falloff = RETRO_K_FALLOFF)
 {
 	RETRO_CreateShadingRamps(texturepalette, texturecolors, specularity, falloff);
 
@@ -322,7 +322,7 @@ void RETRO_CreateOptimalPalette(RETRO_Palette *texturepalette, int texturecolors
 // dark colors the picture happened to contain, whatever the entry started as.
 // Lighting off the bottom of such a palette turns faces into holes. A floor
 // under the darkening keeps every shade among colors it has plenty of.
-void RETRO_CreatePaletteShadeTable(RETRO_Palette *palette, int colors, int shades, unsigned char *shadetable, float ambient = 0.0f)
+inline void RETRO_CreatePaletteShadeTable(const RETRO_Palette *palette, int colors, int shades, unsigned char *shadetable, float ambient = 0.0f)
 {
 	for (int source = 0; source < colors; source++) {
 		for (int shade = 0; shade < shades; shade++) {

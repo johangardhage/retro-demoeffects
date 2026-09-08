@@ -66,7 +66,7 @@ static RETRO_Font Font;
 // into an xscale by yscale block and tracking columns left between glyphs. A zero
 // texel is transparent, and the rest scale from atlas brightness to seed heat.
 //
-void DrawText(const char *text, int y, int xscale, int yscale, int tracking)
+static void DrawText(const char *text, int y, int xscale, int yscale, int tracking)
 {
 	int length = (int)strlen(text);
 	int linewidth = 0;

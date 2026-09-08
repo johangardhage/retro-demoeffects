@@ -32,7 +32,7 @@
 Point3Df Stars[NUM_STARS];
 
 // Direction is measured on the screen, so a star at STAR_FAR lands within a screen of the middle.
-void PlaceStar(Point3Df *star, float depth)
+static void PlaceStar(Point3Df *star, float depth)
 {
 	star->x = RANDOM(RETRO_WIDTH) - (RETRO_WIDTH / 2);
 	star->y = RANDOM(RETRO_HEIGHT) - (RETRO_HEIGHT / 2);

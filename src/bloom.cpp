@@ -28,7 +28,7 @@
 #define BLOB_RADIUS 4
 #define BLOOM_PERIOD (200 * M_PI)
 
-void DrawBlob(int xc, int yc, unsigned char color)
+static void DrawBlob(int xc, int yc, unsigned char color)
 {
 	for (int y = -BLOB_RADIUS; y <= BLOB_RADIUS; y++) {
 		for (int x = -BLOB_RADIUS; x <= BLOB_RADIUS; x++) {

@@ -26,7 +26,7 @@
 #define RETRO_PROJECTION_SCALE 50
 
 // R = Rz(az) * Ry(ay) * Rx(ax). Applied to column vectors as p' = R p.
-void RETRO_InitializeRotationMatrix(float ax, float ay, float az, Model3D *model = NULL)
+inline void RETRO_InitializeRotationMatrix(float ax, float ay, float az, Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -41,7 +41,7 @@ void RETRO_InitializeRotationMatrix(float ax, float ay, float az, Model3D *model
 	model->matrix[2][2] = cos(ax) * cos(ay);
 }
 
-void RETRO_RotateVertices(Model3D *model = NULL)
+inline void RETRO_RotateVertices(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -52,7 +52,7 @@ void RETRO_RotateVertices(Model3D *model = NULL)
 	}
 }
 
-void RETRO_RotateVertexNormals(Model3D *model = NULL)
+inline void RETRO_RotateVertexNormals(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -68,7 +68,7 @@ void RETRO_RotateVertexNormals(Model3D *model = NULL)
 // only stay so in view space if one matrix carries all of them. N goes to the
 // flat and env shading; T and B reach the drawers as a TangentFrame, and have
 // to turn with the model or the relief stays keyed to the screen.
-void RETRO_RotateFaceFrames(Model3D *model = NULL)
+inline void RETRO_RotateFaceFrames(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -102,7 +102,7 @@ void RETRO_RotateFaceFrames(Model3D *model = NULL)
 // A vertex at or behind the near plane is given q = 0 and parked at the
 // principal point, for the caller to drop.
 //
-void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2), float cy = (RETRO_HEIGHT / 2), float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
+inline void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2), float cy = (RETRO_HEIGHT / 2), float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
 {
 	float depth = scale * vertex->rz + eyedistance;
 
@@ -119,7 +119,7 @@ void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_SCALE, f
 	}
 }
 
-void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2), float cy = (RETRO_HEIGHT / 2), Model3D *model = NULL, float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
+inline void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2), float cy = (RETRO_HEIGHT / 2), Model3D *model = NULL, float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -133,7 +133,7 @@ void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_
 	}
 }
 
-void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
+inline void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 {
 	RETRO_InitializeRotationMatrix(ax, ay, az, model);
 	RETRO_RotateVertices(model);
@@ -149,7 +149,7 @@ void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 // RETRO_ProjectModel's screen centre cannot stand in for this. That offset is
 // in pixels, applied after the divide, so it neither shrinks with distance nor
 // moves the model in z at all.
-void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = NULL)
+inline void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
@@ -166,7 +166,7 @@ void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = NULL)
 // and leaves its axis alone, so a pair that is not unit squashes the model as
 // it turns and the composition is not in SO(3), which is why this is not
 // called a rotation.
-void RETRO_SpinVertex(Vertex *vertex, float cosa, float sina)
+inline void RETRO_SpinVertex(Vertex *vertex, float cosa, float sina)
 {
 	// Rotate around x axis
 	vertex->ry = vertex->y * cosa - vertex->z * sina;
@@ -182,7 +182,7 @@ void RETRO_SpinVertex(Vertex *vertex, float cosa, float sina)
 	vertex->rx = tmpx;
 }
 
-void RETRO_RotateVertex(Vertex *vertex, float ax, float ay, float az)
+inline void RETRO_RotateVertex(Vertex *vertex, float ax, float ay, float az)
 {
 	// Rotate around x axis
 	vertex->ry = vertex->y * cos(ax) - vertex->z * sin(ax);
@@ -198,7 +198,7 @@ void RETRO_RotateVertex(Vertex *vertex, float ax, float ay, float az)
 	vertex->rx = tmpx;
 }
 
-void RETRO_RotateDirection(Direction *direction, float ax, float ay, float az)
+inline void RETRO_RotateDirection(Direction *direction, float ax, float ay, float az)
 {
 	// Rotate around x axis
 	direction->ry = direction->y * cos(ax) - direction->z * sin(ax);
@@ -216,12 +216,12 @@ void RETRO_RotateDirection(Direction *direction, float ax, float ay, float az)
 
 // D1 · D2, taken on the rotated directions. Both are unit, so this is already
 // the cosine of the angle between them and there is nothing to divide out.
-float RETRO_DotProduct(Direction d1, Direction d2)
+inline float RETRO_DotProduct(Direction d1, Direction d2)
 {
 	return d1.rx * d2.rx + d1.ry * d2.ry + d1.rz * d2.rz;
 }
 
-void RETRO_QuickSort(Model3D *model, int lo, int hi)
+inline void RETRO_QuickSort(Model3D *model, int lo, int hi)
 {
 	int i = lo;
 	int j = hi;
@@ -267,7 +267,7 @@ void RETRO_QuickSort(Model3D *model, int lo, int hi)
 // reaches drawface either and its frontfacing is left as it stands. There is no
 // answer to give: its corners were parked on the principal point with q = 0, so
 // the cross product would be meaningless.
-void RETRO_SortFaces(Model3D *model = NULL, bool backfaces = false)
+inline void RETRO_SortFaces(Model3D *model = NULL, bool backfaces = false)
 {
 	model = model ? model : RETRO_Get3DModel();
 

@@ -40,7 +40,7 @@ Vertex Sphere[POINTS];
 Vertex Torus[POINTS];
 Vertex Morph[POINTS];
 
-void MorphShapes(Vertex *from, Vertex *to, float t)
+static void MorphShapes(Vertex *from, Vertex *to, float t)
 {
 	for (int i = 0; i < POINTS; i++) {
 		Morph[i].x = from[i].x + (to[i].x - from[i].x) * t;

@@ -160,7 +160,7 @@ struct RETRO_Image {
 
 enum { RETRO_MODE_FULLSCREEN, RETRO_MODE_FULLWINDOW, RETRO_MODE_WINDOW };
 
-struct {
+inline struct {
 	int mode;
 	char *basename;
 	bool stretch;
@@ -191,7 +191,7 @@ struct {
 // Public functions
 // *******************************************************************
 
-void RETRO_RageQuit(const char *message, ...)
+inline void RETRO_RageQuit(const char *message, ...)
 {
 	va_list args;
 	va_start(args, message);
@@ -200,12 +200,12 @@ void RETRO_RageQuit(const char *message, ...)
 	exit(-1);
 }
 
-unsigned char *RETRO_FrameBuffer(void)
+inline unsigned char *RETRO_FrameBuffer(void)
 {
 	return RETRO.framebuffer;
 }
 
-RETRO_Palette RETRO_GetColor(int color)
+inline RETRO_Palette RETRO_GetColor(int color)
 {
 	RETRO_Palette palette;
 	palette.r = (RETRO.palette[color] >> 16) & 0xff;
@@ -214,7 +214,7 @@ RETRO_Palette RETRO_GetColor(int color)
 	return palette;
 }
 
-RETRO_Palette RETRO_Get6bitColor(int color)
+inline RETRO_Palette RETRO_Get6bitColor(int color)
 {
 	RETRO_Palette palette;
 	palette.r = ((RETRO.palette[color] >> 16) & 0xff) >> 2;
@@ -232,7 +232,7 @@ RETRO_Palette RETRO_Get6bitColor(int color)
 // put at that boundary, so a color named on the 8-bit scale can be handed to a
 // 6-bit one and be seen to have been converted
 //
-RETRO_Palette RETRO_To6bitColor(RETRO_Palette color)
+inline RETRO_Palette RETRO_To6bitColor(RETRO_Palette color)
 {
 	RETRO_Palette palette;
 	palette.r = color.r >> 2;
@@ -241,7 +241,7 @@ RETRO_Palette RETRO_To6bitColor(RETRO_Palette color)
 	return palette;
 }
 
-void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b)
+inline void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b)
 {
 	RETRO.palette[color] = 0xff000000 | (r << 16) | (g << 8) | (b);
 }
@@ -251,7 +251,7 @@ void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b
 // given. Writing to a buffer copies the components as they are given, which
 // allows both 6-bit and 8-bit palettes
 //
-void RETRO_SetColor(int index, RETRO_Palette color, RETRO_Palette *buffer = NULL)
+inline void RETRO_SetColor(int index, RETRO_Palette color, RETRO_Palette *buffer = NULL)
 {
 	if (buffer) {
 		buffer[index] = color;
@@ -260,7 +260,7 @@ void RETRO_SetColor(int index, RETRO_Palette color, RETRO_Palette *buffer = NULL
 	}
 }
 
-void RETRO_Set6bitColor(int color, unsigned char r, unsigned char g, unsigned char b)
+inline void RETRO_Set6bitColor(int color, unsigned char r, unsigned char g, unsigned char b)
 {
 	r = (r & 63) << 2;
 	g = (g & 63) << 2;
@@ -268,14 +268,14 @@ void RETRO_Set6bitColor(int color, unsigned char r, unsigned char g, unsigned ch
 	RETRO.palette[color] = 0xff000000 | (r << 16) | (g << 8) | (b);
 }
 
-void RETRO_SetPalette(RETRO_Palette *palette, int colors = RETRO_COLORS)
+inline void RETRO_SetPalette(const RETRO_Palette *palette, int colors = RETRO_COLORS)
 {
 	for (int i = 0; i < colors; i++) {
 		RETRO_SetColor(i, palette[i].r, palette[i].g, palette[i].b);
 	}
 }
 
-void RETRO_Set6bitPalette(RETRO_Palette *palette, int colors = RETRO_COLORS)
+inline void RETRO_Set6bitPalette(const RETRO_Palette *palette, int colors = RETRO_COLORS)
 {
 	for (int i = 0; i < colors; i++) {
 		RETRO_Set6bitColor(i, palette[i].r, palette[i].g, palette[i].b);
@@ -294,44 +294,44 @@ void RETRO_Set6bitPalette(RETRO_Palette *palette, int colors = RETRO_COLORS)
 #define RETRO_ASSERT_PIXEL(x, y) ((void)0)
 #endif
 
-void RETRO_PutPixel(int x, int y, unsigned char color)
+inline void RETRO_PutPixel(int x, int y, unsigned char color)
 {
 	RETRO_ASSERT_PIXEL(x, y);
 	RETRO.framebuffer[RETRO.yoffset[y] + x] = color;
 }
 
-unsigned char RETRO_GetPixel(int x, int y)
+inline unsigned char RETRO_GetPixel(int x, int y)
 {
 	RETRO_ASSERT_PIXEL(x, y);
 	return RETRO.framebuffer[RETRO.yoffset[y] + x];
 }
 
-void RETRO_Clear(unsigned char color = 0, int size = RETRO.framebuffersize, unsigned char *dest = RETRO.framebuffer)
+inline void RETRO_Clear(unsigned char color = 0, int size = RETRO.framebuffersize, unsigned char *dest = RETRO.framebuffer)
 {
 	memset(dest, color, size);
 }
 
-void RETRO_Blit(unsigned char *src, int size = RETRO.framebuffersize, unsigned char *dest = RETRO.framebuffer)
+inline void RETRO_Blit(unsigned char *src, int size = RETRO.framebuffersize, unsigned char *dest = RETRO.framebuffer)
 {
 	memcpy(dest, src, size);
 }
 
-int *RETRO_Yoffset(void)
+inline int *RETRO_Yoffset(void)
 {
 	return RETRO.yoffset;
 }
 
-unsigned char *RETRO_ImageData(int id = 0)
+inline unsigned char *RETRO_ImageData(int id = 0)
 {
 	return id >= 0 && id < RETRO_MAX_IMAGES && RETRO.image[id] ? RETRO.image[id]->data : NULL;
 }
 
-RETRO_Palette *RETRO_ImagePalette(int id = 0)
+inline RETRO_Palette *RETRO_ImagePalette(int id = 0)
 {
 	return id >= 0 && id < RETRO_MAX_IMAGES && RETRO.image[id] ? RETRO.image[id]->palette : NULL;
 }
 
-RETRO_Image *RETRO_AllocateImage(void)
+inline RETRO_Image *RETRO_AllocateImage(void)
 {
 	int id = 0;
 	while (id < RETRO_MAX_IMAGES && RETRO.image[id]) {
@@ -352,7 +352,7 @@ RETRO_Image *RETRO_AllocateImage(void)
 	return image;
 }
 
-void RETRO_FreeImage(int id = 0)
+inline void RETRO_FreeImage(int id = 0)
 {
 	if (id >= 0 && id < RETRO_MAX_IMAGES && RETRO.image[id]) {
 		if (RETRO.image[id]->data) {
@@ -365,7 +365,7 @@ void RETRO_FreeImage(int id = 0)
 	}
 }
 
-RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = false)
+inline RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = false)
 {
 	RETRO_Image *image = RETRO_AllocateImage();
 
@@ -438,7 +438,7 @@ RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = false)
 	return image;
 }
 
-void RETRO_Flip(void)
+inline void RETRO_Flip(void)
 {
 	// Copy framebuffer
 	unsigned int *pixels;
@@ -464,7 +464,7 @@ void RETRO_Flip(void)
 // pixel, without the window. The index buffer is not stored: a dump is a
 // picture of the frame, not an asset.
 //
-void RETRO_DumpFrame(const char *filename)
+inline void RETRO_DumpFrame(const char *filename)
 {
 	FILE *fp = fopen(filename, "wb");
 	if (fp == NULL) {
@@ -482,7 +482,7 @@ void RETRO_DumpFrame(const char *filename)
 	fclose(fp);
 }
 
-void RETRO_Initialize(void)
+inline void RETRO_Initialize(void)
 {
 	// --dumpfile never shows a window; render on the dummy driver instead of the real display.
 	// Fullscreen mode-setting fails on the dummy driver, so fall back to windowed too.
@@ -585,7 +585,7 @@ void RETRO_Initialize(void)
 	if (RETRO_Initialize_3D) RETRO_Initialize_3D();
 }
 
-void RETRO_Deinitialize(void)
+inline void RETRO_Deinitialize(void)
 {
 	if (RETRO_Deinitialize_3D) RETRO_Deinitialize_3D();
 
@@ -603,13 +603,13 @@ void RETRO_Deinitialize(void)
 	SDL_Quit();
 }
 
-void RETRO_SetVSync(bool state = true)
+inline void RETRO_SetVSync(bool state = true)
 {
 	SDL_SetRenderVSync(RETRO.renderer, state ? 1 : SDL_RENDERER_VSYNC_DISABLED);
 	RETRO.vsync = state;
 }
 
-double RETRO_DeltaTime(void)
+inline double RETRO_DeltaTime(void)
 {
 	static unsigned long int now = SDL_GetPerformanceCounter();
 	static unsigned long int old = 0;
@@ -620,12 +620,12 @@ double RETRO_DeltaTime(void)
 	return (double)(now - old) / SDL_GetPerformanceFrequency();
 }
 
-bool RETRO_KeyState(SDL_Scancode key)
+inline bool RETRO_KeyState(SDL_Scancode key)
 {
 	return RETRO.keystate[key];
 }
 
-bool RETRO_KeyPressed(SDL_Scancode key)
+inline bool RETRO_KeyPressed(SDL_Scancode key)
 {
 	if (key > 255) return false;
 	// Latched on SDL_EVENT_KEY_DOWN so a down+up that lands in one poll still counts.
@@ -636,12 +636,12 @@ bool RETRO_KeyPressed(SDL_Scancode key)
 	return false;
 }
 
-void RETRO_Quit(void)
+inline void RETRO_Quit(void)
 {
 	RETRO.quit = true;
 }
 
-bool RETRO_QuitRequested(void)
+inline bool RETRO_QuitRequested(void)
 {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
@@ -678,7 +678,7 @@ bool RETRO_QuitRequested(void)
 // drifting. The cap stops a stall from demanding an unbounded burst of
 // catch-up. Past it the simulation runs slow instead.
 //
-void RETRO_AdvanceSimulation(double deltatime)
+inline void RETRO_AdvanceSimulation(double deltatime)
 {
 	RETRO.accumulator = MIN(RETRO.accumulator + deltatime, RETRO_SIMULATION_STEP * RETRO_MAX_SIMULATION_STEPS);
 
@@ -689,7 +689,7 @@ void RETRO_AdvanceSimulation(double deltatime)
 	}
 }
 
-void RETRO_Mainloop(void)
+inline void RETRO_Mainloop(void)
 {
 	while (!RETRO_QuitRequested()) {
 		double deltatime = RETRO_DeltaTime();
@@ -738,7 +738,7 @@ void RETRO_Mainloop(void)
 		}
 
 		// Show FPS once a second
-		if (RETRO.showfps) {
+		if (RETRO.showfps && RETRO.mode == RETRO_MODE_WINDOW) {
 			static unsigned long int fpsticks = SDL_GetTicks();
 			static int fpscount = 0;
 			if (fpsticks < SDL_GetTicks() - 1000UL) {

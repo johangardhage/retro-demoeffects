@@ -146,7 +146,7 @@
 // A renderer therefore has to convert its dot product with
 // RETRO_ShadeFromLambert before using it to pick a shade
 //
-float RETRO_IncidenceAngle(int shade, int shades)
+inline float RETRO_IncidenceAngle(int shade, int shades)
 {
 	return ((float)(shades - (shade + 1)) / shades) * (M_PI / 2);
 }
@@ -158,7 +158,7 @@ float RETRO_IncidenceAngle(int shade, int shades)
 //
 //   N·L = cos(theta)  ->  1 - acos(N·L) / (pi / 2)  =  1 - theta / (pi / 2)
 //
-float RETRO_ShadeFromLambert(float lambert)
+inline float RETRO_ShadeFromLambert(float lambert)
 {
 	// theta = acos(N·L) in [0, π/2], then 1 - theta/(π/2) so face-on is 1.
 	return 1.0f - acos(CLAMP01(lambert)) / (M_PI / 2);
@@ -187,7 +187,7 @@ float RETRO_ShadeFromLambert(float lambert)
 // as plastic rather than metal. A specularity of 0 drops the highlight and
 // leaves plain lambert diffuse, which is the matte end of the same model
 //
-float RETRO_PhongIntensity(float facecolor, float lightcolor, float ambientcolor, float theta, float specularity, float falloff)
+inline float RETRO_PhongIntensity(float facecolor, float lightcolor, float ambientcolor, float theta, float specularity, float falloff)
 {
 	// Viewer sits at the light, so V = L and R · V = 2(N·L)^2 - 1 = cos(2 theta).
 	float ndotl = cos(theta);
@@ -208,7 +208,7 @@ float RETRO_PhongIntensity(float facecolor, float lightcolor, float ambientcolor
 // color and of the ramp share the same scale, given by colormax, so the same
 // call fills a 6-bit ramp as readily as an 8-bit one
 //
-void RETRO_CreatePhongRamp(RETRO_Palette *ramp, int shades, RETRO_Palette face, float specularity, float falloff, int colormax)
+inline void RETRO_CreatePhongRamp(RETRO_Palette *ramp, int shades, RETRO_Palette face, float specularity, float falloff, int colormax)
 {
 	for (int shade = 0; shade < shades; shade++) {
 		float theta = RETRO_IncidenceAngle(shade, shades);
@@ -226,7 +226,7 @@ void RETRO_CreatePhongRamp(RETRO_Palette *ramp, int shades, RETRO_Palette face, 
 // There is no color at end: the last written entry is the face-on highlight.
 // A last range with end = RETRO_COLORS therefore writes that highlight at 255.
 //
-void RETRO_CreatePhongPalette(int start, int end, RETRO_Palette face, float specularity = RETRO_K_SPECULAR, float falloff = RETRO_K_FALLOFF, RETRO_Palette *palette = NULL, int colormax = 255)
+inline void RETRO_CreatePhongPalette(int start, int end, RETRO_Palette face, float specularity = RETRO_K_SPECULAR, float falloff = RETRO_K_FALLOFF, RETRO_Palette *palette = NULL, int colormax = 255)
 {
 	int shades = MIN(end - start, RETRO_PHONG_SHADES);
 	RETRO_Palette ramp[RETRO_PHONG_SHADES];
@@ -243,7 +243,7 @@ void RETRO_CreatePhongPalette(int start, int end, RETRO_Palette face, float spec
 // are written to it, in both cases scaled to colormax so that a 6-bit palette
 // can be filled as readily as an 8-bit one
 //
-void RETRO_CreateMaterialPalette(RETRO_Palette face, float specularity, float falloff, RETRO_Palette *palette, int colormax)
+inline void RETRO_CreateMaterialPalette(RETRO_Palette face, float specularity, float falloff, RETRO_Palette *palette, int colormax)
 {
 	RETRO_SetColor(0, RETRO_BLACK, palette);
 	RETRO_CreatePhongPalette(RETRO_PHONG_OFFSET, RETRO_PHONG_OFFSET + RETRO_PHONG_SHADES, face, specularity, falloff, palette, colormax);
@@ -263,7 +263,7 @@ void RETRO_CreateMaterialPalette(RETRO_Palette face, float specularity, float fa
 // copied as they are given, which allows both 6-bit and 8-bit palettes
 //
 //   C(i) = from + ((i - start) / (end - start)) * (to - from),  i ∈ [start, end)
-void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, RETRO_Palette to, RETRO_Palette *palette = NULL)
+inline void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, RETRO_Palette to, RETRO_Palette *palette = NULL)
 {
 	int steps = end - start;
 
@@ -287,7 +287,7 @@ void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, RETRO_P
 // directly, otherwise they are written to it, in both cases scaled to colormax
 // so that a 6-bit palette can be filled as readily as an 8-bit one
 //
-void RETRO_CreatePlasticPhongPalette(float falloff = RETRO_K_FALLOFF, RETRO_Palette face = RETRO_DEEPPINK, RETRO_Palette *palette = NULL, int colormax = 255)
+inline void RETRO_CreatePlasticPhongPalette(float falloff = RETRO_K_FALLOFF, RETRO_Palette face = RETRO_DEEPPINK, RETRO_Palette *palette = NULL, int colormax = 255)
 {
 	RETRO_CreateMaterialPalette(face, RETRO_K_SPECULAR, falloff, palette, colormax);
 }
@@ -302,7 +302,7 @@ void RETRO_CreatePlasticPhongPalette(float falloff = RETRO_K_FALLOFF, RETRO_Pale
 // highlight at once and blinks white. Gouraud and phong interpolate a normal and
 // can carry RETRO_CreatePlasticPhongPalette instead
 //
-void RETRO_CreateMattePalette(RETRO_Palette face = RETRO_DEEPPINK, RETRO_Palette *palette = NULL, int colormax = 255)
+inline void RETRO_CreateMattePalette(RETRO_Palette face = RETRO_DEEPPINK, RETRO_Palette *palette = NULL, int colormax = 255)
 {
 	RETRO_CreateMaterialPalette(face, 0.0, RETRO_K_FALLOFF, palette, colormax);
 }
@@ -325,7 +325,7 @@ void RETRO_CreateMattePalette(RETRO_Palette face = RETRO_DEEPPINK, RETRO_Palette
 //
 // Outside the disk the darkest material shade is kept, so a grazing lookup
 // never punches a black hole.
-void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
+inline void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 {
 	float centerx = (width - 1) * 0.5f;
 	float centery = (height - 1) * 0.5f;
@@ -369,7 +369,7 @@ void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 // their own, and one map per ramp, is how a demo dims a ball by depth without
 // touching its shading.
 //
-void RETRO_CreateBallMap(unsigned char *buffer, float *depthmap, int size, int color, int shades, float lightx = -0.4f, float lighty = -0.4f, float lightz = 0.82f)
+inline void RETRO_CreateBallMap(unsigned char *buffer, float *depthmap, int size, int color, int shades, float lightx = -0.4f, float lighty = -0.4f, float lightz = 0.82f)
 {
 	float centre = (size - 1) * 0.5f;
 	float length = sqrt(lightx * lightx + lighty * lighty + lightz * lightz);
@@ -399,7 +399,7 @@ void RETRO_CreateBallMap(unsigned char *buffer, float *depthmap, int size, int c
 // entries left black. A demo that draws with the colors it finds there, rather
 // than setting a palette of its own, is drawing against this
 //
-RETRO_Palette RETRO_Default8bitPalette[256] = {
+static const RETRO_Palette RETRO_Default8bitPalette[256] = {
 	{ 0, 0, 0 },
 	{ 0, 0, 170 },
 	{ 0, 170, 0 },
@@ -662,7 +662,7 @@ RETRO_Palette RETRO_Default8bitPalette[256] = {
 // The same palette on the 6-bit scale the VGA DAC works in, for
 // RETRO_Set6bitPalette
 //
-RETRO_Palette RETRO_Default6bitPalette[256] = {
+static const RETRO_Palette RETRO_Default6bitPalette[256] = {
 	{ 0, 0, 0 },
 	{ 0, 0, 42 },
 	{ 0, 42, 0 },

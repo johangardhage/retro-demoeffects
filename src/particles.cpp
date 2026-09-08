@@ -56,7 +56,7 @@ struct Particle {
 //
 //   v = s * (cos theta, sin theta),   theta ~ U[0, 2pi),   s ~ U[0, PARTICLE_SPEED)
 //
-void CreateExplosion(void)
+static void CreateExplosion(void)
 {
 	int x = RANDOM(RETRO_WIDTH);
 	int y = RANDOM(RETRO_HEIGHT);

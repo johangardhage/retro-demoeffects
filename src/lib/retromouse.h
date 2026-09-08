@@ -21,7 +21,7 @@ struct RETRO_MouseState {
 	unsigned int leftcount, rightcount;
 };
 
-struct {
+inline struct {
 	RETRO_MouseState state;
 } RETRO_Mouse;
 
@@ -29,7 +29,7 @@ struct {
 // Public functions
 // *******************************************************************
 
-RETRO_MouseState RETRO_GetMouseState(void)
+inline RETRO_MouseState RETRO_GetMouseState(void)
 {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
@@ -61,7 +61,7 @@ RETRO_MouseState RETRO_GetMouseState(void)
 	return RETRO_Mouse.state;
 }
 
-RETRO_MouseState RETRO_GetMouseState2(void)
+inline RETRO_MouseState RETRO_GetMouseState2(void)
 {
 	// Get mouse window position
 	float x1, y1;
@@ -91,7 +91,7 @@ RETRO_MouseState RETRO_GetMouseState2(void)
 	return RETRO_Mouse.state;
 }
 
-void RETRO_SetMouseMode(bool relative, bool cursor = false)
+inline void RETRO_SetMouseMode(bool relative, bool cursor = false)
 {
 	SDL_SetWindowRelativeMouseMode(RETRO.window, relative);
 	if (cursor) {

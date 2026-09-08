@@ -41,7 +41,7 @@ struct Point3Df {
 };
 
 // C(step) = (step / steps) * C_loaded. Returns true when step >= steps.
-bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
+inline bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 {
 	step = CLAMP(step, 0, steps + 1);
 
@@ -56,7 +56,7 @@ bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 }
 
 // C(step) = ((steps - step) / steps) * C_loaded. Returns true when step >= steps.
-bool RETRO_FadeOut(int steps, int step, RETRO_Palette *palette)
+inline bool RETRO_FadeOut(int steps, int step, RETRO_Palette *palette)
 {
 	step = CLAMP(step, 0, steps + 1);
 
@@ -70,7 +70,7 @@ bool RETRO_FadeOut(int steps, int step, RETRO_Palette *palette)
 	return step >= steps;
 }
 
-void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+inline void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 
@@ -116,7 +116,7 @@ void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, unsigne
 	}
 }
 
-void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char intensity, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+inline void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char intensity, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 
@@ -163,7 +163,7 @@ void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char color, uns
 }
 
 // Inclusive on y1 and y2, so DrawVline(x, y1, y2) lights the same pixels as DrawLine(x, y1, x, y2).
-void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+inline void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 
@@ -179,7 +179,7 @@ void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *
 }
 
 // Filled axis-aligned rectangle with inclusive endpoints, clipped to the buffer.
-void RETRO_DrawRectangle(int x1, int y1, int x2, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+inline void RETRO_DrawRectangle(int x1, int y1, int x2, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 
@@ -199,7 +199,7 @@ void RETRO_DrawRectangle(int x1, int y1, int x2, int y2, unsigned char color, un
 // Each scanline is the span between the two roots in x, inclusive, clipped
 // to the buffer. ra or rb below 1 is empty.
 //
-void RETRO_DrawEllipse(float cx, float cy, float ra, float rb, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+inline void RETRO_DrawEllipse(float cx, float cy, float ra, float rb, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 
@@ -226,7 +226,7 @@ void RETRO_DrawEllipse(float cx, float cy, float ra, float rb, unsigned char col
 	}
 }
 
-void RETRO_DrawSprite(int x, int y, float xsize, float ysize, int imagewidth, int imageheight, unsigned char* image, unsigned char alpha, int color = -1, unsigned char *buffer = RETRO.framebuffer)
+inline void RETRO_DrawSprite(int x, int y, float xsize, float ysize, int imagewidth, int imageheight, unsigned char* image, unsigned char alpha, int color = -1, unsigned char *buffer = RETRO.framebuffer)
 {
 	float xstart = x - xsize / 2;
 	float ystart = y - ysize / 2;
@@ -276,7 +276,7 @@ void RETRO_DrawSprite(int x, int y, float xsize, float ysize, int imagewidth, in
 // sublattices and kill it. Every other pattern here damps the checkerboard
 // on its own (RING to 0, FIRE to 1/4, SMOOTH to 3/5).
 //
-void RETRO_Blur(RETRO_BLUR_PATTERN blur, int decay = 0, RETRO_BLUR_MODE mode = RETRO_BLUR_CLAMP, unsigned char *buffer = NULL)
+inline void RETRO_Blur(RETRO_BLUR_PATTERN blur, int decay = 0, RETRO_BLUR_MODE mode = RETRO_BLUR_CLAMP, unsigned char *buffer = NULL)
 {
 	buffer = buffer ? buffer : RETRO.framebuffer;
 

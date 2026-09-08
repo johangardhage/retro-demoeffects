@@ -34,7 +34,7 @@
 //
 // How far the picture has coarsened at this point of the cycle
 //
-double Coarseness(double phase)
+static double Coarseness(double phase)
 {
 	if (phase < TIME_HOLD) {
 		return 0;

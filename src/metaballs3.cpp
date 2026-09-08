@@ -66,7 +66,7 @@ float Charge[NUM_BALLS];
 
 static const float BallRadius[NUM_BALLS] = { 36, 32, 28, 34 };
 
-float Field(float x, float y, float z)
+static float Field(float x, float y, float z)
 {
 	float sum = 0;
 	for (int i = 0; i < NUM_BALLS; i++) {
@@ -83,7 +83,7 @@ float Field(float x, float y, float z)
 // and the isosurface meets one only at the instant a blob splits or merges,
 // when it passes through the saddle between two centres. The fallback for that
 // instant is the headlight itself, which shades the pixel fully lit.
-void FieldNormal(float x, float y, float z, float *nx, float *ny, float *nz)
+static void FieldNormal(float x, float y, float z, float *nx, float *ny, float *nz)
 {
 	float gx = 0;
 	float gy = 0;
@@ -114,7 +114,7 @@ void FieldNormal(float x, float y, float z, float *nx, float *ny, float *nz)
 }
 
 // Unit-D ray against a sphere. tEnter can be negative when the eye is inside.
-bool RaySphere(float ox, float oy, float oz, float dx, float dy, float dz, float cx, float cy, float cz, float radius, float *tenter, float *tleave)
+static bool RaySphere(float ox, float oy, float oz, float dx, float dy, float dz, float cx, float cy, float cz, float radius, float *tenter, float *tleave)
 {
 	float ocx = ox - cx;
 	float ocy = oy - cy;
@@ -132,7 +132,7 @@ bool RaySphere(float ox, float oy, float oz, float dx, float dy, float dz, float
 	return *tleave > 0;
 }
 
-void ShadeHit(int x, int y, float px, float py, float pz)
+static void ShadeHit(int x, int y, float px, float py, float pz)
 {
 	float nx, ny, nz;
 	FieldNormal(px, py, pz, &nx, &ny, &nz);

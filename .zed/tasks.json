@@ -1,0 +1,8 @@
+[
+  {
+    "label": "Run current demo",
+    "command": "sh",
+    "args": ["-c", "meson compile -C build $ZED_STEM && ./build/$ZED_STEM --window"],
+    "cwd": "$ZED_WORKTREE_ROOT"
+  }
+]

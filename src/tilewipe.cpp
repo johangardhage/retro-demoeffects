@@ -50,7 +50,7 @@ int Rank[WIPE_MODES][TILES];
 //
 // How much of the picture has been dealt at this point of the cycle
 //
-double Progress(double phase)
+static double Progress(double phase)
 {
 	if (phase < TIME_HOLD) {
 		return 1;

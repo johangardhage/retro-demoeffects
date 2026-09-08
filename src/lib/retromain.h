@@ -10,7 +10,7 @@
 #include <SDL3/SDL_main.h>
 #include "retro.h"
 
-void RETRO_ParseArguments(int argc, char *argv[])
+inline void RETRO_ParseArguments(int argc, char *argv[])
 {
 	RETRO.basename = basename(argv[0]);
 	static struct option long_options[] = {

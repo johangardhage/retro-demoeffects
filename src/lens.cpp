@@ -43,7 +43,7 @@ struct Lens {
 	int buffer[LENS_WIDTH * LENS_HEIGHT];
 } Lens1;
 
-void DrawLens(Lens *lens, unsigned char *image)
+static void DrawLens(Lens *lens, unsigned char *image)
 {
 	for (int lensy = 0; lensy < LENS_HEIGHT; lensy++) {
 		for (int lensx = 0; lensx < LENS_WIDTH; lensx++) {
@@ -71,7 +71,7 @@ void DEMO_Render(double time, double deltatime)
 	DrawLens(&Lens1, image);
 }
 
-void InitLens(Lens *lens)
+static void InitLens(Lens *lens)
 {
 	// Init table
 	for (int y = 0; y < LENS_RADIUS; y++) {

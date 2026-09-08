@@ -36,14 +36,14 @@ enum RETRO_POLY_SHADE {
 	RETRO_SHADE_PHONG
 };
 
-struct {
+inline struct {
 	Direction lightsource;
 } RETRO_Render;
 
 // Where a surface must face to catch the light, given at whatever scale is
 // convenient and stored unit, like every other Direction. Only the direction is
 // held so far, so the source has no position yet: it can be pointed, not moved.
-void RETRO_InitializeLightSource(float x, float y, float z)
+inline void RETRO_InitializeLightSource(float x, float y, float z)
 {
 	float length = sqrt(x * x + y * y + z * z);
 	float inverselength = length > 0.0f ? 1.0f / length : 0.0f;
@@ -56,7 +56,7 @@ void RETRO_InitializeLightSource(float x, float y, float z)
 	RETRO_RotateDirection(&RETRO_Render.lightsource, 0, 0, 0);
 }
 
-void RETRO_RenderDotModel(Model3D *model)
+inline void RETRO_RenderDotModel(Model3D *model)
 {
 	for (int i = 0; i < model->vertices; i++) {
 		if (model->vertex[i].q > 0.0f) {
@@ -65,7 +65,7 @@ void RETRO_RenderDotModel(Model3D *model)
 	}
 }
 
-void RETRO_RenderWireModel(Model3D *model, bool hiddenlines, bool fire)
+inline void RETRO_RenderWireModel(Model3D *model, bool hiddenlines, bool fire)
 {
 	// Hidden lines means only the front faces are drawn; without it the back
 	// ones are drawn too, so they go into the list as well.
@@ -93,12 +93,12 @@ void RETRO_RenderWireModel(Model3D *model, bool hiddenlines, bool fire)
 // reverse of its normal, which is the direction that side of the surface
 // actually points. Reversing the normal is the same as negating the lambert it
 // produces, so a scalar is all that has to be carried
-float RETRO_FaceSide(Face *face)
+inline float RETRO_FaceSide(Face *face)
 {
 	return face->frontfacing ? 1.0f : -1.0f;
 }
 
-void RETRO_RenderFlatModel(Model3D *model, bool shaded)
+inline void RETRO_RenderFlatModel(Model3D *model, bool shaded)
 {
 	RETRO_SortFaces(model, model->twosided);
 
@@ -123,7 +123,7 @@ void RETRO_RenderFlatModel(Model3D *model, bool shaded)
 	}
 }
 
-void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
+inline void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
 	RETRO_SortFaces(model, true);
 
@@ -163,7 +163,7 @@ void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 	}
 }
 
-void RETRO_RenderGouraudModel(Model3D *model)
+inline void RETRO_RenderGouraudModel(Model3D *model)
 {
 	RETRO_SortFaces(model, model->twosided);
 
@@ -185,7 +185,7 @@ void RETRO_RenderGouraudModel(Model3D *model)
 	}
 }
 
-void RETRO_RenderPhongModel(Model3D *model)
+inline void RETRO_RenderPhongModel(Model3D *model)
 {
 	RETRO_SortFaces(model, model->twosided);
 
@@ -218,7 +218,7 @@ void RETRO_RenderPhongModel(Model3D *model)
 	}
 }
 
-void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
+inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
 	RETRO_SortFaces(model, model->twosided);
 	// The model's table is the shading-palette shape: a texture drawn from a
@@ -332,7 +332,7 @@ void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 	}
 }
 
-void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
+inline void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
 	RETRO_SortFaces(model, model->twosided);
 	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
@@ -372,7 +372,7 @@ void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 // clears once a frame itself, or each model would erase the depth of the ones
 // before it. Glenz is exempt either way: it adds palette indices, so it
 // depends on the order the sort gives it.
-void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE, Model3D *model = NULL, bool cleardepth = true)
+inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE, Model3D *model = NULL, bool cleardepth = true)
 {
 	model = model ? model : RETRO_Get3DModel();
 	if (model == NULL) return;
@@ -412,7 +412,11 @@ void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype =
 	}
 }
 
-void RETRO_Deinitialize_3D(void)
+inline void RETRO_Initialize_3D(void)
+{
+}
+
+inline void RETRO_Deinitialize_3D(void)
 {
 	for (int i = 0; i < RETRO_MAX_MODELS; i++) {
 		RETRO_Free3DModel(i);

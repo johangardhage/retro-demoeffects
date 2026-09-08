@@ -30,7 +30,7 @@
 static unsigned char Metal[METAL_SIZE * METAL_SIZE];
 static Model3D *Cube;
 
-void DrawStencilFace(Face *face, Model3D *model, int scroll)
+static void DrawStencilFace(Face *face, Model3D *model, int scroll)
 {
 	PolygonPoint point[RETRO_MAX_FACEVERTICES];
 	float minx = RETRO_WIDTH;

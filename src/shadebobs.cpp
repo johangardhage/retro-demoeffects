@@ -41,7 +41,7 @@ unsigned char Image[] = {
 	 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
 	 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 };
 
-void DrawShadebob(double xphase1, double xphase2, double yphase1, double yphase2)
+static void DrawShadebob(double xphase1, double xphase2, double yphase1, double yphase2)
 {
 	int x = RETRO_WIDTH / 2 + SIN(xphase1) * BOB_AMP / 2 + SIN(xphase2) * BOB_AMP / 2;
 	int y = RETRO_HEIGHT / 2 + SIN(yphase1) * BOB_AMP / 3 + SIN(yphase2) * BOB_AMP / 3;

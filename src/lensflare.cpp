@@ -47,7 +47,7 @@ static const float GhostPeak[] = { 90, 55, 70, 40, 50, 80 };
 static const bool GhostHex[] = { false, true, false, true, true, false };
 #define NUM_GHOSTS 6
 
-void AddPixel(int x, int y, int add)
+static void AddPixel(int x, int y, int add)
 {
 	if (x < 0 || x >= RETRO_WIDTH || y < 0 || y >= RETRO_HEIGHT || add <= 0) {
 		return;
@@ -58,7 +58,7 @@ void AddPixel(int x, int y, int add)
 
 // Radial disc, brightness (1 − r/R)² peak. r² is compared to R² first so
 // the sqrt is only taken inside the disc.
-void AddDisc(float cx, float cy, float radius, int peak)
+static void AddDisc(float cx, float cy, float radius, int peak)
 {
 	if (radius < 1.0f || peak <= 0) {
 		return;
@@ -85,7 +85,7 @@ void AddDisc(float cx, float cy, float radius, int peak)
 }
 
 // Hexagonal iris, same (1 − d)² peak with d the cube-coordinate distance.
-void AddHex(float cx, float cy, float radius, int peak)
+static void AddHex(float cx, float cy, float radius, int peak)
 {
 	if (radius < 1.0f || peak <= 0) {
 		return;

@@ -40,7 +40,7 @@ static Model3D *Torus2 = NULL;
 // Bake one torus into the linked pair before the animation starts. Translation
 // is part of the source geometry so the later rotation carries both the ring
 // and its centre around the origin as one rigid object.
-void PlaceTorusInLink(Model3D *model, float angle, float tx)
+static void PlaceTorusInLink(Model3D *model, float angle, float tx)
 {
 	float c = cos(angle);
 	float s = sin(angle);

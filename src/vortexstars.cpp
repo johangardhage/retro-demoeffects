@@ -37,7 +37,7 @@ struct VortexStar {
 
 static const float BandRadius[3] = { 55, 90, 130 };
 
-void PlaceStar(VortexStar *star, float depth)
+static void PlaceStar(VortexStar *star, float depth)
 {
 	star->angle = RANDOMF(2 * M_PI);
 	star->radius = BandRadius[RANDOM(3)];

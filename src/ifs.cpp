@@ -93,7 +93,7 @@ int Current = 0;
 // The cut points are cumulative, so the last one is the whole of the draw and
 // the walk cannot run off the end of the table
 //
-void StepPoint(System *system)
+static void StepPoint(System *system)
 {
 	float draw = RAND() * Cumulative[system->transforms - 1];
 	int t = 0;
@@ -110,7 +110,7 @@ void StepPoint(System *system)
 //
 // Frame a system, clear what the last one left, and drop the transient
 //
-void StartSystem(void)
+static void StartSystem(void)
 {
 	System *system = &Systems[Current];
 

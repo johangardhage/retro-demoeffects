@@ -66,7 +66,7 @@
 // map reads it itself; what is here is the sampling every effect over a
 // height field repeats.
 //
-struct {
+inline struct {
 	unsigned char *heightmap = NULL;	// One byte of altitude per cell
 	unsigned char *colormap = NULL;		// The color painted over it, one byte per cell
 	int width = 0;						// Map size in cells, across x
@@ -102,7 +102,7 @@ struct {
 // treat each screen row as a constant-depth slice of the ground. A real
 // pitch is the island's, and is on RETRO_Island, not here.
 //
-struct {
+inline struct {
 	int step = 6;										// Mesh spacing, in map cells. Draw policy
 	int distance = RETRO_TERRAIN_DISTANCE;				// How far the wrapping look draws, in map cells
 	float nearplane = 3.0f;								// Nearest depth worth drawing
@@ -134,7 +134,7 @@ struct RETRO_TerrainPoint {
 // to tell a slope facing it from one turned away. A future edit of the
 // direction therefore cannot silently rescale the whole ramp.
 //
-struct {
+inline struct {
 	float x = -0.50f;
 	float y = 0.62f;
 	float z = -0.60f;
@@ -236,7 +236,7 @@ struct RETRO_TerrainCamera {
 // An effect flying one wrapping camera never has to name it, the way the
 // terrain and the lens are not named either.
 //
-RETRO_TerrainCamera RETRO_Camera;
+inline RETRO_TerrainCamera RETRO_Camera;
 
 //
 // The wrapping mesh walk
@@ -307,11 +307,11 @@ struct RETRO_TerrainIslandFrame {
 // stands this pose and writes the lens to match; RETRO_UpdateTerrainIsland
 // drives it.
 //
-RETRO_TerrainIsland RETRO_Island;
+inline RETRO_TerrainIsland RETRO_Island;
 
 // Point the sampling at these planes. wrap false is a finite patch: a
 // sample past the edge is the last cell, not the other side of the map.
-void RETRO_SetTerrain(int width, int height, float scale, unsigned char *heightmap, unsigned char *colormap, bool wrap = true)
+inline void RETRO_SetTerrain(int width, int height, float scale, unsigned char *heightmap, unsigned char *colormap, bool wrap = true)
 {
 	RETRO_Terrain.width = width;
 	RETRO_Terrain.height = height;
@@ -342,7 +342,7 @@ void RETRO_SetTerrain(int width, int height, float scale, unsigned char *heightm
 // height calls here, and there is no scale for it to disagree with. The map
 // wraps: a file is a torus until a caller says otherwise.
 //
-void RETRO_LoadTerrain(const char *colorfile, const char *heightfile, float scale = 1.0f)
+inline void RETRO_LoadTerrain(const char *colorfile, const char *heightfile, float scale = 1.0f)
 {
 	RETRO_Image *colormap = RETRO_LoadImage(colorfile, true);
 	RETRO_Image *heightmap = RETRO_LoadImage(heightfile);
@@ -356,7 +356,7 @@ void RETRO_LoadTerrain(const char *colorfile, const char *heightfile, float scal
 // edge. The voxel slice half-width at depth z is z times this, so the
 // column walk and the wrapping pinhole share one number. After LookDown
 // the island lens is narrower, and this answers for that lens instead.
-float RETRO_TerrainViewHalfSlope(void)
+inline float RETRO_TerrainViewHalfSlope(void)
 {
 	return (RETRO_WIDTH * 0.5f) / RETRO_TerrainView.focalx;
 }
@@ -366,7 +366,7 @@ float RETRO_TerrainViewHalfSlope(void)
 // rather than thrown out before it is. Derived from the focals, so a
 // change of lens - LookDown's, or a caller writing focalx - is this
 // number too, and not a copy that would go stale beside it.
-float RETRO_TerrainViewCullSlope(void)
+inline float RETRO_TerrainViewCullSlope(void)
 {
 	return RETRO_TerrainViewHalfSlope() * 1.05f;
 }
@@ -392,7 +392,7 @@ float RETRO_TerrainViewCullSlope(void)
 // for the root would be asking the caller to undo a step it had already done:
 // the falloff is squared once instead, and no sample pays for one.
 //
-bool RETRO_KeepTerrainDot(int x, int z, float distance2, float falloff = 110.0f)
+inline bool RETRO_KeepTerrainDot(int x, int z, float distance2, float falloff = 110.0f)
 {
 	if (RETRO_Terrain.wrap) {
 		x = WRAP(x, RETRO_Terrain.width);
@@ -415,7 +415,7 @@ bool RETRO_KeepTerrainDot(int x, int z, float distance2, float falloff = 110.0f)
 // from the image and one that has been told what they will be: swap the
 // asset and this answers for the new one, or says no.
 //
-bool RETRO_TerrainWrapsByMask(void)
+inline bool RETRO_TerrainWrapsByMask(void)
 {
 	int width = RETRO_Terrain.width;
 	int height = RETRO_Terrain.height;
@@ -426,7 +426,7 @@ bool RETRO_TerrainWrapsByMask(void)
 // The stored cell under (x, z), unscaled. A wrapping map takes any
 // coordinate as a cell; a finite one holds a sample past the edge on the
 // last cell. Nearest, not filtered: HeightLinear is the continuous read.
-int RETRO_TerrainIndex(float x, float z)
+inline int RETRO_TerrainIndex(float x, float z)
 {
 	int width = RETRO_Terrain.width;
 	int height = RETRO_Terrain.height;
@@ -438,7 +438,7 @@ int RETRO_TerrainIndex(float x, float z)
 
 // The stored height at a cell, unscaled. RETRO_TerrainHeight is this in
 // world units.
-unsigned char RETRO_TerrainSample(float x, float z)
+inline unsigned char RETRO_TerrainSample(float x, float z)
 {
 	return RETRO_Terrain.heightmap[RETRO_TerrainIndex(x, z)];
 }
@@ -446,7 +446,7 @@ unsigned char RETRO_TerrainSample(float x, float z)
 //
 // The ground height at a cell, in world units
 //
-float RETRO_TerrainHeight(float x, float z)
+inline float RETRO_TerrainHeight(float x, float z)
 {
 	return RETRO_TerrainSample(x, z) * RETRO_Terrain.scale;
 }
@@ -464,7 +464,7 @@ float RETRO_TerrainHeight(float x, float z)
 // is what a letter sitting on the shore of a finite island wants instead of
 // the opposite coast.
 //
-float RETRO_TerrainHeightLinear(float x, float z)
+inline float RETRO_TerrainHeightLinear(float x, float z)
 {
 	unsigned char *heightmap = RETRO_Terrain.heightmap;
 	int width = RETRO_Terrain.width;
@@ -514,7 +514,7 @@ float RETRO_TerrainHeightLinear(float x, float z)
 // and truncating toward zero would fold the cell either side of it onto
 // the same sample.
 //
-float RETRO_TerrainSampleLinear(const unsigned char *map, float x, float z)
+inline float RETRO_TerrainSampleLinear(const unsigned char *map, float x, float z)
 {
 	int width = RETRO_Terrain.width;
 	int height = RETRO_Terrain.height;
@@ -534,7 +534,7 @@ float RETRO_TerrainSampleLinear(const unsigned char *map, float x, float z)
 }
 
 // The color painted on a cell. Nearest, and folded the way the map wraps.
-unsigned char RETRO_TerrainColor(float x, float z)
+inline unsigned char RETRO_TerrainColor(float x, float z)
 {
 	return RETRO_Terrain.colormap[RETRO_TerrainIndex(x, z)];
 }
@@ -550,7 +550,7 @@ unsigned char RETRO_TerrainColor(float x, float z)
 // current terrain: an island that wants to be the map points sampling at
 // the copy afterwards, and says it does not wrap.
 //
-void RETRO_DownsampleTerrain(unsigned char *heightmap, unsigned char *colormap, int width, int height)
+inline void RETRO_DownsampleTerrain(unsigned char *heightmap, unsigned char *colormap, int width, int height)
 {
 	int scalex = RETRO_Terrain.width / width;
 	int scalez = RETRO_Terrain.height / height;
@@ -582,7 +582,7 @@ void RETRO_DownsampleTerrain(unsigned char *heightmap, unsigned char *colormap, 
 // The band is still mapped whole rather than clipped at the terminator, so a
 // face turned away darkens instead of dropping to flat black.
 //
-int RETRO_TerrainShade(float nx, float ny, float nz, int shades)
+inline int RETRO_TerrainShade(float nx, float ny, float nz, int shades)
 {
 	float nlength = sqrtf(nx * nx + ny * ny + nz * nz);
 	float lx = RETRO_TerrainLight.x;
@@ -597,7 +597,7 @@ int RETRO_TerrainShade(float nx, float ny, float nz, int shades)
 
 // The wrapping view frame for this heading. Zero looks along decreasing z;
 // see RETRO_TerrainBasis.
-RETRO_TerrainBasis RETRO_TerrainHeadingBasis(float heading)
+inline RETRO_TerrainBasis RETRO_TerrainHeadingBasis(float heading)
 {
 	float sina = sinf(heading);
 	float cosa = cosf(heading);
@@ -612,7 +612,7 @@ RETRO_TerrainBasis RETRO_TerrainHeadingBasis(float heading)
 
 // The wrapping frustum on the ground at unit depth. Scale by z for the
 // slice the column walk fills at that depth; see RETRO_TerrainSlice.
-RETRO_TerrainSlice RETRO_TerrainViewSlice(const RETRO_TerrainBasis &basis)
+inline RETRO_TerrainSlice RETRO_TerrainViewSlice(const RETRO_TerrainBasis &basis)
 {
 	float slope = RETRO_TerrainViewHalfSlope();
 	RETRO_TerrainSlice slice;
@@ -625,7 +625,7 @@ RETRO_TerrainSlice RETRO_TerrainViewSlice(const RETRO_TerrainBasis &basis)
 
 // A ground displacement in the wrapping camera's terms. Altitude is not
 // mixed in, so a wedge can run before a height is read; see RETRO_TerrainOffset.
-RETRO_TerrainOffset RETRO_TerrainCameraOffset(float dx, float dz, const RETRO_TerrainBasis &basis)
+inline RETRO_TerrainOffset RETRO_TerrainCameraOffset(float dx, float dz, const RETRO_TerrainBasis &basis)
 {
 	RETRO_TerrainOffset offset;
 	offset.side = dx * basis.rightx + dz * basis.rightz;
@@ -642,7 +642,7 @@ RETRO_TerrainOffset RETRO_TerrainCameraOffset(float dx, float dz, const RETRO_Te
 // Eye in. A point at or behind the eye comes back with q at or below zero
 // for them to drop.
 //
-RETRO_TerrainPoint RETRO_ProjectTerrainView(const RETRO_TerrainEye &eye)
+inline RETRO_TerrainPoint RETRO_ProjectTerrainView(const RETRO_TerrainEye &eye)
 {
 	RETRO_TerrainPoint point;
 	point.q = 1.0f / eye.depth;
@@ -657,7 +657,7 @@ RETRO_TerrainPoint RETRO_ProjectTerrainView(const RETRO_TerrainEye &eye)
 // Wrapping dots have the Offset from the wedge test and should not take
 // the yaw twice. World height becomes Eye height here, then the pinhole.
 //
-RETRO_TerrainPoint RETRO_ProjectTerrainOffset(const RETRO_TerrainOffset &offset, float height)
+inline RETRO_TerrainPoint RETRO_ProjectTerrainOffset(const RETRO_TerrainOffset &offset, float height)
 {
 	RETRO_TerrainEye eye;
 	eye.side = offset.side;
@@ -679,7 +679,7 @@ RETRO_TerrainPoint RETRO_ProjectTerrainOffset(const RETRO_TerrainOffset &offset,
 // back the Offset it already had from the wedge, so a depth buffer or a
 // ray march does not take the yaw again.
 //
-bool RETRO_ProjectTerrainDot(int x, int z, float dx, float dz, float radius2, const RETRO_TerrainBasis &basis, RETRO_TerrainOffset *offset, RETRO_TerrainPoint *point)
+inline bool RETRO_ProjectTerrainDot(int x, int z, float dx, float dz, float radius2, const RETRO_TerrainBasis &basis, RETRO_TerrainOffset *offset, RETRO_TerrainPoint *point)
 {
 	*offset = RETRO_TerrainCameraOffset(dx, dz, basis);
 	if (offset->depth <= RETRO_TerrainView.nearplane || fabsf(offset->side) > offset->depth * RETRO_TerrainViewCullSlope()) return false;
@@ -700,21 +700,21 @@ bool RETRO_ProjectTerrainDot(int x, int z, float dx, float dz, float radius2, co
 // position. The island look is RETRO_TerrainIslandEye, then the same
 // pinhole.
 //
-RETRO_TerrainPoint RETRO_ProjectTerrainPoint(float x, float z, float height, const RETRO_TerrainBasis &basis)
+inline RETRO_TerrainPoint RETRO_ProjectTerrainPoint(float x, float z, float height, const RETRO_TerrainBasis &basis)
 {
 	return RETRO_ProjectTerrainOffset(RETRO_TerrainCameraOffset(x - RETRO_Camera.x, z - RETRO_Camera.z, basis), height);
 }
 
 //
 // The wrapping pinhole for a point sitting on the ground.
-RETRO_TerrainPoint RETRO_ProjectTerrainVertex(float x, float z, const RETRO_TerrainBasis &basis)
+inline RETRO_TerrainPoint RETRO_ProjectTerrainVertex(float x, float z, const RETRO_TerrainBasis &basis)
 {
 	return RETRO_ProjectTerrainPoint(x, z, RETRO_TerrainHeight(x, z), basis);
 }
 
 // The wrapping mesh walk for the current camera and view. What is painted
 // on a cell is the effect's; this is only which cells are worth asking.
-RETRO_TerrainMesh RETRO_BuildTerrainMesh(void)
+inline RETRO_TerrainMesh RETRO_BuildTerrainMesh(void)
 {
 	int step = RETRO_TerrainView.step;
 	int distance = RETRO_TerrainView.distance;
@@ -739,7 +739,7 @@ RETRO_TerrainMesh RETRO_BuildTerrainMesh(void)
 // ground Offset, not the Eye: a yaw leaves height alone, so the height of
 // the cell can wait until the cell has been kept.
 //
-bool RETRO_TerrainCellVisible(const RETRO_TerrainMesh &mesh, int x, int z)
+inline bool RETRO_TerrainCellVisible(const RETRO_TerrainMesh &mesh, int x, int z)
 {
 	float centrex = x + mesh.step / 2.0f - RETRO_Camera.x;
 	float centrez = z + mesh.step / 2.0f - RETRO_Camera.z;
@@ -758,7 +758,7 @@ bool RETRO_TerrainCellVisible(const RETRO_TerrainMesh &mesh, int x, int z)
 // sits inside has one half in front of it and one behind, and judging the cell
 // would throw both away and leave a hole in the foreground.
 //
-bool RETRO_TerrainTriangleProjects(float q0, float q1, float q2)
+inline bool RETRO_TerrainTriangleProjects(float q0, float q1, float q2)
 {
 	return q0 > 0 && q1 > 0 && q2 > 0;
 }
@@ -771,7 +771,7 @@ bool RETRO_TerrainTriangleProjects(float q0, float q1, float q2)
 // shorter than one unit would otherwise be truncated away every frame and
 // the movement stall.
 //
-float RETRO_WrapCoordinate(float coordinate, float size)
+inline float RETRO_WrapCoordinate(float coordinate, float size)
 {
 	coordinate = fmodf(coordinate, size);
 	return coordinate < 0 ? coordinate + size : coordinate;
@@ -802,7 +802,7 @@ float RETRO_WrapCoordinate(float coordinate, float size)
 // approach the same at any frame rate. A floor under it stops a fast descent
 // putting the eye inside the hill.
 //
-void RETRO_UpdateTerrainCamera(float timestep)
+inline void RETRO_UpdateTerrainCamera(float timestep)
 {
 	float distance = timestep * RETRO_Camera.movespeed;
 	float rotation = timestep * RETRO_Camera.turnspeed;
@@ -856,7 +856,7 @@ void RETRO_UpdateTerrainCamera(float timestep)
 // under the map while the demo is already being watched. The island look
 // is RETRO_LookDownAtTerrain, which stands outside the patch.
 //
-void RETRO_PlaceTerrainCamera(float x, float z)
+inline void RETRO_PlaceTerrainCamera(float x, float z)
 {
 	RETRO_Camera.x = x;
 	RETRO_Camera.z = z;
@@ -875,7 +875,7 @@ void RETRO_PlaceTerrainCamera(float x, float z)
 // change of scale does not touch. The island look is not scaled: it stands
 // outside a finite patch and LookDown sets its own pose.
 //
-void RETRO_ScaleTerrainWorld(float worldscale)
+inline void RETRO_ScaleTerrainWorld(float worldscale)
 {
 	RETRO_TerrainCamera defaults;
 	RETRO_Camera.movespeed = defaults.movespeed * worldscale;
@@ -893,7 +893,7 @@ void RETRO_ScaleTerrainWorld(float worldscale)
 // once for the wrapping look. RETRO_TerrainIslandEye then uses this
 // rather than taking them per sample.
 //
-RETRO_TerrainIslandFrame RETRO_BuildTerrainIslandFrame(void)
+inline RETRO_TerrainIslandFrame RETRO_BuildTerrainIslandFrame(void)
 {
 	RETRO_TerrainIslandFrame frame;
 	frame.centerx = (RETRO_Terrain.width - 1) * 0.5f;
@@ -932,7 +932,7 @@ RETRO_TerrainIslandFrame RETRO_BuildTerrainIslandFrame(void)
 // of the half-extents, which equals the half-depth times sqrt(2) only when
 // the patch is square.
 //
-void RETRO_LookDownAtTerrain(void)
+inline void RETRO_LookDownAtTerrain(void)
 {
 	RETRO_TerrainView.focalx = RETRO_WIDTH * 0.54f;
 	RETRO_TerrainView.focaly = RETRO_HEIGHT * 0.78f;
@@ -960,7 +960,7 @@ void RETRO_LookDownAtTerrain(void)
 // depth - then RETRO_ProjectTerrainView, the way wrapping dots test the
 // wedge before they project.
 //
-RETRO_TerrainEye RETRO_TerrainIslandEye(float x, float y, float z, const RETRO_TerrainIslandFrame &frame)
+inline RETRO_TerrainEye RETRO_TerrainIslandEye(float x, float y, float z, const RETRO_TerrainIslandFrame &frame)
 {
 	float localx = x - frame.centerx;
 	float localz = z - frame.centerz;
@@ -985,7 +985,7 @@ RETRO_TerrainEye RETRO_TerrainIslandEye(float x, float y, float z, const RETRO_T
 // set, so the finite patch stays in frame. There is no horizon slide: the
 // pitch is the look.
 //
-void RETRO_UpdateTerrainIsland(float timestep)
+inline void RETRO_UpdateTerrainIsland(float timestep)
 {
 	float distance = timestep * RETRO_Island.movespeed;
 	float rotation = timestep * RETRO_Island.turnspeed;
@@ -1018,7 +1018,7 @@ void RETRO_UpdateTerrainIsland(float timestep)
 // corners fold onto heightmap[0]. A dirty buffer would be a different map
 // every run; this zeros it rather than asking the caller to have done so.
 //
-void RETRO_BuildDisplacementTerrain(unsigned char *heightmap, unsigned char *colormap, int width, int height, float worldscale)
+inline void RETRO_BuildDisplacementTerrain(unsigned char *heightmap, unsigned char *colormap, int width, int height, float worldscale)
 {
 	if (width != height || width <= 0 || (width & (width - 1)) != 0) {
 		RETRO_RageQuit("Displacement terrain must be square with power-of-two sides\n");

@@ -8,7 +8,6 @@
 #define _RETROPOLY_H_
 
 #include "retropalette.h"
-#include "retromodel.h"
 
 // A corner of a polygon as the drawers take it: where it landed on screen, and
 // what they interpolate across the face from there. Not a Vertex - the
@@ -65,9 +64,9 @@ struct TriangleSpan {
 // and larger q is nearer, so the same number resolves depth. Cleared to 0,
 // infinitely far, once per model.
 //
-float RETRO_DepthBuffer[RETRO_WIDTH * RETRO_HEIGHT];
+inline float RETRO_DepthBuffer[RETRO_WIDTH * RETRO_HEIGHT];
 
-void RETRO_ClearDepthBuffer(void)
+inline void RETRO_ClearDepthBuffer(void)
 {
 	memset(RETRO_DepthBuffer, 0, sizeof(RETRO_DepthBuffer));
 }
@@ -101,7 +100,7 @@ inline bool RETRO_DepthTest(int offset, float q)
 //
 // The radius is unused on that path: the sphere map already covers the image.
 //
-void RETRO_GetEnvMapCoordinates(float nx, float ny, float nz, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, float &u, float &v)
+inline void RETRO_GetEnvMapCoordinates(float nx, float ny, float nz, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, float &u, float &v)
 {
 	const float epsilon = 1.0e-12f;
 
@@ -123,8 +122,8 @@ void RETRO_GetEnvMapCoordinates(float nx, float ny, float nz, bool lightingmap, 
 			ny *= inversenormallength;
 		}
 
-		u = envmapwidth / 2 + envmapradius * nx;
-		v = envmapheight / 2 + envmapradius * ny;
+		u = envmapwidth / 2.0f + envmapradius * nx;
+		v = envmapheight / 2.0f + envmapradius * ny;
 		return;
 	}
 
@@ -162,7 +161,7 @@ void RETRO_GetEnvMapCoordinates(float nx, float ny, float nz, bool lightingmap, 
 // sign, leaving the same gradient whichever way round the corners are listed.
 // Edges are half-open in y so a shared edge is drawn by exactly one triangle.
 //
-float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, const PolygonPoint *p2, TriangleSpan *span, int &ystart, int &yend)
+inline float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, const PolygonPoint *p2, TriangleSpan *span, int &ystart, int &yend)
 {
 	const float epsilon = 1.0e-12f;
 	float determinant = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
@@ -205,7 +204,7 @@ float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, const P
 // Flat shaded polygon
 // Split a convex polygon into a triangle fan and fill it with one color.
 //
-void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char color)
+inline void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char color)
 {
 	for (int triangle = 1; triangle < points - 1; triangle++) {
 		PolygonPoint *p0 = &point[0];
@@ -245,7 +244,7 @@ void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char color)
 // Model3D::colormax) so a triple overlap fills a chosen shade instead
 // of walking into white. RETRO_COLORS - 1 is the unsigned char ceiling.
 //
-void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned char color, int colormax = RETRO_COLORS - 1)
+inline void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned char color, int colormax = RETRO_COLORS - 1)
 {
 	colormax = CLAMP(colormax, 0, RETRO_COLORS);
 
@@ -275,7 +274,7 @@ void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned char color
 // Interpolate palette indices affinely in screen space to keep shared
 // triangle edges continuous.
 //
-void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points)
+inline void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points)
 {
 	for (int triangle = 1; triangle < points - 1; triangle++) {
 		PolygonPoint *p0 = &point[0];
@@ -322,7 +321,7 @@ void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points)
 //   I = ShadeFromLambert(max(N · L, 0))
 //   color = c + shades * I
 //
-void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight light)
+inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight light)
 {
 	const float epsilon = 1.0e-12f;
 
@@ -404,7 +403,7 @@ void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight light)
 // it by whole multiples - wants those folded back rather than smeared into the
 // edge texel, and says so here.
 //
-void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, bool wrap = false)
+inline void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, bool wrap = false)
 {
 	if (texmap == NULL) return;
 
@@ -468,7 +467,7 @@ void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned char *tex
 // shading-palette one, so a texture that is a picture in its own palette is
 // drawn from all of it and not from its first thirty-two entries.
 //
-void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, const ShadeTable &shadetable, bool wrap = false)
+inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, const ShadeTable &shadetable, bool wrap = false)
 {
 	if (texmap == NULL || shadetable.table == NULL) return;
 
@@ -538,7 +537,7 @@ void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned ch
 // geometric face; project it onto the interpolated shading normal here so it
 // is also a tangent frame for Gouraud and environment-mapped normals.
 //
-void RETRO_BumpNormal(float nx, float ny, float nz, float dhx, float dhy, const TangentFrame &frame, float *outnx, float *outny, float *outnz)
+inline void RETRO_BumpNormal(float nx, float ny, float nz, float dhx, float dhy, const TangentFrame &frame, float *outnx, float *outny, float *outnz)
 {
 	if (dhx == 0.0f && dhy == 0.0f) {
 		*outnx = nx;
@@ -621,7 +620,7 @@ void RETRO_BumpNormal(float nx, float ny, float nz, float dhx, float dhy, const 
 }
 
 // L and N' are unit, so the term is N' · L.
-float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float dhy, const TangentFrame &frame, float lightx, float lighty, float lightz)
+inline float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float dhy, const TangentFrame &frame, float lightx, float lighty, float lightz)
 {
 	RETRO_BumpNormal(nx, ny, nz, dhx, dhy, frame, &nx, &ny, &nz);
 	return nx * lightx + ny * lighty + nz * lightz;
@@ -639,7 +638,7 @@ float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float dhy, co
 // which a model sets for itself and which is not the table's own height. The
 // bump moves the shade by the difference it makes to the lighting, so it is
 // measured in the same steps the face was already shaded in.
-void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, int lambertshades, float lightx, float lighty, float lightz, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, int lambertshades, float lightx, float lighty, float lightz, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
 	if (texmap == NULL || bumpmap == NULL || shadetable.table == NULL) return;
 
@@ -759,7 +758,7 @@ void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char 
 //
 // Texture coordinates are clamped, not wrapped: nothing tiles a map through
 // this drawer, and an env map has a rim rather than a seam.
-void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, const ShadeTable &shadetable, unsigned char shade, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight)
+inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, const ShadeTable &shadetable, unsigned char shade, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight)
 {
 	if (texmap == NULL || shadetable.table == NULL) return;
 
@@ -849,7 +848,7 @@ void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned cha
 //
 // Texture coordinates are clamped, not wrapped: nothing tiles a map through
 // this drawer, and an env map has a rim rather than a seam.
-void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
 	if (texmap == NULL || envmap == NULL || bumpmap == NULL || shadetable.table == NULL) return;
 
@@ -957,7 +956,7 @@ void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned
 // Lighting normals are perspective-correct and normalized at lookup;
 // reflection normals retain the original affine interpolation.
 //
-void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned char *envmap, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius)
+inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned char *envmap, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius)
 {
 	if (envmap == NULL) return;
 
@@ -1012,7 +1011,7 @@ void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned char *env
 // Bump-mapped environment polygon
 // Lighting and reflection maps are read at the tilted unit normal N'.
 //
-void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
 	if (envmap == NULL || bumpmap == NULL) return;
 
@@ -1135,7 +1134,7 @@ void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char 
 // model times whatever scale the projection was given. Transparency is the
 // alpha entry, as in RETRO_DrawSprite, not the shape of the map.
 //
-void RETRO_DrawDepthSprite(float sx, float sy, float q, float size, float thickness, unsigned char *map, float *depthmap, int mapsize, unsigned char alpha = 0, unsigned char *buffer = RETRO.framebuffer)
+inline void RETRO_DrawDepthSprite(float sx, float sy, float q, float size, float thickness, unsigned char *map, float *depthmap, int mapsize, unsigned char alpha = 0, unsigned char *buffer = RETRO.framebuffer)
 {
 	if (q <= 0.0f || size <= 0.0f) return;
 

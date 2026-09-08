@@ -38,7 +38,7 @@ unsigned char TwisterShadeTable[RETRO_COLORS * TWISTER_SHADES];
 // One scanline of one face, half-open in x. Texture position and depth shade
 // both advance from where the unclipped span begins.
 //
-void DrawSpan(int left, int right, int y, unsigned char *texels, int base, float left_shade, float right_shade)
+static void DrawSpan(int left, int right, int y, unsigned char *texels, int base, float left_shade, float right_shade)
 {
 	if (right <= left) {
 		return;

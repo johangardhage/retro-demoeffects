@@ -56,7 +56,7 @@
 // would have begun, so clipping the left edge shifts the ramp rather than restarting it.
 // A back-facing edge has left >= right and covers nothing, which is the silhouette test.
 //
-void DrawSpan(int left, int right, int y, unsigned char color)
+static void DrawSpan(int left, int right, int y, unsigned char color)
 {
 	int start = left;
 

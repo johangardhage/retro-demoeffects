@@ -95,7 +95,7 @@ Point3Df EllipseTangents[SPANS];
 // lumel indexes FlubberShadeTable[texel][0..DIFFUSE_SHADES) diffuse /
 // [DIFFUSE_SHADES..SHADE_LUT_WIDTH) specular. Smaller z is nearer.
 //
-void DrawSpan(int y, int x1, float u1, float l1, float z1, int x2, float u2, float l2, float z2)
+static void DrawSpan(int y, int x1, float u1, float l1, float z1, int x2, float u2, float l2, float z2)
 {
 	if (x1 >= x2) {
 		return;
@@ -189,7 +189,7 @@ void DEMO_Render(double time, double deltatime)
 }
 
 // Nearest palette entry in RGB, by d² = Δr² + Δg² + Δb²
-unsigned char ClosestColor(RETRO_Palette *palette, unsigned char r, unsigned char g, unsigned char b)
+static unsigned char ClosestColor(RETRO_Palette *palette, unsigned char r, unsigned char g, unsigned char b)
 {
 	long dist = 1 << 30;
 	unsigned char color = 0;

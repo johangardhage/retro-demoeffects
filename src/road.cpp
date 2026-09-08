@@ -106,7 +106,7 @@ int ZMapEntries = 0; // the entries inside the draw distance, so the walk stops 
 // Fill a scanline from x1 to x2, clipped to the screen. The ends are pixel
 // positions, not columns, so a span narrower than a pixel drops out
 //
-void DrawSpan(unsigned char *row, float x1, float x2, unsigned char color)
+static void DrawSpan(unsigned char *row, float x1, float x2, unsigned char color)
 {
 	int left = x1 < 0 ? 0 : (int)x1;
 	int right = x2 > RETRO_WIDTH ? RETRO_WIDTH : (int)x2;
@@ -192,7 +192,7 @@ void DEMO_Render(double time, double deltatime)
 // way regardless: what a seam needs is that neither arrives at a value the
 // section before it did not already hold
 //
-void AddRoad(int enter, int hold, int leave, float curve, float hill)
+static void AddRoad(int enter, int hold, int leave, float curve, float hill)
 {
 	int total = enter + hold + leave;
 

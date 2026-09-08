@@ -31,7 +31,7 @@ static const float RibbonWidth[RIBBON_COUNT] = { 0.20f, 0.16f, 0.13f };
 static const float RibbonHeight[RIBBON_COUNT] = { 2.1f, 2.1f, 2.1f };
 static const float RibbonPhase[RIBBON_COUNT] = { 0.0f, 2.1f, 4.2f };
 
-void AddQuad(Model3D *model, int a, int b, int c, int d)
+static void AddQuad(Model3D *model, int a, int b, int c, int d)
 {
 	if (model->faces >= RETRO_MAX_FACES) {
 		RETRO_RageQuit("Too many ribbon faces\n");
@@ -47,7 +47,7 @@ void AddQuad(Model3D *model, int a, int b, int c, int d)
 	face->backc = 0;
 }
 
-void BuildRibbons(Model3D *model)
+static void BuildRibbons(Model3D *model)
 {
 	float tmax = RIBBON_TURNS * 2 * M_PI;
 

@@ -28,7 +28,7 @@
 
 Point2Df Points[POINTS];
 
-void DrawLines(int x, int y, float k)
+static void DrawLines(int x, int y, float k)
 {
 	Points[0].x = x;
 	Points[0].y = y;

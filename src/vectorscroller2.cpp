@@ -384,7 +384,7 @@ static Model3D *GetGlyph(unsigned char character)
 	Model3D *model = RETRO_Allocate3DModel();
 	model->c = 0;
 	model->shades = GLENZ_SHADES;
-	model->colormax = 3 * GLENZ_SHADES; // hold the add at the gradient's last entry, or a third overlap would walk into white
+	model->glenzlighting.colormax = 3 * GLENZ_SHADES; // hold the add at the gradient's last entry, or a third overlap would walk into white
 	BuildGlyph(model, character);
 
 	GlyphCache[GlyphCacheCount] = model;
@@ -428,7 +428,7 @@ void DEMO_Render(double time, double deltatime)
 
 		RETRO_RotateModel(ax, ay, az, glyph);
 		RETRO_TranslateModel(pose.s, pose.y, pose.z, glyph);
-		RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, glyph);
+		RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, glyph);
 		// Glenz adds into the framebuffer and does not use the q-buffer, so
 		// overlapping letters and the front and back of one letter all show
 		// through each other.

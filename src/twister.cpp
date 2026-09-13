@@ -22,7 +22,7 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TWISTER_CENTER_X (RETRO_WIDTH / 2)
+#define TWISTER_CENTER_X (RETRO_WIDTH / 2.0)
 #define TWISTER_RADIUS 60
 #define TWISTER_TWIST 2.0 // peak radians of twist from row 0 to row HEIGHT
 #define TWISTER_TORSION_WAVE 2 // wind-up cycles over one rotation

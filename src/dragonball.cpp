@@ -3,7 +3,7 @@
 //
 // Sync/Dreamdealers' DragonBall (and Robster's of the same name): a filled
 // ellipse that stands in for a sphere, six five-pointed stars sitting on it,
-// bouncing and squashing onto a copper-split floor that reflects the ball.
+// bouncing and squashing onto a copper-split floor.
 //
 // The ball is not a mesh. It is an axis-aligned ellipse. Airborne it is a
 // ballistic parabola, y = APEX + ½ g t², hitting the floor at speed v. Contact
@@ -30,9 +30,8 @@
 // Euler rotation they are projected with a pinhole and then scaled by
 // (ra/R, rb/R) so they squash with the ellipse. The rotated plane normal
 // chooses the bit: facing the camera adds 4, facing away adds 2, the ellipse
-// itself is 1. Those three bits pick a colour, and a scanline above, on, or
-// below the horizon picks which of the three banks that 8 is drawn from —
-// sky, floor, or the reflected copy of the scanlines above the mirror.
+// itself is 1. Those three bits pick a colour, and a scanline above or
+// below the horizon picks the sky or floor palette bank.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -59,11 +58,10 @@
 #define BALL_WOBBLE_OMEGA (BALL_OMEGA * 1.4f) // faster than contact so the stretch overshoots less
 #define BALL_WD (BALL_WOBBLE_OMEGA * sqrtf(1.0f - BALL_ZETA * BALL_ZETA))
 #define BALL_HORIZON 158 // copper split, sky above, floor below
-#define BALL_REFLECTION 200 // first mirrored scanline, the copper's negative modulo
 #define BALL_SPEEDX 0.87f // radians a second, the original's 1/2/3 degrees a PAL frame
 #define BALL_SPEEDY 1.75f
 #define BALL_SPEEDZ -2.62f
-#define BALL_CX (RETRO_WIDTH / 2)
+#define BALL_CX (RETRO_WIDTH / 2.0)
 #define BALL_EYE 3.2f // closer than RETRO_PROJECTION_EYEDISTANCE so the sphere bulges
 
 #define STAR_COUNT 6
@@ -75,10 +73,9 @@
 #define STAR_SPIN 3.49f // radians a second, the original's 4 degrees a PAL frame
 
 #define BIT_BALL 1
-#define BIT_BACK 2 // far side of the sphere, teal
-#define BIT_FRONT 4 // near side, blue
+#define BIT_BACK 2 // far side of the sphere, muted lavender
+#define BIT_FRONT 4 // near side, mint green
 #define BANK_FLOOR 8
-#define BANK_REFLECT 16
 
 // Continuation of the contact spring after takeoff. d(0) = 0 and d'(0) = −v
 // so the radii stay C¹ with p = (v/ω) sin(ω τ) at τ = π/ω.
@@ -212,7 +209,7 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Floor, then the ball, then the stars. Background 0 is already the sky.
-	for (int y = BALL_HORIZON; y < BALL_REFLECTION; y++) {
+	for (int y = BALL_HORIZON; y < RETRO_HEIGHT; y++) {
 		memset(RETRO.framebuffer + y * RETRO_WIDTH, BANK_FLOOR, RETRO_WIDTH);
 	}
 
@@ -266,52 +263,34 @@ void DEMO_Render(double time, double deltatime)
 		FillStar(pts, STAR_VERTS, bit);
 	}
 
-	// Copper negative-modulo: every line from REFLECTION down is the line the
-	// same distance above it, remapped into the reflection bank
-	for (int y = BALL_REFLECTION; y < RETRO_HEIGHT; y++) {
-		int ysrc = 2 * BALL_REFLECTION - 1 - y;
-		if (ysrc < 0) {
-			memset(RETRO.framebuffer + y * RETRO_WIDTH, BANK_REFLECT, RETRO_WIDTH);
-			continue;
-		}
-		unsigned char *src = RETRO.framebuffer + ysrc * RETRO_WIDTH;
-		unsigned char *dst = RETRO.framebuffer + y * RETRO_WIDTH;
-		for (int x = 0; x < RETRO_WIDTH; x++) {
-			dst[x] = (src[x] & 7) | BANK_REFLECT;
-		}
-	}
 }
 
 void DEMO_Initialize(void)
 {
-	// Three banks of the same 8 slots: sky, floor, reflection. The body is
-	// seagreen, far-side stars mediumseagreen, near-side stars steelblue.
-	// Unused combinations (star bits without the ball) still get a colour
-	// so a clipped-out leak does not flash palette 0.
-	RETRO_SetColor(0, RETRO_REBECCAPURPLE);
-	RETRO_SetColor(BIT_BALL, RETRO_SEAGREEN);
-	RETRO_SetColor(BIT_BACK, RETRO_SEAGREEN);
-	RETRO_SetColor(BIT_BALL | BIT_BACK, RETRO_MEDIUMSEAGREEN);
-	RETRO_SetColor(BIT_FRONT, RETRO_STEELBLUE);
-	RETRO_SetColor(BIT_BALL | BIT_FRONT, RETRO_STEELBLUE);
-	RETRO_SetColor(BIT_BACK | BIT_FRONT, RETRO_STEELBLUE);
-	RETRO_SetColor(BIT_BALL | BIT_BACK | BIT_FRONT, RETRO_LIGHTSKYBLUE);
-
-	RETRO_SetColor(BANK_FLOOR, RETRO_INDIGO);
-	RETRO_SetColor(BANK_FLOOR | BIT_BALL, RETRO_TEAL);
-	RETRO_SetColor(BANK_FLOOR | BIT_BACK, RETRO_TEAL);
-	RETRO_SetColor(BANK_FLOOR | BIT_BALL | BIT_BACK, RETRO_SEAGREEN);
-	RETRO_SetColor(BANK_FLOOR | BIT_FRONT, RETRO_DARKCYAN);
-	RETRO_SetColor(BANK_FLOOR | BIT_BALL | BIT_FRONT, RETRO_DARKCYAN);
-	RETRO_SetColor(BANK_FLOOR | BIT_BACK | BIT_FRONT, RETRO_DARKCYAN);
-	RETRO_SetColor(BANK_FLOOR | BIT_BALL | BIT_BACK | BIT_FRONT, RETRO_STEELBLUE);
-
-	RETRO_SetColor(BANK_REFLECT, RETRO_INDIGO);
-	RETRO_SetColor(BANK_REFLECT | BIT_BALL, RETRO_DARKSLATEGRAY);
-	RETRO_SetColor(BANK_REFLECT | BIT_BACK, RETRO_DARKSLATEGRAY);
-	RETRO_SetColor(BANK_REFLECT | BIT_BALL | BIT_BACK, RETRO_TEAL);
-	RETRO_SetColor(BANK_REFLECT | BIT_FRONT, RETRO_MIDNIGHTBLUE);
-	RETRO_SetColor(BANK_REFLECT | BIT_BALL | BIT_FRONT, RETRO_MIDNIGHTBLUE);
-	RETRO_SetColor(BANK_REFLECT | BIT_BACK | BIT_FRONT, RETRO_MIDNIGHTBLUE);
-	RETRO_SetColor(BANK_REFLECT | BIT_BALL | BIT_BACK | BIT_FRONT, RETRO_DARKCYAN);
+	// The copper split darkens the ball and both star colours along with
+	// the beige background. Front stars win where front and back overlap.
+	static const RETRO_Palette sky[8] = {
+		{ 172, 154, 138 }, // background
+		{ 154, 100, 204 }, // violet ball
+		{ 138, 138, 190 }, // back star (unused without ball)
+		{ 138, 138, 190 },
+		{  82, 170, 154 }, // mint front star
+		{  82, 170, 154 },
+		{  82, 170, 154 },
+		{  82, 170, 154 },
+	};
+	static const RETRO_Palette floor[8] = {
+		{ 156, 137, 114 },
+		{ 138,  85, 186 },
+		{ 114, 116, 170 },
+		{ 114, 116, 170 },
+		{  66, 153, 136 },
+		{  66, 153, 136 },
+		{  66, 153, 136 },
+		{  66, 153, 136 },
+	};
+	for (int i = 0; i < 8; i++) {
+		RETRO_SetColor(i, sky[i]);
+		RETRO_SetColor(BANK_FLOOR | i, floor[i]);
+	}
 }

@@ -87,22 +87,18 @@ void DEMO_Render(double time, double deltatime)
 
 	// Draw from front to back
 	for (float z = 1.0f; z < distance; z += deltaz) {
-		float plx = z * slice.leftx;
-		float plz = z * slice.leftz;
-		float prx = z * slice.rightx;
-		float prz = z * slice.rightz;
+		vec2 pl = z * slice.left;
+		vec2 pr = z * slice.right;
+		vec2 d = (pr - pl) / RETRO_WIDTH;
 
-		float dx = (prx - plx) / RETRO_WIDTH;
-		float dz = (prz - plz) / RETRO_WIDTH;
-
-		plx += RETRO_Camera.x;
-		plz += RETRO_Camera.z;
+		pl.x += RETRO_Camera.x;
+		pl.y += RETRO_Camera.z;
 		float invz = focal / z;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			// floor and not a cast: the walk runs negative wherever the camera
 			// looks back across the map's origin, and truncating toward zero
 			// would fold the cell either side of it onto the same sample
-			int mapoffset = ((int)floorf(plz) & mapzmask) * mapstride + ((int)floorf(plx) & mapxmask);
+			int mapoffset = ((int)floorf(pl.y) & mapzmask) * mapstride + ((int)floorf(pl.x) & mapxmask);
 			int heightonscreen = (int)((cameraheight - heightmap[mapoffset]) * invz + horizon);
 			if (heightonscreen < 0) {
 				heightonscreen = 0;
@@ -114,8 +110,7 @@ void DEMO_Render(double time, double deltatime)
 			if (heightonscreen < hiddeny[x]) {
 				hiddeny[x] = heightonscreen;
 			}
-			plx += dx;
-			plz += dz;
+			pl += d;
 		}
 		deltaz += VOXEL_LOD;
 	}

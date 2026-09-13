@@ -21,7 +21,7 @@
 //
 // The bars are drawn back to front in palette order, giving bar 6 priority
 // wherever two overlap, the way a copper list lets the last write to a
-// scanline win. t lives on RETRO_SINCOS_ANGLE.
+// scanline win. t lives on RETRO_ANGLES_PER_TURN.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -48,13 +48,13 @@ RETRO_Palette BarColors[COPPER_BARS] = {
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	double phase = fmod(time * COPPER_SPEED, RETRO_SINCOS_ANGLE);
+	double phase = fmod(time * COPPER_SPEED, RETRO_ANGLES_PER_TURN);
 
 	// Draw bars, back to front, each riding the cosine a lag behind the one before.
 	// Row j of a bar is entry j of that bar's ramp, so the tube shading comes out
 	// of the palette, and a bar that runs off an edge is clipped to the screen
 	for (int k = 0; k < COPPER_BARS; k++) {
-		int y = lround(RETRO_HEIGHT / 2 + COPPER_AMP * COS(phase + k * COPPER_LAG)) - COPPER_BARHEIGHT / 2;
+		int y = lround(RETRO_HEIGHT / 2.0 + COPPER_AMP * COS(phase + k * COPPER_LAG)) - COPPER_BARHEIGHT / 2.0;
 		int ramp = COPPER_RAMP0 + k * COPPER_BARHEIGHT;
 		int top = MAX(y, 0);
 		int bottom = MIN(y + COPPER_BARHEIGHT, RETRO_HEIGHT);

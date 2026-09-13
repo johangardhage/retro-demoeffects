@@ -134,20 +134,16 @@ void DEMO_Render(double time, double deltatime)
 
 	// Draw from front to back
 	for (float z = VOXEL_NEAR; z < distance; z += deltaz) {
-		float plx = z * slice.leftx;
-		float plz = z * slice.leftz;
-		float prx = z * slice.rightx;
-		float prz = z * slice.rightz;
+		vec2 pl = z * slice.left;
+		vec2 pr = z * slice.right;
+		vec2 d = (pr - pl) / RETRO_WIDTH;
 
-		float dx = (prx - plx) / RETRO_WIDTH;
-		float dz = (prz - plz) / RETRO_WIDTH;
-
-		plx += RETRO_Camera.x;
-		plz += RETRO_Camera.z;
+		pl.x += RETRO_Camera.x;
+		pl.y += RETRO_Camera.z;
 		float invz = focal / z;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int heightonscreen = (int)((cameraheight - RETRO_TerrainSampleLinear(heightmap, plx, plz)) * invz + horizon);
-			float color = RETRO_TerrainSampleLinear(colormap, plx, plz);
+			int heightonscreen = (int)((cameraheight - RETRO_TerrainSampleLinear(heightmap, pl.x, pl.y)) * invz + horizon);
+			float color = RETRO_TerrainSampleLinear(colormap, pl.x, pl.y);
 
 			if (heightonscreen < hiddeny[x]) {
 				// The nearest slice has no strip in front of it to be shaded
@@ -184,8 +180,7 @@ void DEMO_Render(double time, double deltatime)
 			// Kept whether the strip was drawn or hidden: it is where the
 			// ground is, not what reached the screen
 			lastcolor[x] = color;
-			plx += dx;
-			plz += dz;
+			pl += d;
 		}
 		deltaz += VOXEL_LOD;
 	}

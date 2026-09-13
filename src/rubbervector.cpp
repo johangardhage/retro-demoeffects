@@ -93,7 +93,7 @@ static void RetainCubeImage(float ax, float ay, float az, RubberLine *image)
 {
 	RETRO_Clear();
 	RETRO_RotateModel(ax, ay, az, Cube);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Cube);
+	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Cube);
 	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT, Cube);
 	PackCubeImage(image, RETRO_FrameBuffer());
 }

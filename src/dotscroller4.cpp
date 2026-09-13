@@ -119,7 +119,8 @@ static void PlotDot(float x, float y, float z, int band)
 	if (dot.rpos.z >= ZBuffer[pixel]) return;
 
 	int shade = (DepthFar - dot.rpos.z) / (DepthFar - DepthNear) * (BAND_SHADES - 1);
-	shade = MAX(1, MIN(BAND_SHADES - 1, shade));
+	shade = MIN(BAND_SHADES - 1, shade);
+	shade = MAX(1, shade);
 	ZBuffer[pixel] = dot.rpos.z;
 	RETRO_PutPixel(sx, sy, 1 + band * BAND_SHADES + shade);
 }

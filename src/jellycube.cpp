@@ -61,7 +61,7 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_InitializeFaceNormals(Jelly);
 
 	RETRO_RotateModel(ax, ay, az, Jelly);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Jelly);
+	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Jelly);
 	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT, Jelly);
 }
 

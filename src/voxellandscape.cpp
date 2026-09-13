@@ -132,26 +132,22 @@ void DEMO_Render(double time, double deltatime)
 
 	// Draw from front to back
 	for (float z = VOXEL_NEAR; z < distance; z += deltaz) {
-		float plx = z * slice.leftx;
-		float plz = z * slice.leftz;
-		float prx = z * slice.rightx;
-		float prz = z * slice.rightz;
+		vec2 pl = z * slice.left;
+		vec2 pr = z * slice.right;
+		vec2 d = (pr - pl) / RETRO_WIDTH;
 
-		float dx = (prx - plx) / RETRO_WIDTH;
-		float dz = (prz - plz) / RETRO_WIDTH;
-
-		plx += RETRO_Camera.x;
-		plz += RETRO_Camera.z;
+		pl.x += RETRO_Camera.x;
+		pl.y += RETRO_Camera.z;
 		float invz = focal / z;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int heightonscreen = (int)((cameraheight - RETRO_TerrainSampleLinear(heightmap, plx, plz)) * invz + horizon);
+			int heightonscreen = (int)((cameraheight - RETRO_TerrainSampleLinear(heightmap, pl.x, pl.y)) * invz + horizon);
 			if (heightonscreen < 0) {
 				heightonscreen = 0;
 			}
 
 			// One colour for the whole strip, so nothing has to be carried from
 			// the slice before and the top of the screen is a plain clamp
-			unsigned char color = (unsigned char)RETRO_TerrainSampleLinear(colormap, plx, plz);
+			unsigned char color = (unsigned char)RETRO_TerrainSampleLinear(colormap, pl.x, pl.y);
 			for (int y = heightonscreen; y < hiddeny[x]; y++) {
 				buffer[y * RETRO_WIDTH + x] = color;
 			}
@@ -159,8 +155,7 @@ void DEMO_Render(double time, double deltatime)
 				hiddeny[x] = heightonscreen;
 			}
 
-			plx += dx;
-			plz += dz;
+			pl += d;
 		}
 		deltaz += VOXEL_LOD;
 	}

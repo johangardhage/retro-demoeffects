@@ -55,8 +55,8 @@ void DEMO_FixedUpdate(double timestep)
 
 	// Draw orbiting blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {
-		int x = RETRO_WIDTH / 2 + cos(phase * (0.6 + i * 0.23) + i * 1.3) * (40 + i * 22);
-		int y = RETRO_HEIGHT / 2 + sin(phase * (0.9 + i * 0.31) + i * 2.1) * (30 + i * 16);
+		int x = RETRO_WIDTH / 2.0 + cos(phase * (0.6 + i * 0.23) + i * 1.3) * (40 + i * 22);
+		int y = RETRO_HEIGHT / 2.0 + sin(phase * (0.9 + i * 0.31) + i * 2.1) * (30 + i * 16);
 		DrawBlob(x, y, 255);
 	}
 

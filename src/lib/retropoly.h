@@ -156,8 +156,16 @@ inline float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, 
 	float determinant = cross(p1->pos - p0->pos, p2->pos - p0->pos);
 	if (fabs(determinant) <= epsilon) return 0.0f;
 
-	ystart = MAX((int)ceil(MIN(p0->pos.y, MIN(p1->pos.y, p2->pos.y)) - 0.5f), 0);
-	yend = MIN((int)ceil(MAX(p0->pos.y, MAX(p1->pos.y, p2->pos.y)) - 0.5f), RETRO_HEIGHT);
+	// MIN/MAX are statement-expression macros: nesting one inside another
+	// declares an inner temporary that shadows the outer one, so the
+	// three-way reduction is chained as separate calls instead
+	float ymin = MIN(p0->pos.y, p1->pos.y);
+	ymin = MIN(ymin, p2->pos.y);
+	float ymax = MAX(p0->pos.y, p1->pos.y);
+	ymax = MAX(ymax, p2->pos.y);
+
+	ystart = MAX((int)ceil(ymin - 0.5f), 0);
+	yend = MIN((int)ceil(ymax - 0.5f), RETRO_HEIGHT);
 	if (ystart >= yend) return 0.0f;
 
 	for (int y = ystart; y < yend; y++) {
@@ -230,7 +238,7 @@ inline void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char
 // Glenz shaded polygon
 // Add one color to the framebuffer, allowing sorted polygons to show through.
 // colormax is the top of the add; a model opts into a lower one (see
-// Model3D::colormax) so a triple overlap fills a chosen shade instead
+// GlenzLighting::colormax) so a triple overlap fills a chosen shade instead
 // of walking into white. RETRO_COLORS - 1 is the unsigned char ceiling.
 //
 inline void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned char color, int colormax = RETRO_COLORS - 1)

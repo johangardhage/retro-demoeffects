@@ -30,7 +30,7 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate phase
 	float phase = fmod(time, MORPH_PERIOD) / MORPH_PERIOD;
 
-	float yaw = fmod(time * 0.42, 2 * M_PI);
+	float yaw = 0.7f * sinf(time * 0.42f);
 	float pitch = -0.20f + 0.48f * sinf(time * 0.31f);
 	float roll = 0.06f * sinf(time * 0.19f);
 
@@ -40,7 +40,7 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_InitializeFaceNormals(Wall);
 	RETRO_InitializeVertexNormals(Wall);
 	RETRO_RotateModel(pitch, yaw, roll, Wall);
-	RETRO_ProjectModel(WALL_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Wall);
+	RETRO_ProjectModel(WALL_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Wall);
 	RETRO_RenderModel(RETRO_POLY_TEXTURE, RETRO_SHADE_GOURAUD, Wall);
 }
 

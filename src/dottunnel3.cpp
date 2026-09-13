@@ -48,8 +48,8 @@
 #define TUNNEL_SWAY 50 // how far the centre line wanders off the axis
 #define TUNNEL_SPEED 30 // angle units a second the path is walked, one ring per step at 60 Hz
 #define TUNNEL_LAG 0.5 // angle units of path between one ring and the next
-#define TUNNEL_XPHASE (RETRO_SINCOS_ANGLE / 8) // offset that keeps the figure from opening on a crossing
-#define TUNNEL_PERIOD (5 * RETRO_SINCOS_ANGLE) // five turns of the figure, the shortest span the bands also close over
+#define TUNNEL_XPHASE (RETRO_ANGLES_PER_TURN / 8.0) // offset that keeps the figure from opening on a crossing
+#define TUNNEL_PERIOD (5 * RETRO_ANGLES_PER_TURN) // five turns of the figure, the shortest span the bands also close over
 
 double RingX[RING_DOTS];
 double RingY[RING_DOTS];
@@ -77,8 +77,8 @@ void DEMO_Render(double time, double deltatime)
 
 		// Draw ring
 		for (int j = 0; j < RING_DOTS; j++) {
-			int x = RETRO_WIDTH / 2 + lround(RingX[j] * RingScale[i] + swayx);
-			int y = RETRO_HEIGHT / 2 + lround(RingY[j] * RingScale[i] + swayy);
+			int x = RETRO_WIDTH / 2.0 + lround(RingX[j] * RingScale[i] + swayx);
+			int y = RETRO_HEIGHT / 2.0 + lround(RingY[j] * RingScale[i] + swayy);
 
 			if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
 				RETRO_PutPixel(x, y, color);
@@ -94,7 +94,7 @@ void DEMO_Initialize(void)
 
 	// Init ring
 	for (int i = 0; i < RING_DOTS; i++) {
-		double angle = i * (double)RETRO_SINCOS_ANGLE / RING_DOTS;
+		double angle = i * (double)RETRO_ANGLES_PER_TURN / RING_DOTS;
 
 		RingX[i] = RING_WIDTH * COS(angle);
 		RingY[i] = RING_HEIGHT * SIN(angle);

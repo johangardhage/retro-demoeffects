@@ -54,7 +54,7 @@ void DEMO_Render(double time, double deltatime)
 	for (int i = 0; i < NUM_BALLS; i++) {
 		int p = WRAP(iphase * rate[i] + offset[i], SINE_VALUES);
 		Balls[i].r = charge[i];
-		Balls[i].pos = { (float)(CosTable[p] * amplitudex[i] + (RETRO_WIDTH / 2)), (float)(SinTable[p] * amplitudey[i] + (RETRO_HEIGHT / 2)) };
+		Balls[i].pos = { (float)(CosTable[p] * amplitudex[i] + (RETRO_WIDTH / 2.0)), (float)(SinTable[p] * amplitudey[i] + (RETRO_HEIGHT / 2.0)) };
 	}
 
 	// Draw balls

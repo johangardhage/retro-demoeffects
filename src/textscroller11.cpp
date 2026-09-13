@@ -72,7 +72,7 @@ static Vertex Project(double angle, double localx, double localy)
 	RETRO_RotateVertex(&vertex, 0, -angle, 0);
 	vertex.pos = vertex.rpos;
 	RETRO_RotateVertex(&vertex, RING_TILT, 0, 0);
-	RETRO_ProjectVertex(&vertex, PROJECTION_SCALE, RETRO_WIDTH / 2, RING_Y, CAMERA_DISTANCE);
+	RETRO_ProjectVertex(&vertex, PROJECTION_SCALE, RETRO_WIDTH / 2.0, RING_Y, CAMERA_DISTANCE);
 	return vertex;
 }
 
@@ -113,7 +113,7 @@ static void DrawGlyph(int letter, double angle, bool shadow, float &paintdepth)
 static int BarEdge(int y, double phase)
 {
 	// Two low-frequency waves keep the dividing seam gently curved and moving.
-	return RETRO_WIDTH / 2 + lround(4 * sin(phase + y * 0.018) + 2 * sin(phase * 0.6));
+	return RETRO_WIDTH / 2.0 + lround(4 * sin(phase + y * 0.018) + 2 * sin(phase * 0.6));
 }
 
 void DEMO_Render(double time, double deltatime)

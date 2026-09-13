@@ -88,9 +88,9 @@ void DEMO_Render(double time, double deltatime)
 	// constant and the hit only walks in x. Start at the left edge
 	// (sx = −W/2) and step (s, t) by λ (U_x, V_x) / P², one pixel of sx.
 	for (int y = PLANE_FIRST_ROW; y < RETRO_HEIGHT; y++) {
-		float ry = y - (RETRO_HEIGHT / 2);
+		float ry = y - (RETRO_HEIGHT / 2.0);
 		float lambda = PLANE_Y / ry;
-		float sx0 = -(RETRO_WIDTH / 2);
+		float sx0 = -(RETRO_WIDTH / 2.0);
 		float hitx = lambda * sx0;
 		float hitz = lambda * PLANE_DISTANCE;
 		vec3 d = { hitx - bp.x, 0, hitz - bp.z };

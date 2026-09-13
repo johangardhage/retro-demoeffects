@@ -63,7 +63,7 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_InitializeFaceNormals(Rubber);
 
 	RETRO_RotateModel(ax, ay, az, Rubber);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Rubber);
+	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Rubber);
 	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT, Rubber);
 }
 

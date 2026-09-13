@@ -1,76 +1,90 @@
 //
-// Stars, tumbling
+// Vortex starfield
 //
-// A box of stars, half-extents (W, H, BOX_DEPTH), rotated by R = Rz Ry Rx
-// (the same sequential Rx, Ry, Rz as RETRO_RotateVertex). The cloud is
-// fixed; only the view changes. After rotation a star is the library
-// pinhole q = 1/(rz + eye) and is shaded by rotated depth:
+// Stars on cylinders, flying toward the eye with a twist. Star i holds a
+// radius R, an angle θ and a depth z. The pinhole is the same as stars2
 //
-//   color = (furthest − rz) · (SHADES − 1) / (furthest − STAR_NEAREST)
+//   sx = W/2 + R cos(θ + k/z) · EYE / z
+//   sy = H/2 + R sin(θ + k/z) · EYE / z
 //
-// furthest = √(W² + H² + D²) is the bounding-sphere radius. Stars with
-// rz ≤ STAR_NEAREST (−150) are dropped — 100 units in front of the eye
-// (eye = 250), which also drops anything behind it, so they do not streak.
-// The box is filled half-open: [−W, W) × [−H, H) × [−D, D). Euler angles
-// live on 2π.
+// except the angle is taken at θ + k/z rather than at θ. k/z is a
+// stronger twist near the eye, so the cylinders read as a vortex
+// rather than as a straight tube. z shrinks at SPEED; at z ≤ STAR_NEAR
+// the star is reborn at STAR_FAR on a fresh angle. Brightness is the
+// remaining depth, as in stars2. Three radii keep the tube from being
+// a single ring.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retromath.h"
 #include "lib/retropalette.h"
 
-#define NUM_STARS 1000
-#define SPEED 2 // radians a second, about each axis
-#define BOX_DEPTH 250 // half the depth of the box; it is two screens wide and two tall
-#define PROJECTION_SCALE 1.0 // the box is built in pixels, so the projection adds no scale
-#define STAR_NEAREST (-150) // nearest a star may come before it would streak, in rotated depth
+#define NUM_STARS 1400
+#define SPEED 180 // depth travelled per second
+#define SPIN 1.4 // radians of θ per second, the cylinder's own turn
+#define EYE 250 // how far the eye sits from the screen
+#define STAR_NEAR 12 // nearest a star gets before it has gone past
+#define STAR_FAR 520 // and the depth it comes back at
+#define TWIST 90 // extra radians of θ at z = 1; at z it is this over z
 #define SHADES 64 // palette entries the depth shading ramps over
 
-Vertex Stars[NUM_STARS];
+struct VortexStar {
+	float angle;
+	float radius;
+	float z;
+} Stars[NUM_STARS];
+
+static const float BandRadius[3] = { 55, 90, 130 };
+
+static void PlaceStar(VortexStar *star, float depth)
+{
+	star->angle = RANDOMF(2 * M_PI);
+	star->radius = BandRadius[RANDOM(3)];
+	star->z = depth;
+}
 
 void DEMO_Render(double time, double deltatime)
 {
-	// Calculate rotation
-	float ax = fmod(time * SPEED, 2 * M_PI);
-	float ay = fmod(time * SPEED, 2 * M_PI);
-	float az = fmod(time * SPEED, 2 * M_PI);
+	float cx = RETRO_WIDTH / 2.0f;
+	float cy = RETRO_HEIGHT / 2.0f;
 
-	double furthest = sqrt((double)RETRO_WIDTH * RETRO_WIDTH + (double)RETRO_HEIGHT * RETRO_HEIGHT + (double)BOX_DEPTH * BOX_DEPTH);
-
-	// Draw stars
 	for (int i = 0; i < NUM_STARS; i++) {
-		RETRO_RotateVertex(&Stars[i], ax, ay, az);
+		Stars[i].z -= SPEED * deltatime;
+		Stars[i].angle += SPIN * deltatime;
 
-		if (Stars[i].rpos.z <= STAR_NEAREST) {
-			continue;
+		if (Stars[i].z <= STAR_NEAR) {
+			PlaceStar(&Stars[i], STAR_FAR);
 		}
 
-		RETRO_ProjectVertex(&Stars[i], PROJECTION_SCALE);
-
-		int x = Stars[i].spos.x;
-		int y = Stars[i].spos.y;
+		float a = Stars[i].angle + TWIST / Stars[i].z;
+		float q = EYE / Stars[i].z;
+		int x = cx + Stars[i].radius * cos(a) * q;
+		int y = cy + Stars[i].radius * sin(a) * q;
 
 		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
-			int color = (furthest - Stars[i].rpos.z) * (SHADES - 1) / (furthest - STAR_NEAREST);
-
+			int color = (STAR_FAR - Stars[i].z) * (SHADES - 1) / (STAR_FAR - STAR_NEAR);
 			RETRO_PutPixel(x, y, color);
+
+			// Near stars take a neighbour so they read as a streak along the
+			// vortex rather than as a single pixel.
+			if (color > SHADES / 2) {
+				int x2 = x + (x > cx ? 1 : -1);
+				int y2 = y + (y > cy ? 1 : -1);
+				if (x2 >= 0 && x2 < RETRO_WIDTH && y2 >= 0 && y2 < RETRO_HEIGHT) {
+					RETRO_PutPixel(x2, y, color);
+					RETRO_PutPixel(x, y2, color / 2);
+				}
+			}
 		}
 	}
 }
 
 void DEMO_Initialize(void)
 {
-	// Init palette
 	RETRO_CreateGradientPalette(0, SHADES, RETRO_BLACK, RETRO_WHITE);
 
-	// Init stars. Fill a box centred on the eye's axis: [-W, W] x [-H, H] x [-BOX_DEPTH, BOX_DEPTH].
 	for (int i = 0; i < NUM_STARS; i++) {
-		Stars[i].pos = {
-			(float)(RANDOM(RETRO_WIDTH * 2) - RETRO_WIDTH),
-			(float)(RANDOM(RETRO_HEIGHT * 2) - RETRO_HEIGHT),
-			(float)(RANDOM(BOX_DEPTH * 2) - BOX_DEPTH)
-		};
+		PlaceStar(&Stars[i], RANDOM(STAR_FAR - STAR_NEAR) + STAR_NEAR);
 	}
 }

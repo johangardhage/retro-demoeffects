@@ -89,12 +89,12 @@ void DEMO_Render(double time, double deltatime)
 
 	// Draw torus 1 (blue gradient)
 	RETRO_RotateModel(ax, ay, az, Torus1);
-	RETRO_ProjectModel(PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Torus1);
+	RETRO_ProjectModel(PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Torus1);
 	RETRO_RenderModel(RETRO_POLY_GOURAUD, RETRO_SHADE_NONE, Torus1, false);
 
 	// Draw torus 2 (green gradient)
 	RETRO_RotateModel(ax, ay, az, Torus2);
-	RETRO_ProjectModel(PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Torus2);
+	RETRO_ProjectModel(PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Torus2);
 	RETRO_RenderModel(RETRO_POLY_GOURAUD, RETRO_SHADE_NONE, Torus2, false);
 }
 

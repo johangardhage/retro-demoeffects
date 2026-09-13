@@ -43,8 +43,8 @@ unsigned char Image[] = {
 
 static void DrawShadebob(double xphase1, double xphase2, double yphase1, double yphase2)
 {
-	int x = RETRO_WIDTH / 2 + SIN(xphase1) * BOB_AMP / 2 + SIN(xphase2) * BOB_AMP / 2;
-	int y = RETRO_HEIGHT / 2 + SIN(yphase1) * BOB_AMP / 3 + SIN(yphase2) * BOB_AMP / 3;
+	int x = RETRO_WIDTH / 2.0 + SIN(xphase1) * BOB_AMP / 2 + SIN(xphase2) * BOB_AMP / 2;
+	int y = RETRO_HEIGHT / 2.0 + SIN(yphase1) * BOB_AMP / 3 + SIN(yphase2) * BOB_AMP / 3;
 	int xstart = x - BOB_SIZE / 2;
 	int ystart = y - BOB_SIZE / 2;
 
@@ -70,10 +70,10 @@ void DEMO_FixedUpdate(double timestep)
 	// Calculate phase
 	static double xphase1 = 60, xphase2 = 100, yphase1 = 55, yphase2 = 200;
 
-	xphase1 = fmod(xphase1 + BOB_SPEED1 * timestep, RETRO_SINCOS_ANGLE);
-	xphase2 = fmod(xphase2 + BOB_SPEED2 * timestep, RETRO_SINCOS_ANGLE);
-	yphase1 = fmod(yphase1 + BOB_SPEED2 * timestep, RETRO_SINCOS_ANGLE);
-	yphase2 = fmod(yphase2 + BOB_SPEED1 * timestep, RETRO_SINCOS_ANGLE);
+	xphase1 = fmod(xphase1 + BOB_SPEED1 * timestep, RETRO_ANGLES_PER_TURN);
+	xphase2 = fmod(xphase2 + BOB_SPEED2 * timestep, RETRO_ANGLES_PER_TURN);
+	yphase1 = fmod(yphase1 + BOB_SPEED2 * timestep, RETRO_ANGLES_PER_TURN);
+	yphase2 = fmod(yphase2 + BOB_SPEED1 * timestep, RETRO_ANGLES_PER_TURN);
 
 	// Draw bobs
 	DrawShadebob(xphase1, xphase2, yphase1, yphase2);

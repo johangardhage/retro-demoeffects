@@ -66,8 +66,8 @@ void DEMO_FixedUpdate(double timestep)
 	double xx = cos(cos(phase / 2.0) * M_PI) * rx;
 	double yy = sin(cos(phase / 2.7) * M_PI) * ry;
 
-	int x = RETRO_WIDTH / 2 + xx * cos(aa) + yy * sin(aa);
-	int y = RETRO_HEIGHT / 2 - xx * sin(aa) + yy * cos(aa);
+	int x = RETRO_WIDTH / 2.0 + xx * cos(aa) + yy * sin(aa);
+	int y = RETRO_HEIGHT / 2.0 - xx * sin(aa) + yy * cos(aa);
 	float k = sin(phase / 15.0) + 0.75;
 
 	// Draw lines

@@ -15,7 +15,7 @@
 // with A and B the two modes' phases. The surface is a height field over x and
 // y, so the normal is (dz/dx, dz/dy, -1) up to length: the u factor makes the
 // first term a product rule, and the chain rule brings out the rate each mode
-// turns at. RADIAN is there because SIN and COS run on RETRO_SINCOS_ANGLE units
+// turns at. RADIAN is there because SIN and COS run on RETRO_ANGLES_PER_TURN units
 // per turn, so COS is the derivative of SIN only up to that scale.
 //
 // The asset carries two normals per vertex, the second the negation of the
@@ -45,7 +45,7 @@
 #define FLAG_SWAYSPEED 13 // table units a second
 #define FLAG_TILTX 0.12 // radians the view leans, fixed
 #define FLAG_TILTY 0.40
-#define FLAG_RADIAN (2 * M_PI / RETRO_SINCOS_ANGLE) // radians a table unit is worth
+#define FLAG_RADIAN (2 * M_PI / RETRO_ANGLES_PER_TURN) // radians a table unit is worth
 #define FLAG_SHADES ((RETRO_COLORS - 1) / 2) // palette entries a color's ramp covers, the
                                                  // two sharing everything past the background
 #define FLAG_BLUE 1 // where the blue ramp starts, past the background
@@ -55,9 +55,9 @@ void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase, of the wave running out along the flag and of the yaw it
 	// swings through
-	double travel = fmod(time * FLAG_SPEED, RETRO_SINCOS_ANGLE);
+	double travel = fmod(time * FLAG_SPEED, RETRO_ANGLES_PER_TURN);
 
-	double sway = fmod(time * FLAG_SWAYSPEED, RETRO_SINCOS_ANGLE);
+	double sway = fmod(time * FLAG_SWAYSPEED, RETRO_ANGLES_PER_TURN);
 
 	// Shake out the cloth, and slope with it: the height and the two slopes come
 	// from the same wave, so the shading is the surface's own and not an average

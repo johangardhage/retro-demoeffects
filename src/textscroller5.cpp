@@ -26,8 +26,8 @@
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
 //#define FONT RETRO_FONT_MINECRAFT_8X8
 #define SCROLL_SPEED 60.0 // strip columns per second
-#define CIRCLE_X (RETRO_WIDTH / 2)
-#define CIRCLE_Y (RETRO_HEIGHT / 2)
+#define CIRCLE_X (RETRO_WIDTH / 2.0)
+#define CIRCLE_Y (RETRO_HEIGHT / 2.0)
 #define CIRCLE_RADIUS 68
 #define CIRCLE_GAP 16 // pixels of open circumference before the bottom
 #define SAMPLES_PER_PIXEL 2

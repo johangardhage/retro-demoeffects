@@ -33,7 +33,7 @@ void DEMO_Initialize(void)
 {
 	// Init palette
 	RETRO_SetColor(0, RETRO_BLACK);
-	RETRO_SetColor(1, RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS), RANDOM(RETRO_COLORS));
+	RETRO_SetColor(1, RETRO_WHITE);
 
 	Model3D *model = RETRO_Load3DModel("assets/cubequads.obj");
 	model->c = 1;

@@ -125,8 +125,8 @@ static void StartSystem(void)
 	// Fit the window to the screen, keeping the plane's aspect
 	ScreenScale = MARGIN * MIN(RETRO_WIDTH / (system->right - system->left),
 							   RETRO_HEIGHT / (system->top - system->bottom));
-	ScreenX = RETRO_WIDTH / 2 - ScreenScale * (system->left + system->right) / 2;
-	ScreenY = RETRO_HEIGHT / 2 + ScreenScale * (system->bottom + system->top) / 2;
+	ScreenX = RETRO_WIDTH / 2.0 - ScreenScale * (system->left + system->right) / 2;
+	ScreenY = RETRO_HEIGHT / 2.0 + ScreenScale * (system->bottom + system->top) / 2;
 
 	float sum = 0;
 	for (int i = 0; i < system->transforms; i++) {

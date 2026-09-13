@@ -257,7 +257,7 @@ void DEMO_Render(double time, double deltatime)
 
 		RETRO_RotateModel(pose.ax, pose.ay, 0, glyph);
 		RETRO_TranslateModel(pose.s, pose.y, pose.z, glyph);
-		RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, glyph);
+		RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, glyph);
 		RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT, glyph, false);
 	}
 }

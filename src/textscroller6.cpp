@@ -105,7 +105,7 @@ void DEMO_Render(double time, double deltatime)
 		int right = RETRO_WIDTH / 2 + halfwidth;
 
 		for (int x = MAX(left, 0); x < MIN(right, RETRO_WIDTH); x++) {
-			double u = (x - RETRO_WIDTH / 2) / scale + PageImage->width / 2.0;
+			double u = (x - RETRO_WIDTH / 2.0) / scale + PageImage->width / 2.0;
 			int sx = (int)u;
 			if (sx < 0 || sx >= PageImage->width) {
 				continue;

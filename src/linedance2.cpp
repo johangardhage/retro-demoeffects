@@ -32,8 +32,8 @@ void DEMO_Render(double time, double deltatime)
 
 	for (int i = 0; i <= RETRO_DEGREES_PER_TURN; i++) {
 		double b = i * M_PI / 180;
-		double x = RETRO_WIDTH / 2 + 50 * sin(b + a * 2) + 25 * sin(a + b * 2) - 50 * sin(a + b);
-		double y = RETRO_HEIGHT / 2 + 20 * sin(a + b * 2) + 15 * sin(b + a * 2) + 20 * sin(a + b);
+		double x = RETRO_WIDTH / 2.0 + 50 * sin(b + a * 2) + 25 * sin(a + b * 2) - 50 * sin(a + b);
+		double y = RETRO_HEIGHT / 2.0 + 20 * sin(a + b * 2) + 15 * sin(b + a * 2) + 20 * sin(a + b);
 
 		if (i > 0) {
 			// One shade per segment, taken at its midpoint

@@ -37,10 +37,10 @@ void DEMO_Render(double time, double deltatime)
 
 	// Calculate windows. Each spans [0, W] by [0, H], so the last row and column
 	// read is exactly the last one the table holds.
-	int xtableleft = (RETRO_WIDTH / 2) + (RETRO_WIDTH / 2 * sin(-phase / 197));
-	int xtabletop = (RETRO_HEIGHT / 2) + (RETRO_HEIGHT / 2 * cos(-phase / 224));
-	int ytableleft = (RETRO_WIDTH / 2) + (RETRO_WIDTH / 2 * cos(phase / 205));
-	int ytabletop = (RETRO_HEIGHT / 2) + (RETRO_HEIGHT / 2 * sin(phase / 231));
+	int xtableleft = (RETRO_WIDTH / 2.0) + (RETRO_WIDTH / 2.0 * sin(-phase / 197));
+	int xtabletop = (RETRO_HEIGHT / 2.0) + (RETRO_HEIGHT / 2.0 * cos(-phase / 224));
+	int ytableleft = (RETRO_WIDTH / 2.0) + (RETRO_WIDTH / 2.0 * cos(phase / 205));
+	int ytabletop = (RETRO_HEIGHT / 2.0) + (RETRO_HEIGHT / 2.0 * sin(phase / 231));
 
 	// Draw distort
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

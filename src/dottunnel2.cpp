@@ -24,7 +24,7 @@
 #include "lib/retrovector.h"
 
 #define POINTSTEP 5 // angle units between the dots around a ring, of the 256 in a whole turn
-#define RING_DOTS (RETRO_SINCOS_ANGLE / POINTSTEP) // 5 does not divide 256; the ring uses 256/n
+#define RING_DOTS (RETRO_ANGLES_PER_TURN / POINTSTEP) // 5 does not divide 256; the ring uses 256/n
 #define CIRCLE_RADIUS 50
 #define RING_COUNT 87 // rings between the mouth and the eye
 #define RING_STEP 5 // depth from one ring to the next
@@ -39,9 +39,9 @@ vec2 Circle[RING_DOTS];
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	double phase = fmod(-time * SWAY_SPEED, RETRO_SINCOS_ANGLE);
+	double phase = fmod(-time * SWAY_SPEED, RETRO_ANGLES_PER_TURN);
 	if (phase < 0) {
-		phase += RETRO_SINCOS_ANGLE;
+		phase += RETRO_ANGLES_PER_TURN;
 	}
 
 	// Draw rings
@@ -53,8 +53,8 @@ void DEMO_Render(double time, double deltatime)
 		int color = i * (SHADES - 1) / (RING_COUNT - 1);
 
 		for (int j = 0; j < RING_DOTS; j++) {
-			int x = (RETRO_WIDTH / 2) + (Circle[j].x * EYE) / (EYE - z) + xo;
-			int y = (RETRO_HEIGHT / 2) + (Circle[j].y * EYE) / (EYE - z) + yo;
+			int x = (RETRO_WIDTH / 2.0) + (Circle[j].x * EYE) / (EYE - z) + xo;
+			int y = (RETRO_HEIGHT / 2.0) + (Circle[j].y * EYE) / (EYE - z) + yo;
 
 			if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
 				RETRO_PutPixel(x, y, color);
@@ -70,7 +70,7 @@ void DEMO_Initialize(void)
 
 	// Init ring
 	for (int i = 0; i < RING_DOTS; i++) {
-		double angle = i * (double)RETRO_SINCOS_ANGLE / RING_DOTS;
+		double angle = i * (double)RETRO_ANGLES_PER_TURN / RING_DOTS;
 
 		Circle[i].x = CIRCLE_RADIUS * COS(angle);
 		Circle[i].y = CIRCLE_RADIUS * SIN(angle);

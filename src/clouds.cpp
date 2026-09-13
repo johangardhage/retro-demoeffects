@@ -51,7 +51,7 @@ static float Cell(float *field, int x, int y)
 static void BuildField(void)
 {
 	static float field[MAP_SIZE * MAP_SIZE];
-	float amplitude = MAP_SIZE / 2;
+	float amplitude = MAP_SIZE / 2.0;
 
 	for (int step = MAP_SIZE; step > 1; step /= 2) {
 		int half = step / 2;

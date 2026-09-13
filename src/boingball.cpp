@@ -44,7 +44,7 @@
 #define BOING_PERIOD 9.6 // seconds of motion before the phase repeats
 #define BOING_SWEEPS 2 // crossings of the room and back in that time
 #define BOING_BOUNCES 7 // floor bounces in it, coprime with SWEEPS so the landings differ
-#define BOING_CX (RETRO_WIDTH / 2)
+#define BOING_CX (RETRO_WIDTH / 2.0)
 #define BOING_AMP 95 // pixels either side of centre the ball travels
 #define BOING_FLOOR 190 // screen y of the ball's centre when it is on the floor
 #define BOING_HEIGHT 70 // pixels the ball rises at the top of a bounce

@@ -10,7 +10,7 @@
 #include <SDL3/SDL.h>
 #include <getopt.h> // getopt_long
 #include <libgen.h> // basename
-#include <limits.h> // INT_MIN
+#include <limits.h> // INT_MAX
 #include <math.h> // cos, sin, pow
 #include <stdarg.h> // va_list, vprintf
 #include <stdio.h> // FILE
@@ -75,8 +75,7 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 
 #define RETRO_MAX_IMAGES 10
 
-#define RETRO_SINCOS_ANGLE 256
-
+#define RETRO_ANGLES_PER_TURN 256
 #define RETRO_DEGREES_PER_TURN 360
 
 #define RAD2DEG (180 / M_PI)
@@ -91,9 +90,9 @@ inline double RAND() { return (double)rand() / ((double)RAND_MAX + 1); }
 inline int RANDOM(double n) { return (int)(RAND() * n); }
 inline float RANDOMF(double n) { return (float)(RAND() * n); }
 
-// Cosine and sine over RETRO_SINCOS_ANGLE units per turn rather than 2*pi radians
-inline double COS(double x) { return cos((x * 2.0 * M_PI) / RETRO_SINCOS_ANGLE); }
-inline double SIN(double x) { return sin((x * 2.0 * M_PI) / RETRO_SINCOS_ANGLE); }
+// Cosine and sine, with a full turn equal to RETRO_ANGLES_PER_TURN rather than 2*pi radians
+inline double COS(double x) { return cos((x * 2.0 * M_PI) / RETRO_ANGLES_PER_TURN); }
+inline double SIN(double x) { return sin((x * 2.0 * M_PI) / RETRO_ANGLES_PER_TURN); }
 
 // Clamp n into [l, h - 1], so h is one past the highest value the result can take.
 //
@@ -390,16 +389,20 @@ inline RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = fals
 	// Calculate the size of image
 	image->width = xmax - xmin + 1;
 	image->height = ymax - ymin + 1;
+	if (image->width <= 0 || image->height <= 0) {
+		RETRO_RageQuit("Invalid image dimensions in file: %s\n", filename);
+	}
 
-	// Reserve memory
-	image->data = (unsigned char *)malloc(image->width * image->height);
+	// Reserve memory. Widened to size_t so a maximal header (up to 65536 per
+	// side) can't overflow the multiplication into an undersized allocation.
+	size_t size = (size_t)image->width * (size_t)image->height;
+	image->data = (unsigned char *)malloc(size);
 	if (image->data == NULL) {
 		RETRO_RageQuit("Cannot allocate image data memory\n");
 	}
 
 	// Unpack image
-	int size = image->width * image->height;
-	int index = 0;
+	size_t index = 0;
 	while (index < size) {
 		int data = getc(fp);
 		if (data == EOF) {
@@ -495,6 +498,7 @@ inline void RETRO_Initialize(void)
 	if (!SDL_Init(SDL_INIT_VIDEO)) {
 		RETRO_RageQuit("SDL_Init failed: %s\n", SDL_GetError());
 	}
+	RETRO.keystate = SDL_GetKeyboardState(NULL);
 
 	// Get current display mode
 	SDL_DisplayID display = SDL_GetPrimaryDisplay();
@@ -622,7 +626,7 @@ inline double RETRO_DeltaTime(void)
 
 inline bool RETRO_KeyState(SDL_Scancode key)
 {
-	return RETRO.keystate[key];
+	return RETRO.keystate && RETRO.keystate[key];
 }
 
 inline bool RETRO_KeyPressed(SDL_Scancode key)
@@ -695,7 +699,7 @@ inline void RETRO_Mainloop(void)
 		double deltatime = RETRO_DeltaTime();
 
 		// Check events
-		if (RETRO.keystate[SDL_SCANCODE_SPACE]) {
+		if (RETRO_KeyState(SDL_SCANCODE_SPACE)) {
 			continue;
 		}
 
@@ -730,6 +734,10 @@ inline void RETRO_Mainloop(void)
 		if (RETRO.dumpfile && RETRO.time >= RETRO.dumptime) {
 			RETRO_DumpFrame(RETRO.dumpfile);
 			RETRO_Quit();
+		}
+
+		if (RETRO_KeyPressed(SDL_SCANCODE_BACKSPACE)) {
+			RETRO_DumpFrame("screenshot.ppm");
 		}
 
 		// Limit FPS

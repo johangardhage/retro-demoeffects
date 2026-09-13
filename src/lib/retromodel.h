@@ -40,9 +40,10 @@ struct Vertex {
 	float q;					// Reciprocal projection depth
 };
 
-// A unit direction: where something points. Every UnitVector is normalized as it
-// is written, so nothing that reads one has to divide it out first, and the
-// model's rotation is orthonormal, so it stays unit all the way to the drawers.
+// A unit vector: where something points. Every UnitVector is normalized as it
+// is written (fill dir, then RETRO_NormalizeUnitVector), so nothing that
+// reads one has to divide it out first, and the model's rotation is orthonormal,
+// so it stays unit all the way to the drawers.
 //
 // Unlike a Vertex it has no screen form and does not translate, which is the
 // whole distinction - RETRO_TranslateModel moves vertices and leaves these
@@ -70,7 +71,20 @@ struct Face {
 	bool frontfacing;							// Which side the winding shows. Only set for a face that
 												// reached the winding test, so read it only for a face in
 												// the draw list
-	float rz;									// Mean rotated depth, the painter's sort key
+	float depth;									// Mean rotated depth, the painter's sort key
+};
+
+// Configuration for the Glenz renderer. The flat-shading fields set how a
+// face is lit: the default signed falloff lets rear faces shade below their
+// material offset, while Model3D::twosided instead lights inward normals
+// and stays inside each material ramp. colormax applies to every Glenz face
+// regardless of shading, since it caps the additive framebuffer write itself.
+struct GlenzLighting {
+	float diffuse = 1.0f;
+	float highlight = 0.0f;
+	float exponent = 4.0f;
+	float backstrength = 0.5f;
+	int colormax = RETRO_COLORS - 1;
 };
 
 struct Model3D {
@@ -103,8 +117,10 @@ struct Model3D {
 												// with no inside - a sheet, an open shell - is otherwise
 												// lost the moment it turns: its normals point away from
 												// the viewer, so the whole of it lands on the dark end of
-												// the ramp. Honoured by the shaded renderers; the Glenz
-												// and wireframe paths draw both sides on their own terms
+												// the ramp. Honoured by the shaded renderers for whether a
+												// back face is drawn at all; Glenz draws both sides
+												// regardless, but still reads this for how to light the
+												// back one, and the wireframe path ignores it entirely
 	float *frame = NULL;						// Morph targets: frames blocks of vertices model space
 												// x, y, z, the same vertex list posed differently. Only
 												// the positions are held, since the topology, the UVs
@@ -125,12 +141,7 @@ struct Model3D {
 	int bumpmapwidth = RETRO_TEXMAP_SIZE;		// Bump texture width, which need not match the texture's
 	int bumpmapheight = RETRO_TEXMAP_SIZE;		// Bump texture height
 	int bumpgrazing = RETRO_BUMP_GRAZING;		// Height difference that tilts a normal to grazing
-	int colormax = RETRO_COLORS - 1;			// Top of the Glenz add (see RETRO_RenderGlenzModel),
-												// so a triple overlap fills a chosen shade instead of
-												// walking into white. RETRO_COLORS - 1 leaves the
-												// framebuffer's own ceiling; a model that wants to cap
-												// lower opts in explicitly, since the cap depends on that
-												// model's own palette layout, not on shades alone
+	GlenzLighting glenzlighting;				// Configuration for the Glenz renderer
 };
 
 inline struct {
@@ -175,6 +186,7 @@ inline Model3D *RETRO_Allocate3DModel(void)
 		RETRO_RageQuit("Cannot allocate 3D model memory\n");
 	}
 	memset(model, 0, sizeof(Model3D));
+	model->glenzlighting = GlenzLighting{};
 	model->texmapwidth = RETRO_TEXMAP_SIZE;
 	model->texmapheight = RETRO_TEXMAP_SIZE;
 	model->envmapwidth = RETRO_ENVMAP_SIZE;
@@ -183,7 +195,6 @@ inline Model3D *RETRO_Allocate3DModel(void)
 	model->bumpmapheight = RETRO_TEXMAP_SIZE;
 	model->envmapradius = RETRO_ENVMAP_SIZE / 2;
 	model->bumpgrazing = RETRO_BUMP_GRAZING;
-	model->colormax = RETRO_COLORS - 1;
 
 	RETRO_Model.model[id] = model;
 	RETRO_Model.models++;
@@ -743,7 +754,7 @@ inline void RETRO_Save3DModel(const char *filename, Model3D *model)
 			fprintf(fp, "f %d/%d/%d %d/%d/%d %d/%d/%d\n", model->face[i].vertex[0] + 1, model->face[i].uv[0] + 1, model->face[i].vertexnormal[0] + 1,
 														  model->face[i].vertex[1] + 1, model->face[i].uv[1] + 1, model->face[i].vertexnormal[1] + 1,
 														  model->face[i].vertex[2] + 1, model->face[i].uv[2] + 1, model->face[i].vertexnormal[2] + 1);
-		} if (model->face[i].vertices == 4) {
+		} else if (model->face[i].vertices == 4) {
 			fprintf(fp, "f %d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n", model->face[i].vertex[0] + 1, model->face[i].uv[0] + 1, model->face[i].vertexnormal[0] + 1,
 																   model->face[i].vertex[1] + 1, model->face[i].uv[1] + 1, model->face[i].vertexnormal[1] + 1,
 																   model->face[i].vertex[2] + 1, model->face[i].uv[2] + 1, model->face[i].vertexnormal[2] + 1,

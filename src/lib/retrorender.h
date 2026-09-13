@@ -45,17 +45,104 @@ inline struct {
 // held so far, so the source has no position yet: it can be pointed, not moved.
 inline void RETRO_InitializeLightSource(float x, float y, float z)
 {
-	RETRO_Render.lightsource.dir = normalize(vec3{ x, y, z });
-
-	// Rotate it once
-	RETRO_RotateUnitVector(&RETRO_Render.lightsource, 0, 0, 0);
+	RETRO_Render.lightsource = RETRO_LightSource(x, y, z);
 }
 
-inline void RETRO_RenderDotModel(Model3D *model)
+inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible = false)
 {
+	// How far past the silhouette, in the same units as facing below, a
+	// vertex fades in over instead of popping straight to full color. The
+	// winding test already dropped the back faces; this band sits on the
+	// survivors so a face that has just crossed into view does not appear
+	// at full color in one frame. A flat mesh's vertices share one face's
+	// normal, so without this every vertex on a face would cross together.
+	const float RETRO_DOT_FADE = 0.15f;
+
+	// A vertex has no winding of its own. Visibility is whether any of the
+	// faces that meet there is front-facing, by the same screen-space cross
+	// RETRO_SortFaces already uses for every other renderer. The vertex-
+	// normal z test is not that test under a pinhole: a side face can have
+	// N.z slightly toward the camera while its projected winding is still
+	// back-facing, and those vertices stamp through the cube.
+	bool visible[RETRO_MAX_VERTICES];
+	if (onlyvisible) {
+		for (int i = 0; i < model->vertices; i++) {
+			visible[i] = false;
+		}
+		RETRO_SortFaces(false, model);
+		for (int i = 0; i < model->drawfaces; i++) {
+			Face *face = &model->face[model->drawface[i]];
+			for (int j = 0; j < face->vertices; j++) {
+				visible[face->vertex[j]] = true;
+			}
+		}
+	}
+
+	// A split mesh stores each hard edge once per face. Those copies share a
+	// position, and the side-face one is unlit under a headlight, so stamping
+	// both would leave the floor on the lit rim. Among copies that would
+	// draw, keep the more-facing one.
+	bool drop[RETRO_MAX_VERTICES];
+	float lambert[RETRO_MAX_VERTICES];
+	if (shaded) {
+		for (int i = 0; i < model->vertices; i++) {
+			drop[i] = false;
+			lambert[i] = RETRO_RotatedDot(model->normal[i], RETRO_Render.lightsource);
+		}
+		for (int i = 0; i < model->vertices; i++) {
+			if ((onlyvisible && !visible[i]) || model->vertex[i].q <= 0.0f) {
+				continue;
+			}
+			for (int j = i + 1; j < model->vertices; j++) {
+				if ((onlyvisible && !visible[j]) || model->vertex[j].q <= 0.0f) {
+					continue;
+				}
+				if (model->vertex[i].pos != model->vertex[j].pos) {
+					continue;
+				}
+				if (lambert[j] > lambert[i]) {
+					drop[i] = true;
+				} else {
+					drop[j] = true;
+				}
+			}
+		}
+	}
+
 	for (int i = 0; i < model->vertices; i++) {
+		if (onlyvisible && !visible[i]) {
+			continue;
+		}
+		if (shaded && drop[i]) {
+			continue;
+		}
 		if (model->vertex[i].q > 0.0f) {
-			RETRO_PutPixel(model->vertex[i].spos.x, model->vertex[i].spos.y, model->c);
+			float fade = 1.0f;
+			if (onlyvisible) {
+				float facing = -model->normal[i].rdir.z;
+				if (facing > 0.0f) {
+					fade = CLAMP01(facing / RETRO_DOT_FADE);
+				}
+			}
+			int color = model->c;
+			if (shaded) {
+				// A dot has no face of its own to shade with, only the vertex
+				// normal RETRO_InitializeVertexNormals averaged in from the
+				// faces around it.
+				int cstart = model->c;
+				int cend = model->c + model->shades;
+				color = CLAMP(model->c + RETRO_ShadeFromLambert(lambert[i]) * model->shades, cstart, cend);
+			}
+			if (fade < 1.0f) {
+				// No alpha to blend with the background, so fade toward
+				// model->c - the ramp's own visible floor - instead. Scaling
+				// the index straight down toward 0 rounds a dot already near
+				// the floor to the background color well before the
+				// silhouette actually cuts it, which is indistinguishable
+				// from the pop this was meant to soften.
+				color = lround(model->c + fade * (color - model->c));
+			}
+			RETRO_PutPixel(model->vertex[i].spos.x, model->vertex[i].spos.y, color);
 		}
 	}
 }
@@ -64,7 +151,7 @@ inline void RETRO_RenderWireModel(Model3D *model, bool hiddenlines, bool fire)
 {
 	// Hidden lines means only the front faces are drawn; without it the back
 	// ones are drawn too, so they go into the list as well.
-	RETRO_SortFaces(model, !hiddenlines);
+	RETRO_SortFaces(!hiddenlines, model);
 
 	for (int i = 0; i < model->drawfaces; i++) {
 		Face *face = &model->face[model->drawface[i]];
@@ -95,7 +182,7 @@ inline float RETRO_FaceSide(Face *face)
 
 inline void RETRO_RenderFlatModel(Model3D *model, bool shaded)
 {
-	RETRO_SortFaces(model, model->twosided);
+	RETRO_SortFaces(model->twosided, model);
 
 	for (int i = 0; i < model->drawfaces; i++) {
 		Face *face = &model->face[model->drawface[i]];
@@ -119,7 +206,7 @@ inline void RETRO_RenderFlatModel(Model3D *model, bool shaded)
 
 inline void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
-	RETRO_SortFaces(model, true);
+	RETRO_SortFaces(true, model);
 
 	for (int i = 0; i < model->drawfaces; i++) {
 		Face *face = &model->face[model->drawface[i]];
@@ -127,22 +214,23 @@ inline void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 		for (int j = 0; j < face->vertices; j++) {
 			point[j].pos = model->vertex[face->vertex[j]].spos;
 		}
+		const GlenzLighting &lighting = model->glenzlighting;
 		int color;
 		if (shadertype == RETRO_SHADE_FLAT) {
-			// Glenz shades into a gradient, whose brightness rises linearly with
-			// the color index, so the lambert term is already the shade to use.
-			// No RETRO_ShadeFromLambert here: that only undoes the angle spacing
-			// of a phong ramp, and applying it to a gradient would bend a
-			// correct falloff out of shape
-			float lambert = RETRO_RotatedDot(face->facenormal, RETRO_Render.lightsource);
-			if (face->frontfacing == false) lambert /= 2;
-			// The floor is the model's base, not the face's. A back face carries a
-			// negative lambert and is meant to run down out of its own ramp into
-			// the black beneath it - half the faces drawn here do - so raising it
-			// to model->c + face->c would flatten every one of them to that entry.
-			int cstart = model->c;
-			int cend = model->c + face->c + model->shades;
-			color = CLAMP(model->c + face->c + lambert * model->shades, cstart, cend);
+			float light = RETRO_RotatedDot(face->facenormal, RETRO_Render.lightsource);
+			if (model->twosided) light = CLAMP01(RETRO_FaceSide(face) * light);
+			float strength = face->frontfacing ? 1.0f : lighting.backstrength;
+			int offset = model->twosided && !face->frontfacing ? face->backc : face->c;
+			int shades = MAX(model->shades, 1);
+			int basecolor = model->c + offset;
+			// Signed lighting retains the historical full-range falloff below
+			// face.c. Two-sided materials use their own half-open shade ramp,
+			// including a zero offset as a valid dark material.
+			int range = model->twosided ? shades - 1 : model->shades;
+			int mincolor = model->twosided ? basecolor : model->c;
+			int maxcolor = basecolor + (model->twosided ? shades : model->shades);
+			double contribution = range * strength * (lighting.diffuse * light + lighting.highlight * pow(MAX(0.0, (double)light), (double)lighting.exponent));
+			color = CLAMP(basecolor + contribution, mincolor, maxcolor);
 		} else {
 			// Unshaded Glenz draws both sides of every face. The winding test stored
 			// in frontfacing selects the front or back palette contribution, and zero
@@ -152,13 +240,13 @@ inline void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 			if (offset == 0) continue;
 			color = model->c + offset;
 		}
-		RETRO_DrawGlenzPolygon(point, face->vertices, color, model->colormax);
+		RETRO_DrawGlenzPolygon(point, face->vertices, color, lighting.colormax);
 	}
 }
 
 inline void RETRO_RenderGouraudModel(Model3D *model)
 {
-	RETRO_SortFaces(model, model->twosided);
+	RETRO_SortFaces(model->twosided, model);
 
 	for (int i = 0; i < model->drawfaces; i++) {
 		Face *face = &model->face[model->drawface[i]];
@@ -179,7 +267,7 @@ inline void RETRO_RenderGouraudModel(Model3D *model)
 
 inline void RETRO_RenderPhongModel(Model3D *model)
 {
-	RETRO_SortFaces(model, model->twosided);
+	RETRO_SortFaces(model->twosided, model);
 
 	PhongLight light;
 	light.dir = RETRO_Render.lightsource.rdir;
@@ -208,7 +296,7 @@ inline void RETRO_RenderPhongModel(Model3D *model)
 
 inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
-	RETRO_SortFaces(model, model->twosided);
+	RETRO_SortFaces(model->twosided, model);
 	// The model's table is the shading-palette shape: a texture drawn from a
 	// palette built for shading, with the whole ramp under each of its colors.
 	// A texture that is a picture in its own palette has the other shape, and
@@ -309,7 +397,7 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 
 inline void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 {
-	RETRO_SortFaces(model, model->twosided);
+	RETRO_SortFaces(model->twosided, model);
 	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
 	bool bumpmapping = model->bumpmap != NULL;
 
@@ -353,7 +441,7 @@ inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shade
 
 	switch (rendertype) {
 	case RETRO_POLY_DOT:
-		RETRO_RenderDotModel(model);
+		RETRO_RenderDotModel(model, shadertype == RETRO_SHADE_FLAT);
 		break;
 	case RETRO_POLY_WIREFRAME:
 		RETRO_RenderWireModel(model, false, shadertype == RETRO_SHADE_WIREFIRE);

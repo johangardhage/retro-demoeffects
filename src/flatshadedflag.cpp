@@ -60,9 +60,9 @@ void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase, of the wave running out along the flag and of the yaw it
 	// swings through
-	double travel = fmod(time * FLAG_SPEED, RETRO_SINCOS_ANGLE);
+	double travel = fmod(time * FLAG_SPEED, RETRO_ANGLES_PER_TURN);
 
-	double sway = fmod(time * FLAG_SWAYSPEED, RETRO_SINCOS_ANGLE);
+	double sway = fmod(time * FLAG_SWAYSPEED, RETRO_ANGLES_PER_TURN);
 
 	// Shake out the cloth, then take the face normals again: they are the sheet's
 	// until the wave is written into it

@@ -63,7 +63,7 @@
 
 #define SCROLL_SPEED 120.0 // strip columns per second
 #define ARC_SCALE 1.0 // screen pixels of path per strip column
-#define RIBBON_CX (RETRO_WIDTH / 2)
+#define RIBBON_CX (RETRO_WIDTH / 2.0)
 #define RIBBON_AMP 50 // pixels either side of CX the cosine reaches
 #define SAMPLE_HEIGHT (RETRO_HEIGHT * 3)
 #define WAVE_TURNS 2 // whole turns between the top border and the bottom one

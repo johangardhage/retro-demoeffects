@@ -154,8 +154,8 @@ inline vec3 RETRO_TerrainLight = { -0.50f, 0.62f, -0.60f };
 // renders perfectly and steers backwards.
 //
 struct RETRO_TerrainBasis {
-	float forwardx, forwardz;	// Where the heading looks, on the ground
-	float rightx, rightz;		// and its right, so a heading is a view frame
+	vec2 forward;	// Where the heading looks, on the ground (x, z)
+	vec2 right;		// and its right, so a heading is a view frame
 };
 
 //
@@ -166,8 +166,8 @@ struct RETRO_TerrainBasis {
 // slice at that depth; the column walks do that and nothing else with them.
 //
 struct RETRO_TerrainSlice {
-	float leftx, leftz;
-	float rightx, rightz;
+	vec2 left;
+	vec2 right;
 };
 
 //
@@ -597,10 +597,8 @@ inline RETRO_TerrainBasis RETRO_TerrainHeadingBasis(float heading)
 	float cosa = cosf(heading);
 
 	RETRO_TerrainBasis basis;
-	basis.forwardx = -sina;
-	basis.forwardz = -cosa;
-	basis.rightx = cosa;
-	basis.rightz = -sina;
+	basis.forward = { -sina, -cosa };
+	basis.right = { cosa, -sina };
 	return basis;
 }
 
@@ -610,10 +608,8 @@ inline RETRO_TerrainSlice RETRO_TerrainViewSlice(const RETRO_TerrainBasis &basis
 {
 	float slope = RETRO_TerrainViewHalfSlope();
 	RETRO_TerrainSlice slice;
-	slice.leftx = basis.forwardx - slope * basis.rightx;
-	slice.leftz = basis.forwardz - slope * basis.rightz;
-	slice.rightx = basis.forwardx + slope * basis.rightx;
-	slice.rightz = basis.forwardz + slope * basis.rightz;
+	slice.left = basis.forward - basis.right * slope;
+	slice.right = basis.forward + basis.right * slope;
 	return slice;
 }
 
@@ -621,9 +617,10 @@ inline RETRO_TerrainSlice RETRO_TerrainViewSlice(const RETRO_TerrainBasis &basis
 // mixed in, so a wedge can run before a height is read; see RETRO_TerrainOffset.
 inline RETRO_TerrainOffset RETRO_TerrainCameraOffset(float dx, float dz, const RETRO_TerrainBasis &basis)
 {
+	vec2 d = { dx, dz };
 	RETRO_TerrainOffset offset;
-	offset.side = dx * basis.rightx + dz * basis.rightz;
-	offset.depth = dx * basis.forwardx + dz * basis.forwardz;
+	offset.side = dot(d, basis.right);
+	offset.depth = dot(d, basis.forward);
 	return offset;
 }
 
@@ -816,8 +813,9 @@ inline void RETRO_UpdateTerrainCamera(float timestep)
 		forward /= length;
 		strafe /= length;
 		RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
-		RETRO_Camera.x += (basis.forwardx * forward + basis.rightx * strafe) * distance;
-		RETRO_Camera.z += (basis.forwardz * forward + basis.rightz * strafe) * distance;
+		vec2 move = (basis.forward * forward + basis.right * strafe) * distance;
+		RETRO_Camera.x += move.x;
+		RETRO_Camera.z += move.y;
 	}
 	if (RETRO_Camera.flycam && RETRO_KeyState(SDL_SCANCODE_R)) RETRO_Camera.height += timestep * RETRO_Camera.flyspeed;
 	if (RETRO_Camera.flycam && RETRO_KeyState(SDL_SCANCODE_F)) RETRO_Camera.height -= timestep * RETRO_Camera.flyspeed;

@@ -48,7 +48,7 @@
 #define FLAG_SWAYSPEED 13 // table units a second
 #define FLAG_TILTX 0.12 // radians the view leans, fixed
 #define FLAG_TILTY 0.40
-#define FLAG_RADIAN (2 * M_PI / RETRO_SINCOS_ANGLE) // radians a table unit is worth
+#define FLAG_RADIAN (2 * M_PI / RETRO_ANGLES_PER_TURN) // radians a table unit is worth
 #define FLAG_SHEEN 0.35 // how much of the highlight the cloth returns
 #define FLAG_FALLOFF 8 // how far it spreads, against RETRO_K_FALLOFF's 150
 #define FLAG_LIGHTX -0.7 // a direction the cloth reaches, so the sheen is lit
@@ -62,9 +62,9 @@ void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase, of the wave running out along the flag and of the yaw it
 	// swings through
-	double travel = fmod(time * FLAG_SPEED, RETRO_SINCOS_ANGLE);
+	double travel = fmod(time * FLAG_SPEED, RETRO_ANGLES_PER_TURN);
 
-	double sway = fmod(time * FLAG_SWAYSPEED, RETRO_SINCOS_ANGLE);
+	double sway = fmod(time * FLAG_SWAYSPEED, RETRO_ANGLES_PER_TURN);
 
 	// Shake out the cloth, and slope with it: the height and the two slopes come
 	// from the same wave, so the normal the highlight rides on is the surface's

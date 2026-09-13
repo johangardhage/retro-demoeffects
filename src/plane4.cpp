@@ -109,8 +109,8 @@ void DEMO_Render(double time, double deltatime)
 	// because U × V is vertical. Start at the left edge (sx = −W/2) and
 	// step (s, t) by (ax, bx) / c, which is one pixel of sx.
 	for (int y = PLANE_FIRST_ROW; y < RETRO_HEIGHT; y++) {
-		float sy = y - (RETRO_HEIGHT / 2);
-		float sx0 = -(RETRO_WIDTH / 2);
+		float sy = y - (RETRO_HEIGHT / 2.0);
+		float sx0 = -(RETRO_WIDTH / 2.0);
 		float a = az + ay * sy + ax * sx0;
 		float b = bz + by * sy + bx * sx0;
 		float c = cz + cy * sy + cx * sx0;

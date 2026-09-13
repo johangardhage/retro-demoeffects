@@ -46,11 +46,11 @@
 #define BLUE_SHADES 0
 #define YELLOW_SHADES FLAG_COLORS
 
-#define CLOTH_AMPLITUDE 22.0 // fold depth at the fly, in pixels
+#define CLOTH_AMPLITUDE 22.0f // fold depth at the fly, in pixels
 #define CLOTH_SPEED 85 // pixels of wave travel per second
 #define CLOTH_WAVES 7
-#define CLOTH_OCCLUSION 4.0 // how far a crease shuts out the sky, per unit of curvature
-#define CLOTH_TILT 0.45 // the flag plane leans out of the screen, so a fold carries the
+#define CLOTH_OCCLUSION 4.0f // how far a crease shuts out the sky, per unit of curvature
+#define CLOTH_TILT 0.45f // the flag plane leans out of the screen, so a fold carries the
                            // cloth across the picture as well as into it
 #define CLOTH_SWAY 16 // pixels the fly rises and falls as the flag swings on its halyard
 #define CLOTH_SWAYPERIOD 4.3 // seconds for one swing
@@ -62,13 +62,13 @@
 // Sunlight, so one direction serves the whole surface. (−5, −2, 4) normalised:
 // 37° above the cloth, from the left, well off the viewer's axis, so the
 // shading changes as the surface tilts.
-#define LIGHT_DIRX -0.74536
-#define LIGHT_DIRY -0.29814
-#define LIGHT_DIRZ 0.59629
+#define LIGHT_DIRX -0.74536f
+#define LIGHT_DIRY -0.29814f
+#define LIGHT_DIRZ 0.59629f
 
-#define MATERIAL_AMBIENT 0.34 // cloth is lit by the whole sky, not only by the sun
-#define MATERIAL_DIFFUSE 0.60
-#define MATERIAL_SPECULAR 0.16 // cloth has a broad sheen, not a highlight
+#define MATERIAL_AMBIENT 0.34f // cloth is lit by the whole sky, not only by the sun
+#define MATERIAL_DIFFUSE 0.60f
+#define MATERIAL_SPECULAR 0.16f // cloth has a broad sheen, not a highlight
 #define MATERIAL_SHININESS 12 // fixed: the specular is unrolled as x⁴·x⁴·x⁴
 
 //
@@ -79,20 +79,20 @@
 // the surface without deforming it.
 //
 struct ClothWave {
-	double wavelengthx; // along the flag, in pixels
-	double wavelengthy; // across it, so how far a crest leans over the height of the flag
-	double amplitude; // relative to the others, summing to 1
-	double phase; // in turns, so the modes do not all start from the same crest
+	float wavelengthx; // along the flag, in pixels
+	float wavelengthy; // across it, so how far a crest leans over the height of the flag
+	float amplitude; // relative to the others, summing to 1
+	float phase; // in turns, so the modes do not all start from the same crest
 };
 
 ClothWave ClothWaves[CLOTH_WAVES] = {
-	{ 240, 430, 0.293, 0.00 },
-	{ 155, -310, 0.208, 0.37 },
-	{ 100, 720, 0.146, 0.71 },
-	{ 65, -225, 0.104, 0.13 },
-	{ 42, 880, 0.098, 0.89 },
-	{ 27, -165, 0.083, 0.52 },
-	{ 18, 470, 0.068, 0.28 },
+	{ 240, 430, 0.293f, 0.00f },
+	{ 155, -310, 0.208f, 0.37f },
+	{ 100, 720, 0.146f, 0.71f },
+	{ 65, -225, 0.104f, 0.13f },
+	{ 42, 880, 0.098f, 0.89f },
+	{ 27, -165, 0.083f, 0.52f },
+	{ 18, 470, 0.068f, 0.28f },
 };
 
 // Phase is linear in x, so one pixel is a fixed rotation of the unit vector
@@ -101,23 +101,23 @@ ClothWave ClothWaves[CLOTH_WAVES] = {
 //   (sin, cos)' = (sin Δ, cos Δ) applied as a 2D rotation
 //
 struct ClothPhasor {
-	double sine, cosine;
+	float sine, cosine;
 };
 
-double ClothStepSin[CLOTH_WAVES];
-double ClothStepCos[CLOTH_WAVES];
+float ClothStepSin[CLOTH_WAVES];
+float ClothStepCos[CLOTH_WAVES];
 
 // 2π / λ for each mode, along the flag and across it. Constant, and the inner
 // loop runs once per mode per pixel, so they are divided out once at startup
 // rather than 2 · CLOTH_WAVES times for every pixel of every frame.
-double ClothTurnX[CLOTH_WAVES];
-double ClothTurnY[CLOTH_WAVES];
+float ClothTurnX[CLOTH_WAVES];
+float ClothTurnY[CLOTH_WAVES];
 
 // The envelope A(x) and its first two derivatives, which depend only on the distance from
 // the mast and so are the same in every row and every frame
-double ClothEnvelope[FLAG_WIDTH];
-double ClothEnvelopeSlope[FLAG_WIDTH];
-double ClothEnvelopeCurve[FLAG_WIDTH];
+float ClothEnvelope[FLAG_WIDTH];
+float ClothEnvelopeSlope[FLAG_WIDTH];
+float ClothEnvelopeCurve[FLAG_WIDTH];
 
 vec3 Halfway;
 
@@ -132,7 +132,7 @@ void DEMO_Render(double time, double deltatime)
 	double travel = fmod(time * CLOTH_SPEED, CLOTH_PERIOD);
 
 	// Rigid swing about the mast: up = y - swing * A(x)/AMPLITUDE. Lighting is unchanged.
-	double swing = CLOTH_SWAY * sin(2 * M_PI * sway / CLOTH_SWAYPERIOD);
+	float swing = CLOTH_SWAY * sin(2 * M_PI * sway / CLOTH_SWAYPERIOD);
 
 	// Draw flag. The background is the cleared framebuffer: both ramps start at
 	// black, so index 0 is black and nothing has to be painted behind the cloth.
@@ -150,72 +150,72 @@ void DEMO_Render(double time, double deltatime)
 
 		// Cloth does not stretch. The print is sampled along arc length
 		// s = ∫ sqrt(1 + (dh/dx)^2) dx, so the cross bends where the surface folds.
-		double material = 0;
+		float material = 0;
 
 		for (int x = 0; x < FLAG_WIDTH; x++) {
 			// All modes travel at CLOTH_SPEED, so the medium is non-dispersive and a
 			// crest keeps its shape. Derivatives are exact by the product rule.
 			// dh/dy uses the same cosines, so it is accumulated before the phasor
 			// advances to the next pixel.
-			double waves = 0;
-			double waveslope = 0;
-			double wavecurve = 0;
-			double slopey = 0;
+			float waves = 0;
+			float waveslope = 0;
+			float wavecurve = 0;
+			float slopey = 0;
 
 			for (int i = 0; i < CLOTH_WAVES; i++) {
-				double turn = ClothTurnX[i];
+				float turn = ClothTurnX[i];
 
 				waves += ClothWaves[i].amplitude * phasor[i].sine;
 				waveslope += ClothWaves[i].amplitude * turn * phasor[i].cosine;
 				wavecurve -= ClothWaves[i].amplitude * turn * turn * phasor[i].sine;
 				slopey += ClothWaves[i].amplitude * ClothTurnY[i] * phasor[i].cosine;
 
-				double sine = phasor[i].sine * ClothStepCos[i] + phasor[i].cosine * ClothStepSin[i];
-				double cosine = phasor[i].cosine * ClothStepCos[i] - phasor[i].sine * ClothStepSin[i];
+				float sine = phasor[i].sine * ClothStepCos[i] + phasor[i].cosine * ClothStepSin[i];
+				float cosine = phasor[i].cosine * ClothStepCos[i] - phasor[i].sine * ClothStepSin[i];
 
 				phasor[i].sine = sine;
 				phasor[i].cosine = cosine;
 			}
 
 			// Product rule: h = A * w, so h' = A' w + A w' and h'' = A'' w + 2 A' w' + A w''.
-			double slopex = ClothEnvelopeSlope[x] * waves + ClothEnvelope[x] * waveslope;
-			double curvex = ClothEnvelopeCurve[x] * waves + 2 * ClothEnvelopeSlope[x] * waveslope + ClothEnvelope[x] * wavecurve;
+			float slopex = ClothEnvelopeSlope[x] * waves + ClothEnvelope[x] * waveslope;
+			float curvex = ClothEnvelopeCurve[x] * waves + 2 * ClothEnvelopeSlope[x] * waveslope + ClothEnvelope[x] * wavecurve;
 			slopey *= ClothEnvelope[x];
 
-			double along = material;
+			float along = material;
 			material += sqrt(1 + slopex * slopex);
 
 			// Past the fly the flag has run out, and the swing can carry a row off the top
 			// or the bottom. Either way the background stands.
-			double height = ClothEnvelope[x] * waves;
-			double up = across - swing * ClothEnvelope[x] / CLOTH_AMPLITUDE - CLOTH_TILT * height;
+			float height = ClothEnvelope[x] * waves;
+			float up = across - swing * ClothEnvelope[x] / CLOTH_AMPLITUDE - CLOTH_TILT * height;
 			if (along >= FLAG_WIDTH || up < 0 || up >= FLAG_HEIGHT) {
 				continue;
 			}
 
 			// z = h(x, y), so N = (-dh/dx, -dh/dy, 1) / |...|
-			vec3 normal = normalize(vec3{ (float)-slopex, (float)-slopey, 1.0f });
+			vec3 normal = normalize(vec3{ -slopex, -slopey, 1.0f });
 
-			double lambert = CLAMP01(dot(normal, vec3{ LIGHT_DIRX, LIGHT_DIRY, LIGHT_DIRZ }));
+			float lambert = CLAMP01(dot(normal, vec3{ LIGHT_DIRX, LIGHT_DIRY, LIGHT_DIRZ }));
 
 			// Blinn-Phong. L and V are fixed, so H = normalize(L + V) is formed once.
-			double specular = 0;
+			float specular = 0;
 			if (lambert > 0) {
-				double normalhalfway = CLAMP01(dot(normal, Halfway));
+				float normalhalfway = CLAMP01(dot(normal, Halfway));
 
 				// (N·H)^12 by squaring: x², x⁴, x⁸ · x⁴. Four multiplies rather
 				// than a call to pow for an exponent known at compile time.
-				double squared = normalhalfway * normalhalfway;
-				double fourth = squared * squared;
+				float squared = normalhalfway * normalhalfway;
+				float fourth = squared * squared;
 				specular = fourth * fourth * fourth;
 			}
 
 			// Ambient occlusion from curvature: only the sky is shut out, not the sun.
 			//   occ = 1 / (1 + k * max(d²h/dx², 0))
-			double occlusion = 1.0 / (1.0 + CLOTH_OCCLUSION * MAX(0.0, curvex));
+			float occlusion = 1.0f / (1.0f + CLOTH_OCCLUSION * MAX(0.0f, curvex));
 
-			double intensity = MATERIAL_AMBIENT * occlusion + MATERIAL_DIFFUSE * lambert + MATERIAL_SPECULAR * specular;
-			int shade = (FLAG_COLORS - 1) * CLAMP01(intensity) + 0.5;
+			float intensity = MATERIAL_AMBIENT * occlusion + MATERIAL_DIFFUSE * lambert + MATERIAL_SPECULAR * specular;
+			int shade = (FLAG_COLORS - 1) * CLAMP01(intensity) + 0.5f;
 
 			// The cross is tested in (along, up): arc length along the cloth,
 			// sheared screen row across it. Not screen (x, y).
@@ -254,5 +254,5 @@ void DEMO_Initialize(void)
 	}
 
 	// Init halfway vector, H = normalize(L + V), with the viewer at (0, 0, 1)
-	Halfway = normalize(vec3{ LIGHT_DIRX, LIGHT_DIRY, LIGHT_DIRZ + 1 });
+	Halfway = normalize(vec3{ LIGHT_DIRX, LIGHT_DIRY, LIGHT_DIRZ + 1.0f });
 }

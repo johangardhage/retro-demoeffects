@@ -62,11 +62,11 @@ void DEMO_Render(double time, double deltatime)
 	float az = fmod(time * BALL_SPEEDZ, 2 * M_PI);
 
 	// Calculate phase
-	double phase = fmod(time * BALL_WAVESPEED, RETRO_SINCOS_ANGLE);
+	double phase = fmod(time * BALL_WAVESPEED, RETRO_ANGLES_PER_TURN);
 
 	// Lay the ring out, ripple it, and carry it to the screen
 	for (int i = 0; i < BALLS; i++) {
-		float a = (float)RETRO_SINCOS_ANGLE * i / BALLS;
+		float a = (float)RETRO_ANGLES_PER_TURN * i / BALLS;
 		Balls[i].pos = {
 			BALL_RADIUS * (float)COS(a),
 			BALL_RADIUS * (float)SIN(a),

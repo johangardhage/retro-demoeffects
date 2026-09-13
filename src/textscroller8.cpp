@@ -56,7 +56,7 @@
 
 #define SCROLL_SPEED 120.0 // strip columns per second
 #define ARC_SCALE 1.0 // screen pixels of path per strip column
-#define BAR_CY (RETRO_HEIGHT / 2)
+#define BAR_CY (RETRO_HEIGHT / 2.0)
 #define BAR_AMP 25 // pixels either side of CY the cosine reaches
 #define SAMPLE_WIDTH (RETRO_WIDTH * 3)
 #define WAVE_TURNS 3 // whole turns between the left border and the right one

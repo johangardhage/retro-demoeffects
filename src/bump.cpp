@@ -45,8 +45,8 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate light. Lissajous: twice around vertically for every turn horizontally.
 	double angle = fmod(time * LIGHT_SPEED, RETRO_DEGREES_PER_TURN);
 
-	int lx = RETRO_WIDTH / 2 + LIGHT_ORBIT * cos(angle * DEG2RAD);
-	int ly = RETRO_HEIGHT / 2 + LIGHT_ORBIT * sin(2 * angle * DEG2RAD);
+	int lx = RETRO_WIDTH / 2.0 + LIGHT_ORBIT * cos(angle * DEG2RAD);
+	int ly = RETRO_HEIGHT / 2.0 + LIGHT_ORBIT * sin(2 * angle * DEG2RAD);
 
 	int maporiginx = lx + LIGHT_SIZE;
 	int maporiginy = ly + LIGHT_SIZE;

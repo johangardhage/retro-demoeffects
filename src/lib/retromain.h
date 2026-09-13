@@ -6,6 +6,7 @@
 
 #ifndef _RETROMAIN_H_
 #define _RETROMAIN_H_
+// IWYU pragma: always_keep
 
 #include <SDL3/SDL_main.h>
 #include "retro.h"
@@ -125,7 +126,7 @@ inline void RETRO_ParseArguments(int argc, char *argv[])
 	}
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[]) // NOLINT(misc-definitions-in-headers)
 {
 	RETRO_ParseArguments(argc, argv);
 

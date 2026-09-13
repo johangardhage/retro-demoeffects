@@ -38,7 +38,7 @@
 // off zero by FLARE_EBB it keeps its sign and its stroke, so the ring still
 // reverses - a bounded offset has to - but it turns over briskly every time
 // instead of unwinding and starting over. Both live on phase, an angle in the
-// library's RETRO_SINCOS_ANGLE units per turn, wrapping on one turn of the swell.
+// library's RETRO_ANGLES_PER_TURN units per turn, wrapping on one turn of the swell.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -94,7 +94,7 @@ void DEMO_FixedUpdate(double timestep)
 {
 	// Calculate phase
 	static double phase = 0;
-	phase = fmod(phase + timestep * SUN_SPEED, RETRO_SINCOS_ANGLE);
+	phase = fmod(phase + timestep * SUN_SPEED, RETRO_ANGLES_PER_TURN);
 
 	// Seed the ring of noise, swinging back and forth by a width the swell narrows but never closes
 	double swirl = (FLARE_SWIRL + FLARE_EBB) / 2.0 + (FLARE_SWIRL - FLARE_EBB) / 2.0 * SIN(phase);
@@ -135,7 +135,7 @@ void DEMO_Initialize(void)
 	}
 
 	// Init flare offset table, one strip bin per pixel
-	double rmax = hypot(RETRO_WIDTH / 2 - 0.5, RETRO_HEIGHT / 2 - 0.5);
+	double rmax = hypot(RETRO_WIDTH / 2.0 - 0.5, RETRO_HEIGHT / 2.0 - 0.5);
 	int offset = 0;
 
 	for (int iy = -RETRO_HEIGHT / 2; iy < RETRO_HEIGHT / 2; iy++) {

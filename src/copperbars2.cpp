@@ -43,7 +43,7 @@
 #define COPPER_RATE2 -2.9 // table units the second sine turns per row
 #define COPPER_RATIO_NUM 5 // the second sine's phase against the first, as a fraction
 #define COPPER_RATIO_DEN 8 // so that both sines are whole turns when phase wraps
-#define COPPER_PERIOD (RETRO_SINCOS_ANGLE * COPPER_RATIO_DEN)
+#define COPPER_PERIOD (RETRO_ANGLES_PER_TURN * COPPER_RATIO_DEN)
 #define COPPER_SPEED 55 // table units per second
 
 // One color per band and one band per color, in the order of the bow

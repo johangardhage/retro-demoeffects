@@ -135,8 +135,8 @@ void DEMO_FixedUpdate(double timestep)
 		PointY = sin(c * PointX) - cos(d * PointY);
 		PointX = x;
 
-		int sx = RETRO_WIDTH / 2 + scale * PointX;
-		int sy = RETRO_HEIGHT / 2 - scale * PointY;
+		int sx = RETRO_WIDTH / 2.0 + scale * PointX;
+		int sy = RETRO_HEIGHT / 2.0 - scale * PointY;
 
 		// The reach is a bound on the orbit, not on the pixel it rounds to
 		if (sx >= 0 && sx < RETRO_WIDTH && sy >= 0 && sy < RETRO_HEIGHT) {

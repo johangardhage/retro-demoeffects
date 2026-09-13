@@ -48,7 +48,7 @@ static void RenderTorus(float phase, float focal)
 	// This keeps the camera inside the tube throughout the rotation.
 	RETRO_RotateModel(phase * 0.61f, 0.0f, phase, Torus);
 	RETRO_TranslateModel(0.0f, 0.0f, CAMERA_DISTANCE - focal / MODEL_SCALE, Torus);
-	RETRO_ProjectModel(MODEL_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Torus, focal);
+	RETRO_ProjectModel(MODEL_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Torus, focal);
 	RETRO_RenderModel(RETRO_POLY_TEXTURE, RETRO_SHADE_GOURAUD, Torus);
 }
 
@@ -72,7 +72,7 @@ static void RenderFish(double time, float phase, float focal)
 		RETRO_TranslateModel(drift * cosf(phase) - ringy * sinf(phase),
 			drift * sinf(phase) + ringy * cosf(phase),
 			ringz + CAMERA_DISTANCE - focal / MODEL_SCALE, Fish);
-		RETRO_ProjectModel(MODEL_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Fish, focal);
+		RETRO_ProjectModel(MODEL_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Fish, focal);
 		RETRO_RenderModel(RETRO_POLY_GOURAUD, RETRO_SHADE_NONE, Fish, false);
 	}
 }

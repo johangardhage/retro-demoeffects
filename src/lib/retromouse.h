@@ -23,6 +23,7 @@ struct RETRO_MouseState {
 
 inline struct {
 	RETRO_MouseState state;
+	bool discardmotion;
 } RETRO_Mouse;
 
 // *******************************************************************
@@ -31,38 +32,11 @@ inline struct {
 
 inline RETRO_MouseState RETRO_GetMouseState(void)
 {
-	SDL_Event event;
-	while (SDL_PollEvent(&event)) {
-		if (event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-			if (event.button.button == SDL_BUTTON_LEFT) {
-				RETRO_Mouse.state.leftbutton = false;
-			} else if (event.button.button == SDL_BUTTON_RIGHT) {
-				RETRO_Mouse.state.rightbutton = false;
-			}
-		} else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-			if (event.button.button == SDL_BUTTON_LEFT) {
-				RETRO_Mouse.state.leftbutton = true;
-			} else if (event.button.button == SDL_BUTTON_RIGHT) {
-				RETRO_Mouse.state.rightbutton = true;
-			}
-		} else if (event.type == SDL_EVENT_MOUSE_MOTION) {
-			RETRO_Mouse.state.x = event.motion.x;
-			RETRO_Mouse.state.y = event.motion.y;
-			RETRO_Mouse.state.xrel = event.motion.xrel;
-			RETRO_Mouse.state.yrel = event.motion.yrel;
-		}
-	}
-	RETRO_Mouse.state.isrelative = SDL_GetWindowRelativeMouseMode(RETRO.window);
-
-	// Increase counter if buttons are clicked
-	RETRO_Mouse.state.leftcount = (RETRO_Mouse.state.leftbutton ? RETRO_Mouse.state.leftcount + 1 : 0);
-	RETRO_Mouse.state.rightcount = (RETRO_Mouse.state.rightbutton ? RETRO_Mouse.state.rightcount + 1 : 0);
-
-	return RETRO_Mouse.state;
-}
-
-inline RETRO_MouseState RETRO_GetMouseState2(void)
-{
+	// Polled via SDL_Get*MouseState rather than SDL_PollEvent: the event queue is
+	// drained solely by RETRO_QuitRequested, and a second poller here would steal
+	// quit/key events out from under it. SDL_GetRelativeMouseState keeps its own
+	// accumulator independent of the event queue, so it stays exact regardless.
+	//
 	// Get mouse window position
 	float x1, y1;
 	SDL_MouseButtonFlags buttons = SDL_GetMouseState(&x1, &y1);
@@ -74,6 +48,16 @@ inline RETRO_MouseState RETRO_GetMouseState2(void)
 	// Get relative mouse position
 	float xrel, yrel;
 	SDL_GetRelativeMouseState(&xrel, &yrel);
+
+	// Swallow the transition jump from a relative-mode grab: wait for the
+	// first nonzero delta (the grab itself), discard it, then resume.
+	if (RETRO_Mouse.discardmotion) {
+		if (xrel != 0.0f || yrel != 0.0f) {
+			RETRO_Mouse.discardmotion = false;
+		}
+		xrel = 0.0f;
+		yrel = 0.0f;
+	}
 
 	// Set mouse state
 	RETRO_Mouse.state.x = x2;
@@ -93,6 +77,9 @@ inline RETRO_MouseState RETRO_GetMouseState2(void)
 
 inline void RETRO_SetMouseMode(bool relative, bool cursor = false)
 {
+	if (relative && !SDL_GetWindowRelativeMouseMode(RETRO.window)) {
+		RETRO_Mouse.discardmotion = true;
+	}
 	SDL_SetWindowRelativeMouseMode(RETRO.window, relative);
 	if (cursor) {
 		SDL_ShowCursor();

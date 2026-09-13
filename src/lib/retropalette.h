@@ -102,6 +102,9 @@
 #define RETRO_CHARCOAL RETRO_Palette{ 54, 54, 60 }
 #define RETRO_DIMGRAY RETRO_Palette{ 66, 66, 74 }
 #define RETRO_PINETREE RETRO_Palette{ 30, 74, 40 }
+#define RETRO_PALESAGE RETRO_Palette{ 150, 198, 150 }
+#define RETRO_MOSSBLACK RETRO_Palette{ 0, 20, 0 }
+#define RETRO_CREAM RETRO_Palette{ 255, 255, 142 }
 
 // *******************************************************************
 // Private variables

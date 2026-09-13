@@ -34,7 +34,7 @@
 #define LENS_XAMPLITUDE (LENS_XCENTER - LENS_MARGIN)
 #define LENS_YCENTER ((RETRO_HEIGHT - LENS_HEIGHT) / 2)
 #define LENS_YAMPLITUDE (LENS_YCENTER - LENS_MARGIN)
-#define LENS_XPHASE (RETRO_SINCOS_ANGLE / 16) // offset that keeps the figure from opening on a crossing
+#define LENS_XPHASE (RETRO_ANGLES_PER_TURN / 16) // offset that keeps the figure from opening on a crossing
 #define LENS_PERIOD 14.6 // seconds for the figure to close
 
 struct Lens {
@@ -60,7 +60,7 @@ void DEMO_Render(double time, double deltatime)
 	unsigned char *image = RETRO_ImageData();
 
 	// Calculate phase
-	double phase = fmod(time * RETRO_SINCOS_ANGLE / LENS_PERIOD, RETRO_SINCOS_ANGLE);
+	double phase = fmod(time * RETRO_ANGLES_PER_TURN / LENS_PERIOD, RETRO_ANGLES_PER_TURN);
 	Lens1.x = LENS_XCENTER + LENS_XAMPLITUDE * COS(2 * phase + LENS_XPHASE);
 	Lens1.y = LENS_YCENTER + LENS_YAMPLITUDE * COS(3 * phase);
 

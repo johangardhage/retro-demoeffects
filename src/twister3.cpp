@@ -73,8 +73,8 @@
 #include "lib/retromain.h"
 
 #define TWISTER_PERIOD 512 // one whole cycle of the column and four picture scrolls
-#define TWISTER_CYCLE ((double)RETRO_SINCOS_ANGLE / TWISTER_PERIOD) // angle units a once-round wave advances per phase unit
-#define TWISTER_CENTER_X (RETRO_WIDTH / 2)
+#define TWISTER_CYCLE ((double)RETRO_ANGLES_PER_TURN / TWISTER_PERIOD) // angle units a once-round wave advances per phase unit
+#define TWISTER_CENTER_X (RETRO_WIDTH / 2.0)
 #define TWISTER_RADIUS 60 // the circle the four corners ride, half the column's width corner on
 #define TWISTER_TURNS 1.5 // turns of the square over the period, a whole number of quarter turns
 #define TWISTER_TORSION 1.2 // table units the column twists per scanline where the torsion wave peaks

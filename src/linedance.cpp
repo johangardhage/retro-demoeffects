@@ -10,6 +10,11 @@
 // phase3 −200 (pixels a second). The profile is their interference, sliding.
 // phase1, phase2, phase3 live on 256. The framebuffer is cleared each frame.
 //
+// A bar's color follows the same w that sizes it: constructive interference
+// (w > 0, the bar swollen) runs white through magenta, destructive (w < 0,
+// the bar pinched) runs white through blue, so the palette makes the
+// interference visible instead of just the outline.
+//
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
@@ -38,14 +43,23 @@ void DEMO_Render(double time, double deltatime)
 			+ 15 * cos((y + phase2) * 4 * M_PI / LINE_PERIOD)
 			+ 15 * sin((y + phase3) * 4 * M_PI / LINE_PERIOD);
 
-		int x1 = RETRO_WIDTH / 2 - LINE_HALF - w;
-		int x2 = RETRO_WIDTH / 2 + LINE_HALF + w;
+		int x1 = RETRO_WIDTH / 2.0 - LINE_HALF - w;
+		int x2 = RETRO_WIDTH / 2.0 + LINE_HALF + w;
 
-		RETRO_DrawLine(x1, y, x2, y, 255);
+		// w's max amplitude is 10 + 15 + 15 = 40, so scale it across the
+		// two half-palettes centered on the neutral, white midpoint
+		unsigned char color = 128 + CLAMP(w * 127 / 40, -127, 128);
+
+		RETRO_DrawLine(x1, y, x2, y, color);
 	}
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_WHITE);
+	// Index 0 stays black for the cleared background. Neutral white sits at
+	// the midpoint, cooling to blue below it and warming to magenta above it
+	// as the bars pinch or swell
+	RETRO_SetColor(0, RETRO_BLACK);
+	RETRO_CreateGradientPalette(1, 128, RETRO_BLUE, RETRO_WHITE);
+	RETRO_CreateGradientPalette(128, RETRO_COLORS, RETRO_WHITE, RETRO_MAGENTA);
 }

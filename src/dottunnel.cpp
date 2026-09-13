@@ -14,9 +14,11 @@
 // The centre line is a helix, not a straight axis. A ring's centre is thrown
 // off by angle (twist + along * TWIST_PER_RING). Sliding alone would leave that
 // pattern standing still (each ring inherits the one behind it), so the helix
-// is also turned about the axis and the mouth wanders. twist lives in [0, 360).
+// is also turned about the axis and the mouth wanders. twist lives in
+// [0, RETRO_ANGLES_PER_TURN).
 //
-// Each ring is 360 / RING_STEP dots at even 6°, so the ellipse closes.
+// Each ring is RING_DOTS dots at an even step: 6° in the original, 360/6 = 60
+// exactly, so the ellipse closes with no seam.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -25,15 +27,14 @@
 #include "lib/retropalette.h"
 
 #define RING_COUNT 40 // rings between the eye and the mouth
-#define RING_STEP 6 // degrees between the dots around a ring
-#define RING_DOTS (RETRO_DEGREES_PER_TURN / RING_STEP) // 6° divides a turn, so the ellipse closes
+#define RING_DOTS 60 // 6° per dot in the original, 360/6 = 60 exactly
 #define RING_WIDTH 740 // the ring is an ellipse, so it has two semi axes
 #define RING_HEIGHT 788
 #define TUNNEL_DEPTH 20 // depth of the furthest ring
 #define TUNNEL_SPEED 20 // depth travelled per second
-#define TWIST_PER_RING 15 // degrees the centre line turns from one ring to the next
+#define TWIST_PER_RING (RETRO_ANGLES_PER_TURN / 24.0) // 15° per ring, in angle units
 #define SWAY_RADIUS 260 // how far that turn throws a ring's centre off the axis
-#define TWIST_SPEED 600 // degrees a second the helix turns about the axis
+#define TWIST_SPEED (RETRO_ANGLES_PER_TURN * 5.0 / 3.0) // 600°/s, in angle units
 
 double RingX[RING_DOTS];
 double RingY[RING_DOTS];
@@ -45,9 +46,9 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate phase
 	double phase = fmod(time * TUNNEL_SPEED, spacing);
 
-	double twist = fmod(-time * TWIST_SPEED, RETRO_DEGREES_PER_TURN);
+	double twist = fmod(-time * TWIST_SPEED, RETRO_ANGLES_PER_TURN);
 	if (twist < 0) {
-		twist += RETRO_DEGREES_PER_TURN;
+		twist += RETRO_ANGLES_PER_TURN;
 	}
 
 	// Draw rings
@@ -57,15 +58,15 @@ void DEMO_Render(double time, double deltatime)
 		double along = i + phase / spacing;
 		double depth = TUNNEL_DEPTH + spacing - i * spacing - phase;
 
-		double angle = (twist + along * TWIST_PER_RING) * DEG2RAD;
-		double swayx = SWAY_RADIUS * sin(angle);
-		double swayy = SWAY_RADIUS * cos(angle);
+		double angle = twist + along * TWIST_PER_RING;
+		double swayx = SWAY_RADIUS * SIN(angle);
+		double swayy = SWAY_RADIUS * COS(angle);
 
 		unsigned char color = CLAMP256((RETRO_COLORS - 1) * along / RING_COUNT);
 
 		for (int j = 0; j < RING_DOTS; j++) {
-			int x = (RingX[j] + swayx) / depth + RETRO_WIDTH / 2;
-			int y = (RingY[j] + swayy) / depth + RETRO_HEIGHT / 2;
+			int x = (RingX[j] + swayx) / depth + RETRO_WIDTH / 2.0;
+			int y = (RingY[j] + swayy) / depth + RETRO_HEIGHT / 2.0;
 
 			if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
 				RETRO_PutPixel(x, y, color);
@@ -81,9 +82,9 @@ void DEMO_Initialize(void)
 
 	// Init ring
 	for (int i = 0; i < RING_DOTS; i++) {
-		double angle = i * RING_STEP * DEG2RAD;
+		double angle = i * (double)RETRO_ANGLES_PER_TURN / RING_DOTS;
 
-		RingX[i] = RING_WIDTH * sin(angle);
-		RingY[i] = RING_HEIGHT * cos(angle);
+		RingX[i] = RING_WIDTH * SIN(angle);
+		RingY[i] = RING_HEIGHT * COS(angle);
 	}
 }

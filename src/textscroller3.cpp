@@ -49,7 +49,7 @@ void DEMO_Render(double time, double deltatime)
 	int scrolly = (RETRO_HEIGHT - ScrollImage->height) / 2;
 
 	// Calculate the phase of the wave the columns ride
-	double wave = fmod(time * WAVE_SPEED, RETRO_SINCOS_ANGLE);
+	double wave = fmod(time * WAVE_SPEED, RETRO_ANGLES_PER_TURN);
 
 	// Draw scroller, a column at a time, each dropped by the sine at that column
 	// and its glyph rows clipped to the screen

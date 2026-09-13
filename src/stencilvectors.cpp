@@ -94,8 +94,8 @@ void DEMO_Render(double time, double deltatime)
 	double scroll = fmod(time * METAL_SCROLL, METAL_SIZE);
 
 	RETRO_RotateModel(ax, ay, az, Cube);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Cube);
-	RETRO_SortFaces(Cube);
+	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Cube);
+	RETRO_SortFaces(false, Cube);
 	RETRO_ClearDepthBuffer();
 
 	int iscroll = (int)scroll;

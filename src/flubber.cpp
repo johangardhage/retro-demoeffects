@@ -56,7 +56,7 @@
 
 #define FLUBBER_RX 24.0f
 #define FLUBBER_RZ 110.0f
-#define FLUBBER_CX (RETRO_WIDTH / 2)
+#define FLUBBER_CX (RETRO_WIDTH / 2.0)
 #define FLUBBER_SWAY 40.0f // pixels of lateral sway
 #define FLUBBER_TWIST (3 * M_PI) // radians of the (modulated + 1) yaw
 #define FLUBBER_U_PER_SPAN (TEXTURE_WIDTH * 2 / SPANS) // 16 texels, two wraps of 256

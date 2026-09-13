@@ -34,13 +34,13 @@ void DEMO_Render(double time, double deltatime)
 	unsigned char *image = RETRO_ImageData();
 
 	// Coordinates for first circle
-	int slx1 = RETRO_WIDTH / 2 + RETRO_WIDTH / 2 * cos(phase);
-	int sly1 = RETRO_HEIGHT / 2 + RETRO_HEIGHT / 2 * sin(phase * XOR_WOBBLE);
+	int slx1 = RETRO_WIDTH / 2.0 + RETRO_WIDTH / 2.0 * cos(phase);
+	int sly1 = RETRO_HEIGHT / 2.0 + RETRO_HEIGHT / 2.0 * sin(phase * XOR_WOBBLE);
 	unsigned char *image1 = image + sly1 * IMAGE_WIDTH + slx1;
 
 	// Coordinates for second circle
-	int slx2 = RETRO_WIDTH / 2 + RETRO_WIDTH / 2 * cos(phase + XOR_PHASE);
-	int sly2 = RETRO_HEIGHT / 2 + RETRO_HEIGHT / 2 * sin((phase + XOR_PHASE) * XOR_WOBBLE);
+	int slx2 = RETRO_WIDTH / 2.0 + RETRO_WIDTH / 2.0 * cos(phase + XOR_PHASE);
+	int sly2 = RETRO_HEIGHT / 2.0 + RETRO_HEIGHT / 2.0 * sin((phase + XOR_PHASE) * XOR_WOBBLE);
 	unsigned char *image2 = image + sly2 * IMAGE_WIDTH + slx2;
 
 	// Draw circles

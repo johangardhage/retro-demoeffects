@@ -39,11 +39,11 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_ClearDepthBuffer();
 
 	RETRO_RotateModel(phase1, phase1 * 0.7f, phase1 * 1.3f, Cube1);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Cube1);
+	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Cube1);
 	RETRO_RenderModel(RETRO_POLY_GOURAUD, RETRO_SHADE_NONE, Cube1, false);
 
 	RETRO_RotateModel(phase2 * 0.8f, phase2 * 1.2f, phase2, Cube2);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2, RETRO_HEIGHT / 2, Cube2);
+	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Cube2);
 	RETRO_RenderModel(RETRO_POLY_GOURAUD, RETRO_SHADE_NONE, Cube2, false);
 }
 

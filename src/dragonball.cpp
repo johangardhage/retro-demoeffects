@@ -41,6 +41,7 @@
 #include "lib/retromath.h"
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define BALL_RADIUS 70.0f
 #define BALL_APEX 72.0f // centre at the top of the bounce
@@ -88,7 +89,7 @@ static float BallDeform(float t)
 
 // Even-odd fill of a concave pentagram. Pixels already clear of the ellipse
 // stay clear: a star that would leak past the silhouette is clipped to it.
-static void FillStar(const Point2D *pts, int n, unsigned char bit)
+static void FillStar(const ivec2 *pts, int n, unsigned char bit)
 {
 	int ymin = RETRO_HEIGHT;
 	int ymax = -1;
@@ -151,29 +152,19 @@ static void BuildStar(Vertex *out, int axis, bool antipode, float spin)
 		float r = (i & 1) ? STAR_INNER : STAR_OUTER;
 		float u = r * cos(a);
 		float v = r * sin(a);
-		float x, y, z;
+		vec3 p;
 		if (axis == 0) {
-			x = STAR_OFFSET;
-			y = u;
-			z = v;
+			p = { STAR_OFFSET, u, v };
 		} else if (axis == 1) {
-			x = u;
-			y = -STAR_OFFSET;
-			z = v;
+			p = { u, -STAR_OFFSET, v };
 		} else {
-			x = u;
-			y = v;
-			z = STAR_OFFSET;
+			p = { u, v, STAR_OFFSET };
 		}
 		if (antipode) {
-			x = -x;
-			y = -y;
-			z = -z;
+			p = -p;
 		}
 		int dst = antipode ? STAR_VERTS - 1 - i : i;
-		out[dst].x = x;
-		out[dst].y = y;
-		out[dst].z = z;
+		out[dst].pos = p;
 	}
 }
 
@@ -248,30 +239,30 @@ void DEMO_Render(double time, double deltatime)
 
 		// Which way that star's plane faces: the axis and sign BuildStar offsets
 		// along, as a unit direction, since only the side it lands on is read
-		Direction normal;
-		normal.x = (axis == 0) ? 1.0f : 0.0f;
-		normal.y = (axis == 1) ? -1.0f : 0.0f;
-		normal.z = (axis == 2) ? 1.0f : 0.0f;
+		UnitVector normal;
+		normal.dir = {
+			(axis == 0) ? 1.0f : 0.0f,
+			(axis == 1) ? -1.0f : 0.0f,
+			(axis == 2) ? 1.0f : 0.0f
+		};
 		if (antipode) {
-			normal.x = -normal.x;
-			normal.y = -normal.y;
-			normal.z = -normal.z;
+			normal.dir = -normal.dir;
 		}
-		RETRO_RotateDirection(&normal, ax, ay, az);
+		RETRO_RotateUnitVector(&normal, ax, ay, az);
 
-		Point2D pts[STAR_VERTS];
+		ivec2 pts[STAR_VERTS];
 		for (int i = 0; i < STAR_VERTS; i++) {
 			RETRO_RotateVertex(&star[i], ax, ay, az);
-			float depth = BALL_EYE + star[i].rz;
+			float depth = BALL_EYE + star[i].rpos.z;
 			if (depth < 0.1f) {
 				depth = 0.1f;
 			}
 			float q = 1.0f / depth;
-			pts[i].x = lround(BALL_CX + ra * star[i].rx * BALL_EYE * q);
-			pts[i].y = lround(cy + rb * star[i].ry * BALL_EYE * q);
+			pts[i].x = lround(BALL_CX + ra * star[i].rpos.x * BALL_EYE * q);
+			pts[i].y = lround(cy + rb * star[i].rpos.y * BALL_EYE * q);
 		}
 
-		unsigned char bit = normal.rz < 0.0f ? BIT_FRONT : BIT_BACK;
+		unsigned char bit = normal.rdir.z < 0.0f ? BIT_FRONT : BIT_BACK;
 		FillStar(pts, STAR_VERTS, bit);
 	}
 

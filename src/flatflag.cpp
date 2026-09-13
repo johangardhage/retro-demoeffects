@@ -51,11 +51,11 @@ void DEMO_Render(double time, double deltatime)
 	// and nothing else
 	Model3D *model = RETRO_Get3DModel();
 	for (int i = 0; i < model->vertices; i++) {
-		float u = model->vertex[i].x / FLAG_SPAN + 0.5f;
-		float v = model->vertex[i].y / FLAG_DROP + 0.5f;
+		float u = model->vertex[i].pos.x / FLAG_SPAN + 0.5f;
+		float v = model->vertex[i].pos.y / FLAG_DROP + 0.5f;
 		float wave = SIN(travel + u * FLAG_RATEU + v * FLAG_RATEV) + FLAG_HALF * SIN(2 * travel + u * FLAG_RATEU2);
 
-		model->vertex[i].z = FLAG_AMP * u * wave / (1 + FLAG_HALF);
+		model->vertex[i].pos.z = FLAG_AMP * u * wave / (1 + FLAG_HALF);
 	}
 
 	// Draw flag

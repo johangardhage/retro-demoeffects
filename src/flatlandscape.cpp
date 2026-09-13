@@ -32,9 +32,9 @@ static void DrawTriangle(const RETRO_TerrainPoint &a, const RETRO_TerrainPoint &
 	if (!RETRO_TerrainTriangleProjects(a.q, b.q, c.q)) return;
 
 	PolygonPoint polygon[3] = {
-		{ a.sx, a.sy, 0, 0, 0, a.q, 0, 0, 0 },
-		{ b.sx, b.sy, 0, 0, 0, b.q, 0, 0, 0 },
-		{ c.sx, c.sy, 0, 0, 0, c.q, 0, 0, 0 }
+		{ a.spos, 0, { 0, 0 }, a.q },
+		{ b.spos, 0, { 0, 0 }, b.q },
+		{ c.spos, 0, { 0, 0 }, c.q }
 	};
 	RETRO_DrawFlatPolygon(polygon, 3, color);
 }

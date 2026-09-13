@@ -23,8 +23,8 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define NUM_BLOBS 160
 #define BLOB_RADIUS 20
@@ -33,7 +33,7 @@
 #define BLOB_STEP 2 // maximum walk on one axis per simulation step
 
 unsigned char BlobShape[BLOB_SIZE * BLOB_SIZE];
-Point2D BlobPositions[NUM_BLOBS];
+ivec2 BlobPositions[NUM_BLOBS];
 
 //
 // Advance the walk one fixed step
@@ -56,16 +56,14 @@ void DEMO_FixedUpdate(double timestep)
 {
 	// Move blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {
-		BlobPositions[i].x += RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP;
-		BlobPositions[i].y += RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP;
+		BlobPositions[i] += ivec2{ RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP, RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP };
 
 		// The kernel covers [center - R, center + R]. Once it has left the screen
 		// the edge absorbs the blob and the centre emits a new one, so the swarm
 		// stays a cloud brightest in the middle rather than an even haze.
 		if (BlobPositions[i].x + BLOB_RADIUS < 0 || BlobPositions[i].x - BLOB_RADIUS >= RETRO_WIDTH ||
 			BlobPositions[i].y + BLOB_RADIUS < 0 || BlobPositions[i].y - BLOB_RADIUS >= RETRO_HEIGHT) {
-			BlobPositions[i].x = RETRO_WIDTH / 2;
-			BlobPositions[i].y = RETRO_HEIGHT / 2;
+			BlobPositions[i] = { RETRO_WIDTH / 2, RETRO_HEIGHT / 2 };
 		}
 	}
 }
@@ -101,8 +99,7 @@ void DEMO_Initialize(void)
 	// Init positions. RMS is √(2n) per axis. The shorter half-screen
 	// (height 120) is reached at n = 7200, about two minutes at 60 Hz.
 	for (int i = 0; i < NUM_BLOBS; i++) {
-		BlobPositions[i].x = RETRO_WIDTH / 2;
-		BlobPositions[i].y = RETRO_HEIGHT / 2;
+		BlobPositions[i] = { RETRO_WIDTH / 2, RETRO_HEIGHT / 2 };
 	}
 
 	// Init kernel. Wyvill's soft-object kernel of the normalized squared distance

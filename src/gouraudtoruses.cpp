@@ -46,29 +46,29 @@ static void PlaceTorusInLink(Model3D *model, float angle, float tx)
 	float s = sin(angle);
 
 	for (int i = 0; i < model->vertices; i++) {
-		float y = model->vertex[i].y;
-		float z = model->vertex[i].z;
-		model->vertex[i].x += tx;
-		model->vertex[i].y = c * y - s * z;
-		model->vertex[i].z = s * y + c * z;
+		float y = model->vertex[i].pos.y;
+		float z = model->vertex[i].pos.z;
+		model->vertex[i].pos.x += tx;
+		model->vertex[i].pos.y = c * y - s * z;
+		model->vertex[i].pos.z = s * y + c * z;
 
-		y = model->normal[i].y;
-		z = model->normal[i].z;
-		model->normal[i].y = c * y - s * z;
-		model->normal[i].z = s * y + c * z;
+		y = model->normal[i].dir.y;
+		z = model->normal[i].dir.z;
+		model->normal[i].dir.y = c * y - s * z;
+		model->normal[i].dir.z = s * y + c * z;
 	}
 
 	for (int i = 0; i < model->faces; i++) {
-		Direction *directions[] = {
+		UnitVector *axes[] = {
 			&model->face[i].facenormal,
 			&model->face[i].tangent,
 			&model->face[i].bitangent,
 		};
-		for (Direction *direction : directions) {
-			float y = direction->y;
-			float z = direction->z;
-			direction->y = c * y - s * z;
-			direction->z = s * y + c * z;
+		for (UnitVector *axis : axes) {
+			float y = axis->dir.y;
+			float z = axis->dir.z;
+			axis->dir.y = c * y - s * z;
+			axis->dir.z = s * y + c * z;
 		}
 	}
 }

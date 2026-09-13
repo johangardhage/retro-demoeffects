@@ -46,8 +46,8 @@ static void DrawTerrainDots(float maxdistance)
 			RETRO_TerrainPoint point;
 			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, basis, &offset, &point)) continue;
 
-			int sx = (int)point.sx;
-			int sy = (int)point.sy;
+			int sx = (int)point.spos.x;
+			int sy = (int)point.spos.y;
 			unsigned int idepth = (unsigned int)(offset.depth * 256.0f);
 			int screenindex = sy * RETRO_WIDTH + sx;
 			if (idepth < DotWorldZBuffer[screenindex]) {

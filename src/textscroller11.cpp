@@ -66,15 +66,11 @@ static RETRO_Font Font;
 static Vertex Project(double angle, double localx, double localy)
 {
 	Vertex vertex = {};
-	vertex.x = localx;
-	vertex.y = localy;
-	vertex.z = -RING_RADIUS;
+	vertex.pos = { (float)localx, (float)localy, -RING_RADIUS };
 
 	// Rotate the local point around the ring, tilt the ring, and project it.
 	RETRO_RotateVertex(&vertex, 0, -angle, 0);
-	vertex.x = vertex.rx;
-	vertex.y = vertex.ry;
-	vertex.z = vertex.rz;
+	vertex.pos = vertex.rpos;
 	RETRO_RotateVertex(&vertex, RING_TILT, 0, 0);
 	RETRO_ProjectVertex(&vertex, PROJECTION_SCALE, RETRO_WIDTH / 2, RING_Y, CAMERA_DISTANCE);
 	return vertex;
@@ -88,8 +84,7 @@ static void DrawCell(double angle, double x, double y, int color, float &paintde
 	PolygonPoint poly[4] = {};
 	paintdepth += 0.0001f;
 	for (int i = 0; i < 4; i++) {
-		poly[i].x = p[i].sx;
-		poly[i].y = p[i].sy;
+		poly[i].pos = p[i].spos;
 		poly[i].q = paintdepth;
 	}
 	RETRO_DrawFlatPolygon(poly, 4, color);

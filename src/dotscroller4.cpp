@@ -107,20 +107,20 @@ static void PlotDot(float x, float y, float z, int band)
 	float rx = x * CosAy + rz * SinAy;
 	rz = -x * SinAy + rz * CosAy;
 	Vertex dot = {};
-	dot.rx = rx * CosAz - ry * SinAz;
-	dot.ry = rx * SinAz + ry * CosAz;
-	dot.rz = rz + OBJECT_Z;
+	dot.rpos.x = rx * CosAz - ry * SinAz;
+	dot.rpos.y = rx * SinAz + ry * CosAz;
+	dot.rpos.z = rz + OBJECT_Z;
 	RETRO_ProjectVertex(&dot, PROJECTION_SCALE);
 	if (dot.q == 0.0f) return;
 
-	int sx = (int)lround(dot.sx), sy = (int)lround(dot.sy);
+	int sx = (int)lround(dot.spos.x), sy = (int)lround(dot.spos.y);
 	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) return;
 	int pixel = sy * RETRO_WIDTH + sx;
-	if (dot.rz >= ZBuffer[pixel]) return;
+	if (dot.rpos.z >= ZBuffer[pixel]) return;
 
-	int shade = (DepthFar - dot.rz) / (DepthFar - DepthNear) * (BAND_SHADES - 1);
+	int shade = (DepthFar - dot.rpos.z) / (DepthFar - DepthNear) * (BAND_SHADES - 1);
 	shade = MAX(1, MIN(BAND_SHADES - 1, shade));
-	ZBuffer[pixel] = dot.rz;
+	ZBuffer[pixel] = dot.rpos.z;
 	RETRO_PutPixel(sx, sy, 1 + band * BAND_SHADES + shade);
 }
 

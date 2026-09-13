@@ -16,14 +16,11 @@ void DEMO_Render2(double time, double deltatime)
 {
 	// Draw polygons
 	PolygonPoint point[3];
-	point[0].x = RANDOM(RETRO_WIDTH);
-	point[0].y = RANDOM(RETRO_HEIGHT);
+	point[0].pos = { (float)RANDOM(RETRO_WIDTH), (float)RANDOM(RETRO_HEIGHT) };
 	point[0].q = 1.0f;
-	point[1].x = RANDOM(RETRO_WIDTH);
-	point[1].y = RANDOM(RETRO_HEIGHT);
+	point[1].pos = { (float)RANDOM(RETRO_WIDTH), (float)RANDOM(RETRO_HEIGHT) };
 	point[1].q = 1.0f;
-	point[2].x = RANDOM(RETRO_WIDTH);
-	point[2].y = RANDOM(RETRO_HEIGHT);
+	point[2].pos = { (float)RANDOM(RETRO_WIDTH), (float)RANDOM(RETRO_HEIGHT) };
 	point[2].q = 1.0f;
 
 	// Depth is cleared so the new triangle can overwrite; color is not.

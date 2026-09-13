@@ -46,9 +46,10 @@ inline void RETRO_RotateVertices(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->vertices; i++) {
-		model->vertex[i].rx = model->vertex[i].x * model->matrix[0][0] + model->vertex[i].y * model->matrix[0][1] + model->vertex[i].z * model->matrix[0][2];
-		model->vertex[i].ry = model->vertex[i].x * model->matrix[1][0] + model->vertex[i].y * model->matrix[1][1] + model->vertex[i].z * model->matrix[1][2];
-		model->vertex[i].rz = model->vertex[i].x * model->matrix[2][0] + model->vertex[i].y * model->matrix[2][1] + model->vertex[i].z * model->matrix[2][2];
+		vec3 p = model->vertex[i].pos;
+		model->vertex[i].rpos.x = p.x * model->matrix[0][0] + p.y * model->matrix[0][1] + p.z * model->matrix[0][2];
+		model->vertex[i].rpos.y = p.x * model->matrix[1][0] + p.y * model->matrix[1][1] + p.z * model->matrix[1][2];
+		model->vertex[i].rpos.z = p.x * model->matrix[2][0] + p.y * model->matrix[2][1] + p.z * model->matrix[2][2];
 	}
 }
 
@@ -57,9 +58,10 @@ inline void RETRO_RotateVertexNormals(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->normals; i++) {
-		model->normal[i].rx = model->normal[i].x * model->matrix[0][0] + model->normal[i].y * model->matrix[0][1] + model->normal[i].z * model->matrix[0][2];
-		model->normal[i].ry = model->normal[i].x * model->matrix[1][0] + model->normal[i].y * model->matrix[1][1] + model->normal[i].z * model->matrix[1][2];
-		model->normal[i].rz = model->normal[i].x * model->matrix[2][0] + model->normal[i].y * model->matrix[2][1] + model->normal[i].z * model->matrix[2][2];
+		vec3 d = model->normal[i].dir;
+		model->normal[i].rdir.x = d.x * model->matrix[0][0] + d.y * model->matrix[0][1] + d.z * model->matrix[0][2];
+		model->normal[i].rdir.y = d.x * model->matrix[1][0] + d.y * model->matrix[1][1] + d.z * model->matrix[1][2];
+		model->normal[i].rdir.z = d.x * model->matrix[2][0] + d.y * model->matrix[2][1] + d.z * model->matrix[2][2];
 	}
 }
 
@@ -73,16 +75,18 @@ inline void RETRO_RotateFaceFrames(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->faces; i++) {
-		Direction *direction[2] = { &model->face[i].tangent, &model->face[i].bitangent };
+		UnitVector *axis[2] = { &model->face[i].tangent, &model->face[i].bitangent };
 		for (int j = 0; j < 2; j++) {
-			direction[j]->rx = direction[j]->x * model->matrix[0][0] + direction[j]->y * model->matrix[0][1] + direction[j]->z * model->matrix[0][2];
-			direction[j]->ry = direction[j]->x * model->matrix[1][0] + direction[j]->y * model->matrix[1][1] + direction[j]->z * model->matrix[1][2];
-			direction[j]->rz = direction[j]->x * model->matrix[2][0] + direction[j]->y * model->matrix[2][1] + direction[j]->z * model->matrix[2][2];
+			vec3 d = axis[j]->dir;
+			axis[j]->rdir.x = d.x * model->matrix[0][0] + d.y * model->matrix[0][1] + d.z * model->matrix[0][2];
+			axis[j]->rdir.y = d.x * model->matrix[1][0] + d.y * model->matrix[1][1] + d.z * model->matrix[1][2];
+			axis[j]->rdir.z = d.x * model->matrix[2][0] + d.y * model->matrix[2][1] + d.z * model->matrix[2][2];
 		}
 
-		model->face[i].facenormal.rx = model->face[i].facenormal.x * model->matrix[0][0] + model->face[i].facenormal.y * model->matrix[0][1] + model->face[i].facenormal.z * model->matrix[0][2];
-		model->face[i].facenormal.ry = model->face[i].facenormal.x * model->matrix[1][0] + model->face[i].facenormal.y * model->matrix[1][1] + model->face[i].facenormal.z * model->matrix[1][2];
-		model->face[i].facenormal.rz = model->face[i].facenormal.x * model->matrix[2][0] + model->face[i].facenormal.y * model->matrix[2][1] + model->face[i].facenormal.z * model->matrix[2][2];
+		vec3 n = model->face[i].facenormal.dir;
+		model->face[i].facenormal.rdir.x = n.x * model->matrix[0][0] + n.y * model->matrix[0][1] + n.z * model->matrix[0][2];
+		model->face[i].facenormal.rdir.y = n.x * model->matrix[1][0] + n.y * model->matrix[1][1] + n.z * model->matrix[1][2];
+		model->face[i].facenormal.rdir.z = n.x * model->matrix[2][0] + n.y * model->matrix[2][1] + n.z * model->matrix[2][2];
 	}
 }
 
@@ -104,18 +108,16 @@ inline void RETRO_RotateFaceFrames(Model3D *model = NULL)
 //
 inline void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2), float cy = (RETRO_HEIGHT / 2), float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
 {
-	float depth = scale * vertex->rz + eyedistance;
+	float depth = scale * vertex->rpos.z + eyedistance;
 
 	if (depth <= 1.0f) {
 		vertex->q = 0.0f;
-		vertex->sx = cx;
-		vertex->sy = cy;
+		vertex->spos = { cx, cy };
 	} else {
 		float focal = scale * eyedistance;
 
 		vertex->q = 1.0f / depth;
-		vertex->sx = cx + focal * vertex->rx * vertex->q;
-		vertex->sy = cy + focal * vertex->ry * vertex->q;
+		vertex->spos = { cx + focal * vertex->rpos.x * vertex->q, cy + focal * vertex->rpos.y * vertex->q };
 	}
 }
 
@@ -154,9 +156,7 @@ inline void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = 
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->vertices; i++) {
-		model->vertex[i].rx += tx;
-		model->vertex[i].ry += ty;
-		model->vertex[i].rz += tz;
+		model->vertex[i].rpos += vec3{ tx, ty, tz };
 	}
 }
 
@@ -169,56 +169,56 @@ inline void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = 
 inline void RETRO_SpinVertex(Vertex *vertex, float cosa, float sina)
 {
 	// Rotate around x axis
-	vertex->ry = vertex->y * cosa - vertex->z * sina;
-	vertex->rz = vertex->y * sina + vertex->z * cosa;
+	vertex->rpos.y = vertex->pos.y * cosa - vertex->pos.z * sina;
+	vertex->rpos.z = vertex->pos.y * sina + vertex->pos.z * cosa;
 
 	// Rotate around y axis
-	vertex->rx = vertex->x * cosa + vertex->rz * sina;
-	vertex->rz = vertex->x * -sina + vertex->rz * cosa;
+	vertex->rpos.x = vertex->pos.x * cosa + vertex->rpos.z * sina;
+	vertex->rpos.z = vertex->pos.x * -sina + vertex->rpos.z * cosa;
 
 	// Rotate around z axis
-	float tmpx = vertex->rx * cosa - vertex->ry * sina;
-	vertex->ry = vertex->rx * sina + vertex->ry * cosa;
-	vertex->rx = tmpx;
+	float tmpx = vertex->rpos.x * cosa - vertex->rpos.y * sina;
+	vertex->rpos.y = vertex->rpos.x * sina + vertex->rpos.y * cosa;
+	vertex->rpos.x = tmpx;
 }
 
 inline void RETRO_RotateVertex(Vertex *vertex, float ax, float ay, float az)
 {
 	// Rotate around x axis
-	vertex->ry = vertex->y * cos(ax) - vertex->z * sin(ax);
-	vertex->rz = vertex->y * sin(ax) + vertex->z * cos(ax);
+	vertex->rpos.y = vertex->pos.y * cos(ax) - vertex->pos.z * sin(ax);
+	vertex->rpos.z = vertex->pos.y * sin(ax) + vertex->pos.z * cos(ax);
 
 	// Rotate around y axis
-	vertex->rx = vertex->x * cos(ay) + vertex->rz * sin(ay);
-	vertex->rz = vertex->x * -sin(ay) + vertex->rz * cos(ay);
+	vertex->rpos.x = vertex->pos.x * cos(ay) + vertex->rpos.z * sin(ay);
+	vertex->rpos.z = vertex->pos.x * -sin(ay) + vertex->rpos.z * cos(ay);
 
 	// Rotate around z axis
-	float tmpx = vertex->rx * cos(az) - vertex->ry * sin(az);
-	vertex->ry = vertex->rx * sin(az) + vertex->ry * cos(az);
-	vertex->rx = tmpx;
+	float tmpx = vertex->rpos.x * cos(az) - vertex->rpos.y * sin(az);
+	vertex->rpos.y = vertex->rpos.x * sin(az) + vertex->rpos.y * cos(az);
+	vertex->rpos.x = tmpx;
 }
 
-inline void RETRO_RotateDirection(Direction *direction, float ax, float ay, float az)
+inline void RETRO_RotateUnitVector(UnitVector *direction, float ax, float ay, float az)
 {
 	// Rotate around x axis
-	direction->ry = direction->y * cos(ax) - direction->z * sin(ax);
-	direction->rz = direction->y * sin(ax) + direction->z * cos(ax);
+	direction->rdir.y = direction->dir.y * cos(ax) - direction->dir.z * sin(ax);
+	direction->rdir.z = direction->dir.y * sin(ax) + direction->dir.z * cos(ax);
 
 	// Rotate around y axis
-	direction->rx = direction->x * cos(ay) + direction->rz * sin(ay);
-	direction->rz = direction->x * -sin(ay) + direction->rz * cos(ay);
+	direction->rdir.x = direction->dir.x * cos(ay) + direction->rdir.z * sin(ay);
+	direction->rdir.z = direction->dir.x * -sin(ay) + direction->rdir.z * cos(ay);
 
 	// Rotate around z axis
-	float tmpx = direction->rx * cos(az) - direction->ry * sin(az);
-	direction->ry = direction->rx * sin(az) + direction->ry * cos(az);
-	direction->rx = tmpx;
+	float tmpx = direction->rdir.x * cos(az) - direction->rdir.y * sin(az);
+	direction->rdir.y = direction->rdir.x * sin(az) + direction->rdir.y * cos(az);
+	direction->rdir.x = tmpx;
 }
 
 // D1 · D2, taken on the rotated directions. Both are unit, so this is already
 // the cosine of the angle between them and there is nothing to divide out.
-inline float RETRO_DotProduct(Direction d1, Direction d2)
+inline float RETRO_RotatedDot(UnitVector d1, UnitVector d2)
 {
-	return d1.rx * d2.rx + d1.ry * d2.ry + d1.rz * d2.rz;
+	return dot(d1.rdir, d2.rdir);
 }
 
 inline void RETRO_QuickSort(Model3D *model, int lo, int hi)
@@ -284,20 +284,17 @@ inline void RETRO_SortFaces(Model3D *model = NULL, bool backfaces = false)
 			continue;
 		}
 
-		float s0x = model->vertex[model->face[i].vertex[0]].sx;
-		float s0y = model->vertex[model->face[i].vertex[0]].sy;
-		float s1x = model->vertex[model->face[i].vertex[1]].sx;
-		float s1y = model->vertex[model->face[i].vertex[1]].sy;
-		float s2x = model->vertex[model->face[i].vertex[2]].sx;
-		float s2y = model->vertex[model->face[i].vertex[2]].sy;
+		vec2 s0 = model->vertex[model->face[i].vertex[0]].spos;
+		vec2 s1 = model->vertex[model->face[i].vertex[1]].spos;
+		vec2 s2 = model->vertex[model->face[i].vertex[2]].spos;
 		// (s1 - s0) × (s2 - s0). Same sign as the face normal's z in this
 		// y-down, +z-away frame, so front faces come out negative.
-		float cross = (s1x - s0x) * (s2y - s0y) - (s1y - s0y) * (s2x - s0x);
-		model->face[i].frontfacing = cross < 0;
+		float winding = cross(s1 - s0, s2 - s0);
+		model->face[i].frontfacing = winding < 0;
 		if (model->face[i].frontfacing || backfaces) {
 			model->face[i].rz = 0;
 			for (int j = 0; j < model->face[i].vertices; j++) {
-				model->face[i].rz += model->vertex[model->face[i].vertex[j]].rz;
+				model->face[i].rz += model->vertex[model->face[i].vertex[j]].rpos.z;
 			}
 			model->face[i].rz /= model->face[i].vertices;
 			model->drawface[model->drawfaces] = i;

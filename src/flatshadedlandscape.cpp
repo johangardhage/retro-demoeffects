@@ -30,6 +30,7 @@
 #include "lib/retroterrain.h"
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
+#include "lib/retrovector.h"
 
 #define LANDSCAPE_SHADES 8
 // How much light a face turned away from the sun still catches, as a fraction
@@ -65,8 +66,9 @@ static const float SunRadius[LANDSCAPE_SUNRINGS] = { 11.0f, 7.0f, 4.0f };
 static const unsigned char SunColor[LANDSCAPE_SUNRINGS] = { 247, 248, 249 };
 
 struct WorldVertex {
-	float x, y, z;
-	float sx, sy, q;
+	vec3 pos;
+	vec2 spos;
+	float q;
 };
 
 // The world position is kept alongside the screen one: the face normal below is
@@ -74,13 +76,10 @@ struct WorldVertex {
 static WorldVertex ProjectVertex(float x, float z, const RETRO_TerrainBasis &basis)
 {
 	WorldVertex vertex;
-	vertex.x = x;
-	vertex.y = RETRO_TerrainHeight(x, z);
-	vertex.z = z;
+	vertex.pos = { x, RETRO_TerrainHeight(x, z), z };
 
-	RETRO_TerrainPoint point = RETRO_ProjectTerrainPoint(x, z, vertex.y, basis);
-	vertex.sx = point.sx;
-	vertex.sy = point.sy;
+	RETRO_TerrainPoint point = RETRO_ProjectTerrainPoint(x, z, vertex.pos.y, basis);
+	vertex.spos = point.spos;
 	vertex.q = point.q;
 	return vertex;
 }
@@ -105,7 +104,7 @@ static void DrawSun(const RETRO_TerrainBasis &basis)
 
 	RETRO_TerrainPoint point = RETRO_ProjectTerrainOffset(offset, RETRO_Camera.height + RETRO_TerrainLight.y);
 	for (int ring = 0; ring < LANDSCAPE_SUNRINGS; ring++) {
-		RETRO_DrawEllipse(point.sx, point.sy, SunRadius[ring], SunRadius[ring], SunColor[ring]);
+		RETRO_DrawEllipse(point.spos.x, point.spos.y, SunRadius[ring], SunRadius[ring], SunColor[ring]);
 	}
 }
 
@@ -118,21 +117,13 @@ static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const World
 	// the mesh spacing squared for either winding, since it is built from the x
 	// and z spacing alone, so the normal already points upward and the length
 	// is never zero.
-	float abx = b.x - a.x;
-	float aby = b.y - a.y;
-	float abz = b.z - a.z;
-	float acx = c.x - a.x;
-	float acy = c.y - a.y;
-	float acz = c.z - a.z;
-	float nx = aby * acz - abz * acy;
-	float ny = abz * acx - abx * acz;
-	float nz = abx * acy - aby * acx;
-	int shade = RETRO_TerrainShade(nx, ny, nz, LANDSCAPE_SHADES);
+	vec3 normal = cross(b.pos - a.pos, c.pos - a.pos);
+	int shade = RETRO_TerrainShade(normal, LANDSCAPE_SHADES);
 
 	PolygonPoint polygon[3] = {
-		{ a.sx, a.sy, 0, 0, 0, a.q, 0, 0, 0 },
-		{ b.sx, b.sy, 0, 0, 0, b.q, 0, 0, 0 },
-		{ c.sx, c.sy, 0, 0, 0, c.q, 0, 0, 0 }
+		{ a.spos, 0, { 0, 0 }, a.q },
+		{ b.spos, 0, { 0, 0 }, b.q },
+		{ c.spos, 0, { 0, 0 }, c.q }
 	};
 	RETRO_DrawFlatPolygon(polygon, 3, LandscapeShadeTable[basecolor][shade]);
 }

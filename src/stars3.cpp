@@ -43,17 +43,17 @@ void DEMO_Render(double time, double deltatime)
 	for (int i = 0; i < NUM_STARS; i++) {
 		RETRO_RotateVertex(&Stars[i], ax, ay, az);
 
-		if (Stars[i].rz <= STAR_NEAREST) {
+		if (Stars[i].rpos.z <= STAR_NEAREST) {
 			continue;
 		}
 
 		RETRO_ProjectVertex(&Stars[i], PROJECTION_SCALE);
 
-		int x = Stars[i].sx;
-		int y = Stars[i].sy;
+		int x = Stars[i].spos.x;
+		int y = Stars[i].spos.y;
 
 		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
-			int color = (furthest - Stars[i].rz) * (SHADES - 1) / (furthest - STAR_NEAREST);
+			int color = (furthest - Stars[i].rpos.z) * (SHADES - 1) / (furthest - STAR_NEAREST);
 
 			RETRO_PutPixel(x, y, color);
 		}
@@ -67,8 +67,10 @@ void DEMO_Initialize(void)
 
 	// Init stars. Fill a box centred on the eye's axis: [-W, W] x [-H, H] x [-BOX_DEPTH, BOX_DEPTH].
 	for (int i = 0; i < NUM_STARS; i++) {
-		Stars[i].x = RANDOM(RETRO_WIDTH * 2) - RETRO_WIDTH;
-		Stars[i].y = RANDOM(RETRO_HEIGHT * 2) - RETRO_HEIGHT;
-		Stars[i].z = RANDOM(BOX_DEPTH * 2) - BOX_DEPTH;
+		Stars[i].pos = {
+			(float)(RANDOM(RETRO_WIDTH * 2) - RETRO_WIDTH),
+			(float)(RANDOM(RETRO_HEIGHT * 2) - RETRO_HEIGHT),
+			(float)(RANDOM(BOX_DEPTH * 2) - BOX_DEPTH)
+		};
 	}
 }

@@ -21,21 +21,20 @@
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define POINTS 170
 #define LINE_SPEED 2.5
 #define LINE_PERIOD (2 * M_PI * 19715670.0) // 2π · 2 · 3³ · 5 · 13 · 41 · 137
 
-Point2Df Points[POINTS];
+vec2 Points[POINTS];
 
 static void DrawLines(int x, int y, float k)
 {
-	Points[0].x = x;
-	Points[0].y = y;
+	Points[0] = { (float)x, (float)y };
 
 	for (int i = 1; i < POINTS; i++) {
-		Points[i].x = (Points[i].x + Points[i - 1].x) / (2.0 + k / POINTS);
-		Points[i].y = (Points[i].y + Points[i - 1].y) / (2.0 + k / POINTS);
+		Points[i] = (Points[i] + Points[i - 1]) / (float)(2.0 + k / POINTS);
 
 		// Not clamped: clamping x and y apart bends the segment. DrawLine clips.
 		int x1 = lround(Points[i].x);

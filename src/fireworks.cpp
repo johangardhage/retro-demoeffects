@@ -30,6 +30,7 @@
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define NUM_PARTICLES 1800
 #define SPARKS 140 // sparks a rocket becomes
@@ -44,7 +45,8 @@
 enum { DEAD, ROCKET, SPARK };
 
 struct FireParticle {
-	float x, y, vx, vy;
+	vec2 pos;
+	vec2 vel;
 	int life;
 	unsigned char kind;
 } Particles[NUM_PARTICLES];
@@ -67,15 +69,14 @@ static void LaunchRocket(void)
 	}
 
 	Particles[i].kind = ROCKET;
-	Particles[i].x = 40 + RANDOMF(RETRO_WIDTH - 80);
-	Particles[i].y = RETRO_HEIGHT - 1;
-	Particles[i].vx = RANDOMF(1.2f) - 0.6f;
+	Particles[i].pos = { 40 + RANDOMF(RETRO_WIDTH - 80), RETRO_HEIGHT - 1.0f };
+	Particles[i].vel.x = RANDOMF(1.2f) - 0.6f;
 	float climb = RETRO_HEIGHT - 1 - (BURST_HIGH + RANDOMF(BURST_LOW - BURST_HIGH));
-	Particles[i].vy = -sqrtf(2 * GRAVITY * climb);
+	Particles[i].vel.y = -sqrtf(2 * GRAVITY * climb);
 	Particles[i].life = 0;
 }
 
-static void Explode(float x, float y)
+static void Explode(vec2 pos)
 {
 	for (int n = 0; n < SPARKS; n++) {
 		int i = AllocParticle();
@@ -87,10 +88,8 @@ static void Explode(float x, float y)
 		float speed = RANDOMF(SPARK_SPEED);
 
 		Particles[i].kind = SPARK;
-		Particles[i].x = x;
-		Particles[i].y = y;
-		Particles[i].vx = speed * cos(angle);
-		Particles[i].vy = speed * sin(angle);
+		Particles[i].pos = pos;
+		Particles[i].vel = { (float)(speed * cos(angle)), (float)(speed * sin(angle)) };
 		Particles[i].life = SPARK_LIFE - RANDOM(20);
 	}
 }
@@ -108,31 +107,31 @@ void DEMO_FixedUpdate(double timestep)
 			continue;
 		}
 
-		Particles[i].vy += GRAVITY;
-		Particles[i].x += Particles[i].vx;
-		Particles[i].y += Particles[i].vy;
+		Particles[i].vel.y += GRAVITY;
+		Particles[i].pos.x += Particles[i].vel.x;
+		Particles[i].pos.y += Particles[i].vel.y;
 
 		if (Particles[i].kind == ROCKET) {
-			if (Particles[i].vy >= 0) {
-				Explode(Particles[i].x, Particles[i].y);
+			if (Particles[i].vel.y >= 0) {
+				Explode(Particles[i].pos);
 				Particles[i].kind = DEAD;
 				continue;
 			}
-			if (Particles[i].x >= 0 && Particles[i].x < RETRO_WIDTH &&
-				Particles[i].y >= 0 && Particles[i].y < RETRO_HEIGHT) {
-				RETRO_PutPixel(Particles[i].x, Particles[i].y, RETRO_COLORS - 1);
+			if (Particles[i].pos.x >= 0 && Particles[i].pos.x < RETRO_WIDTH &&
+				Particles[i].pos.y >= 0 && Particles[i].pos.y < RETRO_HEIGHT) {
+				RETRO_PutPixel(Particles[i].pos.x, Particles[i].pos.y, RETRO_COLORS - 1);
 			}
 		} else {
 			Particles[i].life--;
 			if (Particles[i].life <= 0 ||
-				Particles[i].x < 0 || Particles[i].x >= RETRO_WIDTH ||
-				Particles[i].y < 0 || Particles[i].y >= RETRO_HEIGHT) {
+				Particles[i].pos.x < 0 || Particles[i].pos.x >= RETRO_WIDTH ||
+				Particles[i].pos.y < 0 || Particles[i].pos.y >= RETRO_HEIGHT) {
 				Particles[i].kind = DEAD;
 				continue;
 			}
 			int shade = 40 + Particles[i].life * 215 / SPARK_LIFE;
-			int ix = (int)Particles[i].x;
-			int iy = (int)Particles[i].y;
+			int ix = (int)Particles[i].pos.x;
+			int iy = (int)Particles[i].pos.y;
 			unsigned char color = CLAMP256(shade);
 			RETRO_PutPixel(ix, iy, color);
 			if (ix + 1 < RETRO_WIDTH) {

@@ -43,9 +43,7 @@ Vertex Morph[POINTS];
 static void MorphShapes(Vertex *from, Vertex *to, float t)
 {
 	for (int i = 0; i < POINTS; i++) {
-		Morph[i].x = from[i].x + (to[i].x - from[i].x) * t;
-		Morph[i].y = from[i].y + (to[i].y - from[i].y) * t;
-		Morph[i].z = from[i].z + (to[i].z - from[i].z) * t;
+		Morph[i].pos = from[i].pos + (to[i].pos - from[i].pos) * t;
 	}
 }
 
@@ -73,11 +71,11 @@ void DEMO_Render(double time, double deltatime)
 		RETRO_RotateVertex(&Morph[i], 0, angle, angle);
 		RETRO_ProjectVertex(&Morph[i], PROJECTION_SCALE);
 
-		int x = Morph[i].sx;
-		int y = Morph[i].sy;
+		int x = Morph[i].spos.x;
+		int y = Morph[i].spos.y;
 
 		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
-			unsigned char color = CLAMP256((RETRO_COLORS - 1) * (furthest - Morph[i].rz) / (2 * furthest));
+			unsigned char color = CLAMP256((RETRO_COLORS - 1) * (furthest - Morph[i].rpos.z) / (2 * furthest));
 
 			if (color > RETRO_GetPixel(x, y)) {
 				RETRO_PutPixel(x, y, color);
@@ -102,9 +100,7 @@ void DEMO_Initialize(void)
 		float r = sqrt(1 - z * z);
 		float phi = RANDOMF(2 * M_PI);
 
-		Sphere[i].x = r * cos(phi);
-		Sphere[i].y = r * sin(phi);
-		Sphere[i].z = z;
+		Sphere[i].pos = { r * (float)cos(phi), r * (float)sin(phi), z };
 	}
 
 	// Init torus. The area element of a torus carries (R + r cos θ). Drawing θ uniformly
@@ -122,9 +118,7 @@ void DEMO_Initialize(void)
 		float phi = RANDOMF(2 * M_PI);
 		float ring = TORUS_RING + TORUS_TUBE * cos(theta);
 
-		Torus[i].x = ring * cos(phi);
-		Torus[i].y = ring * sin(phi);
-		Torus[i].z = TORUS_TUBE * sin(theta);
+		Torus[i].pos = { ring * (float)cos(phi), ring * (float)sin(phi), (float)(TORUS_TUBE * sin(theta)) };
 	}
 
 	MorphShapes(Torus, Torus, 0);

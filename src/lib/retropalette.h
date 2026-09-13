@@ -8,6 +8,7 @@
 #define _RETROPALETTE_H_
 
 #include "retro.h"
+#include "retrovector.h"
 
 // *******************************************************************
 // Public variables
@@ -369,10 +370,10 @@ inline void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 // their own, and one map per ramp, is how a demo dims a ball by depth without
 // touching its shading.
 //
-inline void RETRO_CreateBallMap(unsigned char *buffer, float *depthmap, int size, int color, int shades, float lightx = -0.4f, float lighty = -0.4f, float lightz = 0.82f)
+inline void RETRO_CreateBallMap(unsigned char *buffer, float *depthmap, int size, int color, int shades, vec3 light = { -0.4f, -0.4f, 0.82f })
 {
 	float centre = (size - 1) * 0.5f;
-	float length = sqrt(lightx * lightx + lighty * lighty + lightz * lightz);
+	float lightlength = length(light);
 
 	for (int y = 0; y < size; y++) {
 		float ny = (y - centre) / centre;
@@ -384,7 +385,7 @@ inline void RETRO_CreateBallMap(unsigned char *buffer, float *depthmap, int size
 			float nz = 0.0f;
 			if (radiussquared <= 1.0f) {
 				nz = sqrt(1.0f - radiussquared);
-				float lambert = (nx * lightx + ny * lighty + nz * lightz) / length;
+				float lambert = dot(vec3{ nx, ny, nz }, light) / lightlength;
 				paletteindex = color + MIN((int)(RETRO_ShadeFromLambert(lambert) * shades), shades - 1);
 			}
 			buffer[y * size + x] = MIN(paletteindex, RETRO_COLORS - 1);

@@ -26,6 +26,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 // Flag of Sweden, SFS 1982:269. The proportions are 16:10, divided 5:2:9 along the flag and
 // 4:2:4 across it, which puts the cross off centre towards the hoist and makes both arms the
@@ -118,7 +119,7 @@ double ClothEnvelope[FLAG_WIDTH];
 double ClothEnvelopeSlope[FLAG_WIDTH];
 double ClothEnvelopeCurve[FLAG_WIDTH];
 
-double HalfwayX, HalfwayY, HalfwayZ;
+vec3 Halfway;
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -193,17 +194,14 @@ void DEMO_Render(double time, double deltatime)
 			}
 
 			// z = h(x, y), so N = (-dh/dx, -dh/dy, 1) / |...|
-			double inverselength = 1.0 / sqrt(slopex * slopex + slopey * slopey + 1);
-			double normalx = -slopex * inverselength;
-			double normaly = -slopey * inverselength;
-			double normalz = inverselength;
+			vec3 normal = normalize(vec3{ (float)-slopex, (float)-slopey, 1.0f });
 
-			double lambert = CLAMP01(normalx * LIGHT_DIRX + normaly * LIGHT_DIRY + normalz * LIGHT_DIRZ);
+			double lambert = CLAMP01(dot(normal, vec3{ LIGHT_DIRX, LIGHT_DIRY, LIGHT_DIRZ }));
 
 			// Blinn-Phong. L and V are fixed, so H = normalize(L + V) is formed once.
 			double specular = 0;
 			if (lambert > 0) {
-				double normalhalfway = CLAMP01(normalx * HalfwayX + normaly * HalfwayY + normalz * HalfwayZ);
+				double normalhalfway = CLAMP01(dot(normal, Halfway));
 
 				// (N·H)^12 by squaring: x², x⁴, x⁸ · x⁴. Four multiplies rather
 				// than a call to pow for an exponent known at compile time.
@@ -256,13 +254,5 @@ void DEMO_Initialize(void)
 	}
 
 	// Init halfway vector, H = normalize(L + V), with the viewer at (0, 0, 1)
-	HalfwayX = LIGHT_DIRX;
-	HalfwayY = LIGHT_DIRY;
-	HalfwayZ = LIGHT_DIRZ + 1;
-
-	double inverselength = 1.0 / sqrt(HalfwayX * HalfwayX + HalfwayY * HalfwayY + HalfwayZ * HalfwayZ);
-
-	HalfwayX *= inverselength;
-	HalfwayY *= inverselength;
-	HalfwayZ *= inverselength;
+	Halfway = normalize(vec3{ LIGHT_DIRX, LIGHT_DIRY, LIGHT_DIRZ + 1 });
 }

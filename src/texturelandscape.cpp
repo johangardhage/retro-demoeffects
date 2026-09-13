@@ -32,21 +32,21 @@
 #include "lib/retropoly.h"
 #include "lib/retroterrain.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 struct WorldVertex {
-	float sx, sy, q;
-	float u, v;
+	vec2 spos;
+	float q;
+	vec2 uv;
 };
 
 static WorldVertex ProjectVertex(float x, float z, const RETRO_TerrainBasis &basis)
 {
 	RETRO_TerrainPoint point = RETRO_ProjectTerrainVertex(x, z, basis);
 	WorldVertex vertex;
-	vertex.sx = point.sx;
-	vertex.sy = point.sy;
+	vertex.spos = point.spos;
 	vertex.q = point.q;
-	vertex.u = x;
-	vertex.v = z;
+	vertex.uv = { x, z };
 	return vertex;
 }
 
@@ -55,9 +55,9 @@ static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const World
 	if (!RETRO_TerrainTriangleProjects(a.q, b.q, c.q)) return;
 
 	PolygonPoint polygon[3] = {
-		{ a.sx, a.sy, 0, a.u, a.v, a.q, 0, 0, 0 },
-		{ b.sx, b.sy, 0, b.u, b.v, b.q, 0, 0, 0 },
-		{ c.sx, c.sy, 0, c.u, c.v, c.q, 0, 0, 0 }
+		{ a.spos, 0, a.uv, a.q },
+		{ b.spos, 0, b.uv, b.q },
+		{ c.spos, 0, c.uv, c.q }
 	};
 	RETRO_DrawTexMapPolygon(polygon, 3, RETRO_Terrain.colormap, RETRO_Terrain.width, RETRO_Terrain.height, RETRO_Terrain.wrap);
 }

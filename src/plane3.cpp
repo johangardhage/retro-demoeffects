@@ -49,8 +49,8 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define PLANE_DISTANCE 320
 #define PLANE_PERIOD 256 // one texture width; U, V, xd and yd share it
@@ -78,9 +78,9 @@ void DEMO_Render(double time, double deltatime)
 	// Rotate U = (P, 0, 0) and V = (0, 0, P) by Ry(ang). bp is the
 	// world-space origin of that frame: (xd / P) U + (yd / P) V, sitting
 	// on y = PLANE_Y.
-	Point3Df up = { PLANE_PERIOD * cosa, 0, -PLANE_PERIOD * sina };
-	Point3Df vp = { PLANE_PERIOD * sina, 0, PLANE_PERIOD * cosa };
-	Point3Df bp = { xd * cosa + yd * sina, PLANE_Y, -xd * sina + yd * cosa };
+	vec3 up = { PLANE_PERIOD * cosa, 0, -PLANE_PERIOD * sina };
+	vec3 vp = { PLANE_PERIOD * sina, 0, PLANE_PERIOD * cosa };
+	vec3 bp = { xd * cosa + yd * sina, PLANE_Y, -xd * sina + yd * cosa };
 
 	const float invp2 = 1.0f / (PLANE_PERIOD * PLANE_PERIOD);
 
@@ -93,12 +93,11 @@ void DEMO_Render(double time, double deltatime)
 		float sx0 = -(RETRO_WIDTH / 2);
 		float hitx = lambda * sx0;
 		float hitz = lambda * PLANE_DISTANCE;
-		float dx = hitx - bp.x;
-		float dz = hitz - bp.z;
+		vec3 d = { hitx - bp.x, 0, hitz - bp.z };
 
 		// s, t at the left edge: (hit − bp) projected onto U and V
-		float s = (dx * up.x + dz * up.z) * invp2;
-		float t = (dx * vp.x + dz * vp.z) * invp2;
+		float s = dot(d, up) * invp2;
+		float t = dot(d, vp) * invp2;
 		float ds = lambda * up.x * invp2;
 		float dt = lambda * vp.x * invp2;
 

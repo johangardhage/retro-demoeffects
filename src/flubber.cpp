@@ -44,7 +44,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
+#include "lib/retrovector.h"
 
 #define SPANS 32
 #define SPANMASK (SPANS - 1)
@@ -80,8 +80,8 @@ unsigned char LightTable[RETRO_COLORS];
 unsigned char FlubberShadeTable[RETRO_COLORS * SHADE_LUT_WIDTH];
 float ZBuffer[RETRO_WIDTH * RETRO_HEIGHT];
 
-Point3Df EllipsePoints[SPANS];
-Point3Df EllipseTangents[SPANS];
+vec3 EllipsePoints[SPANS];
+vec3 EllipseTangents[SPANS];
 
 //
 // One scanline of one face, half-open in x. A back-facing edge has
@@ -255,11 +255,7 @@ void DEMO_Initialize(void)
 	}
 
 	for (int j = 0; j < SPANS; j++) {
-		float tangentX = EllipsePoints[(j + 1) & SPANMASK].x - EllipsePoints[(j - 1) & SPANMASK].x;
-		float tangentZ = EllipsePoints[(j + 1) & SPANMASK].z - EllipsePoints[(j - 1) & SPANMASK].z;
-		float inorm = 1 / sqrt(tangentX * tangentX + tangentZ * tangentZ);
-
-		EllipseTangents[j].x = tangentX * inorm;
-		EllipseTangents[j].z = tangentZ * inorm;
+		vec3 chord = EllipsePoints[(j + 1) & SPANMASK] - EllipsePoints[(j - 1) & SPANMASK];
+		EllipseTangents[j] = normalize(chord);
 	}
 }

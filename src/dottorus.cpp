@@ -58,9 +58,9 @@ void DEMO_Render(double time, double deltatime)
 		RETRO_RotateVertex(&Torus[i], ax, ay, az);
 		RETRO_ProjectVertex(&Torus[i], PROJECTION_SCALE);
 
-		int x = Torus[i].sx;
-		int y = Torus[i].sy;
-		int z = -round(Torus[i].rz);
+		int x = Torus[i].spos.x;
+		int y = Torus[i].spos.y;
+		int z = -round(Torus[i].rpos.z);
 
 		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
 			int color = (z + furthest) * (SHADES - 1) / (2 * furthest);
@@ -87,9 +87,11 @@ void DEMO_Initialize(void)
 			float beta = b * betastep;
 			float ring = RING_RADIUS + TUBE_RADIUS * cos(beta);
 
-			Torus[NumPoints].x = ring * cos(alpha);
-			Torus[NumPoints].y = TUBE_RADIUS * sin(beta);
-			Torus[NumPoints].z = ring * sin(alpha);
+			Torus[NumPoints].pos = {
+				ring * (float)cos(alpha),
+				TUBE_RADIUS * (float)sin(beta),
+				ring * (float)sin(alpha)
+			};
 			NumPoints++;
 		}
 	}

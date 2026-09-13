@@ -17,7 +17,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
+#include "lib/retrovector.h"
 
 #define TEXTURE_WIDTH 256
 #define TEXTURE_HEIGHT 256
@@ -26,7 +26,7 @@
 #define WARP_ALPHA_SPEED 0.12 // radians per second
 #define WARP_BETA_SPEED 0.264
 
-Point2D DistortTable[WARP_HEIGHT * WARP_WIDTH];
+ivec2 DistortTable[WARP_HEIGHT * WARP_WIDTH];
 
 void DEMO_Render(double time, double deltatime)
 {

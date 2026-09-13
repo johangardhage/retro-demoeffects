@@ -28,6 +28,7 @@
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define NUM_PARTICLES 6000
 #define PARTICLE_SPEED 5 // pixels a step, at the fastest
@@ -43,7 +44,8 @@
 #define TRAIL_DECAY 3 // brightness the blur takes off each step, so the trails fade
 
 struct Particle {
-	float x, y, xdir, ydir;
+	vec2 pos;
+	vec2 dir;
 	unsigned char color;
 } Particles[NUM_PARTICLES];
 
@@ -65,10 +67,8 @@ static void CreateExplosion(void)
 		float angle = RANDOMF(2 * M_PI);
 		float speed = RANDOMF(PARTICLE_SPEED);
 
-		Particles[i].x = x;
-		Particles[i].y = y;
-		Particles[i].xdir = speed * cos(angle);
-		Particles[i].ydir = speed * sin(angle);
+		Particles[i].pos = { (float)x, (float)y };
+		Particles[i].dir = { (float)(speed * cos(angle)), (float)(speed * sin(angle)) };
 		Particles[i].color = RETRO_COLORS - 1;
 	}
 }
@@ -84,45 +84,45 @@ void DEMO_FixedUpdate(double timestep)
 
 	// Draw and move particles
 	for (int i = 0; i < NUM_PARTICLES; i++) {
-		RETRO_PutPixel(Particles[i].x, Particles[i].y, Particles[i].color);
+		RETRO_PutPixel(Particles[i].pos.x, Particles[i].pos.y, Particles[i].color);
 
 		// Symplectic Euler: v' = v + g, then x' = x + v'
-		Particles[i].ydir += PARTICLE_GRAVITY;
+		Particles[i].dir.y += PARTICLE_GRAVITY;
 
-		Particles[i].x += Particles[i].xdir;
-		Particles[i].y += Particles[i].ydir;
+		Particles[i].pos.x += Particles[i].dir.x;
+		Particles[i].pos.y += Particles[i].dir.y;
 
 		// Floor and ceiling
 		bool onfloor = false;
-		while (Particles[i].y < 0 || Particles[i].y > RETRO_HEIGHT - 1) {
-			if (Particles[i].y < 0) {
-				Particles[i].y = -Particles[i].y;
+		while (Particles[i].pos.y < 0 || Particles[i].pos.y > RETRO_HEIGHT - 1) {
+			if (Particles[i].pos.y < 0) {
+				Particles[i].pos.y = -Particles[i].pos.y;
 			} else {
-				Particles[i].y = 2 * (RETRO_HEIGHT - 1) - Particles[i].y;
+				Particles[i].pos.y = 2 * (RETRO_HEIGHT - 1) - Particles[i].pos.y;
 				onfloor = true;
 			}
-			Particles[i].ydir *= -BOUNCE_RESTITUTION;
-			Particles[i].xdir *= BOUNCE_FRICTION;
+			Particles[i].dir.y *= -BOUNCE_RESTITUTION;
+			Particles[i].dir.x *= BOUNCE_FRICTION;
 		}
 
 		// Resting contact: a bounce this small cannot clear one step of gravity
-		if (onfloor && fabsf(Particles[i].ydir) < 2 * PARTICLE_GRAVITY) {
-			Particles[i].ydir = 0;
-			Particles[i].y = RETRO_HEIGHT - 1;
+		if (onfloor && fabsf(Particles[i].dir.y) < 2 * PARTICLE_GRAVITY) {
+			Particles[i].dir.y = 0;
+			Particles[i].pos.y = RETRO_HEIGHT - 1;
 		}
 
 		// Side walls
-		while (Particles[i].x < 0 || Particles[i].x > RETRO_WIDTH - 1) {
-			if (Particles[i].x < 0) {
-				Particles[i].x = -Particles[i].x;
+		while (Particles[i].pos.x < 0 || Particles[i].pos.x > RETRO_WIDTH - 1) {
+			if (Particles[i].pos.x < 0) {
+				Particles[i].pos.x = -Particles[i].pos.x;
 			} else {
-				Particles[i].x = 2 * (RETRO_WIDTH - 1) - Particles[i].x;
+				Particles[i].pos.x = 2 * (RETRO_WIDTH - 1) - Particles[i].pos.x;
 			}
-			Particles[i].xdir *= -BOUNCE_RESTITUTION;
-			Particles[i].ydir *= BOUNCE_FRICTION;
+			Particles[i].dir.x *= -BOUNCE_RESTITUTION;
+			Particles[i].dir.y *= BOUNCE_FRICTION;
 		}
 
-		if (Particles[i].y >= RETRO_HEIGHT - EMBER_ROWS) {
+		if (Particles[i].pos.y >= RETRO_HEIGHT - EMBER_ROWS) {
 			Particles[i].color = RANDOM(EMBER_SHADES) + EMBER_SHADES;
 		}
 	}

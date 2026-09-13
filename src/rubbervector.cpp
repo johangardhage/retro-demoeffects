@@ -158,9 +158,10 @@ void DEMO_Initialize(void)
 
 	// The ramp a face is shaded in is the one of the axis it faces
 	for (int i = 0; i < Cube->faces; i++) {
-		float x = fabs(Cube->face[i].facenormal.x);
-		float y = fabs(Cube->face[i].facenormal.y);
-		float z = fabs(Cube->face[i].facenormal.z);
+		vec3 n = abs(Cube->face[i].facenormal.dir);
+		float x = n.x;
+		float y = n.y;
+		float z = n.z;
 		Cube->face[i].c = (x > y && x > z ? 0 : (y > z ? 1 : 2)) * RUBBER_SHADES;
 	}
 

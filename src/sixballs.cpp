@@ -55,11 +55,9 @@ void DEMO_Render(double time, double deltatime)
 
 	for (int i = 0; i < BALLS; i++) {
 		float a = i * 2.0f * M_PI / BALLS;
-		Balls[i].x = RING_RADIUS * cos(a);
-		Balls[i].y = RING_RADIUS * sin(a);
-		Balls[i].z = 0;
+		Balls[i].pos = { RING_RADIUS * (float)cos(a), RING_RADIUS * (float)sin(a), 0.0f };
 		RETRO_RotateVertex(&Balls[i], ax, ay, az);
-		Balls[i].rz += zoffset;
+		Balls[i].rpos.z += zoffset;
 		RETRO_ProjectVertex(&Balls[i], 1.0f, cx, cy);
 	}
 
@@ -68,7 +66,7 @@ void DEMO_Render(double time, double deltatime)
 	for (int i = 1; i < BALLS; i++) {
 		int ball = order[i];
 		int j = i;
-		while (j > 0 && Balls[order[j - 1]].rz < Balls[ball].rz) {
+		while (j > 0 && Balls[order[j - 1]].rpos.z < Balls[ball].rpos.z) {
 			order[j] = order[j - 1];
 			j--;
 		}
@@ -81,7 +79,7 @@ void DEMO_Render(double time, double deltatime)
 			continue;
 		}
 		float radius = BALL_RADIUS * RETRO_PROJECTION_EYEDISTANCE * ball->q;
-		RETRO_DrawEllipse(ball->sx, ball->sy, radius, radius, order[i] + 1);
+		RETRO_DrawEllipse(ball->spos.x, ball->spos.y, radius, radius, order[i] + 1);
 	}
 }
 

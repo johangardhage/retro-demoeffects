@@ -14,8 +14,8 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define NUM_STARS 1000
 #define SPEED 60 // pixels a second travelled by a star in the furthest layer
@@ -23,7 +23,7 @@
 #define LAYER_FAR 1
 #define SHADES 64 // palette entries the layers are shaded over
 
-Point3Df Stars[NUM_STARS];
+vec3 Stars[NUM_STARS];
 
 void DEMO_Render(double time, double deltatime)
 {

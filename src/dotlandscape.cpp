@@ -41,8 +41,8 @@ static void DrawTerrainDots(const RETRO_TerrainIslandFrame &frame)
 			if (eye.depth <= RETRO_TerrainView.nearplane || fabsf(eye.side) > eye.depth * RETRO_TerrainViewCullSlope()) continue;
 
 			RETRO_TerrainPoint point = RETRO_ProjectTerrainView(eye);
-			int sx = (int)point.sx;
-			int sy = (int)point.sy;
+			int sx = (int)point.spos.x;
+			int sy = (int)point.spos.y;
 			if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) continue;
 
 			unsigned int idepth = (unsigned int)(eye.depth * 256.0f);

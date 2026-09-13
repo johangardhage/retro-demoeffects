@@ -8,33 +8,33 @@
 #define _RETROPOLY_H_
 
 #include "retropalette.h"
+#include "retrovector.h"
 
 // A corner of a polygon as the drawers take it: where it landed on screen, and
 // what they interpolate across the face from there. Not a Vertex - the
 // projection is already done, so there is no model space here and no z, only
 // the reciprocal depth that perspective correction needs.
 struct PolygonPoint {
-	float x, y;				// Screen coordinates
+	vec2 pos;				// Screen coordinates
 	float c;				// Palette index, a float because the Gouraud drawers interpolate it
-	float u, v;				// Texture UV coordinates
+	vec2 uv;				// Texture UV coordinates
 	float q;				// Reciprocal projection depth
-	float nx, ny, nz;		// Normal, in view space; every drawer renormalizes, so any scale will do
+	vec3 n;					// Normal, in view space; every drawer renormalizes, so any scale will do
 };
 
 // The surface directions +u and +v run in, in view space. A bump map is a
 // height field over (u, v), so its gradient tilts the normal along these and
 // not along the screen axes.
 struct TangentFrame {
-	float tx, ty, tz;
-	float bx, by, bz;
+	vec3 t, b;
 };
 
 // What RETRO_DrawPhongPolygon shades a face with: where the light is and
 // which ramp to land on. The light arrives rotated and unit, so unlike a
-// Direction, which also carries the model-space form it was rotated from,
+// UnitVector, which also carries the model-space form it was rotated from,
 // there is nothing here but the view-space values.
 struct PhongLight {
-	float x, y, z;			// Light direction, in view space, unit length
+	vec3 dir;				// Light direction, in view space, unit length
 	int c, shades;			// Ramp base, and entries in it: c + shades is one past its last
 };
 
@@ -100,45 +100,34 @@ inline bool RETRO_DepthTest(int offset, float q)
 //
 // The radius is unused on that path: the sphere map already covers the image.
 //
-inline void RETRO_GetEnvMapCoordinates(float nx, float ny, float nz, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, float &u, float &v)
+inline void RETRO_GetEnvMapCoordinates(vec3 n, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, float &u, float &v)
 {
 	const float epsilon = 1.0e-12f;
 
 	if (lightingmap) {
-		if (nz > 0.0f) {
-			float radiallengthsquared = nx * nx + ny * ny;
-			if (radiallengthsquared > epsilon) {
-				float inverseradiallength = 1.0f / sqrt(radiallengthsquared);
-				nx *= inverseradiallength;
-				ny *= inverseradiallength;
-			} else {
-				nx = 1.0f;
-				ny = 0.0f;
-			}
+		vec2 radial;
+		if (n.z > 0.0f) {
+			vec2 r = { n.x, n.y };
+			float radiallengthsquared = dot(r, r);
+			radial = radiallengthsquared > epsilon ? r * (1.0f / sqrt(radiallengthsquared)) : vec2{ 1.0f, 0.0f };
 		} else {
-			float normallengthsquared = nx * nx + ny * ny + nz * nz;
-			float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
-			nx *= inversenormallength;
-			ny *= inversenormallength;
+			vec3 normalized = normalize(n);
+			radial = { normalized.x, normalized.y };
 		}
 
-		u = envmapwidth / 2.0f + envmapradius * nx;
-		v = envmapheight / 2.0f + envmapradius * ny;
+		u = envmapwidth / 2.0f + envmapradius * radial.x;
+		v = envmapheight / 2.0f + envmapradius * radial.y;
 		return;
 	}
 
-	float normallengthsquared = nx * nx + ny * ny + nz * nz;
-	float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
-	nx *= inversenormallength;
-	ny *= inversenormallength;
-	nz *= inversenormallength;
+	n = normalize(n);
 
 	// -sign(Nz)/2, which is where the minus of the formula above went. Nz < 0 is
 	// the front, toward the camera, so flipping the sign with it folds the back
 	// hemisphere onto the same disk, mirrored.
-	float signedhalf = nz < 0.0f ? 0.5f : -0.5f;
-	u = envmapwidth * (0.5f + signedhalf * nx);
-	v = envmapheight * (0.5f + signedhalf * ny);
+	float signedhalf = n.z < 0.0f ? 0.5f : -0.5f;
+	u = envmapwidth * (0.5f + signedhalf * n.x);
+	v = envmapheight * (0.5f + signedhalf * n.y);
 }
 
 //
@@ -164,11 +153,11 @@ inline void RETRO_GetEnvMapCoordinates(float nx, float ny, float nz, bool lighti
 inline float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, const PolygonPoint *p2, TriangleSpan *span, int &ystart, int &yend)
 {
 	const float epsilon = 1.0e-12f;
-	float determinant = (p1->x - p0->x) * (p2->y - p0->y) - (p1->y - p0->y) * (p2->x - p0->x);
+	float determinant = cross(p1->pos - p0->pos, p2->pos - p0->pos);
 	if (fabs(determinant) <= epsilon) return 0.0f;
 
-	ystart = MAX((int)ceil(MIN(p0->y, MIN(p1->y, p2->y)) - 0.5f), 0);
-	yend = MIN((int)ceil(MAX(p0->y, MAX(p1->y, p2->y)) - 0.5f), RETRO_HEIGHT);
+	ystart = MAX((int)ceil(MIN(p0->pos.y, MIN(p1->pos.y, p2->pos.y)) - 0.5f), 0);
+	yend = MIN((int)ceil(MAX(p0->pos.y, MAX(p1->pos.y, p2->pos.y)) - 0.5f), RETRO_HEIGHT);
 	if (ystart >= yend) return 0.0f;
 
 	for (int y = ystart; y < yend; y++) {
@@ -180,16 +169,16 @@ inline float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, 
 	for (int edge = 0; edge < 3; edge++) {
 		const PolygonPoint *a = edgevertex[edge];
 		const PolygonPoint *b = edgevertex[edge + 1];
-		if (b->y < a->y) SWAP(a, b);
+		if (b->pos.y < a->pos.y) SWAP(a, b);
 
-		float ydiff = b->y - a->y;
+		float ydiff = b->pos.y - a->pos.y;
 		if (ydiff == 0.0f) continue;
 
-		float dxdy = (b->x - a->x) / ydiff;
+		float dxdy = (b->pos.x - a->pos.x) / ydiff;
 		// Include scanlines whose pixel center lies within the half-open edge.
-		int edgeystart = MAX((int)ceil(a->y - 0.5f), ystart);
-		int edgeyend = MIN((int)ceil(b->y - 0.5f), yend);
-		float x = a->x + ((edgeystart + 0.5f) - a->y) * dxdy;
+		int edgeystart = MAX((int)ceil(a->pos.y - 0.5f), ystart);
+		int edgeyend = MIN((int)ceil(b->pos.y - 0.5f), yend);
+		float x = a->pos.x + ((edgeystart + 0.5f) - a->pos.y) * dxdy;
 
 		for (int y = edgeystart; y < edgeyend; y++, x += dxdy) {
 			span[y].left = MIN(span[y].left, x);
@@ -215,8 +204,8 @@ inline void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (determinant == 0.0f) continue;
 
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -224,7 +213,7 @@ inline void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
 				int offset = y * RETRO_WIDTH + x;
@@ -285,10 +274,10 @@ inline void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points)
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (determinant == 0.0f) continue;
 
-		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / determinant;
-		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / determinant;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		float dcdx = ((p1->c - p0->c) * (p2->pos.y - p0->pos.y) - (p2->c - p0->c) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dcdy = ((p1->pos.x - p0->pos.x) * (p2->c - p0->c) - (p2->pos.x - p0->pos.x) * (p1->c - p0->c)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -296,8 +285,8 @@ inline void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points)
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float c = p0->c + dcdx * (px - p0->x) + dcdy * (py - p0->y);
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+			float c = p0->c + dcdx * (px - p0->pos.x) + dcdy * (py - p0->pos.y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
 				int offset = y * RETRO_WIDTH + x;
@@ -337,15 +326,10 @@ inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight l
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (determinant == 0.0f) continue;
 
-		float dnxdx, dnxdy, dnydx, dnydy, dnzdx, dnzdy;
-		dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
-		dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
-		dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
-		dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
-		dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
-		dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec3 dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -353,19 +337,17 @@ inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight l
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
-			float ny = p0->ny + dnydx * (px - p0->x) + dnydy * (py - p0->y);
-			float nz = p0->nz + dnzdx * (px - p0->x) + dnzdy * (py - p0->y);
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
-				float normallengthsquared = nx * nx + ny * ny + nz * nz;
+				float normallengthsquared = dot(n, n);
 				float intensity = 0.0f;
 
 				// Interpolated normals must be normalized before lighting.
 				if (normallengthsquared > epsilon) {
 					float inversenormallength = 1.0f / sqrt(normallengthsquared);
-					intensity = MAX((nx * light.x + ny * light.y + nz * light.z) * inversenormallength, 0.0f);
+					intensity = MAX(dot(n, light.dir) * inversenormallength, 0.0f);
 				}
 
 				float paletteintensity = RETRO_ShadeFromLambert(intensity);
@@ -374,9 +356,7 @@ inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight l
 				if (RETRO_DepthTest(offset, q)) {
 					RETRO.framebuffer[offset] = CLAMP(color, cstart, cend);
 				}
-				nx += dnxdx;
-				ny += dnydx;
-				nz += dnzdx;
+				n += dndx;
 				q += dqdx;
 			}
 		}
@@ -418,14 +398,11 @@ inline void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned ch
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (determinant == 0.0f) continue;
 
-		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
-		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -433,24 +410,21 @@ inline void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned ch
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
-			float vq = v0 + dvqdx * (px - p0->x) + dvqdy * (py - p0->y);
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
 				if (fabs(q) > epsilon) {
 					float inverseq = 1.0f / q;
-					float texmapu = uq * inverseq;
-					float texmapv = vq * inverseq;
-					int u = wrap ? WRAP(texmapu, texmapwidth) : CLAMP(texmapu, 0, texmapwidth);
-					int v = wrap ? WRAP(texmapv, texmapheight) : CLAMP(texmapv, 0, texmapheight);
+					vec2 texmapcoord = uv * inverseq;
+					int u = wrap ? WRAP(texmapcoord.x, texmapwidth) : CLAMP(texmapcoord.x, 0, texmapwidth);
+					int v = wrap ? WRAP(texmapcoord.y, texmapheight) : CLAMP(texmapcoord.y, 0, texmapheight);
 					int offset = y * RETRO_WIDTH + x;
 					if (RETRO_DepthTest(offset, q)) {
 						RETRO.framebuffer[offset] = texmap[v * texmapwidth + u];
 					}
 				}
-				uq += duqdx;
-				vq += dvqdx;
+				uv += duvdx;
 				q += dqdx;
 			}
 		}
@@ -482,16 +456,13 @@ inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsi
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (determinant == 0.0f) continue;
 
-		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
-		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
-		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / determinant;
-		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / determinant;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
+		float dcdx = ((p1->c - p0->c) * (p2->pos.y - p0->pos.y) - (p2->c - p0->c) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dcdy = ((p1->pos.x - p0->pos.x) * (p2->c - p0->c) - (p2->pos.x - p0->pos.x) * (p1->c - p0->c)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -499,18 +470,16 @@ inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsi
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
-			float vq = v0 + dvqdx * (px - p0->x) + dvqdy * (py - p0->y);
-			float c = p0->c + dcdx * (px - p0->x) + dcdy * (py - p0->y);
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
+			float c = p0->c + dcdx * (px - p0->pos.x) + dcdy * (py - p0->pos.y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
 				if (fabs(q) > epsilon) {
 					float inverseq = 1.0f / q;
-					float texmapu = uq * inverseq;
-					float texmapv = vq * inverseq;
-					int u = wrap ? WRAP(texmapu, texmapwidth) : CLAMP(texmapu, 0, texmapwidth);
-					int v = wrap ? WRAP(texmapv, texmapheight) : CLAMP(texmapv, 0, texmapheight);
+					vec2 texmapcoord = uv * inverseq;
+					int u = wrap ? WRAP(texmapcoord.x, texmapwidth) : CLAMP(texmapcoord.x, 0, texmapwidth);
+					int v = wrap ? WRAP(texmapcoord.y, texmapheight) : CLAMP(texmapcoord.y, 0, texmapheight);
 					unsigned char texel = CLAMP(texmap[v * texmapwidth + u], 0, shadetable.colors);
 					int shade = CLAMP(c, 0, shadetable.shades);
 					int offset = y * RETRO_WIDTH + x;
@@ -518,8 +487,7 @@ inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsi
 						RETRO.framebuffer[offset] = shadetable.table[texel * shadetable.shades + shade];
 					}
 				}
-				uq += duqdx;
-				vq += dvqdx;
+				uv += duvdx;
 				c += dcdx;
 				q += dqdx;
 			}
@@ -537,93 +505,51 @@ inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsi
 // geometric face; project it onto the interpolated shading normal here so it
 // is also a tangent frame for Gouraud and environment-mapped normals.
 //
-inline void RETRO_BumpNormal(float nx, float ny, float nz, float dhx, float dhy, const TangentFrame &frame, float *outnx, float *outny, float *outnz)
+inline vec3 RETRO_BumpNormal(vec3 n, float dhx, float dhy, const TangentFrame &frame)
 {
 	if (dhx == 0.0f && dhy == 0.0f) {
-		*outnx = nx;
-		*outny = ny;
-		*outnz = nz;
-		return;
+		return n;
 	}
 
 	const float epsilon = 1.0e-12f;
 
-	float tx = frame.tx, ty = frame.ty, tz = frame.tz;
-	float nt = nx * tx + ny * ty + nz * tz;
-	tx -= nx * nt;
-	ty -= ny * nt;
-	tz -= nz * nt;
-	float tlengthsquared = tx * tx + ty * ty + tz * tz;
+	// T projected perpendicular to N: t - n*dot(n,t), the Gram-Schmidt step.
+	vec3 t = frame.t - n * dot(n, frame.t);
+	float tlengthsquared = dot(t, t);
 	if (tlengthsquared > epsilon) {
-		float inversetlength = 1.0f / sqrt(tlengthsquared);
-		tx *= inversetlength;
-		ty *= inversetlength;
-		tz *= inversetlength;
+		t = t * (1.0f / sqrt(tlengthsquared));
 	} else {
 		// If +u is parallel to N, recover it from projected +v. Keep the sign
 		// that is closest to the face's original +u direction.
-		float bx = frame.bx, by = frame.by, bz = frame.bz;
-		float nb = nx * bx + ny * by + nz * bz;
-		bx -= nx * nb;
-		by -= ny * nb;
-		bz -= nz * nb;
-		float blengthsquared = bx * bx + by * by + bz * bz;
+		vec3 b = frame.b - n * dot(n, frame.b);
+		float blengthsquared = dot(b, b);
 		if (blengthsquared <= epsilon) {
-			*outnx = nx;
-			*outny = ny;
-			*outnz = nz;
-			return;
+			return n;
 		}
-		float inverseblength = 1.0f / sqrt(blengthsquared);
-		bx *= inverseblength;
-		by *= inverseblength;
-		bz *= inverseblength;
-		tx = by * nz - bz * ny;
-		ty = bz * nx - bx * nz;
-		tz = bx * ny - by * nx;
-		if (tx * frame.tx + ty * frame.ty + tz * frame.tz < 0.0f) {
-			tx = -tx;
-			ty = -ty;
-			tz = -tz;
+		b = b * (1.0f / sqrt(blengthsquared));
+		t = cross(b, n);
+		if (dot(t, frame.t) < 0.0f) {
+			t = -t;
 		}
 	}
 
 	// N and T are unit and perpendicular, so their cross product is already a
 	// unit +v candidate. Choose its sign to retain mirrored UV handedness.
-	float bx = ny * tz - nz * ty;
-	float by = nz * tx - nx * tz;
-	float bz = nx * ty - ny * tx;
-	if (bx * frame.bx + by * frame.by + bz * frame.bz < 0.0f) {
-		bx = -bx;
-		by = -by;
-		bz = -bz;
+	vec3 b = cross(n, t);
+	if (dot(b, frame.b) < 0.0f) {
+		b = -b;
 	}
 
 	// With T and B perpendicular to N, this sum approaches grazing as the
 	// gradient grows but cannot cross to the back of the surface.
-	float bumpedx = nx + dhx * tx + dhy * bx;
-	float bumpedy = ny + dhx * ty + dhy * by;
-	float bumpedz = nz + dhx * tz + dhy * bz;
+	vec3 bumped = n + t * dhx + b * dhy;
 
-	float lengthsquared = bumpedx * bumpedx + bumpedy * bumpedy + bumpedz * bumpedz;
+	float lengthsquared = dot(bumped, bumped);
 	if (lengthsquared <= epsilon) {
-		*outnx = nx;
-		*outny = ny;
-		*outnz = nz;
-		return;
+		return n;
 	}
 
-	float inverselength = 1.0f / sqrt(lengthsquared);
-	*outnx = bumpedx * inverselength;
-	*outny = bumpedy * inverselength;
-	*outnz = bumpedz * inverselength;
-}
-
-// L and N' are unit, so the term is N' · L.
-inline float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float dhy, const TangentFrame &frame, float lightx, float lighty, float lightz)
-{
-	RETRO_BumpNormal(nx, ny, nz, dhx, dhy, frame, &nx, &ny, &nz);
-	return nx * lightx + ny * lighty + nz * lightz;
+	return bumped * (1.0f / sqrt(lengthsquared));
 }
 
 //
@@ -638,7 +564,7 @@ inline float RETRO_BumpedLambert(float nx, float ny, float nz, float dhx, float 
 // which a model sets for itself and which is not the table's own height. The
 // bump moves the shade by the difference it makes to the lighting, so it is
 // measured in the same steps the face was already shaded in.
-inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, int lambertshades, float lightx, float lighty, float lightz, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, int lambertshades, vec3 light, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
 {
 	if (texmap == NULL || bumpmap == NULL || shadetable.table == NULL) return;
 
@@ -664,22 +590,15 @@ inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigne
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (determinant == 0.0f) continue;
 
-		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
-		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
-		float dcdx = ((p1->c - p0->c) * (p2->y - p0->y) - (p2->c - p0->c) * (p1->y - p0->y)) / determinant;
-		float dcdy = ((p1->x - p0->x) * (p2->c - p0->c) - (p2->x - p0->x) * (p1->c - p0->c)) / determinant;
-		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
-		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
-		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
-		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
-		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
-		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
+		float dcdx = ((p1->c - p0->c) * (p2->pos.y - p0->pos.y) - (p2->c - p0->c) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dcdy = ((p1->pos.x - p0->pos.x) * (p2->c - p0->c) - (p2->pos.x - p0->pos.x) * (p1->c - p0->c)) / determinant;
+		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec3 dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -687,19 +606,16 @@ inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigne
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
-			float vq = v0 + dvqdx * (px - p0->x) + dvqdy * (py - p0->y);
-			float c = p0->c + dcdx * (px - p0->x) + dcdy * (py - p0->y);
-			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
-			float ny = p0->ny + dnydx * (px - p0->x) + dnydy * (py - p0->y);
-			float nz = p0->nz + dnzdx * (px - p0->x) + dnzdy * (py - p0->y);
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
+			float c = p0->c + dcdx * (px - p0->pos.x) + dcdy * (py - p0->pos.y);
+			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
 				if (fabs(q) > epsilon) {
 					float inverseq = 1.0f / q;
-					float u = uq * inverseq;
-					float v = vq * inverseq;
+					float u = uv.x * inverseq;
+					float v = uv.y * inverseq;
 					unsigned int texmapu = CLAMP(u, 0, texmapwidth);
 					unsigned int texmapv = CLAMP(v, 0, texmapheight);
 					float bumpu = u * bumptexelu;
@@ -721,16 +637,15 @@ inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigne
 					float dhx = gx * bumptiltu;
 					float dhy = gy * bumptiltv;
 					// Interpolated normals must be normalized before lighting.
-					float normallengthsquared = nx * nx + ny * ny + nz * nz;
+					float normallengthsquared = dot(n, n);
 					float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
-					float unitnx = nx * inversenormallength;
-					float unitny = ny * inversenormallength;
-					float unitnz = nz * inversenormallength;
+					vec3 unitn = n * inversenormallength;
 					// The shade moves by as much as the tilt changes the lighting
 					// here, so a flat patch of the bump map is left shaded exactly
 					// as it was drawn without one.
-					float lambert = unitnx * lightx + unitny * lighty + unitnz * lightz;
-					float bumpedlambert = RETRO_BumpedLambert(unitnx, unitny, unitnz, dhx, dhy, frame, lightx, lighty, lightz);
+					float lambert = dot(unitn, light);
+					// L and N' are unit, so the term is N' · L.
+					float bumpedlambert = dot(RETRO_BumpNormal(unitn, dhx, dhy, frame), light);
 					float bumpshade = (RETRO_ShadeFromLambert(bumpedlambert) - RETRO_ShadeFromLambert(lambert)) * lambertshades;
 					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, shadetable.colors);
 					int shade = CLAMP(c + bumpshade, 0, shadetable.shades);
@@ -739,12 +654,9 @@ inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigne
 						RETRO.framebuffer[offset] = shadetable.table[texel * shadetable.shades + shade];
 					}
 				}
-				uq += duqdx;
-				vq += dvqdx;
+				uv += duvdx;
 				c += dcdx;
-				nx += dnxdx;
-				ny += dnydx;
-				nz += dnzdx;
+				n += dndx;
 				q += dqdx;
 			}
 		}
@@ -774,25 +686,17 @@ inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsig
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (determinant == 0.0f) continue;
 
-		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
-		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
-		float dnxdx = 0.0f, dnxdy = 0.0f;
-		float dnydx = 0.0f, dnydy = 0.0f;
-		float dnzdx = 0.0f, dnzdy = 0.0f;
+		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
+		vec3 dndx = { 0.0f, 0.0f, 0.0f };
+		vec3 dndy = { 0.0f, 0.0f, 0.0f };
 		if (envmapshading) {
-			dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
-			dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
-			dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
-			dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
-			dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
-			dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
+			dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
+			dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
 		}
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -800,23 +704,20 @@ inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsig
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
-			float vq = v0 + dvqdx * (px - p0->x) + dvqdy * (py - p0->y);
-			float nx = envmapshading ? p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y) : 0.0f;
-			float ny = envmapshading ? p0->ny + dnydx * (px - p0->x) + dnydy * (py - p0->y) : 0.0f;
-			float nz = envmapshading ? p0->nz + dnzdx * (px - p0->x) + dnzdy * (py - p0->y) : 0.0f;
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
+			vec3 n = envmapshading ? p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y) : vec3{ 0.0f, 0.0f, 0.0f };
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
 				if (fabs(q) > epsilon) {
 					float inverseq = 1.0f / q;
-					unsigned int u = CLAMP(uq * inverseq, 0, texmapwidth);
-					unsigned int v = CLAMP(vq * inverseq, 0, texmapheight);
+					unsigned int u = CLAMP(uv.x * inverseq, 0, texmapwidth);
+					unsigned int v = CLAMP(uv.y * inverseq, 0, texmapheight);
 					unsigned char texel = CLAMP(texmap[v * texmapwidth + u], 0, shadetable.colors);
 					unsigned char pixelshade = CLAMP(shade, 0, shadetable.shades);
 					if (envmapshading) {
 						float e, w;
-						RETRO_GetEnvMapCoordinates(nx, ny, nz, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
+						RETRO_GetEnvMapCoordinates(n, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 						unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 						unsigned int envmapv = CLAMP(w, 0, envmapheight);
 						pixelshade = CLAMP(envmap[envmapv * envmapwidth + envmapu], 0, shadetable.shades);
@@ -826,12 +727,9 @@ inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsig
 						RETRO.framebuffer[offset] = shadetable.table[texel * shadetable.shades + pixelshade];
 					}
 				}
-				uq += duqdx;
-				vq += dvqdx;
+				uv += duvdx;
 				if (envmapshading) {
-					nx += dnxdx;
-					ny += dnydx;
-					nz += dnzdx;
+					n += dndx;
 				}
 				q += dqdx;
 			}
@@ -871,20 +769,13 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, u
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (determinant == 0.0f) continue;
 
-		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
-		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
-		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
-		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
-		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
-		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
-		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
-		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
+		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec3 dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -892,18 +783,15 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, u
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
-			float vq = v0 + dvqdx * (px - p0->x) + dvqdy * (py - p0->y);
-			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
-			float ny = p0->ny + dnydx * (px - p0->x) + dnydy * (py - p0->y);
-			float nz = p0->nz + dnzdx * (px - p0->x) + dnzdy * (py - p0->y);
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
+			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
 				if (fabs(q) > epsilon) {
 					float inverseq = 1.0f / q;
-					float u = uq * inverseq;
-					float v = vq * inverseq;
+					float u = uv.x * inverseq;
+					float v = uv.y * inverseq;
 					unsigned int texmapu = CLAMP(u, 0, texmapwidth);
 					unsigned int texmapv = CLAMP(v, 0, texmapheight);
 					float bumpu = u * bumptexelu;
@@ -925,12 +813,11 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, u
 					float e, w;
 					// Both maps are functions of the unit normal, so both tilt N and
 					// look the result up. A unit N' always lands inside either map.
-					float normallengthsquared = nx * nx + ny * ny + nz * nz;
+					float normallengthsquared = dot(n, n);
 					float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
-					float bnx, bny, bnz;
-					RETRO_BumpNormal(nx * inversenormallength, ny * inversenormallength, nz * inversenormallength,
-									 gx * bumptiltu, gy * bumptiltv, frame, &bnx, &bny, &bnz);
-					RETRO_GetEnvMapCoordinates(bnx, bny, bnz, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
+					vec3 unitn = n * inversenormallength;
+					vec3 bumpednormal = RETRO_BumpNormal(unitn, gx * bumptiltu, gy * bumptiltv, frame);
+					RETRO_GetEnvMapCoordinates(bumpednormal, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 					unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 					unsigned int envmapv = CLAMP(w, 0, envmapheight);
 					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, shadetable.colors);
@@ -940,11 +827,8 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, u
 						RETRO.framebuffer[offset] = shadetable.table[texel * shadetable.shades + pixelshade];
 					}
 				}
-				uq += duqdx;
-				vq += dvqdx;
-				nx += dnxdx;
-				ny += dnydx;
-				nz += dnzdx;
+				uv += duvdx;
+				n += dndx;
 				q += dqdx;
 			}
 		}
@@ -969,14 +853,10 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (determinant == 0.0f) continue;
 
-		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
-		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
-		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
-		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
-		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
-		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec3 dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -984,23 +864,19 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
-			float ny = p0->ny + dnydx * (px - p0->x) + dnydy * (py - p0->y);
-			float nz = p0->nz + dnzdx * (px - p0->x) + dnzdy * (py - p0->y);
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
 				float e, w;
-				RETRO_GetEnvMapCoordinates(nx, ny, nz, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
+				RETRO_GetEnvMapCoordinates(n, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 				unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 				unsigned int envmapv = CLAMP(w, 0, envmapheight);
 				int offset = y * RETRO_WIDTH + x;
 				if (RETRO_DepthTest(offset, q)) {
 					RETRO.framebuffer[offset] = envmap[envmapv * envmapwidth + envmapu];
 				}
-				nx += dnxdx;
-				ny += dnydx;
-				nz += dnzdx;
+				n += dndx;
 				q += dqdx;
 			}
 		}
@@ -1034,20 +910,13 @@ inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigne
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
 		if (determinant == 0.0f) continue;
 
-		float u0 = p0->u * p0->q, u1 = p1->u * p1->q, u2 = p2->u * p2->q;
-		float v0 = p0->v * p0->q, v1 = p1->v * p1->q, v2 = p2->v * p2->q;
-		float duqdx = ((u1 - u0) * (p2->y - p0->y) - (u2 - u0) * (p1->y - p0->y)) / determinant;
-		float duqdy = ((p1->x - p0->x) * (u2 - u0) - (p2->x - p0->x) * (u1 - u0)) / determinant;
-		float dvqdx = ((v1 - v0) * (p2->y - p0->y) - (v2 - v0) * (p1->y - p0->y)) / determinant;
-		float dvqdy = ((p1->x - p0->x) * (v2 - v0) - (p2->x - p0->x) * (v1 - v0)) / determinant;
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
-		float dnxdx = ((p1->nx - p0->nx) * (p2->y - p0->y) - (p2->nx - p0->nx) * (p1->y - p0->y)) / determinant;
-		float dnxdy = ((p1->x - p0->x) * (p2->nx - p0->nx) - (p2->x - p0->x) * (p1->nx - p0->nx)) / determinant;
-		float dnydx = ((p1->ny - p0->ny) * (p2->y - p0->y) - (p2->ny - p0->ny) * (p1->y - p0->y)) / determinant;
-		float dnydy = ((p1->x - p0->x) * (p2->ny - p0->ny) - (p2->x - p0->x) * (p1->ny - p0->ny)) / determinant;
-		float dnzdx = ((p1->nz - p0->nz) * (p2->y - p0->y) - (p2->nz - p0->nz) * (p1->y - p0->y)) / determinant;
-		float dnzdy = ((p1->x - p0->x) * (p2->nz - p0->nz) - (p2->x - p0->x) * (p1->nz - p0->nz)) / determinant;
+		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
+		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec3 dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -1055,18 +924,15 @@ inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigne
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float uq = u0 + duqdx * (px - p0->x) + duqdy * (py - p0->y);
-			float vq = v0 + dvqdx * (px - p0->x) + dvqdy * (py - p0->y);
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
-			float nx = p0->nx + dnxdx * (px - p0->x) + dnxdy * (py - p0->y);
-			float ny = p0->ny + dnydx * (px - p0->x) + dnydy * (py - p0->y);
-			float nz = p0->nz + dnzdx * (px - p0->x) + dnzdy * (py - p0->y);
+			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
+			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
 				if (fabs(q) > epsilon) {
 					float inverseq = 1.0f / q;
-					float u = uq * inverseq;
-					float v = vq * inverseq;
+					float u = uv.x * inverseq;
+					float v = uv.y * inverseq;
 					float bumpu = u * bumptexelu;
 					float bumpv = v * bumptexelv;
 					unsigned int bumpmapu = CLAMP(bumpu, 0, bumpmapwidth);
@@ -1086,12 +952,11 @@ inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigne
 					float e, w;
 					// Both maps are functions of the unit normal, so both tilt N and
 					// look the result up. A unit N' always lands inside either map.
-					float normallengthsquared = nx * nx + ny * ny + nz * nz;
+					float normallengthsquared = dot(n, n);
 					float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
-					float bnx, bny, bnz;
-					RETRO_BumpNormal(nx * inversenormallength, ny * inversenormallength, nz * inversenormallength,
-									 gx * bumptiltu, gy * bumptiltv, frame, &bnx, &bny, &bnz);
-					RETRO_GetEnvMapCoordinates(bnx, bny, bnz, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
+					vec3 unitn = n * inversenormallength;
+					vec3 bumpednormal = RETRO_BumpNormal(unitn, gx * bumptiltu, gy * bumptiltv, frame);
+					RETRO_GetEnvMapCoordinates(bumpednormal, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 					unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 					unsigned int envmapv = CLAMP(w, 0, envmapheight);
 					int offset = y * RETRO_WIDTH + x;
@@ -1099,12 +964,9 @@ inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigne
 						RETRO.framebuffer[offset] = envmap[envmapv * envmapwidth + envmapu];
 					}
 				}
-				uq += duqdx;
-				vq += dvqdx;
+				uv += duvdx;
 				q += dqdx;
-				nx += dnxdx;
-				ny += dnydx;
-				nz += dnzdx;
+				n += dndx;
 			}
 		}
 	}
@@ -1134,21 +996,21 @@ inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigne
 // model times whatever scale the projection was given. Transparency is the
 // alpha entry, as in RETRO_DrawSprite, not the shape of the map.
 //
-inline void RETRO_DrawDepthSprite(float sx, float sy, float q, float size, float thickness, unsigned char *map, float *depthmap, int mapsize, unsigned char alpha = 0, unsigned char *buffer = RETRO.framebuffer)
+inline void RETRO_DrawDepthSprite(vec2 spos, float q, float size, float thickness, unsigned char *map, float *depthmap, int mapsize, unsigned char alpha = 0, unsigned char *buffer = RETRO.framebuffer)
 {
 	if (q <= 0.0f || size <= 0.0f) return;
 
 	float half = size / 2;
-	int xstart = MAX((int)ceil(sx - half - 0.5f), 0);
-	int xend = MIN((int)ceil(sx + half - 0.5f), RETRO_WIDTH);
-	int ystart = MAX((int)ceil(sy - half - 0.5f), 0);
-	int yend = MIN((int)ceil(sy + half - 0.5f), RETRO_HEIGHT);
+	int xstart = MAX((int)ceil(spos.x - half - 0.5f), 0);
+	int xend = MIN((int)ceil(spos.x + half - 0.5f), RETRO_WIDTH);
+	int ystart = MAX((int)ceil(spos.y - half - 0.5f), 0);
+	int yend = MIN((int)ceil(spos.y + half - 0.5f), RETRO_HEIGHT);
 	float spritedepth = 1.0f / q;
 
 	for (int y = ystart; y < yend; y++) {
-		int v = CLAMP((int)(((y + 0.5f) - sy + half) * mapsize / size), 0, mapsize);
+		int v = CLAMP((int)(((y + 0.5f) - spos.y + half) * mapsize / size), 0, mapsize);
 		for (int x = xstart; x < xend; x++) {
-			int u = CLAMP((int)(((x + 0.5f) - sx + half) * mapsize / size), 0, mapsize);
+			int u = CLAMP((int)(((x + 0.5f) - spos.x + half) * mapsize / size), 0, mapsize);
 
 			unsigned char color = map[v * mapsize + u];
 			if (color == alpha) continue;

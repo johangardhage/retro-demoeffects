@@ -22,6 +22,7 @@
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
 //#define FONT RETRO_FONT_MINECRAFT_8X8
@@ -79,22 +80,23 @@ void DEMO_Render(double time, double deltatime)
 		for (int j = 0; j < face->vertices; j++) {
 			Vertex *v1 = &model->vertex[face->vertex[j]];
 			Vertex *v2 = &model->vertex[face->vertex[(j + 1) % face->vertices]];
-			int changed = (v1->x != v2->x) + (v1->y != v2->y) + (v1->z != v2->z);
+			int changed = (v1->pos.x != v2->pos.x) + (v1->pos.y != v2->pos.y) + (v1->pos.z != v2->pos.z);
 			if (changed != 1) {
 				continue;
 			}
 
-			float dx = v2->sx - v1->sx;
-			float dy = v2->sy - v1->sy;
-			float length = sqrtf(dx * dx + dy * dy);
-			if (length == 0.0f) {
+			vec2 p1 = v1->spos;
+			vec2 p2 = v2->spos;
+			vec2 edge = p2 - p1;
+			if (length(edge) == 0.0f) {
 				continue;
 			}
-			float ox = -dy / length;
-			float oy = dx / length;
+			vec2 n = normalize(edge);
+			vec2 perp = { -n.y, n.x };
 			for (int offset = -1; offset <= 1; offset++) {
-				RETRO_DrawLine(roundf(v1->sx + ox * offset), roundf(v1->sy + oy * offset),
-							   roundf(v2->sx + ox * offset), roundf(v2->sy + oy * offset), 250);
+				vec2 a = p1 + perp * (float)offset;
+				vec2 b = p2 + perp * (float)offset;
+				RETRO_DrawLine(roundf(a.x), roundf(a.y), roundf(b.x), roundf(b.y), 250);
 			}
 		}
 	}

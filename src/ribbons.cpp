@@ -69,14 +69,10 @@ static void BuildRibbons(Model3D *model)
 			float sa = sin(a);
 			float y = height * (t / tmax - 0.5f);
 
-			model->vertex[model->vertices].x = (radius - width) * ca;
-			model->vertex[model->vertices].y = y;
-			model->vertex[model->vertices].z = (radius - width) * sa;
+			model->vertex[model->vertices].pos = { (radius - width) * ca, y, (radius - width) * sa };
 			model->vertices++;
 
-			model->vertex[model->vertices].x = (radius + width) * ca;
-			model->vertex[model->vertices].y = y;
-			model->vertex[model->vertices].z = (radius + width) * sa;
+			model->vertex[model->vertices].pos = { (radius + width) * ca, y, (radius + width) * sa };
 			model->vertices++;
 		}
 

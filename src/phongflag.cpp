@@ -31,6 +31,7 @@
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define FLAG_SUBDIV 2 // quads per cell of the flag, as the asset was built
 #define FLAG_COLS (16 * FLAG_SUBDIV) // the flag is 16 cells across, per SFS 1982:269
@@ -70,28 +71,25 @@ void DEMO_Render(double time, double deltatime)
 	// own at every vertex, and phong keeps it exact between them
 	Model3D *model = RETRO_Get3DModel();
 	for (int i = 0; i < model->vertices; i++) {
-		float u = model->vertex[i].x / FLAG_SPAN + 0.5f;
-		float v = model->vertex[i].y / FLAG_DROP + 0.5f;
+		float u = model->vertex[i].pos.x / FLAG_SPAN + 0.5f;
+		float v = model->vertex[i].pos.y / FLAG_DROP + 0.5f;
 		float a = travel + u * FLAG_RATEU + v * FLAG_RATEV;
 		float b = 2 * travel + u * FLAG_RATEU2;
 		float wave = SIN(a) + FLAG_HALF * SIN(b);
 		float amp = FLAG_AMP / (1 + FLAG_HALF);
 
-		model->vertex[i].z = amp * u * wave;
+		model->vertex[i].pos.z = amp * u * wave;
 
 		float dx = amp * (wave + u * FLAG_RADIAN * (FLAG_RATEU * COS(a) + FLAG_HALF * FLAG_RATEU2 * COS(b))) / FLAG_SPAN;
 		float dy = amp * u * FLAG_RADIAN * FLAG_RATEV * COS(a) / FLAG_DROP;
 		// The slope is (dx, dy, -1) before scaling, so the length is never zero
-		float inverselength = 1.0f / sqrt(dx * dx + dy * dy + 1);
+		vec3 n = normalize(vec3{ dx, dy, -1.0f });
 
 		// The front of the sheet faces the viewer, which is -z, and the back is
-		// the same normal turned around. Both go in unit, as every Direction is
-		model->normal[i].x = dx * inverselength;
-		model->normal[i].y = dy * inverselength;
-		model->normal[i].z = -inverselength;
-		model->normal[model->vertices + i].x = -dx * inverselength;
-		model->normal[model->vertices + i].y = -dy * inverselength;
-		model->normal[model->vertices + i].z = inverselength;
+		// the same normal turned around. Both go in unit, as every UnitVector is
+		// written unit.
+		model->normal[i].dir = n;
+		model->normal[model->vertices + i].dir = -n;
 	}
 
 	// Draw flag

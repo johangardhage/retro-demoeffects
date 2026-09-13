@@ -24,13 +24,15 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrovector.h"
 
 #define NUM_BALLS 4
 #define SINE_VALUES 360
 #define ORBIT_SPEED 40 // degrees of the base orbit per second; the rates below multiply it
 
 struct MetaBall {
-	float x, y, r;
+	vec2 pos;
+	float r;
 } Balls[NUM_BALLS];
 
 float SinTable[SINE_VALUES];
@@ -52,8 +54,7 @@ void DEMO_Render(double time, double deltatime)
 	for (int i = 0; i < NUM_BALLS; i++) {
 		int p = WRAP(iphase * rate[i] + offset[i], SINE_VALUES);
 		Balls[i].r = charge[i];
-		Balls[i].x = CosTable[p] * amplitudex[i] + (RETRO_WIDTH / 2);
-		Balls[i].y = SinTable[p] * amplitudey[i] + (RETRO_HEIGHT / 2);
+		Balls[i].pos = { (float)(CosTable[p] * amplitudex[i] + (RETRO_WIDTH / 2)), (float)(SinTable[p] * amplitudey[i] + (RETRO_HEIGHT / 2)) };
 	}
 
 	// Draw balls
@@ -62,9 +63,8 @@ void DEMO_Render(double time, double deltatime)
 			float sum = 0;
 			// Sum field
 			for (int i = 0; i < NUM_BALLS; i++) {
-				float a = x - Balls[i].x;
-				float b = y - Balls[i].y;
-				float d = MAX(a * a + b * b, 0.0001f); // squared pixel distance from metaball position
+				vec2 delta = vec2{ (float)x, (float)y } - Balls[i].pos;
+				float d = MAX(dot(delta, delta), 0.0001f); // squared pixel distance from metaball position
 				sum += Balls[i].r / d;
 			}
 			RETRO_PutPixel(x, y, CLAMP256(20 * sum));

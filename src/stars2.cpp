@@ -19,8 +19,8 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define NUM_STARS 1000
 #define SPEED 120 // depth travelled per second
@@ -29,10 +29,10 @@
 #define STAR_FAR 500 // and the depth it comes back at
 #define SHADES 64 // palette entries the depth shading ramps over
 
-Point3Df Stars[NUM_STARS];
+vec3 Stars[NUM_STARS];
 
 // Direction is measured on the screen, so a star at STAR_FAR lands within a screen of the middle.
-static void PlaceStar(Point3Df *star, float depth)
+static void PlaceStar(vec3 *star, float depth)
 {
 	star->x = RANDOM(RETRO_WIDTH) - (RETRO_WIDTH / 2);
 	star->y = RANDOM(RETRO_HEIGHT) - (RETRO_HEIGHT / 2);

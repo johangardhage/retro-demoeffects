@@ -36,6 +36,7 @@
 #define _RETROTERRAIN_H_
 
 #include "retro.h"
+#include "retrovector.h"
 
 // How far the wrapping look draws, in map cells. A wide view has to reach
 // this far to fill itself: it flattens the hills that used to hide where
@@ -120,7 +121,8 @@ inline struct {
 // eye comes back with q at or below zero for the caller to drop.
 //
 struct RETRO_TerrainPoint {
-	float sx, sy, q;
+	vec2 spos;
+	float q;
 };
 
 //
@@ -134,11 +136,7 @@ struct RETRO_TerrainPoint {
 // to tell a slope facing it from one turned away. A future edit of the
 // direction therefore cannot silently rescale the whole ramp.
 //
-inline struct {
-	float x = -0.50f;
-	float y = 0.62f;
-	float z = -0.60f;
-} RETRO_TerrainLight;
+inline vec3 RETRO_TerrainLight = { -0.50f, 0.62f, -0.60f };
 
 //
 // Which way a heading faces, and which way is its right
@@ -582,15 +580,11 @@ inline void RETRO_DownsampleTerrain(unsigned char *heightmap, unsigned char *col
 // The band is still mapped whole rather than clipped at the terminator, so a
 // face turned away darkens instead of dropping to flat black.
 //
-inline int RETRO_TerrainShade(float nx, float ny, float nz, int shades)
+inline int RETRO_TerrainShade(vec3 n, int shades)
 {
-	float nlength = sqrtf(nx * nx + ny * ny + nz * nz);
-	float lx = RETRO_TerrainLight.x;
-	float ly = RETRO_TerrainLight.y;
-	float lz = RETRO_TerrainLight.z;
-	float llength = sqrtf(lx * lx + ly * ly + lz * lz);
-	float light = (nx * lx + ny * ly + nz * lz) / (nlength * llength);
-	float uy = ly / llength;
+	float llength = length(RETRO_TerrainLight);
+	float light = dot(n, RETRO_TerrainLight) / (length(n) * llength);
+	float uy = RETRO_TerrainLight.y / llength;
 	float darkest = -sqrtf(1.0f - uy * uy);
 	return CLAMP((int)((light - darkest) / (1.0f - darkest) * shades), 0, shades);
 }
@@ -646,8 +640,8 @@ inline RETRO_TerrainPoint RETRO_ProjectTerrainView(const RETRO_TerrainEye &eye)
 {
 	RETRO_TerrainPoint point;
 	point.q = 1.0f / eye.depth;
-	point.sx = RETRO_WIDTH / 2.0f + RETRO_TerrainView.focalx * eye.side * point.q;
-	point.sy = RETRO_TerrainView.horizon - RETRO_TerrainView.focaly * eye.height * point.q;
+	point.spos.x = RETRO_WIDTH / 2.0f + RETRO_TerrainView.focalx * eye.side * point.q;
+	point.spos.y = RETRO_TerrainView.horizon - RETRO_TerrainView.focaly * eye.height * point.q;
 	return point;
 }
 
@@ -686,8 +680,8 @@ inline bool RETRO_ProjectTerrainDot(int x, int z, float dx, float dz, float radi
 	if (!RETRO_KeepTerrainDot(x, z, radius2)) return false;
 
 	*point = RETRO_ProjectTerrainOffset(*offset, RETRO_TerrainHeight(x, z));
-	int sx = (int)point->sx;
-	int sy = (int)point->sy;
+	int sx = (int)point->spos.x;
+	int sy = (int)point->spos.y;
 	return sx >= 0 && sx < RETRO_WIDTH && sy >= 0 && sy < RETRO_HEIGHT;
 }
 

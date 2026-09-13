@@ -78,8 +78,8 @@ void DEMO_Render(double time, double deltatime)
 		RETRO_RotateVertex(&Shape[i], ax, ay, az);
 		RETRO_ProjectVertex(&Shape[i], SPHERE_SCALE);
 
-		int x = Shape[i].sx;
-		int y = Shape[i].sy;
+		int x = Shape[i].spos.x;
+		int y = Shape[i].spos.y;
 
 		for (int by = 0; by < BLOB_SIZE; by++) {
 			for (int bx = 0; bx < BLOB_SIZE; bx++) {
@@ -114,8 +114,6 @@ void DEMO_Initialize(void)
 		float z = 2.0f * RANDOMF(1) - 1.0f;
 		float phi = RANDOMF(2 * M_PI);
 		float r = sqrtf(1.0f - z * z);
-		Shape[i].x = r * cosf(phi);
-		Shape[i].y = r * sinf(phi);
-		Shape[i].z = z;
+		Shape[i].pos = { r * cosf(phi), r * sinf(phi), z };
 	}
 }

@@ -53,11 +53,9 @@ void DEMO_Render(double time, double deltatime)
 	float sz = 1 + PULSE_AMOUNT * sin(pulse + 4 * M_PI / 3);
 
 	for (int i = 0; i < Jelly->vertices; i++) {
-		const Vertex &v = RestVertex[i];
-		float b = 1 + BULGE_AMOUNT * sin(BULGE_WAVE * v.y + bulge);
-		Jelly->vertex[i].x = v.x * sx * b;
-		Jelly->vertex[i].y = v.y * sy;
-		Jelly->vertex[i].z = v.z * sz * b;
+		const vec3 &v = RestVertex[i].pos;
+		float b = 1 + BULGE_AMOUNT * (float)sin(BULGE_WAVE * v.y + bulge);
+		Jelly->vertex[i].pos = { v.x * sx * b, v.y * sy, v.z * sz * b };
 	}
 
 	RETRO_InitializeFaceNormals(Jelly);

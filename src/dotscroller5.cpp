@@ -82,22 +82,20 @@ static void PlotDot(float x, float y, float z)
 	rz = x * -SinAy + rz * CosAy;
 
 	Vertex vertex;
-	vertex.rx = rx;
-	vertex.ry = ry;
-	vertex.rz = rz + OBJECT_Z;
+	vertex.rpos = { rx, ry, rz + OBJECT_Z };
 	RETRO_ProjectVertex(&vertex, PROJECTION_SCALE);
 
 	if (vertex.q == 0.0f) {
 		return;
 	}
 
-	int sx = (int)lround(vertex.sx);
-	int sy = (int)lround(vertex.sy);
+	int sx = (int)lround(vertex.spos.x);
+	int sy = (int)lround(vertex.spos.y);
 	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) {
 		return;
 	}
 
-	int color = (int)((DepthFar - vertex.rz) / (DepthFar - DepthNear) * (SHADES - 1));
+	int color = (int)((DepthFar - vertex.rpos.z) / (DepthFar - DepthNear) * (SHADES - 1));
 	if (color < 1) {
 		return;
 	}

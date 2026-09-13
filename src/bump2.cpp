@@ -29,6 +29,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define LIGHT_COLORS 128 // palette entries the shading ramps over
 #define LIGHT_ORBIT 128 // radius of the light's path across the screen, in pixels
@@ -41,11 +42,7 @@
 #define MATERIAL_SPECULAR 0.50
 #define MATERIAL_SHININESS 8 // specular exponent, low enough to keep the highlight wider than a pixel
 
-struct SurfaceNormal {
-	float x, y, z;
-};
-
-SurfaceNormal SurfaceNormals[RETRO_HEIGHT * RETRO_WIDTH];
+vec3 SurfaceNormals[RETRO_HEIGHT * RETRO_WIDTH];
 
 //
 // Slope of the height map along x, second-order finite difference
@@ -84,39 +81,26 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate light
 	double angle = fmod(time * LIGHT_SPEED, RETRO_DEGREES_PER_TURN);
 
-	float lx = RETRO_WIDTH / 2 + LIGHT_ORBIT * cos(angle * DEG2RAD);
-	float ly = RETRO_HEIGHT / 2 + LIGHT_ORBIT * sin(2 * angle * DEG2RAD);
+	float lx = RETRO_WIDTH / 2.0 + LIGHT_ORBIT * cos(angle * DEG2RAD);
+	float ly = RETRO_HEIGHT / 2.0 + LIGHT_ORBIT * sin(2 * angle * DEG2RAD);
 
 	// Draw bump
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int offset = y * RETRO_WIDTH + x;
-			SurfaceNormal normal = SurfaceNormals[offset];
+			vec3 normal = SurfaceNormals[offset];
 
-			float lightx = lx - x;
-			float lighty = ly - y;
-			float distancesquared = lightx * lightx + lighty * lighty + LIGHT_HEIGHT * LIGHT_HEIGHT;
-			float inversedistance = 1.0 / sqrt(distancesquared);
+			vec3 lightvec = { lx - x, ly - y, LIGHT_HEIGHT };
+			float distancesquared = dot(lightvec, lightvec);
+			vec3 lightdir = lightvec * (1.0f / sqrt(distancesquared));
 
-			float lightdirx = lightx * inversedistance;
-			float lightdiry = lighty * inversedistance;
-			float lightdirz = LIGHT_HEIGHT * inversedistance;
-
-			float cosangle = normal.x * lightdirx + normal.y * lightdiry + normal.z * lightdirz;
+			float cosangle = dot(normal, lightdir);
 			float lambert = CLAMP01(cosangle);
 
 			float specular = 0;
 			if (lambert > 0) {
-				float halfwayx = lightdirx;
-				float halfwayy = lightdiry;
-				float halfwayz = lightdirz + 1;
-				float inverselength = 1.0 / sqrt(halfwayx * halfwayx + halfwayy * halfwayy + halfwayz * halfwayz);
-
-				halfwayx *= inverselength;
-				halfwayy *= inverselength;
-				halfwayz *= inverselength;
-
-				float normalhalfway = normal.x * halfwayx + normal.y * halfwayy + normal.z * halfwayz;
+				vec3 halfway = normalize(lightdir + vec3{ 0, 0, 1 });
+				float normalhalfway = dot(normal, halfway);
 
 				specular = pow(CLAMP01(normalhalfway), MATERIAL_SHININESS);
 			}
@@ -147,11 +131,8 @@ void DEMO_Initialize(void)
 
 			float dhdx = BUMP_HEIGHT_SCALE * HeightSlopeX(heightmap->data, x, y);
 			float dhdy = BUMP_HEIGHT_SCALE * HeightSlopeY(heightmap->data, x, y);
-			float inverselength = 1.0 / sqrt(dhdx * dhdx + dhdy * dhdy + 1);
 
-			SurfaceNormals[offset].x = -dhdx * inverselength;
-			SurfaceNormals[offset].y = -dhdy * inverselength;
-			SurfaceNormals[offset].z = inverselength;
+			SurfaceNormals[offset] = normalize(vec3{ -dhdx, -dhdy, 1.0f });
 		}
 	}
 }

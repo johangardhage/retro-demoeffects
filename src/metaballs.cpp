@@ -20,15 +20,15 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define NUM_BALLS 5
 #define THRESHOLD 50 // F = T on the circle of radius R around one ball
 
 struct MetaBall {
-	Point2Df pos;
-	Point2Df vel;
+	vec2 pos;
+	vec2 vel;
 	float radius;
 } Balls[NUM_BALLS];
 
@@ -70,8 +70,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Move balls
 	for (int i = 0; i < NUM_BALLS; i++) {
-		Balls[i].pos.x += Balls[i].vel.x * deltatime;
-		Balls[i].pos.y += Balls[i].vel.y * deltatime;
+		Balls[i].pos += Balls[i].vel * (float)deltatime;
 		while (Balls[i].pos.x < 0 || Balls[i].pos.x > RETRO_WIDTH - 1) {
 			if (Balls[i].pos.x < 0) Balls[i].pos.x = -Balls[i].pos.x;
 			else Balls[i].pos.x = 2 * (RETRO_WIDTH - 1) - Balls[i].pos.x;
@@ -92,10 +91,8 @@ void DEMO_Initialize(void)
 
 	// Init balls
 	for (int i = 0; i < NUM_BALLS; i++) {
-		Balls[i].pos.x = RANDOM(RETRO_WIDTH);
-		Balls[i].pos.y = RANDOM(RETRO_HEIGHT);
-		Balls[i].vel.x = RANDOMF(240) - 120;
-		Balls[i].vel.y = RANDOMF(240) - 120;
+		Balls[i].pos = { (float)RANDOM(RETRO_WIDTH), (float)RANDOM(RETRO_HEIGHT) };
+		Balls[i].vel = { RANDOMF(240) - 120, RANDOMF(240) - 120 };
 		Balls[i].radius = RANDOM(10) + 10;
 	}
 }

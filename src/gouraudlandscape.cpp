@@ -33,6 +33,7 @@
 #include "lib/retroterrain.h"
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
+#include "lib/retrovector.h"
 
 #define LANDSCAPE_SHADES 8
 // How much light a face turned away from the sun still catches, as a fraction
@@ -83,8 +84,9 @@ static const unsigned char SunColor[LANDSCAPE_SUNRINGS] = { 247, 248, 249 };
 // The texture coordinate is the world position, unwrapped; see the note above.
 // The shade rides alongside it because the drawer interpolates both.
 struct ShadedVertex {
-	float sx, sy, q;
-	float u, v;
+	vec2 spos;
+	float q;
+	vec2 uv;
 	float c;
 };
 
@@ -92,11 +94,9 @@ static ShadedVertex ProjectVertex(float x, float z, int step, const RETRO_Terrai
 {
 	RETRO_TerrainPoint point = RETRO_ProjectTerrainVertex(x, z, basis);
 	ShadedVertex vertex;
-	vertex.sx = point.sx;
-	vertex.sy = point.sy;
+	vertex.spos = point.spos;
 	vertex.q = point.q;
-	vertex.u = x;
-	vertex.v = z;
+	vertex.uv = { x, z };
 
 	// Central differences over the mesh spacing make the same normal whenever
 	// this map vertex is visited from an adjacent cell, so the shade the two
@@ -109,7 +109,7 @@ static ShadedVertex ProjectVertex(float x, float z, int step, const RETRO_Terrai
 	float nx = RETRO_TerrainHeight(x - step, z) - RETRO_TerrainHeight(x + step, z);
 	float ny = 2.0f * step;
 	float nz = RETRO_TerrainHeight(x, z - step) - RETRO_TerrainHeight(x, z + step);
-	vertex.c = RETRO_TerrainShade(nx, ny, nz, LANDSCAPE_SHADES);
+	vertex.c = RETRO_TerrainShade({ nx, ny, nz }, LANDSCAPE_SHADES);
 	return vertex;
 }
 
@@ -134,7 +134,7 @@ static void DrawSun(const RETRO_TerrainBasis &basis)
 
 	RETRO_TerrainPoint point = RETRO_ProjectTerrainOffset(offset, RETRO_Camera.height + RETRO_TerrainLight.y);
 	for (int ring = 0; ring < LANDSCAPE_SUNRINGS; ring++) {
-		RETRO_DrawEllipse(point.sx, point.sy, SunRadius[ring], SunRadius[ring], SunColor[ring]);
+		RETRO_DrawEllipse(point.spos.x, point.spos.y, SunRadius[ring], SunRadius[ring], SunColor[ring]);
 	}
 }
 
@@ -143,9 +143,9 @@ static void DrawTriangle(const ShadedVertex &a, const ShadedVertex &b, const Sha
 	if (!RETRO_TerrainTriangleProjects(a.q, b.q, c.q)) return;
 
 	PolygonPoint polygon[3] = {
-		{ a.sx, a.sy, a.c, a.u, a.v, a.q, 0, 0, 0 },
-		{ b.sx, b.sy, b.c, b.u, b.v, b.q, 0, 0, 0 },
-		{ c.sx, c.sy, c.c, c.u, c.v, c.q, 0, 0, 0 }
+		{ a.spos, a.c, a.uv, a.q },
+		{ b.spos, b.c, b.uv, b.q },
+		{ c.spos, c.c, c.uv, c.q }
 	};
 	RETRO_DrawTexMapGouraudPolygon(polygon, 3, RETRO_Terrain.colormap, RETRO_Terrain.width, RETRO_Terrain.height,
 								   ShadeTable{ &LandscapeShadeTable[0][0], RETRO_COLORS, LANDSCAPE_SHADES }, RETRO_Terrain.wrap);

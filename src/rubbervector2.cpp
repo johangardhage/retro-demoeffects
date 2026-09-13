@@ -50,10 +50,12 @@ void DEMO_Render(double time, double deltatime)
 	// Each axis keeps its own wrapped phase so sin(k * phase) does not jump
 	// when k is not an integer.
 	for (int i = 0; i < Rubber->vertices; i++) {
-		const Vertex &v = RestVertex[i];
-		Rubber->vertex[i].x = v.x + RUBBER_AMOUNT * sin(phasex + RUBBER_WAVE1 * v.y + RUBBER_WAVE2 * v.z);
-		Rubber->vertex[i].y = v.y + RUBBER_AMOUNT * sin(phasey + RUBBER_WAVE1 * v.z + RUBBER_WAVE2 * v.x);
-		Rubber->vertex[i].z = v.z + RUBBER_AMOUNT * sin(phasez + RUBBER_WAVE1 * v.x + RUBBER_WAVE2 * v.y);
+		const vec3 &v = RestVertex[i].pos;
+		Rubber->vertex[i].pos = {
+			v.x + RUBBER_AMOUNT * (float)sin(phasex + RUBBER_WAVE1 * v.y + RUBBER_WAVE2 * v.z),
+			v.y + RUBBER_AMOUNT * (float)sin(phasey + RUBBER_WAVE1 * v.z + RUBBER_WAVE2 * v.x),
+			v.z + RUBBER_AMOUNT * (float)sin(phasez + RUBBER_WAVE1 * v.x + RUBBER_WAVE2 * v.y)
+		};
 	}
 
 	// The face normals the loader took describe the cube at rest, so they are

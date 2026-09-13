@@ -67,9 +67,11 @@ void DEMO_Render(double time, double deltatime)
 	// Lay the ring out, ripple it, and carry it to the screen
 	for (int i = 0; i < BALLS; i++) {
 		float a = (float)RETRO_SINCOS_ANGLE * i / BALLS;
-		Balls[i].x = BALL_RADIUS * COS(a);
-		Balls[i].y = BALL_RADIUS * SIN(a);
-		Balls[i].z = BALL_WAVE * SIN(phase + BALL_WAVES * a);
+		Balls[i].pos = {
+			BALL_RADIUS * (float)COS(a),
+			BALL_RADIUS * (float)SIN(a),
+			BALL_WAVE * (float)SIN(phase + BALL_WAVES * a)
+		};
 
 		RETRO_RotateVertex(&Balls[i], ax, ay, az);
 		RETRO_ProjectVertex(&Balls[i], BALL_PROJECTION);
@@ -81,9 +83,9 @@ void DEMO_Render(double time, double deltatime)
 	for (int i = 0; i < BALLS; i++) {
 		Vertex *ball = &Balls[i];
 		float size = BALL_SIZE * RETRO_PROJECTION_EYEDISTANCE * ball->q;
-		int level = CLAMP((BALL_DEPTH + ball->rz) * BALL_LEVELS / (2 * BALL_DEPTH), 0, BALL_LEVELS);
+		int level = CLAMP((BALL_DEPTH + ball->rpos.z) * BALL_LEVELS / (2 * BALL_DEPTH), 0, BALL_LEVELS);
 
-		RETRO_DrawDepthSprite(ball->sx, ball->sy, ball->q, size, BALL_SIZE / 2.0f, BallMap[level], BallDepth, BALL_MAP);
+		RETRO_DrawDepthSprite(ball->spos, ball->q, size, BALL_SIZE / 2.0f, BallMap[level], BallDepth, BALL_MAP);
 	}
 }
 

@@ -7,6 +7,9 @@
 #ifndef _RETROMODEL_H_
 #define _RETROMODEL_H_
 
+#include "retro.h"
+#include "retrovector.h"
+
 // The grazing height G is the height difference that tilts a normal all the
 // way to grazing. The gradient across two texels, divided by the surface they
 // span and by G, is the tilt, so a larger G reads shallower. A metal env map
@@ -31,16 +34,13 @@
 									// per-character glyph cache is the heaviest current user
 
 struct Vertex {
-	float x, y, z;				// Model space coordinates
-	float rx, ry, rz;			// Rotated coordinates
-	float sx, sy, q;			// Screen coordinates and reciprocal projection depth
+	vec3 pos;					// Model space coordinates
+	vec3 rpos;					// Rotated coordinates
+	vec2 spos;					// Screen coordinates
+	float q;					// Reciprocal projection depth
 };
 
-struct UV {
-	float u, v;					// Texture coordinates, in texels: u across texmapwidth, v down texmapheight
-};
-
-// A unit direction: where something points. Every Direction is normalized as it
+// A unit direction: where something points. Every UnitVector is normalized as it
 // is written, so nothing that reads one has to divide it out first, and the
 // model's rotation is orthonormal, so it stays unit all the way to the drawers.
 //
@@ -50,9 +50,9 @@ struct UV {
 // share the type because the library only ever rotates: a normal is strictly a
 // covector and transforms by the inverse transpose, which for an orthonormal
 // matrix is the matrix itself.
-struct Direction {
-	float x, y, z;				// Model space direction, unit length
-	float rx, ry, rz;			// Rotated direction, still unit
+struct UnitVector {
+	vec3 dir;					// Model space direction, unit length
+	vec3 rdir;					// Rotated direction, still unit
 };
 
 struct Face {
@@ -63,9 +63,9 @@ struct Face {
 	int c;										// Front-facing offset from the model's c, in whatever
 												// space that renderer measures in
 	int backc;									// Back-facing offset; zero makes that side transparent
-	Direction facenormal;						// Face normal
-	Direction tangent;							// Surface direction of +u, for bump mapping
-	Direction bitangent;						// and of +v
+	UnitVector facenormal;						// Face normal
+	UnitVector tangent;							// Surface direction of +u, for bump mapping
+	UnitVector bitangent;						// and of +v
 	float area;									// Its area, the weight it lends a vertex normal
 	bool frontfacing;							// Which side the winding shows. Only set for a face that
 												// reached the winding test, so read it only for a face in
@@ -80,8 +80,8 @@ struct Model3D {
 	int normals;								// Number of vertex normals
 	Face face[RETRO_MAX_FACES];					// Face list
 	Vertex vertex[RETRO_MAX_VERTICES];			// Vertex list
-	UV uv[RETRO_MAX_UVS];						// UV list
-	Direction normal[RETRO_MAX_NORMALS];		// Vertex normal list
+	vec2 uv[RETRO_MAX_UVS];						// UV list, in texels: x across texmapwidth, y down texmapheight
+	UnitVector normal[RETRO_MAX_NORMALS];		// Vertex normal list
 	int drawfaces;								// Number of faces in the draw list
 	int drawface[RETRO_MAX_FACES];				// Faces to draw, sorted far to near
 	float matrix[3][3];							// Rotation matrix
@@ -211,9 +211,7 @@ inline int RETRO_AddModelVertex(Model3D *model, float x, float y, float z)
 	}
 
 	int i = model->vertices++;
-	model->vertex[i].x = x;
-	model->vertex[i].y = y;
-	model->vertex[i].z = z;
+	model->vertex[i].pos = { x, y, z };
 	return i;
 }
 
@@ -249,30 +247,21 @@ inline void RETRO_InitializeVertexNormals(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->vertices; i++) {
-		model->normal[i].x = 0;
-		model->normal[i].y = 0;
-		model->normal[i].z = 0;
+		model->normal[i].dir = { 0.0f, 0.0f, 0.0f };
 	}
 
 	for (int i = 0; i < model->faces; i++) {
-		float nx = model->face[i].facenormal.x * model->face[i].area;
-		float ny = model->face[i].facenormal.y * model->face[i].area;
-		float nz = model->face[i].facenormal.z * model->face[i].area;
+		Face *face = &model->face[i];
+		vec3 n = face->facenormal.dir * face->area;
 
-		for (int j = 0; j < model->face[i].vertices; j++) {
-			int v = model->face[i].vertex[j];
-			model->normal[v].x += nx;
-			model->normal[v].y += ny;
-			model->normal[v].z += nz;
+		for (int j = 0; j < face->vertices; j++) {
+			int v = face->vertex[j];
+			model->normal[v].dir += n;
 		}
 	}
 
 	for (int i = 0; i < model->vertices; i++) {
-		float length = sqrt(model->normal[i].x * model->normal[i].x + model->normal[i].y * model->normal[i].y + model->normal[i].z * model->normal[i].z);
-		float inverselength = length > 0.0f ? 1.0f / length : 0.0f;
-		model->normal[i].x *= inverselength;
-		model->normal[i].y *= inverselength;
-		model->normal[i].z *= inverselength;
+		model->normal[i].dir = normalize(model->normal[i].dir);
 	}
 
 	model->normals = model->vertices;
@@ -297,44 +286,32 @@ inline void RETRO_InitializeFaceNormals(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->faces; i++) {
-		float x1 = model->vertex[model->face[i].vertex[0]].x - model->vertex[model->face[i].vertex[1]].x;
-		float y1 = model->vertex[model->face[i].vertex[0]].y - model->vertex[model->face[i].vertex[1]].y;
-		float z1 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[1]].z;
-		float x2 = model->vertex[model->face[i].vertex[0]].x - model->vertex[model->face[i].vertex[2]].x;
-		float y2 = model->vertex[model->face[i].vertex[0]].y - model->vertex[model->face[i].vertex[2]].y;
-		float z2 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[2]].z;
+		Face *face = &model->face[i];
+		Vertex *v0 = &model->vertex[face->vertex[0]];
+		Vertex *v1 = &model->vertex[face->vertex[1]];
+		Vertex *v2 = &model->vertex[face->vertex[2]];
+		vec3 p0 = v0->pos;
+		vec3 e1 = p0 - v1->pos;
+		vec3 e2 = p0 - v2->pos;
 
-		float nx = y1 * z2 - z1 * y2;
-		float ny = z1 * x2 - x1 * z2;
-		float nz = x1 * y2 - y1 * x2;
-
-		float length = sqrt(nx * nx + ny * ny + nz * nz);
-		float inverselength = length > 0.0f ? 1.0f / length : 0.0f;
-
-		model->face[i].facenormal.x = nx * inverselength;
-		model->face[i].facenormal.y = ny * inverselength;
-		model->face[i].facenormal.z = nz * inverselength;
+		vec3 n = cross(e1, e2);
+		float len = length(n);
+		float invlen = len > 0.0f ? 1.0f / len : 0.0f;
+		face->facenormal.dir = n * invlen;
 
 		// Fan the rest of the face from vertex 0, a triangle at a time, so the area
 		// is the whole face's and not just the first triangle's
-		float area = length / 2;
+		float area = len / 2;
 
-		for (int j = 3; j < model->face[i].vertices; j++) {
-			float x3 = model->vertex[model->face[i].vertex[0]].x - model->vertex[model->face[i].vertex[j - 1]].x;
-			float y3 = model->vertex[model->face[i].vertex[0]].y - model->vertex[model->face[i].vertex[j - 1]].y;
-			float z3 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[j - 1]].z;
-			float x4 = model->vertex[model->face[i].vertex[0]].x - model->vertex[model->face[i].vertex[j]].x;
-			float y4 = model->vertex[model->face[i].vertex[0]].y - model->vertex[model->face[i].vertex[j]].y;
-			float z4 = model->vertex[model->face[i].vertex[0]].z - model->vertex[model->face[i].vertex[j]].z;
-
-			float fx = y3 * z4 - z3 * y4;
-			float fy = z3 * x4 - x3 * z4;
-			float fz = x3 * y4 - y3 * x4;
-
-			area += sqrt(fx * fx + fy * fy + fz * fz) / 2;
+		for (int j = 3; j < face->vertices; j++) {
+			Vertex *v3 = &model->vertex[face->vertex[j - 1]];
+			Vertex *v4 = &model->vertex[face->vertex[j]];
+			vec3 e3 = p0 - v3->pos;
+			vec3 e4 = p0 - v4->pos;
+			area += length(cross(e3, e4)) / 2;
 		}
 
-		model->face[i].area = area;
+		face->area = area;
 	}
 }
 
@@ -359,84 +336,57 @@ inline void RETRO_InitializeFaceTangents(Model3D *model = NULL)
 
 	for (int i = 0; i < model->faces; i++) {
 		Face *face = &model->face[i];
+		vec3 n = face->facenormal.dir;
 
-		float nx = face->facenormal.x;
-		float ny = face->facenormal.y;
-		float nz = face->facenormal.z;
-
-		float tx = 0, ty = 0, tz = 0, bx = 0, by = 0, bz = 0;
+		vec3 t = { 0.0f, 0.0f, 0.0f };
+		vec3 b = { 0.0f, 0.0f, 0.0f };
 		bool derived = false;
 
 		if (model->uvs > 0 && face->vertices >= 3) {
 			Vertex *p0 = &model->vertex[face->vertex[0]];
 			Vertex *p1 = &model->vertex[face->vertex[1]];
 			Vertex *p2 = &model->vertex[face->vertex[2]];
-			UV *t0 = &model->uv[face->uv[0]];
-			UV *t1 = &model->uv[face->uv[1]];
-			UV *t2 = &model->uv[face->uv[2]];
+			vec2 t0 = model->uv[face->uv[0]];
+			vec2 t1 = model->uv[face->uv[1]];
+			vec2 t2 = model->uv[face->uv[2]];
 
-			float e1x = p1->x - p0->x, e1y = p1->y - p0->y, e1z = p1->z - p0->z;
-			float e2x = p2->x - p0->x, e2y = p2->y - p0->y, e2z = p2->z - p0->z;
-			float du1 = t1->u - t0->u, dv1 = t1->v - t0->v;
-			float du2 = t2->u - t0->u, dv2 = t2->v - t0->v;
+			vec3 e1 = p1->pos - p0->pos;
+			vec3 e2 = p2->pos - p0->pos;
+			vec2 duv1 = t1 - t0;
+			vec2 duv2 = t2 - t0;
 
-			float determinant = du1 * dv2 - du2 * dv1;
+			float determinant = duv1.x * duv2.y - duv2.x * duv1.y;
 			if (fabs(determinant) > 1.0e-12f) {
 				float r = 1.0f / determinant;
-				tx = (e1x * dv2 - e2x * dv1) * r;
-				ty = (e1y * dv2 - e2y * dv1) * r;
-				tz = (e1z * dv2 - e2z * dv1) * r;
-				bx = (e2x * du1 - e1x * du2) * r;
-				by = (e2y * du1 - e1y * du2) * r;
-				bz = (e2z * du1 - e1z * du2) * r;
+				t = (e1 * duv2.y - e2 * duv1.y) * r;
+				b = (e2 * duv1.x - e1 * duv2.x) * r;
 				derived = true;
 			}
 		}
 
 		if (!derived) {
 			// Any direction not parallel to the normal
-			tx = fabs(nx) < 0.9f ? 1.0f : 0.0f;
-			ty = fabs(nx) < 0.9f ? 0.0f : 1.0f;
-			tz = 0.0f;
-			bx = ny * tz - nz * ty;
-			by = nz * tx - nx * tz;
-			bz = nx * ty - ny * tx;
+			t = fabs(n.x) < 0.9f ? vec3{ 1.0f, 0.0f, 0.0f } : vec3{ 0.0f, 1.0f, 0.0f };
+			b = cross(n, t);
 		}
 
 		// Gram-Schmidt: drop the part of T along N, then of B along both
-		float nt = nx * tx + ny * ty + nz * tz;
-		tx -= nx * nt;
-		ty -= ny * nt;
-		tz -= nz * nt;
-		float tlength = sqrt(tx * tx + ty * ty + tz * tz);
+		t = t - n * dot(n, t);
+		float tlength = length(t);
 		if (tlength > 1.0e-12f) {
-			tx /= tlength;
-			ty /= tlength;
-			tz /= tlength;
+			t = t * (1.0f / tlength);
 		}
 
-		float nb = nx * bx + ny * by + nz * bz;
-		float tb = tx * bx + ty * by + tz * bz;
-		bx -= nx * nb + tx * tb;
-		by -= ny * nb + ty * tb;
-		bz -= nz * nb + tz * tb;
-		float blength = sqrt(bx * bx + by * by + bz * bz);
+		b = b - (n * dot(n, b) + t * dot(t, b));
+		float blength = length(b);
 		if (blength > 1.0e-12f) {
-			bx /= blength;
-			by /= blength;
-			bz /= blength;
+			b = b * (1.0f / blength);
 		} else {
-			bx = ny * tz - nz * ty;
-			by = nz * tx - nx * tz;
-			bz = nx * ty - ny * tx;
+			b = cross(n, t);
 		}
 
-		face->tangent.x = tx;
-		face->tangent.y = ty;
-		face->tangent.z = tz;
-		face->bitangent.x = bx;
-		face->bitangent.y = by;
-		face->bitangent.z = bz;
+		face->tangent.dir = t;
+		face->bitangent.dir = b;
 	}
 }
 
@@ -478,63 +428,45 @@ inline void RETRO_InitializeFaceUVs(Model3D *model = NULL)
 	}
 
 	// Bounding box centre and half extent
-	float minx = model->vertex[0].x, maxx = minx;
-	float miny = model->vertex[0].y, maxy = miny;
-	float minz = model->vertex[0].z, maxz = minz;
+	vec3 boxmin = model->vertex[0].pos;
+	vec3 boxmax = boxmin;
 
 	for (int i = 1; i < model->vertices; i++) {
-		minx = MIN(minx, model->vertex[i].x);
-		maxx = MAX(maxx, model->vertex[i].x);
-		miny = MIN(miny, model->vertex[i].y);
-		maxy = MAX(maxy, model->vertex[i].y);
-		minz = MIN(minz, model->vertex[i].z);
-		maxz = MAX(maxz, model->vertex[i].z);
+		boxmin = min(boxmin, model->vertex[i].pos);
+		boxmax = max(boxmax, model->vertex[i].pos);
 	}
 
-	float cx = (minx + maxx) / 2, hx = (maxx - minx) / 2;
-	float cy = (miny + maxy) / 2, hy = (maxy - miny) / 2;
-	float cz = (minz + maxz) / 2, hz = (maxz - minz) / 2;
+	vec3 center = (boxmin + boxmax) * 0.5f;
+	vec3 half = (boxmax - boxmin) * 0.5f;
 
 	model->uvs = 0;
 
 	for (int i = 0; i < model->faces; i++) {
 		Face *face = &model->face[i];
-
-		float nx = face->facenormal.x;
-		float ny = face->facenormal.y;
-		float nz = face->facenormal.z;
+		vec3 n = face->facenormal.dir;
 
 		// t = n × (0, 1, 0)
-		float tx = -nz, ty = 0, tz = nx;
-		float tlength = sqrt(tx * tx + ty * ty + tz * tz);
-		if (tlength > 1.0e-12f) {
-			tx /= tlength;
-			ty /= tlength;
-			tz /= tlength;
-		} else {
-			tx = 1.0f, ty = 0.0f, tz = 0.0f;
-		}
+		vec3 t = cross(n, vec3{ 0.0f, 1.0f, 0.0f });
+		float tlength = length(t);
+		t = tlength > 1.0e-12f ? t * (1.0f / tlength) : vec3{ 1.0f, 0.0f, 0.0f };
 
 		// b = t × n
-		float bx = ty * nz - tz * ny;
-		float by = tz * nx - tx * nz;
-		float bz = tx * ny - ty * nx;
+		vec3 b = cross(t, n);
 
 		// The box reaches this far along each of them
-		float textent = fabs(tx) * hx + fabs(ty) * hy + fabs(tz) * hz;
-		float bextent = fabs(bx) * hx + fabs(by) * hy + fabs(bz) * hz;
+		float textent = dot(abs(t), half);
+		float bextent = dot(abs(b), half);
 		float inversetextent = textent > 0.0f ? 1.0f / textent : 0.0f;
 		float inversebextent = bextent > 0.0f ? 1.0f / bextent : 0.0f;
 
 		for (int j = 0; j < face->vertices; j++) {
 			Vertex *vertex = &model->vertex[face->vertex[j]];
 
-			float px = vertex->x - cx, py = vertex->y - cy, pz = vertex->z - cz;
-			float u = ((px * tx + py * ty + pz * tz) * inversetextent + 1) / 2;
-			float v = ((px * bx + py * by + pz * bz) * inversebextent + 1) / 2;
+			vec3 p = vertex->pos - center;
+			float u = (dot(p, t) * inversetextent + 1) / 2;
+			float v = (dot(p, b) * inversebextent + 1) / 2;
 
-			model->uv[model->uvs].u = u * model->texmapwidth;
-			model->uv[model->uvs].v = v * model->texmapheight;
+			model->uv[model->uvs] = { u * model->texmapwidth, v * model->texmapheight };
 			face->uv[j] = model->uvs;
 			model->uvs++;
 		}
@@ -637,9 +569,11 @@ inline void RETRO_MorphModel(float u, Model3D *model = NULL)
 	const float *to = &model->frame[(size_t)b * model->vertices * 3];
 
 	for (int i = 0; i < model->vertices; i++) {
-		model->vertex[i].x = from[i * 3] * (1.0f - s) + to[i * 3] * s;
-		model->vertex[i].y = from[i * 3 + 1] * (1.0f - s) + to[i * 3 + 1] * s;
-		model->vertex[i].z = from[i * 3 + 2] * (1.0f - s) + to[i * 3 + 2] * s;
+		model->vertex[i].pos = {
+			from[i * 3] * (1.0f - s) + to[i * 3] * s,
+			from[i * 3 + 1] * (1.0f - s) + to[i * 3 + 1] * s,
+			from[i * 3 + 2] * (1.0f - s) + to[i * 3 + 2] * s
+		};
 	}
 }
 
@@ -676,7 +610,7 @@ inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = 
 			if (vertices >= RETRO_MAX_VERTICES) {
 				RETRO_RageQuit("Too many vertices to fit the vertex list: %s\n", filename);
 			}
-			if (fscanf(fp, "%f %f %f\n", &model->vertex[vertices].x, &model->vertex[vertices].y, &model->vertex[vertices].z) != 3) {
+			if (fscanf(fp, "%f %f %f\n", &model->vertex[vertices].pos.x, &model->vertex[vertices].pos.y, &model->vertex[vertices].pos.z) != 3) {
 				RETRO_RageQuit("Cannot read vertex, expected three floats: %s\n", filename);
 			}
 			vertices++;
@@ -684,27 +618,20 @@ inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = 
 			if (uvs >= RETRO_MAX_UVS) {
 				RETRO_RageQuit("Too many UV coordinates to fit the UV list: %s\n", filename);
 			}
-			if (fscanf(fp, "%f %f\n", &model->uv[uvs].u, &model->uv[uvs].v) != 2) {
+			if (fscanf(fp, "%f %f\n", &model->uv[uvs].x, &model->uv[uvs].y) != 2) {
 				RETRO_RageQuit("Cannot read UV coordinate, expected two floats: %s\n", filename);
 			}
-			model->uv[uvs].u *= RETRO_TEXMAP_SIZE;
-			model->uv[uvs].v *= RETRO_TEXMAP_SIZE;
+			model->uv[uvs] = model->uv[uvs] * (float)RETRO_TEXMAP_SIZE;
 			uvs++;
 		} else if (strcmp(row, "vn") == 0) { // Load normals
 			if (normals >= RETRO_MAX_NORMALS) {
 				RETRO_RageQuit("Too many normals to fit the normal list: %s\n", filename);
 			}
-			if (fscanf(fp, "%f %f %f\n", &model->normal[normals].x, &model->normal[normals].y, &model->normal[normals].z) != 3) {
+			if (fscanf(fp, "%f %f %f\n", &model->normal[normals].dir.x, &model->normal[normals].dir.y, &model->normal[normals].dir.z) != 3) {
 				RETRO_RageQuit("Cannot read normal, expected three floats: %s\n", filename);
 			}
 			// A file's vn need not be unit, and everything downstream assumes it is
-			float length = sqrt(model->normal[normals].x * model->normal[normals].x +
-								model->normal[normals].y * model->normal[normals].y +
-								model->normal[normals].z * model->normal[normals].z);
-			float inverselength = length > 0.0f ? 1.0f / length : 0.0f;
-			model->normal[normals].x *= inverselength;
-			model->normal[normals].y *= inverselength;
-			model->normal[normals].z *= inverselength;
+			model->normal[normals].dir = normalize(model->normal[normals].dir);
 			normals++;
 		} else if (strcmp(row, "f") == 0) {
 			if (faces >= RETRO_MAX_FACES) {
@@ -797,17 +724,17 @@ inline void RETRO_Save3DModel(const char *filename, Model3D *model)
 
 	// Save vertices
 	for (int i = 0; i < model->vertices; i++) {
-		fprintf(fp, "v %f %f %f\n", model->vertex[i].x, model->vertex[i].y, model->vertex[i].z);
+		fprintf(fp, "v %f %f %f\n", model->vertex[i].pos.x, model->vertex[i].pos.y, model->vertex[i].pos.z);
 	}
 
 	// Save UV coordinates
 	for (int i = 0; i < model->uvs; i++) {
-		fprintf(fp, "vt %f %f\n", model->uv[i].u, model->uv[i].v);
+		fprintf(fp, "vt %f %f\n", model->uv[i].x, model->uv[i].y);
 	}
 
 	// Save normals
 	for (int i = 0; i < model->normals; i++) {
-		fprintf(fp, "vn %f %f %f\n", model->normal[i].x, model->normal[i].y, model->normal[i].z);
+		fprintf(fp, "vn %f %f %f\n", model->normal[i].dir.x, model->normal[i].dir.y, model->normal[i].dir.z);
 	}
 
 	// Save faces

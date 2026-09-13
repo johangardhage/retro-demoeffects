@@ -20,8 +20,8 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define POINTSTEP 5 // angle units between the dots around a ring, of the 256 in a whole turn
 #define RING_DOTS (RETRO_SINCOS_ANGLE / POINTSTEP) // 5 does not divide 256; the ring uses 256/n
@@ -34,7 +34,7 @@
 #define SWAY_SPEED 100 // angle units per second
 #define SHADES 64 // palette entries the depth shading ramps over
 
-Point2Df Circle[RING_DOTS];
+vec2 Circle[RING_DOTS];
 
 void DEMO_Render(double time, double deltatime)
 {

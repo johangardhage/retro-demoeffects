@@ -57,8 +57,8 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define PLANE_DISTANCE 320
 #define PLANE_PERIOD 256 // one texture width; U, V, xd and yd share it
@@ -87,9 +87,9 @@ void DEMO_Render(double time, double deltatime)
 	// Rotate U = (P, 0, 0) and V = (0, 0, P) by Ry(ang). bp is the
 	// world-space origin of that frame: (xd / P) U + (yd / P) V, sitting
 	// on y = PLANE_Y.
-	Point3Df up = { PLANE_PERIOD * cosa, 0, -PLANE_PERIOD * sina };
-	Point3Df vp = { PLANE_PERIOD * sina, 0, PLANE_PERIOD * cosa };
-	Point3Df bp = { xd * cosa + yd * sina, PLANE_Y, -xd * sina + yd * cosa };
+	vec3 up = { PLANE_PERIOD * cosa, 0, -PLANE_PERIOD * sina };
+	vec3 vp = { PLANE_PERIOD * sina, 0, PLANE_PERIOD * cosa };
+	vec3 bp = { xd * cosa + yd * sina, PLANE_Y, -xd * sina + yd * cosa };
 
 	// Cramer's rule for bp + s U + t V = λ r. Each triple product is
 	// linear in the ray r = (sx, sy, D), so it splits into a constant

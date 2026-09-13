@@ -48,6 +48,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define NUM_BALLS 4
 #define THRESHOLD 50 // F = T on the sphere of radius R around one ball
@@ -58,7 +59,7 @@
 #define ORBIT_SPEED 1.0 // radians of the base orbit per second; the rates below multiply it
 
 struct MetaBall {
-	float x, y, z;
+	vec3 pos;
 	float bound;
 } Balls[NUM_BALLS];
 
@@ -66,14 +67,12 @@ float Charge[NUM_BALLS];
 
 static const float BallRadius[NUM_BALLS] = { 36, 32, 28, 34 };
 
-static float Field(float x, float y, float z)
+static float Field(vec3 p)
 {
 	float sum = 0;
 	for (int i = 0; i < NUM_BALLS; i++) {
-		float dx = x - Balls[i].x;
-		float dy = y - Balls[i].y;
-		float dz = z - Balls[i].z;
-		float r2 = MAX(dx * dx + dy * dy + dz * dz, 0.0001f);
+		vec3 d = p - Balls[i].pos;
+		float r2 = MAX(dot(d, d), 0.0001f);
 		sum += Charge[i] / r2;
 	}
 	return sum;
@@ -83,45 +82,31 @@ static float Field(float x, float y, float z)
 // and the isosurface meets one only at the instant a blob splits or merges,
 // when it passes through the saddle between two centres. The fallback for that
 // instant is the headlight itself, which shades the pixel fully lit.
-static void FieldNormal(float x, float y, float z, float *nx, float *ny, float *nz)
+static vec3 FieldNormal(vec3 p)
 {
-	float gx = 0;
-	float gy = 0;
-	float gz = 0;
+	vec3 g = { 0.0f, 0.0f, 0.0f };
 	for (int i = 0; i < NUM_BALLS; i++) {
-		float dx = x - Balls[i].x;
-		float dy = y - Balls[i].y;
-		float dz = z - Balls[i].z;
-		float r2 = MAX(dx * dx + dy * dy + dz * dz, 0.0001f);
-		float g = -2 * Charge[i] / (r2 * r2);
-		gx += g * dx;
-		gy += g * dy;
-		gz += g * dz;
+		vec3 d = p - Balls[i].pos;
+		float r2 = MAX(dot(d, d), 0.0001f);
+		float k = -2 * Charge[i] / (r2 * r2);
+		g += d * k;
 	}
 
-	float glen2 = gx * gx + gy * gy + gz * gz;
+	float glen2 = dot(g, g);
 	if (glen2 < 1.0e-12f) {
-		*nx = 0;
-		*ny = 0;
-		*nz = -1;
-		return;
+		return { 0.0f, 0.0f, -1.0f };
 	}
 
-	float inv = 1.0 / sqrt(glen2);
-	*nx = -gx * inv;
-	*ny = -gy * inv;
-	*nz = -gz * inv;
+	return g * (-1.0f / sqrt(glen2));
 }
 
 // Unit-D ray against a sphere. tEnter can be negative when the eye is inside.
-static bool RaySphere(float ox, float oy, float oz, float dx, float dy, float dz, float cx, float cy, float cz, float radius, float *tenter, float *tleave)
+static bool RaySphere(vec3 o, vec3 d, vec3 c, float radius, float *tenter, float *tleave)
 {
-	float ocx = ox - cx;
-	float ocy = oy - cy;
-	float ocz = oz - cz;
-	float b = dx * ocx + dy * ocy + dz * ocz;
-	float c = ocx * ocx + ocy * ocy + ocz * ocz - radius * radius;
-	float disc = b * b - c;
+	vec3 oc = o - c;
+	float b = dot(d, oc);
+	float cc = dot(oc, oc) - radius * radius;
+	float disc = b * b - cc;
 	if (disc < 0) {
 		return false;
 	}
@@ -132,13 +117,12 @@ static bool RaySphere(float ox, float oy, float oz, float dx, float dy, float dz
 	return *tleave > 0;
 }
 
-static void ShadeHit(int x, int y, float px, float py, float pz)
+static void ShadeHit(int x, int y, vec3 p)
 {
-	float nx, ny, nz;
-	FieldNormal(px, py, pz, &nx, &ny, &nz);
+	vec3 n = FieldNormal(p);
 
 	// L = (0, 0, −1)
-	float lambert = MAX(-nz, 0.0f);
+	float lambert = MAX(-n.z, 0.0f);
 	float intensity = RETRO_ShadeFromLambert(lambert);
 	int color = RETRO_PHONG_OFFSET + RETRO_PHONG_SHADES * intensity;
 	RETRO_PutPixel(x, y, CLAMP(color, RETRO_PHONG_OFFSET, RETRO_COLORS));
@@ -165,14 +149,14 @@ void DEMO_Render(double time, double deltatime)
 	float cz = 0;
 
 	for (int i = 0; i < NUM_BALLS; i++) {
-		Balls[i].x = cx + amplitudex[i] * sin(ratex[i] * phase + offsetx[i]);
-		Balls[i].y = cy + amplitudey[i] * sin(ratey[i] * phase + offsety[i]);
-		Balls[i].z = cz + amplitudez[i] * sin(ratez[i] * phase + offsetz[i]);
+		Balls[i].pos = {
+			cx + amplitudex[i] * (float)sin(ratex[i] * phase + offsetx[i]),
+			cy + amplitudey[i] * (float)sin(ratey[i] * phase + offsety[i]),
+			cz + amplitudez[i] * (float)sin(ratez[i] * phase + offsetz[i])
+		};
 	}
 
-	float ox = cx;
-	float oy = cy;
-	float oz = -EYE;
+	vec3 o = { cx, cy, -EYE };
 
 	// Draw balls. A pixel whose ray misses every bounding sphere is left
 	// cleared. |p − c|² is a quadratic in t, so it is stepped by forward
@@ -184,17 +168,14 @@ void DEMO_Render(double time, double deltatime)
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			float px = x + 0.5f - cx;
 			float pz = EYE;
-			float invlen = 1.0 / sqrt(px * px + py * py + pz * pz);
-			float dx = px * invlen;
-			float dy = py * invlen;
-			float dz = pz * invlen;
+			vec3 d = normalize(vec3{ px, py, pz });
 
 			float tmin = 1.0e9f;
 			float tmax = 0;
 			bool hitbound = false;
 			for (int i = 0; i < NUM_BALLS; i++) {
 				float tenter, tleave;
-				if (!RaySphere(ox, oy, oz, dx, dy, dz, Balls[i].x, Balls[i].y, Balls[i].z, Balls[i].bound, &tenter, &tleave)) {
+				if (!RaySphere(o, d, Balls[i].pos, Balls[i].bound, &tenter, &tleave)) {
 					continue;
 				}
 				if (tenter < 0) {
@@ -216,11 +197,9 @@ void DEMO_Render(double time, double deltatime)
 			float distancesquared[NUM_BALLS];
 			float slope[NUM_BALLS];
 			for (int i = 0; i < NUM_BALLS; i++) {
-				float ocx = ox - Balls[i].x;
-				float ocy = oy - Balls[i].y;
-				float ocz = oz - Balls[i].z;
-				float doc = dx * ocx + dy * ocy + dz * ocz;
-				distancesquared[i] = ocx * ocx + ocy * ocy + ocz * ocz + 2 * tmin * doc + tmin * tmin;
+				vec3 oc = o - Balls[i].pos;
+				float doc = dot(d, oc);
+				distancesquared[i] = dot(oc, oc) + 2 * tmin * doc + tmin * tmin;
 				slope[i] = 2 * h * (doc + tmin) + h * h;
 			}
 
@@ -230,7 +209,7 @@ void DEMO_Render(double time, double deltatime)
 			}
 
 			if (sum >= THRESHOLD) {
-				ShadeHit(x, y, ox + tmin * dx, oy + tmin * dy, oz + tmin * dz);
+				ShadeHit(x, y, o + d * tmin);
 				continue;
 			}
 
@@ -254,14 +233,14 @@ void DEMO_Render(double time, double deltatime)
 					float hi = t;
 					for (int k = 0; k < BISECT_STEPS; k++) {
 						float mid = 0.5f * (lo + hi);
-						if (Field(ox + mid * dx, oy + mid * dy, oz + mid * dz) < THRESHOLD) {
+						if (Field(o + d * mid) < THRESHOLD) {
 							lo = mid;
 						} else {
 							hi = mid;
 						}
 					}
 					float thit = 0.5f * (lo + hi);
-					ShadeHit(x, y, ox + thit * dx, oy + thit * dy, oz + thit * dz);
+					ShadeHit(x, y, o + d * thit);
 					break;
 				}
 			}

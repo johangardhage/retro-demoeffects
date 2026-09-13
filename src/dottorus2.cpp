@@ -81,8 +81,8 @@ void DEMO_FixedUpdate(double timestep)
 
 			for (int y = 0; y < BLOB_SIZE; y++) {
 				for (int x = 0; x < BLOB_SIZE; x++) {
-					int px = vertex[p].sx + x;
-					int py = vertex[p].sy + y;
+					int px = vertex[p].spos.x + x;
+					int py = vertex[p].spos.y + y;
 
 					if (px < 0 || px >= RETRO_WIDTH || py < 0 || py >= RETRO_HEIGHT) {
 						continue;

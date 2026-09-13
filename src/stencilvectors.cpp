@@ -38,11 +38,10 @@ static void DrawStencilFace(Face *face, Model3D *model, int scroll)
 
 	for (int j = 0; j < face->vertices; j++) {
 		Vertex *vertex = &model->vertex[face->vertex[j]];
-		point[j].x = vertex->sx;
-		point[j].y = vertex->sy;
+		point[j].pos = vertex->spos;
 		point[j].q = vertex->q;
-		minx = MIN(minx, vertex->sx);
-		miny = MIN(miny, vertex->sy);
+		minx = MIN(minx, vertex->spos.x);
+		miny = MIN(miny, vertex->spos.y);
 	}
 
 	int ox = (int)minx + scroll;
@@ -59,8 +58,8 @@ static void DrawStencilFace(Face *face, Model3D *model, int scroll)
 			continue;
 		}
 
-		float dqdx = ((p1->q - p0->q) * (p2->y - p0->y) - (p2->q - p0->q) * (p1->y - p0->y)) / determinant;
-		float dqdy = ((p1->x - p0->x) * (p2->q - p0->q) - (p2->x - p0->x) * (p1->q - p0->q)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) {
@@ -70,7 +69,7 @@ static void DrawStencilFace(Face *face, Model3D *model, int scroll)
 			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
-			float q = p0->q + dqdx * (px - p0->x) + dqdy * (py - p0->y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			unsigned char *buffer = RETRO_FrameBuffer();
 			for (int x = xstart; x < xend; x++) {

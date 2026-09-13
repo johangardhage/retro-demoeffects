@@ -154,8 +154,7 @@ static void InitializeModels(void)
 	// The loader supplies UVs in its default 256-texel space. A larger map
 	// keeps magnified diagonal borders from turning into chunky stair steps.
 	for (int i = 0; i < Torus->uvs; i++) {
-		Torus->uv[i].u *= (float)TEXTURE_SIZE / RETRO_TEXMAP_SIZE;
-		Torus->uv[i].v *= (float)TEXTURE_SIZE / RETRO_TEXMAP_SIZE;
+		Torus->uv[i] = Torus->uv[i] * ((float)TEXTURE_SIZE / RETRO_TEXMAP_SIZE);
 	}
 	Torus->texmap = Texture;
 	Torus->texmapwidth = Torus->texmapheight = TEXTURE_SIZE;

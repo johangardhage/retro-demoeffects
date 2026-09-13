@@ -57,9 +57,9 @@ void DEMO_Render(double time, double deltatime)
 		RETRO_RotateVertex(&Ball[i], ax, ay, az);
 		RETRO_ProjectVertex(&Ball[i], PROJECTION_SCALE);
 
-		int x = Ball[i].sx;
-		int y = Ball[i].sy;
-		int z = -round(Ball[i].rz);
+		int x = Ball[i].spos.x;
+		int y = Ball[i].spos.y;
+		int z = -round(Ball[i].rpos.z);
 
 		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT && z > ZMIN) {
 			int color = (z - ZMIN) * (SHADES - 1) / (RADIUS - ZMIN);
@@ -89,9 +89,11 @@ void DEMO_Initialize(void)
 			float alpha = a * alphastep;
 			float beta = b * betastep;
 
-			Ball[NumPoints].x = RADIUS * cos(alpha) * sin(beta);
-			Ball[NumPoints].y = RADIUS * cos(beta);
-			Ball[NumPoints].z = RADIUS * sin(alpha) * sin(beta);
+			Ball[NumPoints].pos = {
+				RADIUS * (float)(cos(alpha) * sin(beta)),
+				RADIUS * (float)cos(beta),
+				RADIUS * (float)(sin(alpha) * sin(beta))
+			};
 			NumPoints++;
 		}
 	}

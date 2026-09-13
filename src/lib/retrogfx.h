@@ -24,22 +24,6 @@ enum RETRO_BLUR_MODE {
 	RETRO_BLUR_OVERFLOW
 };
 
-struct Point2D {
-	int x, y;
-};
-
-struct Point2Df {
-	float x, y;
-};
-
-struct Point3D {
-	int x, y, z;
-};
-
-struct Point3Df {
-	float x, y, z;
-};
-
 // C(step) = (step / steps) * C_loaded. Returns true when step >= steps.
 inline bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 {

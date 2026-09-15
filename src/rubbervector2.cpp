@@ -2,7 +2,7 @@
 // Rubber vector
 //
 // A filled cube bent by three travelling sine waves before the usual rotation
-// and perspective projection.  assets/rubbercubequads.obj is an ordinary unit
+// and perspective projection.  subcubequads.obj is an ordinary unit
 // cube whose six quads arrive already subdivided into grids, and the
 // subdivision is what matters: it lets the faces themselves bow in and out
 // instead of merely carrying the cube's eight corners along.  The result is the
@@ -71,7 +71,7 @@ void DEMO_Initialize(void)
 {
 	RETRO_CreateMattePalette();
 
-	Rubber = RETRO_Load3DModel("assets/rubbercubequads.obj");
+	Rubber = RETRO_Load3DModel("assets/subcubequads.obj");
 	Rubber->c = RETRO_PHONG_OFFSET;
 	Rubber->shades = RETRO_PHONG_SHADES;
 	for (int i = 0; i < Rubber->vertices; i++) RestVertex[i] = Rubber->vertex[i];

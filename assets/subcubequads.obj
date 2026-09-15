@@ -1,5 +1,5 @@
 #
-# rubbercubequads.obj - Subdivided unit cube, quad faces, no UVs
+# subcubequads.obj - Subdivided unit cube, quad faces, no UVs
 #
 # Geometry:   the unit cube of cubequads.obj, centred on the origin with corners
 #             at ±1 and wound outward the same way, each of its six quads
@@ -17,9 +17,10 @@
 #             a corner three. A demo that displaces a vertex by its rest
 #             position alone displaces them alike, so the cube stays watertight
 #             while every face is still a plain grid.
-# Used by:    rubbervector2.
+# Used by:    dotcube, dotcube2, dotshadedcube, dotshadedcube2, multicube,
+#             rubbervector, rubbervector2.
 #
-o rubbercubequads
+o subcubequads
 v -1.000000 1.000000 1.000000
 v -0.714286 1.000000 1.000000
 v -0.428571 1.000000 1.000000

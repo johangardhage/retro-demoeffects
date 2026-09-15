@@ -57,6 +57,16 @@ struct TriangleSpan {
 	float left, right;
 };
 
+// The pixels a drawer may write, half-open [x0, x1) by [y0, y1). Full
+// screen unless a caller such as RETRO_RenderModel passes a tighter one so
+// different regions can have their own renderer.
+struct ClipRect {
+	int x0 = 0;
+	int x1 = RETRO_WIDTH;
+	int y0 = 0;
+	int y1 = RETRO_HEIGHT;
+};
+
 //
 // Depth buffer, in q = 1 / depth
 //
@@ -149,8 +159,11 @@ inline void RETRO_GetEnvMapCoordinates(vec3 n, bool lightingmap, int envmapwidth
 // it as one: the factor of two cancels against the numerator, and so does the
 // sign, leaving the same gradient whichever way round the corners are listed.
 // Edges are half-open in y so a shared edge is drawn by exactly one triangle.
+// clip restricts the rows to a horizontal band; the full screen is the
+// default, and RETRO_RenderModel passes a tighter band when a demo gives
+// different rows their own renderer.
 //
-inline float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, const PolygonPoint *p2, TriangleSpan *span, int &ystart, int &yend)
+inline float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, const PolygonPoint *p2, TriangleSpan *span, int &ystart, int &yend, ClipRect clip = {})
 {
 	const float epsilon = 1.0e-12f;
 	float determinant = cross(p1->pos - p0->pos, p2->pos - p0->pos);
@@ -164,8 +177,8 @@ inline float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, 
 	float ymax = MAX(p0->pos.y, p1->pos.y);
 	ymax = MAX(ymax, p2->pos.y);
 
-	ystart = MAX((int)ceil(ymin - 0.5f), 0);
-	yend = MIN((int)ceil(ymax - 0.5f), RETRO_HEIGHT);
+	ystart = MAX((int)ceil(ymin - 0.5f), clip.y0);
+	yend = MIN((int)ceil(ymax - 0.5f), clip.y1);
 	if (ystart >= yend) return 0.0f;
 
 	for (int y = ystart; y < yend; y++) {
@@ -201,7 +214,7 @@ inline float RETRO_ScanTriangle(const PolygonPoint *p0, const PolygonPoint *p1, 
 // Flat shaded polygon
 // Split a convex polygon into a triangle fan and fill it with one color.
 //
-inline void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char color)
+inline void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char color, ClipRect clip = {})
 {
 	for (int triangle = 1; triangle < points - 1; triangle++) {
 		PolygonPoint *p0 = &point[0];
@@ -209,7 +222,7 @@ inline void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -217,8 +230,8 @@ inline void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
@@ -241,7 +254,7 @@ inline void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char
 // GlenzLighting::colormax) so a triple overlap fills a chosen shade instead
 // of walking into white. RETRO_COLORS - 1 is the unsigned char ceiling.
 //
-inline void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned char color, int colormax = RETRO_COLORS - 1)
+inline void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned char color, int colormax, ClipRect clip = {})
 {
 	colormax = CLAMP(colormax, 0, RETRO_COLORS);
 
@@ -251,13 +264,13 @@ inline void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned cha
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			for (int x = xstart; x < xend; x++) {
 				int pixel = RETRO.framebuffer[y * RETRO_WIDTH + x] + color;
 				RETRO.framebuffer[y * RETRO_WIDTH + x] = MIN(pixel, colormax);
@@ -271,7 +284,7 @@ inline void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned cha
 // Interpolate palette indices affinely in screen space to keep shared
 // triangle edges continuous.
 //
-inline void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points)
+inline void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points, ClipRect clip = {})
 {
 	for (int triangle = 1; triangle < points - 1; triangle++) {
 		PolygonPoint *p0 = &point[0];
@@ -279,7 +292,7 @@ inline void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points)
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		float dcdx = ((p1->c - p0->c) * (p2->pos.y - p0->pos.y) - (p2->c - p0->c) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -289,8 +302,8 @@ inline void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points)
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			float c = p0->c + dcdx * (px - p0->pos.x) + dcdy * (py - p0->pos.y);
@@ -318,7 +331,7 @@ inline void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points)
 //   I = ShadeFromLambert(max(N · L, 0))
 //   color = c + shades * I
 //
-inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight light)
+inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight light, ClipRect clip = {})
 {
 	const float epsilon = 1.0e-12f;
 
@@ -331,7 +344,7 @@ inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight l
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -341,8 +354,8 @@ inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight l
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
@@ -391,7 +404,7 @@ inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight l
 // it by whole multiples - wants those folded back rather than smeared into the
 // edge texel, and says so here.
 //
-inline void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, bool wrap = false)
+inline void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, bool wrap = false, ClipRect clip = {})
 {
 	if (texmap == NULL) return;
 
@@ -403,7 +416,7 @@ inline void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned ch
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
@@ -414,8 +427,8 @@ inline void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned ch
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
@@ -449,7 +462,7 @@ inline void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned ch
 // shading-palette one, so a texture that is a picture in its own palette is
 // drawn from all of it and not from its first thirty-two entries.
 //
-inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, const ShadeTable &shadetable, bool wrap = false)
+inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, const ShadeTable &shadetable, bool wrap = false, ClipRect clip = {})
 {
 	if (texmap == NULL || shadetable.table == NULL) return;
 
@@ -461,7 +474,7 @@ inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsi
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
@@ -474,8 +487,8 @@ inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsi
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
@@ -572,7 +585,7 @@ inline vec3 RETRO_BumpNormal(vec3 n, float dhx, float dhy, const TangentFrame &f
 // which a model sets for itself and which is not the table's own height. The
 // bump moves the shade by the difference it makes to the lighting, so it is
 // measured in the same steps the face was already shaded in.
-inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, int lambertshades, vec3 light, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, int lambertshades, vec3 light, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight, ClipRect clip = {})
 {
 	if (texmap == NULL || bumpmap == NULL || shadetable.table == NULL) return;
 
@@ -595,7 +608,7 @@ inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigne
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
@@ -610,8 +623,8 @@ inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigne
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
@@ -678,7 +691,7 @@ inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigne
 //
 // Texture coordinates are clamped, not wrapped: nothing tiles a map through
 // this drawer, and an env map has a rim rather than a seam.
-inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, const ShadeTable &shadetable, unsigned char shade, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight)
+inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, const ShadeTable &shadetable, unsigned char shade, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, ClipRect clip = {})
 {
 	if (texmap == NULL || shadetable.table == NULL) return;
 
@@ -691,7 +704,7 @@ inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsig
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
@@ -708,8 +721,8 @@ inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsig
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
@@ -754,7 +767,7 @@ inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsig
 //
 // Texture coordinates are clamped, not wrapped: nothing tiles a map through
 // this drawer, and an env map has a rim rather than a seam.
-inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight, ClipRect clip = {})
 {
 	if (texmap == NULL || envmap == NULL || bumpmap == NULL || shadetable.table == NULL) return;
 
@@ -774,7 +787,7 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, u
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
@@ -787,8 +800,8 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, u
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
@@ -848,7 +861,7 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, u
 // Lighting normals are perspective-correct and normalized at lookup;
 // reflection normals retain the original affine interpolation.
 //
-inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned char *envmap, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius)
+inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned char *envmap, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, ClipRect clip = {})
 {
 	if (envmap == NULL) return;
 
@@ -858,7 +871,7 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -868,8 +881,8 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
@@ -895,7 +908,7 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 // Bump-mapped environment polygon
 // Lighting and reflection maps are read at the tilted unit normal N'.
 //
-inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight)
+inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight, ClipRect clip = {})
 {
 	if (envmap == NULL || bumpmap == NULL) return;
 
@@ -915,7 +928,7 @@ inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigne
 		PolygonPoint *p2 = &point[triangle + 1];
 		TriangleSpan span[RETRO_HEIGHT];
 		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
 		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
@@ -928,8 +941,8 @@ inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigne
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);

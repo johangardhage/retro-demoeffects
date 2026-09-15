@@ -91,22 +91,6 @@ static UnitVector PathTangent(float t)
 	return RETRO_NormalizeUnitVector(forward);
 }
 
-// Two axes perpendicular to forward, matching the camera's own right/down
-// convention (retrocamera.h) so this doubles as both the camera's frame
-// (forward points toward the look-ahead target) and a ring's cross-section frame (forward =
-// PathTangent(along)). Takes forward itself rather than t, so a caller
-// that already has it - the camera does, for its own forward - is not
-// made to compute PathTangent twice for the same station. world-down is
-// only ever the reference used to build right - it does not appear in
-// the result, so the frame does not inherit a roll from it, only an
-// orientation.
-static void PathAxes(UnitVector forward, UnitVector *right, UnitVector *down)
-{
-	UnitVector worlddown = { { 0, 1, 0 } };
-	*right = RETRO_UnitCrossProduct(worlddown, forward);
-	*down = RETRO_UnitCrossProduct(forward, *right);
-}
-
 static void BuildBrick(void)
 {
 	// 4×4 Bayer. The triangle is mixed with the brick rather than filled
@@ -168,7 +152,7 @@ void DEMO_Render(double time, double deltatime)
 		? RETRO_NormalizeUnitVector({ target.pos - origin.pos })
 		: PathTangent(t);
 	UnitVector right, down;
-	PathAxes(forward, &right, &down);
+	RETRO_FrameFromForward(forward, &right, &down);
 
 	RETRO_Camera camera;
 	RETRO_PlaceCamera(&camera, origin.pos, right, down, forward);
@@ -183,7 +167,7 @@ void DEMO_Render(double time, double deltatime)
 		float along = (first + i) * (float)RING_SPACING;
 		Vertex center = Path(along);
 		UnitVector ringright, ringdown;
-		PathAxes(PathTangent(along), &ringright, &ringdown);
+		RETRO_FrameFromForward(PathTangent(along), &ringright, &ringdown);
 
 		// fog is 1 at the near ring, falling toward 0 at the far one. depth
 		// eases that into [FOG_KEEP, 1] by squaring (1 - fog) instead of fog

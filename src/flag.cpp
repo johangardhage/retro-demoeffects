@@ -35,10 +35,10 @@
 #define FLAG_HEIGHT 160
 #define FLAG_LEFT ((RETRO_WIDTH - FLAG_WIDTH) / 2)
 #define FLAG_TOP ((RETRO_HEIGHT - FLAG_HEIGHT) / 2)
-#define CROSS_LEFT (FLAG_WIDTH * 5 / 16)
-#define CROSS_RIGHT (FLAG_WIDTH * 7 / 16)
-#define CROSS_TOP (FLAG_HEIGHT * 4 / 10)
-#define CROSS_BOTTOM (FLAG_HEIGHT * 6 / 10)
+#define CROSS_LEFT (FLAG_WIDTH * 5.0f / 16)
+#define CROSS_RIGHT (FLAG_WIDTH * 7.0f / 16)
+#define CROSS_TOP (FLAG_HEIGHT * 4.0f / 10)
+#define CROSS_BOTTOM (FLAG_HEIGHT * 6.0f / 10)
 
 // A shade ramp per color of the flag, the two splitting the palette evenly so
 // that every entry carries a shade
@@ -215,7 +215,7 @@ void DEMO_Render(double time, double deltatime)
 			float occlusion = 1.0f / (1.0f + CLOTH_OCCLUSION * MAX(0.0f, curvex));
 
 			float intensity = MATERIAL_AMBIENT * occlusion + MATERIAL_DIFFUSE * lambert + MATERIAL_SPECULAR * specular;
-			int shade = (FLAG_COLORS - 1) * CLAMP01(intensity) + 0.5f;
+			int shade = (RETRO_COLORS / 2.0f - 1) * CLAMP01(intensity) + 0.5f;
 
 			// The cross is tested in (along, up): arc length along the cloth,
 			// sheared screen row across it. Not screen (x, y).

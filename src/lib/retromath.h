@@ -294,39 +294,56 @@ inline float RETRO_RotatedDot(UnitVector d1, UnitVector d2)
 }
 
 //
-// Face visibility and depth sort
+// Face visibility and index sort
 //
 
-// In-place quicksort of model->drawface[lo..hi] by descending face depth
-// (mean depth, far to near for the painter's algorithm). Pivot is the
-// middle element; not used outside RETRO_SortFaces, which is the only
-// caller that has a populated drawface list to sort.
-inline void RETRO_QuickSort(Model3D *model, int lo, int hi)
+// Farther face first: greater mean depth belongs before lesser, which is
+// the painter's order RETRO_SortFaces asks for.
+inline bool RETRO_FaceDepthBefore(int a, int b, Model3D *model)
+{
+	return model->face[a].depth > model->face[b].depth;
+}
+
+// Lower model-space x, then y, then z. Groups split-mesh copies of one
+// vertex so they sit adjacent in RETRO_RenderDotModel.
+inline bool RETRO_VertexPosBefore(int a, int b, Model3D *model)
+{
+	vec3 pa = model->vertex[a].pos, pb = model->vertex[b].pos;
+	if (pa.x != pb.x) return pa.x < pb.x;
+	if (pa.y != pb.y) return pa.y < pb.y;
+	return pa.z < pb.z;
+}
+
+// In-place quicksort of order[lo..hi]. Pivot is the middle element.
+// before(a, b, model) is the order: true means a belongs before b.
+// RETRO_SortFaces passes drawface and RETRO_FaceDepthBefore;
+// RETRO_RenderDotModel passes a vertex index list and RETRO_VertexPosBefore.
+inline void RETRO_QuickSort(int *order, int lo, int hi, bool (*before)(int a, int b, Model3D *model), Model3D *model)
 {
 	int i = lo;
 	int j = hi;
-	float depth = model->face[model->drawface[(lo + hi) / 2]].depth;
+	int pivot = order[(lo + hi) / 2];
 
 	while (i <= j) {
-		while (model->face[model->drawface[i]].depth > depth) {
+		while (before(order[i], pivot, model)) {
 			i++;
 		}
-		while (model->face[model->drawface[j]].depth < depth) {
+		while (before(pivot, order[j], model)) {
 			j--;
 		}
 
 		if (i <= j) {
-			SWAP(model->drawface[i], model->drawface[j]);
+			SWAP(order[i], order[j]);
 			i++;
 			j--;
 		}
 	}
 
 	if (i < hi) {
-		RETRO_QuickSort(model, i, hi);
+		RETRO_QuickSort(order, i, hi, before, model);
 	}
 	if (lo < j) {
-		RETRO_QuickSort(model, lo, j);
+		RETRO_QuickSort(order, lo, j, before, model);
 	}
 }
 
@@ -382,7 +399,7 @@ inline void RETRO_SortFaces(bool backfaces = false, Model3D *model = NULL)
 		}
 	}
 	if (model->drawfaces > 1) {
-		RETRO_QuickSort(model, 0, model->drawfaces - 1);
+		RETRO_QuickSort(model->drawface, 0, model->drawfaces - 1, RETRO_FaceDepthBefore, model);
 	}
 }
 

@@ -1,29 +1,28 @@
 //
-// Classic Amiga rubber vector
+// Jelly cube
 //
-// The cube itself never bends.  One rigid cube is rendered per simulation step
-// and each of its scanlines is packed into a few colored spans.  Old scanlines
-// are retained in a ring buffer, then the displayed picture is assembled one
-// line at a time: a travelling sine chooses how old the source line is.
-// Straight polygon edges therefore appear curved even though every source
-// image contains an ordinary six-face cube.
+// A subdivided cube that squashes as a volume rather than bending as a
+// mesh: rubbervector2.cpp bends it with three travelling sine waves,
+// rubbervector3.cpp twists a Glenz-shaded column of triangles, and
+// rubbervector4.cpp gets the classic Amiga look without deforming a mesh
+// at all, by scanline-multiplexing a ring of rigid rendered frames. This
+// one scales. The three axes take a pulse 120° apart
 //
-// The ring is a number of steps deep rather than a number of seconds, so the
-// cubes are produced in DEMO_FixedUpdate at the fixed simulation rate.  Producing
-// one per displayed frame instead would hand the amount of bend to the refresh
-// rate: the same 24 copies span 0.4s at 60Hz and 0.17s at 144Hz, so the cube
-// shreds into disconnected slabs on a slow display and flattens toward a rigid
-// cube on a fast one.
+//   s_x = 1 + A sin(φ)
+//   s_y = 1 + A sin(φ + 2π/3)
+//   s_z = 1 + A sin(φ + 4π/3)
 //
-// A face takes the ramp of the axis it faces.  Opposite faces share a ramp and
-// a convex cube never shows both of a pair, so the three faces on screen are
-// always three different colors and the multiplexing bends three distinct
-// bands rather than one silhouette.  Every ramp is matte and starts at black,
-// which disposes of the flat renderer's lower clamp at model->c: a face turned
-// away from the light goes dark rather than picking up the first ramp's hue.
+// so the box is always stretching on one axis while it flattens on the
+// others, the way a cube of jelly does under a tap. A travelling bulge
+// then rides the rest y
 //
-// This reproduces the characteristic scanline-multiplexed Amiga effect rather
-// than deforming a subdivided mesh as rubbervector2.cpp does.
+//   b = 1 + B sin(k y_rest + 2φ)
+//
+// and scales the two horizontal axes, so a wave of fatness walks the
+// cube while it pulses. subcubequads.obj is already a grid
+// per face; the bulge would be invisible on eight corners. Face normals
+// are taken again after the scale, because the rest normals describe
+// the cube at rest. Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -32,147 +31,52 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define RUBBER_COPIES 24     // retained cube images, one per simulation step: 0.4s of rotation
-#define ROTATION_SPEED 1.1f  // cube rotation in radians per second
-#define RUBBER_SPEED 2.2f    // vertical selection wave speed
-#define RUBBER_WAVES 1.75f   // waves over the height of the screen
-#define MAX_LINE_SPANS 6     // a projected convex cube normally needs at most three
-#define RUBBER_RAMP 1        // where the first ramp starts, past the background
-#define RUBBER_SHADES ((RETRO_COLORS - RUBBER_RAMP) / 3) // palette entries a face color's ramp
-                             // covers, the three sharing everything past the background
+#define ROTATION_SPEED 0.85f // radians a second, about the middle axis
+#define ROTATION_SPREAD 0.28f // the other two turn this much slower and faster
+#define PULSE_SPEED 2.1f // radians of the squash per second
+#define PULSE_AMOUNT 0.16f // how far an axis stretches from 1
+#define BULGE_AMOUNT 0.12f // extra scale the travelling wave adds
+#define BULGE_WAVE 1.8f // radians of that wave per model unit of rest y
 
-static Model3D *Cube;
-
-struct RubberSpan {
-	unsigned short left;
-	unsigned short right;
-	unsigned char color;
-};
-
-struct RubberLine {
-	unsigned char spans;
-	RubberSpan span[MAX_LINE_SPANS];
-};
-
-static RubberLine LineHistory[RUBBER_COPIES][RETRO_HEIGHT];
-static int HistoryHead;
-
-static void PackCubeImage(RubberLine *image, const unsigned char *source)
-{
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		RubberLine &line = image[y];
-		line.spans = 0;
-		int x = 0;
-
-		while (x < RETRO_WIDTH) {
-			unsigned char color = source[y * RETRO_WIDTH + x];
-			int left = x++;
-			while (x < RETRO_WIDTH && source[y * RETRO_WIDTH + x] == color) x++;
-
-			// Background is implicit.  A convex cube produces only a handful of
-			// nonzero runs even where several differently shaded faces meet.
-			if (color != 0 && line.spans < MAX_LINE_SPANS) {
-				RubberSpan &span = line.span[line.spans++];
-				span.left = left;
-				span.right = x;
-				span.color = color;
-			}
-		}
-	}
-}
-
-//
-// Render the cube at one pose and retain its compact scanline spans rather than
-// the complete chunky image
-//
-// The framebuffer is scratch space for this: a step hands its cube to the ring
-// and nothing else, and DEMO_Render is given a cleared framebuffer, so none of
-// what is drawn here is ever displayed.
-//
-static void RetainCubeImage(float ax, float ay, float az, RubberLine *image)
-{
-	RETRO_Clear();
-	RETRO_RotateModel(ax, ay, az, Cube);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Cube);
-	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT, Cube);
-	PackCubeImage(image, RETRO_FrameBuffer());
-}
-
-//
-// Retain one rigid cube image per fixed step, so the ring holds the same
-// stretch of the cube's rotation whatever the display is doing
-//
-void DEMO_FixedUpdate(double timestep)
-{
-	static float ax, ay, az;
-	ax = fmod(ax + timestep * ROTATION_SPEED, 2 * M_PI);
-	ay = fmod(ay + timestep * ROTATION_SPEED * 1.17f, 2 * M_PI);
-	az = fmod(az + timestep * ROTATION_SPEED * 0.61f, 2 * M_PI);
-
-	// The head is the newest image rather than the next slot to fill, so it
-	// stands still between steps and DEMO_Render can read the ring on a frame
-	// that earned no step at all
-	HistoryHead = (HistoryHead + 1) % RUBBER_COPIES;
-
-	RetainCubeImage(ax, ay, az, LineHistory[HistoryHead]);
-}
+static Model3D *Jelly;
+static Vertex RestVertex[RETRO_MAX_VERTICES];
 
 void DEMO_Render(double time, double deltatime)
 {
-	// The selection wave runs on displayed time, so it stays smooth on a fast
-	// display even though the images it selects between arrive at the step rate
-	float phase = fmod(time * RUBBER_SPEED, 2 * M_PI);
+	// Calculate phase
+	float ax = fmod(time * ROTATION_SPEED * (1 - ROTATION_SPREAD), 2 * M_PI);
+	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(time * ROTATION_SPEED * (1 + ROTATION_SPREAD), 2 * M_PI);
+	float pulse = fmod(time * PULSE_SPEED, 2 * M_PI);
+	float bulge = fmod(time * PULSE_SPEED * 2, 2 * M_PI);
 
-	unsigned char *buffer = RETRO_FrameBuffer();
+	float sx = 1 + PULSE_AMOUNT * sin(pulse);
+	float sy = 1 + PULSE_AMOUNT * sin(pulse + 2 * M_PI / 3);
+	float sz = 1 + PULSE_AMOUNT * sin(pulse + 4 * M_PI / 3);
 
-	// Multiplex the retained copies by scanline.  Quantizing the sine to an
-	// image age is intentional: every line comes wholly from one retained cube
-	// image, with age zero selecting the newest.
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		float wave = phase + y * RUBBER_WAVES * 2.0f * M_PI / RETRO_HEIGHT;
-		float agechoice = (sin(wave) + 1.0f) * 0.5f;
-		int age = CLAMP(agechoice * RUBBER_COPIES, 0, RUBBER_COPIES);
-		int source = WRAP(HistoryHead - age, RUBBER_COPIES);
-		const RubberLine &line = LineHistory[source][y];
-		for (int i = 0; i < line.spans; i++) {
-			const RubberSpan &span = line.span[i];
-			memset(buffer + y * RETRO_WIDTH + span.left, span.color, span.right - span.left);
-		}
+	for (int i = 0; i < Jelly->vertices; i++) {
+		const vec3 &v = RestVertex[i].pos;
+		float b = 1 + BULGE_AMOUNT * (float)sin(BULGE_WAVE * v.y + bulge);
+		Jelly->vertex[i].pos = { v.x * sx * b, v.y * sy, v.z * sz * b };
 	}
+
+	RETRO_InitializeFaceNormals(Jelly);
+
+	RETRO_RotateModel(ax, ay, az, Jelly);
+	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Jelly);
+	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT, Jelly);
 }
 
 void DEMO_Initialize(void)
 {
-	// Init palette.  One ramp per axis of the cube, each out of the black it sits
-	// against.  Matte, for the reason RETRO_CreateMattePalette gives: a flat lit
-	// face has one normal for all of it, so a specular highlight would flash the
-	// whole face at once
-	RETRO_SetColor(0, RETRO_BLACK);
-	RETRO_CreatePhongPalette(RUBBER_RAMP, RUBBER_RAMP + RUBBER_SHADES, RETRO_DEEPPINK, 0.0);
-	RETRO_CreatePhongPalette(RUBBER_RAMP + RUBBER_SHADES, RUBBER_RAMP + 2 * RUBBER_SHADES, RETRO_AZURE, 0.0);
-	RETRO_CreatePhongPalette(RUBBER_RAMP + 2 * RUBBER_SHADES, RUBBER_RAMP + 3 * RUBBER_SHADES, RETRO_GOLD, 0.0);
+	RETRO_CreateMattePalette(RETRO_SPRINGGREEN);
 
-	Cube = RETRO_Load3DModel("assets/cubequads.obj");
-	Cube->c = RUBBER_RAMP;
-	Cube->shades = RUBBER_SHADES;
-
-	// The ramp a face is shaded in is the one of the axis it faces
-	for (int i = 0; i < Cube->faces; i++) {
-		vec3 n = abs(Cube->face[i].facenormal.dir);
-		float x = n.x;
-		float y = n.y;
-		float z = n.z;
-		Cube->face[i].c = (x > y && x > z ? 0 : (y > z ? 1 : 2)) * RUBBER_SHADES;
+	Jelly = RETRO_Load3DModel("assets/subcubequads.obj");
+	Jelly->c = RETRO_PHONG_OFFSET;
+	Jelly->shades = RETRO_PHONG_SHADES;
+	for (int i = 0; i < Jelly->vertices; i++) {
+		RestVertex[i] = Jelly->vertex[i];
 	}
 
-	// Head on, as the other flat shaded cubes have it.  The three faces on screen
-	// are already told apart by their ramps, so the light is left to shade them
-	// rather than to separate them
 	RETRO_InitializeLightSource(0, 0, -1);
-
-	// Fill the ring with the cube at rest, so the first displayed frame has a
-	// full history to multiplex rather than a black trail.  From the first step
-	// onward each slot is replaced naturally as the ring advances.
-	RetainCubeImage(0, 0, 0, LineHistory[0]);
-	for (int i = 1; i < RUBBER_COPIES; i++) memcpy(LineHistory[i], LineHistory[0], sizeof(LineHistory[i]));
 }

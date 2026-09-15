@@ -10,6 +10,8 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define CHECKER_LAYERS 24
 #define CHECKER_SPACING 0.72
@@ -21,57 +23,61 @@
 // together on the curve instead of swinging wildly from one to the next.
 // The camera is still shedding its initial exponential rush over these
 // first boards, so raw amplitude would cover the same lateral distance in
-// far less time than later boards get; ramping it in keeps the early swings
-// gentle instead of snapping hard right after the first board is passed.
-static double WeaveEnvelope(double board)
+// far less time than later boards get; envelope ramps that in over the
+// first ten boards, keeping the early swings gentle instead of snapping
+// hard right after the first board is passed. X and Y share that envelope
+// and this one board argument, so the weave is not computed twice over for
+// what is really one point on the curve.
+static vec2 BoardOffset(double board)
 {
-	double t = board / 10.0;
-	t = fmax(0.0, fmin(1.0, t));
-	return t * t * (3.0 - 2.0 * t);
+	double t = CLAMP01(board / 10.0);
+	double envelope = t * t * (3.0 - 2.0 * t);
+	vec2 offset = {
+		(float)(envelope * (22.0 * sin(board * 0.252) + 9.0 * sin(board * 0.583 + 1.0))),
+		(float)(envelope * (16.0 * sin(board * 0.209 + 0.5) + 7.0 * sin(board * 0.482)))
+	};
+	return offset;
 }
 
-static double BoardOffsetX(double board)
+// The curve between p1 and p2, at t going from 0 to 1; p0 and p3 are only
+// there to hand it a tangent at each end, matching the direction between
+// that end's own neighbors: (p2-p0)/2 at p1, (p3-p1)/2 at p2. Matching
+// tangents this way, rather than easing each segment to a dead stop with a
+// smoothstep, is what keeps velocity continuous across board boundaries -
+// the flight does not stutter once per board.
+//
+// This is the textbook Catmull-Rom basis matrix multiplied out into plain
+// terms, so no matrix type is needed for four control points:
+//
+//   [ 0   2   0   0]
+//   [-1   0   1   0]  *  [p0 p1 p2 p3]^T  *  [1 t t^2 t^3]^T  /  2
+//   [ 2  -5   4  -1]
+//   [-1   3  -3   1]
+static vec2 CatmullRom(vec2 p0, vec2 p1, vec2 p2, vec2 p3, float t)
 {
-	return WeaveEnvelope(board) * (22.0 * sin(board * 0.252) + 9.0 * sin(board * 0.583 + 1.0));
-}
-
-static double BoardOffsetY(double board)
-{
-	return WeaveEnvelope(board) * (16.0 * sin(board * 0.209 + 0.5) + 7.0 * sin(board * 0.482));
-}
-
-// Catmull-Rom keeps velocity continuous across board boundaries, unlike a
-// per-segment smoothstep, which eases to a dead stop at every waypoint and
-// makes the flight look like it stutters once per board.
-static double CatmullRom(double p0, double p1, double p2, double p3, double t)
-{
-	double t2 = t * t, t3 = t2 * t;
-	return 0.5 * (2.0 * p1 + (p2 - p0) * t
-		+ (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2
-		+ (3.0 * p1 - p0 - 3.0 * p2 + p3) * t3);
+	float t2 = t * t, t3 = t2 * t;
+	vec2 point = (p1 * 2.0f + (p2 - p0) * t
+		+ (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * t2
+		+ (p1 * 3.0f - p0 - p2 * 3.0f + p3) * t3) * 0.5f;
+	return point;
 }
 
 // Threads a smooth path through the per-board offsets, indexed by absolute
 // world depth. Control points before the first board are clamped to that
 // board's own offset instead of clamping the progress along the curve, so
 // the approach eases up with zero velocity rather than kinking the instant
-// the freeze lifts.
-static double PathX(double worldz)
+// the freeze lifts. X and Y ride the same board index and blend fraction,
+// so they are solved together rather than as two otherwise-identical paths.
+static vec2 Path(double worldz)
 {
 	double board = worldz / CHECKER_SPACING - 1.0;
 	double board0 = floor(board);
-	double frac = board - board0;
-	return CatmullRom(BoardOffsetX(fmax(board0 - 1.0, 0.0)), BoardOffsetX(fmax(board0, 0.0)),
-		BoardOffsetX(fmax(board0 + 1.0, 0.0)), BoardOffsetX(fmax(board0 + 2.0, 0.0)), frac);
-}
-
-static double PathY(double worldz)
-{
-	double board = worldz / CHECKER_SPACING - 1.0;
-	double board0 = floor(board);
-	double frac = board - board0;
-	return CatmullRom(BoardOffsetY(fmax(board0 - 1.0, 0.0)), BoardOffsetY(fmax(board0, 0.0)),
-		BoardOffsetY(fmax(board0 + 1.0, 0.0)), BoardOffsetY(fmax(board0 + 2.0, 0.0)), frac);
+	float frac = board - board0;
+	vec2 p0 = BoardOffset(fmax(board0 - 1.0, 0.0));
+	vec2 p1 = BoardOffset(fmax(board0, 0.0));
+	vec2 p2 = BoardOffset(fmax(board0 + 1.0, 0.0));
+	vec2 p3 = BoardOffset(fmax(board0 + 2.0, 0.0));
+	return CatmullRom(p0, p1, p2, p3, frac);
 }
 
 void DEMO_Render(double time, double deltatime)
@@ -82,15 +88,13 @@ void DEMO_Render(double time, double deltatime)
 	double cameraZ = travel - 9.0 * exp(-time * 0.55);
 	double nearest = CHECKER_SPACING - cameraZ;
 	if (nearest < 0.0) nearest += CHECKER_SPACING * ceil(-nearest / CHECKER_SPACING);
-	double cameraX = PathX(cameraZ);
-	double cameraY = PathY(cameraZ);
+	vec2 cameraPos = Path(cameraZ);
 	unsigned char *dest = RETRO_FrameBuffer();
 
-	// Muted colors from the reference, interpolated over the flight.
-	const int colors[][3] = {
-		{211, 146, 132}, {242, 240, 209}, {27, 123, 166},
-		{191, 119, 43}, {131, 133, 96}, {21, 120, 166},
-		{112, 142, 139}, {185, 114, 49}
+	const RETRO_Palette colors[] = {
+		RETRO_DARKSALMON, RETRO_ANTIQUEWHITE, RETRO_LIGHTSEAGREEN,
+		RETRO_CHOCOLATE, RETRO_OLIVEDRAB, RETRO_ROYALBLUE,
+		RETRO_CADETBLUE, RETRO_PERU
 	};
 	double colorphase = fmod(time / 3.0, 8.0);
 	int first = (int)colorphase;
@@ -100,12 +104,11 @@ void DEMO_Render(double time, double deltatime)
 	for (int layer = 0; layer < CHECKER_LAYERS; ++layer) {
 		double depth = layer * CHECKER_SPACING + fmin(nearest, CHECKER_SPACING);
 		double shade = exp(-depth * 0.16);
-		int rgb[3];
-		for (int c = 0; c < 3; ++c) {
-			double base = colors[first][c] * (1.0 - blend) + colors[next][c] * blend;
-			rgb[c] = (int)(base * shade);
-		}
-		RETRO_SetColor(layer + 1, rgb[0], rgb[1], rgb[2]);
+		RETRO_Palette color;
+		color.r = (unsigned char)((colors[first].r * (1.0 - blend) + colors[next].r * blend) * shade);
+		color.g = (unsigned char)((colors[first].g * (1.0 - blend) + colors[next].g * blend) * shade);
+		color.b = (unsigned char)((colors[first].b * (1.0 - blend) + colors[next].b * blend) * shade);
+		RETRO_SetColor(layer + 1, color);
 	}
 
 	// Paint far to near. Each board is offset by its own point on the weave
@@ -114,14 +117,13 @@ void DEMO_Render(double time, double deltatime)
 	for (int layer = CHECKER_LAYERS - 1; layer >= 0; --layer) {
 		double z = 0.001 + nearest + layer * CHECKER_SPACING;
 		double inversecell = z / CHECKER_FOCAL;
-		double offsetX = PathX(cameraZ + z) - cameraX;
-		double offsetY = PathY(cameraZ + z) - cameraY;
+		vec2 offset = Path(cameraZ + z) - cameraPos;
 		bool columns[RETRO_WIDTH];
 		for (int x = 0; x < RETRO_WIDTH; ++x) {
-			columns[x] = ((int)floor((x + 0.5 - RETRO_WIDTH * 0.5 - offsetX) * inversecell + 0.5) & 1) != 0;
+			columns[x] = ((int)floor((x + 0.5 - RETRO_WIDTH * 0.5 - offset.x) * inversecell + 0.5) & 1) != 0;
 		}
 		for (int y = 0; y < RETRO_HEIGHT; ++y) {
-			bool row = ((int)floor((y + 0.5 - RETRO_HEIGHT * 0.5 - offsetY) * inversecell + 0.5) & 1) != 0;
+			bool row = ((int)floor((y + 0.5 - RETRO_HEIGHT * 0.5 - offset.y) * inversecell + 0.5) & 1) != 0;
 			for (int x = 0; x < RETRO_WIDTH; ++x) {
 				if (columns[x] != row) dest[y * RETRO_WIDTH + x] = layer + 1;
 			}

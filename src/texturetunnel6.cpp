@@ -57,13 +57,6 @@ static UnitVector PathTangent(float t)
 	return RETRO_NormalizeUnitVector(forward);
 }
 
-static void PathAxes(UnitVector forward, UnitVector *right, UnitVector *down)
-{
-	UnitVector worlddown = { { 0, 1, 0 } };
-	*right = RETRO_UnitCrossProduct(worlddown, forward);
-	*down = RETRO_UnitCrossProduct(forward, *right);
-}
-
 static void BuildBrick(void)
 {
 	// A dark triangle on an orange tile. Dither after projection so the
@@ -100,7 +93,7 @@ static void BuildTunnel(void)
 	Vertex origin = Path(t);
 	UnitVector forward = PathTangent(t);
 	UnitVector right, down;
-	PathAxes(forward, &right, &down);
+	RETRO_FrameFromForward(forward, &right, &down);
 
 	RETRO_Camera camera;
 	RETRO_PlaceCamera(&camera, origin.pos, right, down, forward);
@@ -112,7 +105,7 @@ static void BuildTunnel(void)
 		float along = (first + i) * (float)RING_SPACING;
 		Vertex center = Path(along);
 		UnitVector ringright, ringdown;
-		PathAxes(PathTangent(along), &ringright, &ringdown);
+		RETRO_FrameFromForward(PathTangent(along), &ringright, &ringdown);
 
 		float fog = 1.0f - (along - t) / far;
 		float ease = 1.0f - fog;

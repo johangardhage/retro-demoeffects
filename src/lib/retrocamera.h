@@ -9,6 +9,7 @@
 
 #include "retro.h"
 #include "retromodel.h"
+#include "retromath.h"
 
 // A pinhole's worth of focal length, decoupled from any near-plane offset.
 // RETRO_PROJECTION_EYEDISTANCE (retromath.h) is not reused here: it is half
@@ -131,6 +132,22 @@ inline void RETRO_ViewUnitVector(UnitVector *direction, const RETRO_Camera *came
 	direction->rdir.x = dot(direction->dir, camera->right);
 	direction->rdir.y = dot(direction->dir, camera->down);
 	direction->rdir.z = dot(direction->dir, camera->forward);
+}
+
+// Two axes perpendicular to forward, in the camera's own right/down
+// convention: right is world-down cross forward, down is forward cross
+// right. Building a ring's cross-section frame from its own tangent, or a
+// camera's frame from its look direction, is the same operation, so a
+// caller that already has forward - the camera does, for its own forward -
+// is not made to recompute it for a second frame at the same station.
+// world-down is only ever the reference used to build right - it does not
+// appear in the result, so the frame does not inherit a roll from it, only
+// an orientation.
+inline void RETRO_FrameFromForward(UnitVector forward, UnitVector *right, UnitVector *down)
+{
+	UnitVector worlddown = { { 0, 1, 0 } };
+	*right = RETRO_UnitCrossProduct(worlddown, forward);
+	*down = RETRO_UnitCrossProduct(forward, *right);
 }
 
 // Pinhole projection of an already camera-relative vertex (see

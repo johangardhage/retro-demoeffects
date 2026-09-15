@@ -48,7 +48,7 @@ inline void RETRO_InitializeLightSource(float x, float y, float z)
 	RETRO_Render.lightsource = RETRO_LightSource(x, y, z);
 }
 
-inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible = false)
+inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible = false, ClipRect clip = {})
 {
 	// How far past the silhouette, in the same units as facing below, a
 	// vertex fades in over instead of popping straight to full color. The
@@ -81,7 +81,10 @@ inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible =
 	// A split mesh stores each hard edge once per face. Those copies share a
 	// position, and the side-face one is unlit under a headlight, so stamping
 	// both would leave the floor on the lit rim. Among copies that would
-	// draw, keep the more-facing one.
+	// draw, keep the more-facing one. Sharing a position groups them under a
+	// lexicographic sort, so the copies of one vertex end up adjacent and
+	// the search for them is O(n log n) rather than every vertex against
+	// every other.
 	bool drop[RETRO_MAX_VERTICES];
 	float lambert[RETRO_MAX_VERTICES];
 	if (shaded) {
@@ -89,23 +92,31 @@ inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible =
 			drop[i] = false;
 			lambert[i] = RETRO_RotatedDot(model->normal[i], RETRO_Render.lightsource);
 		}
+
+		int order[RETRO_MAX_VERTICES];
+		int eligible = 0;
 		for (int i = 0; i < model->vertices; i++) {
 			if ((onlyvisible && !visible[i]) || model->vertex[i].q <= 0.0f) {
 				continue;
 			}
-			for (int j = i + 1; j < model->vertices; j++) {
-				if ((onlyvisible && !visible[j]) || model->vertex[j].q <= 0.0f) {
-					continue;
-				}
-				if (model->vertex[i].pos != model->vertex[j].pos) {
-					continue;
-				}
-				if (lambert[j] > lambert[i]) {
-					drop[i] = true;
+			order[eligible++] = i;
+		}
+		if (eligible > 1) {
+			RETRO_QuickSort(order, 0, eligible - 1, RETRO_VertexPosBefore, model);
+		}
+		for (int k = 0; k < eligible; ) {
+			int best = order[k];
+			int next = k + 1;
+			while (next < eligible && model->vertex[order[next]].pos == model->vertex[best].pos) {
+				if (lambert[order[next]] > lambert[best]) {
+					drop[best] = true;
+					best = order[next];
 				} else {
-					drop[j] = true;
+					drop[order[next]] = true;
 				}
+				next++;
 			}
+			k = next;
 		}
 	}
 
@@ -142,12 +153,16 @@ inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible =
 				// from the pop this was meant to soften.
 				color = lround(model->c + fade * (color - model->c));
 			}
-			RETRO_PutPixel(model->vertex[i].spos.x, model->vertex[i].spos.y, color);
+			int x = (int)model->vertex[i].spos.x;
+			int y = (int)model->vertex[i].spos.y;
+			if (x >= clip.x0 && x < clip.x1 && y >= clip.y0 && y < clip.y1) {
+				RETRO_PutPixel(x, y, color);
+			}
 		}
 	}
 }
 
-inline void RETRO_RenderWireModel(Model3D *model, bool hiddenlines, bool fire)
+inline void RETRO_RenderWireModel(Model3D *model, bool hiddenlines, bool fire, ClipRect clip = {})
 {
 	// Hidden lines means only the front faces are drawn; without it the back
 	// ones are drawn too, so they go into the list as well.
@@ -161,9 +176,9 @@ inline void RETRO_RenderWireModel(Model3D *model, bool hiddenlines, bool fire)
 			Vertex *p1 = &model->vertex[face->vertex[j]];
 			Vertex *p2 = &model->vertex[face->vertex[(j + 1) % face->vertices]];
 			if (fire) {
-				RETRO_DrawFireLine(p1->spos.x, p1->spos.y, p2->spos.x, p2->spos.y, color, model->shades);
+				RETRO_DrawFireLine(p1->spos.x, p1->spos.y, p2->spos.x, p2->spos.y, color, model->shades, { clip.x0, clip.x1, clip.y0, clip.y1 });
 			} else {
-				RETRO_DrawLine(p1->spos.x, p1->spos.y, p2->spos.x, p2->spos.y, color);
+				RETRO_DrawLine(p1->spos.x, p1->spos.y, p2->spos.x, p2->spos.y, color, { clip.x0, clip.x1, clip.y0, clip.y1 });
 			}
 		}
 	}
@@ -180,7 +195,7 @@ inline float RETRO_FaceSide(Face *face)
 	return face->frontfacing ? 1.0f : -1.0f;
 }
 
-inline void RETRO_RenderFlatModel(Model3D *model, bool shaded)
+inline void RETRO_RenderFlatModel(Model3D *model, bool shaded, ClipRect clip = {})
 {
 	RETRO_SortFaces(model->twosided, model);
 
@@ -200,11 +215,11 @@ inline void RETRO_RenderFlatModel(Model3D *model, bool shaded)
 			int cend = model->c + face->c + model->shades;
 			color = CLAMP(model->c + face->c + RETRO_ShadeFromLambert(lambert) * model->shades, cstart, cend);
 		}
-		RETRO_DrawFlatPolygon(point, face->vertices, color);
+		RETRO_DrawFlatPolygon(point, face->vertices, color, clip);
 	}
 }
 
-inline void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
+inline void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype, ClipRect clip = {})
 {
 	RETRO_SortFaces(true, model);
 
@@ -240,11 +255,11 @@ inline void RETRO_RenderGlenzModel(Model3D *model, RETRO_POLY_SHADE shadertype)
 			if (offset == 0) continue;
 			color = model->c + offset;
 		}
-		RETRO_DrawGlenzPolygon(point, face->vertices, color, lighting.colormax);
+		RETRO_DrawGlenzPolygon(point, face->vertices, color, lighting.colormax, clip);
 	}
 }
 
-inline void RETRO_RenderGouraudModel(Model3D *model)
+inline void RETRO_RenderGouraudModel(Model3D *model, ClipRect clip = {})
 {
 	RETRO_SortFaces(model->twosided, model);
 
@@ -261,11 +276,11 @@ inline void RETRO_RenderGouraudModel(Model3D *model)
 			float lambert = side * RETRO_RotatedDot(model->normal[face->vertexnormal[j]], RETRO_Render.lightsource);
 			point[j].c = CLAMP(model->c + face->c + RETRO_ShadeFromLambert(lambert) * model->shades, cstart, cend);
 		}
-		RETRO_DrawGouraudPolygon(point, face->vertices);
+		RETRO_DrawGouraudPolygon(point, face->vertices, clip);
 	}
 }
 
-inline void RETRO_RenderPhongModel(Model3D *model)
+inline void RETRO_RenderPhongModel(Model3D *model, ClipRect clip = {})
 {
 	RETRO_SortFaces(model->twosided, model);
 
@@ -290,11 +305,11 @@ inline void RETRO_RenderPhongModel(Model3D *model)
 			UnitVector *normal = &model->normal[face->vertexnormal[j]];
 			point[j].n = normal->rdir * normalscale;
 		}
-		RETRO_DrawPhongPolygon(point, face->vertices, light);
+		RETRO_DrawPhongPolygon(point, face->vertices, light, clip);
 	}
 }
 
-inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype)
+inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype, ClipRect clip = {})
 {
 	RETRO_SortFaces(model->twosided, model);
 	// The model's table is the shading-palette shape: a texture drawn from a
@@ -339,7 +354,7 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 			}
 		}
 		if (shadertype == RETRO_SHADE_NONE) {
-			RETRO_DrawTexMapPolygon(point, face->vertices, model->texmap, model->texmapwidth, model->texmapheight);
+			RETRO_DrawTexMapPolygon(point, face->vertices, model->texmap, model->texmapwidth, model->texmapheight, false, clip);
 		} else if (shadertype == RETRO_SHADE_TABLE) {
 			// Texture mapped through the shade table at a fixed light level, with
 			// no light source involved. face->c offsets it per face, so a model
@@ -354,9 +369,9 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 					point[j].c = shade;
 					point[j].n = face->facenormal.rdir * side;
 				}
-				RETRO_DrawTexMapBumpPolygon(point, face->vertices, model->texmap, model->bumpmap, model->bumpgrazing, shadetable, shades, light, frame, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight);
+				RETRO_DrawTexMapBumpPolygon(point, face->vertices, model->texmap, model->bumpmap, model->bumpgrazing, shadetable, shades, light, frame, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight, clip);
 			} else {
-				RETRO_DrawTexMapEnvMapPolygon(point, face->vertices, model->texmap, model->envmap, shadetable, shade, false, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight);
+				RETRO_DrawTexMapEnvMapPolygon(point, face->vertices, model->texmap, model->envmap, shadetable, shade, false, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, clip);
 			}
 		} else if (shadertype == RETRO_SHADE_FLAT) {
 			int shade = model->c + face->c;
@@ -369,9 +384,9 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 					point[j].c = shade;
 					point[j].n = face->facenormal.rdir * side;
 				}
-				RETRO_DrawTexMapBumpPolygon(point, face->vertices, model->texmap, model->bumpmap, model->bumpgrazing, shadetable, shades, light, frame, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight);
+				RETRO_DrawTexMapBumpPolygon(point, face->vertices, model->texmap, model->bumpmap, model->bumpgrazing, shadetable, shades, light, frame, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight, clip);
 			} else {
-				RETRO_DrawTexMapEnvMapPolygon(point, face->vertices, model->texmap, model->envmap, shadetable, shade, false, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight);
+				RETRO_DrawTexMapEnvMapPolygon(point, face->vertices, model->texmap, model->envmap, shadetable, shade, false, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, clip);
 			}
 		} else if (shadertype == RETRO_SHADE_GOURAUD) {
 			for (int j = 0; j < face->vertices; j++) {
@@ -383,19 +398,19 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 				}
 			}
 			if (bumpmapping) {
-				RETRO_DrawTexMapBumpPolygon(point, face->vertices, model->texmap, model->bumpmap, model->bumpgrazing, shadetable, shades, light, frame, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight);
+				RETRO_DrawTexMapBumpPolygon(point, face->vertices, model->texmap, model->bumpmap, model->bumpgrazing, shadetable, shades, light, frame, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight, clip);
 			} else {
-				RETRO_DrawTexMapGouraudPolygon(point, face->vertices, model->texmap, model->texmapwidth, model->texmapheight, shadetable);
+				RETRO_DrawTexMapGouraudPolygon(point, face->vertices, model->texmap, model->texmapwidth, model->texmapheight, shadetable, false, clip);
 			}
 		} else if (envmapshading && !bumpmapping) {
-			RETRO_DrawTexMapEnvMapPolygon(point, face->vertices, model->texmap, model->envmap, shadetable, 0, lightingmap, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight);
+			RETRO_DrawTexMapEnvMapPolygon(point, face->vertices, model->texmap, model->envmap, shadetable, 0, lightingmap, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, clip);
 		} else if (envmapshading) {
-			RETRO_DrawTexMapEnvMapBumpPolygon(point, face->vertices, model->texmap, model->envmap, model->bumpmap, model->bumpgrazing, shadetable, lightingmap, frame, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight);
+			RETRO_DrawTexMapEnvMapBumpPolygon(point, face->vertices, model->texmap, model->envmap, model->bumpmap, model->bumpgrazing, shadetable, lightingmap, frame, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight, clip);
 		}
 	}
 }
 
-inline void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype)
+inline void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype, ClipRect clip = {})
 {
 	RETRO_SortFaces(model->twosided, model);
 	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
@@ -418,9 +433,9 @@ inline void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shader
 			point[j].n = normal->rdir * normalscale;
 		}
 		if (bumpmapping) {
-			RETRO_DrawEnvMapBumpPolygon(point, face->vertices, model->envmap, model->bumpmap, model->bumpgrazing, lightingmap, frame, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight);
+			RETRO_DrawEnvMapBumpPolygon(point, face->vertices, model->envmap, model->bumpmap, model->bumpgrazing, lightingmap, frame, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight, clip);
 		} else {
-			RETRO_DrawEnvMapPolygon(point, face->vertices, model->envmap, lightingmap, model->envmapwidth, model->envmapheight, model->envmapradius);
+			RETRO_DrawEnvMapPolygon(point, face->vertices, model->envmap, lightingmap, model->envmapwidth, model->envmapheight, model->envmapradius, clip);
 		}
 	}
 }
@@ -430,7 +445,13 @@ inline void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shader
 // clears once a frame itself, or each model would erase the depth of the ones
 // before it. Glenz is exempt either way: it adds palette indices, so it
 // depends on the order the sort gives it.
-inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE, Model3D *model = NULL, bool cleardepth = true)
+//
+// clip restricts the draw to a horizontal band of the screen, for a demo
+// that gives different rows their own renderer. The range is passed into
+// the drawers (RETRO_ScanTriangle, RETRO_RenderDotModel, RETRO_RenderWireModel),
+// so nothing outside the band is touched and a caller stacking several bands
+// needs no backup/restore of its own between them.
+inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE, Model3D *model = NULL, bool cleardepth = true, ClipRect clip = {})
 {
 	model = model ? model : RETRO_Get3DModel();
 	if (model == NULL) return;
@@ -441,31 +462,31 @@ inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shade
 
 	switch (rendertype) {
 	case RETRO_POLY_DOT:
-		RETRO_RenderDotModel(model, shadertype == RETRO_SHADE_FLAT);
+		RETRO_RenderDotModel(model, shadertype == RETRO_SHADE_FLAT, false, clip);
 		break;
 	case RETRO_POLY_WIREFRAME:
-		RETRO_RenderWireModel(model, false, shadertype == RETRO_SHADE_WIREFIRE);
+		RETRO_RenderWireModel(model, false, shadertype == RETRO_SHADE_WIREFIRE, clip);
 		break;
 	case RETRO_POLY_HIDDENLINE:
-		RETRO_RenderWireModel(model, true, shadertype == RETRO_SHADE_WIREFIRE);
+		RETRO_RenderWireModel(model, true, shadertype == RETRO_SHADE_WIREFIRE, clip);
 		break;
 	case RETRO_POLY_FLAT:
-		RETRO_RenderFlatModel(model, shadertype == RETRO_SHADE_FLAT);
+		RETRO_RenderFlatModel(model, shadertype == RETRO_SHADE_FLAT, clip);
 		break;
 	case RETRO_POLY_GLENZ:
-		RETRO_RenderGlenzModel(model, shadertype);
+		RETRO_RenderGlenzModel(model, shadertype, clip);
 		break;
 	case RETRO_POLY_GOURAUD:
-		RETRO_RenderGouraudModel(model);
+		RETRO_RenderGouraudModel(model, clip);
 		break;
 	case RETRO_POLY_PHONG:
-		RETRO_RenderPhongModel(model);
+		RETRO_RenderPhongModel(model, clip);
 		break;
 	case RETRO_POLY_TEXTURE:
-		RETRO_RenderTextureModel(model, shadertype);
+		RETRO_RenderTextureModel(model, shadertype, clip);
 		break;
 	case RETRO_POLY_ENVIRONMENT:
-		RETRO_RenderEnvironmentModel(model, shadertype);
+		RETRO_RenderEnvironmentModel(model, shadertype, clip);
 		break;
 	}
 }

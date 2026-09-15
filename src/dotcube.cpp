@@ -1,7 +1,7 @@
 //
 // Dot cube
 //
-// The 7×7-subdivided cube of rubbercubequads.obj, one dot per vertex, in a
+// The 7×7-subdivided cube of subcubequads.obj, one dot per vertex, in a
 // single flat color and no visibility test - every vertex is stamped,
 // including the ones on the far side of the cube from the camera. Euler
 // angles live on 2π.
@@ -33,6 +33,6 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(0, RETRO_BLACK);
 	RETRO_SetColor(1, RETRO_WHITE);
 
-	Model = RETRO_Load3DModel("assets/rubbercubequads.obj");
+	Model = RETRO_Load3DModel("assets/subcubequads.obj");
 	Model->c = 1;
 }

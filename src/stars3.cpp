@@ -71,8 +71,10 @@ void DEMO_Render(double time, double deltatime)
 			if (color > SHADES / 2) {
 				int x2 = x + (x > cx ? 1 : -1);
 				int y2 = y + (y > cy ? 1 : -1);
-				if (x2 >= 0 && x2 < RETRO_WIDTH && y2 >= 0 && y2 < RETRO_HEIGHT) {
+				if (x2 >= 0 && x2 < RETRO_WIDTH) {
 					RETRO_PutPixel(x2, y, color);
+				}
+				if (y2 >= 0 && y2 < RETRO_HEIGHT) {
 					RETRO_PutPixel(x, y2, color / 2);
 				}
 			}

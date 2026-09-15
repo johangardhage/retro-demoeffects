@@ -195,9 +195,9 @@ void DEMO_Initialize(void)
 	// only what the entry displays as. The three the sun is drawn in are claimed
 	// the same way.
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
-	RETRO_SetColor(SunColor[0], RETRO_RGB(0x3d3a30));
-	RETRO_SetColor(SunColor[1], RETRO_RGB(0x8f7a4e));
-	RETRO_SetColor(SunColor[2], RETRO_RGB(0xfff0c8));
+	RETRO_SetColor(SunColor[0], RETRO_UMBER);
+	RETRO_SetColor(SunColor[1], RETRO_FAWN);
+	RETRO_SetColor(SunColor[2], RETRO_BLANCHEDALMOND);
 
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

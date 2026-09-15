@@ -20,7 +20,7 @@
 // is column (W/2 − 1 − x) so column 0 is drawn and the centre column is
 // not written twice.
 //
-// Land, sky and the ball sprite are one 128×384 atlas (assets/planedemo.pcx),
+// Land, sky and the ball sprite are one 128×384 atlas (planedemo.pcx),
 // stacked as land, sky, sprite, pitch PLANE_MAP. Palette 0 is black
 // (sprite key and the reflection tint). There is no yaw. phase lives
 // on the wall clock. A chain of sprites rides a Lissajous above the

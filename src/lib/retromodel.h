@@ -74,6 +74,12 @@ struct Face {
 	float depth;									// Mean rotated depth, the painter's sort key
 };
 
+// Default cap on Glenz's additive framebuffer write: the unsigned char
+// ceiling. RETRO_DrawGlenzPolygon clamps to this unless a model sets a
+// lower GlenzLighting::colormax, so a triple overlap fills a chosen shade
+// instead of walking into white.
+#define RETRO_GLENZ_COLORMAX_DEFAULT (RETRO_COLORS - 1)
+
 // Configuration for the Glenz renderer. The flat-shading fields set how a
 // face is lit: the default signed falloff lets rear faces shade below their
 // material offset, while Model3D::twosided instead lights inward normals
@@ -84,7 +90,7 @@ struct GlenzLighting {
 	float highlight = 0.0f;
 	float exponent = 4.0f;
 	float backstrength = 0.5f;
-	int colormax = RETRO_COLORS - 1;
+	int colormax = RETRO_GLENZ_COLORMAX_DEFAULT;
 };
 
 struct Model3D {

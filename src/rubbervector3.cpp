@@ -28,7 +28,6 @@
 #define FLUBBER_DARK_C 0
 #define FLUBBER_GOLD_C 64
 #define FLUBBER_BACK_STRENGTH 0.8f // rear surface visibility, from 0 to 1
-#define FLUBBER_BG RETRO_RGB(0x450500)
 
 static Model3D *Flubber;
 static Vertex RestVertex[RETRO_MAX_VERTICES];
@@ -109,13 +108,13 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_SetColor(0, FLUBBER_BG);
+	RETRO_SetColor(0, RETRO_EMBERBLACK);
 	// Each bank has independent brightness, rather than a single ramp that
 	// turns two ordinary gold contributions into cream. Reserve the fourth
 	// bank for rare overlaps of three gold faces near a fold.
-	const RETRO_Palette base[] = { RETRO_RGB(0x080808), RETRO_RGB(0x38351b), RETRO_RGB(0x625908), RETRO_RGB(0x827722) };
-	const RETRO_Palette mid[] = { RETRO_RGB(0x343434), RETRO_RGB(0x777349), RETRO_RGB(0xaaa037), RETRO_RGB(0xb7ad52) };
-	const RETRO_Palette peak[] = { RETRO_RGB(0xbcbcbc), RETRO_RGB(0xbdbba0), RETRO_RGB(0xd8ce77), RETRO_RGB(0xded695) };
+	const RETRO_Palette base[] = { RETRO_JET, RETRO_MUDGOLD, RETRO_DARKBRASS, RETRO_DRABGOLD };
+	const RETRO_Palette mid[] = { RETRO_SOOT, RETRO_DUSTYGOLD, RETRO_BRASSGOLD, RETRO_DARKKHAKI };
+	const RETRO_Palette peak[] = { RETRO_SILVER, RETRO_DARKGRAY, RETRO_BURLYWOOD, RETRO_KHAKI };
 	for (int bank = 0; bank < 4; bank++) {
 		int offset = bank * 64;
 		RETRO_CreateGradientPalette(offset + 1, offset + 14, base[bank], mid[bank]);

@@ -34,7 +34,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Original: 15 strength steps, one every 16 frames at 70 Hz, after
 	// five seconds. Smooth the ramp but retain its duration and 32px peak.
-	double strength = fmin(1.0, fmax(0.0, (time - 5.0) * 70.0 / (16.0 * 15.0)));
+	double strength = CLAMP01((time - 5.0) * 70.0 / (16.0 * 15.0));
 	double wavephase = fmod(time * 70.0 * 7.0, 1024.0) * (2.0 * M_PI / 1024.0);
 
 	for (int y = 0; y < RETRO_HEIGHT; ++y) {

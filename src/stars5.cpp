@@ -45,7 +45,7 @@ static RETRO_Camera Turn(double angle)
 // Smooth starts and stops, including acceleration at phase boundaries.
 static double Ease(double t)
 {
-	t = fmax(0.0, fmin(1.0, t));
+	t = CLAMP01(t);
 	return t * t * t * (t * (t * 6 - 15) + 10);
 }
 

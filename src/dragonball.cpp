@@ -131,9 +131,9 @@ static void FillStar(const ivec2 *pts, int n, unsigned char bit)
 
 		unsigned char *row = RETRO.framebuffer + y * RETRO_WIDTH;
 		for (int k = 0; k + 1 < nx; k += 2) {
-			int x0 = MAX(xs[k], 0);
-			int x1 = MIN(xs[k + 1], RETRO_WIDTH - 1);
-			for (int x = x0; x <= x1; x++) {
+			int xmin = MAX(xs[k], 0);
+			int xmax = MIN(xs[k + 1], RETRO_WIDTH - 1);
+			for (int x = xmin; x <= xmax; x++) {
 				if (row[x] & BIT_BALL) {
 					row[x] |= bit;
 				}
@@ -217,9 +217,9 @@ void DEMO_Render(double time, double deltatime)
 
 	// The ellipse is a single palette index; the copper split is the floor
 	// bank ORed onto every ball pixel on or below the horizon.
-	int y0 = MAX((int)ceil(cy - rb), BALL_HORIZON);
-	int y1 = MIN((int)floor(cy + rb), RETRO_HEIGHT - 1);
-	for (int y = y0; y <= y1; y++) {
+	int ymin = MAX((int)ceil(cy - rb), BALL_HORIZON);
+	int ymax = MIN((int)floor(cy + rb), RETRO_HEIGHT - 1);
+	for (int y = ymin; y <= ymax; y++) {
 		unsigned char *row = RETRO.framebuffer + y * RETRO_WIDTH;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			if (row[x] & BIT_BALL) {

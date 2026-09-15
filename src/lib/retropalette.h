@@ -101,10 +101,47 @@
 #define RETRO_FIREBRICK RETRO_Palette{ 187, 40, 32 }
 #define RETRO_CHARCOAL RETRO_Palette{ 54, 54, 60 }
 #define RETRO_DIMGRAY RETRO_Palette{ 66, 66, 74 }
+#define RETRO_SOOT RETRO_Palette{ 52, 52, 52 }
+#define RETRO_ASHGRAY RETRO_Palette{ 72, 72, 72 }
 #define RETRO_PINETREE RETRO_Palette{ 30, 74, 40 }
 #define RETRO_PALESAGE RETRO_Palette{ 150, 198, 150 }
 #define RETRO_MOSSBLACK RETRO_Palette{ 0, 20, 0 }
 #define RETRO_CREAM RETRO_Palette{ 255, 255, 142 }
+#define RETRO_DARKSALMON RETRO_Palette{ 211, 146, 132 }
+#define RETRO_ANTIQUEWHITE RETRO_Palette{ 242, 240, 209 }
+#define RETRO_LIGHTSEAGREEN RETRO_Palette{ 27, 123, 166 }
+#define RETRO_CHOCOLATE RETRO_Palette{ 191, 119, 43 }
+#define RETRO_OLIVEDRAB RETRO_Palette{ 131, 133, 96 }
+#define RETRO_ROYALBLUE RETRO_Palette{ 21, 120, 166 }
+#define RETRO_CADETBLUE RETRO_Palette{ 112, 142, 139 }
+#define RETRO_PERU RETRO_Palette{ 185, 114, 49 }
+#define RETRO_UMBER RETRO_Palette{ 61, 58, 48 }
+#define RETRO_FAWN RETRO_Palette{ 143, 122, 78 }
+#define RETRO_BLANCHEDALMOND RETRO_Palette{ 255, 240, 200 }
+#define RETRO_INDIGOBLACK RETRO_Palette{ 15, 3, 40 }
+#define RETRO_NAVY RETRO_Palette{ 0, 19, 85 }
+#define RETRO_DEEPCERULEAN RETRO_Palette{ 14, 36, 101 }
+#define RETRO_ONYX RETRO_Palette{ 1, 0, 16 }
+#define RETRO_ROYALVIOLET RETRO_Palette{ 103, 23, 171 }
+#define RETRO_EMBERBLACK RETRO_Palette{ 69, 5, 0 }
+#define RETRO_JET RETRO_Palette{ 8, 8, 8 }
+#define RETRO_SILVER RETRO_Palette{ 188, 188, 188 }
+#define RETRO_MUDGOLD RETRO_Palette{ 56, 53, 27 }
+#define RETRO_DUSTYGOLD RETRO_Palette{ 119, 115, 73 }
+#define RETRO_DARKGRAY RETRO_Palette{ 189, 187, 160 }
+#define RETRO_DARKBRASS RETRO_Palette{ 98, 89, 8 }
+#define RETRO_BRASSGOLD RETRO_Palette{ 170, 160, 55 }
+#define RETRO_BURLYWOOD RETRO_Palette{ 216, 206, 119 }
+#define RETRO_DRABGOLD RETRO_Palette{ 130, 119, 34 }
+#define RETRO_DARKKHAKI RETRO_Palette{ 183, 173, 82 }
+#define RETRO_KHAKI RETRO_Palette{ 222, 214, 149 }
+#define RETRO_LAVENDER RETRO_Palette{ 208, 224, 255 }
+#define RETRO_CORNFLOWERBLUE RETRO_Palette{ 128, 160, 255 }
+#define RETRO_OCEANBLUE RETRO_Palette{ 48, 80, 192 }
+#define RETRO_TWILIGHT RETRO_Palette{ 64, 32, 160 }
+#define RETRO_LILAC RETRO_Palette{ 176, 144, 255 }
+#define RETRO_SCORCHED RETRO_Palette{ 80, 24, 0 }
+#define RETRO_MARIGOLD RETRO_Palette{ 255, 192, 40 }
 
 // *******************************************************************
 // Private variables

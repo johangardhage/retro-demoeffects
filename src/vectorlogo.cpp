@@ -2,7 +2,7 @@
 // Vector logo
 //
 // The word RETRO as a solid, one Lambert term per face: the shading of
-// flatshadedcube.cpp on a mesh that is not a cube. assets/retrologo.obj is
+// flatshadedcube.cpp on a mesh that is not a cube. retrologo.obj is
 // twenty convex strokes extruded along z, because a letter is concave and the
 // polygon drawer fans from the first vertex, which only fills a convex outline.
 //

@@ -59,7 +59,7 @@
 #define FLUBBER_CX (RETRO_WIDTH / 2.0)
 #define FLUBBER_SWAY 40.0f // pixels of lateral sway
 #define FLUBBER_TWIST (3 * M_PI) // radians of the (modulated + 1) yaw
-#define FLUBBER_U_PER_SPAN (TEXTURE_WIDTH * 2 / SPANS) // 16 texels, two wraps of 256
+#define FLUBBER_U_PER_SPAN (TEXTURE_WIDTH * 2.0f / SPANS) // 16 texels, two wraps of 256
 #define FLUBBER_LIGHT_CENTER 128.0f // tent peak in the 8-bit light table
 #define FLUBBER_Z_FAR 1.0e30f
 
@@ -210,7 +210,7 @@ static unsigned char ClosestColor(RETRO_Palette *palette, unsigned char r, unsig
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/flubber_256x256.pcx", true);
+	RETRO_LoadImage("assets/flowers_256x256.pcx", true);
 	RETRO_Palette *palette = RETRO_ImagePalette();
 
 	// Precalculate the light values. tent(i) = 255 − |255 − 2i|, 0 at both

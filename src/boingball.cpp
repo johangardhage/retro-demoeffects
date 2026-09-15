@@ -3,7 +3,7 @@
 //
 // The Amiga's own demo, from the 1984 CES: a checkered ball bouncing in a
 // gridded room. The checker is not a texture but the face list of
-// assets/spherequads.obj, where face f is row f / MERIDIANS and column
+// spherequads.obj, where face f is row f / MERIDIANS and column
 // f % MERIDIANS and the parity of their sum picks one of two colors. It lines
 // up around the seam because the meridians are even. Nothing is lit, so the
 // ball reads as round only from the way the checks foreshorten towards the

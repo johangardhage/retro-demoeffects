@@ -7,7 +7,7 @@
 // The complete link tumbles as one rigid object, preserving the knot while its
 // rings continually pass in front of and behind each other.
 //
-// Both are the same model, assets/torusquads.obj, loaded twice so each keeps
+// Both are the same model, torusquads.obj, loaded twice so each keeps
 // its own rotated vertices and its own base color. The model carries the
 // analytic outward normals of the surface, which is what gouraud interpolates
 // between, so the shading runs smooth around the tube with no seam at the

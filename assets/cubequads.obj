@@ -1,13 +1,17 @@
 #
-# cubequads.obj - Unit cube, quad faces, no UVs
+# cubequads.obj - Unit cube, quad faces, whole-face UVs
 #
 # Geometry:   unit cube centred on the origin, corners at ±1.
-# Components: 8 vertices, no UV coordinates, 8 vertex normals along the
-#             corner diagonals, unnormalized, and 6 quad faces. The faces
-#             still carry a 1/1/1 index triple, whose UV index refers to
-#             nothing.
-# Used by:    wirecube, hiddenlinecube, flatcube, firecube, glenzshadedcube,
-#             rubbervector.
+# Components: 8 vertices, 4 UV coordinates, 8 vertex normals along the
+#             corner diagonals, unnormalized, and 6 quad faces. The 4 UVs
+#             are a texture's full 0 to 1 square, and every face reuses
+#             them, corner for corner in its own winding order, so a
+#             texture loaded whole is stamped identically on each face
+#             rather than wrapped once around the cube or laid out in an
+#             atlas. A renderer that ignores UVs, which is most of this
+#             file's users, is unaffected by their being here.
+# Used by:    wirecube, wirecube2, hiddenlinecube, flatcube, firecube,
+#             glenzshadedcube, rubbervector4, stencilvectors, multicube.
 #
 o cubequads
 v 1.000000 1.000000 1.000000
@@ -18,6 +22,10 @@ v -1.000000 1.000000 1.000000
 v -1.000000 1.000000 -1.000000
 v -1.000000 -1.000000 1.000000
 v -1.000000 -1.000000 -1.000000
+vt 0.000000 0.000000
+vt 1.000000 0.000000
+vt 1.000000 1.000000
+vt 0.000000 1.000000
 vn 1.000000 1.000000 1.000000
 vn 1.000000 1.000000 -1.000000
 vn 1.000000 -1.000000 1.000000
@@ -26,9 +34,9 @@ vn -1.000000 1.000000 1.000000
 vn -1.000000 1.000000 -1.000000
 vn -1.000000 -1.000000 1.000000
 vn -1.000000 -1.000000 -1.000000
-f 5/1/1 1/1/1 2/1/1 6/1/1
-f 2/1/1 1/1/1 3/1/1 4/1/1
-f 6/1/1 2/1/1 4/1/1 8/1/1
-f 5/1/1 6/1/1 8/1/1 7/1/1
-f 1/1/1 5/1/1 7/1/1 3/1/1
-f 4/1/1 3/1/1 7/1/1 8/1/1
+f 5/1/1 1/2/1 2/3/1 6/4/1
+f 2/1/1 1/2/1 3/3/1 4/4/1
+f 6/1/1 2/2/1 4/3/1 8/4/1
+f 5/1/1 6/2/1 8/3/1 7/4/1
+f 1/1/1 5/2/1 7/3/1 3/4/1
+f 4/1/1 3/2/1 7/3/1 8/4/1

@@ -102,9 +102,9 @@ static void InvertToolButton(int tool, unsigned char *buffer)
 {
 	int x0 = CANVAS_RIGHT + (tool % TOOL_COLUMNS) * TOOL_CELL_SIZE + 2;
 	int y0 = TOOL_TOP + (tool / TOOL_COLUMNS) * TOOL_CELL_SIZE + 2;
-	for (int yy = y0; yy < y0 + TOOL_CELL_SIZE - 2; yy++) {
-		for (int xx = x0; xx < x0 + TOOL_CELL_SIZE - 2; xx++) {
-			unsigned char &color = buffer[yy * RETRO_WIDTH + xx];
+	for (int y = y0; y < y0 + TOOL_CELL_SIZE - 2; y++) {
+		for (int x = x0; x < x0 + TOOL_CELL_SIZE - 2; x++) {
+			unsigned char &color = buffer[y * RETRO_WIDTH + x];
 			if (color <= 1) color = 1 - color;
 		}
 	}
@@ -135,16 +135,16 @@ static void DrawSwatchSelection(int row, int col)
 static void InvertBrushCell(BrushKind kind, int col)
 {
 	const int *edges = BrushColumnEdges[kind == BRUSH_SQUARE ? 1 : 0];
-	int x0 = kind == BRUSH_SPRAY ? SprayBounds[col].left : edges[col];
-	int x1 = kind == BRUSH_SPRAY ? SprayBounds[col].right : edges[col + 1] - 1;
-	int y0 = kind == BRUSH_SPRAY ? SprayBounds[col].top : kind == BRUSH_SQUARE ? 30 : 14;
-	int y1 = kind == BRUSH_SPRAY ? SprayBounds[col].bottom : kind == BRUSH_SQUARE ? 39 : 27;
+	int xmin = kind == BRUSH_SPRAY ? SprayBounds[col].left : edges[col];
+	int xmax = kind == BRUSH_SPRAY ? SprayBounds[col].right : edges[col + 1] - 1;
+	int ymin = kind == BRUSH_SPRAY ? SprayBounds[col].top : kind == BRUSH_SQUARE ? 30 : 14;
+	int ymax = kind == BRUSH_SPRAY ? SprayBounds[col].bottom : kind == BRUSH_SQUARE ? 39 : 27;
 
-	for (int yy = y0; yy <= y1; yy++) {
-		for (int xx = x0; xx <= x1; xx++) {
-			unsigned char c = RETRO_GetPixel(xx, yy);
+	for (int y = ymin; y <= ymax; y++) {
+		for (int x = xmin; x <= xmax; x++) {
+			unsigned char c = RETRO_GetPixel(x, y);
 			if (c <= 1) {
-				RETRO_PutPixel(xx, yy, 1 - c);
+				RETRO_PutPixel(x, y, 1 - c);
 			}
 		}
 	}
@@ -172,14 +172,14 @@ static void PaintBrush(int cx, int cy, BrushKind kind, int size, unsigned char c
 		}
 		return;
 	}
-	int y0 = MAX(cy - size, CANVAS_TOP);
-	int y1 = MIN(cy + size, RETRO_HEIGHT - 1);
-	int x0 = MAX(cx - size, 0);
-	int x1 = MIN(cx + size, CANVAS_RIGHT - 1);
-	for (int yy = y0; yy <= y1; yy++) {
-		for (int xx = x0; xx <= x1; xx++) {
-			if (kind == BRUSH_SQUARE || (xx - cx) * (xx - cx) + (yy - cy) * (yy - cy) <= size * size) {
-				Canvas[yy * RETRO_WIDTH + xx] = color;
+	int ymin = MAX(cy - size, CANVAS_TOP);
+	int ymax = MIN(cy + size, RETRO_HEIGHT - 1);
+	int xmin = MAX(cx - size, 0);
+	int xmax = MIN(cx + size, CANVAS_RIGHT - 1);
+	for (int y = ymin; y <= ymax; y++) {
+		for (int x = xmin; x <= xmax; x++) {
+			if (kind == BRUSH_SQUARE || (x - cx) * (x - cx) + (y - cy) * (y - cy) <= size * size) {
+				Canvas[y * RETRO_WIDTH + x] = color;
 			}
 		}
 	}

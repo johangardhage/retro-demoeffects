@@ -33,6 +33,6 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(0, RETRO_BLACK);
 	RETRO_SetColor(1, RETRO_WHITE);
 
-	Model = RETRO_Load3DModel("assets/rubbercubequads.obj");
+	Model = RETRO_Load3DModel("assets/subcubequads.obj");
 	Model->c = 1;
 }

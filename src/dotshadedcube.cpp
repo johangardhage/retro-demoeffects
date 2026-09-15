@@ -33,9 +33,9 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_SetColor(0, RETRO_BLACK);
-	RETRO_CreateGradientPalette(1, RETRO_COLORS, RETRO_RGB(0x484848), RETRO_WHITE);
+	RETRO_CreateGradientPalette(1, RETRO_COLORS, RETRO_ASHGRAY, RETRO_WHITE);
 
-	Model = RETRO_Load3DModel("assets/rubbercubequads.obj");
+	Model = RETRO_Load3DModel("assets/subcubequads.obj");
 	Model->c = 1;
 	Model->shades = RETRO_COLORS - 1;
 

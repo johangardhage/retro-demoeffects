@@ -64,15 +64,15 @@ static void AddDisc(float cx, float cy, float radius, int peak)
 		return;
 	}
 
-	int y0 = MAX((int)floor(cy - radius), 0);
-	int y1 = MIN((int)ceil(cy + radius), RETRO_HEIGHT - 1);
-	int x0 = MAX((int)floor(cx - radius), 0);
-	int x1 = MIN((int)ceil(cx + radius), RETRO_WIDTH - 1);
+	int ymin = MAX((int)floor(cy - radius), 0);
+	int ymax = MIN((int)ceil(cy + radius), RETRO_HEIGHT - 1);
+	int xmin = MAX((int)floor(cx - radius), 0);
+	int xmax = MIN((int)ceil(cx + radius), RETRO_WIDTH - 1);
 	float r2max = radius * radius;
 
-	for (int y = y0; y <= y1; y++) {
+	for (int y = ymin; y <= ymax; y++) {
 		float dy = y + 0.5f - cy;
-		for (int x = x0; x <= x1; x++) {
+		for (int x = xmin; x <= xmax; x++) {
 			float dx = x + 0.5f - cx;
 			float r2 = dx * dx + dy * dy;
 			if (r2 >= r2max) {
@@ -91,14 +91,14 @@ static void AddHex(float cx, float cy, float radius, int peak)
 		return;
 	}
 
-	int y0 = MAX((int)floor(cy - radius), 0);
-	int y1 = MIN((int)ceil(cy + radius), RETRO_HEIGHT - 1);
-	int x0 = MAX((int)floor(cx - radius), 0);
-	int x1 = MIN((int)ceil(cx + radius), RETRO_WIDTH - 1);
+	int ymin = MAX((int)floor(cy - radius), 0);
+	int ymax = MIN((int)ceil(cy + radius), RETRO_HEIGHT - 1);
+	int xmin = MAX((int)floor(cx - radius), 0);
+	int xmax = MIN((int)ceil(cx + radius), RETRO_WIDTH - 1);
 
-	for (int y = y0; y <= y1; y++) {
+	for (int y = ymin; y <= ymax; y++) {
 		float py = (y + 0.5f - cy) / radius;
-		for (int x = x0; x <= x1; x++) {
+		for (int x = xmin; x <= xmax; x++) {
 			float px = (x + 0.5f - cx) / radius;
 			float d = fabs(px);
 			float d2 = fabs(px * HEX_HALF + py * HEX_SQRT3_2);
@@ -129,9 +129,9 @@ void DEMO_Render(double time, double deltatime)
 	AddDisc(lx, ly, FLARE_CORE, 220);
 
 	// Anamorphic streak, 1 / (1 + |x − Lx| / w) on a few rows about Ly
-	int y0 = MAX((int)floor(ly) - FLARE_STREAK_ROWS, 0);
-	int y1 = MIN((int)ceil(ly) + FLARE_STREAK_ROWS, RETRO_HEIGHT - 1);
-	for (int y = y0; y <= y1; y++) {
+	int ymin = MAX((int)floor(ly) - FLARE_STREAK_ROWS, 0);
+	int ymax = MIN((int)ceil(ly) + FLARE_STREAK_ROWS, RETRO_HEIGHT - 1);
+	for (int y = ymin; y <= ymax; y++) {
 		float fy = 1.0f - fabs(y + 0.5f - ly) / (FLARE_STREAK_ROWS + 0.5f);
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			float fx = 1.0f / (1.0f + fabs(x + 0.5f - lx) / FLARE_STREAK_WIDTH);

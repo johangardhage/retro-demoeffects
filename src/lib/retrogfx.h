@@ -24,6 +24,16 @@ enum RETRO_BLUR_MODE {
 	RETRO_BLUR_OVERFLOW
 };
 
+// The pixels a drawer may write, half-open [x0, x1) by [y0, y1). Full screen
+// unless a caller passes a tighter one so different regions can have their
+// own drawer.
+struct RETRO_Rectangle {
+	int x0 = 0;
+	int x1 = RETRO_WIDTH;
+	int y0 = 0;
+	int y1 = RETRO_HEIGHT;
+};
+
 // C(step) = (step / steps) * C_loaded. Returns true when step >= steps.
 inline bool RETRO_FadeIn(int steps, int step, RETRO_Palette *palette)
 {
@@ -54,9 +64,10 @@ inline bool RETRO_FadeOut(int steps, int step, RETRO_Palette *palette)
 	return step >= steps;
 }
 
-inline void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+inline void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, RETRO_Rectangle clip = {}, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO.framebuffer;
+	int clipx1 = MIN(clip.x1, bufferwidth);
+	int clipy1 = MIN(clip.y1, bufferheight);
 
 	// Draw from whichever end comes first, so a segment and its reverse run the
 	// identical loop and light the same pixels.
@@ -69,8 +80,8 @@ inline void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, 
 	int dy = y2 > y1 ? y2 - y1 : y1 - y2;
 	int sdx = x2 > x1 ? 1 : -1;
 	int sdy = y2 > y1 ? 1 : -1;
-	int px = x1;
-	int py = y1;
+	int x = x1;
+	int y = y1;
 
 	// Midpoint Bresenham: the error starts at half the major delta, so the minor
 	// axis steps where the ideal line crosses a pixel centre.
@@ -78,31 +89,32 @@ inline void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, 
 	int error = steps;
 
 	for (int i = 0; i <= steps; i++) {
-		if (px >= 0 && px < width && py >= 0 && py < height) {
-			buffer[py * width + px] = color;
+		if (x >= clip.x0 && x < clipx1 && y >= clip.y0 && y < clipy1) {
+			buffer[y * bufferwidth + x] = color;
 		}
 		// Doubled, so the half is exact for an odd delta
 		if (dx >= dy) {
-			px += sdx;
+			x += sdx;
 			error += 2 * dy;
 			if (error >= 2 * steps) {
 				error -= 2 * steps;
-				py += sdy;
+				y += sdy;
 			}
 		} else {
-			py += sdy;
+			y += sdy;
 			error += 2 * dx;
 			if (error >= 2 * steps) {
 				error -= 2 * steps;
-				px += sdx;
+				x += sdx;
 			}
 		}
 	}
 }
 
-inline void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char intensity, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+inline void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char color, unsigned char intensity, RETRO_Rectangle clip = {}, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO.framebuffer;
+	int clipx1 = MIN(clip.x1, bufferwidth);
+	int clipy1 = MIN(clip.y1, bufferheight);
 
 	// Draw from whichever end comes first, so a segment and its reverse run the
 	// identical loop and light the same pixels.
@@ -115,8 +127,8 @@ inline void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char col
 	int dy = y2 > y1 ? y2 - y1 : y1 - y2;
 	int sdx = x2 > x1 ? 1 : -1;
 	int sdy = y2 > y1 ? 1 : -1;
-	int px = x1;
-	int py = y1;
+	int x = x1;
+	int y = y1;
 
 	// Midpoint Bresenham: the error starts at half the major delta, so the minor
 	// axis steps where the ideal line crosses a pixel centre.
@@ -124,112 +136,135 @@ inline void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char col
 	int error = steps;
 
 	for (int i = 0; i <= steps; i++) {
-		if (px >= 0 && px < width && py >= 0 && py < height) {
-			buffer[py * width + px] = color + RANDOM(intensity);
+		if (x >= clip.x0 && x < clipx1 && y >= clip.y0 && y < clipy1) {
+			buffer[y * bufferwidth + x] = color + RANDOM(intensity);
 		}
 		// Doubled, so the half is exact for an odd delta
 		if (dx >= dy) {
-			px += sdx;
+			x += sdx;
 			error += 2 * dy;
 			if (error >= 2 * steps) {
 				error -= 2 * steps;
-				py += sdy;
+				y += sdy;
 			}
 		} else {
-			py += sdy;
+			y += sdy;
 			error += 2 * dx;
 			if (error >= 2 * steps) {
 				error -= 2 * steps;
-				px += sdx;
+				x += sdx;
 			}
 		}
 	}
 }
 
 // Inclusive on y1 and y2, so DrawVline(x, y1, y2) lights the same pixels as DrawLine(x, y1, x, y2).
-inline void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+inline void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, RETRO_Rectangle clip = {}, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO.framebuffer;
+	int clipx1 = MIN(clip.x1, bufferwidth);
+	int clipy1 = MIN(clip.y1, bufferheight);
 
-	if (y1 > y2) {
-		SWAP(y1, y2);
+	if (y1 > y2) SWAP(y1, y2);
+
+	int ymin = MAX(y1, clip.y0);
+	int ymax = MIN(y2, clipy1 - 1);
+	if (x < clip.x0 || x >= clipx1 || ymin > ymax) {
+		return;
 	}
 
-	for (int y = y1; y <= y2; y++) {
-		if (x >= 0 && x < width && y >= 0 && y < height) {
-			buffer[y * width + x] = color;
-		}
+	for (int y = ymin; y <= ymax; y++) {
+		buffer[y * bufferwidth + x] = color;
 	}
 }
 
-// Filled axis-aligned rectangle with inclusive endpoints, clipped to the buffer.
-inline void RETRO_DrawRectangle(int x1, int y1, int x2, int y2, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+// Filled axis-aligned rectangle with inclusive endpoints, clipped to clip.
+inline void RETRO_DrawRectangle(int x1, int y1, int x2, int y2, unsigned char color, RETRO_Rectangle clip = {}, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO.framebuffer;
+	int clipx1 = MIN(clip.x1, bufferwidth);
+	int clipy1 = MIN(clip.y1, bufferheight);
 
 	if (x1 > x2) SWAP(x1, x2);
 	if (y1 > y2) SWAP(y1, y2);
-	x1 = MAX(x1, 0);
-	y1 = MAX(y1, 0);
-	x2 = MIN(x2, width - 1);
-	y2 = MIN(y2, height - 1);
-	if (x1 > x2 || y1 > y2) return;
 
-	for (int y = y1; y <= y2; y++) memset(buffer + y * width + x1, color, x2 - x1 + 1);
+	int ymin = MAX(y1, clip.y0);
+	int ymax = MIN(y2, clipy1 - 1);
+	int xmin = MAX(x1, clip.x0);
+	int xmax = MIN(x2, clipx1 - 1);
+	if (xmin > xmax || ymin > ymax) {
+		return;
+	}
+
+	for (int y = ymin; y <= ymax; y++) {
+		memset(buffer + y * bufferwidth + xmin, color, xmax - xmin + 1);
+	}
 }
 
 //
 // Filled axis-aligned ellipse, (x − cx)² / ra² + (y − cy)² / rb² ≤ 1.
 // Each scanline is the span between the two roots in x, inclusive, clipped
-// to the buffer. ra or rb below 1 is empty.
+// to clip. ra or rb below 1 is empty.
 //
-inline void RETRO_DrawEllipse(float cx, float cy, float ra, float rb, unsigned char color, unsigned char *buffer = NULL, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+inline void RETRO_DrawEllipse(float cx, float cy, float ra, float rb, unsigned char color, RETRO_Rectangle clip = {}, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
 {
-	buffer = buffer ? buffer : RETRO.framebuffer;
+	int clipx1 = MIN(clip.x1, bufferwidth);
+	int clipy1 = MIN(clip.y1, bufferheight);
 
 	if (ra < 1.0f || rb < 1.0f) {
 		return;
 	}
 
-	int y0 = MAX((int)ceil(cy - rb), 0);
-	int y1 = MIN((int)floor(cy + rb), height - 1);
+	int ymin = MAX((int)ceil(cy - rb), clip.y0);
+	int ymax = MIN((int)floor(cy + rb), clipy1 - 1);
 
-	for (int y = y0; y <= y1; y++) {
+	for (int y = ymin; y <= ymax; y++) {
 		float fy = (y + 0.5f - cy) / rb;
 		float inner = 1.0f - fy * fy;
 		if (inner <= 0.0f) {
 			continue;
 		}
 		float xoff = ra * sqrt(inner);
-		int x0 = MAX((int)ceil(cx - xoff), 0);
-		int x1 = MIN((int)floor(cx + xoff), width - 1);
-		if (x0 > x1) {
+		int xmin = MAX((int)ceil(cx - xoff), clip.x0);
+		int xmax = MIN((int)floor(cx + xoff), clipx1 - 1);
+		if (xmin > xmax) {
 			continue;
 		}
-		memset(buffer + y * width + x0, color, x1 - x0 + 1);
+		memset(buffer + y * bufferwidth + xmin, color, xmax - xmin + 1);
 	}
 }
 
-inline void RETRO_DrawSprite(int x, int y, float xsize, float ysize, int imagewidth, int imageheight, unsigned char* image, unsigned char alpha, int color = -1, unsigned char *buffer = RETRO.framebuffer)
+// Blits image (imagewidth x imageheight) scaled to xsize x ysize, centered on
+// (xc, yc). Pixels equal to alpha are skipped; color overrides the image's
+// own index when not -1.
+inline void RETRO_DrawSprite(int xc, int yc, float xsize, float ysize, int imagewidth, int imageheight, unsigned char* image, unsigned char alpha, int color = -1, RETRO_Rectangle clip = {}, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
 {
-	float xstart = x - xsize / 2;
-	float ystart = y - ysize / 2;
+	int clipx1 = MIN(clip.x1, bufferwidth);
+	int clipy1 = MIN(clip.y1, bufferheight);
+
+	float xstart = xc - xsize / 2;
+	float ystart = yc - ysize / 2;
 	float xdelta = imagewidth / xsize;
 	float ydelta = imageheight / ysize;
 
-	for (int xx = 0; xx < xsize; xx++) {
-		for (int yy = 0; yy < ysize; yy++) {
-			int xpos = xx + xstart;
-			int ypos = yy + ystart;
-			int xsrc = xx * xdelta;
-			int ysrc = yy * ydelta;
-			if (image[ysrc * imagewidth + xsrc] != alpha) {
-				if (xpos >= 0 && xpos < RETRO_WIDTH && ypos >= 0 && ypos < RETRO_HEIGHT) {
-					if (color == -1) {
-						buffer[ypos * RETRO_WIDTH + xpos] = image[ysrc * imagewidth + xsrc];
-					} else {
-						buffer[ypos * RETRO_WIDTH + xpos] = color;
-					}
+	// xpos/ypos truncate x + xstart/y + ystart toward zero, so the x/y where
+	// that crosses clip.x0/y0 can land a pixel early or late; widen the
+	// scanned range by one on each side and let the per-pixel check below do
+	// the exact filtering.
+	int ymin = MAX(0, (int)floor(clip.y0 - ystart) - 1);
+	int ymax = MIN((int)ysize, (int)ceil(clipy1 - ystart) + 1);
+	int xmin = MAX(0, (int)floor(clip.x0 - xstart) - 1);
+	int xmax = MIN((int)xsize, (int)ceil(clipx1 - xstart) + 1);
+
+	for (int y = ymin; y < ymax; y++) {
+		int ypos = y + ystart;
+		int ysrc = y * ydelta;
+		for (int x = xmin; x < xmax; x++) {
+			int xpos = x + xstart;
+			int xsrc = x * xdelta;
+			if (image[ysrc * imagewidth + xsrc] != alpha && xpos >= clip.x0 && xpos < clipx1 && ypos >= clip.y0 && ypos < clipy1) {
+				if (color == -1) {
+					buffer[ypos * bufferwidth + xpos] = image[ysrc * imagewidth + xsrc];
+				} else {
+					buffer[ypos * bufferwidth + xpos] = color;
 				}
 			}
 		}
@@ -260,10 +295,8 @@ inline void RETRO_DrawSprite(int x, int y, float xsize, float ysize, int imagewi
 // sublattices and kill it. Every other pattern here damps the checkerboard
 // on its own (RING to 0, FIRE to 1/4, SMOOTH to 3/5).
 //
-inline void RETRO_Blur(RETRO_BLUR_PATTERN blur, int decay = 0, RETRO_BLUR_MODE mode = RETRO_BLUR_CLAMP, unsigned char *buffer = NULL)
+inline void RETRO_Blur(RETRO_BLUR_PATTERN blur, int decay = 0, RETRO_BLUR_MODE mode = RETRO_BLUR_CLAMP, unsigned char *buffer = RETRO.framebuffer)
 {
-	buffer = buffer ? buffer : RETRO.framebuffer;
-
 	typedef int pattern_ptr[2];
 	static int patternvertical[][2] = {{0, -1}, {0, 0}, {0, 1}};
 	static int patterndiffuse[][2] = {{0, -1}, {-1, 0}, {1, 0}, {0, 1}};

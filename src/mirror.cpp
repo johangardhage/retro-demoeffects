@@ -236,12 +236,8 @@ static void DrawGlassPolygon(PolygonPoint *point, int points, vec3 normal)
 
 		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
 		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
-		vec3 dndx = { ((p1->n.x - p0->n.x) * (p2->pos.y - p0->pos.y) - (p2->n.x - p0->n.x) * (p1->pos.y - p0->pos.y)) / determinant,
-					  ((p1->n.y - p0->n.y) * (p2->pos.y - p0->pos.y) - (p2->n.y - p0->n.y) * (p1->pos.y - p0->pos.y)) / determinant,
-					  ((p1->n.z - p0->n.z) * (p2->pos.y - p0->pos.y) - (p2->n.z - p0->n.z) * (p1->pos.y - p0->pos.y)) / determinant };
-		vec3 dndy = { ((p1->pos.x - p0->pos.x) * (p2->n.x - p0->n.x) - (p2->pos.x - p0->pos.x) * (p1->n.x - p0->n.x)) / determinant,
-					  ((p1->pos.x - p0->pos.x) * (p2->n.y - p0->n.y) - (p2->pos.x - p0->pos.x) * (p1->n.y - p0->n.y)) / determinant,
-					  ((p1->pos.x - p0->pos.x) * (p2->n.z - p0->n.z) - (p2->pos.x - p0->pos.x) * (p1->n.z - p0->n.z)) / determinant };
+		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec3 dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
 
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
@@ -315,11 +311,11 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_SetColor(COL_BG, RETRO_RGB(0x0f0328));
-	RETRO_SetColor(COL_FLOOR_DARK, RETRO_RGB(0x001355));
-	RETRO_SetColor(COL_FLOOR_LIGHT, RETRO_RGB(0x0e2465));
-	RETRO_SetColor(COL_GLASS, RETRO_RGB(0x010010));
-	RETRO_SetColor(COL_RIM, RETRO_RGB(0x6717ab));
+	RETRO_SetColor(COL_BG, RETRO_INDIGOBLACK);
+	RETRO_SetColor(COL_FLOOR_DARK, RETRO_NAVY);
+	RETRO_SetColor(COL_FLOOR_LIGHT, RETRO_DEEPCERULEAN);
+	RETRO_SetColor(COL_GLASS, RETRO_ONYX);
+	RETRO_SetColor(COL_RIM, RETRO_ROYALVIOLET);
 
 	Floor = RETRO_Allocate3DModel();
 	Floor->c = COL_FLOOR_DARK;

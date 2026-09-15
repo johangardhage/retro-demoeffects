@@ -1,7 +1,7 @@
 //
 // Dot torus, glowing
 //
-// The vertices of assets/torus.obj, each stamping a 5×5 blob into a
+// The vertices of torus.obj, each stamping a 5×5 blob into a
 // framebuffer that is never cleared. Blobs add where they overlap. After
 // the stamps, a 4-neighbour diffuse blur (no self) subtracts TRAIL_DECAY,
 // so each vertex leaves a trail that fades over a fixed number of steps.

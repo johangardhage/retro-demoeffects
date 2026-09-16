@@ -1,72 +1,85 @@
 //
-// Rotating dot landscape
+// Dot landscape
 //
-// A 128x128 landscape sampled from heightmap and colormap image assets and
-// rendered as a field of dots. The island look is the terrain library's: the
-// camera is pitched down so the island fills the frame, the patch turns about
-// its centre, and the camera dollies along the viewing axis between stops that
-// keep the finite patch in view. The same look as dotscroller3.cpp.
-// Left and Right rotate the terrain. Up/W and Down/S move the camera forward
-// and backward.
+// The 256x256 voxel_height_256x256.pcx height field, paired with its own
+// voxel_color_256x256.pcx color map, tiled without limit and rendered as a
+// point cloud in perspective. The same look and PlotDot as dotscroller3.cpp,
+// which pairs the equivalent 128x128 pair with a scrolling text strip and a
+// turning camera; here the camera cruises straight ahead instead.
+//
+// There are no controls.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
-#include "lib/retroterrain.h"
+#include "lib/retropoly.h"
 
-#define MAP_WIDTH 128
-#define MAP_HEIGHT 128
-#define WORLD_HEIGHT_SCALE 0.34f
+#define CAMERA_HEIGHT 20.0f
+#define PITCH -0.5f
+#define NEAR_PLANE 1.0f
+#define VIEW_DISTANCE 100.0f
+#define WORLD_HEIGHT_SCALE (1.0f / 16.0f)
+#define FORWARD_SPEED 30.0f
 
-// HeightMap stores terrain altitude. ColorMap stores the palette index of the
-// corresponding dot, so neither value has to be recalculated while rendering.
-unsigned char HeightMap[MAP_WIDTH * MAP_HEIGHT];
-unsigned char ColorMap[MAP_WIDTH * MAP_HEIGHT];
+static RETRO_Image *HeightMap, *ColorMap;
 
-// More than one terrain dot may land on the same screen pixel. The depth
-// buffer ensures that the nearest one remains visible.
-unsigned int DotWorldZBuffer[RETRO_WIDTH * RETRO_HEIGHT];
-
-// Draw the finite 128x128 terrain through the island look.
-static void DrawTerrainDots(const RETRO_TerrainIslandFrame &frame)
+static unsigned char TerrainSample(int x, int z)
 {
-	int width = RETRO_Terrain.width;
-	int height = RETRO_Terrain.height;
+	return HeightMap->data[WRAP(z, HeightMap->height) * HeightMap->width + WRAP(x, HeightMap->width)];
+}
 
-	for (int z = 0; z < height; z++) {
-		for (int x = 0; x < width; x++) {
-			RETRO_TerrainEye eye = RETRO_TerrainIslandEye(x, RETRO_TerrainHeight(x, z), z, frame);
-			if (eye.depth <= RETRO_TerrainView.nearplane || fabsf(eye.side) > eye.depth * RETRO_TerrainViewCullSlope()) continue;
+static unsigned char ColorSample(int x, int z)
+{
+	return ColorMap->data[WRAP(z, ColorMap->height) * ColorMap->width + WRAP(x, ColorMap->width)];
+}
 
-			RETRO_TerrainPoint point = RETRO_ProjectTerrainView(eye);
-			int sx = (int)point.spos.x;
-			int sy = (int)point.spos.y;
-			if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) continue;
+// Terrain and letters use the same perspective and pixel depth buffer.
+static void PlotDot(float side, float forward, float height, unsigned char color)
+{
+	float up = (height - CAMERA_HEIGHT) * cosf(PITCH) - forward * sinf(PITCH);
+	float depth = (height - CAMERA_HEIGHT) * sinf(PITCH) + forward * cosf(PITCH);
+	if (depth < NEAR_PLANE || depth > VIEW_DISTANCE) return;
+	float sx = RETRO_WIDTH * 0.5f + side * (RETRO_WIDTH * 0.5f) / depth;
+	float sy = RETRO_HEIGHT * 0.5f - up * (RETRO_HEIGHT * 0.5f) / depth;
+	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) return;
+	int x = (int)sx, y = (int)sy;
+	if (RETRO_DepthTest(y * RETRO_WIDTH + x, 1.0f / depth)) {
+		RETRO_PutPixel(x, y, color);
+	}
+}
 
-			unsigned int idepth = (unsigned int)(eye.depth * 256.0f);
-			int screenindex = sy * RETRO_WIDTH + sx;
-			if (idepth < DotWorldZBuffer[screenindex]) {
-				DotWorldZBuffer[screenindex] = idepth;
-				RETRO_PutPixel(sx, sy, RETRO_TerrainColor(x, z));
-			}
+// Scan the view radius around the camera and plot every terrain cell in it.
+static void DrawTerrainDots(float camerax, float cameraz)
+{
+	int minx = (int)floorf(camerax - VIEW_DISTANCE);
+	int maxx = (int)ceilf(camerax + VIEW_DISTANCE);
+	int minz = (int)floorf(cameraz - VIEW_DISTANCE);
+	int maxz = (int)ceilf(cameraz + VIEW_DISTANCE);
+	for (int z = minz; z <= maxz; z++) {
+		for (int x = minx; x <= maxx; x++) {
+			float dx = x - camerax, dz = z - cameraz;
+			// No heading to turn by: this camera cruises straight, unlike dotscroller3's.
+			float side = dx;
+			float forward = dz;
+			PlotDot(side, forward, TerrainSample(x, z) * WORLD_HEIGHT_SCALE, ColorSample(x, z));
 		}
 	}
 }
 
 void DEMO_Render(double time, double deltatime)
 {
-	RETRO_UpdateTerrainIsland(deltatime);
-	memset(DotWorldZBuffer, 0xFF, sizeof(DotWorldZBuffer));
-	DrawTerrainDots(RETRO_BuildTerrainIslandFrame());
+	static float camerax = 128, cameraz = 236;
+	cameraz = fmodf(cameraz + FORWARD_SPEED * deltatime + HeightMap->height, HeightMap->height);
+
+	RETRO_ClearDepthBuffer();
+	DrawTerrainDots(camerax, cameraz);
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTerrain("assets/voxel_color_1024x1024.pcx", "assets/voxel_height_1024x1024.pcx");
+	HeightMap = RETRO_LoadImage("assets/voxel_height_256x256.pcx");
+	ColorMap = RETRO_LoadImage("assets/voxel_color_256x256.pcx", true);
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
-	RETRO_DownsampleTerrain(HeightMap, ColorMap, MAP_WIDTH, MAP_HEIGHT);
-	RETRO_SetTerrain(MAP_WIDTH, MAP_HEIGHT, WORLD_HEIGHT_SCALE, HeightMap, ColorMap, false);
-	RETRO_LookDownAtTerrain();
 }

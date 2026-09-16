@@ -339,4 +339,28 @@ inline void RETRO_CreatePaletteShadeTable(const RETRO_Palette *palette, int colo
 	}
 }
 
+// A cuberes^3 RGB cube, each cell mapped ahead of time to the nearest entry
+// in an explicit palette. Several demos composite a true-color pixel and
+// need it as a palette index every pixel; matching straight against
+// RETRO_ClosestPaletteColor's linear scan there would cost a 256-entry scan
+// per pixel, so they quantize into this cube once at startup instead. lut
+// is flattened row-major (r * cuberes + g) * cuberes + b, the layout a
+// caller's own unsigned char lut[cuberes][cuberes][cuberes] already has, so
+// it can be passed as &lut[0][0][0].
+inline void RETRO_CreateColorLUT(const RETRO_Palette *palette, int colors, int cuberes, unsigned char *lut)
+{
+	for (int r = 0; r < cuberes; r++) {
+		for (int g = 0; g < cuberes; g++) {
+			for (int b = 0; b < cuberes; b++) {
+				RETRO_Palette target = {
+					(unsigned char)(r * 255 / (cuberes - 1)),
+					(unsigned char)(g * 255 / (cuberes - 1)),
+					(unsigned char)(b * 255 / (cuberes - 1)),
+				};
+				lut[(r * cuberes + g) * cuberes + b] = RETRO_ClosestPaletteColor(target, palette, colors);
+			}
+		}
+	}
+}
+
 #endif

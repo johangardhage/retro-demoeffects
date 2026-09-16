@@ -1,25 +1,6 @@
 //
-// Dot landscape scroller
-//
-// A finite grid of dots is the landscape, a sine in x and z so the platform
-// is not a plane. The font (see FONT below) is packed into one strip at
-// startup. Every lit texel is a column standing on that surface,
-//
-//   x     = (column − phase) · SPACING
-//   z     = (row0 + row − depth/2) · SPACING
-//   base  = WAVE · sin(kx x + ω t) · sin(kz z) + LETTER_GAP · SPACING
-//   y     = −(base + level · SPACING)
-//
-// for level in 0..EXTRUSION on an outline texel, and only the top of an
-// interior one, so a letter is a box of dots rather than a filled solid.
-// The landscape grid cell a texel maps onto is skipped, so the flat ground
-// dot never shows through below a letter. phase lives on stripwidth, in
-// cells per second. A letter that leaves on the left is wrapped by one
-// stripwidth and plotted again if that copy still sits on the map, so the
-// strip loops. A zero texel is a gap. The
-// patch nods about y and is then pushed back OBJECT_Z, viewed at a fixed
-// pitch. Shade falls with rz, so keeping the brighter of two dots on one
-// pixel is an exact depth test.
+// Dot landscape scroller: terrain samples raise a fixed text mask into
+// columns of dots. The sampling window orbits the map while the patch rocks.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -28,164 +9,151 @@
 #include "lib/retromain.h"
 #include "lib/retromath.h"
 #include "lib/retropalette.h"
+#include "lib/retropoly.h"
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
 //#define FONT RETRO_FONT_MINECRAFT_8X8
 
-#define MAP_WIDTH 80 // cells across the platform
-#define MAP_DEPTH 40 // and along it
-#define DOT_SPACING 3.0f // pixels between neighbouring dots, the same in x, y and z
-#define EXTRUSION 8 // levels a lit texel stands above the landscape
-#define LETTER_GAP 3 // levels of clearance between the floor and a letter's underside
-#define WAVE_AMP 4.0f // pixels the sine lifts the platform
-#define WAVE_KX 0.045f // radians per pixel of that sine in x
-#define WAVE_KZ 0.070f // and in z
-#define WAVE_SPEED 0.55 // radians per second the wave travels
-#define SCROLL_SPEED 10.0f // cells per second the strip travels left
-#define SHADES 64 // palette entries the depth shading ramps over
-#define YAW_AMP 0.6 // radians either side of centre the patch turns about y
-#define YAW_SPEED 0.5 // radians per second of that turn
-#define PITCH 1.15 // radians of x the view holds, looking down
-#define OBJECT_Z 55.0f // model units the patch is pushed back after the turn
-#define PROJECTION_SCALE 1.0f // the dots are built in pixels, so the projection adds no scale
+#define ORBIT_CENTER_X 80
+#define ORBIT_CENTER_Y 54
+#define ORBIT_RADIUS 20
+#define ORBIT_SPEED 0.8
 
-static const char *const ScrollText[] = { "RETRO DEMOEFFECTS...        " };
+#define DOT_SPACING 3.0f
+#define GROUND_PAD 6
+#define EXTRUSION_MIN 4
+#define EXTRUSION_MAX 22
+// Index 0 stays the screen's background black. Index 1 is reserved for the
+// flat ground; RETRO_LoadImage's own palette load fills the rest, so a
+// letter is drawn in whatever colour the colour map actually painted
+// that texel.
+#define GROUND_COLOR_INDEX 1
+#define YAW_AMP 0.75
+#define YAW_SPEED 0.35
+#define INITIAL_PITCH 1.15
+#define PITCH_AMP 0.38
+#define PITCH_SPEED 0.45
+#define ROLL_AMP 0.22
+#define ROLL_SPEED 0.55
+#define OBJECT_Z 50.0f
+#define PROJECTION_SCALE 1.0f
 
-RETRO_Image *ScrollImage;
+#define MAX_MAP 256
 
-float OriginX;
-float OriginZ;
-int TextRow0;
-float DepthNear;
-float DepthFar;
+static const char *const ScrollText[] = { "RETRO", "DEMO" };
+static RETRO_Image *HeightMap, *ColorMap, *TextImage;
 
-static float CosAx, SinAx, CosAy, SinAy;
+static unsigned char HeightSample[MAX_MAP * MAX_MAP];
+static unsigned char ColorSample[MAX_MAP * MAX_MAP];
 
-static float LandscapeY(float x, float z, float time)
+// TextImage never changes after DEMO_Initialize, so which grid cell holds a
+// letter is looked up directly rather than cached in a mask array.
+static bool GlyphLit(int row, int col)
 {
-	return WAVE_AMP * sinf(x * WAVE_KX + time * WAVE_SPEED) * sinf(z * WAVE_KZ);
+	int imagerow = row - GROUND_PAD, imagecol = col - GROUND_PAD;
+	if (imagerow < 0 || imagerow >= TextImage->height) return false;
+	if (imagecol < 0 || imagecol >= TextImage->width) return false;
+	return TextImage->data[imagerow * TextImage->width + imagecol] != 0;
 }
 
-static bool GlyphInk(int x, int y)
+static void SampleLandscape(int offsetx, int offsety)
 {
-	if (x < 0 || y < 0 || x >= ScrollImage->width || y >= ScrollImage->height) {
-		return false;
+	int mapwidth = TextImage->width + 2 * GROUND_PAD;
+	int mapheight = TextImage->height + 2 * GROUND_PAD;
+	int low = 255, high = 0;
+	for (int row = 0; row < mapheight; row++) {
+		for (int col = 0; col < mapwidth; col++) {
+			int cell = row * mapwidth + col;
+			HeightSample[cell] = 0;
+			ColorSample[cell] = GROUND_COLOR_INDEX;
+			if (!GlyphLit(row, col)) continue;
+
+			int x = (col + offsetx) % HeightMap->width;
+			int y = (row + offsety) % HeightMap->height;
+			int sample = y * HeightMap->width + x;
+			HeightSample[cell] = HeightMap->data[sample];
+			ColorSample[cell] = ColorMap->data[sample];
+			low = MIN(low, HeightSample[cell]);
+			high = MAX(high, HeightSample[cell]);
+		}
 	}
-	return ScrollImage->data[y * ScrollImage->width + x] != 0;
+	// Stretch the sampled heights so the letters retain relief on flat terrain.
+	for (int row = 0; row < mapheight; row++) {
+		for (int col = 0; col < mapwidth; col++) {
+			if (!GlyphLit(row, col)) continue;
+			int cell = row * mapwidth + col;
+			int sample = HeightSample[cell];
+			int offset = sample - low;
+			int inputrange = high - low;
+			int outputrange = EXTRUSION_MAX - EXTRUSION_MIN;
+			int stretched = high > low
+				? EXTRUSION_MIN + offset * outputrange / inputrange
+				: (EXTRUSION_MIN + EXTRUSION_MAX) / 2;
+			HeightSample[cell] = stretched;
+		}
+	}
 }
 
-static void PlotDot(float x, float y, float z)
+static void PlotDot(float x, float y, float z, unsigned char color, const RETRO_RotationTrig &rotation)
 {
-	float ry = y * CosAx - z * SinAx;
-	float rz = y * SinAx + z * CosAx;
-	float rx = x * CosAy + rz * SinAy;
-	rz = x * -SinAy + rz * CosAy;
+	Vertex dot = {};
+	dot.pos = { x, y, z };
+	RETRO_RotateVertexTrig(&dot, rotation);
+	dot.rpos.z += OBJECT_Z;
+	RETRO_ProjectVertex(&dot, PROJECTION_SCALE);
+	if (dot.q == 0.0f) return;
 
-	Vertex vertex;
-	vertex.rpos = { rx, ry, rz + OBJECT_Z };
-	RETRO_ProjectVertex(&vertex, PROJECTION_SCALE);
+	int sx = (int)lround(dot.spos.x), sy = (int)lround(dot.spos.y);
+	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) return;
 
-	if (vertex.q == 0.0f) {
-		return;
-	}
-
-	int sx = (int)lround(vertex.spos.x);
-	int sy = (int)lround(vertex.spos.y);
-	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) {
-		return;
-	}
-
-	int color = (int)((DepthFar - vertex.rpos.z) / (DepthFar - DepthNear) * (SHADES - 1));
-	if (color < 1) {
-		return;
-	}
-	if (color > SHADES - 1) {
-		color = SHADES - 1;
-	}
-
-	if (color > RETRO_GetPixel(sx, sy)) {
+	// dot.q is already 1/depth from the projection, and larger means nearer,
+	// which is exactly what the shared depth test wants.
+	if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, dot.q)) {
 		RETRO_PutPixel(sx, sy, color);
-	}
-}
-
-static void PlotLetterColumn(float x, float z, float time, bool wall)
-{
-	float base = LandscapeY(x, z, time) + LETTER_GAP * DOT_SPACING;
-	PlotDot(x, -(base + EXTRUSION * DOT_SPACING), z);
-	if (!wall) {
-		return;
-	}
-	for (int level = 0; level < EXTRUSION; level++) {
-		PlotDot(x, -(base + level * DOT_SPACING), z);
 	}
 }
 
 void DEMO_Render(double time, double deltatime)
 {
+	int offsetx = (int)(ORBIT_CENTER_X + ORBIT_RADIUS * cos(time * ORBIT_SPEED));
+	int offsety = (int)(ORBIT_CENTER_Y + ORBIT_RADIUS * sin(time * ORBIT_SPEED));
+	SampleLandscape(offsetx, offsety);
+
+	float ax = INITIAL_PITCH + PITCH_AMP * sin(time * PITCH_SPEED);
 	float ay = YAW_AMP * sin(time * YAW_SPEED);
+	float az = ROLL_AMP * sin(time * ROLL_SPEED);
+	RETRO_RotationTrig rotation = RETRO_InitializeRotationTrig(ax, ay, az);
+	RETRO_ClearDepthBuffer();
 
-	CosAx = cos(PITCH);
-	SinAx = sin(PITCH);
-	CosAy = cos(ay);
-	SinAy = sin(ay);
-
-	float phase = fmod(time * SCROLL_SPEED, (double)ScrollImage->width);
-
-	bool occupied[MAP_DEPTH][MAP_WIDTH] = {};
-
-	for (int sy = 0; sy < ScrollImage->height; sy++) {
-		for (int sx = 0; sx < ScrollImage->width; sx++) {
-			if (!GlyphInk(sx, sy)) {
-				continue;
+	int mapwidth = TextImage->width + 2 * GROUND_PAD;
+	int mapheight = TextImage->height + 2 * GROUND_PAD;
+	float originx = (mapwidth - 1) / 2.0f;
+	float originz = (mapheight - 1) / 2.0f;
+	for (int row = 0; row < mapheight; row++) {
+		for (int col = 0; col < mapwidth; col++) {
+			int cell = row * mapwidth + col;
+			int height = HeightSample[cell];
+			// Draw the top and the exposed drop to the lowest neighbour.
+			int bottom = height;
+			bottom = MIN(bottom, row > 0 ? HeightSample[cell - mapwidth] : 0);
+			bottom = MIN(bottom, row + 1 < mapheight ? HeightSample[cell + mapwidth] : 0);
+			bottom = MIN(bottom, col > 0 ? HeightSample[cell - 1] : 0);
+			bottom = MIN(bottom, col + 1 < mapwidth ? HeightSample[cell + 1] : 0);
+			float x = (col - originx) * DOT_SPACING;
+			float z = (originz - row) * DOT_SPACING;
+			for (int level = bottom; level <= height; level++) {
+				float y = -level * DOT_SPACING;
+				PlotDot(x, y, z, ColorSample[cell], rotation);
 			}
-
-			bool wall = !GlyphInk(sx - 1, sy) || !GlyphInk(sx + 1, sy) ||
-				!GlyphInk(sx, sy - 1) || !GlyphInk(sx, sy + 1);
-
-			for (int copy = 0; copy < 2; copy++) {
-				float col = sx - phase + copy * ScrollImage->width;
-				if (col < 0 || col >= MAP_WIDTH) {
-					continue;
-				}
-
-				occupied[TextRow0 + sy][(int)lround(col)] = true;
-
-				float x = (col - OriginX) * DOT_SPACING;
-				float z = (OriginZ - (TextRow0 + sy)) * DOT_SPACING;
-				PlotLetterColumn(x, z, (float)time, wall);
-			}
-		}
-	}
-
-	for (int row = 0; row < MAP_DEPTH; row++) {
-		for (int col = 0; col < MAP_WIDTH; col++) {
-			if (occupied[row][col]) {
-				continue;
-			}
-			float x = (col - OriginX) * DOT_SPACING;
-			float z = (OriginZ - row) * DOT_SPACING;
-			PlotDot(x, -LandscapeY(x, z, (float)time), z);
 		}
 	}
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_CreateGradientPalette(0, SHADES, RETRO_BLACK, RETRO_WHITE);
-
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
-	if (ScrollImage->height > MAP_DEPTH) {
-		RETRO_RageQuit("Scroll strip is taller than the landscape\n");
-	}
-
-	OriginX = (MAP_WIDTH - 1) / 2.0f;
-	OriginZ = (MAP_DEPTH - 1) / 2.0f;
-	TextRow0 = (MAP_DEPTH - ScrollImage->height) / 2;
-
-	float halfw = OriginX * DOT_SPACING;
-	float halfd = OriginZ * DOT_SPACING;
-	float halfh = WAVE_AMP + (LETTER_GAP + EXTRUSION) * DOT_SPACING;
-	float radius = sqrtf(halfw * halfw + halfd * halfd + halfh * halfh);
-	DepthNear = OBJECT_Z - radius;
-	DepthFar = OBJECT_Z + radius;
+	TextImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	HeightMap = RETRO_LoadImage("assets/voxel_height_256x256.pcx");
+	ColorMap = RETRO_LoadImage("assets/voxel_color_256x256.pcx", true);
+	RETRO_SetColor(GROUND_COLOR_INDEX, RETRO_MIDNIGHTBLUE);
+	RETRO_SetColor(0, RETRO_BLACK);
 }

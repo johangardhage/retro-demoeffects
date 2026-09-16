@@ -1,57 +1,44 @@
 //
-// Endless dot landscape
+// Rotating dot landscape
 //
-// The 1024x1024 voxel landscape rendered as a perspective point cloud. Unlike
-// a voxel renderer, it never joins samples into columns: every terrain texel is
-// an independent dot and the empty space between them remains visible.
-//
-// The map wraps, making the camera's world unbounded. Dot density decreases
-// smoothly with distance using a world-anchored pattern, avoiding transition
-// rings and preventing dots from swimming when the camera moves.
-//
-// Left/Right turn and Up/Down move along the new viewing direction. W/S are
-// alternate forward/back controls and A/D provide optional strafing. Combined
-// movement is normalized, so diagonals have the same speed. By default the
-// camera follows the ground; Tab toggles a flycam, in which R and F raise
-// and lower the camera. PageUp and PageDown move the horizon, which tilts
-// the view up and down.
+// The 128x128 voxel_height_128x128.pcx landscape, paired with its own
+// voxel_color_128x128.pcx colormap, rendered as a field of dots. The island
+// look is the terrain library's: the camera is pitched down so the island
+// fills the frame, the patch turns about its centre, and the camera dollies
+// along the viewing axis between stops that keep the finite patch in view.
+// The same look as dotscroller3.cpp and dotscroller4.cpp, which share these
+// assets.
+// Left and Right rotate the terrain. Up/W and Down/S move the camera forward
+// and backward.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
+#include "lib/retropoly.h"
 #include "lib/retroterrain.h"
 
-unsigned int DotWorldZBuffer[RETRO_WIDTH * RETRO_HEIGHT];
+#define WORLD_HEIGHT_SCALE (1.0f / 8.0f) // Same relief as dotscroller4
+#define ISLAND_START_ROTATION -0.5f // A modest turn off dead-on at startup, as dotscroller4
 
-// Draw a smoothly distance-thinned grid inside the view radius.
-static void DrawTerrainDots(float maxdistance)
+// Draw the finite 128x128 terrain through the island look.
+static void DrawTerrainDots(const RETRO_TerrainIslandFrame &frame)
 {
-	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
-	float maxdistance2 = maxdistance * maxdistance;
-	int minx = (int)floorf(RETRO_Camera.x - maxdistance);
-	int maxx = (int)ceilf(RETRO_Camera.x + maxdistance);
-	int minz = (int)floorf(RETRO_Camera.z - maxdistance);
-	int maxz = (int)ceilf(RETRO_Camera.z + maxdistance);
+	int width = RETRO_Terrain.width;
+	int height = RETRO_Terrain.height;
 
-	for (int z = minz; z <= maxz; z++) {
-		float dz = z - RETRO_Camera.z;
-		for (int x = minx; x <= maxx; x++) {
-			float dx = x - RETRO_Camera.x;
-			float radius2 = dx * dx + dz * dz;
-			if (radius2 > maxdistance2) continue;
+	for (int z = 0; z < height; z++) {
+		for (int x = 0; x < width; x++) {
+			RETRO_TerrainEye eye = RETRO_TerrainIslandEye(x, RETRO_TerrainHeight(x, z), z, frame);
+			if (eye.depth <= RETRO_TerrainView.nearplane || fabsf(eye.side) > eye.depth * RETRO_TerrainViewCullSlope()) continue;
 
-			RETRO_TerrainOffset offset;
-			RETRO_TerrainPoint point;
-			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, basis, &offset, &point)) continue;
-
+			RETRO_TerrainPoint point = RETRO_ProjectTerrainView(eye);
 			int sx = (int)point.spos.x;
 			int sy = (int)point.spos.y;
-			unsigned int idepth = (unsigned int)(offset.depth * 256.0f);
-			int screenindex = sy * RETRO_WIDTH + sx;
-			if (idepth < DotWorldZBuffer[screenindex]) {
-				DotWorldZBuffer[screenindex] = idepth;
+			if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) continue;
+
+			if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, 1.0f / eye.depth)) {
 				RETRO_PutPixel(sx, sy, RETRO_TerrainColor(x, z));
 			}
 		}
@@ -60,14 +47,15 @@ static void DrawTerrainDots(float maxdistance)
 
 void DEMO_Render(double time, double deltatime)
 {
-	RETRO_UpdateTerrainCamera(deltatime);
-	memset(DotWorldZBuffer, 0xFF, sizeof(DotWorldZBuffer));
-	DrawTerrainDots(RETRO_TerrainView.distance);
+	RETRO_UpdateTerrainIsland(deltatime);
+	RETRO_ClearDepthBuffer();
+	DrawTerrainDots(RETRO_BuildTerrainIslandFrame());
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTerrain("assets/voxel_color_1024x1024.pcx", "assets/voxel_height_1024x1024.pcx");
+	RETRO_LoadTerrain("assets/voxel_color_128x128.pcx", "assets/voxel_height_128x128.pcx", WORLD_HEIGHT_SCALE, false);
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
-	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
+	RETRO_LookDownAtTerrain();
+	RETRO_Island.rotation = ISLAND_START_ROTATION;
 }

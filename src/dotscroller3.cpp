@@ -1,24 +1,9 @@
 //
-// Dot world scroller
-//
-// The same 128x128 rotating landscape as dotlandscape.cpp, with a scroller
-// (see FONT below) packed into one strip at startup. Every lit texel is a
-// world-space point on the rotating island,
-//
-//   localx = MAP_WIDTH + column · LETTER_DOT_SPACING − phase
-//   localz = LETTER_BASE_Z + row · LETTER_ROW_SPACING
-//   worldy = height(localx, localz) + LETTER_HEIGHT_OFFSET
-//
-// so the letters follow hills and valleys. phase lives on
-// MAP_WIDTH + stripwidth · LETTER_DOT_SPACING, in world units per second.
-// A zero texel is a gap, never a colour: the strip's own palette is unused.
-//
-// The island look is the terrain library's: the camera is pitched down so
-// the island fills the frame, the patch turns about its centre, and the
-// camera dollies along the viewing axis between stops that keep the finite
-// patch in view.
-// Left and Right rotate the terrain and text. Up/W and Down/S move the
-// camera forward and backward.
+// Dot landscape scroller over the repeating height field from dotlandscape4,
+// painted with its paired voxel_color_128x128.pcx colormap.
+// The camera cruises and turns automatically. The text strip travels with
+// the camera, scrolling sideways while each letter dot follows the terrain
+// beneath it.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -26,105 +11,129 @@
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
-#include "lib/retroterrain.h"
-
-#define MAP_WIDTH 128
-#define MAP_HEIGHT 128
-#define WORLD_HEIGHT_SCALE 0.34f
+#include "lib/retropoly.h"
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
 //#define FONT RETRO_FONT_MINECRAFT_8X8
 
+// voxel_color_128x128.pcx never uses palette indices 224 upward, so the
+// letter gradient can occupy them without stealing a terrain color.
 #define LETTER_COLOR_BASE 224
-#define LETTER_DOT_SPACING 1.35f
-#define LETTER_ROW_SPACING 1.35f
-#define LETTER_BASE_Z 54.4f
-#define LETTER_HEIGHT_OFFSET 2.5f
-#define SCROLL_SPEED 17.0f // world units per second
+#define LETTER_DOT_SPACING 0.8f
+#define LETTER_ROW_SPACING 1.0f
+#define LETTER_HEIGHT_OFFSET 1.5f
+#define SCROLL_SPEED 17.0f
+#define CAMERA_HEIGHT 20.0f
+#define PITCH -0.5f
+#define NEAR_PLANE 1.0f
+#define VIEW_DISTANCE 100.0f
+#define WORLD_HEIGHT_SCALE (1.0f / 16.0f)
+#define LETTER_NEAR_FORWARD 24.0f
+#define TURN_SPEED 0.3f
+#define FORWARD_SPEED 30.0f
 
-static const char *const ScrollText[] = { " RETRO DEMOEFFECTS...    " };
+static const char *const ScrollText[] = { " RETRO DEMOEFFECTS..." };
+static RETRO_Image *HeightMap, *ColorMap, *ScrollImage;
 
-// HeightMap stores terrain altitude. ColorMap stores the palette index of the
-// corresponding dot, so neither value has to be recalculated while rendering.
-unsigned char HeightMap[MAP_WIDTH * MAP_HEIGHT];
-unsigned char ColorMap[MAP_WIDTH * MAP_HEIGHT];
-RETRO_Image *ScrollImage;
-
-// More than one terrain or letter dot may land on the same screen pixel. The
-// depth buffer ensures that the nearest one remains visible.
-unsigned int DotWorldZBuffer[RETRO_WIDTH * RETRO_HEIGHT];
-
-static void PlotWorldDot(float x, float y, float z, unsigned char color, const RETRO_TerrainIslandFrame &frame)
+static unsigned char TerrainSample(int x, int z)
 {
-	RETRO_TerrainEye eye = RETRO_TerrainIslandEye(x, y, z, frame);
-	if (eye.depth <= RETRO_TerrainView.nearplane || fabsf(eye.side) > eye.depth * RETRO_TerrainViewCullSlope()) return;
+	return HeightMap->data[WRAP(z, HeightMap->height) * HeightMap->width + WRAP(x, HeightMap->width)];
+}
 
-	RETRO_TerrainPoint point = RETRO_ProjectTerrainView(eye);
-	int sx = (int)point.spos.x;
-	int sy = (int)point.spos.y;
+static unsigned char ColorSample(int x, int z)
+{
+	return ColorMap->data[WRAP(z, ColorMap->height) * ColorMap->width + WRAP(x, ColorMap->width)];
+}
+
+// Terrain and letters use the same perspective and pixel depth buffer.
+static void PlotDot(float side, float forward, float height, unsigned char color)
+{
+	float up = (height - CAMERA_HEIGHT) * cosf(PITCH) - forward * sinf(PITCH);
+	float depth = (height - CAMERA_HEIGHT) * sinf(PITCH) + forward * cosf(PITCH);
+	if (depth < NEAR_PLANE || depth > VIEW_DISTANCE) return;
+	float sx = RETRO_WIDTH * 0.5f + side * (RETRO_WIDTH * 0.5f) / depth;
+	float sy = RETRO_HEIGHT * 0.5f - up * (RETRO_HEIGHT * 0.5f) / depth;
 	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) return;
-
-	unsigned int idepth = (unsigned int)(eye.depth * 256.0f);
-	int screenindex = sy * RETRO_WIDTH + sx;
-	if (idepth < DotWorldZBuffer[screenindex]) {
-		DotWorldZBuffer[screenindex] = idepth;
-		RETRO_PutPixel(sx, sy, color);
+	int x = (int)sx, y = (int)sy;
+	if (RETRO_DepthTest(y * RETRO_WIDTH + x, 1.0f / depth)) {
+		RETRO_PutPixel(x, y, color);
 	}
 }
 
-// Draw the finite 128x128 terrain through the island look.
-static void DrawTerrainDots(const RETRO_TerrainIslandFrame &frame)
+// Scan the view radius around the camera and plot every terrain cell in it.
+static void DrawTerrainDots(float camerax, float cameraz, float cs, float sn)
 {
-	int width = RETRO_Terrain.width;
-	int height = RETRO_Terrain.height;
+	int minx = (int)floorf(camerax - VIEW_DISTANCE);
+	int maxx = (int)ceilf(camerax + VIEW_DISTANCE);
+	int minz = (int)floorf(cameraz - VIEW_DISTANCE);
+	int maxz = (int)ceilf(cameraz + VIEW_DISTANCE);
+	for (int z = minz; z <= maxz; z++) {
+		for (int x = minx; x <= maxx; x++) {
+			float dx = x - camerax, dz = z - cameraz;
+			// Turned into camera space by the heading: this camera turns, dotlandscape4's does not.
+			float side = dx * cs - dz * sn;
+			float forward = dx * sn + dz * cs;
+			PlotDot(side, forward, TerrainSample(x, z) * WORLD_HEIGHT_SCALE, ColorSample(x, z));
+		}
+	}
+}
 
-	for (int z = 0; z < height; z++) {
-		for (int x = 0; x < width; x++) {
-			PlotWorldDot(x, RETRO_TerrainHeight(x, z), z, RETRO_TerrainColor(x, z), frame);
+static float TerrainHeight(float x, float z)
+{
+	int ix = (int)floorf(x), iz = (int)floorf(z);
+	float fx = x - ix, fz = z - iz;
+	float top = TerrainSample(ix, iz) * (1 - fx) + TerrainSample(ix + 1, iz) * fx;
+	float bottom = TerrainSample(ix, iz + 1) * (1 - fx) + TerrainSample(ix + 1, iz + 1) * fx;
+	return (top * (1 - fz) + bottom * fz) * WORLD_HEIGHT_SCALE;
+}
+
+// Scroll the text strip sideways with the camera, following the terrain
+// beneath each letter dot.
+static void DrawScrollerDots(double time, float camerax, float cameraz, float cs, float sn)
+{
+	// The farthest row's own depth: at that depth the true screen edge sits at
+	// side = +-farforward, wider than any nearer row's. Timing entry/exit to
+	// this bound, rather than a smaller guess, means no row is ever still
+	// waiting on a phantom margin PlotDot would already have put on screen.
+	float farforward = LETTER_NEAR_FORWARD + (ScrollImage->height - 1) * LETTER_ROW_SPACING;
+	float cycle = 2 * farforward + ScrollImage->width * LETTER_DOT_SPACING;
+	float phase = fmod(time * SCROLL_SPEED, cycle);
+	for (int row = 0; row < ScrollImage->height; row++) {
+		// Top rows lie farther away, keeping the font upright in perspective.
+		float forward = LETTER_NEAR_FORWARD + (ScrollImage->height - 1 - row) * LETTER_ROW_SPACING;
+		for (int column = 0; column < ScrollImage->width; column++) {
+			if (!ScrollImage->data[row * ScrollImage->width + column]) continue;
+			float side = farforward + column * LETTER_DOT_SPACING - phase;
+			if (side < -farforward || side > farforward) continue;
+			float x = camerax + side * cs + forward * sn;
+			float z = cameraz - side * sn + forward * cs;
+			PlotDot(side, forward, TerrainHeight(x, z) + LETTER_HEIGHT_OFFSET, LETTER_COLOR_BASE + row);
 		}
 	}
 }
 
 void DEMO_Render(double time, double deltatime)
 {
-	RETRO_UpdateTerrainIsland(deltatime);
+	static float camerax = 64, cameraz = 118, heading = 0;
+	heading = fmodf(heading + TURN_SPEED * deltatime, 2.0f * M_PI);
+	float cs = cosf(heading), sn = sinf(heading);
+	camerax = fmodf(camerax + sn * FORWARD_SPEED * deltatime + HeightMap->width, HeightMap->width);
+	cameraz = fmodf(cameraz + cs * FORWARD_SPEED * deltatime + HeightMap->height, HeightMap->height);
 
-	// Calculate phase
-	float scrollcycle = MAP_WIDTH + ScrollImage->width * LETTER_DOT_SPACING;
-	float phase = fmod(time * SCROLL_SPEED, scrollcycle);
-
-	memset(DotWorldZBuffer, 0xFF, sizeof(DotWorldZBuffer));
-	RETRO_TerrainIslandFrame frame = RETRO_BuildTerrainIslandFrame();
-	DrawTerrainDots(frame);
-
-	int width = RETRO_Terrain.width;
-	for (int sy = 0; sy < ScrollImage->height; sy++) {
-		// The camera looks toward decreasing Z, so the font's top row uses the
-		// smaller (farther) coordinate and the text reads upright on the ground.
-		float localz = LETTER_BASE_Z + sy * LETTER_ROW_SPACING;
-		for (int sx = 0; sx < ScrollImage->width; sx++) {
-			if (ScrollImage->data[sy * ScrollImage->width + sx] == 0) continue;
-			float localx = width + sx * LETTER_DOT_SPACING - phase;
-			if (localx < 0 || localx >= width) continue;
-			float worldy = RETRO_TerrainHeightLinear(localx, localz) + LETTER_HEIGHT_OFFSET;
-			PlotWorldDot(localx, worldy, localz, LETTER_COLOR_BASE + sy, frame);
-		}
-	}
+	RETRO_ClearDepthBuffer();
+	DrawTerrainDots(camerax, cameraz, cs, sn);
+	DrawScrollerDots(time, camerax, cameraz, cs, sn);
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadTerrain("assets/voxel_color_1024x1024.pcx", "assets/voxel_height_1024x1024.pcx");
-	RETRO_SetColor(0, RETRO_NIGHTSKY);
-	RETRO_DownsampleTerrain(HeightMap, ColorMap, MAP_WIDTH, MAP_HEIGHT);
-	RETRO_SetTerrain(MAP_WIDTH, MAP_HEIGHT, WORLD_HEIGHT_SCALE, HeightMap, ColorMap, false);
-	RETRO_LookDownAtTerrain();
-
-	// Font pixels are only used as a lit/unlit mask, never as color, so the
-	// strip's own palette is never applied here.
+	HeightMap = RETRO_LoadImage("assets/voxel_height_128x128.pcx");
+	ColorMap = RETRO_LoadImage("assets/voxel_color_128x128.pcx", true);
 	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	if (ScrollImage->height > 256 - LETTER_COLOR_BASE) {
+		RETRO_RageQuit("Scroller font is too tall for the letter palette\n");
+	}
 
-	// The terrain colormap does not use indices 224..239, so the lettering can
-	// own this range without recoloring isolated terrain dots.
 	RETRO_CreateGradientPalette(LETTER_COLOR_BASE, LETTER_COLOR_BASE + ScrollImage->height, RETRO_GOLD, RETRO_WHITE);
+	RETRO_SetColor(0, RETRO_NIGHTSKY);
 }

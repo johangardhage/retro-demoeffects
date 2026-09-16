@@ -173,6 +173,7 @@ void DEMO_Render(double time, double deltatime)
 	float ax = fmod(time * BALL_SPEEDX, 2 * M_PI);
 	float ay = fmod(time * BALL_SPEEDY, 2 * M_PI);
 	float az = fmod(time * BALL_SPEEDZ, 2 * M_PI);
+	RETRO_RotationTrig rotation = RETRO_InitializeRotationTrig(ax, ay, az);
 	float spin = fmod(time * STAR_SPIN, 2 * M_PI);
 
 	// First fall has no previous takeoff to continue, so the oscillator
@@ -249,7 +250,7 @@ void DEMO_Render(double time, double deltatime)
 
 		ivec2 pts[STAR_VERTS];
 		for (int i = 0; i < STAR_VERTS; i++) {
-			RETRO_RotateVertex(&star[i], ax, ay, az);
+			RETRO_RotateVertexTrig(&star[i], rotation);
 			float depth = BALL_EYE + star[i].rpos.z;
 			if (depth < 0.1f) {
 				depth = 0.1f;

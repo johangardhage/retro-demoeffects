@@ -340,14 +340,14 @@ inline void RETRO_SetTerrain(int width, int height, float scale, unsigned char *
 // height calls here, and there is no scale for it to disagree with. The map
 // wraps: a file is a torus until a caller says otherwise.
 //
-inline void RETRO_LoadTerrain(const char *colorfile, const char *heightfile, float scale = 1.0f)
+inline void RETRO_LoadTerrain(const char *colorfile, const char *heightfile, float scale = 1.0f, bool wrap = true)
 {
 	RETRO_Image *colormap = RETRO_LoadImage(colorfile, true);
 	RETRO_Image *heightmap = RETRO_LoadImage(heightfile);
 	if (colormap->width != heightmap->width || colormap->height != heightmap->height) {
 		RETRO_RageQuit("Terrain color and height maps must be the same size\n");
 	}
-	RETRO_SetTerrain(heightmap->width, heightmap->height, scale, heightmap->data, colormap->data);
+	RETRO_SetTerrain(heightmap->width, heightmap->height, scale, heightmap->data, colormap->data, wrap);
 }
 
 // tan of half the view: a point at this side-per-depth sits on the screen

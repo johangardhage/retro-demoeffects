@@ -169,28 +169,6 @@ inline void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = 
 // Single vertex and unit vector rotation, without a model
 //
 
-// Sequential Rx, Ry, Rz by the same (cos, sin) pair, where RETRO_RotateVertex
-// below takes an angle per axis. The angle arrives already resolved, so a demo
-// can spin from a table. Each plane map scales that plane by r = √(cos²+sin²)
-// and leaves its axis alone, so a pair that is not unit squashes the model as
-// it turns and the composition is not in SO(3), which is why this is not
-// called a rotation.
-inline void RETRO_SpinVertex(Vertex *vertex, float cosa, float sina)
-{
-	// Rotate around x axis
-	vertex->rpos.y = vertex->pos.y * cosa - vertex->pos.z * sina;
-	vertex->rpos.z = vertex->pos.y * sina + vertex->pos.z * cosa;
-
-	// Rotate around y axis
-	vertex->rpos.x = vertex->pos.x * cosa + vertex->rpos.z * sina;
-	vertex->rpos.z = vertex->pos.x * -sina + vertex->rpos.z * cosa;
-
-	// Rotate around z axis
-	float tmpx = vertex->rpos.x * cosa - vertex->rpos.y * sina;
-	vertex->rpos.y = vertex->rpos.x * sina + vertex->rpos.y * cosa;
-	vertex->rpos.x = tmpx;
-}
-
 inline void RETRO_RotateVertex(Vertex *vertex, float ax, float ay, float az)
 {
 	// Rotate around x axis
@@ -204,6 +182,36 @@ inline void RETRO_RotateVertex(Vertex *vertex, float ax, float ay, float az)
 	// Rotate around z axis
 	float tmpx = vertex->rpos.x * cos(az) - vertex->rpos.y * sin(az);
 	vertex->rpos.y = vertex->rpos.x * sin(az) + vertex->rpos.y * cos(az);
+	vertex->rpos.x = tmpx;
+}
+
+// Cos/sin per axis for RETRO_RotateVertexTrig, built once per frame by
+// RETRO_InitializeRotationTrig and reused across many vertices so a caller
+// does not pay for six cos()/sin() calls per vertex.
+struct RETRO_RotationTrig {
+	float cosax, sinax, cosay, sinay, cosaz, sinaz;
+};
+
+inline RETRO_RotationTrig RETRO_InitializeRotationTrig(float ax, float ay, float az)
+{
+	return { cos(ax), sin(ax), cos(ay), sin(ay), cos(az), sin(az) };
+}
+
+// Same sequential Rx, Ry, Rz as RETRO_RotateVertex, but taking a precomputed
+// RETRO_RotationTrig instead of angles.
+inline void RETRO_RotateVertexTrig(Vertex *vertex, const RETRO_RotationTrig &rotation)
+{
+	// Rotate around x axis
+	vertex->rpos.y = vertex->pos.y * rotation.cosax - vertex->pos.z * rotation.sinax;
+	vertex->rpos.z = vertex->pos.y * rotation.sinax + vertex->pos.z * rotation.cosax;
+
+	// Rotate around y axis
+	vertex->rpos.x = vertex->pos.x * rotation.cosay + vertex->rpos.z * rotation.sinay;
+	vertex->rpos.z = vertex->pos.x * -rotation.sinay + vertex->rpos.z * rotation.cosay;
+
+	// Rotate around z axis
+	float tmpx = vertex->rpos.x * rotation.cosaz - vertex->rpos.y * rotation.sinaz;
+	vertex->rpos.y = vertex->rpos.x * rotation.sinaz + vertex->rpos.y * rotation.cosaz;
 	vertex->rpos.x = tmpx;
 }
 

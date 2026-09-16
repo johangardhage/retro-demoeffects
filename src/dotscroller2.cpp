@@ -65,8 +65,7 @@ void DEMO_Render(double time, double deltatime)
 
 			// Bend the strip toward and away from the camera. The depth wave
 			// belongs to the text, so its shape travels with the letters.
-			double z = DEPTH_AMPLITUDE * sin(sx * DOT_SPACING * 2 * M_PI /
-				DEPTH_WAVELENGTH + depthphase);
+			double z = DEPTH_AMPLITUDE * sin(sx * DOT_SPACING * 2 * M_PI / DEPTH_WAVELENGTH + depthphase);
 			double scale = CAMERA_DISTANCE / (CAMERA_DISTANCE + z);
 
 			double x = (worldx - RETRO_WIDTH / 2.0) * scale + RETRO_WIDTH / 2.0;

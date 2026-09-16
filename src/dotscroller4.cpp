@@ -1,191 +1,162 @@
 //
-// Dot landscape scroller: terrain samples raise a fixed text mask into
-// columns of dots. The sampling window orbits the map while the patch rocks.
+// Dot world scroller
+//
+// The 128x128 voxel_height_128x128.pcx landscape in a zoomed-out island view,
+// with a scroller (see FONT below) packed into one strip at startup. Every
+// lit texel is a world-space point on the rotating island,
+//
+//   mapx = MAP_WIDTH + column · LETTER_DOT_SPACING − phase
+//   mapz = LETTER_BASE_Z + row · LETTER_ROW_SPACING
+//   worldy = height(mapx, mapz) + LETTER_HEIGHT_OFFSET
+//
+// so the letters follow hills and valleys. phase lives on
+// MAP_WIDTH + stripwidth · LETTER_DOT_SPACING, in world units per second.
+// A zero texel is a gap, never a colour: the strip's own palette is unused.
+//
+// The camera stands outside the finite patch, pitched down so the island
+// fills the frame; the patch turns about its own centre under it rather than
+// the camera turning. Left and Right rotate the terrain and text. Up/W and
+// Down/S dolly the camera forward and backward, held between stops that keep
+// the patch in frame.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
-#include "lib/retromath.h"
-#include "lib/retropalette.h"
+#include "lib/retropoly.h"
+
+#define MAP_WIDTH 128
+#define MAP_HEIGHT 128
+#define WORLD_HEIGHT_SCALE (1.0f / 8.0f) // Same relief as dotscroller3
+#define CENTER_X ((MAP_WIDTH - 1) * 0.5f)
+#define CENTER_Z ((MAP_HEIGHT - 1) * 0.5f)
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
 //#define FONT RETRO_FONT_MINECRAFT_8X8
 
-#define HEIGHTFIELD "assets/voxel_height_256x256.pcx"
-#define COLORFIELD "assets/voxel_color_256x256.pcx"
-#define ORBIT_CENTER_X 80
-#define ORBIT_CENTER_Y 54
-#define ORBIT_RADIUS 20
-#define ORBIT_SPEED 0.8
+#define LETTER_COLOR_BASE 224
+#define LETTER_DOT_SPACING 1.35f
+#define LETTER_ROW_SPACING 1.35f
+#define LETTER_BASE_Z 54.4f
+#define LETTER_HEIGHT_OFFSET 2.5f
+#define SCROLL_SPEED 34.0f // world units per second
 
-#define DOT_SPACING 3.0f
-#define GROUND_PAD 6
-#define EXTRUSION_MIN 4
-#define EXTRUSION_MAX 22
-#define LETTER_BANDS 6
-#define GROUND_BAND LETTER_BANDS
-#define BAND_SHADES 32
-#define YAW_AMP 0.75
-#define YAW_SPEED 0.35
-#define INITIAL_PITCH 1.15
-#define PITCH_AMP 0.38
-#define PITCH_SPEED 0.45
-#define ROLL_AMP 0.22
-#define ROLL_SPEED 0.55
-#define OBJECT_Z 50.0f
-#define PROJECTION_SCALE 1.0f
+#define ISLAND_PITCH 0.70f // Radians down from the horizon
+#define ISLAND_START_Z (MAP_HEIGHT + 35.0f)
+#define ISLAND_START_ROTATION -0.5f // A modest turn off dead-on at startup
+#define ISLAND_MOVE_SPEED 24.0f
+#define ISLAND_TURN_SPEED 1.35f
+#define NEAR_PLANE 4.0f
+#define FOCAL_X (RETRO_WIDTH * 0.54f)
+#define FOCAL_Y (RETRO_HEIGHT * 0.78f)
+#define HORIZON_Y (RETRO_HEIGHT * 0.46f)
 
+static const char *const ScrollText[] = { " RETRO DEMOEFFECTS...    " };
+static RETRO_Image *HeightMap, *ColorMap, *ScrollImage;
 
-#define MAX_MAP 256
+// The camera's dolly stops and the height its pitch was posed at, all fixed
+// once the map is loaded: the patch turns and the camera dollies, but the
+// pose that keeps the view centred on it never moves.
+static float IslandHeight, IslandNearestZ, IslandFarthestZ;
 
-static const char *const ScrollText[] = { "RETRO", "DEMO" };
-
-static RETRO_Image *HeightField, *ColorField;
-static int MapWidth, MapHeight;
-static float OriginX, OriginZ, DepthNear, DepthFar;
-static unsigned char LitMask[MAX_MAP * MAX_MAP];
-static unsigned char HeightMap[MAX_MAP * MAX_MAP];
-static unsigned char BandMap[MAX_MAP * MAX_MAP];
-static float ZBuffer[RETRO_WIDTH * RETRO_HEIGHT];
-static float CosAx, SinAx, CosAy, SinAy, CosAz, SinAz;
-
-// The terrain palette is muted, so push each channel away from the colour's
-// own grey level to make the hue vivid before shading it dark and light.
-static RETRO_Palette Saturate(RETRO_Palette c, float s)
+static unsigned char TerrainSample(int x, int z)
 {
-	float gray = (c.r + c.g + c.b) / 3.0f;
-	return { (unsigned char)CLAMP256(gray + (c.r - gray) * s), (unsigned char)CLAMP256(gray + (c.g - gray) * s), (unsigned char)CLAMP256(gray + (c.b - gray) * s) };
+	return HeightMap->data[CLAMP(z, 0, MAP_HEIGHT) * MAP_WIDTH + CLAMP(x, 0, MAP_WIDTH)];
 }
 
-// Each band's shade ramp runs dark to light from one representative colour
-// sampled straight out of the colour map's own palette.
-static void InitializePalette()
+static unsigned char ColorSample(int x, int z)
 {
-	for (int band = 0; band < LETTER_BANDS; band++) {
-		RETRO_Palette c = Saturate(ColorField->palette[band * RETRO_COLORS / LETTER_BANDS], 2.2f);
-		RETRO_Palette dark = { (unsigned char)(c.r * 0.6f), (unsigned char)(c.g * 0.6f), (unsigned char)(c.b * 0.6f) };
-		RETRO_Palette light = { (unsigned char)CLAMP256(c.r * 1.3f), (unsigned char)CLAMP256(c.g * 1.3f), (unsigned char)CLAMP256(c.b * 1.3f) };
-		RETRO_CreateGradientPalette(1 + band * BAND_SHADES, 1 + (band + 1) * BAND_SHADES, dark, light);
-	}
-	RETRO_CreateGradientPalette(1 + GROUND_BAND * BAND_SHADES, 1 + (GROUND_BAND + 1) * BAND_SHADES, RETRO_Palette{ 5, 5, 30 }, RETRO_MIDNIGHTBLUE);
+	return ColorMap->data[CLAMP(z, 0, MAP_HEIGHT) * MAP_WIDTH + CLAMP(x, 0, MAP_WIDTH)];
 }
 
-static void SampleLandscape(int offsetx, int offsety)
+static float TerrainHeight(float x, float z)
 {
-	int low = 255, high = 0;
-	for (int row = 0; row < MapHeight; row++) {
-		for (int col = 0; col < MapWidth; col++) {
-			int cell = row * MapWidth + col;
-			HeightMap[cell] = 0;
-			BandMap[cell] = GROUND_BAND;
-			if (!LitMask[cell]) continue;
-
-			int x = (col + offsetx) % HeightField->width;
-			int y = (row + offsety) % HeightField->height;
-			int sample = y * HeightField->width + x;
-			HeightMap[cell] = HeightField->data[sample];
-			BandMap[cell] = ColorField->data[sample] * LETTER_BANDS / RETRO_COLORS;
-			low = MIN(low, HeightMap[cell]);
-			high = MAX(high, HeightMap[cell]);
-		}
-	}
-	// Stretch the sampled heights so the letters retain relief on flat terrain.
-	for (int cell = 0; cell < MapWidth * MapHeight; cell++) {
-		if (!LitMask[cell]) continue;
-		HeightMap[cell] = high > low
-			? EXTRUSION_MIN + (HeightMap[cell] - low) * (EXTRUSION_MAX - EXTRUSION_MIN) / (high - low)
-			: (EXTRUSION_MIN + EXTRUSION_MAX) / 2;
-	}
+	int ix = (int)floorf(x), iz = (int)floorf(z);
+	float fx = x - ix, fz = z - iz;
+	float top = TerrainSample(ix, iz) * (1 - fx) + TerrainSample(ix + 1, iz) * fx;
+	float bottom = TerrainSample(ix, iz + 1) * (1 - fx) + TerrainSample(ix + 1, iz + 1) * fx;
+	return (top * (1 - fz) + bottom * fz) * WORLD_HEIGHT_SCALE;
 }
 
-static void PlotDot(float x, float y, float z, int band)
+// Terrain and letters use the same perspective and pixel depth buffer. side
+// and forward are the map point's offset from the camera, already turned by
+// the patch's own rotation; PlotDot only has to mix in the fixed pitch.
+static void PlotDot(float side, float forward, float height, unsigned char color)
 {
-	float ry = y * CosAx - z * SinAx;
-	float rz = y * SinAx + z * CosAx;
-	float rx = x * CosAy + rz * SinAy;
-	rz = -x * SinAy + rz * CosAy;
-	Vertex dot = {};
-	dot.rpos.x = rx * CosAz - ry * SinAz;
-	dot.rpos.y = rx * SinAz + ry * CosAz;
-	dot.rpos.z = rz + OBJECT_Z;
-	RETRO_ProjectVertex(&dot, PROJECTION_SCALE);
-	if (dot.q == 0.0f) return;
-
-	int sx = (int)lround(dot.spos.x), sy = (int)lround(dot.spos.y);
+	float vertical = height - IslandHeight;
+	float depth = forward * cosf(ISLAND_PITCH) - vertical * sinf(ISLAND_PITCH);
+	if (depth <= NEAR_PLANE) return;
+	float up = vertical * cosf(ISLAND_PITCH) + forward * sinf(ISLAND_PITCH);
+	float sx = RETRO_WIDTH * 0.5f + FOCAL_X * side / depth;
+	float sy = HORIZON_Y - FOCAL_Y * up / depth;
 	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) return;
-	int pixel = sy * RETRO_WIDTH + sx;
-	if (dot.rpos.z >= ZBuffer[pixel]) return;
-
-	int shade = (DepthFar - dot.rpos.z) / (DepthFar - DepthNear) * (BAND_SHADES - 1);
-	shade = MIN(BAND_SHADES - 1, shade);
-	shade = MAX(1, shade);
-	ZBuffer[pixel] = dot.rpos.z;
-	RETRO_PutPixel(sx, sy, 1 + band * BAND_SHADES + shade);
+	int x = (int)sx, y = (int)sy;
+	if (RETRO_DepthTest(y * RETRO_WIDTH + x, 1.0f / depth)) {
+		RETRO_PutPixel(x, y, color);
+	}
 }
 
 void DEMO_Render(double time, double deltatime)
 {
-	SampleLandscape((int)(ORBIT_CENTER_X + ORBIT_RADIUS * cos(time * ORBIT_SPEED)),
-		(int)(ORBIT_CENTER_Y + ORBIT_RADIUS * sin(time * ORBIT_SPEED)));
+	static float IslandZ = ISLAND_START_Z;
+	static float IslandRotation = ISLAND_START_ROTATION;
 
-	float ax = INITIAL_PITCH + PITCH_AMP * sin(time * PITCH_SPEED);
-	float ay = YAW_AMP * sin(time * YAW_SPEED);
-	float az = ROLL_AMP * sin(time * ROLL_SPEED);
-	CosAx = cos(ax); SinAx = sin(ax);
-	CosAy = cos(ay); SinAy = sin(ay);
-	CosAz = cos(az); SinAz = sin(az);
-	for (int pixel = 0; pixel < RETRO_WIDTH * RETRO_HEIGHT; pixel++) ZBuffer[pixel] = DepthFar + 1;
+	float distance = deltatime * ISLAND_MOVE_SPEED;
+	float rotation = deltatime * ISLAND_TURN_SPEED;
+	if (RETRO_KeyState(SDL_SCANCODE_LEFT)) IslandRotation += rotation;
+	if (RETRO_KeyState(SDL_SCANCODE_RIGHT)) IslandRotation -= rotation;
+	if (RETRO_KeyState(SDL_SCANCODE_UP) || RETRO_KeyState(SDL_SCANCODE_W)) IslandZ -= distance;
+	if (RETRO_KeyState(SDL_SCANCODE_DOWN) || RETRO_KeyState(SDL_SCANCODE_S)) IslandZ += distance;
+	if (IslandZ < IslandNearestZ) IslandZ = IslandNearestZ;
+	if (IslandZ > IslandFarthestZ) IslandZ = IslandFarthestZ;
+	IslandRotation = fmodf(IslandRotation, (float)(2.0 * M_PI));
 
-	for (int row = 0; row < MapHeight; row++) {
-		for (int col = 0; col < MapWidth; col++) {
-			int cell = row * MapWidth + col;
-			int height = HeightMap[cell];
-			// Draw the top and the exposed drop to the lowest neighbour.
-			int bottom = height;
-			bottom = MIN(bottom, row > 0 ? HeightMap[cell - MapWidth] : 0);
-			bottom = MIN(bottom, row + 1 < MapHeight ? HeightMap[cell + MapWidth] : 0);
-			bottom = MIN(bottom, col > 0 ? HeightMap[cell - 1] : 0);
-			bottom = MIN(bottom, col + 1 < MapWidth ? HeightMap[cell + 1] : 0);
-			for (int level = bottom; level <= height; level++) {
-				PlotDot((col - OriginX) * DOT_SPACING, -level * DOT_SPACING,
-					(OriginZ - row) * DOT_SPACING, BandMap[cell]);
-			}
+	RETRO_ClearDepthBuffer();
+	float rotcos = cosf(IslandRotation), rotsin = sinf(IslandRotation);
+	float forward0 = IslandZ - CENTER_Z;
+
+	for (int z = 0; z < MAP_HEIGHT; z++) {
+		for (int x = 0; x < MAP_WIDTH; x++) {
+			float dx = x - CENTER_X, dz = z - CENTER_Z;
+			PlotDot(dx * rotcos - dz * rotsin, forward0 - (dx * rotsin + dz * rotcos), TerrainSample(x, z) * WORLD_HEIGHT_SCALE, ColorSample(x, z));
+		}
+	}
+
+	// The camera looks toward decreasing Z, so the font's top row uses the
+	// smaller (farther) coordinate and the text reads upright on the ground.
+	float scrollcycle = MAP_WIDTH + ScrollImage->width * LETTER_DOT_SPACING;
+	float phase = fmod(time * SCROLL_SPEED, scrollcycle);
+	for (int sy = 0; sy < ScrollImage->height; sy++) {
+		float mapz = LETTER_BASE_Z + sy * LETTER_ROW_SPACING;
+		for (int sx = 0; sx < ScrollImage->width; sx++) {
+			if (ScrollImage->data[sy * ScrollImage->width + sx] == 0) continue;
+			float mapx = MAP_WIDTH + sx * LETTER_DOT_SPACING - phase;
+			if (mapx < 0 || mapx >= MAP_WIDTH) continue;
+			float dx = mapx - CENTER_X, dz = mapz - CENTER_Z;
+			float height = TerrainHeight(mapx, mapz) + LETTER_HEIGHT_OFFSET;
+			PlotDot(dx * rotcos - dz * rotsin, forward0 - (dx * rotsin + dz * rotcos), height, LETTER_COLOR_BASE + sy);
 		}
 	}
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_Image *image = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
-	HeightField = RETRO_LoadImage(HEIGHTFIELD);
-	ColorField = RETRO_LoadImage(COLORFIELD);
-
-	if (HeightField->width != ColorField->width || HeightField->height != ColorField->height) {
-		RETRO_RageQuit("Terrain height and colour maps must have matching dimensions\n");
-	}
-	InitializePalette();
-
-	MapWidth = image->width + 2 * GROUND_PAD;
-	MapHeight = image->height + 2 * GROUND_PAD;
-	if (MapWidth > MAX_MAP || MapHeight > MAX_MAP) {
-		RETRO_RageQuit("Dot landscape is larger than the height map\n");
-	}
-	OriginX = (MapWidth - 1) / 2.0f;
-	OriginZ = (MapHeight - 1) / 2.0f;
-
-	for (int row = 0; row < MapHeight; row++) {
-		int imagerow = row - GROUND_PAD;
-		for (int col = 0; col < MapWidth; col++) {
-			int imagecol = col - GROUND_PAD;
-			LitMask[row * MapWidth + col] = imagerow >= 0 && imagerow < image->height &&
-				imagecol >= 0 && imagecol < image->width &&
-				image->data[imagerow * image->width + imagecol] != 0;
-		}
+	HeightMap = RETRO_LoadImage("assets/voxel_height_128x128.pcx");
+	ColorMap = RETRO_LoadImage("assets/voxel_color_128x128.pcx", true);
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	if (ScrollImage->height > 256 - LETTER_COLOR_BASE) {
+		RETRO_RageQuit("Scroller font is too tall for the letter palette\n");
 	}
 
-	float radius = DOT_SPACING * sqrtf(OriginX * OriginX + OriginZ * OriginZ + EXTRUSION_MAX * EXTRUSION_MAX);
-	DepthNear = OBJECT_Z - radius;
-	DepthFar = OBJECT_Z + radius;
+	RETRO_CreateGradientPalette(LETTER_COLOR_BASE, LETTER_COLOR_BASE + ScrollImage->height, RETRO_GOLD, RETRO_WHITE);
+	RETRO_SetColor(0, RETRO_NIGHTSKY);
+
+	// The near stop is the centre plus the circumradius of the patch plus the
+	// near plane, not the unrotated south edge: the island turns about its
+	// centre, and a stop at the south edge would let a 45 degree yaw put the
+	// camera inside it looking at a corner.
+	IslandNearestZ = CENTER_Z + hypotf(CENTER_X, CENTER_Z) + NEAR_PLANE;
+	IslandFarthestZ = MAP_HEIGHT + 70.0f;
+	IslandHeight = TerrainSample((int)CENTER_X, (int)CENTER_Z) * WORLD_HEIGHT_SCALE + tanf(ISLAND_PITCH) * (ISLAND_START_Z - CENTER_Z);
 }

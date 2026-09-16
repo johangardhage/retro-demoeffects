@@ -74,9 +74,14 @@ void DEMO_FixedUpdate(double timestep)
 	// Draw blobs
 	for (int step = 0; step < slots; step++) {
 		int turn = (iphase - slots + 1 + step + SINE_VALUES) % SINE_VALUES;
+		// Not a rotation: the same (cos, sin) pair on all three axes. Each
+		// plane map scales that plane by r = sqrt(cos^2+sin^2) and leaves its
+		// axis alone, so a pair that is not unit squashes the model as it
+		// turns and the composition is not in SO(3).
+		RETRO_RotationTrig spin = { CosTable[turn], SinTable[turn], CosTable[turn], SinTable[turn], CosTable[turn], SinTable[turn] };
 
 		for (int p = 0; p < model->vertices; p++) {
-			RETRO_SpinVertex(&vertex[p], CosTable[turn], SinTable[turn]);
+			RETRO_RotateVertexTrig(&vertex[p], spin);
 			RETRO_ProjectVertex(&vertex[p], PROJECTION_SCALE);
 
 			for (int y = 0; y < BLOB_SIZE; y++) {

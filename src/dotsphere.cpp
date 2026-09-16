@@ -73,9 +73,10 @@ void DEMO_Render(double time, double deltatime)
 	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
 	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
 	float az = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	RETRO_RotationTrig rotation = RETRO_InitializeRotationTrig(ax, ay, az);
 
 	for (int i = 0; i < NUM_POINTS; i++) {
-		RETRO_RotateVertex(&Shape[i], ax, ay, az);
+		RETRO_RotateVertexTrig(&Shape[i], rotation);
 		RETRO_ProjectVertex(&Shape[i], SPHERE_SCALE);
 
 		int x = Shape[i].spos.x;

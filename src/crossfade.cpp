@@ -38,7 +38,7 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Crossfade transition
-	double phase = fmod(time * CROSSFADE_SPEED, 2 * M_PI);
+	double phase = fmod((time - TIME_FADEIN) * CROSSFADE_SPEED, 2 * M_PI);
 	float t = 0.5f - 0.5f * cos(phase);
 	float s = 1.0f - t;
 
@@ -69,18 +69,7 @@ void DEMO_Initialize(void)
 	}
 
 	// Build 3D inverse color lookup table to map blended RGB to closest palette entry
-	for (int r = 0; r < 32; r++) {
-		for (int g = 0; g < 32; g++) {
-			for (int b = 0; b < 32; b++) {
-				RETRO_Palette target = {
-					(unsigned char)(r * 255 / 31),
-					(unsigned char)(g * 255 / 31),
-					(unsigned char)(b * 255 / 31)
-				};
-				ColorLUT[r][g][b] = RETRO_ClosestPaletteColor(target, PictureA->palette, RETRO_COLORS);
-			}
-		}
-	}
+	RETRO_CreateColorLUT(PictureA->palette, RETRO_COLORS, 32, &ColorLUT[0][0][0]);
 
 	// Start with black hardware palette for initial fade-in
 	RETRO_Palette black_palette[RETRO_COLORS] = { {0, 0, 0} };

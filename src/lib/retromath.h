@@ -11,34 +11,32 @@
 #include "retromodel.h"
 
 //
-// Model rotation, translation and projection
+// Single vertex and unit vector rotation, without a model
 //
 
-// R = Rz(az) * Ry(ay) * Rx(ax). Applied to column vectors as p' = R p.
-inline void RETRO_InitializeRotationMatrix(float ax, float ay, float az, Model3D *model = NULL)
+// Same R as RETRO_RotateVertices, applied to one vertex that is not
+// necessarily part of model->vertex - the ring and cloud effects that carry
+// their own loose points instead of a loaded mesh.
+inline void RETRO_RotateVertex(Vertex *vertex, const mat3 &matrix)
 {
-	model = model ? model : RETRO_Get3DModel();
-
-	model->matrix[0][0] = cos(az) * cos(ay);
-	model->matrix[1][0] = sin(az) * cos(ay);
-	model->matrix[2][0] = -sin(ay);
-	model->matrix[0][1] = cos(az) * sin(ay) * sin(ax) - sin(az) * cos(ax);
-	model->matrix[1][1] = sin(az) * sin(ay) * sin(ax) + cos(ax) * cos(az);
-	model->matrix[2][1] = sin(ax) * cos(ay);
-	model->matrix[0][2] = cos(az) * sin(ay) * cos(ax) + sin(az) * sin(ax);
-	model->matrix[1][2] = sin(az) * sin(ay) * cos(ax) - cos(az) * sin(ax);
-	model->matrix[2][2] = cos(ax) * cos(ay);
+	vertex->rpos = matrix * vertex->pos;
 }
+
+inline void RETRO_RotateUnitVector(UnitVector *direction, const mat3 &matrix)
+{
+	direction->rdir = matrix * direction->dir;
+}
+
+//
+// Model rotation, translation and projection
+//
 
 inline void RETRO_RotateVertices(Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->vertices; i++) {
-		vec3 p = model->vertex[i].pos;
-		model->vertex[i].rpos.x = p.x * model->matrix[0][0] + p.y * model->matrix[0][1] + p.z * model->matrix[0][2];
-		model->vertex[i].rpos.y = p.x * model->matrix[1][0] + p.y * model->matrix[1][1] + p.z * model->matrix[1][2];
-		model->vertex[i].rpos.z = p.x * model->matrix[2][0] + p.y * model->matrix[2][1] + p.z * model->matrix[2][2];
+		model->vertex[i].rpos = model->matrix * model->vertex[i].pos;
 	}
 }
 
@@ -47,10 +45,7 @@ inline void RETRO_RotateVertexNormals(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->normals; i++) {
-		vec3 d = model->normal[i].dir;
-		model->normal[i].rdir.x = d.x * model->matrix[0][0] + d.y * model->matrix[0][1] + d.z * model->matrix[0][2];
-		model->normal[i].rdir.y = d.x * model->matrix[1][0] + d.y * model->matrix[1][1] + d.z * model->matrix[1][2];
-		model->normal[i].rdir.z = d.x * model->matrix[2][0] + d.y * model->matrix[2][1] + d.z * model->matrix[2][2];
+		model->normal[i].rdir = model->matrix * model->normal[i].dir;
 	}
 }
 
@@ -64,24 +59,27 @@ inline void RETRO_RotateFaceFrames(Model3D *model = NULL)
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->faces; i++) {
-		UnitVector *axis[2] = { &model->face[i].tangent, &model->face[i].bitangent };
-		for (int j = 0; j < 2; j++) {
-			vec3 d = axis[j]->dir;
-			axis[j]->rdir.x = d.x * model->matrix[0][0] + d.y * model->matrix[0][1] + d.z * model->matrix[0][2];
-			axis[j]->rdir.y = d.x * model->matrix[1][0] + d.y * model->matrix[1][1] + d.z * model->matrix[1][2];
-			axis[j]->rdir.z = d.x * model->matrix[2][0] + d.y * model->matrix[2][1] + d.z * model->matrix[2][2];
-		}
-
-		vec3 n = model->face[i].facenormal.dir;
-		model->face[i].facenormal.rdir.x = n.x * model->matrix[0][0] + n.y * model->matrix[0][1] + n.z * model->matrix[0][2];
-		model->face[i].facenormal.rdir.y = n.x * model->matrix[1][0] + n.y * model->matrix[1][1] + n.z * model->matrix[1][2];
-		model->face[i].facenormal.rdir.z = n.x * model->matrix[2][0] + n.y * model->matrix[2][1] + n.z * model->matrix[2][2];
+		model->face[i].tangent.rdir = model->matrix * model->face[i].tangent.dir;
+		model->face[i].bitangent.rdir = model->matrix * model->face[i].bitangent.dir;
+		model->face[i].facenormal.rdir = model->matrix * model->face[i].facenormal.dir;
 	}
+}
+
+inline void RETRO_RotateModel(const mat3 &matrix, Model3D *model = NULL)
+{
+	model = model ? model : RETRO_Get3DModel();
+
+	model->matrix = matrix;
+	RETRO_RotateVertices(model);
+	RETRO_RotateVertexNormals(model);
+	RETRO_RotateFaceFrames(model);
 }
 
 inline void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 {
-	RETRO_InitializeRotationMatrix(ax, ay, az, model);
+	model = model ? model : RETRO_Get3DModel();
+
+	model->matrix = rotate(ax, ay, az);
 	RETRO_RotateVertices(model);
 	RETRO_RotateVertexNormals(model);
 	RETRO_RotateFaceFrames(model);
@@ -166,72 +164,6 @@ inline void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = 
 }
 
 //
-// Single vertex and unit vector rotation, without a model
-//
-
-inline void RETRO_RotateVertex(Vertex *vertex, float ax, float ay, float az)
-{
-	// Rotate around x axis
-	vertex->rpos.y = vertex->pos.y * cos(ax) - vertex->pos.z * sin(ax);
-	vertex->rpos.z = vertex->pos.y * sin(ax) + vertex->pos.z * cos(ax);
-
-	// Rotate around y axis
-	vertex->rpos.x = vertex->pos.x * cos(ay) + vertex->rpos.z * sin(ay);
-	vertex->rpos.z = vertex->pos.x * -sin(ay) + vertex->rpos.z * cos(ay);
-
-	// Rotate around z axis
-	float tmpx = vertex->rpos.x * cos(az) - vertex->rpos.y * sin(az);
-	vertex->rpos.y = vertex->rpos.x * sin(az) + vertex->rpos.y * cos(az);
-	vertex->rpos.x = tmpx;
-}
-
-// Cos/sin per axis for RETRO_RotateVertexTrig, built once per frame by
-// RETRO_InitializeRotationTrig and reused across many vertices so a caller
-// does not pay for six cos()/sin() calls per vertex.
-struct RETRO_RotationTrig {
-	float cosax, sinax, cosay, sinay, cosaz, sinaz;
-};
-
-inline RETRO_RotationTrig RETRO_InitializeRotationTrig(float ax, float ay, float az)
-{
-	return { cos(ax), sin(ax), cos(ay), sin(ay), cos(az), sin(az) };
-}
-
-// Same sequential Rx, Ry, Rz as RETRO_RotateVertex, but taking a precomputed
-// RETRO_RotationTrig instead of angles.
-inline void RETRO_RotateVertexTrig(Vertex *vertex, const RETRO_RotationTrig &rotation)
-{
-	// Rotate around x axis
-	vertex->rpos.y = vertex->pos.y * rotation.cosax - vertex->pos.z * rotation.sinax;
-	vertex->rpos.z = vertex->pos.y * rotation.sinax + vertex->pos.z * rotation.cosax;
-
-	// Rotate around y axis
-	vertex->rpos.x = vertex->pos.x * rotation.cosay + vertex->rpos.z * rotation.sinay;
-	vertex->rpos.z = vertex->pos.x * -rotation.sinay + vertex->rpos.z * rotation.cosay;
-
-	// Rotate around z axis
-	float tmpx = vertex->rpos.x * rotation.cosaz - vertex->rpos.y * rotation.sinaz;
-	vertex->rpos.y = vertex->rpos.x * rotation.sinaz + vertex->rpos.y * rotation.cosaz;
-	vertex->rpos.x = tmpx;
-}
-
-inline void RETRO_RotateUnitVector(UnitVector *direction, float ax, float ay, float az)
-{
-	// Rotate around x axis
-	direction->rdir.y = direction->dir.y * cos(ax) - direction->dir.z * sin(ax);
-	direction->rdir.z = direction->dir.y * sin(ax) + direction->dir.z * cos(ax);
-
-	// Rotate around y axis
-	direction->rdir.x = direction->dir.x * cos(ay) + direction->rdir.z * sin(ay);
-	direction->rdir.z = direction->dir.x * -sin(ay) + direction->rdir.z * cos(ay);
-
-	// Rotate around z axis
-	float tmpx = direction->rdir.x * cos(az) - direction->rdir.y * sin(az);
-	direction->rdir.y = direction->rdir.x * sin(az) + direction->rdir.y * cos(az);
-	direction->rdir.x = tmpx;
-}
-
-//
 // Unit vectors and vertices, as written
 //
 // UnitVector::dir is the vector as authored. rdir is that vector after
@@ -260,9 +192,8 @@ inline UnitVector RETRO_NormalizeUnitVector(UnitVector direction)
 // call that would never come.
 inline UnitVector RETRO_LightSource(float x, float y, float z)
 {
-	UnitVector light = RETRO_NormalizeUnitVector({ vec3{ x, y, z } });
-	light.rdir = light.dir;
-	return light;
+	vec3 dir = normalize(vec3{ x, y, z });
+	return { dir, dir };
 }
 
 // D1 × D2 on the authored components, then normalized: the magnitude
@@ -271,7 +202,7 @@ inline UnitVector RETRO_LightSource(float x, float y, float z)
 // inputs write the zero direction.
 inline UnitVector RETRO_UnitCrossProduct(UnitVector d1, UnitVector d2)
 {
-	return RETRO_NormalizeUnitVector({ cross(d1.dir, d2.dir) });
+	return { normalize(cross(d1.dir, d2.dir)) };
 }
 
 // s · D. D is unit, so s is a length. The result is a Vertex because it is

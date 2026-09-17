@@ -2,7 +2,7 @@
 // Stars, tumbling
 //
 // A box of stars, half-extents (W, H, BOX_DEPTH), rotated by R = Rz Ry Rx
-// (the same sequential Rx, Ry, Rz as RETRO_RotateVertexTrig). The cloud is
+// (rotate(ax, ay, az) / RETRO_RotateVertex). The cloud is
 // fixed; only the view changes. After rotation a star is the library
 // pinhole q = 1/(rz + eye) and is shaded by rotated depth:
 //
@@ -36,13 +36,13 @@ void DEMO_Render(double time, double deltatime)
 	float ax = fmod(time * SPEED, 2 * M_PI);
 	float ay = fmod(time * SPEED, 2 * M_PI);
 	float az = fmod(time * SPEED, 2 * M_PI);
-	RETRO_RotationTrig rotation = RETRO_InitializeRotationTrig(ax, ay, az);
+	mat3 matrix = rotate(ax, ay, az);
 
 	double furthest = sqrt((double)RETRO_WIDTH * RETRO_WIDTH + (double)RETRO_HEIGHT * RETRO_HEIGHT + (double)BOX_DEPTH * BOX_DEPTH);
 
 	// Draw stars
 	for (int i = 0; i < NUM_STARS; i++) {
-		RETRO_RotateVertexTrig(&Stars[i], rotation);
+		RETRO_RotateVertex(&Stars[i], matrix);
 
 		if (Stars[i].rpos.z <= STAR_NEAREST) {
 			continue;

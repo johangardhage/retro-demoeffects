@@ -54,7 +54,7 @@ void DEMO_Render(double time, double deltatime)
 	int iphase = phase;
 
 	double angle = fmod(time * ROTATION_SPEED * DEG2RAD, 2 * M_PI);
-	RETRO_RotationTrig rotation = RETRO_InitializeRotationTrig(0, angle, angle);
+	mat3 matrix = rotate(0, angle, angle);
 
 	// Morph shapes
 	if (iphase < MORPH_STEPS) {
@@ -69,7 +69,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Draw points
 	for (int i = 0; i < POINTS; i++) {
-		RETRO_RotateVertexTrig(&Morph[i], rotation);
+		RETRO_RotateVertex(&Morph[i], matrix);
 		RETRO_ProjectVertex(&Morph[i], PROJECTION_SCALE);
 
 		int x = Morph[i].spos.x;

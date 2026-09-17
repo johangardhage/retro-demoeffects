@@ -63,24 +63,21 @@ static RETRO_Font Font;
 
 // Transform a point from a character's tangent plane into screen space.
 // Local x follows the ring tangent and local y runs down the character.
-static Vertex Project(double angle, double localx, double localy)
+static Vertex Project(const mat3 &matrix, double localx, double localy)
 {
 	Vertex vertex = {};
 	vertex.pos = { (float)localx, (float)localy, -RING_RADIUS };
 
-	// Rotate the local point around the ring, tilt the ring, and project it.
-	RETRO_RotateVertex(&vertex, 0, -angle, 0);
-	vertex.pos = vertex.rpos;
-	RETRO_RotateVertex(&vertex, RING_TILT, 0, 0);
+	RETRO_RotateVertex(&vertex, matrix);
 	RETRO_ProjectVertex(&vertex, PROJECTION_SCALE, RETRO_WIDTH / 2.0, RING_Y, CAMERA_DISTANCE);
 	return vertex;
 }
 
 // Project and fill one source-font pixel as a screen-space quadrilateral.
 // Increasing paintdepth makes each later cell cover the ones before it.
-static void DrawCell(double angle, double x, double y, int color, float &paintdepth)
+static void DrawCell(const mat3 &matrix, double x, double y, int color, float &paintdepth)
 {
-	Vertex p[4] = { Project(angle, x, y), Project(angle, x + 1, y), Project(angle, x + 1, y + 1), Project(angle, x, y + 1) };
+	Vertex p[4] = { Project(matrix, x, y), Project(matrix, x + 1, y), Project(matrix, x + 1, y + 1), Project(matrix, x, y + 1) };
 	PolygonPoint poly[4] = {};
 	paintdepth += 0.0001f;
 	for (int i = 0; i < 4; i++) {
@@ -104,10 +101,11 @@ static void DrawGlyph(int letter, double angle, bool shadow, float &paintdepth)
 	if (glyph < 0 || sourcex + Font.width > Font.atlas->width) {
 		return;
 	}
+	mat3 matrix = rotateX((float)RING_TILT) * rotateY((float)-angle);
 	for (int y = 0; y < Font.height; y++)
 		for (int x = 0; x < copywidth; x++)
 			if (Font.atlas->data[y * Font.atlas->width + sourcex + x])
-				DrawCell(angle, x - width / 2.0, y - Font.height / 2.0 + yoff, color, paintdepth);
+				DrawCell(matrix, x - width / 2.0, y - Font.height / 2.0 + yoff, color, paintdepth);
 }
 
 static int BarEdge(int y, double phase)

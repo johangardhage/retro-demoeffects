@@ -8,6 +8,7 @@
 #define _RETROMODEL_H_
 
 #include "retro.h"
+#include "retromatrix.h"
 #include "retrovector.h"
 
 // The grazing height G is the height difference that tilts a normal all the
@@ -55,6 +56,7 @@ struct UnitVector {
 	vec3 dir;					// Model space direction, unit length
 	vec3 rdir;					// Rotated direction, still unit
 };
+
 
 struct Face {
 	int vertices;								// Number of vertices in face
@@ -104,7 +106,7 @@ struct Model3D {
 	UnitVector normal[RETRO_MAX_NORMALS];		// Vertex normal list
 	int drawfaces;								// Number of faces in the draw list
 	int drawface[RETRO_MAX_FACES];				// Faces to draw, sorted far to near
-	float matrix[3][3];							// Rotation matrix
+	mat3 matrix;								// Rotation matrix
 	int c;										// The base the shading is measured from, which the
 												// renderer decides the space of: the first entry of the
 												// model's own ramp for the palette renderers, and a level

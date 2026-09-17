@@ -78,10 +78,10 @@ void DEMO_FixedUpdate(double timestep)
 		// plane map scales that plane by r = sqrt(cos^2+sin^2) and leaves its
 		// axis alone, so a pair that is not unit squashes the model as it
 		// turns and the composition is not in SO(3).
-		RETRO_RotationTrig spin = { CosTable[turn], SinTable[turn], CosTable[turn], SinTable[turn], CosTable[turn], SinTable[turn] };
+		mat3 matrix = rotate(CosTable[turn], SinTable[turn], CosTable[turn], SinTable[turn], CosTable[turn], SinTable[turn]);
 
 		for (int p = 0; p < model->vertices; p++) {
-			RETRO_RotateVertexTrig(&vertex[p], spin);
+			RETRO_RotateVertex(&vertex[p], matrix);
 			RETRO_ProjectVertex(&vertex[p], PROJECTION_SCALE);
 
 			for (int y = 0; y < BLOB_SIZE; y++) {

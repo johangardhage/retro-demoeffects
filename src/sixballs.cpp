@@ -44,7 +44,7 @@ void DEMO_Render(double time, double deltatime)
 	float ax = fmod(time * ROTATEX, 2 * M_PI);
 	float ay = fmod(time * ROTATEY, 2 * M_PI);
 	float az = fmod(time * ROTATEZ, 2 * M_PI);
-	RETRO_RotationTrig rotation = RETRO_InitializeRotationTrig(ax, ay, az);
+	mat3 matrix = rotate(ax, ay, az);
 	float phase = fmod(time, CYCLE) * 2.0f * M_PI / CYCLE;
 
 	// Ease at both ends of the trip. The small sideways loop prevents the six
@@ -57,7 +57,7 @@ void DEMO_Render(double time, double deltatime)
 	for (int i = 0; i < BALLS; i++) {
 		float a = i * 2.0f * M_PI / BALLS;
 		Balls[i].pos = { RING_RADIUS * (float)cos(a), RING_RADIUS * (float)sin(a), 0.0f };
-		RETRO_RotateVertexTrig(&Balls[i], rotation);
+		RETRO_RotateVertex(&Balls[i], matrix);
 		Balls[i].rpos.z += zoffset;
 		RETRO_ProjectVertex(&Balls[i], 1.0f, cx, cy);
 	}

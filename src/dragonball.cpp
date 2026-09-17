@@ -173,7 +173,7 @@ void DEMO_Render(double time, double deltatime)
 	float ax = fmod(time * BALL_SPEEDX, 2 * M_PI);
 	float ay = fmod(time * BALL_SPEEDY, 2 * M_PI);
 	float az = fmod(time * BALL_SPEEDZ, 2 * M_PI);
-	RETRO_RotationTrig rotation = RETRO_InitializeRotationTrig(ax, ay, az);
+	mat3 matrix = rotate(ax, ay, az);
 	float spin = fmod(time * STAR_SPIN, 2 * M_PI);
 
 	// First fall has no previous takeoff to continue, so the oscillator
@@ -246,11 +246,11 @@ void DEMO_Render(double time, double deltatime)
 		if (antipode) {
 			normal.dir = -normal.dir;
 		}
-		RETRO_RotateUnitVector(&normal, ax, ay, az);
+		RETRO_RotateUnitVector(&normal, matrix);
 
 		ivec2 pts[STAR_VERTS];
 		for (int i = 0; i < STAR_VERTS; i++) {
-			RETRO_RotateVertexTrig(&star[i], rotation);
+			RETRO_RotateVertex(&star[i], matrix);
 			float depth = BALL_EYE + star[i].rpos.z;
 			if (depth < 0.1f) {
 				depth = 0.1f;

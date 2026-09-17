@@ -94,11 +94,11 @@ static void SampleLandscape(int offsetx, int offsety)
 	}
 }
 
-static void PlotDot(float x, float y, float z, unsigned char color, const RETRO_RotationTrig &rotation)
+static void PlotDot(float x, float y, float z, unsigned char color, const mat3 &matrix)
 {
 	Vertex dot = {};
 	dot.pos = { x, y, z };
-	RETRO_RotateVertexTrig(&dot, rotation);
+	RETRO_RotateVertex(&dot, matrix);
 	dot.rpos.z += OBJECT_Z;
 	RETRO_ProjectVertex(&dot, PROJECTION_SCALE);
 	if (dot.q == 0.0f) return;
@@ -122,7 +122,7 @@ void DEMO_Render(double time, double deltatime)
 	float ax = INITIAL_PITCH + PITCH_AMP * sin(time * PITCH_SPEED);
 	float ay = YAW_AMP * sin(time * YAW_SPEED);
 	float az = ROLL_AMP * sin(time * ROLL_SPEED);
-	RETRO_RotationTrig rotation = RETRO_InitializeRotationTrig(ax, ay, az);
+	mat3 matrix = rotate(ax, ay, az);
 	RETRO_ClearDepthBuffer();
 
 	int mapwidth = TextImage->width + 2 * GROUND_PAD;
@@ -143,7 +143,7 @@ void DEMO_Render(double time, double deltatime)
 			float z = (originz - row) * DOT_SPACING;
 			for (int level = bottom; level <= height; level++) {
 				float y = -level * DOT_SPACING;
-				PlotDot(x, y, z, ColorSample[cell], rotation);
+				PlotDot(x, y, z, ColorSample[cell], matrix);
 			}
 		}
 	}

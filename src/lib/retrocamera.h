@@ -10,6 +10,7 @@
 #include "retro.h"
 #include "retromodel.h"
 #include "retromath.h"
+#include "retromatrix.h"
 
 // A pinhole's worth of focal length, decoupled from any near-plane offset.
 // RETRO_PROJECTION_EYEDISTANCE (retromath.h) is not reused here: it is half
@@ -25,7 +26,7 @@
 // direction, matching the y-down, z-away convention RETRO_ProjectVertex and
 // RETRO_SortFaces already assume (retromath.h).
 //
-// RETRO_InitializeRotationMatrix builds a rotation from ax, ay, az taken
+// rotate(ax, ay, az) builds a rotation from Euler angles taken
 // against the world's fixed axes, which is the wrong tool here: yawing left,
 // then pitching up, then yawing again would have to recover ax, ay, az from
 // the frame this camera is already at, and two of those three axes are by
@@ -112,26 +113,22 @@ inline void RETRO_RollCamera(RETRO_Camera *camera, float angle)
 }
 
 // World point to camera-relative rotated coordinates: vertex->pos is read
-// as a world position, not a model-space one, and the eye is subtracted
-// before the frame's three dot products.
+// as a world position, not a model-space one. The frame's columns are
+// right, down and forward, so transpose(frame) is the view rotation.
 inline void RETRO_ViewVertex(Vertex *vertex, const RETRO_Camera *camera)
 {
-	vec3 w = vertex->pos - camera->pos;
-
-	vertex->rpos.x = dot(w, camera->right);
-	vertex->rpos.y = dot(w, camera->down);
-	vertex->rpos.z = dot(w, camera->forward);
+	mat3 frame = { camera->right, camera->down, camera->forward };
+	vertex->rpos = transpose(frame) * (vertex->pos - camera->pos);
 }
 
 // World direction to camera-relative: the rotational half of
 // RETRO_ViewVertex. A UnitVector does not translate, so the eye is not
-// subtracted; only the frame's three dots are taken, and they land in
-// rdir, which is the slot RETRO_RotatedDot reads.
+// subtracted; only the frame is applied, and it lands in rdir, which is
+// the slot RETRO_RotatedDot reads.
 inline void RETRO_ViewUnitVector(UnitVector *direction, const RETRO_Camera *camera)
 {
-	direction->rdir.x = dot(direction->dir, camera->right);
-	direction->rdir.y = dot(direction->dir, camera->down);
-	direction->rdir.z = dot(direction->dir, camera->forward);
+	mat3 frame = { camera->right, camera->down, camera->forward };
+	direction->rdir = transpose(frame) * direction->dir;
 }
 
 // Two axes perpendicular to forward, in the camera's own right/down

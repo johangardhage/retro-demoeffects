@@ -291,16 +291,14 @@ void DEMO_Render(double time, double deltatime)
 	float ay = fmod(time * TUMBLE_Y, 2 * M_PI);
 	float az = fmod(time * TUMBLE_Z, 2 * M_PI);
 
+	mat3 tumble = rotate(ax, ay, az);
 	for (int i = 0; i < Mirror->vertices; i++) {
-		Vertex v = MirrorRest[i];
-		RETRO_RotateVertex(&v, ax, ay, az);
-		Mirror->vertex[i].pos = v.rpos - vec3{ 0, MIRROR_HOVER, 0 };
+		Mirror->vertex[i].pos = tumble * MirrorRest[i].pos - vec3{ 0, MIRROR_HOVER, 0 };
 	}
 	RETRO_InitializeFaceNormals(Mirror);
 
-	float c = cos(WORLD_TILT);
-	float s = sin(WORLD_TILT);
-	CameraScene = { 0.0f, -SCENE_Y * c - SCENE_Z * s, SCENE_Y * s - SCENE_Z * c };
+	mat3 tilt = rotateX(WORLD_TILT);
+	CameraScene = -(transpose(tilt) * vec3{ 0.0f, SCENE_Y, SCENE_Z });
 
 	PlaceScene(Floor);
 	PlaceScene(Mirror);

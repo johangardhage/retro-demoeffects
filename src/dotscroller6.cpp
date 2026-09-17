@@ -84,11 +84,11 @@ static bool GlyphLit(int x, int y)
 // patch's worst-case turn, not what one frame's fixed yaw actually reaches
 // - so each fraction is stretched around the midpoint to still reach the
 // ramp's ends instead of huddling near the middle of it.
-static void PlotDot(float x, float y, float z, int base, int shades, float contrast, const RETRO_RotationTrig &rotation)
+static void PlotDot(float x, float y, float z, int base, int shades, float contrast, const mat3 &matrix)
 {
 	Vertex vertex = {};
 	vertex.pos = { x, y, z };
-	RETRO_RotateVertexTrig(&vertex, rotation);
+	RETRO_RotateVertex(&vertex, matrix);
 	vertex.rpos.z += OBJECT_Z;
 	RETRO_ProjectVertex(&vertex, PROJECTION_SCALE);
 
@@ -118,22 +118,22 @@ static void PlotDot(float x, float y, float z, int base, int shades, float contr
 	}
 }
 
-static void PlotLetterColumn(float x, float z, float time, bool wall, const RETRO_RotationTrig &rotation)
+static void PlotLetterColumn(float x, float z, float time, bool wall, const mat3 &matrix)
 {
 	float base = LandscapeY(x, z, time) + LETTER_GAP * DOT_SPACING;
-	PlotDot(x, -(base + EXTRUSION * DOT_SPACING), z, 1 + GROUND_SHADES, LETTER_SHADES, LETTER_CONTRAST, rotation);
+	PlotDot(x, -(base + EXTRUSION * DOT_SPACING), z, 1 + GROUND_SHADES, LETTER_SHADES, LETTER_CONTRAST, matrix);
 	if (!wall) {
 		return;
 	}
 	for (int level = 0; level < EXTRUSION; level++) {
-		PlotDot(x, -(base + level * DOT_SPACING), z, 1 + GROUND_SHADES, LETTER_SHADES, LETTER_CONTRAST, rotation);
+		PlotDot(x, -(base + level * DOT_SPACING), z, 1 + GROUND_SHADES, LETTER_SHADES, LETTER_CONTRAST, matrix);
 	}
 }
 
 void DEMO_Render(double time, double deltatime)
 {
 	float ay = YAW_AMP * sin(time * YAW_SPEED);
-	RETRO_RotationTrig rotation = RETRO_InitializeRotationTrig(PITCH, ay, 0);
+	mat3 matrix = rotate(PITCH, ay, 0);
 
 	RETRO_ClearDepthBuffer();
 
@@ -160,7 +160,7 @@ void DEMO_Render(double time, double deltatime)
 
 				float x = (col - OriginX) * DOT_SPACING;
 				float z = (OriginZ - (TextRow0 + sy)) * DOT_SPACING;
-				PlotLetterColumn(x, z, (float)time, wall, rotation);
+				PlotLetterColumn(x, z, (float)time, wall, matrix);
 			}
 		}
 	}
@@ -172,7 +172,7 @@ void DEMO_Render(double time, double deltatime)
 			}
 			float x = (col - OriginX) * DOT_SPACING;
 			float z = (OriginZ - row) * DOT_SPACING;
-			PlotDot(x, -LandscapeY(x, z, (float)time), z, 1, GROUND_SHADES, GROUND_CONTRAST, rotation);
+			PlotDot(x, -LandscapeY(x, z, (float)time), z, 1, GROUND_SHADES, GROUND_CONTRAST, matrix);
 		}
 	}
 }

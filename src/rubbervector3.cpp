@@ -94,14 +94,13 @@ void DEMO_Render(double time, double deltatime)
 		float t = (v.y + FLUBBER_HEIGHT / 2) / FLUBBER_HEIGHT;
 		float xOffset = FLUBBER_SWAY * swayCos * sin(t * M_PI);
 		float angle = spin + FLUBBER_TWIST * (twistCos * cos(t * M_PI / 3) * twistMod + 1);
-		float cosAngle = cos(angle);
-		float sinAngle = sin(angle);
-		Flubber->vertex[i].pos = { v.x * cosAngle - v.z * sinAngle + xOffset, v.y, v.x * sinAngle + v.z * cosAngle };
+		Flubber->vertex[i].pos = rotateY(-angle) * v + vec3{ xOffset, 0, 0 };
 	}
 
 	RETRO_InitializeFaceNormals(Flubber);
 
-	RETRO_RotateModel(0, 0, 0, Flubber);
+	// Twist is already in pos; identity copies it into rpos for projection.
+	RETRO_RotateModel(identity(), Flubber);
 	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Flubber, FLUBBER_EYE_DISTANCE);
 	RETRO_RenderModel(RETRO_POLY_GLENZ, RETRO_SHADE_FLAT, Flubber);
 }

@@ -42,20 +42,12 @@ static Model3D *Torus2 = NULL;
 // and its centre around the origin as one rigid object.
 static void PlaceTorusInLink(Model3D *model, float angle, float tx)
 {
-	float c = cos(angle);
-	float s = sin(angle);
+	mat3 rx = rotateX(angle);
+	vec3 shift = { tx, 0, 0 };
 
 	for (int i = 0; i < model->vertices; i++) {
-		float y = model->vertex[i].pos.y;
-		float z = model->vertex[i].pos.z;
-		model->vertex[i].pos.x += tx;
-		model->vertex[i].pos.y = c * y - s * z;
-		model->vertex[i].pos.z = s * y + c * z;
-
-		y = model->normal[i].dir.y;
-		z = model->normal[i].dir.z;
-		model->normal[i].dir.y = c * y - s * z;
-		model->normal[i].dir.z = s * y + c * z;
+		model->vertex[i].pos = rx * model->vertex[i].pos + shift;
+		model->normal[i].dir = rx * model->normal[i].dir;
 	}
 
 	for (int i = 0; i < model->faces; i++) {
@@ -65,10 +57,7 @@ static void PlaceTorusInLink(Model3D *model, float angle, float tx)
 			&model->face[i].bitangent,
 		};
 		for (UnitVector *axis : axes) {
-			float y = axis->dir.y;
-			float z = axis->dir.z;
-			axis->dir.y = c * y - s * z;
-			axis->dir.z = s * y + c * z;
+			axis->dir = rx * axis->dir;
 		}
 	}
 }

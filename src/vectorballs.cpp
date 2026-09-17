@@ -60,7 +60,7 @@ void DEMO_Render(double time, double deltatime)
 	float ax = fmod(time * BALL_SPEEDX, 2 * M_PI);
 	float ay = fmod(time * BALL_SPEEDY, 2 * M_PI);
 	float az = fmod(time * BALL_SPEEDZ, 2 * M_PI);
-	RETRO_RotationTrig rotation = RETRO_InitializeRotationTrig(ax, ay, az);
+	mat3 matrix = rotate(ax, ay, az);
 
 	// Calculate phase
 	double phase = fmod(time * BALL_WAVESPEED, RETRO_ANGLES_PER_TURN);
@@ -74,7 +74,7 @@ void DEMO_Render(double time, double deltatime)
 			BALL_WAVE * (float)SIN(phase + BALL_WAVES * a)
 		};
 
-		RETRO_RotateVertexTrig(&Balls[i], rotation);
+		RETRO_RotateVertex(&Balls[i], matrix);
 		RETRO_ProjectVertex(&Balls[i], BALL_PROJECTION);
 	}
 

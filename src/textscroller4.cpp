@@ -29,6 +29,7 @@
 #include "lib/retro.h"
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
+#include "lib/retrovector.h"
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
 //#define FONT RETRO_FONT_MINECRAFT_8X8
@@ -105,7 +106,7 @@ void DEMO_Render(double time, double deltatime)
 		} else {
 			progress = 1.0 - (t - ENTRANCE_TIME - HOLD_TIME) / EXIT_TIME;
 		}
-		double eased = progress * progress * (3.0 - 2.0 * progress); // ease gently through both ends
+		double eased = smoothstep(0.0, 1.0, progress); // ease gently through both ends
 
 		int x = startx + (int)round((restx - startx) * eased);
 		int resty = starty + i * spacing;

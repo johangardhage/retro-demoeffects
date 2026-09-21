@@ -85,16 +85,16 @@ static void BuildFlubber(Model3D *model)
 void DEMO_Render(double time, double deltatime)
 {
 	float spin = (float)(time * FLUBBER_SPIN_SPEED);
-	float twistCos = cos(time * FLUBBER_TWIST_OMEGA);
-	float twistMod = sin(time * FLUBBER_TWIST_MOD_OMEGA);
-	float swayCos = cos(time * FLUBBER_SWAY_OMEGA);
+	float twistcos = cos(time * FLUBBER_TWIST_OMEGA);
+	float twistmod = sin(time * FLUBBER_TWIST_MOD_OMEGA);
+	float swaycos = cos(time * FLUBBER_SWAY_OMEGA);
 
 	for (int i = 0; i < Flubber->vertices; i++) {
 		const vec3 &v = RestVertex[i].pos;
 		float t = (v.y + FLUBBER_HEIGHT / 2) / FLUBBER_HEIGHT;
-		float xOffset = FLUBBER_SWAY * swayCos * sin(t * M_PI);
-		float angle = spin + FLUBBER_TWIST * (twistCos * cos(t * M_PI / 3) * twistMod + 1);
-		Flubber->vertex[i].pos = rotateY(-angle) * v + vec3{ xOffset, 0, 0 };
+		float xoffset = FLUBBER_SWAY * swaycos * sin(t * M_PI);
+		float angle = spin + FLUBBER_TWIST * (twistcos * cos(t * M_PI / 3) * twistmod + 1);
+		Flubber->vertex[i].pos = rotateY(-angle) * v + vec3{ xoffset, 0, 0 };
 	}
 
 	RETRO_InitializeFaceNormals(Flubber);

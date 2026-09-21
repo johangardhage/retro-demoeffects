@@ -2,7 +2,7 @@
 // Mask demo
 //
 // One mesh, many materials. Each key selects a renderer and the maps it
-// reads: texture, shade table, phong/env lookup, bump height. The maths of
+// reads: texture, shade table, matcap/env lookup, bump height. The maths of
 // each path live in retropoly.h; this file only chooses the inputs.
 //
 // Shade-table level 0 sits at 33° of incidence, on the shoulder of the
@@ -11,10 +11,10 @@
 // be 44°, past the 45° cutoff where every specular term is zero.
 //
 // H is the height difference that tilts to grazing; larger H is shallower.
-// A bare phong map has only the sheen to spend, so a bump uses 3/2 H. A
-// metal environment map is a Blinn/Newell sphere map of the reflection of
-// V about N, so a tilt lands on a different part of the photo rather than
-// a neighbouring shade; that bump uses 2H (half the default tilt). Euler
+// A bare matcap has only the sheen to spend, so a bump uses 3/2 H. A metal
+// environment map is a Blinn/Newell sphere map of the reflection of V about
+// N, so a tilt lands on a different part of the photo rather than a
+// neighbouring shade; that bump uses 2H (half the default tilt). Euler
 // angles live on 2π. The mesh starts at ax = −π/2, az = π so the face
 // is upright.
 //
@@ -112,7 +112,7 @@ void DEMO_Render(double time, double deltatime)
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_3)) {
 		rendertype = RETRO_POLY_TEXTURE;
-		shadertype = RETRO_SHADE_PHONG;
+		shadertype = RETRO_SHADE_MATCAP;
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
@@ -144,8 +144,8 @@ void DEMO_Render(double time, double deltatime)
 		RETRO_Set6bitPalette(RETRO_OptimalPalette());
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
-		rendertype = RETRO_POLY_ENVIRONMENT;
-		shadertype = RETRO_SHADE_PHONG;
+		rendertype = RETRO_POLY_MATCAP;
+		shadertype = RETRO_SHADE_NONE;
 		shadetable = NULL;
 		envmap = RETRO_ImageData(ASSET_PHONGMAP);
 		color = 128;
@@ -154,8 +154,8 @@ void DEMO_Render(double time, double deltatime)
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_PHONGMAP));
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_O)) {
-		rendertype = RETRO_POLY_ENVIRONMENT;
-		shadertype = RETRO_SHADE_PHONG;
+		rendertype = RETRO_POLY_MATCAP;
+		shadertype = RETRO_SHADE_NONE;
 		shadetable = NULL;
 		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
 		color = 128;
@@ -165,7 +165,7 @@ void DEMO_Render(double time, double deltatime)
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_M)) {
 		rendertype = RETRO_POLY_ENVIRONMENT;
-		shadertype = RETRO_SHADE_ENVIRONMENT;
+		shadertype = RETRO_SHADE_NONE;
 		shadetable = NULL;
 		envmap = RETRO_ImageData(ASSET_ENVMAP);
 		color = 128;
@@ -248,10 +248,10 @@ void DEMO_Render(double time, double deltatime)
 		RETRO_PutString("0 to use shade table texture mapping", 0, 120, 255);
 		RETRO_PutString("1 to use flat shaded texture mapping", 0, 130, 255);
 		RETRO_PutString("2 to use gouraud shaded texture mapping", 0, 140, 255);
-		RETRO_PutString("3 to use env shaded texture mapping", 0, 150, 255);
+		RETRO_PutString("3 to use matcap shaded texture mapping", 0, 150, 255);
 		RETRO_PutString("m to use metal environment mapping", 0, 160, 255);
-		RETRO_PutString("p to use phong environment mapping", 0, 170, 255);
-		RETRO_PutString("o to use mini phong environment mapping", 0, 180, 255);
+		RETRO_PutString("p to use matcap mapping", 0, 170, 255);
+		RETRO_PutString("o to use mini matcap mapping", 0, 180, 255);
 		RETRO_PutString("b to toggle bumpmapping", 0, 190, 255);
 		RETRO_PutString("h to toggle this help screen", 0, 210, 255);
 	}

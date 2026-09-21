@@ -33,15 +33,15 @@ void DEMO_Render(double time, double deltatime)
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 
-	int slopeX = Sin256[WRAP256(iphase * 3)];
-	int slopeY = Sin256[WRAP256(64 + iphase * 5)];
+	int slopex = Sin256[WRAP256(iphase * 3)];
+	int slopey = Sin256[WRAP256(64 + iphase * 5)];
 
 	for (int y = 0; y < PLASMA_HEIGHT; y++) {
 		int vertical = Sin256[WRAP256(y * 3 + iphase * 3)];
 
 		for (int x = 0; x < PLASMA_WIDTH; x++) {
 			int horizontal = Sin256[WRAP256(x * 3 + iphase * 2)];
-			int diagonal = Sin256[WRAP256((x * slopeX) / PLASMA_WIDTH + (y * slopeY) / PLASMA_HEIGHT + iphase)];
+			int diagonal = Sin256[WRAP256((x * slopex) / PLASMA_WIDTH + (y * slopey) / PLASMA_HEIGHT + iphase)];
 			unsigned char color = (horizontal + diagonal + vertical) / 3;
 
 			int left = x * PLASMA_SCALE;

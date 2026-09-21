@@ -177,6 +177,23 @@ inline void RETRO_DrawVline(int x, int y1, int y2, unsigned char color, RETRO_Re
 	}
 }
 
+// Inclusive on x1 and x2, so DrawHline(x1, x2, y) lights the same pixels as DrawLine(x1, y, x2, y).
+inline void RETRO_DrawHline(int x1, int x2, int y, unsigned char color, RETRO_Rectangle clip = {}, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
+{
+	int clipx1 = MIN(clip.x1, bufferwidth);
+	int clipy1 = MIN(clip.y1, bufferheight);
+
+	if (x1 > x2) SWAP(x1, x2);
+
+	int xmin = MAX(x1, clip.x0);
+	int xmax = MIN(x2, clipx1 - 1);
+	if (y < clip.y0 || y >= clipy1 || xmin > xmax) {
+		return;
+	}
+
+	memset(buffer + y * bufferwidth + xmin, color, xmax - xmin + 1);
+}
+
 // Filled axis-aligned rectangle with inclusive endpoints, clipped to clip.
 inline void RETRO_DrawRectangle(int x1, int y1, int x2, int y2, unsigned char color, RETRO_Rectangle clip = {}, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
 {

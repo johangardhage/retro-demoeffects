@@ -1,7 +1,7 @@
 //
 // Scroller, Star Wars crawl
 //
-// Pages of text are packed into one strip and sampled as a plane receding
+// A page of text is packed into one strip and sampled as a plane receding
 // toward a horizon: rows become narrower and more compressed as they
 // travel up the screen.
 //
@@ -19,13 +19,8 @@
 // the frame for that lag (and a further glyph-height) to close. A zero
 // texel is transparent.
 //
-// The strip is a single call to RETRO_GenerateTextImage: a null slot is
-// an empty row, so each page occupies the inner bound of rows and each
-// line is already centered within the widest one. The pages are a 2D
-// array of lines rather than strings broken up by '\n', so
-// ScrollText[page][row] is already a line's own text, with no scan needed
-// to find where it ends. The inner bound is the longest page; unused
-// slots are null.
+// RETRO_GenerateTextImage packs the lines into one strip, centered within
+// the widest line. Empty strings preserve blank rows in the page.
 //
 // PERSPECTIVE_DEPTH, CRAWL_SPEED and the horizon geometry are all tuned by
 // feel against the reference 16x16 PCX font. FONT_SCALE brings whichever
@@ -50,35 +45,31 @@
 #define PHASE_BOTTOM (PERSPECTIVE_DEPTH / BOTTOM_DISTANCE) // sourcey lag at y = BOTTOM_Y
 #define CRAWL_GAP 180 // extra rows after the strip before the crawl wraps
 
-static const char *const ScrollText[][12] = {
-	{
-		"THE TEXT WRITER",
-		"",
-		"SIMPLE TEXT WRITER",
-		"",
-		"A PAGE OF TEXT",
-		"APPEARS ON SCREEN",
-		"ONE CHARACTER",
-		"AT A TIME.",
-		"",
-		"WHEN IT IS DONE",
-		"THE NEXT PAGE",
-		"BEGINS.",
-	},
-	{
-		"EACH PAGE IS",
-		"WRITTEN OUT",
-		"THEN HELD,",
-		"THEN CLEARED.",
-		"",
-		"THE WRITER MOVES ON.",
-		"",
-		"AND THEN IT STARTS",
-		"ALL OVER AGAIN.",
-		"",
-		"RETRO",
-		"DEMOEFFECTS...",
-	},
+static const char *const ScrollText[] = {
+	"THE TEXT WRITER",
+	"",
+	"SIMPLE TEXT WRITER",
+	"",
+	"A PAGE OF TEXT",
+	"APPEARS ON SCREEN",
+	"ONE CHARACTER",
+	"AT A TIME.",
+	"",
+	"WHEN IT IS DONE",
+	"THE NEXT PAGE",
+	"BEGINS.",
+	"EACH PAGE IS",
+	"WRITTEN OUT",
+	"THEN HELD,",
+	"THEN CLEARED.",
+	"",
+	"THE WRITER MOVES ON.",
+	"",
+	"AND THEN IT STARTS",
+	"ALL OVER AGAIN.",
+	"",
+	"RETRO",
+	"DEMOEFFECTS...",
 };
 
 static RETRO_Image *PageImage;
@@ -121,6 +112,6 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), &ScrollText[0][0], sizeof(ScrollText) / sizeof(ScrollText[0][0]), FONT_SCALE);
+	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]), FONT_SCALE);
 	RETRO_SetPalette(PageImage->palette);
 }

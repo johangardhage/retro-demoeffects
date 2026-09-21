@@ -74,12 +74,13 @@ static Model3D *GlyphCache[MAX_DISTINCT_GLYPHS];
 static unsigned char GlyphCacheChar[MAX_DISTINCT_GLYPHS];
 static int GlyphCacheCount;
 
-// Lay text out along the helix: letterS[i] is where letter i's cube starts,
-// spaced by the font's fixed width plus gap, or spacewidth for a literal
-// space. textWidth is one lap's length, the point at which the strip
-// repeats. RageQuits if text holds more letters than letterS can take.
+// Lay text out along the helix: letterstart[i] is where letter i's cube
+// starts, spaced by the font's fixed width plus gap, or spacewidth for a
+// literal space. textwidth is one lap's length, the point at which the
+// strip repeats. RageQuits if text holds more letters than letterstart can
+// take.
 static int BuildLetterStrip(const char *text, const RETRO_Font &font, float pixel, float gap,
-							 float spacewidth, float *letterS, int maxletters, float *textWidth)
+							 float spacewidth, float *letterstart, int maxletters, float *textwidth)
 {
 	int length = (int)strlen(text);
 	if (length > maxletters) {
@@ -88,14 +89,14 @@ static int BuildLetterStrip(const char *text, const RETRO_Font &font, float pixe
 
 	float s = 0;
 	for (int i = 0; i < length; i++) {
-		letterS[i] = s;
+		letterstart[i] = s;
 		if (text[i] == ' ') {
 			s += spacewidth;
 		} else {
 			s += font.width * pixel + gap;
 		}
 	}
-	*textWidth = s;
+	*textwidth = s;
 
 	return length;
 }
@@ -105,25 +106,25 @@ struct ScrollPose {
 };
 
 // Position and orient one letter on the wrapped strip, from its base place
-// letterS to the pose a caller rotates and translates its model with.
+// letterstart to the pose a caller rotates and translates its model with.
 // Returns false, pose untouched, once the letter is past cull on either
 // side.
 //
-// raw = letterS - phase is the letter's place on an unwrapped line; it is
+// raw = letterstart - phase is the letter's place on an unwrapped line; it is
 // brought to the representative closest to 0 every frame rather than
 // carrying a wrap decision forward from the last one. phase itself resets
-// by -textWidth once a lap (it is a fmod), which jumps raw by +textWidth for
+// by -textwidth once a lap (it is a fmod), which jumps raw by +textwidth for
 // every letter at once, not just the one due to cross -cull; recomputing
-// fresh from letterS and the current phase keeps a letter already inside the
-// visible window from being caught by that reset and culled a lap early.
-static bool ScrollPoseCompute(float letterS, double phase, float textWidth, float cull, float wavek,
+// fresh from letterstart and the current phase keeps a letter already inside
+// the visible window from being caught by that reset and culled a lap early.
+static bool ScrollPoseCompute(float letterstart, double phase, float textwidth, float cull, float wavek,
 							   float spin, float distance, float ampy, float ampz, ScrollPose *pose)
 {
-	float raw = letterS - (float)phase;
-	if (raw > textWidth * 0.5f) {
-		raw -= textWidth;
-	} else if (raw < -textWidth * 0.5f) {
-		raw += textWidth;
+	float raw = letterstart - (float)phase;
+	if (raw > textwidth * 0.5f) {
+		raw -= textwidth;
+	} else if (raw < -textwidth * 0.5f) {
+		raw += textwidth;
 	}
 	float s = raw + cull;
 	if (s < -cull || s > cull) {

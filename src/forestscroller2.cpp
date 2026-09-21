@@ -20,6 +20,7 @@
 #include "lib/retro.h"
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
+#include "lib/retrovector.h"
 
 #define FOREST_BACKGROUND "assets/forest_320x200.pcx"
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
@@ -113,7 +114,7 @@ void DEMO_FixedUpdate(double timestep)
 			int u0 = (int)u;
 			int u1 = u0 + 1 < HEIGHTMAP_POINTS ? u0 + 1 : u0;
 			double ufrac = u - u0;
-			double uweight = ufrac * ufrac * (3 - 2 * ufrac);
+			double uweight = smoothstep(0.0, 1.0, ufrac);
 			double bend = HeightMap[u0] + (HeightMap[u1] - HeightMap[u0]) * uweight;
 			double ssampled = s + bend;
 			if (ssampled < -height / 2 || ssampled >= height / 2) {

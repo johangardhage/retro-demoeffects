@@ -217,8 +217,7 @@ void DEMO_Render(double time, double deltatime)
 	// A sine swings hardest as it crosses zero, so a swing at full
 	// amplitude is at its fastest on the first frame. The ease holds both
 	// terms near nothing while it is small, and the tube starts from rest.
-	double ease = MIN(1.0, time / TUNNEL_TWIST_EASE);
-	ease = ease * ease * (3.0 - 2.0 * ease);
+	double ease = smoothstep(0.0, TUNNEL_TWIST_EASE, time);
 	TwistBase = sin(time * TUNNEL_ROLL_SPEED) * TUNNEL_ROLL * ease;
 	TwistPerZ = sin(time * TUNNEL_TWIST_SPEED) * TUNNEL_TWIST_PER_Z * ease;
 	ScrollV = time * TUNNEL_FLIGHT;

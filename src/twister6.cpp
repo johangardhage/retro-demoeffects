@@ -12,13 +12,13 @@
 // half-open and clipped to [0, WIDTH).
 //
 //   spin(time)     = SPIN_SPEED · time
-//   twistCos(time) = cos(TWIST_OMEGA · time)
-//   twistMod(time) = sin(TWIST_MOD_OMEGA · time)
-//   swayCos(time)  = cos(SWAY_OMEGA · time)
+//   twistcos(time) = cos(TWIST_OMEGA · time)
+//   twistmod(time) = sin(TWIST_MOD_OMEGA · time)
+//   swaycos(time)  = cos(SWAY_OMEGA · time)
 //   scroll(time)   = SCROLL_SPEED · time
 //
-//   angle(i) = spin + 3π (twistCos · twistMod · cos(π i / 3H) + 1)
-//   xOffset(i) = CX + SWAY · swayCos · sin(π i / H)
+//   angle(i) = spin + 3π (twistcos · twistmod · cos(π i / 3H) + 1)
+//   xoffset(i) = CX + SWAY · swaycos · sin(π i / H)
 //
 // Rotation is x' = Px c − Pz s, z' = Px s + Pz c. Smaller z' is nearer.
 // Texture u steps 16 texels per span (two wraps of 256). v is
@@ -38,7 +38,7 @@
 // C + (255 − C) · h / 23. lumel 240..255 is the tent peak, so the highlight
 // sits on the silhouette rims.
 //
-// spin, scroll, twistCos, twistMod and swayCos live on the displayed clock.
+// spin, scroll, twistcos, twistmod and swaycos live on the displayed clock.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -144,8 +144,8 @@ static void DrawSpan(int y, int x1, float u1, float l1, float z1, int x2, float 
 
 void DEMO_Render(double time, double deltatime)
 {
-	float screenX[SPANS];
-	float viewZ[SPANS];
+	float screenx[SPANS];
+	float viewz[SPANS];
 	float lighting[SPANS];
 
 	for (int i = 0; i < RETRO_WIDTH * RETRO_HEIGHT; i++) {
@@ -157,33 +157,33 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate phase. The three oscillators have incommensurate periods
 	// (20s, 17s, 18s) so the pose does not obviously loop.
 	float spin = (float)(time * FLUBBER_SPIN_SPEED);
-	float twistCos = cos(time * FLUBBER_TWIST_OMEGA);
-	float twistMod = sin(time * FLUBBER_TWIST_MOD_OMEGA);
-	float swayCos = cos(time * FLUBBER_SWAY_OMEGA);
+	float twistcos = cos(time * FLUBBER_TWIST_OMEGA);
+	float twistmod = sin(time * FLUBBER_TWIST_MOD_OMEGA);
+	float swaycos = cos(time * FLUBBER_SWAY_OMEGA);
 
 	for (int i = 0; i < RETRO_HEIGHT; i++) {
 		// Half-sine bow down the column, scaled by the slow sway oscillator
-		float xOffset = FLUBBER_CX + FLUBBER_SWAY * swayCos * sin(i * M_PI / RETRO_HEIGHT);
+		float xoffset = FLUBBER_CX + FLUBBER_SWAY * swaycos * sin(i * M_PI / RETRO_HEIGHT);
 		// Always 3π of yaw, plus a twist that varies slowly down the height
-		float angle = spin + FLUBBER_TWIST * (twistCos * cos(i * M_PI / (3 * RETRO_HEIGHT)) * twistMod + 1);
-		float cosAngle = cos(angle);
-		float sinAngle = sin(angle);
+		float angle = spin + FLUBBER_TWIST * (twistcos * cos(i * M_PI / (3 * RETRO_HEIGHT)) * twistmod + 1);
+		float cosangle = cos(angle);
+		float sinangle = sin(angle);
 
 		for (int j = 0; j < SPANS; j++) {
 			// Same 2D rotation as the point: x' = x c − z s, z' = x s + z c
-			float tangentX = EllipseTangents[j].x * cosAngle + EllipseTangents[j].z * -sinAngle;
-			screenX[j] = EllipsePoints[j].x * cosAngle + EllipsePoints[j].z * -sinAngle + xOffset;
-			viewZ[j] = EllipsePoints[j].x * sinAngle + EllipsePoints[j].z * cosAngle;
+			float tangentx = EllipseTangents[j].x * cosangle + EllipseTangents[j].z * -sinangle;
+			screenx[j] = EllipsePoints[j].x * cosangle + EllipsePoints[j].z * -sinangle + xoffset;
+			viewz[j] = EllipsePoints[j].x * sinangle + EllipsePoints[j].z * cosangle;
 			// idx = (256 − 128 t_x) mod 256. Rim (±x) lands on the tent peak.
-			lighting[j] = 2 * FLUBBER_LIGHT_CENTER - FLUBBER_LIGHT_CENTER * tangentX;
+			lighting[j] = 2 * FLUBBER_LIGHT_CENTER - FLUBBER_LIGHT_CENTER * tangentx;
 		}
 
 		// u steps 16 texels per span, 32 × 16 = 512 = two wraps of the 256 texture
 		for (int j = 0; j < SPANS; j++) {
 			int jn = (j + 1) & SPANMASK;
-			DrawSpan(i, (int)lround(screenX[j]), j * FLUBBER_U_PER_SPAN, lighting[j], viewZ[j],
-					 (int)lround(screenX[jn]), (j + 1) * FLUBBER_U_PER_SPAN,
-					 lighting[jn], viewZ[jn]);
+			DrawSpan(i, (int)lround(screenx[j]), j * FLUBBER_U_PER_SPAN, lighting[j], viewz[j],
+					 (int)lround(screenx[jn]), (j + 1) * FLUBBER_U_PER_SPAN,
+					 lighting[jn], viewz[jn]);
 		}
 	}
 }
@@ -195,13 +195,13 @@ static unsigned char ClosestColor(RETRO_Palette *palette, unsigned char r, unsig
 	unsigned char color = 0;
 
 	for (int i = 0; i < RETRO_COLORS; i++) {
-		long newDist = (r - palette[i].r) * (r - palette[i].r) + (g - palette[i].g) * (g - palette[i].g) + (b - palette[i].b) * (b - palette[i].b);
-		if (newDist == 0) {
+		long newdist = (r - palette[i].r) * (r - palette[i].r) + (g - palette[i].g) * (g - palette[i].g) + (b - palette[i].b) * (b - palette[i].b);
+		if (newdist == 0) {
 			return i;
 		}
-		if (newDist < dist) {
+		if (newdist < dist) {
 			color = i;
-			dist = newDist;
+			dist = newdist;
 		}
 	}
 

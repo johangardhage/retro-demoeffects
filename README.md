@@ -50,8 +50,9 @@ Options:
  -f, --fullscreen     Render in fullscreen
  -v, --vsync          Enable sync to vertical refresh
      --novsync        Disable sync to vertical refresh
- -l, --linear         Render using linear filtering
-     --nolinear       Render using nearest pixel sampling
+     --pixelart       Scale to even, sharp pixels (default)
+     --linear         Scale using linear filtering
+     --nearest        Scale using nearest pixel sampling
  -c, --showcursor     Show mouse cursor
      --nocursor       Hide mouse cursor
      --showfps        Show frame rate in window title

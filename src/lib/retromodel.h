@@ -145,10 +145,21 @@ struct Model3D {
 	int envmapheight = RETRO_ENVMAP_SIZE;		// Environment texture height
 	int envmapradius = RETRO_ENVMAP_SIZE / 2;	// Texels from the map's middle a grazing normal reaches,
 												// so half the width samples the lighting map's whole disk
+	bool envmapperspective;						// Reflect each vertex's own view ray, from the eye, rather
+												// than the view axis. Off, the reflection renderer looks a
+												// pixel up by its normal alone, as if seen head-on: close on
+												// a curved surface, whose normals already sweep the map,
+												// and cheaper. A flat face needs it on, since its normal
+												// never varies and the whole picture is in the view ray
 	unsigned char *bumpmap = NULL;				// Bump texture
 	int bumpmapwidth = RETRO_TEXMAP_SIZE;		// Bump texture width, which need not match the texture's
 	int bumpmapheight = RETRO_TEXMAP_SIZE;		// Bump texture height
 	int bumpgrazing = RETRO_BUMP_GRAZING;		// Height difference that tilts a normal to grazing
+	float eye;									// Model units from the rotated origin back to the eye,
+												// along -z, as RETRO_ProjectModel last placed it. What
+												// envmapperspective aims each view ray from; zero, a
+												// model never projected that way, keeps every ray parallel
+												// to the view axis
 	GlenzLighting glenzlighting;				// Configuration for the Glenz renderer
 };
 

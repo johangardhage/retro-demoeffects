@@ -22,8 +22,9 @@ enum RETRO_POLY_TYPE {
 	RETRO_POLY_GLENZ,
 	RETRO_POLY_GOURAUD,
 	RETRO_POLY_PHONG,
+	RETRO_POLY_MATCAP,		// a canned lighting response, looked up by screen-facing normal; see RETRO_POLY_ENVIRONMENT for the true reflection this is not
 	RETRO_POLY_TEXTURE,
-	RETRO_POLY_ENVIRONMENT
+	RETRO_POLY_ENVIRONMENT	// a true Blinn/Newell reflection map, sampled by the reflected view ray
 };
 
 enum RETRO_POLY_SHADE {
@@ -32,8 +33,8 @@ enum RETRO_POLY_SHADE {
 	RETRO_SHADE_WIREFIRE,
 	RETRO_SHADE_FLAT,
 	RETRO_SHADE_GOURAUD,
-	RETRO_SHADE_ENVIRONMENT,
-	RETRO_SHADE_PHONG
+	RETRO_SHADE_ENVIRONMENT,	// RETRO_POLY_TEXTURE combined with a reflection map
+	RETRO_SHADE_MATCAP			// RETRO_POLY_TEXTURE combined with a lighting map; RETRO_POLY_MATCAP needs no shadertype of its own
 };
 
 inline struct {
@@ -46,6 +47,23 @@ inline struct {
 inline void RETRO_InitializeLightSource(float x, float y, float z)
 {
 	RETRO_Render.lightsource = RETRO_LightSource(x, y, z);
+}
+
+// A light whose direction turns in a circle over time - x and y sweeping at
+// radius while z stays fixed - in whatever space shading happens in, the
+// same one RETRO_InitializeLightSource takes its direction in. Unlike that
+// one, which sets the light once at startup, this is meant to be called
+// every frame, so it writes RETRO_Render.lightsource directly rather than
+// naming itself after a step that only runs once. It also returns the
+// direction alongside setting it, since a caller that derives more than
+// shading from the light - a planar shadow's cast direction, say - needs the
+// same vector rather than a second one left to drift out of sync with it
+inline vec3 RETRO_RotateLightSource(double time, float speed, float radius, float z)
+{
+	double angle = time * speed;
+	vec3 lightsource = { (float)(radius * cos(angle)), (float)(radius * sin(angle)), z };
+	RETRO_Render.lightsource = RETRO_LightSource(lightsource.x, lightsource.y, lightsource.z);
+	return lightsource;
 }
 
 inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible = false, ClipRect clip = {})
@@ -317,7 +335,7 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 	// A texture that is a picture in its own palette has the other shape, and
 	// says so; see ShadeTable.
 	ShadeTable shadetable = { model->shadetable, RETRO_TEXTURE_COLORS, RETRO_SHADES };
-	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
+	bool lightingmap = shadertype == RETRO_SHADE_MATCAP;
 	bool envmapshading = shadertype == RETRO_SHADE_ENVIRONMENT || lightingmap;
 	bool bumpmapping = model->bumpmap != NULL;
 	// How far up the shade table one unit of lambert carries a face: the model's
@@ -410,10 +428,51 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 	}
 }
 
-inline void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shadertype, ClipRect clip = {})
+// True reflection: the map holds a picture of the surroundings, sampled by
+// the ray the visible surface point reflects towards. That ray times q is
+// interpolated (perspective-correct) and renormalising it is the same
+// direction as dividing by q first, the trick RETRO_RenderPhongModel uses;
+// skipping it (interpolating the ray alone, affinely in screen space) is only
+// close on a face so gently curved that its corners barely differ, and comes apart on
+// a coarse, foreshortened face, where screen-space and surface-space pull far
+// enough apart that the sampled direction swings wildly pixel to pixel. See
+// RETRO_RenderMatcapModel for the lighting-map counterpart this is not.
+//
+// The map is baked for one view ray, I0 = (0, 0, 1), down the axis, and by
+// default every pixel is looked up by its normal as though seen along it.
+// With envmapperspective a vertex off the axis is instead seen along its
+// own I, from the eye at (0, 0, -eye), and reflects
+//
+//   R = I - 2(N·I)N
+//
+// which is what each vertex passes, for RETRO_GetReflectionMapCoordinates to
+// look up, at a second square root a pixel. On a curved surface that differs
+// little from reflecting I0, which is why it is not the default. On a flat
+// face it is the whole picture: every corner shares the one N, only I
+// differs, and the face shows the slice of the room a plane mirror there
+// would. R is linear in I, and I left unnormalized, times q, is linear in
+// screen space, so R q interpolates exactly across a flat face and a straight
+// edge in the room stays straight in the mirror.
+//
+// A bump map tilts a normal, not a ray, so the bumped path is handed the
+// normal that reflects I0 to R instead, the half-way vector N' = (R - I0)
+// normalized, with R unit. That is exact at the corners and bends in between.
+inline vec3 RETRO_ReflectionVector(vec3 n, vec3 rpos, float eye)
+{
+	vec3 i = eye > 0.0f ? vec3{ rpos.x, rpos.y, rpos.z + eye } : vec3{ 0.0f, 0.0f, 1.0f };
+	return i - n * (2.0f * dot(n, i));
+}
+
+inline vec3 RETRO_ReflectionNormal(vec3 n, vec3 rpos, float eye)
+{
+	vec3 h = normalize(RETRO_ReflectionVector(n, rpos, eye)) - vec3{ 0.0f, 0.0f, 1.0f };
+	float length = sqrt(dot(h, h));
+	return length > 1.0e-6f ? h * (1.0f / length) : n;
+}
+
+inline void RETRO_RenderEnvironmentModel(Model3D *model, ClipRect clip = {})
 {
 	RETRO_SortFaces(model->twosided, model);
-	bool lightingmap = shadertype == RETRO_SHADE_PHONG;
 	bool bumpmapping = model->bumpmap != NULL;
 
 	for (int i = 0; i < model->drawfaces; i++) {
@@ -429,13 +488,50 @@ inline void RETRO_RenderEnvironmentModel(Model3D *model, RETRO_POLY_SHADE shader
 			if (bumpmapping) {
 				point[j].uv = model->uv[face->uv[j]];
 			}
-			float normalscale = side * (lightingmap ? vertex->q : 1.0f);
-			point[j].n = normal->rdir * normalscale;
+			if (!model->envmapperspective) {
+				point[j].n = normal->rdir * (side * vertex->q);
+			} else if (bumpmapping) {
+				point[j].n = RETRO_ReflectionNormal(normal->rdir * side, vertex->rpos, model->eye) * vertex->q;
+			} else {
+				point[j].n = RETRO_ReflectionVector(normal->rdir * side, vertex->rpos, model->eye) * vertex->q;
+			}
 		}
 		if (bumpmapping) {
-			RETRO_DrawEnvMapBumpPolygon(point, face->vertices, model->envmap, model->bumpmap, model->bumpgrazing, lightingmap, frame, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight, clip);
+			RETRO_DrawEnvMapBumpPolygon(point, face->vertices, model->envmap, model->bumpmap, model->bumpgrazing, false, frame, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight, clip);
 		} else {
-			RETRO_DrawEnvMapPolygon(point, face->vertices, model->envmap, lightingmap, model->envmapwidth, model->envmapheight, model->envmapradius, clip);
+			RETRO_DrawEnvMapPolygon(point, face->vertices, model->envmap, false, model->envmapperspective, model->envmapwidth, model->envmapheight, model->envmapradius, clip);
+		}
+	}
+}
+
+// Matcap: the map holds a canned lighting response, sampled by screen-facing
+// normal. n * q is interpolated (perspective-correct) and renormalising it
+// is the same direction as dividing by q, the same trick RETRO_RenderPhongModel
+// uses for a true per-pixel normal.
+inline void RETRO_RenderMatcapModel(Model3D *model, ClipRect clip = {})
+{
+	RETRO_SortFaces(model->twosided, model);
+	bool bumpmapping = model->bumpmap != NULL;
+
+	for (int i = 0; i < model->drawfaces; i++) {
+		Face *face = &model->face[model->drawface[i]];
+		float side = RETRO_FaceSide(face);
+		TangentFrame frame = { face->tangent.rdir, face->bitangent.rdir };
+		PolygonPoint point[RETRO_MAX_FACEVERTICES];
+		for (int j = 0; j < face->vertices; j++) {
+			Vertex *vertex = &model->vertex[face->vertex[j]];
+			UnitVector *normal = &model->normal[face->vertexnormal[j]];
+			point[j].pos = vertex->spos;
+			point[j].q = vertex->q;
+			if (bumpmapping) {
+				point[j].uv = model->uv[face->uv[j]];
+			}
+			point[j].n = normal->rdir * (side * vertex->q);
+		}
+		if (bumpmapping) {
+			RETRO_DrawEnvMapBumpPolygon(point, face->vertices, model->envmap, model->bumpmap, model->bumpgrazing, true, frame, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight, clip);
+		} else {
+			RETRO_DrawEnvMapPolygon(point, face->vertices, model->envmap, true, false, model->envmapwidth, model->envmapheight, model->envmapradius, clip);
 		}
 	}
 }
@@ -482,11 +578,14 @@ inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shade
 	case RETRO_POLY_PHONG:
 		RETRO_RenderPhongModel(model, clip);
 		break;
+	case RETRO_POLY_MATCAP:
+		RETRO_RenderMatcapModel(model, clip);
+		break;
 	case RETRO_POLY_TEXTURE:
 		RETRO_RenderTextureModel(model, shadertype, clip);
 		break;
 	case RETRO_POLY_ENVIRONMENT:
-		RETRO_RenderEnvironmentModel(model, shadertype, clip);
+		RETRO_RenderEnvironmentModel(model, clip);
 		break;
 	}
 }

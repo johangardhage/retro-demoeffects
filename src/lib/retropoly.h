@@ -102,13 +102,18 @@ inline bool RETRO_DepthTest(int offset, float q)
 // sweeps the whole of the map's own disk; less stops short of its rim.
 //
 // A photographic reflection map is Blinn/Newell sphere-mapping of
-// R = 2(N·V)N - V with V = (0, 0, -1). For a unit N that identity
-// simplifies to a hemisphere-aware scale of Nxy, with no second sqrt:
+// R = 2(N·V)N - V with V = (0, 0, -1). For a unit front face (Nz < 0) that
+// identity simplifies to a scale of Nxy, with no second sqrt:
 //
-//   u = W (1/2 - sign(Nz) * Nx / 2)
-//   v = H (1/2 - sign(Nz) * Ny / 2)
+//   u = W (1/2 + Nx / 2)
+//   v = H (1/2 + Ny / 2)
 //
-// The radius is unused on that path: the sphere map already covers the image.
+// Nz > 0 is past the silhouette. The same scale of Nxy is used there too.
+// Flipping the sign of Nxy would jump to the opposite side of the disk as
+// Nz crosses zero. Scaling Nxy out to the unit circle would pin every such
+// normal on the horizon, so an upward one would read pale sky instead of
+// the zenith and a downward one would read grey instead of the checker.
+// The radius is unused on this path: the sphere map covers the image.
 //
 inline void RETRO_GetEnvMapCoordinates(vec3 n, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, float &u, float &v)
 {
@@ -132,12 +137,34 @@ inline void RETRO_GetEnvMapCoordinates(vec3 n, bool lightingmap, int envmapwidth
 
 	n = normalize(n);
 
-	// -sign(Nz)/2, which is where the minus of the formula above went. Nz < 0 is
-	// the front, toward the camera, so flipping the sign with it folds the back
-	// hemisphere onto the same disk, mirrored.
-	float signedhalf = n.z < 0.0f ? 0.5f : -0.5f;
-	u = envmapwidth * (0.5f + signedhalf * n.x);
-	v = envmapheight * (0.5f + signedhalf * n.y);
+	u = envmapwidth * (0.5f + 0.5f * n.x);
+	v = envmapheight * (0.5f + 0.5f * n.y);
+}
+
+//
+// The same photographic lookup, addressed by the reflected ray itself
+//
+// The map above reflects I0 = (0, 0, 1), the view axis, about N. The normal
+// that sends I0 to a given R is the half-way vector
+//
+//   N' = (R/|R| - I0) / |R/|R| - I0|
+//
+// and N' is always front-facing, N'z ≤ 0, so it goes straight into the
+// front-face scale of Nxy. r need not be unit: a reflection interpolated
+// across a flat face is linear in screen space only while it is left
+// unnormalized. R = I0 is the one ray the whole rim of the disk shares, a
+// ray reflected straight on past the model; the bottom of the rim stands in.
+//
+inline void RETRO_GetReflectionMapCoordinates(vec3 r, int envmapwidth, int envmapheight, float &u, float &v)
+{
+	const float epsilon = 1.0e-12f;
+
+	vec3 h = normalize(r) - vec3{ 0.0f, 0.0f, 1.0f };
+	float lengthsquared = dot(h, h);
+	h = lengthsquared > epsilon ? h * (1.0f / sqrt(lengthsquared)) : vec3{ 0.0f, 1.0f, 0.0f };
+
+	u = envmapwidth * (0.5f + 0.5f * h.x);
+	v = envmapheight * (0.5f + 0.5f * h.y);
 }
 
 //
@@ -858,10 +885,11 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, u
 
 //
 // Environment mapped polygon
-// Lighting normals are perspective-correct and normalized at lookup;
-// reflection normals retain the original affine interpolation.
+// point.n is the interpolated normal, or with reflectedray the interpolated
+// reflected ray, which only a reflection map is read by. Either arrives
+// multiplied by q, so it is perspective-correct, and is normalized at lookup.
 //
-inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned char *envmap, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, ClipRect clip = {})
+inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned char *envmap, bool lightingmap, bool reflectedray, int envmapwidth, int envmapheight, int envmapradius, ClipRect clip = {})
 {
 	if (envmap == NULL) return;
 
@@ -890,7 +918,11 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 
 			for (int x = xstart; x < xend; x++) {
 				float e, w;
-				RETRO_GetEnvMapCoordinates(n, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
+				if (reflectedray) {
+					RETRO_GetReflectionMapCoordinates(n, envmapwidth, envmapheight, e, w);
+				} else {
+					RETRO_GetEnvMapCoordinates(n, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
+				}
 				unsigned int envmapu = CLAMP(e, 0, envmapwidth);
 				unsigned int envmapv = CLAMP(w, 0, envmapheight);
 				int offset = y * RETRO_WIDTH + x;

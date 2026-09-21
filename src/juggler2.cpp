@@ -54,7 +54,7 @@
 // Eric Graham's real 1987 source (recovered and republished by Ernie Wright
 // and by AlphaPixel) gives each mirror sphere its own colour, <.9,.9,.9>,
 // and multiplies a bounce's traced result by it - not a lossless mirror, so
-// reflectionColor below is 0.9 rather than white, dimming a chrome ball's
+// reflectioncolor below is 0.9 rather than white, dimming a chrome ball's
 // reflection by a tenth on every bounce (the only material weight left on
 // that path - see TraceScene, where only a hit's own material kind, not a
 // separate reflection field, decides whether it bounces at all).
@@ -64,6 +64,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrovector.h"
+#include "lib/retropalette.h"
 
 #define NEAR_T 0.001f // t past which a hit counts, so a ray does not re-hit its own origin
 #define MAX_BOUNCES 10 // matches the source recreation's own MAX_DEPTH
@@ -73,21 +74,19 @@
 #define SCREEN_WIDTH 100.0f // world units the virtual screen spans; with FOCAL_DISTANCE this sets the field of view
 
 #define FLOOR_TILE 107.0f // world units per checker tile
-#define GAMMA 2.2f
-#define INV_GAMMA (1.0f / GAMMA)
 
 // The source recreation measured these from photographs of the original: a
 // shadowed floor tile reads as 40% of its lit colour, a shadowed sphere as
-// 15%. Both are stored already raised to GAMMA, since every material colour
-// here is linear light and only converted to a displayable percentage right
+// 15%, 102 and 40 of 255. Both are stored decoded to linear light, since
+// every material colour here is linear light and only encoded to sRGB right
 // before it is shown - so the weight that makes a 0.4 or 0.15 photograph
-// measurement come out right, after that conversion, is 0.4^GAMMA and
-// 0.15^GAMMA, not 0.4 and 0.15 themselves. Both are AMBIENT_SHAPE's anchor
-// value below, not the literal ambient weight
-#define PLASTIC_AMBIENT 0.016988052f
+// measurement come out right, after that encoding, is the measurement
+// decoded by RETRO_SRGBToLinear, not the measurement itself. Both are
+// AMBIENT_SHAPE's anchor value below, not the literal ambient weight
+#define PLASTIC_AMBIENT RETRO_SRGBToLinear(40 / 255.0f)
 #define PLASTIC_DIFFUSE 1.0f
 #define PLASTIC_SPECULAR 1.0f
-#define MATTE_AMBIENT 0.13320851f
+#define MATTE_AMBIENT RETRO_SRGBToLinear(102 / 255.0f)
 #define MATTE_DIFFUSE 1.5f
 #define MIRROR_SPECULAR 1.0f
 
@@ -155,10 +154,10 @@ static vec3 LightPos = { -564, 686, 147 };
 // the mirror balls are their own one-off, a specular-only material with no
 // colour of their own to speak of - everything they show is either the
 // light's own white or whatever they reflect (see TraceScene: only mirrors
-// bounce, and reflectionColor is the only thing that dims that bounce)
+// bounce, and reflectioncolor is the only thing that dims that bounce)
 struct PhongMaterial {
 	float ambient, diffuse, specular;
-	vec3 color, highlight, reflectionColor;
+	vec3 color, highlight, reflectioncolor;
 };
 
 static PhongMaterial Mats[5]; // indexed by JugglerMaterial
@@ -166,13 +165,14 @@ static PhongMaterial FloorYellow, FloorGreen;
 static vec3 SkyMin, SkyMax;
 static vec3 Palette[RETRO_COLORS];
 
-// A material's own colour is stored in linear light, gamma-decoded from the
+// A material's own colour is stored in linear light, decoded from the
 // sRGB hex a colour picker would give - see PLASTIC_AMBIENT above for why
 // that matters once it is lit
 static vec3 Linear(int hex, float scale = 1.0f)
 {
-	auto channel = [hex, scale](int shift) { return powf(scale * ((hex >> shift) & 0xFF) / 255.0f, GAMMA); };
-	return { channel(16), channel(8), channel(0) };
+	return { RETRO_SRGBToLinear(scale * ((hex >> 16) & 0xFF) / 255.0f),
+		RETRO_SRGBToLinear(scale * ((hex >> 8) & 0xFF) / 255.0f),
+		RETRO_SRGBToLinear(scale * (hex & 0xFF) / 255.0f) };
 }
 
 static PhongMaterial CreatePlastic(vec3 color)
@@ -237,7 +237,7 @@ static bool Shadowed(vec3 origin, vec3 dir, float maxdist, bool full)
 // and, from a chrome ball's own surface, for its reflection - so a mirror
 // ball shows the rest of the juggler and the floor sliding across it with
 // real parallax rather than a canned environment map. Returns linear-light
-// radiance; DEMO_Render gamma-encodes and quantizes it to a palette index.
+// radiance; DEMO_Render encodes it to sRGB and quantizes it to a palette index.
 static vec3 TraceScene(vec3 origin, vec3 dir)
 {
 	vec3 pixel = { 0, 0, 0 };
@@ -284,14 +284,14 @@ static vec3 TraceScene(vec3 origin, vec3 dir)
 			m = &Mats[Body[hit].material];
 		}
 
-		vec3 pOut = p + normal * 0.35f;
+		vec3 pout = p + normal * 0.35f;
 		bool fullshadow = floorhit || Body[hit].material == MAT_MIRROR;
 
-		vec3 tolight = LightPos - pOut;
+		vec3 tolight = LightPos - pout;
 		float lightdist = length(tolight);
 		vec3 l = tolight / lightdist;
 		float lambert = dot(normal, l);
-		bool lit = lambert > 0.0f && !Shadowed(pOut, l, lightdist, fullshadow);
+		bool lit = lambert > 0.0f && !Shadowed(pout, l, lightdist, fullshadow);
 
 		// found or not, Glint is never blended with ambient plus diffuse -
 		// see the file header
@@ -304,13 +304,13 @@ static vec3 TraceScene(vec3 origin, vec3 dir)
 			if (lit && m->diffuse > 0.0f) pixel += throughput * m->color * (m->diffuse * lambert);
 		}
 
-		// only the mirror balls bounce; reflectionColor is what actually dims
+		// only the mirror balls bounce; reflectioncolor is what actually dims
 		// the throughput on the way out, not a separate reflection weight
 		if (floorhit || Body[hit].material != MAT_MIRROR) break;
-		throughput = throughput * m->reflectionColor;
+		throughput = throughput * m->reflectioncolor;
 		if (throughput.x < MIN_THROUGHPUT && throughput.y < MIN_THROUGHPUT && throughput.z < MIN_THROUGHPUT) break;
-		dir = normalize(dir - normal * (2.0f * dot(dir, normal)));
-		origin = pOut;
+		dir = normalize(reflect(dir, normal));
+		origin = pout;
 	}
 
 	return pixel;
@@ -482,15 +482,15 @@ void DEMO_Render(double time, double deltatime)
 			vec3 p = CamCenter + CamU * a + CamV * b;
 			vec3 dir = normalize(p - CamEye);
 			vec3 color = TraceScene(CamEye, dir);
-			color = { powf(MAX(color.x, 0.0f), INV_GAMMA), powf(MAX(color.y, 0.0f), INV_GAMMA), powf(MAX(color.z, 0.0f), INV_GAMMA) };
+			color = { RETRO_LinearToSRGB(color.x), RETRO_LinearToSRGB(color.y), RETRO_LinearToSRGB(color.z) };
 			RETRO_PutPixel(x, y, QuantizeToPalette(color));
 		}
 	}
 }
 
-// A colour a byte at a time, straight off the sRGB scale with no gamma
-// decode - unlike Linear, this builds the palette in the same already-
-// gamma-encoded space DEMO_Render's search compares against
+// A colour a byte at a time, straight off the sRGB scale with no decode -
+// unlike Linear, this builds the palette in the same already-encoded space
+// DEMO_Render's search compares against
 static vec3 Byte(int hex)
 {
 	return { ((hex >> 16) & 0xFF) / 255.0f, ((hex >> 8) & 0xFF) / 255.0f, (hex & 0xFF) / 255.0f };
@@ -510,11 +510,11 @@ void DEMO_Initialize(void)
 
 	// Six materials, black to their own colour, then the sky's own gradient,
 	// then a plain black-to-white ramp for whatever else a search turns up
-	vec3 materialColor[6] = { Byte(0xF2ADAB), Byte(0xE51715), Byte(0x1E1B94), Byte(0x261117), { 1, 1, 0 }, { 0, 1, 0 } };
+	vec3 materialcolor[6] = { Byte(0xF2ADAB), Byte(0xE51715), Byte(0x1E1B94), Byte(0x261117), { 1, 1, 0 }, { 0, 1, 0 } };
 	int index = 0;
 	for (int m = 0; m < 6; m++) {
 		for (int shade = 0; shade < PALETTE_MATERIAL_SHADES; shade++) {
-			Palette[index++] = materialColor[m] * (shade / (float)(PALETTE_MATERIAL_SHADES - 1));
+			Palette[index++] = materialcolor[m] * (shade / (float)(PALETTE_MATERIAL_SHADES - 1));
 		}
 	}
 	for (int shade = 0; shade < PALETTE_SKY_SHADES; shade++) {

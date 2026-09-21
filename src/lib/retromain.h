@@ -23,8 +23,9 @@ inline void RETRO_ParseArguments(int argc, char *argv[])
 		{"nostretch", no_argument, 0, 0},
 		{"vsync", no_argument, 0, 'v'},
 		{"novsync", no_argument, 0, 0},
-		{"linear", no_argument, 0, 'l'},
-		{"nolinear", no_argument, 0, 0},
+		{"linear", no_argument, 0, 0},
+		{"nearest", no_argument, 0, 0},
+		{"pixelart", no_argument, 0, 0},
 		{"showcursor", no_argument, 0, 'c'},
 		{"nocursor", no_argument, 0, 0},
 		{"showfps", no_argument, 0, 0},
@@ -36,7 +37,7 @@ inline void RETRO_ParseArguments(int argc, char *argv[])
 	bool usage = false;
 	int c;
 	int option_index = 0;
-	while ((c = getopt_long(argc, argv, ":hwfslcv", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, ":hwfscv", long_options, &option_index)) != -1) {
 		switch (c) {
 		case 0:
 			if (strcmp("fullwindow", long_options[option_index].name) == 0) {
@@ -45,8 +46,12 @@ inline void RETRO_ParseArguments(int argc, char *argv[])
 				RETRO.stretch = false;
 			} else if (strcmp("novsync", long_options[option_index].name) == 0) {
 				RETRO.vsync = false;
-			} else if (strcmp("nolinear", long_options[option_index].name) == 0) {
-				RETRO.linear = false;
+			} else if (strcmp("linear", long_options[option_index].name) == 0) {
+				RETRO.scaling = RETRO_SCALING_LINEAR;
+			} else if (strcmp("pixelart", long_options[option_index].name) == 0) {
+				RETRO.scaling = RETRO_SCALING_PIXELART;
+			} else if (strcmp("nearest", long_options[option_index].name) == 0) {
+				RETRO.scaling = RETRO_SCALING_NEAREST;
 			} else if (strcmp("nocursor", long_options[option_index].name) == 0) {
 				RETRO.showcursor = false;
 			} else if (strcmp("showfps", long_options[option_index].name) == 0) {
@@ -79,9 +84,6 @@ inline void RETRO_ParseArguments(int argc, char *argv[])
 		case 'v':
 			RETRO.vsync = true;
 			break;
-		case 'l':
-			RETRO.linear = true;
-			break;
 		case 'c':
 			RETRO.showcursor = true;
 			break;
@@ -113,15 +115,16 @@ inline void RETRO_ParseArguments(int argc, char *argv[])
 		printf("     --nostretch      Use fixed resolution for rendering\n");
 		printf(" -v, --vsync          Enable sync to vertical refresh\n");
 		printf("     --novsync        Disable sync to vertical refresh\n");
-		printf(" -l, --linear         Render using linear filtering\n");
-		printf("     --nolinear       Render using nearest pixel sampling\n");
+		printf("     --pixelart       Scale to even, sharp pixels (default)\n");
+		printf("     --linear         Scale using linear filtering\n");
+		printf("     --nearest        Scale using nearest pixel sampling\n");
 		printf(" -c, --showcursor     Show mouse cursor\n");
 		printf("     --nocursor       Hide mouse cursor\n");
 		printf("     --showfps        Show frame rate in window title\n");
 		printf("     --nofps          Hide frame rate\n");
 		printf("     --capfps=VALUE   Limit frame rate to the specified VALUE\n");
 		printf("     --dumpfile=FILE  Write a PPM of the current frame and exit\n");
-		printf("     --dumptime=VALUE Wait VALUE seconds of demo time before --dumpfile\n");
+		printf("     --dumptime=VALUE Render VALUE seconds of demo time before --dumpfile\n");
 		exit(1);
 	}
 }

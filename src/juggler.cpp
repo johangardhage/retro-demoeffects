@@ -200,25 +200,25 @@ static unsigned char TraceScene(vec3 origin, vec3 dir)
 		vec3 p = origin + dir * nearest;
 		vec3 normal = floorhit ? vec3{ 0, 1, 0 } : normalize(p - Body[hit].center);
 		if (!floorhit && dot(normal, dir) >= 0.0f) normal = -normal;
-		vec3 pOut = p + normal * 0.35f;
+		vec3 pout = p + normal * 0.35f;
 
 		if (floorhit) {
 			int tilex = (int)floorf(p.x / FLOOR_TILE), tilez = (int)floorf(p.z / FLOOR_TILE);
 			start = ((tilex + tilez) & 1) == 0 ? FLOOR_GREEN_START : FLOOR_YELLOW_START;
 			shades = FLOOR_SHADES;
-			brightness = ShadeLight(pOut, normal, dir, MATTE_AMBIENT, MATTE_DIFFUSE).x;
+			brightness = ShadeLight(pout, normal, dir, MATTE_AMBIENT, MATTE_DIFFUSE).x;
 			break;
 		}
 
 		if (Body[hit].mat == Mirror) {
-			glint = MAX(glint, ShadeLight(pOut, normal, dir, 0.0f, 0.0f).y);
-			dir = normalize(dir - normal * (2.0f * dot(dir, normal)));
-			origin = pOut;
+			glint = MAX(glint, ShadeLight(pout, normal, dir, 0.0f, 0.0f).y);
+			dir = normalize(reflect(dir, normal));
+			origin = pout;
 			continue;
 		}
 
 		MaterialRange(Body[hit].mat, start, shades);
-		vec2 shade = ShadeLight(pOut, normal, dir, PLASTIC_AMBIENT, PLASTIC_DIFFUSE);
+		vec2 shade = ShadeLight(pout, normal, dir, PLASTIC_AMBIENT, PLASTIC_DIFFUSE);
 		brightness = shade.x;
 		glint = MAX(glint, shade.y);
 		break;

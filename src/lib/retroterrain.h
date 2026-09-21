@@ -396,9 +396,7 @@ inline bool RETRO_KeepTerrainDot(int x, int z, float distance2, float falloff = 
 		x = WRAP(x, RETRO_Terrain.width);
 		z = WRAP(z, RETRO_Terrain.height);
 	}
-	unsigned int hash = (unsigned int)x * 374761393u + (unsigned int)z * 668265263u;
-	hash = (hash ^ (hash >> 13)) * 1274126177u;
-	float random = (hash & 65535u) / 65535.0f;
+	float random = (RETRO_Hash(x, z) & 65535u) / 65535.0f;
 	float density = 1.0f / (1.0f + distance2 / (falloff * falloff));
 	return random < density;
 }

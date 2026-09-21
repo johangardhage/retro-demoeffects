@@ -161,6 +161,7 @@ inline void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = 
 	for (int i = 0; i < model->vertices; i++) {
 		RETRO_ProjectVertex(&model->vertex[i], scale, cx, cy, eyedistance);
 	}
+	model->eye = eyedistance / scale;
 }
 
 //

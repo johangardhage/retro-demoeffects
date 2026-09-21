@@ -142,6 +142,7 @@
 #define RETRO_LILAC RETRO_Palette{ 176, 144, 255 }
 #define RETRO_SCORCHED RETRO_Palette{ 80, 24, 0 }
 #define RETRO_MARIGOLD RETRO_Palette{ 255, 192, 40 }
+#define RETRO_GRAPHITE RETRO_Palette{ 40, 40, 40 }
 
 // *******************************************************************
 // Private variables
@@ -173,10 +174,18 @@
 // *******************************************************************
 
 //
-// The angle of incidence a shade stands for. The last shade is face on (0);
-// the first is one step short of grazing, so theta lives on [0, π/2):
+// The angle of incidence a shade stands for. A renderer picks a shade as
+// floor(RETRO_ShadeFromLambert(N·L) * shades), so shade s is the one taken
+// for every theta in the step
 //
-//   theta = (shades − (shade + 1)) / shades * (π / 2)
+//   ((shades − (shade + 1)) / shades * (π / 2), (shades − shade) / shades * (π / 2)]
+//
+// and it is built for the middle of that step, not for either end of it:
+//
+//   theta = (shades − (shade + 0.5)) / shades * (π / 2)
+//
+// Built for the step's face-on end instead, every surface would come out up
+// to a whole shade brighter than its lighting, and half a shade on average.
 //
 // Shades are spaced evenly in the angle, not in cos(theta). Spacing them in
 // cos(theta) would look like the obvious choice, since a renderer finds a
@@ -189,7 +198,7 @@
 //
 inline float RETRO_IncidenceAngle(int shade, int shades)
 {
-	return ((float)(shades - (shade + 1)) / shades) * (M_PI / 2);
+	return ((shades - (shade + 0.5f)) / shades) * (M_PI / 2);
 }
 
 //
@@ -293,6 +302,56 @@ inline void RETRO_CreateMaterialPalette(RETRO_Palette face, float specularity, f
 // *******************************************************************
 // Public functions
 // *******************************************************************
+
+//
+// Encode an amount of light for display, by the sRGB transfer function of
+// IEC 61966-2-1. Lighting adds and multiplies amounts of light, so it has to
+// be worked out in linear values, where 0.5 is half the light of 1.0. A
+// palette entry is not linear: the display spends more of its steps on the
+// darks, and entry 128 of 255 gives only about a fifth of the light of 255.
+// Both sides are on [0, 1], and the input is clamped to it:
+//
+//   l ≤ 0.0031308:  s = 12.92 l
+//   otherwise:      s = 1.055 l^(1 / 2.4) − 0.055
+//
+// The straight segment near black keeps the slope finite at zero, and the
+// two pieces meet at the threshold. Overall the curve is close to l^(1 / 2.2)
+//
+inline float RETRO_LinearToSRGB(float linear)
+{
+	float l = CLAMP01(linear);
+	return l <= 0.0031308f ? 12.92f * l : 1.055f * pow(l, 1.0f / 2.4f) - 0.055f;
+}
+
+//
+// The inverse: the amount of light an encoded value stands for, such as a
+// component of a color picked on screen divided by its maximum. Both sides
+// are on [0, 1], and the input is clamped to it:
+//
+//   s ≤ 0.04045:  l = s / 12.92
+//   otherwise:    l = ((s + 0.055) / 1.055)^2.4
+//
+// 0.04045 is 12.92 · 0.0031308, the same threshold on the encoded side
+//
+inline float RETRO_SRGBToLinear(float srgb)
+{
+	float s = CLAMP01(srgb);
+	return s <= 0.04045f ? s / 12.92f : pow((s + 0.055f) / 1.055f, 2.4f);
+}
+
+//
+// A palette color from linear light, each component encoded by
+// RETRO_LinearToSRGB and rounded to colormax, so that a 6-bit palette can be
+// filled as readily as an 8-bit one
+//
+inline RETRO_Palette RETRO_LinearToPalette(vec3 color, int colormax = 255)
+{
+	return {
+		(unsigned char)(colormax * RETRO_LinearToSRGB(color.x) + 0.5f),
+		(unsigned char)(colormax * RETRO_LinearToSRGB(color.y) + 0.5f),
+		(unsigned char)(colormax * RETRO_LinearToSRGB(color.z) + 0.5f)
+	};
+}
 
 //
 // Fill [start, end) with a linear interpolation from one color toward another.

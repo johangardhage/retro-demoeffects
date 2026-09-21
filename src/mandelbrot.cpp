@@ -45,15 +45,15 @@ void DEMO_Render(double time, double deltatime)
 	double scale = 3.0 / (zoom * RETRO_WIDTH);
 
 	// The integral of PAN_SPEED / zoom
-	double moveX = CENTER_X - PAN_SPEED * (1.0 - 1.0 / zoom) / log(ZOOM_RATE);
-	double moveY = CENTER_Y;
+	double movex = CENTER_X - PAN_SPEED * (1.0 - 1.0 / zoom) / log(ZOOM_RATE);
+	double movey = CENTER_Y;
 
 	// Map pixel
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		double pi = scale * (y + 0.5 - RETRO_HEIGHT / 2.0) + moveY;
+		double pi = scale * (y + 0.5 - RETRO_HEIGHT / 2.0) + movey;
 
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			double pr = scale * (x + 0.5 - RETRO_WIDTH / 2.0) + moveX;
+			double pr = scale * (x + 0.5 - RETRO_WIDTH / 2.0) + movex;
 
 			// Inside the cardioid or the period-2 bulb the orbit is bounded
 			double cardioidx = pr - 0.25;
@@ -64,22 +64,22 @@ void DEMO_Render(double time, double deltatime)
 				continue;
 			}
 
-			double newRe = 0;
-			double newIm = 0;
+			double newre = 0;
+			double newim = 0;
 			double lengthsquared = 0;
 
 			int iterations = 0;
 
 			// Iterate
 			for (int i = 0; i < MAX_ITERATIONS; i++) {
-				double oldRe = newRe;
-				double oldIm = newIm;
+				double oldre = newre;
+				double oldim = newim;
 
 				// (a+bi)² + p = (a² - b² + Re p) + (2ab + Im p)i
-				newRe = oldRe * oldRe - oldIm * oldIm + pr;
-				newIm = 2 * oldRe * oldIm + pi;
+				newre = oldre * oldre - oldim * oldim + pr;
+				newim = 2 * oldre * oldim + pi;
 
-				lengthsquared = newRe * newRe + newIm * newIm;
+				lengthsquared = newre * newre + newim * newim;
 
 				// Outside the bailout circle
 				if (lengthsquared > BAILOUT) {

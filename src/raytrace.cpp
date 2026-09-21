@@ -155,7 +155,7 @@ static unsigned char TraceScene(vec3 origin, vec3 dir, vec3 light)
 	if (IntersectSphere(origin, dir, t)) {
 		vec3 p = origin + dir * t;
 		vec3 normal = normalize(p - SphereCenter);
-		vec3 reflected = dir - normal * (2.0f * dot(dir, normal));
+		vec3 reflected = reflect(dir, normal);
 
 		EnvironmentHit env = TraceEnvironment(p + normal * 0.5f, reflected, light);
 		float brightness = CLAMP01(env.brightness * MIRROR_REFLECTIVITY);

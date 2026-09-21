@@ -61,22 +61,22 @@ void DEMO_Render(double time, double deltatime)
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			double pr0 = scale * (x + 0.5 - RETRO_WIDTH / 2.0) + CENTER_X;
 
-			double newRe = pr0;
-			double newIm = pi0;
-			double lengthsquared = newRe * newRe + newIm * newIm;
+			double newre = pr0;
+			double newim = pi0;
+			double lengthsquared = newre * newre + newim * newim;
 
 			int iterations = 0;
 
 			// Iterate
 			for (int i = 0; i < MAX_ITERATIONS; i++) {
-				double oldRe = newRe;
-				double oldIm = newIm;
+				double oldre = newre;
+				double oldim = newim;
 
 				// (a+bi)² + c = (a² - b² + Re c) + (2ab + Im c)i
-				newRe = oldRe * oldRe - oldIm * oldIm + CONST_RE;
-				newIm = 2 * oldRe * oldIm + CONST_IM;
+				newre = oldre * oldre - oldim * oldim + CONST_RE;
+				newim = 2 * oldre * oldim + CONST_IM;
 
-				lengthsquared = newRe * newRe + newIm * newIm;
+				lengthsquared = newre * newre + newim * newim;
 
 				// Outside the bailout circle
 				if (lengthsquared > BAILOUT) {

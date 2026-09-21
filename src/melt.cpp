@@ -65,10 +65,10 @@ void DEMO_Render(double time, double deltatime)
 	} else {
 		// The animation has two scanline steps for each image row. Once the
 		// moving boundary reaches a row, that row repeats below it.
-		int freezeRow = MIN((int)MeltPosition / 2, RETRO_HEIGHT - 1);
+		int freezerow = MIN((int)MeltPosition / 2, RETRO_HEIGHT - 1);
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
-			int sourceRow = MIN(y, freezeRow);
-			memcpy(buffer + y * RETRO_WIDTH, image + sourceRow * RETRO_WIDTH, RETRO_WIDTH);
+			int sourcerow = MIN(y, freezerow);
+			memcpy(buffer + y * RETRO_WIDTH, image + sourcerow * RETRO_WIDTH, RETRO_WIDTH);
 		}
 	}
 }

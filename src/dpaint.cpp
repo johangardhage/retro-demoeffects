@@ -57,7 +57,10 @@ static const int BrushColumnEdges[2][5] = {
 };
 
 enum BrushKind { BRUSH_ROUND, BRUSH_SQUARE, BRUSH_SPRAY };
-static const struct { int left, top, right, bottom; } SprayBounds[2] = {
+struct SprayRect {
+	int left, top, right, bottom;
+};
+static const SprayRect SprayBounds[2] = {
 	{ 594, 40, 615, 51 }, { 618, 38, 639, 51 }
 };
 
@@ -158,7 +161,7 @@ static void PaintBrush(int cx, int cy, BrushKind kind, int size, unsigned char c
 {
 	if (kind == BRUSH_SPRAY) {
 		// Stamp the original icon mask, before any transient selection inversion.
-		const auto &bounds = SprayBounds[size];
+		const SprayRect &bounds = SprayBounds[size];
 		int centerx = (bounds.left + bounds.right) / 2;
 		int centery = (bounds.top + bounds.bottom) / 2;
 		for (int sy = bounds.top; sy <= bounds.bottom; sy++) {

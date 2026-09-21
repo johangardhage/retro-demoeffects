@@ -138,6 +138,19 @@ inline int WRAP(unsigned long n, int h) { return WRAP((int)n, h); }
 #define WRAPWIDTH(n) WRAP((n), RETRO_WIDTH)
 #define WRAPHEIGHT(n) WRAP((n), RETRO_HEIGHT)
 
+// Integer hash of a grid position. The same (x, y) always gives the same bits
+// and neighbouring positions give unrelated ones, so a pattern built from it
+// repeats exactly and stays anchored to its grid. The odd multipliers spread
+// each coordinate over the word; the xor-shifts fold the well-mixed high bits
+// back into the low ones a caller masks off. Unsigned arithmetic keeps the
+// overflow defined.
+inline unsigned int RETRO_Hash(int x, int y)
+{
+	unsigned int hash = (unsigned int)x * 374761393u + (unsigned int)y * 668265263u;
+	hash = (hash ^ (hash >> 13)) * 1274126177u;
+	return hash ^ (hash >> 16);
+}
+
 // For building an lcm from. Both signs are folded so a non-positive length
 // cannot make a later width / GCD period blow up.
 inline int GCD(int a, int b) { a = abs(a); b = abs(b); return b == 0 ? a : GCD(b, a % b); }
@@ -158,18 +171,19 @@ struct RETRO_Image {
 // *******************************************************************
 
 enum { RETRO_MODE_FULLSCREEN, RETRO_MODE_FULLWINDOW, RETRO_MODE_WINDOW };
+enum { RETRO_SCALING_PIXELART, RETRO_SCALING_LINEAR, RETRO_SCALING_NEAREST };
 
 inline struct {
 	int mode;
 	char *basename;
 	bool stretch;
 	bool vsync;
-	bool linear;
+	int scaling;
 	bool showcursor;
 	bool showfps;
 	int fpscap;
 	const char *dumpfile = NULL;	// --dumpfile writes this PPM after dumptime, then quits
-	double dumptime = 0;			// demo seconds to wait before that write
+	double dumptime = 0;			// demo time of the frame that write shows
 	bool quit;
 	SDL_Window *window = NULL;
 	SDL_Renderer *renderer = NULL;
@@ -184,7 +198,7 @@ inline struct {
 	int yoffset[RETRO_HEIGHT];
 	double accumulator = 0;
 	double time = 0;
-} RETRO = { .mode = RETRO_MODE_FULLSCREEN, .stretch = false, .vsync = true, .showfps = true };
+} RETRO = { .mode = RETRO_MODE_FULLSCREEN, .stretch = false, .vsync = true, .scaling = RETRO_SCALING_PIXELART, .showfps = true };
 
 // *******************************************************************
 // Public functions
@@ -488,10 +502,12 @@ inline void RETRO_DumpFrame(const char *filename)
 inline void RETRO_Initialize(void)
 {
 	// --dumpfile never shows a window; render on the dummy driver instead of the real display.
-	// Fullscreen mode-setting fails on the dummy driver, so fall back to windowed too.
+	// Fullscreen mode-setting fails on the dummy driver, so fall back to windowed too. Its
+	// clock is stepped rather than read, so waiting for vsync would only make the dump slower.
 	if (RETRO.dumpfile) {
 		SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy");
 		RETRO.mode = RETRO_MODE_WINDOW;
+		RETRO.vsync = false;
 	}
 
 	// Initialize SDL
@@ -561,7 +577,15 @@ inline void RETRO_Initialize(void)
 		RETRO_RageQuit("SDL_CreateTexture failed: %s\n", SDL_GetError());
 	}
 	SDL_SetTextureBlendMode(RETRO.renderbuffer, SDL_BLENDMODE_NONE);
-	SDL_SetTextureScaleMode(RETRO.renderbuffer, RETRO.linear ? SDL_SCALEMODE_LINEAR : SDL_SCALEMODE_NEAREST);
+	// Letterboxing rarely scales by a whole number, and nearest sampling then
+	// draws some source pixels a screen pixel wider than others, so small
+	// moving detail pulses in size. Pixel-art sampling keeps nearest inside
+	// each source pixel and blends only across its border, so every source
+	// pixel covers the same area. The GPU renderers do this in a shader; the
+	// software renderer blits it as nearest, so it is never worse than that.
+	SDL_SetTextureScaleMode(RETRO.renderbuffer,
+		RETRO.scaling == RETRO_SCALING_LINEAR ? SDL_SCALEMODE_LINEAR :
+		RETRO.scaling == RETRO_SCALING_NEAREST ? SDL_SCALEMODE_NEAREST : SDL_SCALEMODE_PIXELART);
 
 	// Create framebuffer
 	RETRO.framebuffersize = RETRO_WIDTH * RETRO_HEIGHT;
@@ -583,8 +607,9 @@ inline void RETRO_Initialize(void)
 		RETRO.yoffset[y] = y * RETRO_WIDTH;
 	}
 
-	// Initialize random number generator
-	srand(time(NULL));
+	// Initialize random number generator. --dumpfile uses a fixed seed, so the same
+	// dumptime always writes the same picture.
+	srand(RETRO.dumpfile ? 1 : time(NULL));
 
 	if (RETRO_Initialize_3D) RETRO_Initialize_3D();
 }
@@ -613,8 +638,12 @@ inline void RETRO_SetVSync(bool state = true)
 	RETRO.vsync = state;
 }
 
+// --dumpfile steps the clock by a fixed RETRO_SIMULATION_STEP a frame instead of reading it,
+// so the frame it writes does not depend on how fast the machine renders.
 inline double RETRO_DeltaTime(void)
 {
+	if (RETRO.dumpfile) return RETRO_SIMULATION_STEP;
+
 	static unsigned long int now = SDL_GetPerformanceCounter();
 	static unsigned long int old = 0;
 
@@ -728,10 +757,10 @@ inline void RETRO_Mainloop(void)
 		}
 		unsigned long int stop = SDL_GetTicks();
 
-		// --dumpfile writes once the displayed clock has reached dumptime, then
-		// quits so Deinitialize still runs. The write is after the frame, so
-		// the file is the picture Flip just showed.
-		if (RETRO.dumpfile && RETRO.time >= RETRO.dumptime) {
+		// --dumpfile writes the frame nearest dumptime, then quits so Deinitialize
+		// still runs. The write is after the frame, so the file is the picture
+		// Flip just showed.
+		if (RETRO.dumpfile && RETRO.time + RETRO_SIMULATION_STEP / 2 >= RETRO.dumptime) {
 			RETRO_DumpFrame(RETRO.dumpfile);
 			RETRO_Quit();
 		}

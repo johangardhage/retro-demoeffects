@@ -42,6 +42,25 @@ struct vec4 {
 };
 
 //
+// Scalars
+//
+
+// GLSL's smoothstep: 0 at edge0, 1 at edge1 and the cubic 3t² - 2t³ between,
+// whose slope is zero at both ends, so whatever it eases starts and stops
+// without a jolt. x beyond either edge clamps to 0 or 1.
+inline float smoothstep(float edge0, float edge1, float x)
+{
+	float t = CLAMP01((x - edge0) / (edge1 - edge0));
+	return t * t * (3.0f - 2.0f * t);
+}
+
+inline double smoothstep(double edge0, double edge1, double x)
+{
+	double t = CLAMP01((x - edge0) / (edge1 - edge0));
+	return t * t * (3.0 - 2.0 * t);
+}
+
+//
 // vec2
 //
 
@@ -136,6 +155,11 @@ inline vec3 normalize(vec3 v)
 }
 
 inline vec3 lerp(vec3 a, vec3 b, float t) { return a + (b - a) * t; }
+
+// GLSL's reflect: the incident direction I mirrored about the surface whose
+// normal is N. N must be unit length; I need not be, and the result keeps
+// its length. I points toward the surface, the result away from it.
+inline vec3 reflect(vec3 I, vec3 N) { return I - N * (2.0f * dot(N, I)); }
 
 inline vec3 min(vec3 a, vec3 b) { return { MIN(a.x, b.x), MIN(a.y, b.y), MIN(a.z, b.z) }; }
 inline vec3 max(vec3 a, vec3 b) { return { MAX(a.x, b.x), MAX(a.y, b.y), MAX(a.z, b.z) }; }

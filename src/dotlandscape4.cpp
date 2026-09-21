@@ -89,10 +89,10 @@ static void OrderDotsByDepth(void)
 // handles ridges which happen to project between two screen columns.
 static bool TerrainOccludes(const ProjectedDot &dot)
 {
-	const float sampleStep = 2.0f;
+	const float samplestep = 2.0f;
 	float height = RETRO_TerrainHeight(dot.worldx, dot.worldz);
-	for (float distance = RETRO_TerrainView.nearplane + sampleStep;
-		distance < dot.depth - sampleStep; distance += sampleStep) {
+	for (float distance = RETRO_TerrainView.nearplane + samplestep;
+		distance < dot.depth - samplestep; distance += samplestep) {
 		float t = distance / dot.depth;
 		float x = RETRO_Camera.x + (dot.worldx - RETRO_Camera.x) * t;
 		float z = RETRO_Camera.z + (dot.worldz - RETRO_Camera.z) * t;

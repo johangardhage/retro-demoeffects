@@ -30,8 +30,7 @@
 // what is really one point on the curve.
 static vec2 BoardOffset(double board)
 {
-	double t = CLAMP01(board / 10.0);
-	double envelope = t * t * (3.0 - 2.0 * t);
+	double envelope = smoothstep(0.0, 10.0, board);
 	vec2 offset = {
 		(float)(envelope * (22.0 * sin(board * 0.252) + 9.0 * sin(board * 0.583 + 1.0))),
 		(float)(envelope * (16.0 * sin(board * 0.209 + 0.5) + 7.0 * sin(board * 0.482)))
@@ -85,10 +84,10 @@ void DEMO_Render(double time, double deltatime)
 	// Start with a fine grid, then settle into a continuous flight. Wrapping
 	// the travel distance replaces a board only once it is behind the eye.
 	double travel = 2.4 * time;
-	double cameraZ = travel - 9.0 * exp(-time * 0.55);
-	double nearest = CHECKER_SPACING - cameraZ;
+	double cameraz = travel - 9.0 * exp(-time * 0.55);
+	double nearest = CHECKER_SPACING - cameraz;
 	if (nearest < 0.0) nearest += CHECKER_SPACING * ceil(-nearest / CHECKER_SPACING);
-	vec2 cameraPos = Path(cameraZ);
+	vec2 camerapos = Path(cameraz);
 	unsigned char *dest = RETRO_FrameBuffer();
 
 	const RETRO_Palette colors[] = {
@@ -100,7 +99,7 @@ void DEMO_Render(double time, double deltatime)
 	int first = (int)colorphase;
 	int next = (first + 1) % 8;
 	double blend = colorphase - first;
-	blend = blend * blend * (3.0 - 2.0 * blend);
+	blend = smoothstep(0.0, 1.0, blend);
 	for (int layer = 0; layer < CHECKER_LAYERS; ++layer) {
 		double depth = layer * CHECKER_SPACING + fmin(nearest, CHECKER_SPACING);
 		double shade = exp(-depth * 0.16);
@@ -117,7 +116,7 @@ void DEMO_Render(double time, double deltatime)
 	for (int layer = CHECKER_LAYERS - 1; layer >= 0; --layer) {
 		double z = 0.001 + nearest + layer * CHECKER_SPACING;
 		double inversecell = z / CHECKER_FOCAL;
-		vec2 offset = Path(cameraZ + z) - cameraPos;
+		vec2 offset = Path(cameraz + z) - camerapos;
 		bool columns[RETRO_WIDTH];
 		for (int x = 0; x < RETRO_WIDTH; ++x) {
 			columns[x] = ((int)floor((x + 0.5 - RETRO_WIDTH * 0.5 - offset.x) * inversecell + 0.5) & 1) != 0;

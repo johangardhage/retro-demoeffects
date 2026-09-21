@@ -146,7 +146,7 @@ static unsigned char TraceScene(vec3 origin, vec3 dir, vec3 light)
 		}
 		vec3 p = origin + dir * nearest;
 		vec3 normal = normalize(p - Balls[hit].center);
-		dir = normalize(dir - normal * (2 * dot(dir, normal)));
+		dir = normalize(reflect(dir, normal));
 		origin = p + normal * 0.01f;
 		throughput *= MIRROR_REFLECTIVITY;
 	}

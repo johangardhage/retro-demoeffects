@@ -20,6 +20,17 @@ struct PolygonPoint {
 	vec2 uv;				// Texture UV coordinates
 	float q;				// Reciprocal projection depth
 	vec3 n;					// Normal, in view space; every drawer renormalizes, so any scale will do
+	vec3 p;					// Surface point, in view space; only the shader drawer reads it
+};
+
+// One pixel of a surface, as a shader is handed it
+struct Fragment {
+	int x, y;				// Screen pixel
+	float q;				// Reciprocal projection depth, as the depth buffer holds it
+	vec3 position;			// Surface point, in view space
+	vec3 normal;			// Unit normal, in view space, turned to the side the viewer sees
+	vec3 view;				// From the eye to position; its length is the eye's distance
+	vec2 uv;				// Texture coordinates in texels, as the model holds them, or zero without any
 };
 
 // The surface directions +u and +v run in, in view space. A bump map is a
@@ -102,18 +113,25 @@ inline bool RETRO_DepthTest(int offset, float q)
 // sweeps the whole of the map's own disk; less stops short of its rim.
 //
 // A photographic reflection map is Blinn/Newell sphere-mapping of
-// R = 2(N·V)N - V with V = (0, 0, -1). For a unit front face (Nz < 0) that
-// identity simplifies to a scale of Nxy, with no second sqrt:
+// R = 2(N·V)N - V with V = (0, 0, -1). The map is addressed by the half-way
+// vector of R and V, and R + V = 2(N·V)N, so that is sign(N·V) N. For a unit
+// front face (Nz < 0) it is N itself, and the lookup is a scale of Nxy with
+// no second sqrt:
 //
 //   u = W (1/2 + Nx / 2)
 //   v = H (1/2 + Ny / 2)
 //
-// Nz > 0 is past the silhouette. The same scale of Nxy is used there too.
-// Flipping the sign of Nxy would jump to the opposite side of the disk as
-// Nz crosses zero. Scaling Nxy out to the unit circle would pin every such
-// normal on the horizon, so an upward one would read pale sky instead of
-// the zenith and a downward one would read grey instead of the checker.
-// The radius is unused on this path: the sphere map covers the image.
+// Past the silhouette (Nz > 0) the half-way vector is -N, and the formula
+// flips Nxy. Every point of the rim is the one ray R = (0, 0, 1), so that
+// flip is continuous in the room but not in the map: the rim texels of a
+// baked disk differ side to side, and a normal crossing Nz = 0 would jump to
+// the opposite one. The same scale of Nxy is used there instead, folding N
+// onto its mirror (Nx, Ny, -Nz), so the lookup turns back inward from the rim
+// and N = (0, 0, 1) reads the middle. Scaling Nxy out to the unit circle
+// would pin every such normal on the horizon, so an upward one would read
+// pale sky instead of the zenith and a downward one would read grey instead
+// of the checker. The radius is unused on this path: the sphere map covers
+// the image.
 //
 inline void RETRO_GetEnvMapCoordinates(vec3 n, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, float &u, float &v)
 {
@@ -142,26 +160,39 @@ inline void RETRO_GetEnvMapCoordinates(vec3 n, bool lightingmap, int envmapwidth
 }
 
 //
-// The same photographic lookup, addressed by the reflected ray itself
+// The normal that reflects the view axis I0 = (0, 0, 1) to r, the half-way
+// vector
 //
-// The map above reflects I0 = (0, 0, 1), the view axis, about N. The normal
-// that sends I0 to a given R is the half-way vector
+//   N' = (r/|r| - I0) / |r/|r| - I0|
 //
-//   N' = (R/|R| - I0) / |R/|R| - I0|
+// N' is always front-facing, N'z ≤ 0. r = I0 has none: it is the one ray the
+// whole rim of the disk shares, a ray reflected straight on past the model,
+// and fallback stands in for it.
 //
-// and N' is always front-facing, N'z ≤ 0, so it goes straight into the
-// front-face scale of Nxy. r need not be unit: a reflection interpolated
-// across a flat face is linear in screen space only while it is left
-// unnormalized. R = I0 is the one ray the whole rim of the disk shares, a
-// ray reflected straight on past the model; the bottom of the rim stands in.
-//
-inline void RETRO_GetReflectionMapCoordinates(vec3 r, int envmapwidth, int envmapheight, float &u, float &v)
+inline vec3 RETRO_ReflectionHalfway(vec3 r, vec3 fallback)
 {
 	const float epsilon = 1.0e-12f;
 
 	vec3 h = normalize(r) - vec3{ 0.0f, 0.0f, 1.0f };
 	float lengthsquared = dot(h, h);
-	h = lengthsquared > epsilon ? h * (1.0f / sqrt(lengthsquared)) : vec3{ 0.0f, 1.0f, 0.0f };
+	return lengthsquared > epsilon ? h * (1.0f / sqrt(lengthsquared)) : fallback;
+}
+
+//
+// The same photographic lookup, addressed by the reflected ray itself
+//
+// The map above reflects I0 about N, so the half-way vector of R goes
+// straight into the front-face scale of Nxy. For R reflected from I0 the two
+// agree only on a front face: past the silhouette R's half-way vector is -N,
+// so this path takes the Blinn/Newell flip where the one above folds. R does
+// not say which side of the disk N was on, so a ray cannot be folded. r need
+// not be unit: a reflection interpolated across a flat face is linear in
+// screen space only while it is left unnormalized. For R = I0 the bottom of
+// the rim stands in.
+//
+inline void RETRO_GetReflectionMapCoordinates(vec3 r, int envmapwidth, int envmapheight, float &u, float &v)
+{
+	vec3 h = RETRO_ReflectionHalfway(r, vec3{ 0.0f, 1.0f, 0.0f });
 
 	u = envmapwidth * (0.5f + 0.5f * h.x);
 	v = envmapheight * (0.5f + 0.5f * h.y);
@@ -930,6 +961,68 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 					RETRO.framebuffer[offset] = envmap[envmapv * envmapwidth + envmapu];
 				}
 				n += dndx;
+				q += dqdx;
+			}
+		}
+	}
+}
+
+//
+// Shader polygon
+// Every pixel is described as a Fragment and handed to shader, and what it
+// returns is written. point.p, point.n and point.uv arrive times q, so all
+// three are perspective-correct: p and uv are divided by q at each pixel,
+// and n is only normalized, which dividing it first would not change. A
+// constant n is a flat face; an interpolated one bends smoothly across it.
+//
+inline void RETRO_DrawShaderPolygon(PolygonPoint *point, int points, vec3 eye, unsigned char (*shader)(const Fragment &fragment), ClipRect clip = {})
+{
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
+		TriangleSpan span[RETRO_HEIGHT];
+		int ystart, yend;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
+		if (determinant == 0.0f) continue;
+
+		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec3 dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
+		vec3 dpdx = ((p1->p - p0->p) * (p2->pos.y - p0->pos.y) - (p2->p - p0->p) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec3 dpdy = ((p1->pos.x - p0->pos.x) * (p2->p - p0->p) - (p2->pos.x - p0->pos.x) * (p1->p - p0->p)) / determinant;
+		vec2 duvdx = ((p1->uv - p0->uv) * (p2->pos.y - p0->pos.y) - (p2->uv - p0->uv) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (p2->uv - p0->uv) - (p2->pos.x - p0->pos.x) * (p1->uv - p0->uv)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
+
+		for (int y = ystart; y < yend; y++) {
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
+			float px = xstart + 0.5f;
+			float py = y + 0.5f;
+			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
+			vec3 p = p0->p + dpdx * (px - p0->pos.x) + dpdy * (py - p0->pos.y);
+			vec2 uv = p0->uv + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
+
+			for (int x = xstart; x < xend; x++) {
+				int offset = y * RETRO_WIDTH + x;
+				if (RETRO_DepthTest(offset, q)) {
+					float depth = 1.0f / q;
+					Fragment fragment;
+					fragment.x = x;
+					fragment.y = y;
+					fragment.q = q;
+					fragment.position = p * depth;
+					fragment.normal = normalize(n);
+					fragment.view = fragment.position - eye;
+					fragment.uv = uv * depth;
+					RETRO.framebuffer[offset] = shader(fragment);
+				}
+				n += dndx;
+				p += dpdx;
+				uv += duvdx;
 				q += dqdx;
 			}
 		}

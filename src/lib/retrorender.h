@@ -24,7 +24,8 @@ enum RETRO_POLY_TYPE {
 	RETRO_POLY_PHONG,
 	RETRO_POLY_MATCAP,		// a canned lighting response, looked up by screen-facing normal; see RETRO_POLY_ENVIRONMENT for the true reflection this is not
 	RETRO_POLY_TEXTURE,
-	RETRO_POLY_ENVIRONMENT	// a true Blinn/Newell reflection map, sampled by the reflected view ray
+	RETRO_POLY_ENVIRONMENT,	// a true Blinn/Newell reflection map, sampled by the reflected view ray
+	RETRO_POLY_SHADER		// each pixel handed to model->shader as a Fragment; face normals with RETRO_SHADE_FLAT
 };
 
 enum RETRO_POLY_SHADE {
@@ -447,7 +448,8 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 //
 // which is what each vertex passes, for RETRO_GetReflectionMapCoordinates to
 // look up, at a second square root a pixel. On a curved surface that differs
-// little from reflecting I0, which is why it is not the default. On a flat
+// little from reflecting I0, which is why it is not the default; past the
+// silhouette the two part ways, see RETRO_GetReflectionMapCoordinates. On a flat
 // face it is the whole picture: every corner shares the one N, only I
 // differs, and the face shows the slice of the room a plane mirror there
 // would. R is linear in I, and I left unnormalized, times q, is linear in
@@ -465,9 +467,7 @@ inline vec3 RETRO_ReflectionVector(vec3 n, vec3 rpos, float eye)
 
 inline vec3 RETRO_ReflectionNormal(vec3 n, vec3 rpos, float eye)
 {
-	vec3 h = normalize(RETRO_ReflectionVector(n, rpos, eye)) - vec3{ 0.0f, 0.0f, 1.0f };
-	float length = sqrt(dot(h, h));
-	return length > 1.0e-6f ? h * (1.0f / length) : n;
+	return RETRO_ReflectionHalfway(RETRO_ReflectionVector(n, rpos, eye), n);
 }
 
 inline void RETRO_RenderEnvironmentModel(Model3D *model, ClipRect clip = {})
@@ -501,6 +501,36 @@ inline void RETRO_RenderEnvironmentModel(Model3D *model, ClipRect clip = {})
 		} else {
 			RETRO_DrawEnvMapPolygon(point, face->vertices, model->envmap, false, model->envmapperspective, model->envmapwidth, model->envmapheight, model->envmapradius, clip);
 		}
+	}
+}
+
+// Per-pixel shading by the model's own function: each pixel is described as
+// a Fragment, and model->shader returns its colour. That reaches what no
+// fixed drawer does, tracing a reflected ray into a scene for one, at the
+// cost of a call a pixel. flat gives every pixel of a face the face's own
+// normal; otherwise the vertex normals are interpolated across it. The eye
+// is at (0, 0, -eye).
+inline void RETRO_RenderShaderModel(Model3D *model, bool flat, ClipRect clip = {})
+{
+	if (model->shader == NULL) return;
+
+	RETRO_SortFaces(model->twosided, model);
+	vec3 eye = { 0.0f, 0.0f, -model->eye };
+
+	for (int i = 0; i < model->drawfaces; i++) {
+		Face *face = &model->face[model->drawface[i]];
+		float side = RETRO_FaceSide(face);
+		PolygonPoint point[RETRO_MAX_FACEVERTICES];
+		for (int j = 0; j < face->vertices; j++) {
+			Vertex *vertex = &model->vertex[face->vertex[j]];
+			vec3 normal = flat ? face->facenormal.rdir : model->normal[face->vertexnormal[j]].rdir;
+			point[j].pos = vertex->spos;
+			point[j].q = vertex->q;
+			point[j].n = normal * (side * vertex->q);
+			point[j].p = vertex->rpos * vertex->q;
+			point[j].uv = model->uvs > 0 ? model->uv[face->uv[j]] * vertex->q : vec2{ 0.0f, 0.0f };
+		}
+		RETRO_DrawShaderPolygon(point, face->vertices, eye, model->shader, clip);
 	}
 }
 
@@ -586,6 +616,9 @@ inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shade
 		break;
 	case RETRO_POLY_ENVIRONMENT:
 		RETRO_RenderEnvironmentModel(model, clip);
+		break;
+	case RETRO_POLY_SHADER:
+		RETRO_RenderShaderModel(model, shadertype == RETRO_SHADE_FLAT, clip);
 		break;
 	}
 }

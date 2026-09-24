@@ -9,7 +9,7 @@
 // A normal facing the viewer lands in the middle of the map; a grazing one
 // reaches I = W/2 from it. That is a lighting map baked once and looked up by
 // screen-facing normal (RETRO_POLY_MATCAP), not a Blinn/Newell reflection of
-// an actual surrounding (RETRO_POLY_ENVIRONMENT, see environcube.cpp). The
+// an actual surrounding (RETRO_POLY_ENVIRONMENT, see maskdemo.cpp). The
 // highlight sits still while the cube turns under it. Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>

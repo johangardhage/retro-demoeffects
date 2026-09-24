@@ -11,6 +11,8 @@
 #include "retromatrix.h"
 #include "retrovector.h"
 
+struct Fragment; // one pixel of a surface, for Model3D::shader; see retropoly.h
+
 // The grazing height G is the height difference that tilts a normal all the
 // way to grazing. The gradient across two texels, divided by the surface they
 // span and by G, is the tilt, so a larger G reads shallower. A metal env map
@@ -155,6 +157,8 @@ struct Model3D {
 	int bumpmapwidth = RETRO_TEXMAP_SIZE;		// Bump texture width, which need not match the texture's
 	int bumpmapheight = RETRO_TEXMAP_SIZE;		// Bump texture height
 	int bumpgrazing = RETRO_BUMP_GRAZING;		// Height difference that tilts a normal to grazing
+	unsigned char (*shader)(const Fragment &fragment) = NULL;	// RETRO_POLY_SHADER's per-pixel function: the colour of one
+												// Fragment of the surface
 	float eye;									// Model units from the rotated origin back to the eye,
 												// along -z, as RETRO_ProjectModel last placed it. What
 												// envmapperspective aims each view ray from; zero, a

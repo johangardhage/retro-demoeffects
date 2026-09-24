@@ -12,7 +12,7 @@
 #             are the vertex positions themselves. The UVs run 0 to 1, u around
 #             the equator and v pole to pole, with the seam column duplicated so
 #             the wrap does not fold the map back over itself.
-# Used by:    boingball and shadersphere.
+# Used by:    boingball, shadersphere and environmap.
 #
 o spherequads
 v 0.000000 -1.000000 0.000000

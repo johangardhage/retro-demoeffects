@@ -10,29 +10,44 @@
 #include "retropalette.h"
 
 // *******************************************************************
-// Private variables
+// Public variables
 // *******************************************************************
 
 // Lighting every texture color at every shade gives the shaded colors, so a
-// texture mapper can look up shadetable[texel * RETRO_SHADES + shade]
-#define RETRO_TEXTURE_COLORS 32
-#define RETRO_SHADES 128
-#define RETRO_MAX_SHADING_COLORS (RETRO_TEXTURE_COLORS * RETRO_SHADES)
+// texture mapper can look up shadetable[texel * RETRO_SHADE_TABLE_SHADES + shade]
+#define RETRO_SHADE_TABLE_COLORS 32
+#define RETRO_SHADE_TABLE_SHADES 128
+#define RETRO_SHADE_TABLE_SIZE (RETRO_SHADE_TABLE_COLORS * RETRO_SHADE_TABLE_SHADES)
 
-// An optimal palette is found by halving a 6-bit color cube once per level, which
+// *******************************************************************
+// Private variables
+// *******************************************************************
+
+// A palette is fitted by halving a 6-bit color cube once per level, which
 // leaves one cube, and one palette entry, per leaf
 #define RETRO_CUBE_SIZE 64
 #define RETRO_CUBE_LEVELS 8
 static_assert((1 << RETRO_CUBE_LEVELS) == RETRO_COLORS, "The color cube must have one leaf per palette entry");
 
-enum { RETRO_COLOR_RED, RETRO_COLOR_GREEN, RETRO_COLOR_BLUE };
+enum { RETRO_COMPONENT_RED, RETRO_COMPONENT_GREEN, RETRO_COMPONENT_BLUE };
 
-inline struct {
-	RETRO_Palette shadingramps[RETRO_MAX_SHADING_COLORS];
-	RETRO_Palette palette[RETRO_COLORS];
-	int shadingcolorcount;
-	int palettecolors;
-} RETRO_Color;
+//
+// Every texture color lit at every shade, ramp after ramp, with 6-bit
+// components
+//
+struct RETRO_ShadingRamps {
+	RETRO_Palette colors[RETRO_SHADE_TABLE_SIZE];
+	int count;
+};
+
+//
+// The half open box [min, max) of colors, so a color on the min face is inside
+// it and a color on the max face is not
+//
+struct RETRO_ColorCube {
+	RETRO_Palette min;
+	RETRO_Palette max;
+};
 
 // *******************************************************************
 // Private functions
@@ -44,20 +59,19 @@ inline struct {
 //
 inline unsigned char &RETRO_ColorComponent(RETRO_Palette &color, int axis)
 {
-	if (axis == RETRO_COLOR_RED) return color.r;
-	if (axis == RETRO_COLOR_GREEN) return color.g;
+	if (axis == RETRO_COMPONENT_RED) return color.r;
+	if (axis == RETRO_COMPONENT_GREEN) return color.g;
 	return color.b;
 }
 
 //
-// Light every color of a texture palette across every shade, giving the shaded
-// colors that an optimal palette is then fitted to. The texture palette is
-// taken to be 6-bit, as a palette read from a PCX written by a VGA demo is
+// Light every color of a texture palette across every shade. The texture
+// palette is taken to be 6-bit, as a palette read from a PCX written by a VGA
+// demo is, and only so many texture colors fit in a shade table
 //
-inline void RETRO_CreateShadingRamps(const RETRO_Palette *texturepalette, int texturecolors, float specularity, float falloff)
+inline void RETRO_CreateShadingRamps(const RETRO_Palette *texturepalette, int texturecolors, float specularity, float falloff, RETRO_ShadingRamps *ramps)
 {
-	// Only so many texture colors fit in the shade table
-	texturecolors = MIN(texturecolors, RETRO_TEXTURE_COLORS);
+	texturecolors = MIN(texturecolors, RETRO_SHADE_TABLE_COLORS);
 
 	for (int i = 0; i < texturecolors; i++) {
 		RETRO_Palette texcolor = texturepalette[i];
@@ -66,254 +80,189 @@ inline void RETRO_CreateShadingRamps(const RETRO_Palette *texturepalette, int te
 		texcolor.g = CLAMP64(texcolor.g);
 		texcolor.b = CLAMP64(texcolor.b);
 
-		// The ramps are quantised into a RETRO_CUBE_SIZE cube by the median cut,
-		// and RETRO_SplitColorCube indexes a histogram of that size with a raw
-		// component, so a component must never reach RETRO_CUBE_SIZE
-		RETRO_CreatePhongRamp(&RETRO_Color.shadingramps[i * RETRO_SHADES], RETRO_SHADES, texcolor, specularity, falloff, RETRO_CUBE_SIZE - 1);
+		// The median cut counts the shaded colors in a histogram of RETRO_CUBE_SIZE
+		// bins, indexed by a raw component, so a component must never reach
+		// RETRO_CUBE_SIZE
+		RETRO_CreatePhongRamp(&ramps->colors[i * RETRO_SHADE_TABLE_SHADES], RETRO_SHADE_TABLE_SHADES, texcolor, specularity, falloff, RETRO_CUBE_SIZE - 1);
 	}
 
-	RETRO_Color.shadingcolorcount = texturecolors * RETRO_SHADES;
+	ramps->count = texturecolors * RETRO_SHADE_TABLE_SHADES;
+}
+
+inline bool RETRO_InsideColorCube(RETRO_Palette color, const RETRO_ColorCube &cube)
+{
+	return color.r >= cube.min.r && color.r < cube.max.r &&
+		color.g >= cube.min.g && color.g < cube.max.g &&
+		color.b >= cube.min.b && color.b < cube.max.b;
 }
 
 //
-// A color cube is the half open box [min, max), so a color on the min face is
-// inside it and a color on the max face is not
+// The tightest cube that still holds every shaded color inside the given one.
+// A cube with no colors inside comes back inside out, min above max
 //
-inline bool RETRO_InsideColorCube(RETRO_Palette color, RETRO_Palette min, RETRO_Palette max)
+inline RETRO_ColorCube RETRO_ShrinkColorCube(const RETRO_ShadingRamps &ramps, const RETRO_ColorCube &cube)
 {
-	return color.r >= min.r && color.r < max.r &&
-		color.g >= min.g && color.g < max.g &&
-		color.b >= min.b && color.b < max.b;
-}
+	// Seed the bounds inside out, so the first color inside sets them both
+	RETRO_ColorCube shrunk = { cube.max, cube.min };
 
-//
-// Shrink a color cube to the tightest box that still holds every shaded color
-// inside it
-//
-inline void RETRO_ShrinkColorCube(RETRO_Palette *min, RETRO_Palette *max)
-{
-	// Seed the new bounds inside out, so the first color inside sets them both
-	RETRO_Palette newmin = *max;
-	RETRO_Palette newmax = *min;
+	for (int i = 0; i < ramps.count; i++) {
+		RETRO_Palette color = ramps.colors[i];
 
-	for (int i = 0; i < RETRO_Color.shadingcolorcount; i++) {
-		RETRO_Palette color = RETRO_Color.shadingramps[i];
-
-		if (!RETRO_InsideColorCube(color, *min, *max)) continue;
+		if (!RETRO_InsideColorCube(color, cube)) continue;
 
 		// Does this color push the bounds out?
-		if (color.r < newmin.r) newmin.r = color.r;
-		if (color.g < newmin.g) newmin.g = color.g;
-		if (color.b < newmin.b) newmin.b = color.b;
+		if (color.r < shrunk.min.r) shrunk.min.r = color.r;
+		if (color.g < shrunk.min.g) shrunk.min.g = color.g;
+		if (color.b < shrunk.min.b) shrunk.min.b = color.b;
 
-		if (color.r >= newmax.r) newmax.r = color.r + 1;
-		if (color.g >= newmax.g) newmax.g = color.g + 1;
-		if (color.b >= newmax.b) newmax.b = color.b + 1;
+		if (color.r >= shrunk.max.r) shrunk.max.r = color.r + 1;
+		if (color.g >= shrunk.max.g) shrunk.max.g = color.g + 1;
+		if (color.b >= shrunk.max.b) shrunk.max.b = color.b + 1;
 	}
 
-	*min = newmin;
-	*max = newmax;
+	return shrunk;
 }
 
 //
-// Split a color cube in two along the given axis, at the median of the shaded
-// colors inside it. The halves come back as [min, minsplit) and [maxsplit, max)
+// Cut a color cube in two across the given axis, just past the median of the
+// shaded colors inside it. The lower half takes the colors below the cut and
+// the upper half the rest
 //
-inline void RETRO_SplitColorCube(RETRO_Palette min, RETRO_Palette max, int axis, RETRO_Palette *minsplit, RETRO_Palette *maxsplit)
+// With one color or none inside, half of nothing is already behind the walk at
+// the first bin, so the cut lands at 1 wherever the cube is
+//
+inline void RETRO_SplitColorCube(const RETRO_ShadingRamps &ramps, const RETRO_ColorCube &cube, int axis, RETRO_ColorCube *lower, RETRO_ColorCube *upper)
 {
 	// Count the shaded colors inside the cube, by their position along the axis
 	int histogram[RETRO_CUBE_SIZE] = { 0 };
 	int colors = 0;
 
-	for (int i = 0; i < RETRO_Color.shadingcolorcount; i++) {
-		RETRO_Palette color = RETRO_Color.shadingramps[i];
+	for (int i = 0; i < ramps.count; i++) {
+		RETRO_Palette color = ramps.colors[i];
 
-		if (!RETRO_InsideColorCube(color, min, max)) continue;
+		if (!RETRO_InsideColorCube(color, cube)) continue;
 
 		histogram[RETRO_ColorComponent(color, axis)]++;
 		colors++;
 	}
 
-	// Walk the histogram until half of the colors are behind us
+	// Walk the histogram until half of the colors are behind us, and cut after
+	// the bin that got us there
 	int remaining = colors / 2;
-	int median = 0;
+	int cut = 0;
 
-	for (int i = 0; i < RETRO_CUBE_SIZE; i++) {
-		remaining -= histogram[i];
+	do {
+		remaining -= histogram[cut++];
+	} while (remaining > 0);
 
-		if (remaining <= 0) {
-			median = i;
-			break;
-		}
-	}
-	median += 1;
-
-	// Both halves keep the cube they came from, cut at the median
-	*minsplit = max;
-	*maxsplit = min;
-	RETRO_ColorComponent(*minsplit, axis) = median;
-	RETRO_ColorComponent(*maxsplit, axis) = median;
+	*lower = cube;
+	*upper = cube;
+	RETRO_ColorComponent(lower->max, axis) = cut;
+	RETRO_ColorComponent(upper->min, axis) = cut;
 }
 
 //
-// Halve a color cube once per level, and take the center of each leaf as a
-// palette entry
+// Halve a color cube level times, and write the center of each leaf to the
+// palette, lower halves first. A cube at level fills exactly 1 << level
+// entries, so each half is handed its own run of the palette
 //
-inline void RETRO_SubdivideColorCube(RETRO_Palette min, RETRO_Palette max, int level)
+inline void RETRO_SubdivideColorCube(const RETRO_ShadingRamps &ramps, const RETRO_ColorCube &cube, int level, RETRO_Palette *palette)
 {
-	// Shrink the color cube to contain just the used colors
-	RETRO_ShrinkColorCube(&min, &max);
+	RETRO_ColorCube shrunk = RETRO_ShrinkColorCube(ramps, cube);
 
-	// Find the length of the sides of the color cube
-	int deltar = max.r - min.r;
-	int deltag = max.g - min.g;
-	int deltab = max.b - min.b;
+	int deltar = shrunk.max.r - shrunk.min.r;
+	int deltag = shrunk.max.g - shrunk.min.g;
+	int deltab = shrunk.max.b - shrunk.min.b;
 
-	// If this is the last level then stop, and take the center of the box as its
-	// palette entry
+	// At the last level take the center of the cube as its palette entry. An
+	// inside out cube, which holds no colors, still gets one, clamped into range
 	//
-	// Heckbert takes the mean of the colors inside the box instead. That is the
-	// textbook choice, but it is worth nothing here: RETRO_ShrinkColorCube has
-	// already pulled the box tight around its colors, so its center and its mean
-	// nearly coincide. Measured over the mask texture the mean moves the fit from
-	// rms 1.53 to 1.54 and makes the worst match slightly worse, so the center
-	// stays
+	// Heckbert takes the mean of the colors inside the cube instead. That is the
+	// textbook choice, but it is worth nothing here: the cube has already been
+	// pulled tight around its colors, so its center and its mean nearly coincide.
+	// Measured over a 32-color model texture the mean moves the fit from rms 1.53 to 1.54
+	// and makes the worst match slightly worse, so the center stays
 	if (level == 0) {
-		RETRO_Palette color;
-		color.r = CLAMP64(min.r + deltar / 2);
-		color.g = CLAMP64(min.g + deltag / 2);
-		color.b = CLAMP64(min.b + deltab / 2);
-
-		RETRO_Color.palette[RETRO_Color.palettecolors++] = color;
+		palette->r = CLAMP64(shrunk.min.r + deltar / 2);
+		palette->g = CLAMP64(shrunk.min.g + deltag / 2);
+		palette->b = CLAMP64(shrunk.min.b + deltab / 2);
 		return;
 	}
 
-	// Determine which side is the longest, settling a tie on blue then red
-	int longest = RETRO_COLOR_GREEN;
+	// Cut across the longest side, settling a tie on blue then red
+	int longest = RETRO_COMPONENT_GREEN;
 	if (deltab >= deltar && deltab >= deltag) {
-		longest = RETRO_COLOR_BLUE;
+		longest = RETRO_COMPONENT_BLUE;
 	} else if (deltar >= deltag && deltar >= deltab) {
-		longest = RETRO_COLOR_RED;
+		longest = RETRO_COMPONENT_RED;
 	}
 
-	// Split the color cube at the median point on the longest side
-	RETRO_Palette minsplit, maxsplit;
-	RETRO_SplitColorCube(min, max, longest, &minsplit, &maxsplit);
+	RETRO_ColorCube lower, upper;
+	RETRO_SplitColorCube(ramps, shrunk, longest, &lower, &upper);
 
-	// Subdivide both halves, until they bottom out as palette entries
-	RETRO_SubdivideColorCube(min, minsplit, level - 1);
-	RETRO_SubdivideColorCube(maxsplit, max, level - 1);
-}
-
-//
-// Nearest palette entry in RGB, by d² = Δr² + Δg² + Δb².
-inline int RETRO_NearestPaletteIndex(RETRO_Palette targetcolor)
-{
-	int match = 0;
-	int mindistance = INT_MAX;
-
-	for (int i = 0; i < RETRO_Color.palettecolors; i++) {
-		RETRO_Palette palettecolor = RETRO_Color.palette[i];
-
-		// Calculate distance to this color
-		int deltar = (int)palettecolor.r - (int)targetcolor.r;
-		int deltag = (int)palettecolor.g - (int)targetcolor.g;
-		int deltab = (int)palettecolor.b - (int)targetcolor.b;
-
-		int distance = deltar * deltar + deltag * deltag + deltab * deltab;
-
-		// Is this distance shorter than the current match
-		if (distance < mindistance) {
-			mindistance = distance;
-			match = i;
-		}
-	}
-
-	return match;
-}
-
-// Nearest entry in an explicit palette, by squared RGB distance.
-inline unsigned char RETRO_ClosestPaletteColor(RETRO_Palette target, const RETRO_Palette *palette, int colors = RETRO_COLORS)
-{
-	int match = 0;
-	int min_distance = 3 * 255 * 255 + 1;
-
-	for (int color = 0; color < colors; color++) {
-		int dr = (int)palette[color].r - target.r;
-		int dg = (int)palette[color].g - target.g;
-		int db = (int)palette[color].b - target.b;
-		int distance = dr * dr + dg * dg + db * db;
-		if (distance < min_distance) {
-			min_distance = distance;
-			match = color;
-		}
-	}
-
-	return match;
+	RETRO_SubdivideColorCube(ramps, lower, level - 1, palette);
+	RETRO_SubdivideColorCube(ramps, upper, level - 1, palette + (1 << (level - 1)));
 }
 
 // *******************************************************************
 // Public functions
 // *******************************************************************
 
-inline RETRO_Palette *RETRO_OptimalPalette(void)
+//
+// Fit a 6-bit palette of RETRO_COLORS entries to a material by median cut:
+// light every texture color at every shade, then halve the cube of the shaded
+// colors until there is one cube per palette entry. At most
+// RETRO_SHADE_TABLE_COLORS colors are taken
+//
+// This is Heckbert's median cut with two simplifications. Heckbert keeps a queue
+// and always splits whichever box currently holds the most colors; here every
+// box is split once per level, so the tree is a fixed RETRO_CUBE_LEVELS deep.
+// And Heckbert takes each box's representative as the mean of the colors inside
+// it, where this takes the center of the box, which measures no worse here since
+// the box has already been shrunk around its colors. The fixed depth is the
+// cheaper choice and costs a little accuracy. It is also why some leaves come
+// out empty: a box holding one color still gets split, and one half is then
+// empty and spends a palette entry on the center of nothing
+//
+inline void RETRO_CreatePhongShadeTablePalette(const RETRO_Palette *texturepalette, int texturecolors, RETRO_Palette *palette, float specularity = RETRO_K_SPECULAR, float falloff = RETRO_K_FALLOFF)
 {
-	return RETRO_Color.palette;
+	RETRO_ShadingRamps ramps;
+	RETRO_CreateShadingRamps(texturepalette, texturecolors, specularity, falloff, &ramps);
+
+	RETRO_ColorCube cube = { { 0, 0, 0 }, { RETRO_CUBE_SIZE, RETRO_CUBE_SIZE, RETRO_CUBE_SIZE } };
+	RETRO_SubdivideColorCube(ramps, cube, RETRO_CUBE_LEVELS, palette);
 }
 
 //
-// Build a shade table for a material against the current optimal palette. This
-// lets several materials share one palette while keeping their lighting ramps
+// Build shadetable[texel * RETRO_SHADE_TABLE_SHADES + shade] for a material by
+// lighting every texture color at every shade and finding the nearest entry in
+// a 6-bit palette, normally the one RETRO_CreatePhongShadeTablePalette fitted.
+// Several materials can share that palette while keeping their lighting ramps
 // separate
 //
 // The caller owns the table, one per material, and hands it to a model through
 // Model3D::shadetable. A model without one draws nothing rather than drawing
 // wrong, since the texture mappers stop on a table they were not given
 //
-inline void RETRO_CreateShadeTable(const RETRO_Palette *texturepalette, int texturecolors, float specularity, float falloff, unsigned char *shadetable)
+// Only the rows of the first texturecolors texels are written. The rest keep
+// whatever the table held, so a texel past them draws entry 0 of a zeroed table
+// rather than being lit
+//
+inline void RETRO_CreatePhongShadeTable(const RETRO_Palette *texturepalette, int texturecolors, const RETRO_Palette *palette, unsigned char *shadetable, float specularity = RETRO_K_SPECULAR, float falloff = RETRO_K_FALLOFF)
 {
-	// There has to be a palette to match against. Without this the match below
-	// would find nothing, leave every entry pointing at color 0, and the model
-	// would draw solid black with nothing to say why
-	if (RETRO_Color.palettecolors == 0) {
-		RETRO_RageQuit("RETRO_CreateShadeTable needs a palette, call RETRO_CreateOptimalPalette first\n");
-	}
+	RETRO_ShadingRamps ramps;
+	RETRO_CreateShadingRamps(texturepalette, texturecolors, specularity, falloff, &ramps);
 
-	RETRO_CreateShadingRamps(texturepalette, texturecolors, specularity, falloff);
-
-	for (int i = 0; i < RETRO_Color.shadingcolorcount; i++) {
-		shadetable[i] = RETRO_NearestPaletteIndex(RETRO_Color.shadingramps[i]);
+	for (int i = 0; i < ramps.count; i++) {
+		shadetable[i] = RETRO_NearestPaletteIndex(ramps.colors[i], palette);
 	}
 }
 
 //
-// Fit a 6-bit palette to a material by median cut: light every texture color at
-// every shade, then halve the cube of the shaded colors until there is one cube
-// per palette entry. At most RETRO_TEXTURE_COLORS colors are taken
-//
-// This is Heckbert's median cut with two simplifications. Heckbert keeps a queue
-// and always splits whichever box currently holds the most colors; here every
-// box is split once per level, so the tree is a fixed RETRO_CUBE_LEVELS deep.
-// And Heckbert takes each box's representative as the mean of the colors inside
-// it, where this takes the center of the box. Both are the cheaper choice and
-// both cost a little accuracy. The fixed depth is also why some leaves come out
-// empty: a box holding one color still gets split, and one half is then empty
-// and spends a palette entry on the center of nothing
-//
-inline void RETRO_CreateOptimalPalette(const RETRO_Palette *texturepalette, int texturecolors, float specularity = RETRO_K_SPECULAR, float falloff = RETRO_K_FALLOFF)
-{
-	RETRO_CreateShadingRamps(texturepalette, texturecolors, specularity, falloff);
-
-	RETRO_Color.palettecolors = 0;
-	RETRO_Palette min = { 0, 0, 0 };
-	RETRO_Palette max = { RETRO_CUBE_SIZE, RETRO_CUBE_SIZE, RETRO_CUBE_SIZE };
-	RETRO_SubdivideColorCube(min, max, RETRO_CUBE_LEVELS);
-}
-
 // Build shadetable[color * shades + shade] by scaling every source color from
 // the ambient level through full brightness, then finding the nearest entry in
 // the same palette. This lets an indexed image use shading without reserving
-// palette entries for separate color ramps.
+// palette entries for separate color ramps
 //
 // The ambient level is where the darkest shade starts, and by default it is
 // black. A palette holding one picture's colors rather than ramps is the case
@@ -321,8 +270,9 @@ inline void RETRO_CreateOptimalPalette(const RETRO_Palette *texturepalette, int 
 // nearest thing the palette does have, and towards black that is whichever few
 // dark colors the picture happened to contain, whatever the entry started as.
 // Lighting off the bottom of such a palette turns faces into holes. A floor
-// under the darkening keeps every shade among colors it has plenty of.
-inline void RETRO_CreatePaletteShadeTable(const RETRO_Palette *palette, int colors, int shades, unsigned char *shadetable, float ambient = 0.0f)
+// under the darkening keeps every shade among colors it has plenty of
+//
+inline void RETRO_CreateShadeTable(const RETRO_Palette *palette, int colors, int shades, unsigned char *shadetable, float ambient = 0.0f)
 {
 	for (int source = 0; source < colors; source++) {
 		for (int shade = 0; shade < shades; shade++) {
@@ -334,31 +284,7 @@ inline void RETRO_CreatePaletteShadeTable(const RETRO_Palette *palette, int colo
 				(unsigned char)(palette[source].b * brightness),
 			};
 			shadetable[source * shades + shade] =
-				RETRO_ClosestPaletteColor(target, palette, colors);
-		}
-	}
-}
-
-// A cuberes^3 RGB cube, each cell mapped ahead of time to the nearest entry
-// in an explicit palette. Several demos composite a true-color pixel and
-// need it as a palette index every pixel; matching straight against
-// RETRO_ClosestPaletteColor's linear scan there would cost a 256-entry scan
-// per pixel, so they quantize into this cube once at startup instead. lut
-// is flattened row-major (r * cuberes + g) * cuberes + b, the layout a
-// caller's own unsigned char lut[cuberes][cuberes][cuberes] already has, so
-// it can be passed as &lut[0][0][0].
-inline void RETRO_CreateColorLUT(const RETRO_Palette *palette, int colors, int cuberes, unsigned char *lut)
-{
-	for (int r = 0; r < cuberes; r++) {
-		for (int g = 0; g < cuberes; g++) {
-			for (int b = 0; b < cuberes; b++) {
-				RETRO_Palette target = {
-					(unsigned char)(r * 255 / (cuberes - 1)),
-					(unsigned char)(g * 255 / (cuberes - 1)),
-					(unsigned char)(b * 255 / (cuberes - 1)),
-				};
-				lut[(r * cuberes + g) * cuberes + b] = RETRO_ClosestPaletteColor(target, palette, colors);
-			}
+				RETRO_NearestPaletteIndex(target, palette, colors);
 		}
 	}
 }

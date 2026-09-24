@@ -3,9 +3,9 @@
 //
 // One Lambert term per face of spherequads.obj. The color is
 //
-//   c + intensity · ShadeFromLambert(N · L)
+//   c + intensity · ShadeFractionFromLambert(N · L)
 //
-// with L = (0, 0, −1) and ShadeFromLambert = 1 − acos(N·L)/(π/2), so the
+// with L = (0, 0, −1) and ShadeFractionFromLambert = 1 − acos(N·L)/(π/2), so the
 // shades are even in θ, matching the palette. spherequads.obj's faces carry
 // the analytic outward normal at their centre, one per face, so the sphere
 // reads as 128 flat facets rather than a smooth globe: the polygon budget

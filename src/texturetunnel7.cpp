@@ -213,7 +213,7 @@ void DEMO_Render(double time, double deltatime)
 			UnitVector inward = RETRO_NormalizeUnitVector({ negradial.pos });
 			RETRO_ViewUnitVector(&inward, &camera);
 			float lambert = RETRO_RotatedDot(inward, Light);
-			float lit = AMBIENT + (1.0f - AMBIENT) * RETRO_ShadeFromLambert(MAX(lambert, 0.0f));
+			float lit = AMBIENT + (1.0f - AMBIENT) * RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f));
 			p->shade = lit * depth * (FOG_SHADES - 1);
 		}
 	}
@@ -232,7 +232,7 @@ void DEMO_Initialize(void)
 {
 	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, BRIGHT_ORANGE, Palette);
 	RETRO_SetPalette(Palette);
-	RETRO_CreatePaletteShadeTable(Palette, RETRO_COLORS, FOG_SHADES, FogTable);
+	RETRO_CreateShadeTable(Palette, RETRO_COLORS, FOG_SHADES, FogTable);
 
 	BuildBrick();
 

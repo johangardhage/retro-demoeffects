@@ -34,7 +34,7 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/cube_256x256.pcx", true);
+	RETRO_LoadImage("assets/earthcube_256x256.pcx", true);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->texmap = RETRO_ImageData();

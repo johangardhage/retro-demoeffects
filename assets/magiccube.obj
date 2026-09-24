@@ -1,0 +1,31 @@
+#
+# magiccube.obj - Magic block cube, hollow
+#
+# Geometry:   unit cube centred on the origin, corners at ±1.
+# Components: 8 vertices and 12 quad faces, no UV coordinates or normals.
+#             The six outside faces come first, then the same six again
+#             wound the other way, so the inside walls show where the cube
+#             is cut open.
+# Used by:    magicblock.
+#
+o magiccube
+v 1.000000 1.000000 1.000000
+v -1.000000 1.000000 1.000000
+v -1.000000 -1.000000 1.000000
+v 1.000000 -1.000000 1.000000
+v 1.000000 1.000000 -1.000000
+v -1.000000 1.000000 -1.000000
+v -1.000000 -1.000000 -1.000000
+v 1.000000 -1.000000 -1.000000
+f 4/1/1 3/1/1 2/1/1 1/1/1
+f 2/1/1 6/1/1 5/1/1 1/1/1
+f 3/1/1 7/1/1 6/1/1 2/1/1
+f 4/1/1 8/1/1 7/1/1 3/1/1
+f 1/1/1 5/1/1 8/1/1 4/1/1
+f 6/1/1 7/1/1 8/1/1 5/1/1
+f 1/1/1 2/1/1 3/1/1 4/1/1
+f 1/1/1 5/1/1 6/1/1 2/1/1
+f 2/1/1 6/1/1 7/1/1 3/1/1
+f 3/1/1 7/1/1 8/1/1 4/1/1
+f 4/1/1 8/1/1 5/1/1 1/1/1
+f 5/1/1 8/1/1 7/1/1 6/1/1

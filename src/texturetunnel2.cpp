@@ -7,7 +7,7 @@
 // scaling an index jumps to an unrelated color, not a darker one. So each
 // shade is a separate lookup instead: FogTable[index * SHADES + shade]
 // holds, for every one of the photo's colors, the nearest palette entry to
-// that color scaled toward black, built once by RETRO_CreatePaletteShadeTable.
+// that color scaled toward black, built once by RETRO_CreateShadeTable.
 // The photo leaves no palette entry spare for a clean black ramp of its
 // own, so the darkest shade lands on whichever dark colors the photo
 // happens to hold rather than true black.
@@ -70,7 +70,7 @@ void DEMO_Initialize(void)
 {
 	RETRO_Image *picture = RETRO_LoadImage("assets/flowers_256x256.pcx", true);
 
-	RETRO_CreatePaletteShadeTable(picture->palette, RETRO_COLORS, TUNNEL_FOG_SHADES, FogTable);
+	RETRO_CreateShadeTable(picture->palette, RETRO_COLORS, TUNNEL_FOG_SHADES, FogTable);
 
 	// Init tables
 	for (int y = 0; y < RETRO_HEIGHT * 2; y++) {

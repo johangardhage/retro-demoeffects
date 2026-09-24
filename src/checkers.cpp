@@ -91,9 +91,9 @@ void DEMO_Render(double time, double deltatime)
 	unsigned char *dest = RETRO_FrameBuffer();
 
 	const RETRO_Palette colors[] = {
-		RETRO_DARKSALMON, RETRO_ANTIQUEWHITE, RETRO_LIGHTSEAGREEN,
-		RETRO_CHOCOLATE, RETRO_OLIVEDRAB, RETRO_ROYALBLUE,
-		RETRO_CADETBLUE, RETRO_PERU
+		RETRO_DARKSALMON, RETRO_ANTIQUEWHITE, RETRO_SEABLUE,
+		RETRO_CHOCOLATE, RETRO_OLIVEGRAY, RETRO_DEEPSEABLUE,
+		RETRO_TEALGRAY, RETRO_PERU
 	};
 	double colorphase = fmod(time / 3.0, 8.0);
 	int first = (int)colorphase;

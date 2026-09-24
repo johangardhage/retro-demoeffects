@@ -38,7 +38,7 @@
 //   N  = −∇F / |∇F|
 //
 // L = (0, 0, −1) is the same headlight as phongcube.cpp. The shade is
-// ShadeFromLambert(max(N·L, 0)) into a plastic Phong ramp.
+// ShadeFractionFromLambert(max(N·L, 0)) into a plastic Phong ramp.
 //
 // Each centre rides its own 3-axis Lissajous. Whole-number rates keep
 // every orbit closed on the same 2π of phase.
@@ -123,7 +123,7 @@ static void ShadeHit(int x, int y, vec3 p)
 
 	// L = (0, 0, −1)
 	float lambert = MAX(-n.z, 0.0f);
-	float intensity = RETRO_ShadeFromLambert(lambert);
+	float intensity = RETRO_ShadeFractionFromLambert(lambert);
 	int color = RETRO_PHONG_OFFSET + RETRO_PHONG_SHADES * intensity;
 	RETRO_PutPixel(x, y, CLAMP(color, RETRO_PHONG_OFFSET, RETRO_COLORS));
 }
@@ -251,7 +251,7 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_CreatePlasticPhongPalette(30, RETRO_CYAN);
+	RETRO_CreatePlasticPalette(RETRO_CYAN, 30);
 
 	// Charge of each ball, and the coincident-equal bound sqrt(sum R²)
 	float sumr2 = 0;

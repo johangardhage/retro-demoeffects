@@ -66,12 +66,12 @@ static const char *const CrawlText[] = {
 // The ink flashes white on a beat and decays back to its base gray.
 #define FLASH_PERIOD 0.95
 #define FLASH_DECAY 0.18
-#define BACKGROUND RETRO_Palette{ 69, 66, 70 }
 #define INK RETRO_Palette{ 192, 187, 193 }
 
 static RETRO_Font Font;
 static RETRO_Image *TextStrip;
 static mat3 CameraMatrix;
+static unsigned char Background[RETRO_WIDTH * RETRO_HEIGHT];
 
 static PolygonPoint Project(float x, float y, vec2 uv)
 {
@@ -84,8 +84,10 @@ static PolygonPoint Project(float x, float y, vec2 uv)
 
 void DEMO_Render(double time, double deltatime)
 {
+	unsigned char *screen = RETRO_FrameBuffer();
+	memset(screen, 0, sizeof(Background));
 	double flash = exp(-fmod(time, FLASH_PERIOD) / FLASH_DECAY);
-	RETRO_SetColor(1, (unsigned char)(INK.r + (255 - INK.r) * flash),
+	RETRO_SetColor(3, (unsigned char)(INK.r + (255 - INK.r) * flash),
 		(unsigned char)(INK.g + (255 - INK.g) * flash),
 		(unsigned char)(INK.b + (255 - INK.b) * flash));
 
@@ -108,18 +110,37 @@ void DEMO_Render(double time, double deltatime)
 		quad[1] = Project((right - center) * GLYPH_WIDTH, top, { right, v });
 		quad[2] = Project((right - center) * GLYPH_WIDTH, bottom, { right, v + Font.height });
 		quad[3] = Project((left - center) * GLYPH_WIDTH, bottom, { left, v + Font.height });
-		RETRO_DrawTexMapPolygon(quad, 4, TextStrip->data,
-			TextStrip->width, TextStrip->height);
+		RETRO_DrawTexMapPolygon(quad, 4, TextStrip->data, TextStrip->width, TextStrip->height, false, {});
 	}
+
+	// The lines share one plane and never overlap, so a single mask of all
+	// of them is enough: the background shows wherever it holds no ink.
+	for (int pixel = 0; pixel < RETRO_WIDTH * RETRO_HEIGHT; pixel++)
+		if (!screen[pixel]) screen[pixel] = Background[pixel];
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_SetColor(0, BACKGROUND);
+	RETRO_SetColor(0, RETRO_Palette{ 0, 0, 0 });
+	RETRO_SetColor(1, RETRO_Palette{ 68, 82, 118 });
+	RETRO_SetColor(2, RETRO_Palette{ 33, 49, 84 });
+
 	Font = RETRO_LoadFont(FONT);
 	TextStrip = RETRO_GenerateTextImage(Font, CrawlText, LINES);
 	// Use a two-color ink mask for nearest-neighbor texture sampling.
 	for (int i = 0; i < TextStrip->width * TextStrip->height; i++)
-		TextStrip->data[i] = TextStrip->data[i] != 0;
+		TextStrip->data[i] = TextStrip->data[i] != 0 ? 3 : 0;
 	CameraMatrix = rotateZ(CRAWL_ROLL) * rotateY(CRAWL_YAW);
+
+	const vec2 edge[] = { { 205, 24 }, { 233, 51 }, { 219, 66 },
+		{ 247, 91 }, { 205, 133 }, { 233, 161 }, { 219, 176 },
+		{ 233, 190 }, { 205, 216 } };
+	for (int segment = 0; segment < 8; segment++) {
+		vec2 a = edge[segment], b = edge[segment + 1];
+		for (int y = (int)a.y; y < (int)b.y; y++) {
+			int right = (int)(a.x + (b.x - a.x) * (y - a.y) / (b.y - a.y));
+			for (int x = RETRO_WIDTH - right; x < RETRO_WIDTH; x++)
+				Background[y * RETRO_WIDTH + x] = y < 133 ? 1 : 2;
+		}
+	}
 }

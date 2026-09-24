@@ -35,7 +35,7 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_CreatePlasticPhongPalette(30);
+	RETRO_CreatePlasticPalette(RETRO_DEEPPINK, 30);
 
 	// The faces are not shaded, so spread their colors over the palette
 	Model3D *model = RETRO_Load3DModel("assets/cubequads.obj");

@@ -113,7 +113,7 @@ void DEMO_Initialize(void)
 	// bank for rare overlaps of three gold faces near a fold.
 	const RETRO_Palette base[] = { RETRO_JET, RETRO_MUDGOLD, RETRO_DARKBRASS, RETRO_DRABGOLD };
 	const RETRO_Palette mid[] = { RETRO_SOOT, RETRO_DUSTYGOLD, RETRO_BRASSGOLD, RETRO_DARKKHAKI };
-	const RETRO_Palette peak[] = { RETRO_SILVER, RETRO_DARKGRAY, RETRO_BURLYWOOD, RETRO_KHAKI };
+	const RETRO_Palette peak[] = { RETRO_SILVER, RETRO_STONE, RETRO_BURLYWOOD, RETRO_KHAKI };
 	for (int bank = 0; bank < 4; bank++) {
 		int offset = bank * 64;
 		RETRO_CreateGradientPalette(offset + 1, offset + 14, base[bank], mid[bank]);

@@ -681,20 +681,16 @@ inline bool RETRO_QuitRequested(void)
 		if (event.type == SDL_EVENT_QUIT) {
 			RETRO.quit = true;
 		} else if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
+			if (event.key.scancode == SDL_SCANCODE_ESCAPE || event.key.scancode == SDL_SCANCODE_Q) {
+				RETRO.quit = true;
+			}
 			if (event.key.scancode < 256) {
 				RETRO.keylatched[event.key.scancode] = true;
 			}
 		}
 	}
 	RETRO.keystate = SDL_GetKeyboardState(NULL);
-	if (RETRO.quit) {
-		return true;
-	} else if (RETRO.keystate && RETRO.keystate[SDL_SCANCODE_ESCAPE]) {
-		return true;
-	} else if (RETRO.keystate && RETRO.keystate[SDL_SCANCODE_Q]) {
-		return true;
-	}
-	return false;
+	return RETRO.quit;
 }
 
 // *******************************************************************
@@ -766,7 +762,7 @@ inline void RETRO_Mainloop(void)
 		}
 
 		if (RETRO_KeyPressed(SDL_SCANCODE_BACKSPACE)) {
-			RETRO_DumpFrame("screenshot.ppm");
+			RETRO_DumpFrame("dumpfile.ppm");
 		}
 
 		// Limit FPS

@@ -7,7 +7,7 @@
 //
 //   shade = c + face->c + (N · L) · intensity
 //
-// Back faces use half the Lambert term. There is no ShadeFromLambert: the
+// Back faces use half the Lambert term. There is no ShadeFractionFromLambert: the
 // palette is a linear black–magenta gradient, and converting θ would
 // bend that falloff. L is (0, 0, −1), from the eye. A letter that only
 // banked with the helix would keep its front on the light, so each glyph

@@ -116,5 +116,5 @@ void DEMO_Initialize(void)
 	RETRO_Palette *palette = RETRO_ImagePalette();
 
 	// Map every darkened source color back into the image's own palette
-	RETRO_CreatePaletteShadeTable(palette, RETRO_COLORS, TWISTER_SHADES, TwisterShadeTable);
+	RETRO_CreateShadeTable(palette, RETRO_COLORS, TWISTER_SHADES, TwisterShadeTable);
 }

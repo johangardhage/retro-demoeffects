@@ -175,13 +175,13 @@ void DEMO_Render(double time, double deltatime)
 			int base = cell * CUBESHADOW_LIGHT_CELL + shadowed * CUBESHADOW_SHADOW;
 			vec3 wall = vec3{ 1, 1, 1 } * (float)cell;
 			if (shadowed) wall = wall * shadowlight;
-			RETRO_SetColor(base + CUBESHADOW_WALL, RETRO_LinearToPalette(wall));
+			RETRO_SetColor(base + CUBESHADOW_WALL, RETRO_LinearToColor(wall));
 			for (int f = 0; f < CUBESHADOW_SIDES; f++) {
 				if (!front[f]) continue;
 				for (int b = 0; b < CUBESHADOW_SIDES; b++) {
 					if (front[b]) continue;
 					vec3 color = pane[f] + transmit * (pane[b] + transmit * wall);
-					RETRO_SetColor(base + 1 + f * CUBESHADOW_SIDES + b, RETRO_LinearToPalette(color));
+					RETRO_SetColor(base + 1 + f * CUBESHADOW_SIDES + b, RETRO_LinearToColor(color));
 				}
 			}
 		}

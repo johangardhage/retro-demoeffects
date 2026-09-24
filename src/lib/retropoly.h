@@ -50,8 +50,8 @@ struct PhongLight {
 };
 
 // A shade table and the shape it was read at. The lookup is
-// table[color * shades + shade], which is what RETRO_CreateShadeTable and
-// RETRO_CreatePaletteShadeTable both write. The two dimensions travel with the
+// table[color * shades + shade], which is what RETRO_CreatePhongShadeTable and
+// RETRO_CreateShadeTable both write. The two dimensions travel with the
 // pointer because they are not the same for every texture: one drawn from a
 // palette built for shading has few colors and a long ramp, one that is a
 // picture in its own palette has all of them and a short ramp, and a table read
@@ -306,6 +306,35 @@ inline void RETRO_DrawFlatPolygon(PolygonPoint *point, int points, unsigned char
 }
 
 //
+// Masked polygon
+// Fill a convex polygon writing (pixel & ~mask) | (color & mask)
+//
+inline void RETRO_DrawMaskedPolygon(const PolygonPoint *point, int points, unsigned char color, unsigned char mask, ClipRect clip = {})
+{
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		const PolygonPoint *p0 = &point[0];
+		const PolygonPoint *p1 = &point[triangle];
+		const PolygonPoint *p2 = &point[triangle + 1];
+		TriangleSpan span[RETRO_HEIGHT];
+		int ystart, yend;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
+		if (determinant == 0.0f) continue;
+
+		for (int y = ystart; y < yend; y++) {
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
+
+			for (int x = xstart; x < xend; x++) {
+				int offset = y * RETRO_WIDTH + x;
+				unsigned char &pixel = RETRO.framebuffer[offset];
+				pixel = (pixel & ~mask) | (color & mask);
+			}
+		}
+	}
+}
+
+//
 // Glenz shaded polygon
 // Add one color to the framebuffer, allowing sorted polygons to show through.
 // colormax is the top of the add; a model opts into a lower one (see
@@ -386,7 +415,7 @@ inline void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points, ClipRect c
 // renormalising is the same direction as divide-by-q then renormalise
 // (q > 0 in front of the near plane). The pixel is then
 //
-//   I = ShadeFromLambert(max(N · L, 0))
+//   I = ShadeFractionFromLambert(max(N · L, 0))
 //   color = c + shades * I
 //
 inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight light, ClipRect clip = {})
@@ -429,7 +458,7 @@ inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight l
 					intensity = MAX(dot(n, light.dir) * inversenormallength, 0.0f);
 				}
 
-				float paletteintensity = RETRO_ShadeFromLambert(intensity);
+				float paletteintensity = RETRO_ShadeFractionFromLambert(intensity);
 				int color = light.c + light.shades * paletteintensity;
 				int offset = y * RETRO_WIDTH + x;
 				if (RETRO_DepthTest(offset, q)) {
@@ -725,7 +754,7 @@ inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigne
 					float lambert = dot(unitn, light);
 					// L and N' are unit, so the term is N' · L.
 					float bumpedlambert = dot(RETRO_BumpNormal(unitn, dhx, dhy, frame), light);
-					float bumpshade = (RETRO_ShadeFromLambert(bumpedlambert) - RETRO_ShadeFromLambert(lambert)) * lambertshades;
+					float bumpshade = (RETRO_ShadeFractionFromLambert(bumpedlambert) - RETRO_ShadeFractionFromLambert(lambert)) * lambertshades;
 					unsigned char texel = CLAMP(texmap[texmapv * texmapwidth + texmapu], 0, shadetable.colors);
 					int shade = CLAMP(c + bumpshade, 0, shadetable.shades);
 					int offset = y * RETRO_WIDTH + x;

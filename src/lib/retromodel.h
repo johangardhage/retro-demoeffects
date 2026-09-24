@@ -120,8 +120,8 @@ struct Model3D {
 												// palette constructors are given. A texture
 												// renderer steps it through the shade table
 												// rather than the palette, and falls back to
-												// RETRO_SHADES, the table's full height, for a
-												// model that leaves this zero
+												// RETRO_SHADE_TABLE_SHADES, the table's full
+												// height, for a model that leaves this zero
 	bool twosided;								// Draw every face from either side, shading the one
 												// turned away by the reverse of its normal. A surface
 												// with no inside - a sheet, an open shell - is otherwise
@@ -131,6 +131,8 @@ struct Model3D {
 												// back face is drawn at all; Glenz draws both sides
 												// regardless, but still reads this for how to light the
 												// back one, and the wireframe path ignores it entirely
+	unsigned char mask;							// The palette index bits a masked write replaces,
+												// leaving the rest of each pixel as it was
 	float *frame = NULL;						// Morph targets: frames blocks of vertices model space
 												// x, y, z, the same vertex list posed differently. Only
 												// the positions are held, since the topology, the UVs
@@ -218,6 +220,7 @@ inline Model3D *RETRO_Allocate3DModel(void)
 	model->bumpmapheight = RETRO_TEXMAP_SIZE;
 	model->envmapradius = RETRO_ENVMAP_SIZE / 2;
 	model->bumpgrazing = RETRO_BUMP_GRAZING;
+	model->mask = 0xff;
 
 	RETRO_Model.model[id] = model;
 	RETRO_Model.models++;

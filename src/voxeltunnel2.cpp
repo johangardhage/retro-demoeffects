@@ -306,5 +306,5 @@ void DEMO_Initialize(void)
 			palette[TUNNEL_FADE_RAMP + i].g, palette[TUNNEL_FADE_RAMP + i].b);
 	}
 
-	RETRO_CreatePaletteShadeTable(palette, RETRO_COLORS, TUNNEL_FOG_SHADES, FogTable);
+	RETRO_CreateShadeTable(palette, RETRO_COLORS, TUNNEL_FOG_SHADES, FogTable);
 }

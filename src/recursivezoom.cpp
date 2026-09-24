@@ -25,7 +25,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retroshadetable.h"
+#include "lib/retropalette.h"
 
 #define CHILD_SCALE 0.6 // child image size before clipping to the arch
 #define ZOOM_PERIOD 4.0 // seconds for one child to grow to its parent's size

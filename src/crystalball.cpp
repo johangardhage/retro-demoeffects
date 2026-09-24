@@ -9,7 +9,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retroshadetable.h"
+#include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
 static const float Radius = 29.0f;
@@ -200,6 +200,6 @@ void DEMO_Initialize(void)
 	// Prequantize RGB to the shared 8-bit palette; no color searches per frame.
 	for (int r = 0; r < 32; r++) for (int g = 0; g < 32; g++) for (int b = 0; b < 32; b++) {
 		RETRO_Palette color = {(unsigned char)(r * 8 + 4), (unsigned char)(g * 8 + 4), (unsigned char)(b * 8 + 4)};
-		ColorLookup[(r * 32 + g) * 32 + b] = RETRO_ClosestPaletteColor(color, palette);
+		ColorLookup[(r * 32 + g) * 32 + b] = RETRO_NearestPaletteIndex(color, palette);
 	}
 }

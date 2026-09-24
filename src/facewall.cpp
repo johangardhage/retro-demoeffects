@@ -23,7 +23,7 @@
 #define FACE_COLORS 8
 
 static Model3D *Wall;
-static unsigned char WallShadeTable[RETRO_MAX_SHADING_COLORS];
+static unsigned char WallShadeTable[RETRO_SHADE_TABLE_SIZE];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -51,9 +51,10 @@ void DEMO_Initialize(void)
 	// Init palette
 	RETRO_Palette texturepalette[FACE_COLORS];
 	RETRO_CreateGradientPalette(0, FACE_COLORS, RETRO_BLACK, RETRO_To6bitColor(RETRO_WHITE), texturepalette);
-	RETRO_CreateOptimalPalette(texturepalette, FACE_COLORS, FACE_SPECULAR, FACE_FALLOFF);
-	RETRO_CreateShadeTable(texturepalette, FACE_COLORS, FACE_SPECULAR, FACE_FALLOFF, WallShadeTable);
-	RETRO_Set6bitPalette(RETRO_OptimalPalette());
+	RETRO_Palette palette[RETRO_COLORS];
+	RETRO_CreatePhongShadeTablePalette(texturepalette, FACE_COLORS, palette, FACE_SPECULAR, FACE_FALLOFF);
+	RETRO_CreatePhongShadeTable(texturepalette, FACE_COLORS, palette, WallShadeTable, FACE_SPECULAR, FACE_FALLOFF);
+	RETRO_Set6bitPalette(palette);
 
 	// Load model
 	Wall = RETRO_Load3DModel("assets/facewall.obj", "assets/facewall_%02d.obj", FACE_FRAMES);
@@ -62,7 +63,7 @@ void DEMO_Initialize(void)
 	}
 	Wall->twosided = true;
 	Wall->c = 0;
-	Wall->shades = RETRO_SHADES;
+	Wall->shades = RETRO_SHADE_TABLE_SHADES;
 	Wall->texmap = RETRO_ImageData();
 	Wall->shadetable = WallShadeTable;
 

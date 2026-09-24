@@ -41,7 +41,7 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init map
-	RETRO_CreatePlasticPhongPalette(PHONG_FALLOFF);
+	RETRO_CreatePlasticPalette(RETRO_DEEPPINK, PHONG_FALLOFF);
 	RETRO_CreatePhongMap(PhongMap, PHONGMAP_SIZE, PHONGMAP_SIZE);
 
 	// Load model

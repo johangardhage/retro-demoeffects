@@ -18,6 +18,15 @@
 // angles live on 2π. The mesh starts at ax = −π/2, az = π so the face
 // is upright.
 //
+// The matcaps are generated, not loaded: RETRO_CreateAnglePhongMap lays out
+// the lit ball, and RETRO_CreateAnglePhongPalette colors it with a face of
+// (0.86, 0.23, 0.59) under the library's default material, in 6 bits. The
+// full map spans the palette. The mini map is the same ball in shade levels
+// for the textured matcap, brightest one below the shade table's height and
+// that many steps to a quarter turn, so it tops out at the table's last
+// level; read bare through the palette it keeps to the dark half, below the
+// highlight.
+//
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
@@ -31,11 +40,17 @@
 #define TEXTURE_WIDTH 256
 #define TEXTURE_HEIGHT 256
 #define ROTATION_SPEED 1 // radians a second, about each axis
+#define MATCAP_SIZE 256 // the matcaps are square, and this is their side in pixels
+#define MATCAP_FACE vec3{ 0.86f, 0.23f, 0.59f } // the material, as intensities
 
-enum { ASSET_TEXMAP, ASSET_ENVMAP, ASSET_PHONGMAP, ASSET_MINIPHONGMAP, ASSET_BUMPMAP };
+enum { ASSET_TEXMAP, ASSET_ENVMAP, ASSET_BUMPMAP };
 enum { MATERIAL_FLAT, MATERIAL_GOURAUD, MATERIAL_PHONG, MATERIALS };
 
-static unsigned char MaterialShadeTables[MATERIALS][RETRO_MAX_SHADING_COLORS];
+static RETRO_Palette MaterialPalette[RETRO_COLORS];
+static unsigned char MaterialShadeTables[MATERIALS][RETRO_SHADE_TABLE_SIZE];
+static unsigned char PhongMap[MATCAP_SIZE * MATCAP_SIZE];
+static unsigned char MiniPhongMap[MATCAP_SIZE * MATCAP_SIZE];
+static RETRO_Palette PhongPalette[RETRO_COLORS];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -82,11 +97,11 @@ void DEMO_Render(double time, double deltatime)
 		shadertype = RETRO_SHADE_TABLE;
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
 		envmap = NULL;
-		color = RETRO_SHADES * 5 / 8;
+		color = RETRO_SHADE_TABLE_SHADES * 5 / 8;
 		envmapradius = 0;
 		bumpgrazing = RETRO_BUMP_GRAZING;
 		shadetable = MaterialShadeTables[MATERIAL_GOURAUD];
-		RETRO_Set6bitPalette(RETRO_OptimalPalette());
+		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_1)) {
 		rendertype = RETRO_POLY_TEXTURE;
@@ -97,7 +112,7 @@ void DEMO_Render(double time, double deltatime)
 		envmapradius = 0;
 		bumpgrazing = RETRO_BUMP_GRAZING;
 		shadetable = MaterialShadeTables[MATERIAL_FLAT];
-		RETRO_Set6bitPalette(RETRO_OptimalPalette());
+		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_2)) {
 		rendertype = RETRO_POLY_TEXTURE;
@@ -108,18 +123,18 @@ void DEMO_Render(double time, double deltatime)
 		envmapradius = 0;
 		bumpgrazing = RETRO_BUMP_GRAZING;
 		shadetable = MaterialShadeTables[MATERIAL_GOURAUD];
-		RETRO_Set6bitPalette(RETRO_OptimalPalette());
+		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_3)) {
 		rendertype = RETRO_POLY_TEXTURE;
 		shadertype = RETRO_SHADE_MATCAP;
 		texmap = RETRO_ImageData(ASSET_TEXMAP);
-		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
+		envmap = MiniPhongMap;
 		color = 128;
 		envmapradius = 90;
 		bumpgrazing = RETRO_BUMP_GRAZING;
 		shadetable = MaterialShadeTables[MATERIAL_PHONG];
-		RETRO_Set6bitPalette(RETRO_OptimalPalette());
+		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_D)) {
 		rendertype = RETRO_POLY_DOT;
@@ -130,7 +145,7 @@ void DEMO_Render(double time, double deltatime)
 		color = 255;
 		envmapradius = 0;
 		bumpgrazing = RETRO_BUMP_GRAZING;
-		RETRO_Set6bitPalette(RETRO_OptimalPalette());
+		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_W)) {
 		rendertype = RETRO_POLY_WIREFRAME;
@@ -141,27 +156,27 @@ void DEMO_Render(double time, double deltatime)
 		color = 255;
 		envmapradius = 0;
 		bumpgrazing = RETRO_BUMP_GRAZING;
-		RETRO_Set6bitPalette(RETRO_OptimalPalette());
+		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
 		rendertype = RETRO_POLY_MATCAP;
 		shadertype = RETRO_SHADE_NONE;
 		shadetable = NULL;
-		envmap = RETRO_ImageData(ASSET_PHONGMAP);
+		envmap = PhongMap;
 		color = 128;
 		envmapradius = 90;
 		bumpgrazing = RETRO_BUMP_GRAZING * 3 / 2;
-		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_PHONGMAP));
+		RETRO_Set6bitPalette(PhongPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_O)) {
 		rendertype = RETRO_POLY_MATCAP;
 		shadertype = RETRO_SHADE_NONE;
 		shadetable = NULL;
-		envmap = RETRO_ImageData(ASSET_MINIPHONGMAP);
+		envmap = MiniPhongMap;
 		color = 128;
 		envmapradius = 90;
 		bumpgrazing = RETRO_BUMP_GRAZING * 3 / 2;
-		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_PHONGMAP));
+		RETRO_Set6bitPalette(PhongPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_M)) {
 		rendertype = RETRO_POLY_ENVIRONMENT;
@@ -262,18 +277,21 @@ void DEMO_Initialize(void)
 	// Load assets
 	RETRO_LoadImage("assets/mask_texmap_256x256.pcx");
 	RETRO_LoadImage("assets/mask_envmap_256x256.pcx");
-	RETRO_LoadImage("assets/mask_phongmap_256x256.pcx");
-	RETRO_LoadImage("assets/mask_miniphongmap_256x256.pcx");
 	RETRO_LoadImage("assets/mask_bumpmap_256x256.pcx");
+
+	// Init matcaps
+	RETRO_CreateAnglePhongMap(PhongMap, MATCAP_SIZE, MATCAP_SIZE);
+	RETRO_CreateAnglePhongMap(MiniPhongMap, MATCAP_SIZE, MATCAP_SIZE, RETRO_SHADE_TABLE_SHADES - 1, RETRO_SHADE_TABLE_SHADES);
+	RETRO_CreateAnglePhongPalette(MATCAP_FACE, RETRO_K_SPECULAR, RETRO_K_FALLOFF, PhongPalette, 63);
 
 	// Init palette. One palette, three shade tables. Flat: a strong, moderately focused
 	// highlight. Gouraud: the full plastic highlight, sampled at vertices.
 	// Phong: the library's default falloff.
 	RETRO_Palette *texturepalette = RETRO_ImagePalette(ASSET_TEXMAP);
-	RETRO_CreateOptimalPalette(texturepalette, RETRO_TEXTURE_COLORS, RETRO_K_SPECULAR, 5.0f);
-	RETRO_CreateShadeTable(texturepalette, RETRO_TEXTURE_COLORS, RETRO_K_SPECULAR, 5.0f, MaterialShadeTables[MATERIAL_GOURAUD]);
-	RETRO_CreateShadeTable(texturepalette, RETRO_TEXTURE_COLORS, 0.6f, 5.0f, MaterialShadeTables[MATERIAL_FLAT]);
-	RETRO_CreateShadeTable(texturepalette, RETRO_TEXTURE_COLORS, RETRO_K_SPECULAR, RETRO_K_FALLOFF, MaterialShadeTables[MATERIAL_PHONG]);
+	RETRO_CreatePhongShadeTablePalette(texturepalette, RETRO_SHADE_TABLE_COLORS, MaterialPalette, RETRO_K_SPECULAR, 5.0f);
+	RETRO_CreatePhongShadeTable(texturepalette, RETRO_SHADE_TABLE_COLORS, MaterialPalette, MaterialShadeTables[MATERIAL_GOURAUD], RETRO_K_SPECULAR, 5.0f);
+	RETRO_CreatePhongShadeTable(texturepalette, RETRO_SHADE_TABLE_COLORS, MaterialPalette, MaterialShadeTables[MATERIAL_FLAT], 0.6f, 5.0f);
+	RETRO_CreatePhongShadeTable(texturepalette, RETRO_SHADE_TABLE_COLORS, MaterialPalette, MaterialShadeTables[MATERIAL_PHONG], RETRO_K_SPECULAR, RETRO_K_FALLOFF);
 	RETRO_Set6bitPalette(texturepalette);
 	RETRO_SetColor(0, RETRO_BLACK);
 	RETRO_SetColor(255, RETRO_PERIWINKLE);

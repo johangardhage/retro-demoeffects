@@ -40,7 +40,7 @@ enum Material {
 static Model3D *Torus;
 static Model3D *Fish;
 static unsigned char Texture[TEXTURE_SIZE * TEXTURE_SIZE];
-static unsigned char Shades[RETRO_MAX_SHADING_COLORS];
+static unsigned char Shades[RETRO_SHADE_TABLE_SIZE];
 
 static void RenderTorus(float phase, float focal)
 {
@@ -105,10 +105,10 @@ static void InitializeShadeTable(void)
 {
 	// Inverse of the palette's highlight-weighted shade spacing.
 	for (int material = 0; material < MATERIAL_COUNT; material++) {
-		for (int shade = 0; shade < RETRO_SHADES; shade++) {
-			float s = (float)shade / (RETRO_SHADES - 1);
+		for (int shade = 0; shade < RETRO_SHADE_TABLE_SHADES; shade++) {
+			float s = (float)shade / (RETRO_SHADE_TABLE_SHADES - 1);
 			float t = 1.0f - sqrtf(1.0f - s);
-			Shades[material * RETRO_SHADES + shade] = material * MATERIAL_SHADES
+			Shades[material * RETRO_SHADE_TABLE_SHADES + shade] = material * MATERIAL_SHADES
 				+ (int)(t * (MATERIAL_SHADES - 1) + 0.5f);
 		}
 	}
@@ -159,7 +159,7 @@ static void InitializeModels(void)
 	Torus->texmap = Texture;
 	Torus->texmapwidth = Torus->texmapheight = TEXTURE_SIZE;
 	Torus->shadetable = Shades;
-	Torus->shades = RETRO_SHADES;
+	Torus->shades = RETRO_SHADE_TABLE_SHADES;
 
 	Fish = RETRO_Load3DModel("assets/fish_00.obj", "assets/fish_%02d.obj", FISH_FRAMES);
 	// Scale every morph target once so swimming never restores the old size.

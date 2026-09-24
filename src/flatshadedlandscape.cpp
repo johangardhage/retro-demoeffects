@@ -188,7 +188,7 @@ void DEMO_Initialize(void)
 	// drawn in ramps that repeat themselves. This floor cuts that to 134 and to
 	// under three quarters of the map, where 0.40 would cut it to 93 and to
 	// under half. The shorter ramps are what the holes cost.
-	RETRO_CreatePaletteShadeTable(RETRO_ImagePalette(0), RETRO_COLORS, LANDSCAPE_SHADES, &LandscapeShadeTable[0][0], LANDSCAPE_AMBIENT);
+	RETRO_CreateShadeTable(RETRO_ImagePalette(0), RETRO_COLORS, LANDSCAPE_SHADES, &LandscapeShadeTable[0][0], LANDSCAPE_AMBIENT);
 
 	// Sky, in an entry the color map never uses. The table above matched against
 	// the image's own palette, which keeps its copy of entry 0, so this changes

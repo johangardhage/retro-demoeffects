@@ -61,7 +61,7 @@ static Model3D *Cube;
 static Model3D *Dots;
 static unsigned char NoiseMap[TEXMAP * TEXMAP];
 static unsigned char CheckMap[TEXMAP * TEXMAP];
-static unsigned char ShadeTable[RETRO_TEXTURE_COLORS * RETRO_SHADES];
+static unsigned char ShadeTable[RETRO_SHADE_TABLE_COLORS * RETRO_SHADE_TABLE_SHADES];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -144,11 +144,11 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(COL_GLENZ, 180, RETRO_SCORCHED, RETRO_MARIGOLD);
 	RETRO_CreateGradientPalette(180, RETRO_COLORS, RETRO_MARIGOLD, RETRO_WHITE);
 
-	RETRO_Palette texpal[RETRO_TEXTURE_COLORS];
-	for (int i = 0; i < RETRO_TEXTURE_COLORS; i++) {
+	RETRO_Palette texpal[RETRO_SHADE_TABLE_COLORS];
+	for (int i = 0; i < RETRO_SHADE_TABLE_COLORS; i++) {
 		texpal[i] = RETRO_GetColor(i);
 	}
-	RETRO_CreatePaletteShadeTable(texpal, RETRO_TEXTURE_COLORS, RETRO_SHADES, ShadeTable, 0.20f);
+	RETRO_CreateShadeTable(texpal, RETRO_SHADE_TABLE_COLORS, RETRO_SHADE_TABLE_SHADES, ShadeTable, 0.20f);
 
 	for (int y = 0; y < TEXMAP; y++) {
 		for (int x = 0; x < TEXMAP; x++) {

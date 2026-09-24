@@ -29,7 +29,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retroshadetable.h"
+#include "lib/retropalette.h"
 
 #define TWISTER_PERIOD 512
 #define TWISTER_CYCLE ((double)RETRO_ANGLES_PER_TURN / TWISTER_PERIOD)
@@ -86,7 +86,7 @@ static void CreateChromeShadeTable(const RETRO_Palette *palette)
 				target.b = (unsigned char)(color.b + (255 - color.b) * t);
 			}
 			TwisterShadeTable[source * TWISTER_SHADES + shade] =
-				RETRO_ClosestPaletteColor(target, palette, RETRO_COLORS);
+				RETRO_NearestPaletteIndex(target, palette, RETRO_COLORS);
 		}
 	}
 }

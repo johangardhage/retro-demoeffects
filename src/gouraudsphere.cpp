@@ -2,7 +2,7 @@
 // Gouraud shaded sphere
 //
 // N·L at each of spherequads.obj's 114 vertex normals (the analytic outward
-// normals of a unit sphere, 22.5° apart both ways), then ShadeFromLambert,
+// normals of a unit sphere, 22.5° apart both ways), then ShadeFractionFromLambert,
 // then the shade is interpolated affinely in screen space so a shared edge
 // agrees. That is three times denser than a cube's eight corner normals, 70°
 // apart, so the highlight can sit tighter than gouraudcube.cpp's without
@@ -35,7 +35,7 @@ void DEMO_Initialize(void)
 	// Init palette. A tighter highlight than gouraudcube.cpp's, since the
 	// sphere's vertex normals sit 22.5° apart rather than 70° and can resolve
 	// one without it falling between samples
-	RETRO_CreatePlasticPhongPalette(12);
+	RETRO_CreatePlasticPalette(RETRO_DEEPPINK, 12);
 
 	Model3D *model = RETRO_Load3DModel("assets/spherequads.obj");
 	model->c = RETRO_PHONG_OFFSET;

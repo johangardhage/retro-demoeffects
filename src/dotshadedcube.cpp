@@ -2,11 +2,11 @@
 // Dot cube, shaded
 //
 // Same dot cube as dotcube.cpp, but each vertex takes its brightness from
-// RETRO_ShadeFromLambert(N·L), N being the vertex normal RETRO_InitializeVertexNormals
-// averaged in from the faces around it. That clamps a vertex turned away from
-// the light to the ramp's own floor, so the floor is a dim gray rather than
-// black - every vertex still shows, just dimmer the more it faces away.
-// Euler angles live on 2π.
+// RETRO_ShadeFractionFromLambert(N·L), N being the vertex normal
+// RETRO_InitializeVertexNormals averaged in from the faces around it. That
+// clamps a vertex turned away from the light to the ramp's own floor, so the
+// floor is a dim gray rather than black - every vertex still shows, just
+// dimmer the more it faces away. Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

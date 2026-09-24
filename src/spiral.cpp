@@ -15,7 +15,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retroshadetable.h"
+#include "lib/retropalette.h"
 
 #define TWIST_AMOUNT (3.0 * M_PI) // maximum rotation at the centre, radians
 #define TWIST_PERIOD 12.0 // seconds for a clockwise/counterclockwise cycle

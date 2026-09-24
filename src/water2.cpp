@@ -127,5 +127,5 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadImage("assets/monkey_320x240.pcx", true);
-	RETRO_CreatePaletteShadeTable(RETRO_ImagePalette(), RETRO_COLORS, WATER_SHADES, ShadeTable, WATER_AMBIENT);
+	RETRO_CreateShadeTable(RETRO_ImagePalette(), RETRO_COLORS, WATER_SHADES, ShadeTable, WATER_AMBIENT);
 }

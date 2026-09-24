@@ -6,7 +6,7 @@
 // same direction as divide-by-q then normalise (q > 0 in front of the
 // near plane). The pixel is then
 //
-//   I = ShadeFromLambert(max(N · L, 0))
+//   I = ShadeFractionFromLambert(max(N · L, 0))
 //   color = c + intensity · I
 //
 // with L = (0, 0, −1). The palette falloff is 30: tight enough to read
@@ -38,7 +38,7 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_CreatePlasticPhongPalette(30);
+	RETRO_CreatePlasticPalette(RETRO_DEEPPINK, 30);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->c = RETRO_PHONG_OFFSET;

@@ -6,7 +6,7 @@
 //
 //   shade = c + face->c + (N · L) · intensity
 //
-// Back faces use half the Lambert term. There is no ShadeFromLambert:
+// Back faces use half the Lambert term. There is no ShadeFractionFromLambert:
 // the palette is a linear black–magenta–white gradient, and converting
 // θ would bend that falloff. Faces add, so a pixel covered three times
 // walks far enough up the ramp to wash out toward white. Euler angles

@@ -25,7 +25,8 @@ enum RETRO_POLY_TYPE {
 	RETRO_POLY_MATCAP,		// a canned lighting response, looked up by screen-facing normal; see RETRO_POLY_ENVIRONMENT for the true reflection this is not
 	RETRO_POLY_TEXTURE,
 	RETRO_POLY_ENVIRONMENT,	// a true Blinn/Newell reflection map, sampled by the reflected view ray
-	RETRO_POLY_SHADER		// each pixel handed to model->shader as a Fragment; face normals with RETRO_SHADE_FLAT
+	RETRO_POLY_SHADER,		// each pixel handed to model->shader as a Fragment; face normals with RETRO_SHADE_FLAT
+	RETRO_POLY_MASKED		// bitmasked polygon write using model->mask
 };
 
 enum RETRO_POLY_SHADE {
@@ -161,7 +162,7 @@ inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible =
 				// faces around it.
 				int cstart = model->c;
 				int cend = model->c + model->shades;
-				color = CLAMP(model->c + RETRO_ShadeFromLambert(lambert[i]) * model->shades, cstart, cend);
+				color = CLAMP(model->c + RETRO_ShadeFractionFromLambert(lambert[i]) * model->shades, cstart, cend);
 			}
 			if (fade < 1.0f) {
 				// No alpha to blend with the background, so fade toward
@@ -228,11 +229,11 @@ inline void RETRO_RenderFlatModel(Model3D *model, bool shaded, ClipRect clip = {
 
 		int color = model->c + face->c;
 		if (shaded) {
-			// One lambert per face: color = c + face.c + ShadeFromLambert(N · L) * shades.
+			// One lambert per face: color = c + face.c + ShadeFractionFromLambert(N · L) * shades.
 			float lambert = RETRO_FaceSide(face) * RETRO_RotatedDot(face->facenormal, RETRO_Render.lightsource);
 			int cstart = model->c;
 			int cend = model->c + face->c + model->shades;
-			color = CLAMP(model->c + face->c + RETRO_ShadeFromLambert(lambert) * model->shades, cstart, cend);
+			color = CLAMP(model->c + face->c + RETRO_ShadeFractionFromLambert(lambert) * model->shades, cstart, cend);
 		}
 		RETRO_DrawFlatPolygon(point, face->vertices, color, clip);
 	}
@@ -293,7 +294,7 @@ inline void RETRO_RenderGouraudModel(Model3D *model, ClipRect clip = {})
 			point[j].pos = model->vertex[face->vertex[j]].spos;
 			point[j].q = model->vertex[face->vertex[j]].q;
 			float lambert = side * RETRO_RotatedDot(model->normal[face->vertexnormal[j]], RETRO_Render.lightsource);
-			point[j].c = CLAMP(model->c + face->c + RETRO_ShadeFromLambert(lambert) * model->shades, cstart, cend);
+			point[j].c = CLAMP(model->c + face->c + RETRO_ShadeFractionFromLambert(lambert) * model->shades, cstart, cend);
 		}
 		RETRO_DrawGouraudPolygon(point, face->vertices, clip);
 	}
@@ -335,15 +336,15 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 	// palette built for shading, with the whole ramp under each of its colors.
 	// A texture that is a picture in its own palette has the other shape, and
 	// says so; see ShadeTable.
-	ShadeTable shadetable = { model->shadetable, RETRO_TEXTURE_COLORS, RETRO_SHADES };
+	ShadeTable shadetable = { model->shadetable, RETRO_SHADE_TABLE_COLORS, RETRO_SHADE_TABLE_SHADES };
 	bool lightingmap = shadertype == RETRO_SHADE_MATCAP;
 	bool envmapshading = shadertype == RETRO_SHADE_ENVIRONMENT || lightingmap;
 	bool bumpmapping = model->bumpmap != NULL;
 	// How far up the shade table one unit of lambert carries a face: the model's
 	// own share of it, or the whole of it when the model names none. Unlike a
 	// palette ramp, which a demo has to lay down before anything can index it,
-	// the table is always RETRO_SHADES tall.
-	int shades = model->shades ? model->shades : RETRO_SHADES;
+	// the table is always RETRO_SHADE_TABLE_SHADES tall.
+	int shades = model->shades ? model->shades : RETRO_SHADE_TABLE_SHADES;
 
 	// A bump is lit by the dot product of a tilted normal with the light, so the
 	// light is needed as a direction rather than as the shade it lands on
@@ -395,7 +396,7 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 		} else if (shadertype == RETRO_SHADE_FLAT) {
 			int shade = model->c + face->c;
 			float lambert = side * RETRO_RotatedDot(face->facenormal, RETRO_Render.lightsource);
-			shade = CLAMP128(shade + RETRO_ShadeFromLambert(lambert) * shades);
+			shade = CLAMP128(shade + RETRO_ShadeFractionFromLambert(lambert) * shades);
 			if (bumpmapping) {
 				// A flat shaded face carries one shade and one normal over all of
 				// it, which the bump mapper draws as every vertex holding both
@@ -411,7 +412,7 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 			for (int j = 0; j < face->vertices; j++) {
 				UnitVector *normal = &model->normal[face->vertexnormal[j]];
 				float lambert = side * RETRO_RotatedDot(*normal, RETRO_Render.lightsource);
-				point[j].c = CLAMP128(model->c + face->c + RETRO_ShadeFromLambert(lambert) * shades);
+				point[j].c = CLAMP128(model->c + face->c + RETRO_ShadeFractionFromLambert(lambert) * shades);
 				if (bumpmapping) {
 					point[j].n = normal->rdir * side;
 				}
@@ -566,6 +567,22 @@ inline void RETRO_RenderMatcapModel(Model3D *model, ClipRect clip = {})
 	}
 }
 
+inline void RETRO_RenderMaskedModel(Model3D *model, ClipRect clip = {})
+{
+	RETRO_SortFaces(model->twosided, model);
+
+	for (int i = 0; i < model->drawfaces; i++) {
+		Face *face = &model->face[model->drawface[i]];
+		PolygonPoint point[RETRO_MAX_FACEVERTICES];
+		for (int j = 0; j < face->vertices; j++) {
+			point[j].pos = model->vertex[face->vertex[j]].spos;
+			point[j].q = model->vertex[face->vertex[j]].q;
+		}
+		int color = model->c + face->c;
+		RETRO_DrawMaskedPolygon(point, face->vertices, color, model->mask, clip);
+	}
+}
+
 // One model, one depth range, so the depth buffer is cleared here by default.
 // A demo drawing several models that interleave passes cleardepth false and
 // clears once a frame itself, or each model would erase the depth of the ones
@@ -619,6 +636,9 @@ inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shade
 		break;
 	case RETRO_POLY_SHADER:
 		RETRO_RenderShaderModel(model, shadertype == RETRO_SHADE_FLAT, clip);
+		break;
+	case RETRO_POLY_MASKED:
+		RETRO_RenderMaskedModel(model, clip);
 		break;
 	}
 }

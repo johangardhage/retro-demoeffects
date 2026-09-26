@@ -172,16 +172,21 @@ inline vec3 RETRO_ReflectionHalfway(vec3 r, vec3 fallback)
 //
 // The map above reflects I0 about N, so the half-way vector of R goes
 // straight into the front-face scale of Nxy. For R reflected from I0 the two
-// agree only on a front face: past the silhouette R's half-way vector is -N,
-// so this path takes the Blinn/Newell flip where the one above folds. R does
-// not say which side of the disk N was on, so a ray cannot be folded. r need
-// not be unit: a reflection interpolated across a flat face is linear in
-// screen space only while it is left unnormalized. For R = I0 the bottom of
-// the rim stands in.
+// agree only on a front face: past the silhouette R's half-way vector is -N.
+// Taken as it is, that is the Blinn/Newell flip, and a ray passing I0 jumps
+// to the opposite side of the rim, which in a baked disk is a different
+// colour. So this path folds as the one above does: n, the unit normal R was
+// reflected about, says which side of the disk it is on, and a half-way
+// vector facing away from it is turned round, so the lookup comes back
+// inward from the rim it reached. r need not be unit. For R = I0, where there
+// is no half-way vector, n itself stands in.
 //
-inline void RETRO_GetReflectionMapCoordinates(vec3 r, int envmapwidth, int envmapheight, float &u, float &v)
+inline void RETRO_GetReflectionMapCoordinates(vec3 r, vec3 n, int envmapwidth, int envmapheight, float &u, float &v)
 {
-	vec3 h = RETRO_ReflectionHalfway(r, vec3{ 0.0f, 1.0f, 0.0f });
+	vec3 h = RETRO_ReflectionHalfway(r, n);
+	if (dot(h, n) < 0.0f) {
+		h = -h;
+	}
 
 	u = envmapwidth * (0.5f + 0.5f * h.x);
 	v = envmapheight * (0.5f + 0.5f * h.y);
@@ -1010,9 +1015,13 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, u
 
 //
 // Environment mapped polygon
-// point.n is the interpolated normal, or with reflectedray the interpolated
-// reflected ray, which only a reflection map is read by. Either arrives
-// multiplied by q, so it is perspective-correct, and is normalized at lookup.
+// point.n is the interpolated normal, multiplied by q so it is
+// perspective-correct, and normalized at lookup. With reflectedray point.p is
+// the view ray to the vertex, also times q, and each pixel reflects it about
+// its own normal, which only a reflection map is read by. Reflecting at the
+// corners and interpolating the rays would be exact only on a flat face: where
+// the normals differ, the corners' rays can average out to one pointing
+// nowhere near what the middle of the face reflects.
 //
 inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned char *envmap, bool lightingmap, bool reflectedray, int envmapwidth, int envmapheight, int envmapradius, ClipRect clip = {})
 {
@@ -1029,6 +1038,8 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 
 		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec3 dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
+		vec3 dpdx = ((p1->p - p0->p) * (p2->pos.y - p0->pos.y) - (p2->p - p0->p) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec3 dpdy = ((p1->pos.x - p0->pos.x) * (p2->p - p0->p) - (p2->pos.x - p0->pos.x) * (p1->p - p0->p)) / determinant;
 		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
 		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
@@ -1039,12 +1050,14 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 			float px = xstart + 0.5f;
 			float py = y + 0.5f;
 			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
+			vec3 p = p0->p + dpdx * (px - p0->pos.x) + dpdy * (py - p0->pos.y);
 			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
 				float e, w;
 				if (reflectedray) {
-					RETRO_GetReflectionMapCoordinates(n, envmapwidth, envmapheight, e, w);
+					vec3 normal = normalize(n);
+					RETRO_GetReflectionMapCoordinates(p - normal * (2.0f * dot(normal, p)), normal, envmapwidth, envmapheight, e, w);
 				} else {
 					RETRO_GetEnvMapCoordinates(n, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 				}
@@ -1055,6 +1068,7 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 					RETRO.framebuffer[offset] = envmap[envmapv * envmapwidth + envmapu];
 				}
 				n += dndx;
+				p += dpdx;
 				q += dqdx;
 			}
 		}

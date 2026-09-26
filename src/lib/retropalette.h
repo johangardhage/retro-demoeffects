@@ -271,6 +271,32 @@ inline RETRO_Palette RETRO_PhongColor(vec3 face, float theta, float specularity,
 	return color;
 }
 
+//
+// A color from 6-bit DAC values, each widened to 8 bits by repeating its top
+// bits, so 0 stays 0 and 63 becomes 255
+//
+inline RETRO_Palette RETRO_DACColor(int r, int g, int b)
+{
+	return RETRO_Palette{
+		(unsigned char)(r << 2 | r >> 4),
+		(unsigned char)(g << 2 | g >> 4),
+		(unsigned char)(b << 2 | b >> 4),
+	};
+}
+
+//
+// Which of five levels a channel is at, hue steps round a ring of 24: it
+// rises for 4, holds at the top for 8, falls for 4 and rests for 8
+//
+inline int RETRO_HueStep(int hue)
+{
+	hue = (hue + 24) % 24;
+	if (hue < 4) return hue;
+	if (hue < 12) return 4;
+	if (hue < 16) return 16 - hue;
+	return 0;
+}
+
 // *******************************************************************
 // Public functions
 // *******************************************************************
@@ -490,18 +516,62 @@ inline void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 // lighting map over a shade table, takes brightest one below the table's
 // height and steps at the height, so it runs out at 0 just short of grazing
 //
-// Pixel (x, y) stands for a normal tilted by one angle along each axis, a
-// quarter turn at the map's edge, and the angle between it and the view
-// axis picks the entry:
+// Pixel (x, y) stands for a normal tilted from the view axis by an angle
+// that grows evenly with its distance from the middle, a quarter turn at the
+// map's edge, and that angle picks the entry:
+//
+//   r = |((x - cx)/cx, (y - cy)/cy)|
+//   alpha = r * π/2
+//   entry = max(brightest - floor(steps * r), 0)
+//
+// Past the edge, r ≥ 1, the entry is 0, so the lit ball is round
+//
+// It is not a drop-in for RETRO_CreatePhongMap. The environment lookup reads
+// the texel at W/2 + radius * N, taking the offset to be the normal itself,
+// which is how RETRO_CreatePhongMap lays the ball out. Read that way, this
+// map shades a normal as though its angle were (π/2) |Nxy| rather than
+// asin |Nxy|: 45 degrees where the surface is at 30, so the highlight comes
+// out tighter and the falloff steeper than phong, and a radius short of the
+// map's half width never reaches the grazing rim. That is the look it was
+// made for, not the lighting
+//
+inline void RETRO_CreateRoundAnglePhongMap(unsigned char *buffer, int width, int height, int brightest = RETRO_COLORS - 1, float steps = RETRO_COLORS - 1)
+{
+	float centerx = (width - 1) * 0.5f;
+	float centery = (height - 1) * 0.5f;
+
+	for (int y = 0; y < height; y++) {
+		float dy = (y - centery) / centery;
+		for (int x = 0; x < width; x++) {
+			float dx = (x - centerx) / centerx;
+			float radius = sqrt(dx * dx + dy * dy);
+
+			int paletteindex = 0;
+			if (radius < 1.0f) {
+				paletteindex = MAX(brightest - (int)floor(radius * steps), 0);
+			}
+			buffer[y * width + x] = paletteindex;
+		}
+	}
+}
+
+//
+// The same map with the angle laid out along each axis instead, the way the
+// maps it reproduces were made. Pixel (x, y) stands for a normal tilted by
+// one angle along each axis, a quarter turn at the map's edge, and the angle
+// between it and the view axis picks the entry:
 //
 //   (tx, ty) = ((x - cx)/cx, (y - cy)/cy) * π/2
 //   nz = sqrt(1 - sin^2 tx - sin^2 ty)
 //   alpha = acos(nz)
 //   entry = max(brightest - floor(steps * alpha / (π/2)), 0)
 //
-// Where the two sines add up past 1 there is no such normal, and the entry is
-// 0. That bends the rim of the disk in along the diagonals, so the map is not
-// round
+// Along an axis that is the round map. Where the two sines add up past 1
+// there is no such normal, and the entry is 0: sin^2 tx + sin^2 ty = 1 is
+// tx + ty = π/2, so the lit area is a diamond, its edge |x - cx|/cx +
+// |y - cy|/cy = 1. A lookup of radius R reaches grazing along a diagonal
+// already at R = W/(2√2), and at that radius the entries fall to 0 within a
+// texel
 //
 // alpha lands exactly on a step at some pixels (sin^2 0.1π + sin^2 0.3π =
 // 3/4, so alpha = π/3), and there rounding decides which side it falls. The
@@ -510,16 +580,7 @@ inline void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 // another order, sends a few of them the other way. A compiler that fuses
 // the sum of squares into one operation differently could too
 //
-// It is not a drop-in for RETRO_CreatePhongMap. The environment lookup reads
-// the texel at W/2 + radius * N, taking the offset to be the normal itself,
-// which is how RETRO_CreatePhongMap lays the ball out. Read that way, this
-// map shades a normal as though its angle were (π/2) * Nx along an axis
-// rather than asin(Nx): 45 degrees where the surface is at 30, so the
-// highlight comes out tighter and the falloff steeper than phong, and a
-// radius short of the map's half width never reaches the grazing rim. That
-// is the look it was made for, not the lighting
-//
-inline void RETRO_CreateAnglePhongMap(unsigned char *buffer, int width, int height, int brightest = RETRO_COLORS - 1, float steps = RETRO_COLORS - 1)
+inline void RETRO_CreateDiamondAnglePhongMap(unsigned char *buffer, int width, int height, int brightest = RETRO_COLORS - 1, float steps = RETRO_COLORS - 1)
 {
 	const float quarter = (float)M_PI / 2;
 	float centerx = (width - 1) * 0.5f;
@@ -542,8 +603,9 @@ inline void RETRO_CreateAnglePhongMap(unsigned char *buffer, int width, int heig
 }
 
 //
-// The palette RETRO_CreateAnglePhongMap is read through: entry i lit by the
-// phong model at the angle the map gives it, the face-on end of its step,
+// The palette RETRO_CreateRoundAnglePhongMap and
+// RETRO_CreateDiamondAnglePhongMap are read through: entry i lit by the phong
+// model at the angle the map gives it, the face-on end of its step,
 //
 //   theta = (255 - i) / 255 * π/2
 //
@@ -627,20 +689,26 @@ inline unsigned char RETRO_NearestPaletteIndex(RETRO_Palette target, const RETRO
 // in an explicit palette. Several demos composite a true-color pixel and
 // need it as a palette index every pixel; matching straight against
 // RETRO_NearestPaletteIndex's linear scan there would cost a 256-entry scan
-// per pixel, so they quantize into this cube once at startup instead. lut
-// is flattened row-major (r * cuberes + g) * cuberes + b, the layout a
-// caller's own unsigned char lut[cuberes][cuberes][cuberes] already has, so
-// it can be passed as &lut[0][0][0]
+// per pixel, so they quantize into this cube once at startup instead.
 //
-inline void RETRO_CreateColorLUT(const RETRO_Palette *palette, int colors, int cuberes, unsigned char *lut)
+// cuberes is a power of two, and a color is looked up by shifting each
+// component down to it, r >> 3 for a cube of 32, so a cell holds the colors
+// that truncate to it and is matched at its center. lut is flattened
+// row-major (r * cuberes + g) * cuberes + b, the layout a caller's own
+// unsigned char lut[cuberes][cuberes][cuberes] already has, so it can be
+// passed as &lut[0][0][0]
+//
+inline void RETRO_CreateColorLUT(const RETRO_Palette *palette, int cuberes, unsigned char *lut, int colors = RETRO_COLORS)
 {
+	int cell = RETRO_COLORS / cuberes;
+
 	for (int r = 0; r < cuberes; r++) {
 		for (int g = 0; g < cuberes; g++) {
 			for (int b = 0; b < cuberes; b++) {
 				RETRO_Palette target = {
-					(unsigned char)(r * 255 / (cuberes - 1)),
-					(unsigned char)(g * 255 / (cuberes - 1)),
-					(unsigned char)(b * 255 / (cuberes - 1)),
+					(unsigned char)(r * cell + cell / 2),
+					(unsigned char)(g * cell + cell / 2),
+					(unsigned char)(b * cell + cell / 2),
 				};
 				lut[(r * cuberes + g) * cuberes + b] = RETRO_NearestPaletteIndex(target, palette, colors);
 			}
@@ -675,51 +743,39 @@ inline void RETRO_AddHistogramColor(RETRO_ColorHistogram *histogram, RETRO_Palet
 }
 
 //
-// A palette fitted to the gathered colours
+// Fit a palette to weighted colours, every entry after the first held ones,
+// which the caller has already set
 //
-// Each entry starts on the colour that is heaviest for its distance to the
-// entries before it, so the seeds cover the colours by how much they weigh.
-// Then k-means refines them: every colour goes to its nearest entry, the
-// squared RGB distance RETRO_NearestPaletteIndex matches with, and each entry
-// moves to the mean of what it was given.
-//
-// The held colours are the caller's, colours that must come out exactly,
-// such as a flat sky. They take the last entries of the palette and are
+// Each fitted entry starts on the colour that is heaviest for its distance to
+// the entries before it, so the seeds cover the colours by how much they
+// weigh. Then k-means refines them: every colour goes to its nearest entry,
+// the squared RGB distance RETRO_NearestPaletteIndex matches with, and each
+// fitted entry moves to the mean of what it was given. The held entries are
 // never moved, but they take the colours nearest them like any other entry
 //
-inline void RETRO_CreateHistogramPalette(const RETRO_ColorHistogram *histogram, RETRO_Palette *palette, const RETRO_Palette *held = NULL, int heldcolors = 0, int colors = RETRO_COLORS, int iterations = 16)
+inline void RETRO_FitPalette(const vec3 *color, const float *weight, int count, RETRO_Palette *palette, int held, int colors, int iterations, int colormax)
 {
-	int fitted = colors - heldcolors;
-	for (int i = 0; i < heldcolors; i++) palette[fitted + i] = held[i];
-
-	// The cells that hold anything, with their colours
-	float *weight = (float *)malloc(RETRO_HISTOGRAM_CELLS * sizeof(float));
-	vec3 *color = (vec3 *)malloc(RETRO_HISTOGRAM_CELLS * sizeof(vec3));
-	float *distance = (float *)malloc(RETRO_HISTOGRAM_CELLS * sizeof(float));
-	if (!weight || !color || !distance) {
+	float *distance = (float *)malloc(count * sizeof(float));
+	if (!distance) {
 		RETRO_RageQuit("Cannot allocate palette fitting memory\n");
 	}
-	int count = 0;
-	for (int cell = 0; cell < RETRO_HISTOGRAM_CELLS; cell++) {
-		if (histogram->weight[cell] <= 0) continue;
-		weight[count] = histogram->weight[cell];
-		color[count] = histogram->sum[cell] / histogram->weight[cell];
-		distance[count] = 1e30f;
-		count++;
-	}
+	for (int i = 0; i < count; i++) distance[i] = 1e30f;
 
-	// The seeds, after the caller's entries
+	// The seeds, after the held entries
 	vec3 entry[RETRO_COLORS] = {};
-	for (int i = fitted; i < colors; i++) entry[i] = { (float)palette[i].r, (float)palette[i].g, (float)palette[i].b };
-	for (int n = 0; n < colors; n++) {
-		int e = (n + fitted) % colors;
-		if (e < fitted) {
-			int best = 0;
-			for (int i = 1; i < count; i++) {
-				if (weight[i] * distance[i] > weight[best] * distance[best]) best = i;
-			}
-			entry[e] = count > 0 ? color[best] : vec3{};
+	for (int e = 0; e < held; e++) {
+		entry[e] = { (float)palette[e].r, (float)palette[e].g, (float)palette[e].b };
+		for (int i = 0; i < count; i++) {
+			vec3 d = color[i] - entry[e];
+			distance[i] = MIN(distance[i], dot(d, d));
 		}
+	}
+	for (int e = held; e < colors; e++) {
+		int best = 0;
+		for (int i = 1; i < count; i++) {
+			if (weight[i] * distance[i] > weight[best] * distance[best]) best = i;
+		}
+		entry[e] = count > 0 ? color[best] : vec3{};
 		for (int i = 0; i < count; i++) {
 			vec3 d = color[i] - entry[e];
 			distance[i] = MIN(distance[i], dot(d, d));
@@ -744,22 +800,50 @@ inline void RETRO_CreateHistogramPalette(const RETRO_ColorHistogram *histogram, 
 			sum[match] += color[i] * weight[i];
 			total[match] += weight[i];
 		}
-		for (int e = 0; e < fitted; e++) {
+		for (int e = held; e < colors; e++) {
 			if (total[e] > 0) entry[e] = sum[e] / total[e];
 		}
 	}
 
-	for (int e = 0; e < fitted; e++) {
+	for (int e = held; e < colors; e++) {
 		palette[e] = {
-			(unsigned char)CLAMP256((int)(entry[e].x + 0.5f)),
-			(unsigned char)CLAMP256((int)(entry[e].y + 0.5f)),
-			(unsigned char)CLAMP256((int)(entry[e].z + 0.5f)),
+			(unsigned char)CLAMP((int)(entry[e].x + 0.5f), 0, colormax + 1),
+			(unsigned char)CLAMP((int)(entry[e].y + 0.5f), 0, colormax + 1),
+			(unsigned char)CLAMP((int)(entry[e].z + 0.5f), 0, colormax + 1),
 		};
 	}
 
+	free(distance);
+}
+
+//
+// A palette fitted to the gathered colours, by RETRO_FitPalette
+//
+// The held colors are the caller's, colors that must come out exactly, such
+// as a flat sky. They take the first entries of the palette
+//
+inline void RETRO_CreateHistogramPalette(const RETRO_ColorHistogram *histogram, RETRO_Palette *palette, const RETRO_Palette *held = NULL, int heldcolors = 0, int colors = RETRO_COLORS, int iterations = 16)
+{
+	for (int i = 0; i < heldcolors; i++) palette[i] = held[i];
+
+	// The cells that hold anything, with their colours
+	float *weight = (float *)malloc(RETRO_HISTOGRAM_CELLS * sizeof(float));
+	vec3 *color = (vec3 *)malloc(RETRO_HISTOGRAM_CELLS * sizeof(vec3));
+	if (!weight || !color) {
+		RETRO_RageQuit("Cannot allocate palette fitting memory\n");
+	}
+	int count = 0;
+	for (int cell = 0; cell < RETRO_HISTOGRAM_CELLS; cell++) {
+		if (histogram->weight[cell] <= 0) continue;
+		weight[count] = histogram->weight[cell];
+		color[count] = histogram->sum[cell] / histogram->weight[cell];
+		count++;
+	}
+
+	RETRO_FitPalette(color, weight, count, palette, heldcolors, colors, iterations, 255);
+
 	free(weight);
 	free(color);
-	free(distance);
 }
 
 //
@@ -768,263 +852,55 @@ inline void RETRO_CreateHistogramPalette(const RETRO_ColorHistogram *histogram, 
 // entries left black. A demo that draws with the colors it finds there, rather
 // than setting a palette of its own, is drawing against this
 //
-static const RETRO_Palette RETRO_Default8bitPalette[256] = {
-	{ 0, 0, 0 },
-	{ 0, 0, 170 },
-	{ 0, 170, 0 },
-	{ 0, 170, 170 },
-	{ 170, 0, 0 },
-	{ 170, 0, 170 },
-	{ 170, 85, 0 },
-	{ 170, 170, 170 },
-	{ 85, 85, 85 },
-	{ 85, 85, 255 },
-	{ 85, 255, 85 },
-	{ 85, 255, 255 },
-	{ 255, 85, 85 },
-	{ 255, 85, 255 },
-	{ 255, 255, 85 },
-	{ 255, 255, 255 },
-	{ 0, 0, 0 },
-	{ 20, 20, 20 },
-	{ 32, 32, 32 },
-	{ 44, 44, 44 },
-	{ 56, 56, 56 },
-	{ 69, 69, 69 },
-	{ 81, 81, 81 },
-	{ 97, 97, 97 },
-	{ 113, 113, 113 },
-	{ 130, 130, 130 },
-	{ 146, 146, 146 },
-	{ 162, 162, 162 },
-	{ 182, 182, 182 },
-	{ 203, 203, 203 },
-	{ 227, 227, 227 },
-	{ 255, 255, 255 },
-	{ 0, 0, 255 },
-	{ 65, 0, 255 },
-	{ 125, 0, 255 },
-	{ 190, 0, 255 },
-	{ 255, 0, 255 },
-	{ 255, 0, 190 },
-	{ 255, 0, 125 },
-	{ 255, 0, 65 },
-	{ 255, 0, 0 },
-	{ 255, 65, 0 },
-	{ 255, 125, 0 },
-	{ 255, 190, 0 },
-	{ 255, 255, 0 },
-	{ 190, 255, 0 },
-	{ 125, 255, 0 },
-	{ 65, 255, 0 },
-	{ 0, 255, 0 },
-	{ 0, 255, 65 },
-	{ 0, 255, 125 },
-	{ 0, 255, 190 },
-	{ 0, 255, 255 },
-	{ 0, 190, 255 },
-	{ 0, 125, 255 },
-	{ 0, 65, 255 },
-	{ 125, 125, 255 },
-	{ 158, 125, 255 },
-	{ 190, 125, 255 },
-	{ 223, 125, 255 },
-	{ 255, 125, 255 },
-	{ 255, 125, 223 },
-	{ 255, 125, 190 },
-	{ 255, 125, 158 },
-	{ 255, 125, 125 },
-	{ 255, 158, 125 },
-	{ 255, 190, 125 },
-	{ 255, 223, 125 },
-	{ 255, 255, 125 },
-	{ 223, 255, 125 },
-	{ 190, 255, 125 },
-	{ 158, 255, 125 },
-	{ 125, 255, 125 },
-	{ 125, 255, 158 },
-	{ 125, 255, 190 },
-	{ 125, 255, 223 },
-	{ 125, 255, 255 },
-	{ 125, 223, 255 },
-	{ 125, 190, 255 },
-	{ 125, 158, 255 },
-	{ 182, 182, 255 },
-	{ 199, 182, 255 },
-	{ 219, 182, 255 },
-	{ 235, 182, 255 },
-	{ 255, 182, 255 },
-	{ 255, 182, 235 },
-	{ 255, 182, 219 },
-	{ 255, 182, 199 },
-	{ 255, 182, 182 },
-	{ 255, 199, 182 },
-	{ 255, 219, 182 },
-	{ 255, 235, 182 },
-	{ 255, 255, 182 },
-	{ 235, 255, 182 },
-	{ 219, 255, 182 },
-	{ 199, 255, 182 },
-	{ 182, 255, 182 },
-	{ 182, 255, 199 },
-	{ 182, 255, 219 },
-	{ 182, 255, 235 },
-	{ 182, 255, 255 },
-	{ 182, 235, 255 },
-	{ 182, 219, 255 },
-	{ 182, 199, 255 },
-	{ 0, 0, 113 },
-	{ 28, 0, 113 },
-	{ 56, 0, 113 },
-	{ 85, 0, 113 },
-	{ 113, 0, 113 },
-	{ 113, 0, 85 },
-	{ 113, 0, 56 },
-	{ 113, 0, 28 },
-	{ 113, 0, 0 },
-	{ 113, 28, 0 },
-	{ 113, 56, 0 },
-	{ 113, 85, 0 },
-	{ 113, 113, 0 },
-	{ 85, 113, 0 },
-	{ 56, 113, 0 },
-	{ 28, 113, 0 },
-	{ 0, 113, 0 },
-	{ 0, 113, 28 },
-	{ 0, 113, 56 },
-	{ 0, 113, 85 },
-	{ 0, 113, 113 },
-	{ 0, 85, 113 },
-	{ 0, 56, 113 },
-	{ 0, 28, 113 },
-	{ 56, 56, 113 },
-	{ 69, 56, 113 },
-	{ 85, 56, 113 },
-	{ 97, 56, 113 },
-	{ 113, 56, 113 },
-	{ 113, 56, 97 },
-	{ 113, 56, 85 },
-	{ 113, 56, 69 },
-	{ 113, 56, 56 },
-	{ 113, 69, 56 },
-	{ 113, 85, 56 },
-	{ 113, 97, 56 },
-	{ 113, 113, 56 },
-	{ 97, 113, 56 },
-	{ 85, 113, 56 },
-	{ 69, 113, 56 },
-	{ 56, 113, 56 },
-	{ 56, 113, 69 },
-	{ 56, 113, 85 },
-	{ 56, 113, 97 },
-	{ 56, 113, 113 },
-	{ 56, 97, 113 },
-	{ 56, 85, 113 },
-	{ 56, 69, 113 },
-	{ 81, 81, 113 },
-	{ 89, 81, 113 },
-	{ 97, 81, 113 },
-	{ 105, 81, 113 },
-	{ 113, 81, 113 },
-	{ 113, 81, 105 },
-	{ 113, 81, 97 },
-	{ 113, 81, 89 },
-	{ 113, 81, 81 },
-	{ 113, 89, 81 },
-	{ 113, 97, 81 },
-	{ 113, 105, 81 },
-	{ 113, 113, 81 },
-	{ 105, 113, 81 },
-	{ 97, 113, 81 },
-	{ 89, 113, 81 },
-	{ 81, 113, 81 },
-	{ 81, 113, 89 },
-	{ 81, 113, 97 },
-	{ 81, 113, 105 },
-	{ 81, 113, 113 },
-	{ 81, 105, 113 },
-	{ 81, 97, 113 },
-	{ 81, 89, 113 },
-	{ 0, 0, 65 },
-	{ 16, 0, 65 },
-	{ 32, 0, 65 },
-	{ 48, 0, 65 },
-	{ 65, 0, 65 },
-	{ 65, 0, 48 },
-	{ 65, 0, 32 },
-	{ 65, 0, 16 },
-	{ 65, 0, 0 },
-	{ 65, 16, 0 },
-	{ 65, 32, 0 },
-	{ 65, 48, 0 },
-	{ 65, 65, 0 },
-	{ 48, 65, 0 },
-	{ 32, 65, 0 },
-	{ 16, 65, 0 },
-	{ 0, 65, 0 },
-	{ 0, 65, 16 },
-	{ 0, 65, 32 },
-	{ 0, 65, 48 },
-	{ 0, 65, 65 },
-	{ 0, 48, 65 },
-	{ 0, 32, 65 },
-	{ 0, 16, 65 },
-	{ 32, 32, 65 },
-	{ 40, 32, 65 },
-	{ 48, 32, 65 },
-	{ 56, 32, 65 },
-	{ 65, 32, 65 },
-	{ 65, 32, 56 },
-	{ 65, 32, 48 },
-	{ 65, 32, 40 },
-	{ 65, 32, 32 },
-	{ 65, 40, 32 },
-	{ 65, 48, 32 },
-	{ 65, 56, 32 },
-	{ 65, 65, 32 },
-	{ 56, 65, 32 },
-	{ 48, 65, 32 },
-	{ 40, 65, 32 },
-	{ 32, 65, 32 },
-	{ 32, 65, 40 },
-	{ 32, 65, 48 },
-	{ 32, 65, 56 },
-	{ 32, 65, 65 },
-	{ 32, 56, 65 },
-	{ 32, 48, 65 },
-	{ 32, 40, 65 },
-	{ 44, 44, 65 },
-	{ 48, 44, 65 },
-	{ 52, 44, 65 },
-	{ 60, 44, 65 },
-	{ 65, 44, 65 },
-	{ 65, 44, 60 },
-	{ 65, 44, 52 },
-	{ 65, 44, 48 },
-	{ 65, 44, 44 },
-	{ 65, 48, 44 },
-	{ 65, 52, 44 },
-	{ 65, 60, 44 },
-	{ 65, 65, 44 },
-	{ 60, 65, 44 },
-	{ 52, 65, 44 },
-	{ 48, 65, 44 },
-	{ 44, 65, 44 },
-	{ 44, 65, 48 },
-	{ 44, 65, 52 },
-	{ 44, 65, 60 },
-	{ 44, 65, 65 },
-	{ 44, 60, 65 },
-	{ 44, 52, 65 },
-	{ 44, 48, 65 },
-	{ 0, 0, 0 },
-	{ 0, 0, 0 },
-	{ 0, 0, 0 },
-	{ 0, 0, 0 },
-	{ 0, 0, 0 },
-	{ 0, 0, 0 },
-	{ 0, 0, 0 },
-	{ 0, 0, 0 }
-};
+// The BIOS holds 6-bit values, widened here to 8 bits. The grays and each
+// block's five levels are the BIOS's own, and follow no formula
+//
+inline void RETRO_CreateDefault8bitPalette(RETRO_Palette *palette = NULL)
+{
+	static const int Grays[16] = { 0, 5, 8, 11, 14, 17, 20, 24, 28, 32, 36, 40, 45, 50, 56, 63 };
+
+	// Each block's levels, from low to high: value 63, 28 and 16, each at
+	// full, middle and low saturation
+	static const int Levels[9][5] = {
+		{ 0, 16, 31, 47, 63 }, { 31, 39, 47, 55, 63 }, { 45, 49, 54, 58, 63 },
+		{ 0, 7, 14, 21, 28 }, { 14, 17, 21, 24, 28 }, { 20, 22, 24, 26, 28 },
+		{ 0, 4, 8, 12, 16 }, { 8, 10, 12, 14, 16 }, { 11, 12, 13, 15, 16 },
+	};
+
+	int color = 0;
+
+	// The EGA colors, bit 2 red, bit 1 green, bit 0 blue and bit 3 brighter.
+	// Color 6 is brown rather than dark yellow
+	for (int i = 0; i < 16; i++) {
+		int intensity = i & 8 ? 21 : 0;
+		int red = (i & 4 ? 42 : 0) + intensity;
+		int green = (i & 2 ? 42 : 0) + intensity;
+		int blue = (i & 1 ? 42 : 0) + intensity;
+		if (i == 6) {
+			green = 21;
+		}
+		RETRO_SetColor(color++, RETRO_DACColor(red, green, blue), palette);
+	}
+
+	for (int i = 0; i < 16; i++) {
+		RETRO_SetColor(color++, RETRO_DACColor(Grays[i], Grays[i], Grays[i]), palette);
+	}
+
+	// Round the hues from blue through red, yellow, green and cyan back to
+	// blue. Green steps 8 hues behind red and blue 8 ahead
+	for (int block = 0; block < 9; block++) {
+		const int *level = Levels[block];
+		for (int hue = 0; hue < 24; hue++) {
+			int red = level[RETRO_HueStep(hue)];
+			int green = level[RETRO_HueStep(hue - 8)];
+			int blue = level[RETRO_HueStep(hue + 8)];
+			RETRO_SetColor(color++, RETRO_DACColor(red, green, blue), palette);
+		}
+	}
+
+	while (color < RETRO_COLORS) {
+		RETRO_SetColor(color++, RETRO_BLACK, palette);
+	}
+}
 
 #endif

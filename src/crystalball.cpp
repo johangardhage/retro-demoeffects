@@ -198,8 +198,5 @@ void DEMO_Initialize(void)
 	if (count != 256) RETRO_RageQuit("Crystal ball palette must fill all 256 colors\n");
 	RETRO_SetPalette(palette);
 	// Prequantize RGB to the shared 8-bit palette; no color searches per frame.
-	for (int r = 0; r < 32; r++) for (int g = 0; g < 32; g++) for (int b = 0; b < 32; b++) {
-		RETRO_Palette color = {(unsigned char)(r * 8 + 4), (unsigned char)(g * 8 + 4), (unsigned char)(b * 8 + 4)};
-		ColorLookup[(r * 32 + g) * 32 + b] = RETRO_NearestPaletteIndex(color, palette);
-	}
+	RETRO_CreateColorLUT(palette, 32, ColorLookup);
 }

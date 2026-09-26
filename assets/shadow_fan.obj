@@ -9,7 +9,7 @@
 #             since the fan is untextured, 64 vertex normals, each averaged
 #             over the faces meeting at it, so the edges shade smoothly,
 #             and 108 triangular faces.
-# Used by:    shadow2 and shadow5, a plain grey lit and Gouraud shaded.
+# Used by:    shadow3 and shadow4, a plain grey lit and Gouraud shaded.
 #
 o shadow_fan
 v -1.000000 -0.250000 0.000000

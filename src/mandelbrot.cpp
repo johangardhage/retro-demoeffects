@@ -104,5 +104,5 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_SetPalette(RETRO_Default8bitPalette);
+	RETRO_CreateDefault8bitPalette();
 }

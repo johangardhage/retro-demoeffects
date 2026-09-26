@@ -11,7 +11,8 @@
 #             atlas. A renderer that ignores UVs, which is most of this
 #             file's users, is unaffected by their being here.
 # Used by:    wirecube, wirecube2, hiddenlinecube, flatcube, firecube,
-#             glenzshadedcube, rubbervector4, stencilvectors, multicube.
+#             glenzshadedcube, rubbervector4, rubbervector5, stencilvectors,
+#             multicube.
 #
 o cubequads
 v 1.000000 1.000000 1.000000

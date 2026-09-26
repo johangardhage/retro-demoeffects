@@ -1,16 +1,15 @@
 //
 // Shadow 4
 //
-// A lit, textured landscape to drive over, an object orbiting above it, and
-// four lights - ambient, a sun, and a green and a red point light circling
-// the world - with a cube marking each point light. Each point light throws
-// a shadow of the object onto the ground, and either can be lowered and
-// raised: the nearer it comes down to the object, the larger its shadow.
-// Either shadow can instead be cast from straight above the object, at its
-// light's altitude.
+// A flat, lit, sandstone plain to drive over, a fan spinning over its centre,
+// and four lights - ambient, a sun, and a green and a red point light
+// circling the world - with a cube marking each point light, and either can
+// be lowered and raised. The fan's shadow is not cast by any of them, but
+// painted: lightmaps darken the sandstone under it.
 //
-// The world is measured in units of its own, 4000 across the 40 by 40 height
-// map; WORLD() takes those to map cells.
+// The world is measured in units of its own, 1000 across the 16 by 16 height
+// map; WORLD() takes those to map cells. The map is all zeros, so it is
+// made here rather than loaded.
 //
 // Two point lights have a hue, so a vertex's light is three numbers: a
 // neutral level, and how much further green and red reach. All three are
@@ -19,31 +18,33 @@
 //
 //   table[t][n][g][r] = nearest(texture[t] · (min(n + r, 1), min(n + g, 1), n))
 //
-// Each shadow is the convex outline of the object's corners as its light
-// sees them, each corner of it followed along its ray from the light to where
-// it meets the ground and lifted just above it. On flat ground, an object of
-// radius r at height h under a light at height l throws a shadow of radius
-// r * l / (l - h), stretched away from the light by how far to the side of
-// it the object is. It falls off the map when the light comes down near the
-// object's height, and tilts and bends with a slope rather than floating over
-// it. It is depth tested but writes no depth, and darkens what is under it
-// through a table, so where the two shadows cross it is darker still. With
-// a point light out, or down level with any of the object, there is none
-// from it.
+// The fan is untextured, a plain grey, and is lit like the textures through
+// a table of its own, as a texture of one texel.
+//
+// A lightmap is a level of light for every texel of the ground's texture,
+// stretched over the ground as the texture is. Each texel is darkened to its
+// level before the light above is added, through a table from the texture's
+// palette onto itself:
+//
+//   texture[x, y] = nearest(sandstone[x, y] · lightmap[x, y])
+//
+// The fan's four blades repeat every quarter turn, so nine lightmaps, a
+// ninth of that apart, hold every turn of its shadow, and the one nearest the
+// fan's own turn is laid on the texture whenever it changes. The texture's
+// palette holds the sandstone's shadowed colours besides its own.
 //
 // The screen's palette is fitted as the demo starts, to the colours those
-// tables will ask for: each texture's colours, as often as its texels have
-// them, under each light as often as the ground sees it with the point
-// lights at points round their paths, and the ground's again in shadow.
+// tables will ask for: the ground's, as often as its texels have them under
+// the lightmaps, and the fan's grey, each under each light as often as the
+// ground sees it with the point lights at points round their paths.
 // Changing a light changes the palette with it.
 //
 // Faces are cut at the near plane in the camera's frame before they are
 // projected, so one reaching from behind the camera leaves no hole.
 //
 // Up/Down drive, Left/Right turn. L all lighting, A ambient, I sun, P both
-// point lights, G and R the green and the red one, O next object, 1 and 2
-// lower and raise the green light, 3 and 4 the red one, C cast from above or
-// from the lights, H help.
+// point lights, G and R the green and the red one, 1 and 2 lower and raise
+// the green light, 3 and 4 the red one, H help.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -59,9 +60,9 @@
 #include "lib/retrofont.h"
 #include "lib/retrovector.h"
 
-// The terrain is 4000 world units across 40 samples
-#define WORLD(units) ((units) * (40 - 1) / 4000.0f)
-#define TO_WORLD(cells) ((cells) * 4000.0f / (40 - 1))
+// The terrain is 1000 world units across 16 samples
+#define WORLD(units) ((units) * (16 - 1) / 1000.0f)
+#define TO_WORLD(cells) ((cells) * 1000.0f / (16 - 1))
 
 #define TERRAIN_SCALE WORLD(700.0f / 255) // map cells of height per stored byte
 
@@ -79,40 +80,25 @@
 #define LIGHT_LEVELS 32 // neutral light, in the tables
 #define TINT_LEVELS 8 // and each point light's colour beyond it
 
-#define OBJECT_SCALE WORLD(40)
-#define OBJECT_ORBIT WORLD(150) // radius of the orbit about the world's centre
-#define OBJECT_ALTITUDE WORLD(200) // mean height of the orbit
-#define OBJECT_BOB WORLD(75) // and how far it rises and falls, once a lap
-#define OBJECT_RATE (30 * DEG2RAD) // radians a second round the orbit
+#define OBJECT_SCALE WORLD(20)
+#define OBJECT_ALTITUDE WORLD(200) // over the world's centre
+#define OBJECT_RATE (300 * DEG2RAD) // radians a second it spins
 #define LIGHT_OBJECT_SCALE WORLD(10)
-
-#define SHADOW_LIFT WORLD(25) // above the ground it lies on
-#define SHADOW_MAX_CORNERS 30 // on a shadow's outline; a model that needs more casts none
-#define SHADOW_STEP WORLD(10) // along a ray, looking for the ground
-#define SHADOW_LIGHT 0.5f // fraction of the light left in the shadow
-
-#define PALETTE_TURNS 8 // points round the point lights' paths the palette is fitted at
-#define OBJECT_WEIGHT (1 / 8.0f) // an object texture's say in the palette, beside the ground's
-#define SHADOW_WEIGHT (1 / 4.0f) // and the ground's in shadow
 
 #define TEXTURE_SIZE 256 // every texture, on a side
 
-enum { ASSET_TERRAIN, ASSET_EARTH, ASSET_CUBE, ASSET_HEIGHTMAP };
-#define TEXTURES (ASSET_HEIGHTMAP - ASSET_TERRAIN)
+#define LIGHTMAPS 9 // the fan's shadow, one after the other in their image
+#define LIGHTMAP_TURN (10 * DEG2RAD) // radians the fan turns from one to the next
+#define NO_LIGHTMAP -1
+
+#define PALETTE_TURNS 8 // points round the point lights' paths the palette is fitted at
+#define OBJECT_WEIGHT (1 / 8.0f) // an object texture's say in the palette, beside the ground's
+
+enum { ASSET_TERRAIN, ASSET_LIGHTMAPS };
 #define NO_TEXTURE -1
-enum { MODEL_SPHERE, MODEL_CUBE, MODELS };
+#define GREY -2 // no texture, but lit: the fan's plain grey
+enum { MODEL_FAN, MODEL_CUBE, MODELS };
 enum { LIGHT_GREEN, LIGHT_RED, POINT_LIGHTS };
-
-struct Object {
-	int model;
-	int texture;
-};
-
-static const Object Objects[] = {
-	{ MODEL_SPHERE, ASSET_EARTH },
-	{ MODEL_CUBE, ASSET_CUBE }
-};
-static constexpr int OBJECTS = sizeof(Objects) / sizeof(Objects[0]);
 
 // Light as summed, reduced to the numbers that differ
 struct Light {
@@ -121,10 +107,16 @@ struct Light {
 };
 static_assert(POINT_LIGHTS <= RETRO_MAX_TINTS, "Each point light needs a tint of its own");
 
-static unsigned char LightTableData[TEXTURES][RETRO_COLORS][LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS];
-static unsigned char ShadowTable[RETRO_COLORS];
+static unsigned char LightTableData[RETRO_COLORS][LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS]; // the ground's
+static unsigned char GreyTable[LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS]; // and on the fan's grey
+static unsigned char GreyTexel; // the one texel of the grey, the table's only row
+static unsigned char LightmapTable[RETRO_COLORS][RETRO_COLORS]; // a texel at each lightmap level
+static unsigned char Sandstone[TEXTURE_SIZE * TEXTURE_SIZE]; // the ground's texture under no lightmap
+static int AppliedLightmap = NO_LIGHTMAP; // none yet
 static unsigned char ColorBlack, ColorTextGreen, ColorWhite, ColorCubeGreen, ColorCubeRed, ColorSky, ColorGround;
 static Model3D *Models[MODELS];
+static unsigned char FlatGround[16 * 16]; // the height map
+static const RETRO_Palette Grey = { 191, 191, 191 };
 static const vec3 Sun = normalize(vec3{ 1, 1, -1 }); // the infinite light, towards it
 
 // The screen's palette, and what it is fitted to
@@ -137,7 +129,6 @@ static const RETRO_Palette CubeGreen = { 0, 255, 10 }, CubeRed = { 255, 0, 0 }, 
 static const RETRO_Palette Held[] = { RETRO_BLACK, RETRO_GREEN, RETRO_WHITE, CubeGreen, CubeRed, Sky, Ground };
 static constexpr int HELD = sizeof(Held) / sizeof(Held[0]);
 
-static int CurrentObject;
 static const float PointLightKL[POINT_LIGHTS] = { POINT_LIGHT_KL, POINT_LIGHT2_KL };
 static vec3 PointLightPosition[POINT_LIGHTS];
 static float PointLightAltitude[POINT_LIGHTS] = { POINT_LIGHT_ALTITUDE, POINT_LIGHT_ALTITUDE };
@@ -148,7 +139,6 @@ static bool AmbientLight = true;
 static bool InfiniteLight = true;
 static bool PointLight[POINT_LIGHTS] = { true, true };
 static bool Help = true;
-static bool CastFromAbove = false; // or from the point lights
 
 static vec3 WorldCenter(void)
 {
@@ -207,16 +197,23 @@ static RETRO_TerrainVertex MakeVertex(vec3 p, vec2 uv, Light light)
 	return vertex;
 }
 
-// A texture's light table, from its own colours to the screen's
-static RETRO_ShadeTable LightTable(int texture)
+// The ground's light table, from its texture's own colours to the screen's
+static RETRO_ShadeTable LightTable(void)
 {
-	return { &LightTableData[texture - ASSET_TERRAIN][0][0][0][0], RETRO_COLORS, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
+	return { &LightTableData[0][0][0][0], RETRO_COLORS, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
+}
+
+// The fan's grey's, as a texture of one texel
+static RETRO_ShadeTable GreyLightTable(void)
+{
+	return { &GreyTable[0][0][0], 1, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
 }
 
 //
-// One polygon, through the near plane and onto the screen: textured and lit
-// when there is a texture, a flat colour when there is not. Flat colours
-// are black with the lighting off.
+// One polygon, through the near plane and onto the screen: the ground's
+// texture, lit, for ASSET_TERRAIN, grey and lit for GREY, a flat colour
+// otherwise.
+// Flat colours are black with the lighting off.
 //
 static void DrawPolygon(const RETRO_TerrainVertex *vertex, int count, int texture, unsigned char color)
 {
@@ -225,8 +222,10 @@ static void DrawPolygon(const RETRO_TerrainVertex *vertex, int count, int textur
 	if (points < 3) return;
 
 	if (!Lighting) color = ColorBlack;
-	if (texture != NO_TEXTURE) {
-		RETRO_DrawTexMapGouraudPolygon(polygon, points, RETRO_ImageData(texture), TEXTURE_SIZE, TEXTURE_SIZE, LightTable(texture));
+	if (texture == GREY) {
+		RETRO_DrawTexMapGouraudPolygon(polygon, points, &GreyTexel, 1, 1, GreyLightTable());
+	} else if (texture != NO_TEXTURE) {
+		RETRO_DrawTexMapGouraudPolygon(polygon, points, RETRO_ImageData(texture), TEXTURE_SIZE, TEXTURE_SIZE, LightTable());
 	} else {
 		RETRO_DrawFlatPolygon(polygon, points, color);
 	}
@@ -263,77 +262,30 @@ static void DrawTerrain(const RETRO_TerrainMesh &mesh)
 	}
 }
 
-// One of the models at a position and scale
-static void DrawModel(const Model3D *model, vec3 position, float scale, int texture, unsigned char color, bool lit)
+// One of the models turned, at a position and scale
+static void DrawModel(const Model3D *model, const mat3 &rotation, vec3 position, float scale, int texture, unsigned char color, bool lit)
 {
 	for (int i = 0; i < model->faces; i++) {
 		const Face *face = &model->face[i];
 		RETRO_TerrainVertex polygon[RETRO_MAX_FACEVERTICES];
 		for (int j = 0; j < face->vertices; j++) {
-			vec3 p = position + model->vertex[face->vertex[j]].pos * scale;
-			Light light = lit ? LightVertex(p, model->normal[face->vertexnormal[j]].dir) : Light{ 1, {} };
+			vec3 p = position + rotation * model->vertex[face->vertex[j]].pos * scale;
+			Light light = lit ? LightVertex(p, rotation * model->normal[face->vertexnormal[j]].dir) : Light{ 1, {} };
 			polygon[j] = MakeVertex(p, model->uv[face->uv[j]], light);
 		}
 		DrawPolygon(polygon, face->vertices, texture, color);
 	}
 }
 
-// Where the ray from light through p meets the ground
-static bool CastFrom(vec3 light, vec3 p, vec3 &ground)
+//
+// The ground's texture under a lightmap
+//
+static void ApplyLightmap(int lightmap)
 {
-	vec3 ray = p - light;
-	float distance = length(ray);
-	if (distance <= 0) return false;
-	return RETRO_TerrainRayHit(p, ray / distance, SHADOW_STEP, ground);
-}
-
-// The shadow of a model at a position and scale, cast by a point light
-static void DrawShadow(const Model3D *model, vec3 position, float scale, vec3 light)
-{
-	vec3 center;
-	if (!CastFrom(light, position, center)) return;
-	int x = (int)floorf(center.x);
-	int z = (int)floorf(center.z);
-	if (x < 0 || z < 0 || x >= RETRO_Terrain.width - 1 || z >= RETRO_Terrain.height - 1) return;
-
-	// Two directions across the ray to the object's centre, taken off
-	// whichever axis is not along it, and the model's corners as the light
-	// sees them: across the ray over the distance along it. A corner level
-	// with the light or behind it has no ray to the ground
-	vec3 ray = normalize(position - light);
-	vec3 axis = fabsf(ray.y) < 0.99f ? vec3{ 0, 1, 0 } : vec3{ 0, 0, 1 };
-	vec3 across = normalize(cross(ray, axis));
-	vec3 up = cross(across, ray);
-	vec2 seen[RETRO_MAX_VERTICES];
-	for (int i = 0; i < model->vertices; i++) {
-		vec3 v = position + model->vertex[i].pos * scale - light;
-		float depth = dot(v, ray);
-		if (depth <= 0) return;
-		seen[i] = { dot(v, across) / depth, dot(v, up) / depth };
-	}
-	int outline[SHADOW_MAX_CORNERS];
-	int corners = RETRO_ConvexOutline(seen, model->vertices, outline, SHADOW_MAX_CORNERS);
-	if (corners < 3) return;
-
-	RETRO_TerrainVertex shadow[SHADOW_MAX_CORNERS];
-	for (int i = 0; i < corners; i++) {
-		vec3 corner = position + model->vertex[outline[i]].pos * scale;
-		vec3 p;
-		if (!CastFrom(light, corner, p)) return;
-		shadow[i] = MakeVertex({ p.x, p.y + SHADOW_LIFT, p.z }, { 0, 0 }, { 1, {} });
-	}
-	// Each corner lands at its own height, so the outline is not flat and can
-	// turn concave on screen, where a fan from one of its corners reaches
-	// past it. Fanned from the centre's shadow instead, the triangles stay
-	// inside the outline; each is clipped on its own, so the near plane
-	// cannot move the fan off that centre
-	RETRO_TerrainVertex middle = MakeVertex({ center.x, center.y + SHADOW_LIFT, center.z }, { 0, 0 }, { 1, {} });
-	for (int i = 0; i < corners; i++) {
-		RETRO_TerrainVertex triangle[3] = { middle, shadow[i], shadow[(i + 1) % corners] };
-		PolygonPoint polygon[4];
-		int points = RETRO_ClipProjectTerrainPolygon(triangle, 3, polygon);
-		// One pass for the whole fan, including overlapping triangles.
-		RETRO_DrawRemapPolygon(polygon, points, ShadowTable, i == 0);
+	unsigned char *texture = RETRO_ImageData(ASSET_TERRAIN);
+	const unsigned char *level = RETRO_ImageData(ASSET_LIGHTMAPS) + lightmap * TEXTURE_SIZE * TEXTURE_SIZE;
+	for (int i = 0; i < TEXTURE_SIZE * TEXTURE_SIZE; i++) {
+		texture[i] = LightmapTable[Sandstone[i]][level[i]];
 	}
 }
 
@@ -348,10 +300,8 @@ static void DrawText(void)
 						"<I> Toggle infinite light source\n"
 						"<P> Toggle both point lights\n"
 						"<G>/<R> Toggle green/red light\n"
-						"<O> Select different objects\n"
 						"<1>/<2> Lower/raise green light\n"
 						"<3>/<4> Lower/raise red light\n"
-						"<C> Cast from above/point lights\n"
 						"<H> Toggle Help\n"
 						"<Q> Exit demo", 0, 14, ColorWhite);
 	}
@@ -359,11 +309,10 @@ static void DrawText(void)
 	// CELL is the cell the camera is over
 	vec3 center = WorldCenter();
 	// Each line within the screen's 40 columns
-	snprintf(text, sizeof(text), "CAM [%5.0f,%5.0f,%5.0f] CELL [%d, %d]\nLighting [%s]: Amb=%d Inf=%d G=%d R=%d\nGreen y=%.0f Red y=%.0f\nShadow cast from [%s]",
+	snprintf(text, sizeof(text), "CAM [%5.0f,%5.0f,%5.0f] CELL [%d, %d]\nLighting [%s]: Amb=%d Inf=%d G=%d R=%d\nGreen y=%.0f Red y=%.0f",
 			 TO_WORLD(RETRO_Camera.x - center.x), TO_WORLD(RETRO_Camera.height), TO_WORLD(RETRO_Camera.z - center.z), (int)floorf(RETRO_Camera.x), (int)floorf(RETRO_Camera.z),
-			 Lighting ? "ON" : "OFF", AmbientLight, InfiniteLight, PointLight[LIGHT_GREEN], PointLight[LIGHT_RED], TO_WORLD(PointLightAltitude[LIGHT_GREEN]), TO_WORLD(PointLightAltitude[LIGHT_RED]),
-			 CastFromAbove ? "ABOVE" : "POINT LIGHTS");
-	RETRO_PutString(text, 0, RETRO_HEIGHT - 37, ColorTextGreen);
+			 Lighting ? "ON" : "OFF", AmbientLight, InfiniteLight, PointLight[LIGHT_GREEN], PointLight[LIGHT_RED], TO_WORLD(PointLightAltitude[LIGHT_GREEN]), TO_WORLD(PointLightAltitude[LIGHT_RED]));
+	RETRO_PutString(text, 0, RETRO_HEIGHT - 28, ColorTextGreen);
 }
 
 // The point lights on their paths about the world's centre
@@ -397,17 +346,17 @@ static void FitScreenPalette(void)
 		}
 	}
 
-	// Each texture's colours, as often as its texels have them, under those
-	// lights: the ground's, then the objects' with less say, since they
-	// cover less of the screen, and the ground's again in shadow
-	for (int texture = ASSET_TERRAIN; texture < ASSET_TERRAIN + TEXTURES; texture++) {
-		if (texture == ASSET_TERRAIN) {
-			RETRO_AddShadeTableColors(&Histogram, texture, LightTable(texture), &LightWeight[0][0][0], Modulate);
-			RETRO_AddShadeTableColors(&Histogram, texture, LightTable(texture), &LightWeight[0][0][0], Modulate, SHADOW_WEIGHT, SHADOW_LIGHT);
-		} else {
-			RETRO_AddShadeTableColors(&Histogram, texture, LightTable(texture), &LightWeight[0][0][0], Modulate, OBJECT_WEIGHT);
-		}
+	// The ground's colours, as often as its texels have them under the
+	// lightmaps, under those lights, then the fan's grey with less say, since
+	// it covers less of the screen
+	float texels[RETRO_COLORS] = {};
+	for (int lightmap = 0; lightmap < LIGHTMAPS; lightmap++) {
+		const unsigned char *level = RETRO_ImageData(ASSET_LIGHTMAPS) + lightmap * TEXTURE_SIZE * TEXTURE_SIZE;
+		for (int i = 0; i < TEXTURE_SIZE * TEXTURE_SIZE; i++) texels[LightmapTable[Sandstone[i]][level[i]]] += 1.0f / LIGHTMAPS;
 	}
+	RETRO_AddShadeTableColors(&Histogram, RETRO_ImagePalette(ASSET_TERRAIN), texels, LightTable(), &LightWeight[0][0][0], Modulate);
+	float greytexels = TEXTURE_SIZE * TEXTURE_SIZE; // as many as the ground's
+	RETRO_AddShadeTableColors(&Histogram, &Grey, &greytexels, GreyLightTable(), &LightWeight[0][0][0], Modulate, OBJECT_WEIGHT);
 
 	RETRO_CreateHistogramPalette(&Histogram, ScreenPalette, Held, HELD);
 	RETRO_SetPalette(ScreenPalette);
@@ -431,7 +380,6 @@ void DEMO_Render(double time, double deltatime)
 	if (RETRO_KeyPressed(SDL_SCANCODE_G)) PointLight[LIGHT_GREEN] = !PointLight[LIGHT_GREEN];
 	if (RETRO_KeyPressed(SDL_SCANCODE_R)) PointLight[LIGHT_RED] = !PointLight[LIGHT_RED];
 	if (RETRO_KeyPressed(SDL_SCANCODE_H)) Help = !Help;
-	if (RETRO_KeyPressed(SDL_SCANCODE_O)) CurrentObject = (CurrentObject + 1) % OBJECTS;
 	float raise = POINT_LIGHT_RAISE * deltatime;
 	if (RETRO_KeyState(SDL_SCANCODE_1)) PointLightAltitude[LIGHT_GREEN] -= raise;
 	if (RETRO_KeyState(SDL_SCANCODE_2)) PointLightAltitude[LIGHT_GREEN] += raise;
@@ -440,7 +388,6 @@ void DEMO_Render(double time, double deltatime)
 	for (float &altitude : PointLightAltitude) {
 		altitude = MIN(MAX(altitude, 0.0f), POINT_LIGHT_TOP);
 	}
-	if (RETRO_KeyPressed(SDL_SCANCODE_C)) CastFromAbove = !CastFromAbove;
 
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
 	View = mesh.basis;
@@ -448,11 +395,18 @@ void DEMO_Render(double time, double deltatime)
 	PlacePointLights(time);
 	vec3 center = WorldCenter();
 
-	// The object on its orbit, bobbing once a lap
-	float orbit = fmod(time * OBJECT_RATE, 2 * M_PI);
-	vec3 object = { center.x - OBJECT_ORBIT * cosf(orbit), OBJECT_ALTITUDE + OBJECT_BOB * sinf(orbit), center.z + OBJECT_ORBIT * sinf(orbit) };
-	const Object &selected = Objects[CurrentObject];
-	const Model3D *model = Models[selected.model];
+	// The object over the centre, spinning. The world is the mirror of the
+	// book's, so it turns the other way round y to look the same
+	float ay = fmod(time * OBJECT_RATE, 2 * M_PI);
+	mat3 spin = rotateY(-ay);
+	vec3 object = { center.x, OBJECT_ALTITUDE, center.z };
+
+	// The fan's shadow at the fan's turn
+	int lightmap = (int)(ay / LIGHTMAP_TURN + 0.5f) % LIGHTMAPS;
+	if (lightmap != AppliedLightmap) {
+		ApplyLightmap(lightmap);
+		AppliedLightmap = lightmap;
+	}
 
 	// The sky, and a band of ground colour below it for wherever the
 	// landscape does not reach
@@ -460,34 +414,27 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_DrawRectangle(0, (int)(RETRO_HEIGHT * 0.38f), RETRO_WIDTH - 1, RETRO_HEIGHT - 1, ColorGround);
 	RETRO_ClearDepthBuffer();
 	DrawTerrain(mesh);
-	DrawModel(model, object, OBJECT_SCALE, selected.texture, 0, true);
-	DrawModel(Models[MODEL_CUBE], PointLightPosition[LIGHT_GREEN], LIGHT_OBJECT_SCALE, NO_TEXTURE, ColorCubeGreen, false);
-	DrawModel(Models[MODEL_CUBE], PointLightPosition[LIGHT_RED], LIGHT_OBJECT_SCALE, NO_TEXTURE, ColorCubeRed, false);
-
-	// A shadow from each point light that is on, cast from where it is or
-	// from straight above the object at its altitude
-	for (int i = 0; i < POINT_LIGHTS; i++) {
-		if (Lighting && PointLight[i]) {
-			vec3 light = PointLightPosition[i];
-			vec3 caster = CastFromAbove ? vec3{ object.x, light.y, object.z } : light;
-			DrawShadow(model, object, OBJECT_SCALE, caster);
-		}
-	}
+	DrawModel(Models[MODEL_FAN], spin, object, OBJECT_SCALE, GREY, 0, true);
+	DrawModel(Models[MODEL_CUBE], identity(), PointLightPosition[LIGHT_GREEN], LIGHT_OBJECT_SCALE, NO_TEXTURE, ColorCubeGreen, false);
+	DrawModel(Models[MODEL_CUBE], identity(), PointLightPosition[LIGHT_RED], LIGHT_OBJECT_SCALE, NO_TEXTURE, ColorCubeRed, false);
 
 	DrawText();
 }
 
 void DEMO_Initialize(void)
 {
-	// The textures, each in a palette of its own
-	RETRO_LoadImage("assets/shadow_terrain_256x256.pcx");
-	RETRO_LoadImage("assets/shadow_earth_256x256.pcx");
-	RETRO_LoadImage("assets/shadow_terrain2_256x256.pcx"); // the cube's sandstone
-	RETRO_Image *heightmap = RETRO_LoadImage("assets/shadow_height_40x40.pcx");
-	RETRO_SetTerrain(heightmap->width, heightmap->height, TERRAIN_SCALE, heightmap->data, NULL, false);
+	// The ground's texture, in a palette of its own, and its lightmaps
+	RETRO_LoadImage("assets/shadow_terrain2_256x256.pcx");
+	RETRO_LoadImage("assets/shadow_fanlight_256x2304.pcx"); // each index its level
+	RETRO_SetTerrain(16, 16, TERRAIN_SCALE, FlatGround, NULL, false);
 
-	Models[MODEL_SPHERE] = RETRO_Load3DModel("assets/shadow_sphere.obj");
+	Models[MODEL_FAN] = RETRO_Load3DModel("assets/shadow_fan.obj");
 	Models[MODEL_CUBE] = RETRO_Load3DModel("assets/shadow_cube.obj");
+
+	// The ground's texture at every lightmap level, onto its own palette, and
+	// the texture as it was loaded, for laying each lightmap on
+	RETRO_CreateShadeTable(RETRO_ImagePalette(ASSET_TERRAIN), RETRO_COLORS, RETRO_COLORS, &LightmapTable[0][0]);
+	memcpy(Sandstone, RETRO_ImageData(ASSET_TERRAIN), sizeof(Sandstone));
 
 	FitScreenPalette();
 	const RETRO_Palette *palette = ScreenPalette;
@@ -501,14 +448,10 @@ void DEMO_Initialize(void)
 	ColorSky = RETRO_NearestPaletteIndex(Sky, palette);
 	ColorGround = RETRO_NearestPaletteIndex(Ground, palette);
 
-	// A light table per texture, from its own colours to the screen's
-	for (int texture = ASSET_TERRAIN; texture < ASSET_TERRAIN + TEXTURES; texture++) {
-		RETRO_CreateShadeTable(RETRO_ImagePalette(texture), palette, LightTable(texture), Modulate);
-	}
-
-	// Every entry, since a shadow can fall across a light's cube or past the
-	// ground's edge onto the sky
-	RETRO_CreateShadeTable(palette, RETRO_COLORS, 1, ShadowTable, SHADOW_LIGHT);
+	// The ground's light table, from its texture's own colours to the
+	// screen's, and the fan's grey's
+	RETRO_CreateShadeTable(RETRO_ImagePalette(ASSET_TERRAIN), palette, LightTable(), Modulate);
+	RETRO_CreateShadeTable(&Grey, palette, GreyLightTable(), Modulate);
 
 	// The lens: 90 degrees across, square pixels, pitched by the jeep
 	RETRO_TerrainView.focalx = RETRO_WIDTH / 2.0f;

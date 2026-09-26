@@ -87,7 +87,7 @@ void DEMO_Initialize(void)
 	}
 
 	// Build 3D inverse color lookup table to map blended RGB to closest palette entry
-	RETRO_CreateColorLUT(PictureA->palette, RETRO_COLORS, 32, &ColorLUT[0][0][0]);
+	RETRO_CreateColorLUT(PictureA->palette, 32, &ColorLUT[0][0][0]);
 
 	// Start with black hardware palette for initial fade-in
 	RETRO_Palette black_palette[RETRO_COLORS] = { {0, 0, 0} };

@@ -305,8 +305,10 @@ void DEMO_Initialize(void)
 		RETRO_SetColor(i, wb2->palette[i].r, wb2->palette[i].g, wb2->palette[i].b);
 	}
 
+	RETRO_Palette vga[RETRO_COLORS];
+	RETRO_CreateDefault8bitPalette(vga);
 	for (int i = 0; i < 16; i++) {
-		RETRO_SetColor(PAINT_PALETTE_OFFSET + i, RETRO_Default8bitPalette[i]);
+		RETRO_SetColor(PAINT_PALETTE_OFFSET + i, vga[i]);
 	}
 
 	// Set relative mouse mode

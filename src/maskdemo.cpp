@@ -18,8 +18,8 @@
 // angles live on 2π. The mesh starts at ax = −π/2, az = π so the face
 // is upright.
 //
-// The matcaps are generated, not loaded: RETRO_CreateAnglePhongMap lays out
-// the lit ball, and RETRO_CreateAnglePhongPalette colors it with a face of
+// The matcaps are generated, not loaded: RETRO_CreateDiamondAnglePhongMap lays
+// out the lit ball, and RETRO_CreateAnglePhongPalette colors it with a face of
 // (0.86, 0.23, 0.59) under the library's default material, in 6 bits. The
 // full map spans the palette. The mini map is the same ball in shade levels
 // for the textured matcap, brightest one below the shade table's height and
@@ -280,8 +280,8 @@ void DEMO_Initialize(void)
 	RETRO_LoadImage("assets/mask_bumpmap_256x256.pcx");
 
 	// Init matcaps
-	RETRO_CreateAnglePhongMap(PhongMap, MATCAP_SIZE, MATCAP_SIZE);
-	RETRO_CreateAnglePhongMap(MiniPhongMap, MATCAP_SIZE, MATCAP_SIZE, RETRO_SHADE_TABLE_SHADES - 1, RETRO_SHADE_TABLE_SHADES);
+	RETRO_CreateDiamondAnglePhongMap(PhongMap, MATCAP_SIZE, MATCAP_SIZE);
+	RETRO_CreateDiamondAnglePhongMap(MiniPhongMap, MATCAP_SIZE, MATCAP_SIZE, RETRO_SHADE_TABLE_SHADES - 1, RETRO_SHADE_TABLE_SHADES);
 	RETRO_CreateAnglePhongPalette(MATCAP_FACE, RETRO_K_SPECULAR, RETRO_K_FALLOFF, PhongPalette, 63);
 
 	// Init palette. One palette, three shade tables. Flat: a strong, moderately focused

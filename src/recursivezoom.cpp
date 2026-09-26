@@ -32,7 +32,6 @@
 #define MAX_DEPTH 32 // bounds the singular centre pixel at odd resolutions
 #define ANCESTOR_LEVELS 2 // trace starts this many levels above the viewport
 #define INV_CHILD_SCALE (1.0 / CHILD_SCALE) // the trace's per-level growth is a multiply, not a divide
-#define QUANT_SCALE (63.0f / 255.0f) // premultiplied colour to a 6-bit LUT axis
 
 #define MAX_LEVELS 16 // generous bound for a mip pyramid down from RETRO_WIDTH x RETRO_HEIGHT to 1x1
 #define MAX_PIXELS (RETRO_WIDTH * RETRO_HEIGHT * 4 / 3 + 64) // geometric series bound, each level near a quarter of its parent
@@ -120,8 +119,8 @@ void DEMO_Render(double time, double deltatime)
 				u *= INV_CHILD_SCALE;
 				v *= INV_CHILD_SCALE;
 			}
-			buffer[y * RETRO_WIDTH + x] = ColorLUT[CLAMP(color.r * QUANT_SCALE + 0.5f, 0, 64)]
-				[CLAMP(color.g * QUANT_SCALE + 0.5f, 0, 64)][CLAMP(color.b * QUANT_SCALE + 0.5f, 0, 64)];
+			buffer[y * RETRO_WIDTH + x] = ColorLUT[CLAMP256(color.r) >> 2]
+				[CLAMP256(color.g) >> 2][CLAMP256(color.b) >> 2];
 		}
 	}
 }
@@ -171,5 +170,5 @@ void DEMO_Initialize(void)
 			}
 		}
 	}
-	RETRO_CreateColorLUT(Picture->palette, RETRO_COLORS, 64, &ColorLUT[0][0][0]);
+	RETRO_CreateColorLUT(Picture->palette, 64, &ColorLUT[0][0][0]);
 }

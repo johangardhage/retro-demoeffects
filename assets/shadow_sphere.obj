@@ -5,7 +5,7 @@
 #             16 segments round and 7 rings between the poles.
 # Components: 114 vertices, 114 UV coordinates, 114 vertex normals, smooth
 #             and close to radial, and 224 triangular faces.
-# Used by:    shadow through shadow4, textured with the planet map.
+# Used by:    shadow through shadow3, textured with the planet map.
 #
 o shadow_sphere
 v 0.000000 1.000000 0.000000

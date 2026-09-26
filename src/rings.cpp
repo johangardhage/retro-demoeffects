@@ -22,11 +22,11 @@
 // drops first and the rest follow outward, one at a time, straight down the
 // screen. A band comes in laid down into a flat ellipse and slowly stands up
 // face on as it settles, so the bullseye opens from the middle out.
-// A band that has stood up never comes to rest. It leans, and the way it
-// leans turns steadily round, while the lean itself swells from slight to
-// nearly edge on and back. The big swings come and go on an axis that has
-// moved on each time. Every band plays the same motion a little behind the
-// band inside it, so each swing runs outward through the dish.
+// Once assembled, the bands turn over in a wave from the hole to the rim.
+// Each half-turn passes right through edge-on, then opens on the other side.
+// A quiet interval lets the bullseye reform before the next turn, whose axis
+// has moved around the screen. A small continuous wobble keeps it alive
+// between turns.
 // The light swings round one side of the dish, cuts straight across the
 // middle to the other side and swings round again.
 //
@@ -68,7 +68,7 @@
 // where perspective pulls it down to 0.62 of its height.
 #define DROP_DISTANCE 1.8f
 #define DROP_TIME 3.0f
-#define RING_STAGGER 0.30f
+#define RING_STAGGER 0.20f
 
 // The fall pose: a nod that lays a band down into a horizontal ellipse.
 // RISE_OVERLAP before it lands, while the drop is easing off, it starts to
@@ -77,26 +77,22 @@
 // up is turned side on.
 #define ENTER_NOD 1.55f
 #define RISE_OVERLAP 0.5f
-#define RISE_TIME 1.8f
+#define RISE_TIME 1.2f
 #define RISE_TURN 0.8f
 
-// The motion once a band has stood up. The direction it leans turns at
-// TURN_SPEED, TURN_SWING faster at the low point of each swell and as much
-// slower at the top, like a coin that spins quicker as it settles. That
-// evens out the pace: the turn moves a band by the sine of its lean, so a
-// band just off face on needs the quicker turn to keep up. The lean swells on a cosine between TILT_MIN and TILT_MAX, one
-// swell every 2π / SWELL_SPEED s, the first from SWELL_START, once the
-// bullseye is nearly complete. Until then the lean stays at TILT_MIN and
-// keeps turning, so the bands do not stop while they wait. Each band runs
-// FOLLOW_DELAY behind the band inside it. The direction never stops
-// turning, so the band never stops, even at the top of a swell.
-#define TURN_SPEED 0.7f
-#define TURN_SWING 0.3f
-#define TILT_MIN 0.4f
-#define TILT_MAX 1.35f
-#define SWELL_SPEED 1.5f
-#define SWELL_START 9.0f
-#define FOLLOW_DELAY 0.07f
+// The reference's first turnover crosses edge-on at about 8 seconds; the
+// next is about four seconds later. Inner bands lead the rim by half a second.
+// Alternate a quick turn with a broader, slower turn, as in the clip.
+// Use complete half-turns, with eased ends and a brisk passage through the
+// side view. Unlike a bounded tilt, this exposes the other face of the band.
+#define FLIP_START 7.0
+#define FLIP_PERIOD 3.9
+#define FLIP_TIME 1.6
+#define FLIP_TIME_SLOW 2.4
+#define FOLLOW_DELAY 0.04
+#define AXIS_SPEED 0.36
+#define AXIS_AT_FIRST_FLIP -1.30
+#define IDLE_TILT 0.22f
 
 // The light is a direction that runs round two circles of the same size at
 // once, a quick one and a slow one the other way. Where the two cancel it
@@ -316,19 +312,22 @@ void DEMO_Render(double time, double deltatime)
 		float turn = RISE_TURN * sinf(rise * (float)M_PI);
 		mat3 matrix = rotateY(turn) * rotateX(nod);
 
-		// This band's own clock, FOLLOW_DELAY behind the band inside it. The
-		// swell starts at its low point, and the lean grows in as the band
-		// stands up. Turn the lean's direction onto x, tilt about it and turn
-		// back.
-		double follow = time - ring * (double)FOLLOW_DELAY;
-		// Before the first swell the turn keeps the quicker pace of a low
-		// point, which the swell then takes up at the same angle and speed.
-		double phase = fmod((follow - SWELL_START) * SWELL_SPEED, 2.0 * M_PI);
-		double swing = follow < SWELL_START ? TURN_SWING * (follow - SWELL_START) : TURN_SWING / SWELL_SPEED * sin(phase);
-		float axis = (float)fmod(follow * TURN_SPEED + swing, 2.0 * M_PI);
-		float swell = follow < SWELL_START ? 0.0f : 0.5f - 0.5f * (float)cos(phase);
-		float tilt = (TILT_MIN + (TILT_MAX - TILT_MIN) * swell) * rise;
-		matrix = rotateZ(axis) * rotateX(tilt) * rotateZ(-axis) * matrix;
+		// Delay the entire pose, so the turnover travels outwards without
+		// separating the rings during the quiet part of the motion.
+		double follow = time - ring * FOLLOW_DELAY;
+		double elapsed = MAX(follow - FLIP_START, 0.0);
+		double cycle = floor(elapsed / FLIP_PERIOD);
+		double duration = fmod(cycle, 2.0) < 1.0 ? FLIP_TIME : FLIP_TIME_SLOW;
+		double u = MIN((elapsed - cycle * FLIP_PERIOD) / duration, 1.0);
+		// Quintic easing joins the hold with zero velocity and acceleration.
+		double eased = u * u * u * (u * (u * 6.0 - 15.0) + 10.0);
+		float flip = (float)(M_PI * (fmod(cycle, 2.0) + eased));
+		float axis = (float)fmod(AXIS_AT_FIRST_FLIP +
+			AXIS_SPEED * (follow - FLIP_START - FLIP_TIME * 0.5), 2.0 * M_PI);
+		float wobble = IDLE_TILT * rise;
+		mat3 idle = rotateY(wobble * sinf((float)fmod(follow * 0.9, 2.0 * M_PI))) *
+			rotateX(wobble * cosf((float)fmod(follow * 0.7, 2.0 * M_PI)));
+		matrix = idle * rotateZ(axis) * rotateX(flip) * rotateZ(-axis) * matrix;
 
 		float fall = RingFall(time, ring);
 		int base = ring * perring;

@@ -447,22 +447,27 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 //
 //   R = I - 2(N·I)N
 //
-// which is what each vertex passes, for RETRO_GetReflectionMapCoordinates to
-// look up, at a second square root a pixel. On a curved surface that differs
-// little from reflecting I0, which is why it is not the default; past the
-// silhouette the two part ways, see RETRO_GetReflectionMapCoordinates. On a flat
-// face it is the whole picture: every corner shares the one N, only I
-// differs, and the face shows the slice of the room a plane mirror there
-// would. R is linear in I, and I left unnormalized, times q, is linear in
-// screen space, so R q interpolates exactly across a flat face and a straight
-// edge in the room stays straight in the mirror.
+// at every pixel, from N and I interpolated apart, for
+// RETRO_GetReflectionMapCoordinates to look up, at a second square root a
+// pixel. On a curved surface that differs little from reflecting I0, which is
+// why it is not the default; past the silhouette the two part ways, see
+// RETRO_GetReflectionMapCoordinates. On a flat face it is the whole picture:
+// every corner shares the one N, only I differs, and the face shows the slice
+// of the room a plane mirror there would. R is linear in I, and I left
+// unnormalized, times q, is linear in screen space, so a straight edge in the
+// room stays straight in the mirror.
 //
 // A bump map tilts a normal, not a ray, so the bumped path is handed the
 // normal that reflects I0 to R instead, the half-way vector N' = (R - I0)
 // normalized, with R unit. That is exact at the corners and bends in between.
+inline vec3 RETRO_ViewRay(vec3 rpos, float eye)
+{
+	return eye > 0.0f ? vec3{ rpos.x, rpos.y, rpos.z + eye } : vec3{ 0.0f, 0.0f, 1.0f };
+}
+
 inline vec3 RETRO_ReflectionVector(vec3 n, vec3 rpos, float eye)
 {
-	vec3 i = eye > 0.0f ? vec3{ rpos.x, rpos.y, rpos.z + eye } : vec3{ 0.0f, 0.0f, 1.0f };
+	vec3 i = RETRO_ViewRay(rpos, eye);
 	return i - n * (2.0f * dot(n, i));
 }
 
@@ -494,7 +499,8 @@ inline void RETRO_RenderEnvironmentModel(Model3D *model, ClipRect clip = {})
 			} else if (bumpmapping) {
 				point[j].n = RETRO_ReflectionNormal(normal->rdir * side, vertex->rpos, model->eye) * vertex->q;
 			} else {
-				point[j].n = RETRO_ReflectionVector(normal->rdir * side, vertex->rpos, model->eye) * vertex->q;
+				point[j].n = normal->rdir * (side * vertex->q);
+				point[j].p = RETRO_ViewRay(vertex->rpos, model->eye) * vertex->q;
 			}
 		}
 		if (bumpmapping) {

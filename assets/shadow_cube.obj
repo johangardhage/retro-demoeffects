@@ -5,7 +5,7 @@
 # Components: 8 vertices, 8 UV coordinates, each face taking the whole
 #             texture, 6 normals, one per face, so each side is lit flat,
 #             and 12 triangular faces.
-# Used by:    shadow through shadow4, textured with sandstone and lit, and
+# Used by:    shadow through shadow3, textured with sandstone and lit, and
 #             every shadow demo and robots, in a flat colour, to mark each
 #             point light.
 #

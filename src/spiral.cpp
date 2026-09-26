@@ -36,9 +36,9 @@ static unsigned char SamplePicture(double x, double y)
 	RETRO_Palette d = Picture->palette[Picture->data[y1 * Picture->width + x1]];
 	double wa = (1 - fx) * (1 - fy), wb = fx * (1 - fy);
 	double wc = (1 - fx) * fy, wd = fx * fy;
-	int r = CLAMP((wa * a.r + wb * b.r + wc * c.r + wd * d.r) * 63 / 255 + 0.5, 0, 64);
-	int g = CLAMP((wa * a.g + wb * b.g + wc * c.g + wd * d.g) * 63 / 255 + 0.5, 0, 64);
-	int blue = CLAMP((wa * a.b + wb * b.b + wc * c.b + wd * d.b) * 63 / 255 + 0.5, 0, 64);
+	int r = CLAMP256(wa * a.r + wb * b.r + wc * c.r + wd * d.r) >> 2;
+	int g = CLAMP256(wa * a.g + wb * b.g + wc * c.g + wd * d.g) >> 2;
+	int blue = CLAMP256(wa * a.b + wb * b.b + wc * c.b + wd * d.b) >> 2;
 	return ColorLUT[r][g][blue];
 }
 
@@ -84,5 +84,5 @@ void DEMO_Initialize(void)
 			Falloff[y][x] = f * f;
 		}
 	}
-	RETRO_CreateColorLUT(Picture->palette, RETRO_COLORS, 64, &ColorLUT[0][0][0]);
+	RETRO_CreateColorLUT(Picture->palette, 64, &ColorLUT[0][0][0]);
 }

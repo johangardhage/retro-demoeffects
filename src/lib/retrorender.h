@@ -335,8 +335,8 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 	// The model's table is the shading-palette shape: a texture drawn from a
 	// palette built for shading, with the whole ramp under each of its colors.
 	// A texture that is a picture in its own palette has the other shape, and
-	// says so; see ShadeTable.
-	ShadeTable shadetable = { model->shadetable, RETRO_SHADE_TABLE_COLORS, RETRO_SHADE_TABLE_SHADES };
+	// says so; see RETRO_ShadeTable.
+	RETRO_ShadeTable shadetable = { model->shadetable, RETRO_SHADE_TABLE_COLORS, RETRO_SHADE_TABLE_SHADES };
 	bool lightingmap = shadertype == RETRO_SHADE_MATCAP;
 	bool envmapshading = shadertype == RETRO_SHADE_ENVIRONMENT || lightingmap;
 	bool bumpmapping = model->bumpmap != NULL;
@@ -640,17 +640,6 @@ inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shade
 	case RETRO_POLY_MASKED:
 		RETRO_RenderMaskedModel(model, clip);
 		break;
-	}
-}
-
-inline void RETRO_Initialize_3D(void)
-{
-}
-
-inline void RETRO_Deinitialize_3D(void)
-{
-	for (int i = 0; i < RETRO_MAX_MODELS; i++) {
-		RETRO_Free3DModel(i);
 	}
 }
 

@@ -16,6 +16,11 @@
 //
 // flatlandscape.cpp is the same mesh with the light taken away.
 //
+// A triangle reaching from behind the camera into view is cut at the near
+// plane rather than dropped, so a camera flown low over the ground still has
+// ground under the bottom of the screen. The near plane is brought in close
+// for the same reason; it can be, because nothing behind it is projected.
+//
 // Left/Right turn and Up/Down move along the viewing direction. W/S are
 // alternate forward/back controls and A/D strafe. Tab toggles a flycam, in
 // which R and F raise and lower the camera. PageUp and PageDown move the
@@ -38,6 +43,9 @@
 // why it is higher than a lambert term alone would want: this map's palette
 // runs out of dark colors before the ramp does
 #define LANDSCAPE_AMBIENT 0.55f
+
+// Near enough that a camera flown down onto the ground still sees it
+#define LANDSCAPE_NEARPLANE 0.25f
 
 unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
 
@@ -67,20 +75,16 @@ static const unsigned char SunColor[LANDSCAPE_SUNRINGS] = { 247, 248, 249 };
 
 struct WorldVertex {
 	vec3 pos;
-	vec2 spos;
-	float q;
+	RETRO_TerrainVertex vertex;
 };
 
-// The world position is kept alongside the screen one: the face normal below is
-// taken in world space, which the projected point no longer carries.
-static WorldVertex ProjectVertex(float x, float z, const RETRO_TerrainBasis &basis)
+// The world position is kept alongside the camera's view of it: the face
+// normal below is taken in world space, which the camera's frame no longer is.
+static WorldVertex TerrainVertex(float x, float z, const RETRO_TerrainBasis &basis)
 {
-	WorldVertex vertex;
+	WorldVertex vertex = {};
 	vertex.pos = { x, RETRO_TerrainHeight(x, z), z };
-
-	RETRO_TerrainPoint point = RETRO_ProjectTerrainPoint(x, z, vertex.pos.y, basis);
-	vertex.spos = point.spos;
-	vertex.q = point.q;
+	vertex.vertex.eye = RETRO_TerrainPointEye(x, z, vertex.pos.y, basis);
 	return vertex;
 }
 
@@ -110,7 +114,10 @@ static void DrawSun(const RETRO_TerrainBasis &basis)
 
 static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const WorldVertex &c, unsigned char basecolor)
 {
-	if (!RETRO_TerrainTriangleProjects(a.q, b.q, c.q)) return;
+	RETRO_TerrainVertex triangle[3] = { a.vertex, b.vertex, c.vertex };
+	PolygonPoint polygon[4];
+	int points = RETRO_ClipProjectTerrainPolygon(triangle, 3, polygon);
+	if (points < 3) return;
 
 	// The unnormalized cross product supplies both the face normal and its
 	// area. A height field over a regular grid fixes the vertical component at
@@ -120,12 +127,7 @@ static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const World
 	vec3 normal = cross(b.pos - a.pos, c.pos - a.pos);
 	int shade = RETRO_TerrainShade(normal, LANDSCAPE_SHADES);
 
-	PolygonPoint polygon[3] = {
-		{ a.spos, 0, { 0, 0 }, a.q },
-		{ b.spos, 0, { 0, 0 }, b.q },
-		{ c.spos, 0, { 0, 0 }, c.q }
-	};
-	RETRO_DrawFlatPolygon(polygon, 3, LandscapeShadeTable[basecolor][shade]);
+	RETRO_DrawFlatPolygon(polygon, points, LandscapeShadeTable[basecolor][shade]);
 }
 
 void DEMO_Render(double time, double deltatime)
@@ -150,10 +152,10 @@ void DEMO_Render(double time, double deltatime)
 		for (int x = mesh.minx; x < mesh.maxx; x += step) {
 			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
 
-			WorldVertex p00 = ProjectVertex(x, z, mesh.basis);
-			WorldVertex p10 = ProjectVertex(x + step, z, mesh.basis);
-			WorldVertex p01 = ProjectVertex(x, z + step, mesh.basis);
-			WorldVertex p11 = ProjectVertex(x + step, z + step, mesh.basis);
+			WorldVertex p00 = TerrainVertex(x, z, mesh.basis);
+			WorldVertex p10 = TerrainVertex(x + step, z, mesh.basis);
+			WorldVertex p01 = TerrainVertex(x, z + step, mesh.basis);
+			WorldVertex p11 = TerrainVertex(x + step, z + step, mesh.basis);
 
 			unsigned char color = RETRO_TerrainColor(x + step / 2.0f, z + step / 2.0f);
 			DrawTriangle(p00, p11, p10, color);
@@ -199,5 +201,6 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(SunColor[1], RETRO_FAWN);
 	RETRO_SetColor(SunColor[2], RETRO_BLANCHEDALMOND);
 
+	RETRO_TerrainView.nearplane = LANDSCAPE_NEARPLANE;
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

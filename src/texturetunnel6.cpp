@@ -42,7 +42,7 @@ static RingVertex Ring[RING_COUNT][RING_SIDES];
 static unsigned char Brick[TEXTURE_SIZE * TEXTURE_SIZE];
 static unsigned char FogTable[RETRO_COLORS * FOG_SHADES];
 static RETRO_Palette Palette[RETRO_COLORS];
-static ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
+static RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
 static UnitVector Light;
 
 // A single left bend continues out of sight instead of waving back.

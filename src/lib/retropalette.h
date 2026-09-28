@@ -649,6 +649,120 @@ inline void RETRO_CreateColorLUT(const RETRO_Palette *palette, int colors, int c
 }
 
 //
+// Colours gathered for fitting a palette to
+//
+// Each colour lands in a cell of a 32x32x32 RGB grid, five bits a channel,
+// which keeps its weight and its weighted sum, so the cell's colour is the
+// mean of what fell in it. A scene lit through tables asks for far more
+// colours than a palette holds; gathering them here first lets a fit weigh
+// each by how much of the screen it is expected to cover
+//
+#define RETRO_HISTOGRAM_BITS 5
+#define RETRO_HISTOGRAM_SIDE (1 << RETRO_HISTOGRAM_BITS)
+#define RETRO_HISTOGRAM_CELLS (RETRO_HISTOGRAM_SIDE * RETRO_HISTOGRAM_SIDE * RETRO_HISTOGRAM_SIDE)
+
+struct RETRO_ColorHistogram {
+	float weight[RETRO_HISTOGRAM_CELLS];
+	vec3 sum[RETRO_HISTOGRAM_CELLS];	// weighted, so sum / weight is the cell's colour
+};
+
+inline void RETRO_AddHistogramColor(RETRO_ColorHistogram *histogram, RETRO_Palette color, float weight)
+{
+	int shift = 8 - RETRO_HISTOGRAM_BITS;
+	int cell = ((color.r >> shift) * RETRO_HISTOGRAM_SIDE + (color.g >> shift)) * RETRO_HISTOGRAM_SIDE + (color.b >> shift);
+	histogram->weight[cell] += weight;
+	histogram->sum[cell] += vec3{ (float)color.r, (float)color.g, (float)color.b } * weight;
+}
+
+//
+// A palette fitted to the gathered colours
+//
+// Each entry starts on the colour that is heaviest for its distance to the
+// entries before it, so the seeds cover the colours by how much they weigh.
+// Then k-means refines them: every colour goes to its nearest entry, the
+// squared RGB distance RETRO_NearestPaletteIndex matches with, and each entry
+// moves to the mean of what it was given.
+//
+// The held colours are the caller's, colours that must come out exactly,
+// such as a flat sky. They take the last entries of the palette and are
+// never moved, but they take the colours nearest them like any other entry
+//
+inline void RETRO_CreateHistogramPalette(const RETRO_ColorHistogram *histogram, RETRO_Palette *palette, const RETRO_Palette *held = NULL, int heldcolors = 0, int colors = RETRO_COLORS, int iterations = 16)
+{
+	int fitted = colors - heldcolors;
+	for (int i = 0; i < heldcolors; i++) palette[fitted + i] = held[i];
+
+	// The cells that hold anything, with their colours
+	float *weight = (float *)malloc(RETRO_HISTOGRAM_CELLS * sizeof(float));
+	vec3 *color = (vec3 *)malloc(RETRO_HISTOGRAM_CELLS * sizeof(vec3));
+	float *distance = (float *)malloc(RETRO_HISTOGRAM_CELLS * sizeof(float));
+	if (!weight || !color || !distance) {
+		RETRO_RageQuit("Cannot allocate palette fitting memory\n");
+	}
+	int count = 0;
+	for (int cell = 0; cell < RETRO_HISTOGRAM_CELLS; cell++) {
+		if (histogram->weight[cell] <= 0) continue;
+		weight[count] = histogram->weight[cell];
+		color[count] = histogram->sum[cell] / histogram->weight[cell];
+		distance[count] = 1e30f;
+		count++;
+	}
+
+	// The seeds, after the caller's entries
+	vec3 entry[RETRO_COLORS] = {};
+	for (int i = fitted; i < colors; i++) entry[i] = { (float)palette[i].r, (float)palette[i].g, (float)palette[i].b };
+	for (int n = 0; n < colors; n++) {
+		int e = (n + fitted) % colors;
+		if (e < fitted) {
+			int best = 0;
+			for (int i = 1; i < count; i++) {
+				if (weight[i] * distance[i] > weight[best] * distance[best]) best = i;
+			}
+			entry[e] = count > 0 ? color[best] : vec3{};
+		}
+		for (int i = 0; i < count; i++) {
+			vec3 d = color[i] - entry[e];
+			distance[i] = MIN(distance[i], dot(d, d));
+		}
+	}
+
+	// k-means
+	for (int iteration = 0; iteration < iterations; iteration++) {
+		vec3 sum[RETRO_COLORS] = {};
+		float total[RETRO_COLORS] = {};
+		for (int i = 0; i < count; i++) {
+			int match = 0;
+			float mindistance = 1e30f;
+			for (int e = 0; e < colors; e++) {
+				vec3 d = color[i] - entry[e];
+				float distance = dot(d, d);
+				if (distance < mindistance) {
+					mindistance = distance;
+					match = e;
+				}
+			}
+			sum[match] += color[i] * weight[i];
+			total[match] += weight[i];
+		}
+		for (int e = 0; e < fitted; e++) {
+			if (total[e] > 0) entry[e] = sum[e] / total[e];
+		}
+	}
+
+	for (int e = 0; e < fitted; e++) {
+		palette[e] = {
+			(unsigned char)CLAMP256((int)(entry[e].x + 0.5f)),
+			(unsigned char)CLAMP256((int)(entry[e].y + 0.5f)),
+			(unsigned char)CLAMP256((int)(entry[e].z + 0.5f)),
+		};
+	}
+
+	free(weight);
+	free(color);
+	free(distance);
+}
+
+//
 // The palette the VGA BIOS leaves in the DAC in mode 13h: the 16 EGA colors,
 // 16 grays, then 216 entries walking hue, saturation and value, and 8 unused
 // entries left black. A demo that draws with the colors it finds there, rather

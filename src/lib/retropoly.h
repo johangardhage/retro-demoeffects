@@ -8,6 +8,7 @@
 #define _RETROPOLY_H_
 
 #include "retropalette.h"
+#include "retroshadetable.h"
 #include "retrovector.h"
 
 // A corner of a polygon as the drawers take it: where it landed on screen, and
@@ -21,6 +22,7 @@ struct PolygonPoint {
 	float q;				// Reciprocal projection depth
 	vec3 n;					// Normal, in view space; every drawer renormalizes, so any scale will do
 	vec3 p;					// Surface point, in view space; only the shader drawer reads it
+	float tint[RETRO_MAX_TINTS];	// Further light levels beside c, read with a shade table that has tints
 };
 
 // One pixel of a surface, as a shader is handed it
@@ -47,19 +49,6 @@ struct TangentFrame {
 struct PhongLight {
 	vec3 dir;				// Light direction, in view space, unit length
 	int c, shades;			// Ramp base, and entries in it: c + shades is one past its last
-};
-
-// A shade table and the shape it was read at. The lookup is
-// table[color * shades + shade], which is what RETRO_CreatePhongShadeTable and
-// RETRO_CreateShadeTable both write. The two dimensions travel with the
-// pointer because they are not the same for every texture: one drawn from a
-// palette built for shading has few colors and a long ramp, one that is a
-// picture in its own palette has all of them and a short ramp, and a table read
-// at the wrong shape is read at the wrong stride.
-struct ShadeTable {
-	unsigned char *table;	// Rows of shades, one row per texture color
-	int colors;				// Texture colors the table has a row for
-	int shades;				// Entries in each row
 };
 
 // One scanline's horizontal extent, in subpixel x. Both ends lie on the
@@ -367,6 +356,59 @@ inline void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned cha
 }
 
 //
+// Remapped polygon
+// Pass what is already drawn through a table, where the polygon is in front
+// of it. An 8-bit framebuffer holds palette entries, not colors, so blending
+// is a lookup: a table that darkens every entry makes a translucent shadow,
+// one that tints them a coloured glass. Depth is tested but not written, so
+// the polygon lies over what is there without hiding what comes after.
+//
+// Remapping goes in passes, and a pass takes each pixel through the table
+// once however many of its polygons cover it: where a fan folds over itself,
+// as a polygon that is not flat can on screen, or where polygons that make
+// one shape overlap. Each polygon begins a pass of its own unless newpass is
+// false, when it joins the pass before it.
+//
+inline void RETRO_DrawRemapPolygon(PolygonPoint *point, int points, const unsigned char *table, bool newpass = true, ClipRect clip = {})
+{
+	static unsigned int stamp[RETRO_WIDTH * RETRO_HEIGHT]; // the last pass to remap each pixel
+	static unsigned int pass = 1; // past the stamps' zero, so the first pass can be joined
+	if (newpass && ++pass == 0) {
+		memset(stamp, 0, sizeof(stamp));
+		pass = 1;
+	}
+
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		PolygonPoint *p0 = &point[0];
+		PolygonPoint *p1 = &point[triangle];
+		PolygonPoint *p2 = &point[triangle + 1];
+		TriangleSpan span[RETRO_HEIGHT];
+		int ystart, yend;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
+		if (determinant == 0.0f) continue;
+
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
+
+		for (int y = ystart; y < yend; y++) {
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
+			float q = p0->q + dqdx * (xstart + 0.5f - p0->pos.x) + dqdy * (y + 0.5f - p0->pos.y);
+
+			for (int x = xstart; x < xend; x++) {
+				int offset = y * RETRO_WIDTH + x;
+				if (q > RETRO_DepthBuffer[offset] && stamp[offset] != pass) {
+					RETRO.framebuffer[offset] = table[RETRO.framebuffer[offset]];
+					stamp[offset] = pass;
+				}
+				q += dqdx;
+			}
+		}
+	}
+}
+
+//
 // Gouraud shaded polygon
 // Interpolate palette indices affinely in screen space to keep shared
 // triangle edges continuous.
@@ -547,11 +589,15 @@ inline void RETRO_DrawTexMapPolygon(PolygonPoint *point, int points, unsigned ch
 //
 // The shade table arrives with its own shape rather than assumed to have the
 // shading-palette one, so a texture that is a picture in its own palette is
-// drawn from all of it and not from its first thirty-two entries.
+// drawn from all of it and not from its first thirty-two entries. A table
+// with tints has each tint interpolated beside the shade, the same way.
 //
-inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, const ShadeTable &shadetable, bool wrap = false, ClipRect clip = {})
+inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsigned char *texmap, int texmapwidth, int texmapheight, const RETRO_ShadeTable &shadetable, bool wrap = false, ClipRect clip = {})
 {
 	if (texmap == NULL || shadetable.table == NULL) return;
+
+	int tints = 0;
+	while (tints < RETRO_MAX_TINTS && shadetable.tints[tints] > 0) tints++;
 
 	const float epsilon = 1.0e-12f;
 
@@ -572,6 +618,14 @@ inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsi
 		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
 		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
+		// Each tint is interpolated like c, and only those the table has: a
+		// caller with a plain table need not have set any
+		float dtdx[RETRO_MAX_TINTS], dtdy[RETRO_MAX_TINTS];
+		for (int i = 0; i < tints; i++) {
+			dtdx[i] = ((p1->tint[i] - p0->tint[i]) * (p2->pos.y - p0->pos.y) - (p2->tint[i] - p0->tint[i]) * (p1->pos.y - p0->pos.y)) / determinant;
+			dtdy[i] = ((p1->pos.x - p0->pos.x) * (p2->tint[i] - p0->tint[i]) - (p2->pos.x - p0->pos.x) * (p1->tint[i] - p0->tint[i])) / determinant;
+		}
+
 		for (int y = ystart; y < yend; y++) {
 			if (span[y].left > span[y].right) continue;
 			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
@@ -580,6 +634,10 @@ inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsi
 			float py = y + 0.5f;
 			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
 			float c = p0->c + dcdx * (px - p0->pos.x) + dcdy * (py - p0->pos.y);
+			float t[RETRO_MAX_TINTS];
+			for (int i = 0; i < tints; i++) {
+				t[i] = p0->tint[i] + dtdx[i] * (px - p0->pos.x) + dtdy[i] * (py - p0->pos.y);
+			}
 			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
@@ -590,13 +648,20 @@ inline void RETRO_DrawTexMapGouraudPolygon(PolygonPoint *point, int points, unsi
 					int v = wrap ? WRAP(texmapcoord.y, texmapheight) : CLAMP(texmapcoord.y, 0, texmapheight);
 					unsigned char texel = CLAMP(texmap[v * texmapwidth + u], 0, shadetable.colors);
 					int shade = CLAMP(c, 0, shadetable.shades);
+					int entry = texel * shadetable.shades + shade;
+					for (int i = 0; i < tints; i++) {
+						entry = entry * shadetable.tints[i] + CLAMP(t[i], 0, shadetable.tints[i]);
+					}
 					int offset = y * RETRO_WIDTH + x;
 					if (RETRO_DepthTest(offset, q)) {
-						RETRO.framebuffer[offset] = shadetable.table[texel * shadetable.shades + shade];
+						RETRO.framebuffer[offset] = shadetable.table[entry];
 					}
 				}
 				uv += duvdx;
 				c += dcdx;
+				for (int i = 0; i < tints; i++) {
+					t[i] += dtdx[i];
+				}
 				q += dqdx;
 			}
 		}
@@ -672,7 +737,7 @@ inline vec3 RETRO_BumpNormal(vec3 n, float dhx, float dhy, const TangentFrame &f
 // which a model sets for itself and which is not the table's own height. The
 // bump moves the shade by the difference it makes to the lighting, so it is
 // measured in the same steps the face was already shaded in.
-inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, int lambertshades, vec3 light, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight, ClipRect clip = {})
+inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *bumpmap, int bumpgrazing, const RETRO_ShadeTable &shadetable, int lambertshades, vec3 light, const TangentFrame &frame, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight, ClipRect clip = {})
 {
 	if (texmap == NULL || bumpmap == NULL || shadetable.table == NULL) return;
 
@@ -778,7 +843,7 @@ inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigne
 //
 // Texture coordinates are clamped, not wrapped: nothing tiles a map through
 // this drawer, and an env map has a rim rather than a seam.
-inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, const ShadeTable &shadetable, unsigned char shade, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, ClipRect clip = {})
+inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, const RETRO_ShadeTable &shadetable, unsigned char shade, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, ClipRect clip = {})
 {
 	if (texmap == NULL || shadetable.table == NULL) return;
 
@@ -854,7 +919,7 @@ inline void RETRO_DrawTexMapEnvMapPolygon(PolygonPoint *point, int points, unsig
 //
 // Texture coordinates are clamped, not wrapped: nothing tiles a map through
 // this drawer, and an env map has a rim rather than a seam.
-inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, const ShadeTable &shadetable, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight, ClipRect clip = {})
+inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, unsigned char *texmap, unsigned char *envmap, unsigned char *bumpmap, int bumpgrazing, const RETRO_ShadeTable &shadetable, bool lightingmap, const TangentFrame &frame, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int bumpmapwidth, int bumpmapheight, ClipRect clip = {})
 {
 	if (texmap == NULL || envmap == NULL || bumpmap == NULL || shadetable.table == NULL) return;
 

@@ -36,7 +36,7 @@ static RETRO_Font Font;
 static RETRO_Image *TextStrip;
 static unsigned char Background[RETRO_WIDTH * RETRO_HEIGHT];
 static unsigned char InkShades[2 * SHADES];
-static ShadeTable TextShades = { InkShades, 2, SHADES };
+static RETRO_ShadeTable TextShades = { InkShades, 2, SHADES };
 
 static PolygonPoint Project(float x, float y, vec2 uv, double time)
 {

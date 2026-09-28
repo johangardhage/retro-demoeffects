@@ -37,6 +37,11 @@
 
 #include "retro.h"
 #include "retrovector.h"
+#include "retropoly.h"
+
+// The most corners a polygon handed to RETRO_ClipProjectTerrainPolygon may
+// have. Clipping adds at most one more.
+#define RETRO_TERRAIN_MAX_POLYGON 32
 
 // How far the wrapping look draws, in map cells. A wide view has to reach
 // this far to fill itself: it flattens the hills that used to hide where
@@ -235,6 +240,39 @@ struct RETRO_TerrainCamera {
 // terrain and the lens are not named either.
 //
 inline RETRO_TerrainCamera RETRO_Camera;
+
+//
+// A hovering vehicle to drive the wrapping camera with
+//
+// The other way to fly RETRO_Camera: with momentum rather than at a fixed
+// speed. Up/Down accelerate, friction brings it to rest, and gravity pulls
+// the eye down until the ground beneath, taken over the whole cell it is
+// over, pushes it back up and lifts the nose. The nose settles back to its
+// resting pitch, and the pitch is shown by moving the horizon.
+//
+// Speeds are in map cells and radians a second. A negative turn speed turns
+// the other way, for a world drawn mirrored.
+//
+struct RETRO_TerrainVehicle {
+	float acceleration = 100.0f;	// Speed gained each second a key is held
+	float friction = 25.0f;			// Speed lost each second
+	float maxspeed = 66.0f;
+	float turnspeed = 1.2f;
+	float gravity = 40.0f;			// Climb lost each second
+	float spring = 22.5f;			// Climb gained each second, per unit of ground above the clearance
+	float lift = 10.7f;				// Rate the eye is pushed out of the ground
+	float clearance = 49.0f;		// Height the eye rides above the ground
+	float floor = 0.0f;				// Lowest the eye can go, on or off the terrain
+	float restpitch = 0.17f;		// Radians the nose rests at, looking down
+	float pitchkick = 0.01f;		// Raised each second, per unit of ground above the clearance
+	float pitchreturn = 0.17f;		// Radians a second, back towards rest
+
+	float speed = 0;				// Forward, now
+	float climb = 0;				// Upward
+	float pitch = 0.17f;			// Looking down when positive
+};
+
+inline RETRO_TerrainVehicle RETRO_Vehicle;
 
 //
 // The wrapping mesh walk
@@ -494,6 +532,81 @@ inline float RETRO_TerrainHeightLinear(float x, float z)
 }
 
 //
+// The ground height on the drawn surface, in world units
+//
+// A mesh one cell apart splits each cell into two flat triangles along the
+// diagonal from (x, z) to (x + 1, z + 1). HeightLinear's bilinear patch bulges
+// off those wherever the four corners are not coplanar; this is the height on
+// the triangle itself, so anything laid on it sits on what is drawn. The
+// corners fold the way the map does.
+//
+inline float RETRO_TerrainHeightTriangle(float x, float z)
+{
+	int ix = floorf(x);
+	int iz = floorf(z);
+	float fx = x - ix;
+	float fz = z - iz;
+
+	float h00 = RETRO_TerrainSample(ix, iz);
+	float h10 = RETRO_TerrainSample(ix + 1, iz);
+	float h01 = RETRO_TerrainSample(ix, iz + 1);
+	float h11 = RETRO_TerrainSample(ix + 1, iz + 1);
+
+	float height;
+	if (fx >= fz) {
+		height = h00 + fx * (h10 - h00) + fz * (h11 - h10);
+	} else {
+		height = h00 + fz * (h01 - h00) + fx * (h11 - h01);
+	}
+	return height * RETRO_Terrain.scale;
+}
+
+//
+// Where a ray first meets the drawn surface
+//
+// The ray runs from origin along a unit direction in steps of step world
+// units until it is at or below the ground, then halves the last step eight
+// times back onto it. A ridge thinner than a step may be passed over.
+// A ray that starts under the ground meets it at its origin. One that runs
+// level or climbs gives up once it is above the highest height a byte can
+// hold, and any gives up once it has crossed the map's width and height
+// together without meeting anything, and returns false. A shallow one would
+// otherwise march a long way to land far off the map, and a level one for
+// ever.
+//
+inline bool RETRO_TerrainRayHit(vec3 origin, vec3 direction, float step, vec3 &hit)
+{
+	float top = 255 * RETRO_Terrain.scale;
+	float limit = RETRO_Terrain.width + RETRO_Terrain.height;
+	float across = sqrtf(direction.x * direction.x + direction.z * direction.z);
+
+	float t = 0;
+	vec3 p = origin;
+	while (p.y > RETRO_TerrainHeightTriangle(p.x, p.z)) {
+		if ((direction.y >= 0 && p.y > top) || t * across > limit) return false;
+		t += step;
+		p = origin + direction * t;
+	}
+	if (t == 0) {
+		hit = origin;
+		return true;
+	}
+
+	float above = t - step, below = t;
+	for (int i = 0; i < 8; i++) {
+		float middle = (above + below) * 0.5f;
+		vec3 q = origin + direction * middle;
+		if (q.y > RETRO_TerrainHeightTriangle(q.x, q.z)) {
+			above = middle;
+		} else {
+			below = middle;
+		}
+	}
+	hit = origin + direction * below;
+	return true;
+}
+
+//
 // A wrapping map read between its cells, bilinearly filtered
 //
 // This is the voxel hot path: both planes are read the same way, neither is
@@ -560,6 +673,19 @@ inline void RETRO_DownsampleTerrain(unsigned char *heightmap, unsigned char *col
 			colormap[index] = RETRO_TerrainColor(sourcex, sourcez);
 		}
 	}
+}
+
+//
+// The ground's upward normal at x, z, by central differences over step
+//
+// Not unit length. Taken at a map vertex it is the same whichever cell the
+// vertex is visited from, so neighbouring cells light a shared edge alike.
+// The differences are in world units, so the vertical component is the
+// spacing they span and carries no scale of its own.
+//
+inline vec3 RETRO_TerrainNormal(float x, float z, float step = 1)
+{
+	return { RETRO_TerrainHeight(x - step, z) - RETRO_TerrainHeight(x + step, z), 2.0f * step, RETRO_TerrainHeight(x, z - step) - RETRO_TerrainHeight(x, z + step) };
 }
 
 //
@@ -695,6 +821,18 @@ inline RETRO_TerrainPoint RETRO_ProjectTerrainPoint(float x, float z, float heig
 }
 
 //
+// A world point in the wrapping camera's own frame, before the pinhole
+//
+// RETRO_ProjectTerrainPoint without its last step, for a polygon that is
+// to be cut at the near plane first (RETRO_ClipProjectTerrainPolygon).
+//
+inline RETRO_TerrainEye RETRO_TerrainPointEye(float x, float z, float height, const RETRO_TerrainBasis &basis)
+{
+	RETRO_TerrainOffset offset = RETRO_TerrainCameraOffset(x - RETRO_Camera.x, z - RETRO_Camera.z, basis);
+	return { offset.side, height - RETRO_Camera.height, offset.depth };
+}
+
+//
 // The wrapping pinhole for a point sitting on the ground.
 inline RETRO_TerrainPoint RETRO_ProjectTerrainVertex(float x, float z, const RETRO_TerrainBasis &basis)
 {
@@ -714,6 +852,18 @@ inline RETRO_TerrainMesh RETRO_BuildTerrainMesh(void)
 	mesh.maxx = (int)ceilf((RETRO_Camera.x + distance) / step) * step;
 	mesh.minz = (int)floorf((RETRO_Camera.z - distance) / step) * step;
 	mesh.maxz = (int)ceilf((RETRO_Camera.z + distance) / step) * step;
+	if (!RETRO_Terrain.wrap) {
+		// A finite patch has no cells past its edges; the last cell starts one
+		// step short of the far edge. The walk has no part cells, so a spacing
+		// that does not divide the patch would leave its far strip undrawn
+		if ((RETRO_Terrain.width - 1) % step != 0 || (RETRO_Terrain.height - 1) % step != 0) {
+			RETRO_RageQuit("Terrain mesh spacing %d does not divide a %dx%d patch\n", step, RETRO_Terrain.width, RETRO_Terrain.height);
+		}
+		mesh.minx = MAX(mesh.minx, 0);
+		mesh.minz = MAX(mesh.minz, 0);
+		mesh.maxx = MIN(mesh.maxx, RETRO_Terrain.width - step);
+		mesh.maxz = MIN(mesh.maxz, RETRO_Terrain.height - step);
+	}
 	mesh.basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
 	mesh.distance2 = (float)distance * distance;
 	return mesh;
@@ -728,6 +878,11 @@ inline RETRO_TerrainMesh RETRO_BuildTerrainMesh(void)
 // ground Offset, not the Eye: a yaw leaves height alone, so the height of
 // the cell can wait until the cell has been kept.
 //
+// The near plane is widened the same way, by the half diagonal of a cell: a
+// cell whose centre is behind the plane can still reach in front of it, and
+// under a low eye that part is the ground at the bottom of the screen. What
+// of it is behind the eye is dropped or clipped by whoever draws it.
+//
 inline bool RETRO_TerrainCellVisible(const RETRO_TerrainMesh &mesh, int x, int z)
 {
 	float centrex = x + mesh.step / 2.0f - RETRO_Camera.x;
@@ -735,21 +890,78 @@ inline bool RETRO_TerrainCellVisible(const RETRO_TerrainMesh &mesh, int x, int z
 	if (centrex * centrex + centrez * centrez > mesh.distance2) return false;
 
 	RETRO_TerrainOffset offset = RETRO_TerrainCameraOffset(centrex, centrez, mesh.basis);
-	return offset.depth >= RETRO_TerrainView.nearplane && fabsf(offset.side) <= offset.depth * RETRO_TerrainViewCullSlope() + mesh.step;
+	float halfdiagonal = mesh.step * 0.7072f;
+	return offset.depth + halfdiagonal >= RETRO_TerrainView.nearplane && fabsf(offset.side) <= offset.depth * RETRO_TerrainViewCullSlope() + mesh.step;
 }
 
 //
-// Whether all three corners came back in front of the eye
+// A corner in the camera's own frame, with what a drawer interpolates
 //
-// A corner behind it is projected through the eye and folds onto the screen as
-// a plausible-looking shape in the wrong place, so the triangle is dropped. The
-// test is on the triangle and not on the cell it was split from: a cell the eye
-// sits inside has one half in front of it and one behind, and judging the cell
-// would throw both away and leave a hole in the foreground.
+// The Eye is where it is, before the pinhole; the rest is carried through to
+// the PolygonPoint the drawers take. A polygon of these can be cut at the
+// near plane before it is projected, which a PolygonPoint, already on the
+// screen, no longer can.
 //
-inline bool RETRO_TerrainTriangleProjects(float q0, float q1, float q2)
+struct RETRO_TerrainVertex {
+	RETRO_TerrainEye eye;	// Right, up and forward of the eye
+	vec2 uv;				// Texture coordinates
+	float c;				// Shade, or palette index
+	float tint[RETRO_MAX_TINTS];	// Further light levels, for a shade table with tints
+};
+
+//
+// Clip a polygon to the near side of the near plane, then project it
+//
+// A corner behind the eye would be projected through it and fold onto the
+// screen in the wrong place, and dropping the face instead leaves a hole
+// along the bottom of the screen wherever it reaches from behind the camera
+// into view. Where the cells are large
+// beside the eye's height that hole is in plain sight. Cutting the polygon
+// at the plane instead keeps the part in front: side, height, depth, the
+// texture coordinates and both light levels are linear along an edge in the
+// camera's frame, so this is Sutherland-Hodgman against the one plane.
+//
+// Returns the corners written to point, which must have room for one more
+// than count; fewer than three is nothing to draw. count may be up to
+// RETRO_TERRAIN_MAX_POLYGON.
+//
+inline int RETRO_ClipProjectTerrainPolygon(const RETRO_TerrainVertex *vertex, int count, PolygonPoint *point)
 {
-	return q0 > 0 && q1 > 0 && q2 > 0;
+	float nearplane = RETRO_TerrainView.nearplane;
+	RETRO_TerrainVertex clipped[RETRO_TERRAIN_MAX_POLYGON + 1];
+	int points = 0;
+	for (int i = 0; i < count; i++) {
+		const RETRO_TerrainVertex &a = vertex[i];
+		const RETRO_TerrainVertex &b = vertex[(i + 1) % count];
+		bool ainside = a.eye.depth >= nearplane;
+		bool binside = b.eye.depth >= nearplane;
+		if (ainside) clipped[points++] = a;
+		if (ainside != binside) {
+			float t = (nearplane - a.eye.depth) / (b.eye.depth - a.eye.depth);
+			RETRO_TerrainVertex &v = clipped[points++];
+			v.eye.side = a.eye.side + (b.eye.side - a.eye.side) * t;
+			v.eye.height = a.eye.height + (b.eye.height - a.eye.height) * t;
+			v.eye.depth = nearplane;
+			v.uv = a.uv + (b.uv - a.uv) * t;
+			v.c = a.c + (b.c - a.c) * t;
+			for (int j = 0; j < RETRO_MAX_TINTS; j++) {
+				v.tint[j] = a.tint[j] + (b.tint[j] - a.tint[j]) * t;
+			}
+		}
+	}
+
+	for (int i = 0; i < points; i++) {
+		RETRO_TerrainPoint projected = RETRO_ProjectTerrainView(clipped[i].eye);
+		point[i] = PolygonPoint{};
+		point[i].pos = projected.spos;
+		point[i].c = clipped[i].c;
+		point[i].uv = clipped[i].uv;
+		point[i].q = projected.q;
+		for (int j = 0; j < RETRO_MAX_TINTS; j++) {
+			point[i].tint[j] = clipped[i].tint[j];
+		}
+	}
+	return points;
 }
 
 //
@@ -836,6 +1048,59 @@ inline void RETRO_UpdateTerrainCamera(float timestep)
 		RETRO_Camera.height += (target - RETRO_Camera.height) * (1.0f - expf(-timestep / RETRO_Camera.follow));
 		if (RETRO_Camera.height < ground + RETRO_Camera.clearance) RETRO_Camera.height = ground + RETRO_Camera.clearance;
 	}
+}
+
+//
+// Drive the wrapping camera as RETRO_Vehicle
+//
+// Hovering, the spring holds the eye a little into the ground, which keeps
+// lifting the nose almost as fast as it settles, so the view rides nearly
+// level rather than at its resting pitch.
+//
+inline void RETRO_UpdateTerrainVehicle(float timestep)
+{
+	RETRO_TerrainVehicle &v = RETRO_Vehicle;
+	if (RETRO_KeyState(SDL_SCANCODE_UP)) {
+		v.speed = MIN(v.speed + v.acceleration * timestep, v.maxspeed);
+	} else if (RETRO_KeyState(SDL_SCANCODE_DOWN)) {
+		v.speed = MAX(v.speed - v.acceleration * timestep, -v.maxspeed);
+	}
+	if (RETRO_KeyState(SDL_SCANCODE_LEFT)) RETRO_Camera.heading += v.turnspeed * timestep;
+	if (RETRO_KeyState(SDL_SCANCODE_RIGHT)) RETRO_Camera.heading -= v.turnspeed * timestep;
+	RETRO_Camera.heading = fmodf(RETRO_Camera.heading, (float)(2 * M_PI));
+	if (RETRO_Camera.heading < 0) RETRO_Camera.heading += (float)(2 * M_PI);
+
+	// The ground the vehicle is over is the height halfway across its cell,
+	// the average of the cell's corners
+	int x = (int)floorf(RETRO_Camera.x), z = (int)floorf(RETRO_Camera.z);
+	if (RETRO_Terrain.wrap || (x >= 0 && z >= 0 && x < RETRO_Terrain.width - 1 && z < RETRO_Terrain.height - 1)) {
+		float depth = RETRO_TerrainHeightLinear(x + 0.5f, z + 0.5f) - (RETRO_Camera.height - v.clearance);
+		if (depth > 0) {
+			v.climb += depth * v.spring * timestep;
+			RETRO_Camera.height += depth * (1 - expf(-v.lift * timestep));
+			v.pitch -= depth * v.pitchkick * timestep;
+		}
+	}
+
+	v.speed = APPROACH(v.speed, 0, v.friction * timestep);
+	v.pitch = APPROACH(v.pitch, v.restpitch, v.pitchreturn * timestep);
+
+	v.climb -= v.gravity * timestep;
+
+	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
+	RETRO_Camera.x += basis.forward.x * v.speed * timestep;
+	RETRO_Camera.z += basis.forward.y * v.speed * timestep;
+	RETRO_Camera.height += v.climb * timestep;
+	if (RETRO_Camera.height < v.floor) {
+		v.climb = 0;
+		RETRO_Camera.height = v.floor;
+	}
+	if (RETRO_Terrain.wrap) {
+		RETRO_Camera.x = RETRO_WrapCoordinate(RETRO_Camera.x, RETRO_Terrain.width);
+		RETRO_Camera.z = RETRO_WrapCoordinate(RETRO_Camera.z, RETRO_Terrain.height);
+	}
+
+	RETRO_TerrainView.horizon = RETRO_HEIGHT / 2 - RETRO_TerrainView.focaly * tanf(v.pitch);
 }
 
 //

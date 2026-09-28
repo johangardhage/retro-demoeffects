@@ -57,7 +57,7 @@ static RETRO_Font Font;
 static RETRO_Image *TextStrip;
 static mat3 CameraMatrix;
 static unsigned char InkShades[2 * SHADES];
-static ShadeTable TextShades = { InkShades, 2, SHADES };
+static RETRO_ShadeTable TextShades = { InkShades, 2, SHADES };
 
 // Full ink at ZNEAR, black from ZFAR on.
 static float Shade(double depth)

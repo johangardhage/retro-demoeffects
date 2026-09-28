@@ -343,4 +343,35 @@ inline void RETRO_SortFaces(bool backfaces = false, Model3D *model = NULL)
 	}
 }
 
+//
+// The convex outline of count points, as the indices of its corners in turn,
+// wrapped one corner at a time: from the leftmost, each next corner is the
+// point every other lies to one side of, the farthest when several line up.
+// Duplicates share a position, so the outline is closed by position. None
+// when it would take more than maxcorners corners.
+//
+inline int RETRO_ConvexOutline(const vec2 *point, int count, int *outline, int maxcorners)
+{
+	int start = 0;
+	for (int i = 1; i < count; i++) {
+		if (point[i].x < point[start].x || (point[i].x == point[start].x && point[i].y < point[start].y)) start = i;
+	}
+
+	int corners = 0;
+	int current = start;
+	do {
+		if (corners == maxcorners) return 0;
+		outline[corners++] = current;
+		int next = start;
+		for (int i = 0; i < count; i++) {
+			vec2 a = point[next] - point[current];
+			vec2 b = point[i] - point[current];
+			float turn = a.x * b.y - a.y * b.x;
+			if (turn < 0 || (turn == 0 && dot(b, b) > dot(a, a))) next = i;
+		}
+		current = next;
+	} while (!(point[current] == point[start]));
+	return corners;
+}
+
 #endif

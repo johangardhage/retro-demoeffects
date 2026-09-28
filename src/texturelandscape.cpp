@@ -20,6 +20,11 @@
 // drawer to clamp it would smear the map's edge texel over everything the walk
 // reaches beyond the map.
 //
+// A triangle reaching from behind the camera into view is cut at the near
+// plane rather than dropped, so a camera flown low over the ground still has
+// ground under the bottom of the screen. The near plane is brought in close
+// for the same reason; it can be, because nothing behind it is projected.
+//
 // Left/Right turn and Up/Down move along the viewing direction. W/S are
 // alternate forward/back controls and A/D strafe. Tab toggles a flycam, in
 // which R and F raise and lower the camera. PageUp and PageDown move the
@@ -34,32 +39,25 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-struct WorldVertex {
-	vec2 spos;
-	float q;
-	vec2 uv;
-};
+// Near enough that a camera flown down onto the ground still sees it
+#define LANDSCAPE_NEARPLANE 0.25f
 
-static WorldVertex ProjectVertex(float x, float z, const RETRO_TerrainBasis &basis)
+static RETRO_TerrainVertex TerrainVertex(float x, float z, const RETRO_TerrainBasis &basis)
 {
-	RETRO_TerrainPoint point = RETRO_ProjectTerrainVertex(x, z, basis);
-	WorldVertex vertex;
-	vertex.spos = point.spos;
-	vertex.q = point.q;
+	RETRO_TerrainVertex vertex = {};
+	vertex.eye = RETRO_TerrainPointEye(x, z, RETRO_TerrainHeight(x, z), basis);
 	vertex.uv = { x, z };
 	return vertex;
 }
 
-static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const WorldVertex &c)
+static void DrawTriangle(const RETRO_TerrainVertex &a, const RETRO_TerrainVertex &b, const RETRO_TerrainVertex &c)
 {
-	if (!RETRO_TerrainTriangleProjects(a.q, b.q, c.q)) return;
+	RETRO_TerrainVertex triangle[3] = { a, b, c };
+	PolygonPoint polygon[4];
+	int points = RETRO_ClipProjectTerrainPolygon(triangle, 3, polygon);
+	if (points < 3) return;
 
-	PolygonPoint polygon[3] = {
-		{ a.spos, 0, a.uv, a.q },
-		{ b.spos, 0, b.uv, b.q },
-		{ c.spos, 0, c.uv, c.q }
-	};
-	RETRO_DrawTexMapPolygon(polygon, 3, RETRO_Terrain.colormap, RETRO_Terrain.width, RETRO_Terrain.height, RETRO_Terrain.wrap);
+	RETRO_DrawTexMapPolygon(polygon, points, RETRO_Terrain.colormap, RETRO_Terrain.width, RETRO_Terrain.height, RETRO_Terrain.wrap);
 }
 
 void DEMO_Render(double time, double deltatime)
@@ -73,10 +71,10 @@ void DEMO_Render(double time, double deltatime)
 		for (int x = mesh.minx; x < mesh.maxx; x += step) {
 			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
 
-			WorldVertex p00 = ProjectVertex(x, z, mesh.basis);
-			WorldVertex p10 = ProjectVertex(x + step, z, mesh.basis);
-			WorldVertex p01 = ProjectVertex(x, z + step, mesh.basis);
-			WorldVertex p11 = ProjectVertex(x + step, z + step, mesh.basis);
+			RETRO_TerrainVertex p00 = TerrainVertex(x, z, mesh.basis);
+			RETRO_TerrainVertex p10 = TerrainVertex(x + step, z, mesh.basis);
+			RETRO_TerrainVertex p01 = TerrainVertex(x, z + step, mesh.basis);
+			RETRO_TerrainVertex p11 = TerrainVertex(x + step, z + step, mesh.basis);
 
 			DrawTriangle(p00, p11, p10);
 			DrawTriangle(p00, p01, p11);
@@ -93,5 +91,6 @@ void DEMO_Initialize(void)
 	// Sky, in an entry the color map never uses
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
 
+	RETRO_TerrainView.nearplane = LANDSCAPE_NEARPLANE;
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

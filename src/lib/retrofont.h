@@ -670,10 +670,17 @@ inline void RETRO_PutChar(unsigned char character, int x, int y, unsigned char c
 	}
 }
 
+// A newline starts the next line back at x, a pixel below the font's height
 inline void RETRO_PutString(const char *text, int x, int y, unsigned char color)
 {
+	int left = x;
 	while (*text != 0) {
 		unsigned char character = *text++;
+		if (character == '\n') {
+			x = left;
+			y += RETRO_CurrentFont.height + 1;
+			continue;
+		}
 		RETRO_PutChar(character, x, y, color);
 		x += RETRO_CharWidth(character);
 	}

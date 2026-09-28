@@ -573,6 +573,37 @@ inline void RETRO_Load3DModelFrames(Model3D *model, const char *pattern, int fra
 }
 
 //
+// Pose the model between any two of its poses, a fraction s of the way from
+// pose a to pose b,
+//
+//   p = (1 - s) a + s b
+//
+// RETRO_MorphModel runs the poses in order through this. Called directly it
+// serves an animation that does not: a loop closing from its last pose back to
+// its first, or one of several sequences held in the same list of poses.
+// Normals are left as they were, as RETRO_MorphModel leaves them
+//
+inline void RETRO_BlendModelPoses(int a, int b, float s, Model3D *model = NULL)
+{
+	model = model ? model : RETRO_Get3DModel();
+
+	if (a < 0 || a >= model->frames || b < 0 || b >= model->frames) {
+		RETRO_RageQuit("RETRO_BlendModelPoses needs poses the model holds, 0 to %d\n", model->frames - 1);
+	}
+
+	const float *from = &model->frame[(size_t)a * model->vertices * 3];
+	const float *to = &model->frame[(size_t)b * model->vertices * 3];
+
+	for (int i = 0; i < model->vertices; i++) {
+		model->vertex[i].pos = {
+			from[i * 3] * (1.0f - s) + to[i * 3] * s,
+			from[i * 3 + 1] * (1.0f - s) + to[i * 3 + 1] * s,
+			from[i * 3 + 2] * (1.0f - s) + to[i * 3 + 2] * s
+		};
+	}
+}
+
+//
 // Pose the model at u along its animation, u in [0, 1] over the whole of it.
 // u * (frames - 1) names the pair of poses it falls between and the fraction s
 // to mix them by,
@@ -600,18 +631,7 @@ inline void RETRO_MorphModel(float u, Model3D *model = NULL)
 	// u = 1 lands on the last pose with nothing past it to mix toward, and s is
 	// zero there, so b carries no weight and only has to stay in range
 	int b = MIN(a + 1, model->frames - 1);
-	float s = f - a;
-
-	const float *from = &model->frame[(size_t)a * model->vertices * 3];
-	const float *to = &model->frame[(size_t)b * model->vertices * 3];
-
-	for (int i = 0; i < model->vertices; i++) {
-		model->vertex[i].pos = {
-			from[i * 3] * (1.0f - s) + to[i * 3] * s,
-			from[i * 3 + 1] * (1.0f - s) + to[i * 3 + 1] * s,
-			from[i * 3 + 2] * (1.0f - s) + to[i * 3 + 2] * s
-		};
-	}
+	RETRO_BlendModelPoses(a, b, f - a, model);
 }
 
 //
@@ -745,6 +765,123 @@ inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = 
 	return model;
 }
 
+//
+// Load a Quake II MD2 model, and every frame it holds as a pose of it
+//
+// The file keeps its frames as bytes, each frame scaled and offset back to
+// model units by its own six floats. Quake is z up, so each point comes in
+// turned a quarter about x, which keeps it right handed and facing +x:
+//
+//   (x, y, z) -> (x, z, -y)
+//
+// Quake draws a triangle wound clockwise as seen from outside, so each is read
+// in reverse and faces out as an OBJ face does. The texture coordinates are
+// pixels of the skin, whose size the header gives, and are scaled to texels of
+// a map RETRO_TEXMAP_SIZE square; the skin itself is loaded apart, as any
+// texture is. The first frame stands as the model's own vertex list. The normals
+// the frames carry are Quake's lighting's, and are not read: the model's are
+// its first frame's, and a pose leaves them as they were, as an OBJ animation's
+// does
+//
+inline Model3D *RETRO_LoadMD2Model(const char *filename)
+{
+	FILE *fp = fopen(filename, "rb");
+	if (fp == NULL) {
+		RETRO_RageQuit("Cannot open file: %s\n", filename);
+	}
+	fseek(fp, 0, SEEK_END);
+	long size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+	unsigned char *data = (unsigned char *)malloc(size > 0 ? size : 1);
+	if (data == NULL) {
+		RETRO_RageQuit("Cannot allocate model file memory\n");
+	}
+	if (size < 68 || fread(data, size, 1, fp) != 1) {
+		RETRO_RageQuit("Cannot read file: %s\n", filename);
+	}
+	fclose(fp);
+
+	// The header: seventeen little endian ints
+	int header[17];
+	for (int i = 0; i < 17; i++) {
+		header[i] = data[i * 4] | data[i * 4 + 1] << 8 | data[i * 4 + 2] << 16 | data[i * 4 + 3] << 24;
+	}
+	int skinwidth = header[2], skinheight = header[3], framesize = header[4];
+	int vertices = header[6], uvs = header[7], faces = header[8], frames = header[10];
+	int uvoffset = header[12], faceoffset = header[13], frameoffset = header[14];
+
+	if (memcmp(data, "IDP2", 4) != 0 || header[1] != 8) {
+		RETRO_RageQuit("Not an MD2 model: %s\n", filename);
+	}
+	if (vertices <= 0 || vertices > RETRO_MAX_VERTICES || uvs <= 0 || uvs > RETRO_MAX_UVS || faces <= 0 || faces > RETRO_MAX_FACES || frames <= 0 || skinwidth <= 0 || skinheight <= 0) {
+		RETRO_RageQuit("MD2 model does not fit the model lists: %s\n", filename);
+	}
+	// Check each offset before subtracting it; division avoids overflowing
+	// even when a malformed header names a very large frame count or size.
+	if (uvoffset < 68 || faceoffset < 68 || frameoffset < 68 || framesize < 40 + vertices * 4 || uvoffset > size || uvs > (size - uvoffset) / 4 || faceoffset > size || faces > (size - faceoffset) / 12 || frameoffset > size || frames > (size - frameoffset) / framesize) {
+		RETRO_RageQuit("MD2 model runs past the end of its file: %s\n", filename);
+	}
+
+	Model3D *model = RETRO_Allocate3DModel();
+	model->vertices = vertices;
+	model->uvs = uvs;
+	model->faces = faces;
+
+	for (int i = 0; i < uvs; i++) {
+		const unsigned char *uv = &data[uvoffset + i * 4];
+		model->uv[i].x = (short)(uv[0] | uv[1] << 8) * (float)RETRO_TEXMAP_SIZE / skinwidth;
+		model->uv[i].y = (short)(uv[2] | uv[3] << 8) * (float)RETRO_TEXMAP_SIZE / skinheight;
+	}
+
+	for (int i = 0; i < faces; i++) {
+		const unsigned char *triangle = &data[faceoffset + i * 12];
+		Face *face = &model->face[i];
+		face->vertices = 3;
+		for (int j = 0; j < 3; j++) {
+			int vertex = triangle[(2 - j) * 2] | triangle[(2 - j) * 2 + 1] << 8;
+			int uv = triangle[6 + (2 - j) * 2] | triangle[6 + (2 - j) * 2 + 1] << 8;
+			if (vertex >= vertices || uv >= uvs) {
+				RETRO_RageQuit("Face names a vertex or UV coordinate the file does not define: %s\n", filename);
+			}
+			face->vertex[j] = vertex;
+			face->uv[j] = uv;
+		}
+	}
+
+	model->frame = (float *)malloc((size_t)frames * vertices * 3 * sizeof(float));
+	if (model->frame == NULL) {
+		RETRO_RageQuit("Cannot allocate animation memory\n");
+	}
+	model->frames = frames;
+
+	for (int frame = 0; frame < frames; frame++) {
+		const unsigned char *source = &data[frameoffset + (size_t)frame * framesize];
+		float transform[6]; // scale, then offset, little endian as the header is
+		for (int i = 0; i < 6; i++) {
+			uint32_t bits = source[i * 4] | source[i * 4 + 1] << 8 | source[i * 4 + 2] << 16 | (uint32_t)source[i * 4 + 3] << 24;
+			memcpy(&transform[i], &bits, sizeof(float));
+		}
+		const unsigned char *point = source + 40; // past the transform and the frame's name
+		float *pose = &model->frame[(size_t)frame * vertices * 3];
+		for (int i = 0; i < vertices; i++) {
+			float x = point[i * 4] * transform[0] + transform[3];
+			float y = point[i * 4 + 1] * transform[1] + transform[4];
+			float z = point[i * 4 + 2] * transform[2] + transform[5];
+			pose[i * 3] = x;
+			pose[i * 3 + 1] = z;
+			pose[i * 3 + 2] = -y;
+		}
+	}
+	free(data);
+
+	RETRO_BlendModelPoses(0, 0, 0, model);
+	RETRO_InitializeFaceNormals(model);
+	RETRO_InitializeFaceTangents(model);
+	RETRO_InitializeVertexNormals(model);
+
+	return model;
+}
+
 inline void RETRO_Save3DModel(const char *filename, Model3D *model)
 {
 	FILE *fp = fopen(filename, "wb");
@@ -789,6 +926,17 @@ inline void RETRO_Save3DModel(const char *filename, Model3D *model)
 	}
 
 	fclose(fp);
+}
+
+inline void RETRO_Initialize_3D(void)
+{
+}
+
+inline void RETRO_Deinitialize_3D(void)
+{
+	for (int i = 0; i < RETRO_MAX_MODELS; i++) {
+		RETRO_Free3DModel(i);
+	}
 }
 
 #endif

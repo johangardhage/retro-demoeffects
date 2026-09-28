@@ -118,6 +118,9 @@ inline int CLAMP(unsigned long n, int l, int h) { return CLAMP((int)n, l, h); }
 inline float CLAMP01(float n) { return n < 0 ? 0 : (n > 1 ? 1 : n); }
 inline double CLAMP01(double n) { return n < 0 ? 0 : (n > 1 ? 1 : n); }
 
+// Move n towards target by step, stopping on it rather than passing it
+inline float APPROACH(float n, float target, float step) { return n > target + step ? n - step : (n < target - step ? n + step : target); }
+
 // Wrap n into [0, h). Negative input wraps from the top, so WRAP(-1, 64) is 63.
 //
 // The integer overload keeps integer effects free of floating point. The floating point

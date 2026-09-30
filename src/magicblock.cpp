@@ -34,7 +34,7 @@
 #define BLOCK_HALF_THICKNESS 0.25f // magicblock.obj's broad faces sit at z = ±0.25
 
 #define STAR_COUNT 81
-#define STAR_FIELD 4.0f // stars fill a cube this far from the centre along each axis
+#define STAR_FIELD 4.0f // stars fill a cube this far from the center along each axis
 #define STAR_SPEED 2.5f // along x, units a second
 #define STAR_ROTATION_SPEED 0.43f
 
@@ -44,7 +44,7 @@
 #define CUBE_MASK 15
 
 // With the library's default eye distance of 250, the eye sits 250 / 32, about
-// 7.8 units, from the centre.
+// 7.8 units, from the center.
 #define PROJECTION_SCALE 32.0f
 
 // Face colors, in the order the assets list their faces. The block's broad

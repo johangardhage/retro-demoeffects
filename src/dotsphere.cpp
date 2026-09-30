@@ -2,7 +2,7 @@
 // Dot sphere
 //
 // A random cloud on the unit sphere, rotated and projected. Each point stamps
-// a 5×5 additive splat; a 4-neighbour diffuse blur (no self) then smears the
+// a 5×5 additive splat; a 4-neighbor diffuse blur (no self) then smears the
 // frame. DEMO_Render clears first, so that smear is spatial, not a trail.
 //
 // Points are uniform on the sphere, not uniform in angle. A zone of height
@@ -29,12 +29,12 @@
 //
 // At the equator (rz = 0) a model unit is s pixels. Depth toward the viewer
 // is −rz, so the near pole sits at depth 175 and the far pole at 325. The
-// splat is always 5×5 pixels, so only the centres have perspective.
+// splat is always 5×5 pixels, so only the centers have perspective.
 //
 // Both hemispheres are drawn, with no depth test. The surface is edge-on at
 // the silhouette, so projected density rises toward the limb
 // (orthographically 2 / |z| = 2 / √(1 − x² − y²)) and stamps add there.
-// The kernel is a 5×5 diamond, 31 at the centre down to 17, corners empty.
+// The kernel is a 5×5 diamond, 31 at the center down to 17, corners empty.
 // The blur is one in-place pass
 //
 //   T' = mean(N, W, E, S) − 3

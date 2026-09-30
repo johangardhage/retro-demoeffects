@@ -12,7 +12,7 @@
 // the width it has in the atlas. Two samples are taken per screen pixel of
 // circumference, which closes small holes caused by rounding the polar
 // coordinates to screen pixels. The path begins just after the bottom and
-// stops just before returning to it, leaving a fixed opening centred on
+// stops just before returning to it, leaving a fixed opening centered on
 // the bottom. The top font row is toward the outside of the circle, so the
 // lettering is upright and outward-facing across the top. A zero texel
 // remains transparent.
@@ -45,7 +45,7 @@ void DEMO_Render(double time, double deltatime)
 	// Walk once around the circle. Arc is measured in screen pixels, so a
 	// font column retains approximately the same width as in the atlas.
 	for (int sample = 0; sample < CIRCLE_SAMPLES; sample++) {
-		// Screen y grows downward, so pi / 2 is bottom centre. Offset the
+		// Screen y grows downward, so pi / 2 is bottom center. Offset the
 		// start by half the gap; the shortened path leaves the other half at
 		// its end. Advancing by arc length preserves that opening.
 		double angle = M_PI / 2 + CIRCLE_GAP / (2.0 * CIRCLE_RADIUS) + (double)sample / (CIRCLE_RADIUS * SAMPLES_PER_PIXEL);

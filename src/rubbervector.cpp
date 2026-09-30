@@ -2,7 +2,7 @@
 // Jelly cube
 //
 // A subdivided cube that squashes as a volume rather than bending as a
-// mesh: rubbervector2.cpp bends it with three travelling sine waves,
+// mesh: rubbervector2.cpp bends it with three traveling sine waves,
 // rubbervector3.cpp twists a Glenz-shaded column of triangles, and
 // rubbervector4.cpp gets the classic Amiga look without deforming a mesh
 // at all, by scanline-multiplexing a ring of rigid rendered frames. This
@@ -13,7 +13,7 @@
 //   s_z = 1 + A sin(φ + 4π/3)
 //
 // so the box is always stretching on one axis while it flattens on the
-// others, the way a cube of jelly does under a tap. A travelling bulge
+// others, the way a cube of jelly does under a tap. A traveling bulge
 // then rides the rest y
 //
 //   b = 1 + B sin(k y_rest + 2φ)
@@ -35,7 +35,7 @@
 #define ROTATION_SPREAD 0.28f // the other two turn this much slower and faster
 #define PULSE_SPEED 2.1f // radians of the squash per second
 #define PULSE_AMOUNT 0.16f // how far an axis stretches from 1
-#define BULGE_AMOUNT 0.12f // extra scale the travelling wave adds
+#define BULGE_AMOUNT 0.12f // extra scale the traveling wave adds
 #define BULGE_WAVE 1.8f // radians of that wave per model unit of rest y
 
 static Model3D *Jelly;

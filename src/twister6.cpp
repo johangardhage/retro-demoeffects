@@ -34,7 +34,7 @@
 // tent(i) = 255 − |255 − 2i|, peaking at i = 127 and 128. The LUT is 240
 // diffuse ramps plus 16 specular highlights, 240 + 16 = 256, independent of
 // the screen height. Diffuse is C · (120 + s) / 360, from one-third ambient
-// up to almost the face colour. Specular lerps toward white as
+// up to almost the face color. Specular lerps toward white as
 // C + (255 − C) · h / 23. lumel 240..255 is the tent peak, so the highlight
 // sits on the silhouette rims.
 //
@@ -220,7 +220,7 @@ void DEMO_Initialize(void)
 		LightTable[i] = 255 - CLAMP256(abs(255 - i * 2));
 	}
 
-	// Calculate light reflections. Each palette colour is shaded against
+	// Calculate light reflections. Each palette color is shaded against
 	// itself and snapped back into the same palette. Diffuse is
 	// C · (120 + s) / 360, from one-third ambient up to almost C.
 	// Specular lerps toward white as C + (255 − C) · h / 23 and never

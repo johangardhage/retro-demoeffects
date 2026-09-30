@@ -6,7 +6,7 @@
 // spherequads.obj, where face f is row f / MERIDIANS and column
 // f % MERIDIANS and the parity of their sum picks one of two colors. It lines
 // up around the seam because the meridians are even. Nothing is lit, so the
-// ball reads as round only from the way the checks foreshorten towards the
+// ball reads as round only from the way the checks foreshorten toward the
 // silhouette, as in the original.
 //
 // RETRO_RotateModel builds R = Rz Ry Rx, so with ax = 0 the spin about y
@@ -26,7 +26,7 @@
 // through several of them before it repeats.
 //
 // The shadow is the ball projected a second time. RETRO_ProjectModel's screen
-// centre is an offset in pixels applied after the divide, so it moves the ball
+// center is an offset in pixels applied after the divide, so it moves the ball
 // on the wall without moving it in z, keeping its size and outline.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
@@ -45,8 +45,8 @@
 #define BOING_SWEEPS 2 // crossings of the room and back in that time
 #define BOING_BOUNCES 7 // floor bounces in it, coprime with SWEEPS so the landings differ
 #define BOING_CX (RETRO_WIDTH / 2.0)
-#define BOING_AMP 95 // pixels either side of centre the ball travels
-#define BOING_FLOOR 190 // screen y of the ball's centre when it is on the floor
+#define BOING_AMP 95 // pixels either side of center the ball travels
+#define BOING_FLOOR 190 // screen y of the ball's center when it is on the floor
 #define BOING_HEIGHT 70 // pixels the ball rises at the top of a bounce
 #define BOING_SHADOWX 26 // pixels the shadow sits to the right of the ball
 #define BOING_SHADOWY 14 // and below it

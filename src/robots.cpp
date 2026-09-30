@@ -31,9 +31,9 @@
 //
 // Each point light throws a shadow of each mech: every corner of it is
 // followed along its ray from the light to a level plane just above the plain
-// at the world's centre, where a corner at height h under a light at height l
+// at the world's center, where a corner at height h under a light at height l
 // lands (l - plane) / (l - h) as far from the light as it started. Only the
-// faces turned towards the light are drawn there. The plane is flat, so the
+// faces turned toward the light are drawn there. The plane is flat, so the
 // shadow does not climb a hill: the hill rises through it and hides it. It is
 // depth tested but writes no depth, and darkens what is under it through a
 // table, in one pass for both mechs that darkens each pixel once however many
@@ -73,7 +73,7 @@
 #define POINT_LIGHT_KL 0.001f // orange, attenuation per world unit
 #define POINT_LIGHT2_KL 0.002f // yellow
 #define POINT_LIGHT_RATE (30 * DEG2RAD) // radians a second round the world
-#define POINT_LIGHT_ORBIT WORLD(500) // orange, radius about the world's centre
+#define POINT_LIGHT_ORBIT WORLD(500) // orange, radius about the world's center
 #define POINT_LIGHT2_ORBIT WORLD(200) // yellow, twice as fast the other way
 #define POINT_LIGHT_ALTITUDE WORLD(500)
 #define LIGHT_LEVELS 32 // neutral light, in the tables
@@ -145,7 +145,7 @@ static unsigned char LightTableData[TEXTURES][RETRO_COLORS][LIGHT_LEVELS][TINT_L
 static unsigned char ShadowTable[RETRO_COLORS];
 static unsigned char ColorBlack, ColorTextGreen, ColorWhite, ColorCubeRed, ColorCubeYellow;
 static Model3D *Models[MODELS];
-static const vec3 Sun = normalize(vec3{ 1, 1, -1 }); // the infinite light, towards it
+static const vec3 Sun = normalize(vec3{ 1, 1, -1 }); // the infinite light, toward it
 
 static const float PointLightKL[POINT_LIGHTS] = { POINT_LIGHT_KL, POINT_LIGHT2_KL };
 static const float PointLightTint[POINT_LIGHTS][TINTS] = { { 1, 128 / 255.0f }, { 1, 1 } }; // orange, and yellow
@@ -180,7 +180,7 @@ static float PointLightTerm(vec3 p, vec3 n, vec3 light, float kl)
 	return POINT_LIGHT * MAX(dot(n, l) / distance, 0.0f) / (kl * TO_WORLD(distance));
 }
 
-// A colour under the light: the neutral level as the shade, and red and green
+// A color under the light: the neutral level as the shade, and red and green
 // beyond it as the tints
 static RETRO_Palette Modulate(RETRO_Palette color, float neutral, const float *tint)
 {
@@ -226,7 +226,7 @@ static RETRO_TerrainVertex MakeVertex(vec3 p, vec2 uv, Light light)
 	return vertex;
 }
 
-// A texture's light table, from its own colours to the screen's
+// A texture's light table, from its own colors to the screen's
 static RETRO_ShadeTable LightTable(int texture)
 {
 	return { &LightTableData[texture - ASSET_TERRAIN][0][0][0][0], RETRO_COLORS, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
@@ -234,7 +234,7 @@ static RETRO_ShadeTable LightTable(int texture)
 
 //
 // One polygon, through the near plane and onto the screen: textured and lit
-// when there is a texture, a flat colour when there is not. Flat colours
+// when there is a texture, a flat color when there is not. Flat colors
 // are black with the lighting off.
 //
 static void DrawPolygon(const RETRO_TerrainVertex *vertex, int count, int texture, unsigned char color)
@@ -425,13 +425,13 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
 	View = mesh.basis;
 
-	// The point lights on their paths about the world's centre
+	// The point lights on their paths about the world's center
 	vec3 center = WorldCenter();
 	float angle = fmod(time * POINT_LIGHT_RATE, 2 * M_PI);
 	PointLightPosition[LIGHT_ORANGE] = { center.x - POINT_LIGHT_ORBIT * cosf(angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_ORBIT * sinf(angle) };
 	PointLightPosition[LIGHT_YELLOW] = { center.x - POINT_LIGHT2_ORBIT * cosf(-2 * angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT2_ORBIT * sinf(-2 * angle) };
 
-	// The mechs, side by side at the world's centre
+	// The mechs, side by side at the world's center
 	PoseRobot(time - AnimationStart);
 	vec3 robots[] = { { center.x, ROBOT_ALTITUDE, center.z }, { center.x, ROBOT_ALTITUDE, center.z + ROBOT_SPACING } };
 
@@ -480,7 +480,7 @@ void DEMO_Initialize(void)
 
 	const RETRO_Palette *palette = RETRO_ImagePalette(ASSET_SKY);
 
-	// The colours drawn besides the textures. The palette is fitted to the
+	// The colors drawn besides the textures. The palette is fitted to the
 	// scene, and holds the read-out's green and white exactly; the rest are
 	// each their nearest entry there rather than one set aside
 	ColorBlack = RETRO_NearestPaletteIndex(RETRO_BLACK, palette);
@@ -489,7 +489,7 @@ void DEMO_Initialize(void)
 	ColorCubeRed = RETRO_NearestPaletteIndex(RETRO_Palette{ 255, 0, 0 }, palette);
 	ColorCubeYellow = RETRO_NearestPaletteIndex(RETRO_Palette{ 251, 255, 10 }, palette);
 
-	// A light table per texture, from its own colours to the screen's
+	// A light table per texture, from its own colors to the screen's
 	for (int texture = ASSET_TERRAIN; texture < ASSET_TERRAIN + TEXTURES; texture++) {
 		RETRO_CreateShadeTable(RETRO_ImagePalette(texture), palette, LightTable(texture), Modulate);
 	}

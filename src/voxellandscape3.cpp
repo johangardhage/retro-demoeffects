@@ -11,9 +11,9 @@
 //
 // where slope is that half width at unit depth, and forward and right are the
 // two directions a heading faces, which the terrain library turns out of it.
-// Each column samples the map on that segment.
-// Indices are a floor and a mask, not a cast toward zero: (-1, 0) is the last
-// texel, not 0. The camera lives on the same torus; the heading lives in [0, 2pi).
+// Each column samples the map on that segment. Indices are a floor and a mask,
+// not a cast toward zero: (-1, 0) is the last texel, not 0. The camera lives on
+// the same torus; the heading lives in [0, 2pi).
 //
 // A height difference dh at depth z is a pinhole
 //
@@ -131,7 +131,7 @@ void DEMO_Initialize(void)
 		RETRO_RageQuit("Terrain map sides must be powers of two\n");
 	}
 
-	// Sky, in an entry the color map never uses, the same colour the other
+	// Sky, in an entry the color map never uses, the same color the other
 	// photographed landscapes open on
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
 

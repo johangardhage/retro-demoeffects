@@ -5,7 +5,9 @@
 // the nearest sphere or floor; reflected rays repeat that same scene query,
 // so the balls reflect one another as well as the floor and sky. Throughput
 // falls at each bounce. A fixed bounce limit bounds work between mirrors.
-// Camera directions are normalized per pixel, at pixel centres.
+// Camera directions are normalized per pixel, at pixel centers.
+//
+// Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"

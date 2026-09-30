@@ -10,7 +10,7 @@
 //   x      = (worldx − WIDTH/2) · scale + WIDTH/2
 //   y      = HEIGHT/2 + (glyphy + worldx · DIAGONAL_RISE) · scale
 //
-// glyphy is the texel's row, centred on the strip. The strip travels from
+// glyphy is the texel's row, centered on the strip. The strip travels from
 // the lower right to the upper left while the sine bends it in depth.
 // Perspective makes the near parts larger and the far parts smaller; every
 // visible font texel is still drawn as one pixel only. phase lives on
@@ -28,7 +28,7 @@
 
 #define DOT_SPACING 3
 #define SCROLL_SPEED 100 // screen pixels per second
-#define DIAGONAL_RISE 0.25 // pixels upward for each pixel travelled left
+#define DIAGONAL_RISE 0.25 // pixels upward for each pixel traveled left
 
 #define DEPTH_AMPLITUDE 110
 #define DEPTH_WAVELENGTH 220

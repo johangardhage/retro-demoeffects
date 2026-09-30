@@ -25,7 +25,7 @@
 // the bottom of the screen. The picture has all 256 colors, so the mixes are
 // a shade table of WATER_LEVELS levels, each mixed color remapped to the
 // nearest one the picture has, and the level rises with d, ordered-dithered
-// between neighbours so the steps do not show as bands.
+// between neighbors so the steps do not show as bands.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

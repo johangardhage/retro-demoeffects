@@ -17,7 +17,7 @@
 // times as densely at the inner rim, since R = 2r here. That crowding is the
 // intended shape, not an error.
 //
-// Depth toward the viewer is z = -rz. No point is further from the centre
+// Depth toward the viewer is z = -rz. No point is further from the center
 // than R+r, so the ramp covers [-R-r, R+r]:
 //
 //   color = (z + R+r) * (SHADES - 1) / (2(R+r))
@@ -33,7 +33,7 @@
 
 #define RING_RADIUS 50 // from the axis out to the middle of the tube
 #define TUBE_RADIUS 25 // and the radius of the tube itself
-#define DOT_SPACING 5 // pixels between neighbouring dots, the same both ways around
+#define DOT_SPACING 5 // pixels between neighboring dots, the same both ways around
 #define SHADES 64 // palette entries the depth shading ramps over
 #define ROTATION_SPEED 1 // radians per second, so about a turn every six seconds
 #define PROJECTION_SCALE 1.0 // the torus is built in pixels, so the projection adds no scale

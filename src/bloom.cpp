@@ -10,7 +10,7 @@
 // phase lives on 200π (every rate is a multiple of 1/100). The discs seed
 // 255; the blur is
 //
-//   T' = max(0, mean(8 neighbours) − 1)
+//   T' = max(0, mean(8 neighbors) − 1)
 //
 // with no self term (RETRO_BLUR_RING), so heat spreads outward and the
 // seed itself is replaced. Every tap reads the previous step, so the ring
@@ -60,7 +60,7 @@ void DEMO_FixedUpdate(double timestep)
 		DrawBlob(x, y, 255);
 	}
 
-	// Bleed the trails outwards
+	// Bleed the trails outward
 	RETRO_Blur(RETRO_BLUR_RING, 1);
 }
 

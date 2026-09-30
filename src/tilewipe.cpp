@@ -3,7 +3,7 @@
 //
 // The picture dealt out a tile at a time. The screen is a grid of TILES_X by
 // TILES_Y tiles of TILE_SIZE pixels, and tile k opens as a box grown from its
-// own centre over one window of the pass:
+// own center over one window of the pass:
 //
 //   start_k = (rank_k / (TILES - 1)) (1 - WINDOW)
 //   u_k     = CLAMP01((p - start_k) / WINDOW)
@@ -17,7 +17,7 @@
 // Overlapping the windows is what keeps this from looking like a counter:
 // several tiles are always part open.
 //
-// p is also run backwards, and then the same formula closes the tiles in the
+// p is also run backward, and then the same formula closes the tiles in the
 // reverse of the order it opened them, no second pass needed.
 //
 // rank is the order the tiles are dealt in, and Tab swaps it. A shuffle deals

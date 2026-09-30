@@ -32,7 +32,7 @@
 #define MIRROR_HX 0.95f // half-extent of the square face
 #define MIRROR_HY 0.95f
 #define MIRROR_HZ 0.18f // half-thickness, much thinner than a cube
-#define MIRROR_HOVER 1.20f // model units the centre sits above the platform
+#define MIRROR_HOVER 1.20f // model units the center sits above the platform
 
 #define WORLD_TILT 0.50f // radians of pitch, looking down onto the board
 #define SCENE_Y 1.55f // model units the scene is shifted down the screen

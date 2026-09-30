@@ -9,7 +9,7 @@
 //
 // r_i is the charge T R_i². One ball of strength r meets color 20 on
 // the circle of radius √r, where 20 r / (√r)² = 20. |p−c|² is floored at 10⁻⁴
-// as in metaballs.cpp. Each centre rides its own (cos, sin) at its own whole
+// as in metaballs.cpp. Each center rides its own (cos, sin) at its own whole
 // multiple of the phase and its own offset, so the four do not move as one.
 // Whole multiples keep every orbit closed on the same 360-entry table.
 //

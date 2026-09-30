@@ -11,7 +11,7 @@
 //
 // Each arm and leg is two line segments (p to a joint j, and q to j) lying
 // in a plane, packed with a fixed count of spheres tapering in radius along
-// the way. j is found the way two circles of radius A and B, centred at p
+// the way. j is found the way two circles of radius A and B, centered at p
 // and q, intersect: drop a perpendicular of length y from the p-q axis,
 //
 //   y = (A^2 - B^2 + D^2) / 2D,   x = sqrt(A^2 - y^2),   D = |q - p|
@@ -36,7 +36,7 @@
 //
 // This file's technique: real linear-light RGB, the same engine
 // juggler2.cpp uses - ambient, diffuse and reflection are added into one
-// colour accumulator per ray, rather than an index picked off a fixed
+// color accumulator per ray, rather than an index picked off a fixed
 // palette ramp the way juggler.cpp does it, so a chrome ball genuinely
 // reddens against the torso instead of that being approximated. The one
 // exception is Eric Graham's real glint() highlight (see TraceScene and
@@ -46,12 +46,12 @@
 //
 // Four camera rays a pixel, a quarter-pixel apart, are each quantized to
 // the palette on their own and the most common result wins, rather than
-// averaging their four raw colours and quantizing once. This palette is a
+// averaging their four raw colors and quantizing once. This palette is a
 // handful of disjoint hue-to-black ramps, not a full RGB cube, so averaging
-// two different materials' colours first can land on a point that sits on
-// no ramp at all - nearest-colour search then resolves that to whatever
-// ramp happens to be closest, usually an unrelated grey. Quantizing each
-// sample before combining them never produces a colour that was not
+// two different materials' colors first can land on a point that sits on
+// no ramp at all - nearest-color search then resolves that to whatever
+// ramp happens to be closest, usually an unrelated gray. Quantizing each
+// sample before combining them never produces a color that was not
 // already on some ramp. That antialiasing is what lets a mirror ball's
 // reflected checkerboard read as fine detail instead of a blocky mosaic,
 // and lets a silhouette edge blend two materials instead of hard-cutting
@@ -60,7 +60,7 @@
 // the same engine, make this the slowest of the three.
 //
 // Eric Graham's real 1987 source (recovered and republished by Ernie Wright
-// and by AlphaPixel) gives each mirror sphere its own colour, <.9,.9,.9>,
+// and by AlphaPixel) gives each mirror sphere its own color, <.9,.9,.9>,
 // and multiplies a bounce's traced result by it - not a lossless mirror, so
 // reflectioncolor below is 0.9 rather than white, dimming a chrome ball's
 // reflection by a tenth on every bounce (the only material weight left on
@@ -85,9 +85,9 @@
 #define FLOOR_TILE 107.0f // world units per checker tile
 
 // The source recreation measured these from photographs of the original: a
-// shadowed floor tile reads as 40% of its lit colour, a shadowed sphere as
+// shadowed floor tile reads as 40% of its lit color, a shadowed sphere as
 // 15%, 102 and 40 of 255. Both are stored decoded to linear light, since
-// every material colour here is linear light and only encoded to sRGB right
+// every material color here is linear light and only encoded to sRGB right
 // before it is shown - so the weight that makes a 0.4 or 0.15 photograph
 // measurement come out right, after that encoding, is the measurement
 // decoded by RETRO_SRGBToLinear, not the measurement itself. Both are
@@ -157,12 +157,12 @@ static vec3 CamEye, CamCenter, CamU, CamV;
 static vec3 LightPos = { -564, 686, 147 };
 
 // One material per Phong term (see the file header) - ambient, diffuse and
-// specular, plus the colour each tints. specular is a weight, not a curve -
+// specular, plus the color each tints. specular is a weight, not a curve -
 // see MINGLINT and TraceScene, where it gates a hard cutoff rather than a
 // shininess exponent. Plastic (torso, skin, hair, eye) and matte (the
-// floor) share their own weights across every colour they come in; only
+// floor) share their own weights across every color they come in; only
 // the mirror balls are their own one-off, a specular-only material with no
-// colour of their own to speak of - everything they show is either the
+// color of their own to speak of - everything they show is either the
 // light's own white or whatever they reflect (see TraceScene: only mirrors
 // bounce, and reflectioncolor is the only thing that dims that bounce)
 struct PhongMaterial {
@@ -175,8 +175,8 @@ static PhongMaterial FloorYellow, FloorGreen;
 static vec3 SkyMin, SkyMax;
 static vec3 Palette[RETRO_COLORS];
 
-// A material's own colour is stored in linear light, decoded from the
-// sRGB hex a colour picker would give - see PLASTIC_AMBIENT above for why
+// A material's own color is stored in linear light, decoded from the
+// sRGB hex a color picker would give - see PLASTIC_AMBIENT above for why
 // that matters once it is lit
 static vec3 Linear(int hex, float scale = 1.0f)
 {
@@ -354,7 +354,7 @@ static void UpdateAppendage(int sceneindex, vec3 p, vec3 q, vec3 w, float A, flo
 }
 
 // Radii and materials, set once - the source recreation's own split between
-// createScene (sizes and materials, called once) and updateScene (centres,
+// createScene (sizes and materials, called once) and updateScene (centers,
 // called every frame - see UpdateScene below) kept here rather than folded
 // into DEMO_Initialize alongside the camera and the palette, which have
 // nothing to do with the body
@@ -447,7 +447,7 @@ static void UpdateScene(double T)
 #define QUANTIZE_LEVELS (1 << QUANTIZE_BITS)
 static unsigned char ColorLookup[QUANTIZE_LEVELS * QUANTIZE_LEVELS * QUANTIZE_LEVELS];
 
-// The nearest of the 256 built colours by squared distance, for every colour
+// The nearest of the 256 built colors by squared distance, for every color
 // a 6-bit-a-channel cube can hold - built once, since a search this size
 // once a pixel, over four samples and up to ten bounces each, is not free
 static void BuildColorLookup(void)
@@ -484,11 +484,11 @@ static unsigned char QuantizeToPalette(vec3 color)
 
 // The palette is a handful of disjoint straight ramps (each material's hue
 // faded to black, plus the sky's own gradient), not a full RGB cube, so
-// averaging two different materials' linear colours before quantizing lands
-// off every ramp - nearest-colour search then snaps that point to whichever
-// ramp is geometrically closest, usually an unrelated grey. Quantizing each
+// averaging two different materials' linear colors before quantizing lands
+// off every ramp - nearest-color search then snaps that point to whichever
+// ramp is geometrically closest, usually an unrelated gray. Quantizing each
 // sample first and taking the most common result never averages across
-// ramps, so a supersampled edge only ever resolves to colours that were
+// ramps, so a supersampled edge only ever resolves to colors that were
 // actually seen there
 static unsigned char MajorityColor(const unsigned char *samples)
 {
@@ -535,7 +535,7 @@ void DEMO_Render(double time, double deltatime)
 	}
 }
 
-// A colour a byte at a time, straight off the sRGB scale with no decode -
+// A color a byte at a time, straight off the sRGB scale with no decode -
 // unlike Linear, this builds the palette in the same already-encoded space
 // DEMO_Render's search compares against
 static vec3 Byte(int hex)
@@ -555,7 +555,7 @@ void DEMO_Initialize(void)
 	SkyMin = Linear(0xBDBDFF);
 	SkyMax = Linear(0x2223F6);
 
-	// Six materials, black to their own colour, then the sky's own gradient,
+	// Six materials, black to their own color, then the sky's own gradient,
 	// then a plain black-to-white ramp for whatever else a search turns up
 	vec3 materialcolor[6] = { Byte(0xF2ADAB), Byte(0xE51715), Byte(0x1E1B94), Byte(0x261117), { 1, 1, 0 }, { 0, 1, 0 } };
 	int index = 0;

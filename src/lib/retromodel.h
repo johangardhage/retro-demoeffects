@@ -127,7 +127,7 @@ struct Model3D {
 												// with no inside - a sheet, an open shell - is otherwise
 												// lost the moment it turns: its normals point away from
 												// the viewer, so the whole of it lands on the dark end of
-												// the ramp. Honoured by the shaded renderers for whether a
+												// the ramp. Honored by the shaded renderers for whether a
 												// back face is drawn at all; Glenz draws both sides
 												// regardless, but still reads this for how to light the
 												// back one, and the wireframe path ignores it entirely
@@ -159,7 +159,7 @@ struct Model3D {
 	int bumpmapwidth = RETRO_TEXMAP_SIZE;		// Bump texture width, which need not match the texture's
 	int bumpmapheight = RETRO_TEXMAP_SIZE;		// Bump texture height
 	int bumpgrazing = RETRO_BUMP_GRAZING;		// Height difference that tilts a normal to grazing
-	unsigned char (*shader)(const Fragment &fragment) = NULL;	// RETRO_POLY_SHADER's per-pixel function: the colour of one
+	unsigned char (*shader)(const Fragment &fragment) = NULL;	// RETRO_POLY_SHADER's per-pixel function: the color of one
 												// Fragment of the surface
 	float eye;									// Model units from the rotated origin back to the eye,
 												// along -z, as RETRO_ProjectModel last placed it. What
@@ -353,7 +353,7 @@ inline void RETRO_InitializeFaceNormals(Model3D *model = NULL)
 }
 
 //
-// Tangent frame of each face, from its UV parametrisation
+// Tangent frame of each face, from its UV parametrization
 //
 // A bump map is a height field over (u, v), so its gradient tilts along dP/du
 // and dP/dv. Both come from the two edges of the face and the UVs at its
@@ -431,7 +431,7 @@ inline void RETRO_InitializeFaceTangents(Model3D *model = NULL)
 // UVs that lay the whole texture over every face, in the face's own frame
 //
 // A model can arrive with its faces sharing one atlas, or with no usable UVs
-// at all. Reparametrising it here hands each face the texture entire, in a
+// at all. Reparametrizing it here hands each face the texture entire, in a
 // frame taken from the face normal rather than from the order the face's
 // corners happen to be listed in:
 //
@@ -444,8 +444,8 @@ inline void RETRO_InitializeFaceTangents(Model3D *model = NULL)
 //
 // The frame is measured against the model's bounding box rather than against
 // the face, so a face on the side of the box gets the whole texture and a
-// quad keeps one parametrisation after being split into triangles. A face
-// carries its own UVs afterwards, one set per corner, and the tangent frames,
+// quad keeps one parametrization after being split into triangles. A face
+// carries its own UVs afterward, one set per corner, and the tangent frames,
 // which are derived from the UVs, are rebuilt to match.
 //
 inline void RETRO_InitializeFaceUVs(Model3D *model = NULL)
@@ -464,7 +464,7 @@ inline void RETRO_InitializeFaceUVs(Model3D *model = NULL)
 		RETRO_RageQuit("Too many face UV coordinates to fit the UV list\n");
 	}
 
-	// Bounding box centre and half extent
+	// Bounding box center and half extent
 	vec3 boxmin = model->vertex[0].pos;
 	vec3 boxmax = boxmin;
 

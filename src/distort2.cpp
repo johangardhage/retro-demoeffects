@@ -1,16 +1,17 @@
 //
 // Distort, from a precalculated field
 //
-// An image resampled through a pair of displacement tables. Pixel (x, y) is copied from
+// An image resampled through a pair of displacement tables. Pixel (x, y) is
+// copied from
 //
 //   I(x + Sx(wx + x, wy + y),  y + Sy(vx + x, vy + y))
 //
 // The tables never change. What moves is the screen-sized window (w, v) each is
-// read through. A window's two coordinates run at different rates, so it walks a
-// Lissajous figure over the whole margin the table has to spare: the tables are
-// 2W by 2H, and each corner of the window stays inside them.
-// The four rates 197, 224, 205, 231 share only a huge lcm (2^5·3·5·7·11·41·197),
-// so the phases drift; t lives on that lcm times 2π.
+// read through. A window's two coordinates run at different rates, so it walks
+// a Lissajous figure over the whole margin the table has to spare: the tables
+// are 2W by 2H, and each corner of the window stays inside them. The four rates
+// 197, 224, 205, 231 share only a huge lcm (2^5·3·5·7·11·41·197), so the phases
+// drift; t lives on that lcm times 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

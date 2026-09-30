@@ -2,7 +2,7 @@
 // Linked Gouraud Shaded Toruses
 //
 // Two gouraud shaded toruses form a permanent two-ring link. Their planes are
-// perpendicular and their centres are separated by one ring radius, so each
+// perpendicular and their centers are separated by one ring radius, so each
 // torus passes through the hole of the other without their tubes intersecting.
 // The complete link tumbles as one rigid object, preserving the knot while its
 // rings continually pass in front of and behind each other.
@@ -26,8 +26,8 @@
 #include "lib/retropalette.h"
 #include "lib/retromath.h"
 
-// Pixels per model unit. Each torus reaches 2.1 from its centre and the linked
-// centres sit 0.75 to either side of the origin.
+// Pixels per model unit. Each torus reaches 2.1 from its center and the linked
+// centers sit 0.75 to either side of the origin.
 #define PROJECTION_SCALE 36.0f
 
 #define LINK_RADIUS 1.5f
@@ -39,7 +39,7 @@ static Model3D *Torus2 = NULL;
 
 // Bake one torus into the linked pair before the animation starts. Translation
 // is part of the source geometry so the later rotation carries both the ring
-// and its centre around the origin as one rigid object.
+// and its center around the origin as one rigid object.
 static void PlaceTorusInLink(Model3D *model, float angle, float tx)
 {
 	mat3 rx = rotateX(angle);
@@ -108,7 +108,7 @@ void DEMO_Initialize(void)
 	Torus2->shades = 127;
 
 	// One ring lies in the xy plane and the other in the xz plane. Separating
-	// their centres by the major radius produces a Hopf link.
+	// their centers by the major radius produces a Hopf link.
 	PlaceTorusInLink(Torus1, 0, -LINK_RADIUS / 2);
 	PlaceTorusInLink(Torus2, M_PI / 2, LINK_RADIUS / 2);
 

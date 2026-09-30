@@ -7,7 +7,7 @@
 //   (u, v) = s R_θ (x, y)
 //
 // with s = 1 + sin θ ∈ [0, 2] and R_θ the 2D rotation by θ. The origin is
-// the corner, not the centre, so the picture swings around that point. The
+// the corner, not the center, so the picture swings around that point. The
 // inner step is one DDA increment (s cos θ, s sin θ) per pixel. θ lives
 // on 360°.
 //

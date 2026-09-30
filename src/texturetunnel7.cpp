@@ -13,7 +13,7 @@
 // brick at a constant depth and only the sine window would change, which
 // is a snake in front of the camera rather than a tunnel the camera
 // travels. texturetunnel.cpp is the polar 1/r form of a straight tube;
-// this one is the mesh, because a polar map about one centre cannot
+// this one is the mesh, because a polar map about one center cannot
 // offset each ring from the last.
 //
 // The path is
@@ -58,7 +58,7 @@
 #define FLIGHT_SPEED 108 // world units of t a second
 #define CAMERA_LOOKAHEAD 100 // path units ahead to aim into the bend; 0 follows the tangent
 #define TEXTURE_SIZE 64
-#define GROUT 3 // texels of mortar on the leading edges; the trailing edges are brick so neighbours do not double it
+#define GROUT 3 // texels of mortar on the leading edges; the trailing edges are brick so neighbors do not double it
 #define FOG_SHADES 32
 #define AMBIENT 0.46f // unlit walls stay a dark red, not black
 #define FOG_KEEP 0.62f // far-end shade as a fraction of the lit shade
@@ -203,7 +203,7 @@ void DEMO_Render(double time, double deltatime)
 			RETRO_ProjectViewVertex(&p->vertex);
 
 			// Lambert lighting: the wall's inward normal (back toward the
-			// tube's centre, so -radial) is carried into view space and
+			// tube's center, so -radial) is carried into view space and
 			// dotted with the fixed view-space light. lit is that term
 			// eased through the shade table and floored at AMBIENT so the
 			// unlit side never goes black; depth folds in the distance fog

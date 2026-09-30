@@ -1,14 +1,14 @@
 //
-// Linedance 2
+// Lissajous
 //
-// A 360-point Lissajous curve, one pixel per degree. The point is
+// A 360-point Lissajous curve, one sample per degree. The point is
 //
 //   x = W/2 + 50 sin(b + 2a) + 25 sin(a + 2b) − 50 sin(a + b)
 //   y = H/2 + 20 sin(a + 2b) + 15 sin(b + 2a) + 20 sin(a + b)
 //
 // with a the time phase and b = 2π i / 360. sin(b+2a) has period π in a,
 // the other terms 2π, so a lives on 360°. Consecutive samples are joined
-// by a segment, so the fast parts of the parametrisation stay a curve
+// by a segment, so the fast parts of the parametrization stay a curve
 // rather than breaking into dots. Color is 50 + x/2 at the segment's
 // midpoint. The framebuffer is cleared each frame.
 //

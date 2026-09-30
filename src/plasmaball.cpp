@@ -24,9 +24,9 @@
 //
 // damped by ARC_SPIN_KEEP, so the filaments wander but stay spread round
 // the ball. The exp term (minus the slope of a von Mises bump) makes a
-// neighbour push hardest when close. An arc also leans toward or away
+// neighbor push hardest when close. An arc also leans toward or away
 // from the viewer by tilt, and its end lands at BALL_RADIUS cos(tilt)
-// from the centre. Each arc forks BRANCHES short side branches off points
+// from the center. Each arc forks BRANCHES short side branches off points
 // in its middle half, each bent off the arc's heading and redrawn from
 // scratch after a life of a few steps, so they flicker while the main
 // filament only writhes.
@@ -35,7 +35,8 @@
 // electrode, into a float buffer C. The glow is two blurs of it, each two
 // box passes (a tent), one tight and one wide:
 //
-//   I = glass + electrode + CORE_GAIN C + TIGHT_GAIN tent_1(C) + WIDE_GAIN tent_6(C)
+//   I = glass + electrode + CORE_GAIN C + TIGHT_GAIN tent_1(C)
+//     + WIDE_GAIN tent_6(C)
 //
 // and the palette index is 1 − exp(−I), so a white core rolls off into
 // pink and violet instead of clipping.
@@ -56,7 +57,7 @@
 #define ARC_KEEP 0.985f // kept of each offset per step, so how slowly a filament writhes
 #define ARC_JITTER 0.15f // fresh offset added every step, the crackle
 #define ARC_REPEL 3.0f // how hard the filaments push apart
-#define ARC_REPEL_REACH 2.0f // how much harder a close neighbour pushes than a far one
+#define ARC_REPEL_REACH 2.0f // how much harder a close neighbor pushes than a far one
 #define ARC_DRIFT 8.0f // random angular kick, radians per second squared
 #define ARC_SPIN_KEEP 0.97f // kept of the angular velocity per step
 #define TILT_MAX 0.9f // radians a filament leans toward or away from the viewer
@@ -73,12 +74,12 @@
 #define WIDE_GAIN 4.0f // weight of the wide glow
 #define GLASS_RIM 0.35f // intensity of the glass edge
 #define GLASS_RIM_WIDTH 3.0f // pixels of the glass edge
-#define GLASS_HAZE 0.08f // intensity the glass adds at its rim, falling to 0 at the centre
+#define GLASS_HAZE 0.08f // intensity the glass adds at its rim, falling to 0 at the center
 #define GLASS_HIGHLIGHT 0.3f // intensity of the window reflection
 #define ELECTRODE_GLOW 0.6f // intensity of the halo round the electrode
 
-static const vec2 Centre = { RETRO_WIDTH / 2.0f, RETRO_HEIGHT / 2.0f };
-static const vec2 Highlight = { -0.45f * BALL_RADIUS, -0.5f * BALL_RADIUS }; // from the centre
+static const vec2 Center = { RETRO_WIDTH / 2.0f, RETRO_HEIGHT / 2.0f };
+static const vec2 Highlight = { -0.45f * BALL_RADIUS, -0.5f * BALL_RADIUS }; // from the center
 
 struct Branch {
 	int root;
@@ -152,7 +153,7 @@ static void Respawn(Branch *branch)
 }
 
 //
-// Add v at a fractional pixel, shared bilinearly between its four neighbours
+// Add v at a fractional pixel, shared bilinearly between its four neighbors
 //
 static void Splat(vec2 p, float v)
 {
@@ -248,8 +249,8 @@ void DEMO_FixedUpdate(double timestep)
 			offset = ARC_KEEP * offset + kick * Noise();
 		}
 		vec2 heading = { cosf(arc.angle), sinf(arc.angle) };
-		arc.point[0] = Centre + heading * ELECTRODE_RADIUS;
-		arc.point[ARC_POINTS - 1] = Centre + heading * (BALL_RADIUS * cosf(arc.tilt));
+		arc.point[0] = Center + heading * ELECTRODE_RADIUS;
+		arc.point[ARC_POINTS - 1] = Center + heading * (BALL_RADIUS * cosf(arc.tilt));
 		Displace(arc.point, arc.offset, ARC_POINTS, ARC_JITTER);
 
 		// Fork the branches off it
@@ -306,7 +307,7 @@ void DEMO_Initialize(void)
 	// toward it, a window reflection, and the electrode with its halo
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			vec2 p = vec2{ x + 0.5f, y + 0.5f } - Centre;
+			vec2 p = vec2{ x + 0.5f, y + 0.5f } - Center;
 			float r = length(p);
 			float edge = (r - BALL_RADIUS) / GLASS_RIM_WIDTH;
 			float intensity = GLASS_RIM * expf(-edge * edge);

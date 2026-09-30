@@ -7,9 +7,9 @@
 //
 //   z(r) = sqrt(LENS_ZOOM² + R² - r²)
 //
-// A pixel at (x, y) from the centre samples the picture at (x, y) · shift,
+// A pixel at (x, y) from the center samples the picture at (x, y) · shift,
 // with shift = LENS_ZOOM / z. At the rim z = LENS_ZOOM so the sample is
-// undisplaced; at the centre shift < 1, so the picture is pulled inward
+// undisplaced; at the center shift < 1, so the picture is pulled inward
 // (magnified). Offsets are lround'ed, packed as iy · WIDTH + ix, and
 // mirrored into the four quadrants. A packed 0 is undisplaced: the blit
 // already shows that pixel.

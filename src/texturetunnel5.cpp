@@ -1,8 +1,10 @@
 //
-// Fixed-bend tunnel using only a 2D texture-coordinate lookup.
-// Screen-space circles shrink and drift left. Each pixel uses the first
-// contour that leaves it behind, so the inside wall hides the distant bend.
-// No vertices, camera, polygons or depth buffer are used, even at startup.
+// Tunnel, fixed bend from a 2D lookup
+//
+// A fixed-bend tunnel using only a 2D texture-coordinate lookup. Screen-space
+// circles shrink and drift left. Each pixel uses the first contour that leaves
+// it behind, so the inside wall hides the distant bend. No vertices, camera,
+// polygons or depth buffer are used, even at startup.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

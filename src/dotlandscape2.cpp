@@ -4,7 +4,7 @@
 // The 128x128 voxel_height_128x128.pcx landscape, paired with its own
 // voxel_color_128x128.pcx colormap, rendered as a field of dots. The island
 // look is the terrain library's: the camera is pitched down so the island
-// fills the frame, the patch turns about its centre, and the camera dollies
+// fills the frame, the patch turns about its center, and the camera dollies
 // along the viewing axis between stops that keep the finite patch in view.
 // The same look as dotscroller3.cpp and dotscroller4.cpp, which share these
 // assets.

@@ -35,8 +35,8 @@
 
 #define WORM_XDIR -1
 #define WORM_YDIR 1
-#define WORM_SPOKES 2400 // angular cells the spoke index is quantised to
-#define WORM_DIVS 2400 // ring cells the ring index is quantised to
+#define WORM_SPOKES 2400 // angular cells the spoke index is quantized to
+#define WORM_DIVS 2400 // ring cells the ring index is quantized to
 #define WORM_Z0 -10 // constant offset of the throat
 #define WORM_ZLOG 11 // how hard the log packs far rings
 #define WORM_SPEED 100 // texture texels a second

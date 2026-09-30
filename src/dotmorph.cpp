@@ -2,7 +2,8 @@
 // Dot morph
 //
 // A cloud of points that is a torus, then a sphere, then a torus again. Both
-// shapes hold the same POINTS identities, so the cloud is the linear interpolant
+// shapes hold the same POINTS identities, so the cloud is the linear
+// interpolant
 //
 //   p(t) = (1 − t) p_from + t p_to,   t ∈ [0, 1]
 //
@@ -63,7 +64,7 @@ void DEMO_Render(double time, double deltatime)
 		MorphShapes(Sphere, Torus, (float)(iphase - MORPH_STEPS - HOLD_STEPS) / (MORPH_STEPS - 1));
 	}
 
-	// No point is further from the centre than the torus's outer rim, and
+	// No point is further from the center than the torus's outer rim, and
 	// rotation cannot change that, so the shade ramp covers [-r, r] in depth.
 	double furthest = TORUS_RING + TORUS_TUBE;
 

@@ -1,7 +1,7 @@
 //
 // Text writer, scrubbing head
 //
-// A disc bounces up and down while moving left across a page of centred
+// A disc bounces up and down while moving left across a page of centered
 // text. A glyph pixel is drawn only after the disc has passed over it,
 // held, then wiped the same way. Pages are one RETRO_GenerateTextImage
 // strip; a null slot is an empty row.

@@ -35,7 +35,7 @@
 
 #define MAP_WIDTH 80 // cells across the platform
 #define MAP_DEPTH 40 // and along it
-#define DOT_SPACING 3.0f // pixels between neighbouring dots, the same in x, y and z
+#define DOT_SPACING 3.0f // pixels between neighboring dots, the same in x, y and z
 #define EXTRUSION 8 // levels a lit texel stands above the landscape
 #define LETTER_GAP 3 // levels of clearance between the floor and a letter's underside
 #define WAVE_AMP 4.0f // pixels the sine lifts the platform
@@ -50,7 +50,7 @@
 // and the ground goes as flat as the letters do without this.
 #define GROUND_CONTRAST 3.0f
 #define LETTER_CONTRAST 4.0f
-#define YAW_AMP 0.6 // radians either side of centre the patch turns about y
+#define YAW_AMP 0.6 // radians either side of center the patch turns about y
 #define YAW_SPEED 0.5 // radians per second of that turn
 #define PITCH 1.15 // radians of x the view holds, looking down
 #define OBJECT_Z 55.0f // model units the patch is pushed back after the turn

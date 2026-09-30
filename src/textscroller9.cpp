@@ -8,7 +8,7 @@
 //
 //   color = strip[row][(x + phase) mod stripwidth]
 //
-// Font greys are remapped onto the cube's colour ramp rather than driven
+// Font grays are remapped onto the cube's color ramp rather than driven
 // into white: the darkest atlas ink becomes the low end of the ramp and
 // the lightest the high end. Model-space cube edges are overstroked after
 // the textured faces so the silhouette stays visible when a face is

@@ -27,7 +27,7 @@
 // the same choice the terrain lens makes with a shorter focaly, and not
 // a pixel-aspect correction. The framebuffer's pixels are square.
 //
-// (cx, cy) is the principal point, and it sits at the centre of the
+// (cx, cy) is the principal point, and it sits at the center of the
 // framebuffer and stays there. The mouth holds still, so the turning of
 // the wall around it is the whole of the movement.
 //
@@ -76,17 +76,17 @@
 // mask: a cast toward zero would fold (−1, 0) onto texel 0, and θ
 // lives in [−π, π].
 //
-// Fog is linear in Z: each source colour c at shade k is the nearest
+// Fog is linear in Z: each source color c at shade k is the nearest
 // palette entry to
 //
 //   (k / (SHADES − 1)) · RGB(c)
 //
 // A photograph's palette has nowhere clean to go on the way down — an
-// entry with no dark relatives is matched to whichever few dark colours
+// entry with no dark relatives is matched to whichever few dark colors
 // the picture happened to hold, so the far wall turns to mud short of
 // the hole rather than reaching it. The free entries above the picture
 // carry a ramp from black to the average of the picture, which is the
-// road a darkening colour travels; the aperture is the black end of it.
+// road a darkening color travels; the aperture is the black end of it.
 // The shade of a hit is
 //
 //   k = floor( (Z_far − Z) / (Z_far − Z_near) · SHADES )
@@ -124,7 +124,7 @@
 #define TUNNEL_LOD 0.004 // added fraction of Z, so far samples thin out
 #define TUNNEL_BISECTIONS 6 // halvings of a sign-change interval
 #define TUNNEL_AXIS_EPS (0.5 / TUNNEL_FOCAL_X) // half a pixel, in slope units
-#define TUNNEL_FOG_SHADES 32 // steps from full colour to black
+#define TUNNEL_FOG_SHADES 32 // steps from full color to black
 #define TUNNEL_FOG_RANGE (TUNNEL_FAR - TUNNEL_NEAR)
 
 #define TUNNEL_FLIGHT 70.0 // texels of v per second
@@ -274,12 +274,12 @@ void DEMO_Initialize(void)
 	HeightScale = TUNNEL_RELIEF / maxheight;
 
 	// The photograph owns its palette and holds no fade of its own: scaled
-	// toward black its colours land on the few dark browns it happens to
+	// toward black its colors land on the few dark browns it happens to
 	// contain, and the far wall turns to mud short of the hole. It stops
 	// short of the top of the range, so the free entries above it take a
-	// ramp from black to the average of the picture, and a darkening colour
+	// ramp from black to the average of the picture, and a darkening color
 	// has clean ground to cross. The aperture is the black end of that
-	// ramp, which is where the darkest shade of every colour lands too.
+	// ramp, which is where the darkest shade of every color lands too.
 	RETRO_Palette palette[RETRO_COLORS];
 	memcpy(palette, Terrain->palette, sizeof(palette));
 

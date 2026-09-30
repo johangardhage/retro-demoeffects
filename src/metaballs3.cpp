@@ -11,11 +11,11 @@
 // midpoint still meets T, which is D ≤ R√8; the orbits run wider than
 // that, so the blob splits. n coincident balls of equal R meet T on the
 // sphere of radius R√n, so a bounding sphere of radius sqrt(sum R_k²)
-// around each centre is exact in that worst case and conservative
-// otherwise. |p−c|² is floored at 10⁻⁴ so a sample on a centre does
+// around each center is exact in that worst case and conservative
+// otherwise. |p−c|² is floored at 10⁻⁴ so a sample on a center does
 // not divide by zero.
 //
-// A pixel is a pinhole ray from the eye through the pixel centre. y
+// A pixel is a pinhole ray from the eye through the pixel center. y
 // grows down, z along the view, matching RETRO_ProjectVertex: the eye
 // sits at (W/2, H/2, −EYE) and the screen is z = 0, so
 //
@@ -40,7 +40,7 @@
 // L = (0, 0, −1) is the same headlight as phongcube.cpp. The shade is
 // ShadeFractionFromLambert(max(N·L, 0)) into a plastic Phong ramp.
 //
-// Each centre rides its own 3-axis Lissajous. Whole-number rates keep
+// Each center rides its own 3-axis Lissajous. Whole-number rates keep
 // every orbit closed on the same 2π of phase.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
@@ -80,7 +80,7 @@ static float Field(vec3 p)
 
 // Outward unit normal N = −∇F / |∇F|. ∇F = 0 only at a critical point of F,
 // and the isosurface meets one only at the instant a blob splits or merges,
-// when it passes through the saddle between two centres. The fallback for that
+// when it passes through the saddle between two centers. The fallback for that
 // instant is the headlight itself, which shades the pixel fully lit.
 static vec3 FieldNormal(vec3 p)
 {

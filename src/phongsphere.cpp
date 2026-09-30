@@ -2,8 +2,8 @@
 // Phong shaded sphere
 //
 // The same 114 vertex normals as gouraudsphere.cpp, stored as n q and
-// interpolated in screen space. Normalising the interpolated n q is the
-// same direction as divide-by-q then normalise (q > 0 in front of the
+// interpolated in screen space. Normalizing the interpolated n q is the
+// same direction as divide-by-q then normalize (q > 0 in front of the
 // near plane). The pixel is then
 //
 //   I = ShadeFractionFromLambert(max(N · L, 0))

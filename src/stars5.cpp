@@ -1,7 +1,9 @@
 //
-// Star flight: cruise, turn onto a new heading, then roll through the stars.
-// Stars wrap in a world-aligned box around the moving eye. A spherical fade
-// hides the wrapping, even when looking diagonally through the box.
+// Star flight
+//
+// Cruise, turn onto a new heading, then roll through the stars. Stars wrap in a
+// world-aligned box around the moving eye. A spherical fade hides the wrapping,
+// even when looking diagonally through the box.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

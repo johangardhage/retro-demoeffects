@@ -1,5 +1,5 @@
 //
-// Linedance 3
+// Dancing lines
 //
 // A chain of POINTS attractors. Point 0 is a wandering walker; each later
 // point is
@@ -50,8 +50,9 @@ static void DrawLines(int x, int y, float k)
 }
 
 //
-// Advance the trails in fixed steps. Lines are drawn into a framebuffer that is never
-// cleared and blurred once per step, so how long they linger follows the step rate.
+// Advance the trails in fixed steps. Lines are drawn into a framebuffer that
+// is never cleared and blurred once per step, so how long they linger follows
+// the step rate.
 //
 void DEMO_FixedUpdate(double timestep)
 {

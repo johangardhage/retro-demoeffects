@@ -3,7 +3,7 @@
 //
 // The vertices of torus.obj, each stamping a 5×5 blob into a
 // framebuffer that is never cleared. Blobs add where they overlap. After
-// the stamps, a 4-neighbour diffuse blur (no self) subtracts TRAIL_DECAY,
+// the stamps, a 4-neighbor diffuse blur (no self) subtracts TRAIL_DECAY,
 // so each vertex leaves a trail that fades over a fixed number of steps.
 //
 // The mesh is a 10×10 torus whose hole sits well left of the origin; the
@@ -39,7 +39,7 @@
 #define GLOW_COLORS 163 // palette entries the glow ramps over
 #define TRAIL_DECAY 3 // brightness the blur takes off each step, so the trail fades
 #define SQUASH 0.7 // how far the turn departs from a rotation
-#define ROTATION_SPEED 200 // table entries travelled per second
+#define ROTATION_SPEED 200 // table entries traveled per second
 #define PROJECTION_SCALE 1 // the model is built in pixels, so the projection adds no scale
 #define SINE_VALUES 720
 

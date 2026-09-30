@@ -1,142 +1,120 @@
 //
-// Tunnel, additive trails
+// Tunnel, free-directional
 //
-// A 160×100 polar map, looked up into the flowers photo from texturetunnel3
-// and doubled to 320×200. The map is a stack of rings: a ring of radius zr,
-// walked by its angle θ, lands on
+// A tube that the camera is inside of rather than a picture of one seen down
+// its length: the camera flies along it, strays from its middle and turns all
+// the way round as it goes, from looking along the tube, across it into the
+// wall, back the way it came, into the wall on the other side and round to
+// the front again. Nothing is looked up from a table, since there is no one
+// view that a table could hold. A ray is sent out through every pixel and met
+// with the wall.
 //
-//   x = zr (sin θ − cos θ) + 80
-//   y = 0.8 · zr (sin θ + cos θ) + 50
+// The tube is the cylinder x² + y² = R² about the z axis. A ray from the eye
+// at o along the unit direction d is at o + t d, and is on the wall where
 //
-// an ellipse of radius zr √2, squashed by 0.8 so it fills the 160×100
-// frame. The bracketed pair is a 45° turn of scale √2, so a pixel hands
-// its own ring and angle straight back:
+//   a t² + 2 b t + c = 0,   a = dx² + dy²
+//                           b = ox dx + oy dy
+//                           c = ox² + oy² - R²
 //
-//   zr = |(dx, dy / 0.8)| / √2
-//   θ  = atan2(dx, dy / 0.8) + π/4
+// The eye is inside the tube, so c is negative, the roots have different
+// signs, and the one ahead of the eye is
 //
-// for dx, dy measured from the centre (80, 50). A pixel then stores
+//   t = (-b + √(b² - a c)) / a
 //
-//   u = θ · 256 / 2π                   around the tube
-//   v = 1.035 ^ ((zc − zr) / 0.5)      along it
+// A ray along the tube never gets to the wall: a is 0 and t is without end,
+// which is the black at the far end of the tube. The wall is hit at
+// p = o + t d, and the texture is laid on it by where around the tube that is
+// and where along it:
 //
-// Rings sit 0.5 apart and each one is 3.5% further down the tube than the
-// ring outside it, counted from zc, the ring through the frame corner. So
-// the corner is depth 1 and the centre, the far end of the tube, is 139.
-// v stays well under 192, which leaves the 0..63 luminance sample room to
-// add on top without wrapping into dark rings. The photo is converted to
-// that luminance at load time, since its palette indices are arbitrary and
-// cannot be summed directly. That sample is added into a 160×100 buffer,
-// and that buffer is faded by 1/6 each step, which is a fake motion blur.
-// (u, v) tick by one texel every step. Each 160×100 sample is written as a
-// 2×2 block.
+//   u = atan2(py, px) / 2π · TEXTURE_TURNS    textures around the tube
+//   v = pz / TEXTURE_LENGTH                   textures along it
+//
+// d is the ray through the pixel, (x - W/2, y - H/2, FOCAL), turned by the
+// camera's rotation: about the camera's upright by ay, which is the turn all
+// the way round, and then about the axis of the tube by az, so that the turn
+// does not always sweep the same side of the wall. The flight is all in o:
+// its z goes up steadily, and phase lives on TEXTURE_LENGTH, after which the
+// wall is the same again, while its x and y go round the axis at TUNNEL_SWAY
+// from it.
+//
+// The wall is darkened by how far off it was hit, down to black at
+// TUNNEL_FOG. The texture's bytes are palette indices, so the darkening is a
+// lookup: FogTable holds, for every color of the texture at every one of
+// TUNNEL_FOG_SHADES levels, the palette entry nearest to it. The level is
+// ordered-dithered between neighbors, so the steps from one to the next do
+// not show as rings down the tube.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
-#define RETRO_HEIGHT 200
-
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retropalette.h"
+#include "lib/retromatrix.h"
+#include "lib/retroshadetable.h"
 
-#define TEXTURE_SIZE 256
-#define MAP_WIDTH 160
-#define MAP_HEIGHT 100
-#define MAP_SIZE (MAP_WIDTH * MAP_HEIGHT)
-#define TUNNEL_SQUASH 0.8 // y squash that fits a ring to the frame
-#define TUNNEL_RING_STEP 0.5 // ring spacing, in ring radius units
-#define TUNNEL_RING_GAIN 1.035 // texture rows gained per ring inward
+#define TEXTURE_WIDTH 256
+#define TEXTURE_HEIGHT 256
+#define TEXTURE_TURNS 3 // times the texture goes around the tube
+#define TEXTURE_LENGTH 2.0f // length of tube a texture covers
+#define TUNNEL_RADIUS 1.0f
+#define TUNNEL_SWAY 0.45f // how far from the axis the camera flies
+#define TUNNEL_SWAY_SPEED 0.9 // radians per second it goes round the axis at
+#define TUNNEL_SPEED 1.6 // length of tube flown per second
+#define TUNNEL_FOG 6.0f // how far off the wall is black
+#define TUNNEL_FOG_SHADES 32 // steps from black to full color
+#define FOCAL (RETRO_WIDTH / 2) // pixels from the eye to the screen
+#define ROTATION_SPEED_Y 0.5 // radians per second
+#define ROTATION_SPEED_Z 0.17
 
-unsigned char AngleMap[MAP_SIZE];
-unsigned char DepthMap[MAP_SIZE];
-unsigned char Texture[TEXTURE_SIZE * TEXTURE_SIZE];
-unsigned char TunnelBuffer[MAP_SIZE];
-unsigned char Scroll;
+// 4×4 ordered dither thresholds, (i + 0.5) / 16
+static const float Bayer[4][4] = {
+	{ 0.5f / 16, 8.5f / 16, 2.5f / 16, 10.5f / 16 },
+	{ 12.5f / 16, 4.5f / 16, 14.5f / 16, 6.5f / 16 },
+	{ 3.5f / 16, 11.5f / 16, 1.5f / 16, 9.5f / 16 },
+	{ 15.5f / 16, 7.5f / 16, 13.5f / 16, 5.5f / 16 },
+};
 
-void DEMO_FixedUpdate(double timestep)
-{
-	// Fade first so the blit shows this step's add, matching the original
-	// order: accumulate, display, then fade for the next step. Fading up
-	// front is that same cycle entered one phase earlier; nothing here
-	// depends on another pixel, so fade and add can share one pass.
-	for (int i = 0; i < MAP_SIZE; i++) {
-		unsigned char depth = DepthMap[i];
-		unsigned char u = AngleMap[i] + Scroll;
-		unsigned char v = depth + Scroll;
-		unsigned char color = Texture[(v << 8) | u] + depth;
-
-		TunnelBuffer[i] = CLAMP256(TunnelBuffer[i] * 5 / 6 + color);
-	}
-
-	Scroll++;
-}
+unsigned char FogTable[RETRO_COLORS * TUNNEL_FOG_SHADES];
 
 void DEMO_Render(double time, double deltatime)
 {
-	unsigned char *buffer = RETRO_FrameBuffer();
-	for (int y = 0; y < MAP_HEIGHT; y++) {
-		for (int x = 0; x < MAP_WIDTH; x++) {
-			unsigned char color = TunnelBuffer[y * MAP_WIDTH + x];
-			int dx = x * 2;
-			int dy = y * 2;
-			buffer[dy * RETRO_WIDTH + dx] = color;
-			buffer[dy * RETRO_WIDTH + dx + 1] = color;
-			buffer[(dy + 1) * RETRO_WIDTH + dx] = color;
-			buffer[(dy + 1) * RETRO_WIDTH + dx + 1] = color;
+	// Calculate rotation
+	float ay = fmod(time * ROTATION_SPEED_Y, 2 * M_PI);
+	float az = fmod(time * ROTATION_SPEED_Z, 2 * M_PI);
+
+	// Calculate phase
+	float phase = fmod(time * TUNNEL_SPEED, TEXTURE_LENGTH);
+	float sway = fmod(time * TUNNEL_SWAY_SPEED, 2 * M_PI);
+
+	unsigned char *image = RETRO_ImageData();
+
+	mat3 rotation = rotateZ(az) * rotateY(ay);
+	vec3 eye = { TUNNEL_SWAY * cosf(sway), TUNNEL_SWAY * sinf(sway), phase };
+	float c = eye.x * eye.x + eye.y * eye.y - TUNNEL_RADIUS * TUNNEL_RADIUS;
+
+	// Draw tunnel, a ray through every pixel
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		for (int x = 0; x < RETRO_WIDTH; x++) {
+			vec3 ray = rotation * normalize(vec3{ x + 0.5f - RETRO_WIDTH / 2, y + 0.5f - RETRO_HEIGHT / 2, FOCAL });
+
+			// How far off the ray meets the wall, without end for a ray along the tube
+			float a = ray.x * ray.x + ray.y * ray.y;
+			float b = eye.x * ray.x + eye.y * ray.y;
+			float distance = MIN((-b + sqrtf(b * b - a * c)) / a, TUNNEL_FOG);
+			vec3 hit = eye + distance * ray;
+
+			int tx = WRAP(atan2f(hit.y, hit.x) / (2 * M_PI) * TEXTURE_TURNS * TEXTURE_WIDTH, TEXTURE_WIDTH);
+			int ty = WRAP(hit.z / TEXTURE_LENGTH * TEXTURE_HEIGHT, TEXTURE_HEIGHT);
+			int shade = (1 - distance / TUNNEL_FOG) * (TUNNEL_FOG_SHADES - 1) + Bayer[y & 3][x & 3];
+			unsigned char color = image[ty * TEXTURE_WIDTH + tx];
+
+			RETRO_PutPixel(x, y, FogTable[color * TUNNEL_FOG_SHADES + shade]);
 		}
 	}
 }
 
 void DEMO_Initialize(void)
 {
-	// Init palette: a cool climb from black to white, a fall through a
-	// muted green down to near-black, then a rise through a dusty orange
-	// back to white-hot. The waypoints are sampled straight from the
-	// original hand-tuned VGA table rather than named "pure" colors, since
-	// a plain white-to-green-to-orange-to-white ramp through saturated
-	// colors reads as neon; this keeps the same dustier, desaturated cast.
-	// Additive trails climb this palette; the far centre sits on the
-	// bright end.
-	RETRO_CreateGradientPalette(0, 136, RETRO_BLACK, RETRO_WHITE);
-	RETRO_CreateGradientPalette(136, 150, RETRO_WHITE, RETRO_PALESAGE);
-	RETRO_CreateGradientPalette(150, 170, RETRO_PALESAGE, RETRO_FORESTGREEN);
-	RETRO_CreateGradientPalette(170, 196, RETRO_FORESTGREEN, RETRO_MOSSBLACK);
-	RETRO_CreateGradientPalette(196, 215, RETRO_MOSSBLACK, RETRO_FIREBRICK);
-	RETRO_CreateGradientPalette(215, 243, RETRO_FIREBRICK, RETRO_CREAM);
-	RETRO_CreateGradientPalette(243, RETRO_COLORS, RETRO_CREAM, RETRO_WHITE);
+	RETRO_Image *picture = RETRO_LoadImage("assets/flowers_256x256.pcx", true);
 
-	// Texture. The flowers photo, converted to a 0..63 luminance so it fits
-	// the same accumulator a plasma field once did: the photo's bytes are
-	// palette indices, not brightness, so they cannot be summed as they
-	// are, and the load leaves the palette set above active rather than
-	// the photo's own.
-	RETRO_LoadImage("assets/flowers_256x256.pcx");
-	unsigned char *photo = RETRO_ImageData();
-	RETRO_Palette *photopalette = RETRO_ImagePalette();
-	for (int i = 0; i < TEXTURE_SIZE * TEXTURE_SIZE; i++) {
-		RETRO_Palette color = photopalette[photo[i]];
-		int luminance = (color.r * 76 + color.g * 150 + color.b * 29) >> 8;
-		Texture[i] = luminance >> 2;
-	}
-
-	// Polar map. 160×100, an angle and a depth per pixel. Each pixel is
-	// asked which ring it sits on and at what angle, rather than the rings
-	// being painted and the gaps between them filled in. The corner ring
-	// carries depth 1, so every pixel is that ring's radius or less.
-	double halfwidth = MAP_WIDTH / 2.0;
-	double halfheight = MAP_HEIGHT / 2.0;
-	double corner = hypot(halfwidth, halfheight / TUNNEL_SQUASH) / M_SQRT2;
-	for (int y = 0; y < MAP_HEIGHT; y++) {
-		for (int x = 0; x < MAP_WIDTH; x++) {
-			double dx = x - halfwidth;
-			double dy = (y - halfheight) / TUNNEL_SQUASH;
-			double angle = atan2(dx, dy) + M_PI_4;
-			double ring = hypot(dx, dy) / M_SQRT2;
-			double depth = pow(TUNNEL_RING_GAIN, (corner - ring) / TUNNEL_RING_STEP);
-
-			int i = y * MAP_WIDTH + x;
-			AngleMap[i] = WRAP256(angle * TEXTURE_SIZE / (2 * M_PI));
-			DepthMap[i] = CLAMP(depth, 1, 256);
-		}
-	}
+	RETRO_CreateShadeTable(picture->palette, RETRO_COLORS, TUNNEL_FOG_SHADES, FogTable);
 }

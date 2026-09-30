@@ -1,6 +1,8 @@
 //
-// Sinus scroller: fine silver/cyan lettering rolls around a sine ribbon,
-// flattening into the dark at its crests, between two magenta raster bars.
+// Scroller, rolling around a sine ribbon
+//
+// Fine silver/cyan lettering rolls around a sine ribbon, flattening into the
+// dark at its crests, between two magenta raster bars.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -74,7 +76,7 @@ static void Stroke(double origin, double x0, double y0, double x1, double y1, do
 		double t = (double)i / steps;
 		double x = origin + (x0 + (x1 - x0) * t) * 4.5;
 		double v = (y0 + (y1 - y0) * t) / 6.0 - 0.5;
-		// A smaller travelling ripple bends the strokes themselves. Keep the
+		// A smaller traveling ripple bends the strokes themselves. Keep the
 		// broad ribbon shallow; shortening its wavelength only tilts the text.
 		double ripple = x * 0.11 - time * RippleSpeed;
 		double bend = sin(v * 5.5 + ripple);

@@ -1,5 +1,5 @@
 //
-// Forest scroller on a straight, tapered ribbon.
+// Forest scroller, on a straight ribbon
 //
 // Uses the original forest with text generated from FONT on a diagonal path.
 // The wide end is shifted right; the ribbon extends below the screen until its

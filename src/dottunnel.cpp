@@ -5,13 +5,13 @@
 //
 //   (sx, sy) = (ring + sway) / d + (WIDTH/2, HEIGHT/2)
 //
-// Flying forwards slides the whole tunnel toward the eye by TUNNEL_SPEED and
+// Flying forward slides the whole tunnel toward the eye by TUNNEL_SPEED and
 // wraps once it has moved by one ring spacing, so ring i lands where ring i+1
 // was. Brightness follows along, not the ring index, so the recycle does not
 // flash. The nearest ring stays a whole spacing from the eye, so the divide
 // never hits 0.
 //
-// The centre line is a helix, not a straight axis. A ring's centre is thrown
+// The center line is a helix, not a straight axis. A ring's center is thrown
 // off by angle (twist + along * TWIST_PER_RING). Sliding alone would leave that
 // pattern standing still (each ring inherits the one behind it), so the helix
 // is also turned about the axis and the mouth wanders. twist lives in
@@ -31,9 +31,9 @@
 #define RING_WIDTH 740 // the ring is an ellipse, so it has two semi axes
 #define RING_HEIGHT 788
 #define TUNNEL_DEPTH 20 // depth of the furthest ring
-#define TUNNEL_SPEED 20 // depth travelled per second
+#define TUNNEL_SPEED 20 // depth traveled per second
 #define TWIST_PER_RING (RETRO_ANGLES_PER_TURN / 24.0) // 15° per ring, in angle units
-#define SWAY_RADIUS 260 // how far that turn throws a ring's centre off the axis
+#define SWAY_RADIUS 260 // how far that turn throws a ring's center off the axis
 #define TWIST_SPEED (RETRO_ANGLES_PER_TURN * 5.0 / 3.0) // 600°/s, in angle units
 
 double RingX[RING_DOTS];

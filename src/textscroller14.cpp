@@ -1,4 +1,6 @@
 //
+// Scroller, turning around behind a panel
+//
 // Letters enter from the left behind a blue panel, turn around on the
 // right, then travel straight off the left edge in front.
 // A generated text strip supplies perspective-correct glyph quads. Binary

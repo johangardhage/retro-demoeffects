@@ -1,9 +1,11 @@
 //
-// Mirror ball behind mint lettering, based on mirror.mp4.
-// Reflected rays reach a virtual logo panel in front of the sphere through a
-// stereographic projection, so the reflection runs all the way to the rim.
-// The ball is shaded afresh each frame at its exact, fractional position, so
-// it glides instead of stepping from pixel to pixel.
+// Crystal ball
+//
+// A mirror ball behind mint lettering. Reflected rays reach a virtual logo
+// panel in front of the sphere through a stereographic projection, so the
+// reflection runs all the way to the rim. The ball is shaded afresh each frame
+// at its exact, fractional position, so it glides instead of stepping from
+// pixel to pixel.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

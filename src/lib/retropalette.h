@@ -231,7 +231,7 @@ inline float RETRO_IncidenceAngle(int shade, int shades)
 //   ambient   = Ka * ambient * face
 //   intensity = (diffuse + specular) * Katt * light + ambient
 //
-// This is textbook Phong, specialised to a viewer sitting at the light. Phong
+// This is textbook Phong, specialized to a viewer sitting at the light. Phong
 // writes the highlight as (R . V)^n for a reflection vector R and a view vector
 // V; with V = L the angle between them is twice the angle of incidence, so
 // R . V becomes cos(2 * theta) and the whole model collapses to the one angle
@@ -663,18 +663,25 @@ inline void RETRO_CreateBallMap(unsigned char *buffer, float *depthmap, int size
 }
 
 //
-// Nearest entry in an explicit palette, by squared RGB distance
+// Nearest entry in an explicit palette, by squared RGB distance with the
+// channels weighed 3, 6 and 2
+//
+// The eye takes most of a color's brightness from its green, less from its
+// red and little from its blue, so a step in green shows more than the same
+// step in blue. Weighed alike, the nearest entry is often one of the wrong
+// brightness, and colors matched along a ramp of light then come out darker
+// above lighter in places
 //
 inline unsigned char RETRO_NearestPaletteIndex(RETRO_Palette target, const RETRO_Palette *palette, int colors = RETRO_COLORS)
 {
 	int match = 0;
-	int mindistance = 3 * 255 * 255 + 1;
+	int mindistance = (3 + 6 + 2) * 255 * 255 + 1;
 
 	for (int color = 0; color < colors; color++) {
 		int dr = (int)palette[color].r - target.r;
 		int dg = (int)palette[color].g - target.g;
 		int db = (int)palette[color].b - target.b;
-		int distance = dr * dr + dg * dg + db * db;
+		int distance = 3 * dr * dr + 6 * dg * dg + 2 * db * db;
 		if (distance < mindistance) {
 			mindistance = distance;
 			match = color;
@@ -717,12 +724,12 @@ inline void RETRO_CreateColorLUT(const RETRO_Palette *palette, int cuberes, unsi
 }
 
 //
-// Colours gathered for fitting a palette to
+// Colors gathered for fitting a palette to
 //
-// Each colour lands in a cell of a 32x32x32 RGB grid, five bits a channel,
-// which keeps its weight and its weighted sum, so the cell's colour is the
+// Each color lands in a cell of a 32x32x32 RGB grid, five bits a channel,
+// which keeps its weight and its weighted sum, so the cell's color is the
 // mean of what fell in it. A scene lit through tables asks for far more
-// colours than a palette holds; gathering them here first lets a fit weigh
+// colors than a palette holds; gathering them here first lets a fit weigh
 // each by how much of the screen it is expected to cover
 //
 #define RETRO_HISTOGRAM_BITS 5
@@ -731,7 +738,7 @@ inline void RETRO_CreateColorLUT(const RETRO_Palette *palette, int cuberes, unsi
 
 struct RETRO_ColorHistogram {
 	float weight[RETRO_HISTOGRAM_CELLS];
-	vec3 sum[RETRO_HISTOGRAM_CELLS];	// weighted, so sum / weight is the cell's colour
+	vec3 sum[RETRO_HISTOGRAM_CELLS];	// weighted, so sum / weight is the cell's color
 };
 
 inline void RETRO_AddHistogramColor(RETRO_ColorHistogram *histogram, RETRO_Palette color, float weight)
@@ -743,15 +750,15 @@ inline void RETRO_AddHistogramColor(RETRO_ColorHistogram *histogram, RETRO_Palet
 }
 
 //
-// Fit a palette to weighted colours, every entry after the first held ones,
+// Fit a palette to weighted colors, every entry after the first held ones,
 // which the caller has already set
 //
-// Each fitted entry starts on the colour that is heaviest for its distance to
-// the entries before it, so the seeds cover the colours by how much they
-// weigh. Then k-means refines them: every colour goes to its nearest entry,
-// the squared RGB distance RETRO_NearestPaletteIndex matches with, and each
-// fitted entry moves to the mean of what it was given. The held entries are
-// never moved, but they take the colours nearest them like any other entry
+// Each fitted entry starts on the color that is heaviest for its distance to
+// the entries before it, so the seeds cover the colors by how much they
+// weigh. Then k-means refines them: every color goes to its nearest entry,
+// by squared RGB distance, and each fitted entry moves to the mean of what
+// it was given. The held entries are never moved, but they take the colors
+// nearest them like any other entry
 //
 inline void RETRO_FitPalette(const vec3 *color, const float *weight, int count, RETRO_Palette *palette, int held, int colors, int iterations, int colormax)
 {
@@ -817,7 +824,7 @@ inline void RETRO_FitPalette(const vec3 *color, const float *weight, int count, 
 }
 
 //
-// A palette fitted to the gathered colours, by RETRO_FitPalette
+// A palette fitted to the gathered colors, by RETRO_FitPalette
 //
 // The held colors are the caller's, colors that must come out exactly, such
 // as a flat sky. They take the first entries of the palette
@@ -826,7 +833,7 @@ inline void RETRO_CreateHistogramPalette(const RETRO_ColorHistogram *histogram, 
 {
 	for (int i = 0; i < heldcolors; i++) palette[i] = held[i];
 
-	// The cells that hold anything, with their colours
+	// The cells that hold anything, with their colors
 	float *weight = (float *)malloc(RETRO_HISTOGRAM_CELLS * sizeof(float));
 	vec3 *color = (vec3 *)malloc(RETRO_HISTOGRAM_CELLS * sizeof(vec3));
 	if (!weight || !color) {

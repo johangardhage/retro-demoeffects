@@ -11,7 +11,7 @@
 //
 //   character = ScrollText[sample / FONT.width]
 //   column    = sample mod FONT.width
-//   y         = SCROLL_Y + AMP sin(wave + x RATE)
+//   y         = scrolly + WAVE_AMP sin(wave + x WAVE_RATE)
 //
 // so the text keeps its shape in x and is displaced only in y. A letter is
 // therefore never bent sideways, only sheared up and down, and it climbs and

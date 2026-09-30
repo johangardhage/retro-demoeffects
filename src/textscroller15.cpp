@@ -1,8 +1,10 @@
 //
-// Upward scroller on a twisting vertical ribbon. Each horizontal band of
-// a generated text strip rotates about the same axis; varying the angle
-// with height bends the letters as they turn. Chrome is a mirror: the view
-// ray reflected about the twisted surface normal, on both faces alike.
+// Scroller, on a twisting chrome ribbon
+//
+// An upward scroller on a twisting vertical ribbon. Each horizontal band of a
+// generated text strip rotates about the same axis; varying the angle with
+// height bends the letters as they turn. Chrome is a mirror: the view ray
+// reflected about the twisted surface normal, on both faces alike.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

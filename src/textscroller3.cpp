@@ -5,7 +5,7 @@
 // down the screen by a sine of the column,
 //
 //   color = strip[row][(x + phase) mod stripwidth]
-//   y     = SCROLL_Y + AMP sin(wave + x RATE)
+//   y     = scrolly + WAVE_AMP sin(wave + x WAVE_RATE)
 //
 // so the text keeps its shape in x and is displaced only in y. A letter is
 // therefore never bent sideways, only sheared up and down, and it climbs and

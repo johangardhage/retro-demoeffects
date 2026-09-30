@@ -250,7 +250,7 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette. A cloudy night sky, a wet street lit from the city, dark
-	// blocks with warm windows and the rain from grey-blue to pale blue
+	// blocks with warm windows and the rain from gray-blue to pale blue
 	RETRO_CreateGradientPalette(SKY, SKY + SKY_COLORS, { 12, 14, 26 }, { 46, 44, 58 }, Colors);
 	RETRO_CreateGradientPalette(STREET, STREET + STREET_COLORS, { 30, 32, 46 }, { 10, 12, 20 }, Colors);
 	Colors[BUILDING] = { 8, 9, 14 };

@@ -1,14 +1,14 @@
 //
 // Radial zoom
 //
-// Concentric zoom-blur layers of a 320×240 picture, centred on the screen.
+// Concentric zoom-blur layers of a 320×240 picture, centered on the screen.
 // For scales s = 32, 34, ..., 60, screen point p samples
 //
-//   source = p s/64 + centre (64-s)/64 + orbit (60-s)/128
+//   source = p s/64 + center (64-s)/64 + orbit (60-s)/128
 //   destination += image(source) s/512
 //
 // The orbit is (100 cos phase, 40 sin phase), so the smaller layers move
-// farther from the centre while the full-size layer stays fixed. Adding all
+// farther from the center while the full-size layer stays fixed. Adding all
 // fifteen layers gives the radial blur.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>

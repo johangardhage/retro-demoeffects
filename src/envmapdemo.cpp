@@ -48,14 +48,14 @@
 // The meshes show where that matters. The cube's corners carry the corner
 // diagonals, so its normals sweep across each face as though it were
 // rounded. The flat cube's corners carry the face's own normal: under matcap,
-// and under environment without perspective, each face is one colour, and
+// and under environment without perspective, each face is one color, and
 // only a reflected view ray gives it a picture, the slice of the room a flat
 // mirror there would show. The mask is curved throughout, and on it the two
 // ways of reflecting differ little.
 //
 // The map being read is drawn as an inset in the top right corner, so a
 // patch of the surface can be matched to the part of the map it samples
-// without the map drowning the mesh in its own colours. Euler angles live on
+// without the map drowning the mesh in its own colors. Euler angles live on
 // 2π. The mask starts at ax = −π/2, az = π so its face is upright.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>

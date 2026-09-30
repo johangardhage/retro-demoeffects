@@ -2,21 +2,21 @@
 // Waving flag, gouraud shaded
 //
 // The same flag and the same wave as flatshadedflag.cpp, lit per vertex instead
-// of per face, so the cloth reads as one curved surface rather than as a grid of
-// facets. Gouraud needs a normal at every vertex, and the two ways of getting
-// one both fail here. Taking them from the faces cannot work on a two sided
-// mesh: the front and back copy of a quad carry opposite normals into the same
-// vertex, which sum to zero. Taking them from the asset cannot work either,
-// since the sheet is deformed every frame. So they are differentiated from the
-// wave itself,
+// of per face, so the cloth reads as one curved surface rather than as a grid
+// of facets. Gouraud needs a normal at every vertex, and the two ways of
+// getting one both fail here. Taking them from the faces cannot work on a two
+// sided mesh: the front and back copy of a quad carry opposite normals into the
+// same vertex, which sum to zero. Taking them from the asset cannot work
+// either, since the sheet is deformed every frame. So they are differentiated
+// from the wave itself,
 //
 //   z = AMP u W / (1 + HALF),   W = sin(A) + HALF sin(B)
 //
 // with A and B the two modes' phases. The surface is a height field over x and
 // y, so the normal is (dz/dx, dz/dy, -1) up to length: the u factor makes the
 // first term a product rule, and the chain rule brings out the rate each mode
-// turns at. RADIAN is there because SIN and COS run on RETRO_ANGLES_PER_TURN units
-// per turn, so COS is the derivative of SIN only up to that scale.
+// turns at. RADIAN is there because SIN and COS run on RETRO_ANGLES_PER_TURN
+// units per turn, so COS is the derivative of SIN only up to that scale.
 //
 // The asset carries two normals per vertex, the second the negation of the
 // first, and its faces index the set for the side they are on. Face normals are

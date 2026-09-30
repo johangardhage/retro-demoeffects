@@ -1,7 +1,7 @@
 //
 // Scroller, vertical pages
 //
-// Pages of centred text (see ScrollText below) are packed into one strip
+// Pages of centered text (see ScrollText below) are packed into one strip
 // and rise from below the screen to above it at a constant rate,
 //
 //   top = RETRO_HEIGHT - phase

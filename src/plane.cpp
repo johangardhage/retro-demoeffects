@@ -53,7 +53,7 @@ void DEMO_Render(double time, double deltatime)
 	float yd = time * PLANE_WALK_SPEED;
 
 	// Perspective scales. v is the forward texel at this depth and does
-	// not depend on x. u stretches about the screen centre with a factor
+	// not depend on x. u stretches about the screen center with a factor
 	// (W/2) / P so a half-width of pixels is one texture period at unit
 	// depth. midx, midy are the vanishing point (the horizon is midy).
 	float xscale = PLANE_EYE * (RETRO_WIDTH / 2.0f) / PLANE_PERIOD;

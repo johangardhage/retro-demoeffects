@@ -28,7 +28,7 @@
 // farther ground. dz grows with z, so far slices are coarser.
 //
 // What is painted between two slices is a strip of ground seen edge on, and it
-// is shaded from the colour the last slice sampled to the colour this one did
+// is shaded from the color the last slice sampled to the color this one did
 // rather than filled with the second of those. That is the whole difference
 // between this and voxellandscape.cpp, which fills. A filled strip is one
 // flat tone and a slope arrives as a stack of them, exactly as flat shading
@@ -39,7 +39,7 @@
 // own is the frustum-to-ground segment above and the column walk that fills it.
 // voxellandscape3.cpp walks the same segment the classic way, a cell read
 // whole and a strip filled with one tone, which is what a photographed map
-// can carry: its own grain covers a seam. Nothing here does. The colour is
+// can carry: its own grain covers a seam. Nothing here does. The color is
 // a slope shade with no texture in it, and the map is a quarter the size,
 // so both the cell and the strip arrive large - hence the filtering above
 // and the shading here.
@@ -62,7 +62,7 @@
 // Left/Right turn and Up/Down move along the viewing direction. W/S are
 // alternate forward/back controls and A/D strafe. Tab toggles a flycam, in
 // which R and F raise and lower the camera. PageUp and PageDown move the
-// horizon, which tilts the view up and down. Colour is an 8-bit grey ramp.
+// horizon, which tilts the view up and down. Color is an 8-bit gray ramp.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -122,7 +122,7 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
 	RETRO_TerrainSlice slice = RETRO_TerrainViewSlice(basis);
 
-	// Where each column has been painted down to, and the colour it last
+	// Where each column has been painted down to, and the color it last
 	// sampled, which is the near edge of the strip the next slice paints
 	int hiddeny[RETRO_WIDTH];
 	float lastcolor[RETRO_WIDTH];
@@ -147,14 +147,14 @@ void DEMO_Render(double time, double deltatime)
 
 			if (heightonscreen < hiddeny[x]) {
 				// The nearest slice has no strip in front of it to be shaded
-				// across, so it takes its own colour at both ends and comes out
+				// across, so it takes its own color at both ends and comes out
 				// flat, which is what one edge of ground looks like
 				if (lastcolor[x] < 0) {
 					lastcolor[x] = color;
 				}
 
 				// The strip runs from the row the last slice stopped at, where
-				// it is that slice's colour, up to this one, where it is this
+				// it is that slice's color, up to this one, where it is this
 				// slice's. Walking down from the top is walking backward along
 				// that ramp.
 				float colorstep = (color - lastcolor[x]) / (hiddeny[x] - heightonscreen);

@@ -22,10 +22,10 @@
 // up to one in two, runs off the letters' shoulders and fills the dips. The
 // world wraps round the sides, as the flakes do.
 //
-// SNOW_MELT random columns a second are tested for melting. Every layer of
-// snow in the column with open air above it, on the logo or on the ground
-// beneath it, melts from the top by d / SNOW_DEPTH cells on average, d
-// being the layer's depth, so a thin cap lasts and a deep drift wastes away. Every
+// SNOW_MELT random columns a second are tested for melting. Every layer of snow
+// in the column with open air above it, on the logo or on the ground beneath
+// it, melts from the top by d / SNOW_DEPTH cells on average, d being the
+// layer's depth, so a thin cap lasts and a deep drift wastes away. Every
 // surface fills to about the same depth, where melting keeps up with the
 // snowfall, and holds it.
 //
@@ -232,7 +232,7 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette. The sky from night blue down to a dim horizon glow, the
-	// flakes from grey-blue far away to white up close
+	// flakes from gray-blue far away to white up close
 	RETRO_CreateGradientPalette(SKY, SKY + SKY_COLORS, { 4, 6, 24 }, { 40, 44, 78 });
 	RETRO_CreateGradientPalette(FLAKE, FLAKE + FLAKE_COLORS, { 90, 100, 130 }, { 255, 255, 255 });
 	RETRO_SetColor(GROUND, { 22, 20, 30 });

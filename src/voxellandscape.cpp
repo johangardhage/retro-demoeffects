@@ -28,8 +28,8 @@
 // farther ground. dz grows with z, so far slices are coarser.
 //
 // What is painted between two slices is a strip of ground seen edge on, and it
-// is filled with the one colour this slice sampled. The strip has a nearer edge
-// too, and that edge was a different colour, so a slope arrives as a stack of
+// is filled with the one color this slice sampled. The strip has a nearer edge
+// too, and that edge was a different color, so a slope arrives as a stack of
 // flat tones with a step at every seam - which is what flat shading a face
 // does, and the near strips stand tall enough to show it.
 // voxellandscape2.cpp shades each strip between its two edges instead, and is
@@ -40,7 +40,7 @@
 // own is the frustum-to-ground segment above and the column walk that fills it.
 // voxellandscape3.cpp walks the same segment over a photographed map, and
 // reads it cell by cell rather than filtering between them: a photograph
-// carries its own grain, which covers a seam. Nothing here does - the colour
+// carries its own grain, which covers a seam. Nothing here does - the color
 // is a slope shade with no texture in it - and the map is a quarter the size,
 // so a cell arrives four times the size. Filtering the map is what this one
 // keeps of the two smoothings; shading the strips is what it gives up.
@@ -63,7 +63,7 @@
 // Left/Right turn and Up/Down move along the viewing direction. W/S are
 // alternate forward/back controls and A/D strafe. Tab toggles a flycam, in
 // which R and F raise and lower the camera. PageUp and PageDown move the
-// horizon, which tilts the view up and down. Colour is an 8-bit grey ramp.
+// horizon, which tilts the view up and down. Color is an 8-bit gray ramp.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -145,7 +145,7 @@ void DEMO_Render(double time, double deltatime)
 				heightonscreen = 0;
 			}
 
-			// One colour for the whole strip, so nothing has to be carried from
+			// One color for the whole strip, so nothing has to be carried from
 			// the slice before and the top of the screen is a plain clamp
 			unsigned char color = (unsigned char)RETRO_TerrainSampleLinear(colormap, pl.x, pl.y);
 			for (int y = heightonscreen; y < hiddeny[x]; y++) {

@@ -5,7 +5,7 @@
 // slowly in its own plane, independently of the cube.
 //
 // The wall is a rotator, not a texture: each pixel's offset from screen
-// centre is rotated by angle, which turns the pattern the other way, and the
+// center is rotated by angle, which turns the pattern the other way, and the
 // parity of its two cell indices (each floored to WALL_CELL) picks one of
 // two colors. There is no scale term, so the tiling never zooms, only turns.
 //
@@ -28,9 +28,9 @@
 // Lighting is worked out in linear light and only encoded to sRGB for the
 // palette. Everything is lit by an ambient share A that reaches everywhere
 // and a direct share D = 1 - A from the light. The light has a fixed tilt
-// towards the wall as it orbits, so the wall's irradiance is a constant, and
+// toward the wall as it orbits, so the wall's irradiance is a constant, and
 // it is the unit everything else is measured in: a surface turned n = N·L
-// towards the light receives
+// toward the light receives
 //
 //   E = A + D n / n_wall
 //
@@ -74,7 +74,7 @@
 #define CUBESHADOW_CX (RETRO_WIDTH / 2.0)
 #define CUBESHADOW_CY (RETRO_HEIGHT / 2.0 - 10)
 
-#define CUBESHADOW_WALLZ 3.0f // model units behind the cube's centre the wall stands
+#define CUBESHADOW_WALLZ 3.0f // model units behind the cube's center the wall stands
 
 #define CUBESHADOW_LIGHT_SPEED 0.6 // radians a second the light orbits the board
 #define CUBESHADOW_LIGHT_RADIUS 0.8 // how far off axis it swings, in x and y
@@ -106,7 +106,7 @@ static void CubeShadowAddFace(Model3D *model, Face *face, int amount)
 	RETRO_DrawGlenzPolygon(point, face->vertices, amount, RETRO_COLORS);
 }
 
-// Every pixel's offset from centre, rotated by angle, then floored into
+// Every pixel's offset from center, rotated by angle, then floored into
 // cells whose combined parity is the checker. Whatever was drawn over a light
 // cell moves to its light variant
 static void CubeShadowDrawWall(double time)

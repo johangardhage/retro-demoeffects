@@ -3,7 +3,7 @@
 //
 // A texture reflected into twelve rotating mirror sectors. For a screen pixel
 // at polar coordinates (r, a), the angle is first wrapped into one sector and
-// then reflected about its centre line:
+// then reflected about its center line:
 //
 //   w = (a + rotation) mod (2pi / sectors)
 //   m = min(w, 2pi / sectors - w)

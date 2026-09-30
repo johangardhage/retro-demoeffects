@@ -19,8 +19,8 @@
 // zeroed and the particle placed on the wall, so it settles rather than buzz.
 //
 // The explosion is uniform in angle and speed, not in a square (a square
-// sample favours the corners). The framebuffer is never cleared; a
-// 4-neighbour diffuse blur (no self) subtracts TRAIL_DECAY each step.
+// sample favors the corners). The framebuffer is never cleared; a
+// 4-neighbor diffuse blur (no self) subtracts TRAIL_DECAY each step.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -52,7 +52,7 @@ struct Particle {
 //
 // Throw every particle out from one point
 //
-// Direction is an angle, not a point in a square. A square sample favours the
+// Direction is an angle, not a point in a square. A square sample favors the
 // corners (they are further out than the edges) and the explosion would be a
 // four-pointed star:
 //

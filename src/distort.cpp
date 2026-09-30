@@ -17,7 +17,7 @@
 
 #define SINE_VALUES 64 // entries in the sine table, covering one whole turn
 #define DISTORT_AMPLITUDE 5 // pixels a row shifts sideways at the peak
-#define DISTORT_SPEED 100 // table entries travelled per second
+#define DISTORT_SPEED 100 // table entries traveled per second
 
 int ShiftX[SINE_VALUES];
 int ShiftY[SINE_VALUES];

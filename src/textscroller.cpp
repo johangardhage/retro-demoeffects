@@ -8,7 +8,7 @@
 //
 // A zero texel is transparent, so the letters slide over a cleared
 // background. phase lives on stripwidth, in texels per second. The strip
-// is centred vertically and is as tall as one glyph, so every screen row
+// is centered vertically and is as tall as one glyph, so every screen row
 // it occupies maps 1:1 onto a strip row. When phase returns to 0 the same
 // column is under x = 0 again, and the wrap is seamless.
 //

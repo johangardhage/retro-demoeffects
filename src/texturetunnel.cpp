@@ -2,7 +2,7 @@
 // Tunnel
 //
 // A polar map of a still texture, looked up as if the screen were the mouth
-// of a tube. A pixel at offset (dx, dy) from the screen centre has
+// of a tube. A pixel at offset (dx, dy) from the screen center has
 //
 //   r = |(dx, dy)|
 //   v = RATIO / r                      along the tunnel
@@ -10,7 +10,7 @@
 //
 // Large r is the near rim (small v). atan2(dx, dy) is from +y and spans
 // [−TW, TW], so the texture wraps twice around the tube. The vanishing
-// point sits fixed at screen centre, so the tables need only cover the
+// point sits fixed at screen center, so the tables need only cover the
 // screen itself, W × H, rather than the 2W × 2H a wandering origin would
 // need to reach every position such a point could sit at. Adding (sx, sy)
 // flies and spins; depth is texture x and angle is texture y.

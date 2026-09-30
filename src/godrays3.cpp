@@ -6,9 +6,9 @@
 // lie on the coordinate axes. Sphere and beam bounds skip empty space;
 // a midpoint march integrates haze up to the ball or palette saturation.
 //
-// Closely spaced samples resolve the soft beam edges without dithering.
-// Light scatters evenly and blends the surface colour exponentially towards white.
-// Grey, red and blue palette ramps shade the ball and the static spiral wall.
+// Closely spaced samples resolve the soft beam edges without dithering. Light
+// scatters evenly and blends the surface color exponentially toward white.
+// Gray, red and blue palette ramps shade the ball and the static spiral wall.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -32,7 +32,7 @@
 #define PATH_SPEED 0.45 // radians a second
 #define PATH_WIDTH 1.5f // ball radii the path reaches either side
 #define PATH_HEIGHT 1.0f // ball radii the path reaches above and below
-#define PATH_DEPTH 1.6f // ball radii the path reaches towards and away from the eye
+#define PATH_DEPTH 1.6f // ball radii the path reaches toward and away from the eye
 
 #define SPIN_SPEED_X 0.9 // radians a second
 #define SPIN_SPEED_Y 1.3
@@ -49,9 +49,9 @@
 #define WALL_RED RETRO_Palette{ 35, 2, 0 }
 #define WALL_BLUE RETRO_Palette{ 0, 0, 31 }
 
-#define LIGHT_LEVELS 85 // no light through white, per ramp; 3 x 85 fills the palette but for one colour
-#define GREY_START 0
-#define RED_START (GREY_START + LIGHT_LEVELS)
+#define LIGHT_LEVELS 85 // no light through white, per ramp; 3 x 85 fills the palette but for one color
+#define GRAY_START 0
+#define RED_START (GRAY_START + LIGHT_LEVELS)
 #define BLUE_START (RED_START + LIGHT_LEVELS)
 
 static vec3 CameraRay[RETRO_WIDTH * RETRO_HEIGHT]; // fixed pinhole rays, before ball rotation
@@ -137,7 +137,7 @@ static float IntegrateHaze(vec3 origin, vec3 direction, float entry, float exit,
 	for (int beam = 0; beam < 6; beam++) {
 		float near = entry, far = exit;
 		if (!BeamBounds(origin, direction, beam / 2, beam % 2 ? -1.0f : 1.0f, near, far)) continue;
-		// Round outwards to keep boundary samples despite floating-point error.
+		// Round outward to keep boundary samples despite floating-point error.
 		Span span = { MAX(0, (int)floor((near - entry) / step - 0.5f)),
 			MIN(samples, (int)ceil((far - entry) / step + 0.5f)) };
 		int insert = count++;
@@ -164,11 +164,11 @@ static float IntegrateHaze(vec3 origin, vec3 direction, float entry, float exit,
 
 static void BuildPalette(void)
 {
-	// Init palette. Each ramp adds white light to its colour, a level at a
+	// Init palette. Each ramp adds white light to its color, a level at a
 	// time, and saturates into white
 	RETRO_Palette palette[RETRO_COLORS] = {};
 	const RETRO_Palette rampcolors[] = { { 0, 0, 0 }, WALL_RED, WALL_BLUE };
-	int rampstart = GREY_START;
+	int rampstart = GRAY_START;
 	for (const RETRO_Palette &color : rampcolors) {
 		for (int level = 0; level < LIGHT_LEVELS; level++) {
 			int light = level * 255 / (LIGHT_LEVELS - 1);
@@ -214,9 +214,9 @@ void DEMO_Render(double time, double deltatime)
 	// keep it closed, so the wrap is seamless. Where it comes nearest the
 	// eye, at phase 3/2 pi, it passes the middle of the screen
 	float phase = fmod(time * PATH_SPEED, 2 * M_PI);
-	vec3 centre = { PATH_WIDTH * sinf(2 * phase), PATH_HEIGHT * cosf(3 * phase), PATH_DISTANCE + PATH_DEPTH * sinf(phase) };
+	vec3 center = { PATH_WIDTH * sinf(2 * phase), PATH_HEIGHT * cosf(3 * phase), PATH_DISTANCE + PATH_DEPTH * sinf(phase) };
 
-	vec3 q0 = inverse * -centre;
+	vec3 q0 = inverse * -center;
 	float c = dot(q0, q0) - 1.0f;
 	float reach = dot(q0, q0) - BEAM_LENGTH * BEAM_LENGTH;
 
@@ -233,7 +233,7 @@ void DEMO_Render(double time, double deltatime)
 			if (disc > 0.0f) {
 				far = -b - sqrt(disc);
 				vec3 normal = q0 + d * far;
-				base = GREY_START;
+				base = GRAY_START;
 				float pixel = far * CameraRay[sy * RETRO_WIDTH + sx].z / FOCAL;
 				shade = ShadeBall(normal, d, pixel);
 			}

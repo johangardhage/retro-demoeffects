@@ -18,7 +18,8 @@
 // Every cell above takes the mean of the three cells below it and the one two
 // rows below, less FIRE_DECAY:
 //
-//   T'(x, y) = max(0, (T(x−1, y+1) + T(x, y+1) + T(x+1, y+1) + T(x, y+2)) / 4 − FIRE_DECAY)
+//   T'(x, y) = max(0, (T(x−1, y+1) + T(x, y+1) + T(x+1, y+1) + T(x, y+2)) / 4
+//                     − FIRE_DECAY)
 //
 // Taps past the side edges read 0, so the flame cools toward them. The
 // hidden rows between the bed and the screen average the fuel's noise

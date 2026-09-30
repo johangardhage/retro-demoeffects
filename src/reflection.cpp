@@ -16,7 +16,8 @@
 // reflected ray by the surface slope, which moves the sample by
 //
 //   dy = d WATER_TILT sin(WATER_KZ z − WATER_SPEED t)
-//   dx = d WATER_SWAY sin(WATER_KX xw + WATER_KZ2 z + WATER_SWAYSPEED t),  xw = (x − W/2) / d
+//   dx = d WATER_SWAY sin(WATER_KX xw + WATER_KZ2 z + WATER_SWAYSPEED t)
+//   xw = (x − W/2) / d
 //
 // xw being the pixel's sideways position on the water. Both offsets scale
 // with d, so near the horizon the waves are too small to move a pixel and
@@ -44,7 +45,7 @@
 #define FAR_RIDGE (SUN + SUN_COLORS)
 #define NEAR_RIDGE (FAR_RIDGE + RIDGE_COLORS)
 #define SUN_X 212
-#define SUN_Y 70 // the sun's centre, halfway through its swing
+#define SUN_Y 70 // the sun's center, halfway through its swing
 #define SUN_RADIUS 22
 #define SUN_SWING 60 // pixels the sun sinks and rises either side of SUN_Y
 #define SUN_SPEED 0.15 // radians a second through the swing

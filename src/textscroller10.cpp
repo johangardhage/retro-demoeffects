@@ -15,7 +15,7 @@
 // so it does not lock to the lean and still closes with the rest of the
 // motion on ColumnPeriod. An edge is drawn when its first screen coordinate
 // is less than its second; the two ascending edges are the visible faces and
-// the descending edges face away. Each face is centred on the strip's own
+// the descending edges face away. Each face is centered on the strip's own
 // rows at their native size, with a 1/z shade
 //
 //   c = 63 · COLUMN_DEPTH_RATE / (COLUMN_RADIUS − z + COLUMN_DEPTH_RATE)
@@ -25,7 +25,7 @@
 // a larger strip crosses the screen at the same speed and simply takes
 // longer to pass in full. ColumnPeriod is the lcm of the 256-table, the
 // twist's five-turn breathing, and the strip's own width. The column is
-// centred at y = 159.
+// centered at y = 159.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -54,7 +54,7 @@ RETRO_Image *ScrollImage;
 
 //
 // One vertical slice of one face, half-open in y. The strip's own rows are
-// centred in the span at their native size rather than stretched to fill
+// centered in the span at their native size rather than stretched to fill
 // it, so a letter keeps the size it was drawn at no matter how tall the
 // twisting face happens to be; rows the strip does not reach stay
 // background. The depth shade is interpolated across the whole span.

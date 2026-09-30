@@ -1,6 +1,8 @@
 //
-// Sanity WOC92 sine scroller with a continuous sinusoidal zoom.
-// Inspired by scroller3.mp4; only the lettering is rendered, on black.
+// Scroller, on a sine with a zoom
+//
+// A sine scroller with a continuous sinusoidal zoom. Only the lettering is
+// rendered, on black.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

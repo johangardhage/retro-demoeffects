@@ -2,13 +2,13 @@
 // Voronoi
 //
 // A pane of stained glass whose pieces keep changing shape: a Voronoi diagram
-// of SEEDS moving points, each cell a bevelled piece of colored glass set in
+// of SEEDS moving points, each cell a beveled piece of colored glass set in
 // black lead.
 //
 // Every pixel belongs to the cell of its nearest seed. The seeds start on a
 // jittered grid, so the cells come out about the same size, and each circles
 // its own grid point on a Lissajous path, so the cells grow, shrink and trade
-// neighbours.
+// neighbors.
 //
 // The border between the cells of seeds a and b is the line halfway between
 // them, and a pixel p in a's cell lies at a distance
@@ -18,7 +18,7 @@
 // from it. The nearest border is the smallest e over every other seed b, so
 // the lead is drawn exactly VORONOI_LEAD pixels wide however the cells are
 // shaped. Within VORONOI_BEVEL pixels of the lead the glass slopes down to
-// it, a face tilted toward that neighbour, and it is lit by the light's dot
+// it, a face tilted toward that neighbor, and it is lit by the light's dot
 // product with the face's normal, so the bevels facing the light shine and
 // the ones facing away are in shade.
 //
@@ -31,7 +31,7 @@
 #define SEEDS_X 6 // grid the seeds start on
 #define SEEDS_Y 4
 #define SEEDS (SEEDS_X * SEEDS_Y)
-#define SEED_JITTER 0.35 // of a grid cell, how far a seed's centre strays from its grid point
+#define SEED_JITTER 0.35 // of a grid cell, how far a seed's center strays from its grid point
 #define SEED_ORBIT 28.0 // pixels, the largest radius of a seed's path
 #define SEED_MINSPEED 0.3 // radians a second
 #define SEED_MAXSPEED 0.9
@@ -46,7 +46,7 @@ static const RETRO_Palette GlassHues[GLASS_HUES] = { RETRO_SCARLET, RETRO_ORANGE
 static const vec3 Light = { -0.45f, -0.55f, 0.70f }; // toward the light, unit length
 
 struct Seed {
-	float x, y; // centre of its path
+	float x, y; // center of its path
 	float ampx, ampy;
 	float speedx, speedy;
 	float phasex, phasey;
@@ -90,12 +90,12 @@ void DEMO_Render(double time, double deltatime)
 
 			// Nearest border
 			float edge = 1e9f;
-			int neighbour = nearest;
+			int neighbor = nearest;
 			for (int i = 0; i < SEEDS; i++) {
 				float e = (distance[i] - distance[nearest]) * invgap[nearest][i];
 				if (i != nearest && e < edge) {
 					edge = e;
-					neighbour = i;
+					neighbor = i;
 				}
 			}
 
@@ -105,11 +105,11 @@ void DEMO_Render(double time, double deltatime)
 				continue;
 			}
 
-			// Light the glass, flat in the middle and tilted toward the neighbour on the bevel
+			// Light the glass, flat in the middle and tilted toward the neighbor on the bevel
 			float brightness = Light.z;
 			if (edge < VORONOI_LEAD / 2 + VORONOI_BEVEL) {
-				float nx = (seedx[neighbour] - seedx[nearest]) * 2 * invgap[nearest][neighbour];
-				float ny = (seedy[neighbour] - seedy[nearest]) * 2 * invgap[nearest][neighbour];
+				float nx = (seedx[neighbor] - seedx[nearest]) * 2 * invgap[nearest][neighbor];
+				float ny = (seedy[neighbor] - seedy[nearest]) * 2 * invgap[nearest][neighbor];
 				brightness = (VORONOI_SLOPE * (nx * Light.x + ny * Light.y) + Light.z) / sqrtf(VORONOI_SLOPE * VORONOI_SLOPE + 1);
 			}
 			*pixel = GLASS + Seeds[nearest].hue * GLASS_SHADES + CLAMP(brightness * GLASS_SHADES, 0, GLASS_SHADES);
@@ -131,7 +131,7 @@ void DEMO_Initialize(void)
 	}
 
 	// Init seeds, one per grid cell. A hue repeats no nearer than two cells
-	// diagonally, or three columns and a row, so neighbours hardly ever match
+	// diagonally, or three columns and a row, so neighbors hardly ever match
 	float cellwidth = (float)RETRO_WIDTH / SEEDS_X;
 	float cellheight = (float)RETRO_HEIGHT / SEEDS_Y;
 	for (int i = 0; i < SEEDS; i++) {

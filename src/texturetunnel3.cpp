@@ -4,7 +4,7 @@
 // A classic polar-coordinate tunnel. For every screen pixel, its angle
 // around the tunnel supplies the horizontal texture coordinate and inverse
 // distance from the moving vanishing point supplies the coordinate down the
-// tunnel. Advancing that second coordinate flies the camera forwards.
+// tunnel. Advancing that second coordinate flies the camera forward.
 //
 // Nothing is precomputed. The mouth wanders on two incommensurate sines per
 // axis, so every pixel's angle and distance change from frame to frame, and

@@ -12,7 +12,7 @@
 //
 // Beams crossing the eye use a full-screen quad to retain complete coverage.
 // Their light accumulates in floating point before exponential blending into
-// the grey, red and blue palette ramps. The noisy spiral wall is static.
+// the gray, red and blue palette ramps. The noisy spiral wall is static.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -23,7 +23,7 @@
 #define HOLE_ANGLE 0.41f // radians from an axis to the rim of its hole
 #define BALL_SHINE 0.38f // brightness of the ball where it faces the eye
 #define BEAM_SPREAD 0.15f // ball radii a beam widens by for every radius it travels
-#define BEAM_APEX (cosf(HOLE_ANGLE) - sinf(HOLE_ANGLE) / BEAM_SPREAD) // ball radii from the centre to the beam's apex, behind it
+#define BEAM_APEX (cosf(HOLE_ANGLE) - sinf(HOLE_ANGLE) / BEAM_SPREAD) // ball radii from the center to the beam's apex, behind it
 #define BEAM_LENGTH 9.0f // ball radii from the lamp to the end of a beam
 #define BEAM_FADE 0.5f // share of the beam's length before its end starts to fade
 #define BEAM_DENSITY 0.9f // light a ray gathers crossing a beam through its axis
@@ -35,7 +35,7 @@
 #define PATH_SPEED 0.45 // radians a second
 #define PATH_WIDTH 1.5f // ball radii the path reaches either side
 #define PATH_HEIGHT 1.0f // ball radii the path reaches above and below
-#define PATH_DEPTH 1.6f // ball radii the path reaches towards and away from the eye
+#define PATH_DEPTH 1.6f // ball radii the path reaches toward and away from the eye
 
 #define SPIN_SPEED_X 0.9 // radians a second
 #define SPIN_SPEED_Y 1.3
@@ -52,9 +52,9 @@
 #define WALL_RED RETRO_Palette{ 35, 2, 0 }
 #define WALL_BLUE RETRO_Palette{ 0, 0, 31 }
 
-#define LIGHT_LEVELS 85 // no light through white, per ramp; 3 x 85 fills the palette but for one colour
-#define GREY_START 0
-#define RED_START (GREY_START + LIGHT_LEVELS)
+#define LIGHT_LEVELS 85 // no light through white, per ramp; 3 x 85 fills the palette but for one color
+#define GRAY_START 0
+#define RED_START (GRAY_START + LIGHT_LEVELS)
 #define BLUE_START (RED_START + LIGHT_LEVELS)
 
 static Model3D *Ball;
@@ -66,7 +66,7 @@ static unsigned char Wall[RETRO_WIDTH * RETRO_HEIGHT]; // RED_START or BLUE_STAR
 static mat3 BallMatrix; // R, this frame
 static mat3 BallInverse; // R^T, shared by all ball fragments
 static float Light[RETRO_WIDTH * RETRO_HEIGHT];
-static vec3 BallCentre; // C, in view space, this frame
+static vec3 BallCenter; // C, in view space, this frame
 static vec3 BeamAxis; // a, unit, in view space, of the beam being drawn
 static float BallDepth[RETRO_WIDTH * RETRO_HEIGHT]; // the depth buffer as the ball left it, q per pixel, 0 off the ball
 
@@ -88,7 +88,7 @@ static float Noise(float x, float y)
 
 static unsigned char ShadeBall(const Fragment &fragment)
 {
-	vec3 normal = normalize(fragment.position - BallCentre);
+	vec3 normal = normalize(fragment.position - BallCenter);
 	vec3 q = BallInverse * normal;
 	float facing = -dot(normal, normalize(fragment.view));
 	float shade = BALL_SHINE * facing * facing * facing * facing;
@@ -100,7 +100,7 @@ static unsigned char ShadeBall(const Fragment &fragment)
 	float rim = 0.5f * sinf(HOLE_ANGLE) * pixel;
 	float hole = smoothstep(cosf(HOLE_ANGLE) - rim, cosf(HOLE_ANGLE) + rim, MAX(fabs(q.x), MAX(fabs(q.y), fabs(q.z))));
 	shade += (1.0f - shade) * hole;
-	return GREY_START + (int)(shade * (LIGHT_LEVELS - 1) + 0.5f);
+	return GRAY_START + (int)(shade * (LIGHT_LEVELS - 1) + 0.5f);
 }
 
 static double PreciseDot(vec3 a, vec3 b)
@@ -113,7 +113,7 @@ static bool IntersectBeam(vec3 eye, vec3 direction, float balldepth, float &near
 {
 	near = 0.0f;
 	far = balldepth > 0.0f ? 1.0f / (balldepth * RETRO_PROJECTION_SCALE * direction.z) : 1.0e9f;
-	vec3 fromapex = eye - (BallCentre + BeamAxis * BEAM_APEX);
+	vec3 fromapex = eye - (BallCenter + BeamAxis * BEAM_APEX);
 	float axialorigin = dot(fromapex, BeamAxis);
 	float axialdirection = dot(direction, BeamAxis);
 	float start = -BEAM_APEX;
@@ -167,10 +167,10 @@ static bool IntersectBeam(vec3 eye, vec3 direction, float balldepth, float &near
 static float IntegrateBeam(vec3 eye, vec3 direction, float near, float far)
 {
 	float raylength = length(direction);
-	vec3 fromcentre = eye - BallCentre;
-	float axialorigin = dot(eye - (BallCentre + BeamAxis * BEAM_APEX), BeamAxis);
+	vec3 fromcenter = eye - BallCenter;
+	float axialorigin = dot(eye - (BallCenter + BeamAxis * BEAM_APEX), BeamAxis);
 	float axialdirection = dot(direction, BeamAxis);
-	// Resolve the soft edge even on long rays looking towards a hole.
+	// Resolve the soft edge even on long rays looking toward a hole.
 	// Width is linear along the ray, so its minimum is at an endpoint.
 	float nearwidth = BEAM_SPREAD * (axialorigin + near * axialdirection);
 	float farwidth = BEAM_SPREAD * (axialorigin + far * axialdirection);
@@ -180,7 +180,7 @@ static float IntegrateBeam(vec3 eye, vec3 direction, float near, float far)
 	float light = 0.0f;
 	for (int i = 0; i < samples; i++) {
 		float t = near + (i + 0.5f) * step;
-		vec3 point = fromcentre + direction * t;
+		vec3 point = fromcenter + direction * t;
 		float distancesquared = dot(point, point);
 		float distance = sqrt(distancesquared);
 		float along = dot(point, BeamAxis);
@@ -204,7 +204,7 @@ static unsigned char ShadeBeam(const Fragment &fragment)
 	return RETRO.framebuffer[pixel]; // Palette conversion happens after all beams.
 }
 
-// A cone truncated at the centre and at BEAM_LENGTH, along +z, closed at
+// A cone truncated at the center and at BEAM_LENGTH, along +z, closed at
 // both ends, as ShadeBeam cuts it. Its sides are drawn out to the far side of the soft edge, and a little
 // more, 1 / cos(pi / BEAM_SEGMENTS), so the polygons cover the whole of the
 // round beam ShadeBeam finds in them
@@ -237,11 +237,11 @@ static void BuildBeam(Model3D *model)
 
 static void BuildPalette(void)
 {
-	// Init palette. Each ramp adds white light to its colour, a level at a
+	// Init palette. Each ramp adds white light to its color, a level at a
 	// time, and saturates into white
 	RETRO_Palette palette[RETRO_COLORS] = {};
 	const RETRO_Palette rampcolors[] = { { 0, 0, 0 }, WALL_RED, WALL_BLUE };
-	int rampstart = GREY_START;
+	int rampstart = GRAY_START;
 	for (const RETRO_Palette &color : rampcolors) {
 		for (int level = 0; level < LIGHT_LEVELS; level++) {
 			int light = level * 255 / (LIGHT_LEVELS - 1);
@@ -290,11 +290,11 @@ void DEMO_Render(double time, double deltatime)
 	// keep it closed, so the wrap is seamless. Where it comes nearest the
 	// eye, at phase 3/2 pi, it passes the middle of the screen
 	float phase = fmod(time * PATH_SPEED, 2 * M_PI);
-	BallCentre = { PATH_WIDTH * sinf(2 * phase), PATH_HEIGHT * cosf(3 * phase), PATH_Z + PATH_DEPTH * sinf(phase) };
+	BallCenter = { PATH_WIDTH * sinf(2 * phase), PATH_HEIGHT * cosf(3 * phase), PATH_Z + PATH_DEPTH * sinf(phase) };
 
 	// Draw ball
 	RETRO_RotateModel(BallMatrix, Ball);
-	RETRO_TranslateModel(BallCentre.x, BallCentre.y, BallCentre.z, Ball);
+	RETRO_TranslateModel(BallCenter.x, BallCenter.y, BallCenter.z, Ball);
 	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Ball);
 	RETRO_RenderModel(RETRO_POLY_SHADER, RETRO_SHADE_NONE, Ball);
 	memcpy(BallDepth, RETRO_DepthBuffer, sizeof(BallDepth));
@@ -306,7 +306,7 @@ void DEMO_Render(double time, double deltatime)
 		mat3 matrix = BallMatrix * frame;
 		BeamAxis = matrix * vec3{ 0.0f, 0.0f, 1.0f };
 		RETRO_RotateModel(matrix, Beam);
-		RETRO_TranslateModel(BallCentre.x, BallCentre.y, BallCentre.z, Beam);
+		RETRO_TranslateModel(BallCenter.x, BallCenter.y, BallCenter.z, Beam);
 		RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Beam);
 		bool pasteye = false;
 		for (int i = 0; i < Beam->vertices; i++) {
@@ -332,7 +332,7 @@ void DEMO_Initialize(void)
 
 	BuildWall();
 
-	// +z, -z, +x, -x, +y, -y; rotateY turns +z towards +x, rotateX towards -y
+	// +z, -z, +x, -x, +y, -y; rotateY turns +z toward +x, rotateX toward -y
 	HoleFrame[0] = identity();
 	HoleFrame[1] = rotateX(M_PI);
 	HoleFrame[2] = rotateY(M_PI / 2);

@@ -1,11 +1,11 @@
 //
 // Dot ball
 //
-// A sphere of points, rotated and projected. Only the near cap is drawn, shaded by
-// depth, so the ball reads as solid without a surface.
+// A sphere of points, rotated and projected. Only the near cap is drawn, shaded
+// by depth, so the ball reads as solid without a surface.
 //
-// Points sit on a latitude/longitude grid, one step of POINTSTEP radians in each
-// angle:
+// Points sit on a latitude/longitude grid, one step of POINTSTEP radians in
+// each angle:
 //
 //   (x, y, z) = R (cos α sin β,  cos β,  sin α sin β)
 //

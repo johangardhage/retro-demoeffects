@@ -17,7 +17,7 @@
 // may start at 0 on the land and the horizon has no 1-pixel gap. Sky
 // starts at z = 1. u on the sky is divided by PLANE_SKY_U, so the clouds
 // are coarser. Both maps wrap on PLANE_MAP. The left half of the screen
-// is column (W/2 − 1 − x) so column 0 is drawn and the centre column is
+// is column (W/2 − 1 − x) so column 0 is drawn and the center column is
 // not written twice.
 //
 // Land, sky and the ball sprite are one 128×384 atlas (planedemo.pcx),
@@ -58,7 +58,7 @@ void DEMO_Render(double time, double deltatime)
 	int midx = RETRO_WIDTH / 2;
 
 	// Draw the ceiling. z is distance up from the horizon. u starts at
-	// the centre and steps by (W/2) / w(z); the sky is sampled at
+	// the center and steps by (W/2) / w(z); the sky is sampled at
 	// u / PLANE_SKY_U.
 	for (int z = 1; z <= PLANE_VIEW; z++) {
 		float u = 0;

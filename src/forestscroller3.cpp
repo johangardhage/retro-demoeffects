@@ -7,28 +7,26 @@
 // whatever the font currently shades there, so a pixel always shows the
 // sum of exactly two things: the static picture underneath, and this
 // instant's font value at that spot. Font's own two possible values (a
-// stroke or 0) select which of two neighbouring ranges of the background
+// stroke or 0) select which of two neighboring ranges of the background
 // asset's own palette apply - see FONT_BOOST.
 //
-// Every fixed tick draws one of three scatter maps (see FOREST_SCATTER
-// below) in turn - three interlaced thirds of the banner's dots, refreshed
-// one third per tick, so any one instant is a little uneven but a full
-// three-tick round is not. A map holds, for each of a CELL_ROWS x CELL_COLS
-// grid, the screen addresses to touch there; when its count is 0 nothing
-// in the picture answers to that cell, so it is skipped. How each hit is
-// shaded comes from the text band, a strip far wider than the grid: cell
-// (row, col) samples the text band at column (col + window - CELL_XOFFSET),
-// where window counts one full three-tick round as a single step, so as it
-// climbs the sampled window slides across the strip and steadily
-// different lettering feeds the same fixed scatter shapes. CELL_XOFFSET is
-// the lead that window starts with, so a lap opens on blank cells and only
-// fills in as the window catches up. A cell whose sample is blank is still
-// touched, with a font value of 0, which is what erases a stroke once the
-// window has scrolled past it - skip that and old letters would stay lit
-// under new ones forever, which is exactly the smear an earlier version of
-// this file had. BAND_CYCLE - the strip's width plus that same lead-in,
-// now serving as the gap between laps - is what window wraps on, looping
-// the banner forever instead of running through it once.
+// Every fixed tick draws one of three scatter maps (see FOREST_SCATTER below)
+// in turn - three interlaced thirds of the banner's dots, refreshed one third
+// per tick, so any one instant is a little uneven but a full three-tick round
+// is not. A map holds, for each of a CELL_ROWS x CELL_COLS grid, the screen
+// addresses to touch there; when its count is 0 nothing in the picture answers
+// to that cell, so it is skipped. How each hit is shaded comes from the text
+// band, a strip far wider than the grid: cell (row, col) samples the text band
+// at column (col + window - CELL_XOFFSET), where window counts one full
+// three-tick round as a single step, so as it climbs the sampled window slides
+// across the strip and steadily different lettering feeds the same fixed
+// scatter shapes. CELL_XOFFSET is the lead that window starts with, so a lap
+// opens on blank cells and only fills in as the window catches up. A cell whose
+// sample is blank is still touched, with a font value of 0, which is what
+// erases a stroke once the window has scrolled past it - skip that and old
+// letters would stay lit under new ones forever. BAND_CYCLE - the strip's width
+// plus that same lead-in, which serves as the gap between laps - is what window
+// wraps on, looping the banner forever.
 //
 // The scatter maps, background, and text band use the original data.
 //

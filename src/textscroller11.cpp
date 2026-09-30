@@ -1,186 +1,147 @@
 //
-// Scroller, perspective ring
+// Scroller, filled with rasters
 //
-// Each glyph is a stack of tiny quads on a tangent plane around a
-// horizontal ring, so a letter bends with the ring instead of stamping
-// flat onto it. Glyph pixels are read straight out of RETRO_LoadFont's
-// atlas at render time.
+// Big letters crawl slowly to the left while a sine wave races through them
+// several times faster, so the text is thrown up and down rather than carried
+// along the wave. The letters are not painted in colors of their own. Every
+// scanline of the screen has one color, and a letter is a hole that the
+// colors of the scanlines it covers show through. Outside the letters the
+// screen is black, so the rasters are only ever seen inside them.
 //
-// Glyph i sits at ring angle phase + column[i] * angle-per-pixel, where
-// column[i] is its running pixel offset into the flattened text. Angle-per-
-// pixel is 2π / (n · WRAP_WIDTH) so n glyphs of that width wrap the ring
-// once. Glyphs narrower than WRAP_WIDTH keep their true spacing instead of
-// being stretched to fill the circle; a shorter total run just leaves the
-// rest of the ring bare. A point (lx, ly) on its own plane is carried out
-// to the ring by
+// The color of a scanline is set anew every frame, in two layers:
 //
-//   p = Ry(-a) (lx, ly, -RING_RADIUS)
+//   ground  a cyclic ramp of GROUND_STEPS colors, one to a scanline, sliding
+//           down the screen at GROUND_SPEED
+//   bars    BARS bars of BAR_HEIGHT scanlines over the ground, each shaded as
+//           a tube, riding one cosine up and down, each BAR_LAG behind the
+//           bar before it:
 //
-// so local x runs along the tangent and local y down the character, and the
-// glyph faces outward wherever it stands. The ring is then tilted about x and
-// projected, so its near side appears larger and lower than its far side.
+//             y = HEIGHT/2 + BAR_AMP cos(bar + k BAR_LAG)
 //
-// A glyph is drawn a font pixel at a time, each one projected as its own
-// quadrilateral rather than as a texture: the four corners are four calls to
-// the same transform, which is what lets a character bend around the ring
-// instead of being a flat stamp on it.
+// The font strip (see FONT below) is sampled a column at a time, and each
+// column dropped by the sine at that column,
 //
-// cos(a) is the whole of the depth sort. rz comes out as lx sin a - R cos a,
-// and lx is under half a glyph where R is 86, so the sign of cos a orders the
-// ring on its own. The far half takes muted colors and the near half bright
-// ones, which is the only fog here. Cells are then painted in that order with
-// a q that only ever increases, so a later cell covers an earlier one and the
-// depth buffer enforces the painter's order the sort chose. That q is a paint
-// counter, not a reciprocal depth; nothing here interpolates it.
+//   texel = strip[row][(x + phase) mod stripwidth]
+//   y     = scrolly + WAVE_AMP sin(wave + x WAVE_RATE)
 //
-// A moving multicolor seam divides the background and passes in front of the
-// text, since it is drawn last.
+// so a letter is sheared up and down, never bent sideways. Where the texel is
+// not zero the pixel gets the color of its scanline. The colors belong to the
+// screen, not to the text: a letter thrown up by the sine goes up through the
+// bars, and a bar on its way down goes through one letter after the other
+// without bending with them.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retrofont.h"
-#include "lib/retromain.h"
-#include "lib/retropoly.h"
 #include "lib/retropalette.h"
-#include "lib/retrogfx.h"
-#include "lib/retromath.h"
+#include "lib/retromain.h"
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
-static const char *const ScrollText[] = { "    RETRO DEMOEFFECTS..." };
+#define FONT_SCALE 3
 
-// Ring geometry and perspective projection.
-#define RING_RADIUS 86.0
-#define RING_Y 75.0
-#define CAMERA_DISTANCE 260.0
-#define PROJECTION_SCALE 1.53
-#define RING_TILT 0.18
-#define SCROLL_SPEED 0.72
-#define WRAP_WIDTH 16.0
+#define SCROLL_SPEED 42 // texels per second
+#define WAVE_AMP 40 // pixels either side of the middle a column reaches
+#define WAVE_RATE 0.85 // table units of the sine per pixel, so one wave per 300 pixels
+#define WAVE_SPEED 230 // table units per second
+#define GROUND_STEPS 96 // palette entries, and scanlines, in one turn of the ground
+#define GROUND_SPEED 30 // scanlines per second
+#define GROUND_RAMP0 1 // palette entry the ground's ramp starts at, past the background
+#define BARS 4
+#define BAR_HEIGHT 16
+#define BAR_CORE 2 // rows of highlight either side of the middle of a bar
+#define BAR_RAMP0 (GROUND_RAMP0 + GROUND_STEPS) // palette entry the first bar's ramp starts at
+#define BAR_LAG 30 // table units a bar rides behind the bar before it
+#define BAR_AMP 62 // pixels either side of the middle a bar reaches
+#define BAR_SPEED 75 // table units per second
 
-static RETRO_Font Font;
+static const char *const ScrollText[] = { "       RETRO DEMOEFFECTS..." };
 
-// Transform a point from a character's tangent plane into screen space.
-// Local x follows the ring tangent and local y runs down the character.
-static Vertex Project(const mat3 &matrix, double localx, double localy)
-{
-	Vertex vertex = {};
-	vertex.pos = { (float)localx, (float)localy, -RING_RADIUS };
+static const RETRO_Palette GroundStops[] = {
+	{ 30, 60, 200 }, // blue
+	{ 130, 40, 190 }, // purple
+	{ 0, 130, 150 }, // teal
+};
 
-	RETRO_RotateVertex(&vertex, matrix);
-	RETRO_ProjectVertex(&vertex, PROJECTION_SCALE, RETRO_WIDTH / 2.0, RING_Y, CAMERA_DISTANCE);
-	return vertex;
-}
+// One color per bar, in draw order
+static const RETRO_Palette BarColors[BARS] = { RETRO_RED, RETRO_ORANGE, RETRO_YELLOW, RETRO_GREEN };
 
-// Project and fill one source-font pixel as a screen-space quadrilateral.
-// Increasing paintdepth makes each later cell cover the ones before it.
-static void DrawCell(const mat3 &matrix, double x, double y, int color, float &paintdepth)
-{
-	Vertex p[4] = { Project(matrix, x, y), Project(matrix, x + 1, y), Project(matrix, x + 1, y + 1), Project(matrix, x, y + 1) };
-	PolygonPoint poly[4] = {};
-	paintdepth += 0.0001f;
-	for (int i = 0; i < 4; i++) {
-		poly[i].pos = p[i].spos;
-		poly[i].q = paintdepth;
-	}
-	RETRO_DrawFlatPolygon(poly, 4, color);
-}
-
-static void DrawGlyph(int letter, double angle, bool shadow, float &paintdepth)
-{
-	// The far half uses muted colors while the near half uses bright colors.
-	bool back = cos(angle) < 0;
-	int color = back ? (shadow ? 4 : 3) : (shadow ? 5 : 6);
-	double yoff = shadow ? Font.height / 8.0 : 0.0;
-	unsigned char code = (unsigned char)ScrollText[0][letter];
-	int width = RETRO_CharWidth(Font, code);
-	int glyph = code - Font.firstcharacter;
-	int sourcex = glyph * Font.width;
-	int copywidth = MIN(Font.width, width);
-	if (glyph < 0 || sourcex + Font.width > Font.atlas->width) {
-		return;
-	}
-	mat3 matrix = rotateX((float)RING_TILT) * rotateY((float)-angle);
-	for (int y = 0; y < Font.height; y++)
-		for (int x = 0; x < copywidth; x++)
-			if (Font.atlas->data[y * Font.atlas->width + sourcex + x])
-				DrawCell(matrix, x - width / 2.0, y - Font.height / 2.0 + yoff, color, paintdepth);
-}
-
-static int BarEdge(int y, double phase)
-{
-	// Two low-frequency waves keep the dividing seam gently curved and moving.
-	return RETRO_WIDTH / 2.0 + lround(4 * sin(phase + y * 0.018) + 2 * sin(phase * 0.6));
-}
+RETRO_Image *ScrollImage;
 
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, 2 * M_PI);
-	double barphase = fmod(time * 0.8, 2 * M_PI);
+	double phase = fmod(time * SCROLL_SPEED, ScrollImage->width);
+	int iphase = (int)phase;
+	int scrolly = (RETRO_HEIGHT - ScrollImage->height) / 2;
 
-	// Draw background
+	// Calculate the phases of the wave the columns ride, of the ground and of
+	// the cosine the bars ride
+	double wave = fmod(time * WAVE_SPEED, RETRO_ANGLES_PER_TURN);
+	double ground = fmod(time * GROUND_SPEED, GROUND_STEPS);
+	double bar = fmod(time * BAR_SPEED, RETRO_ANGLES_PER_TURN);
+
+	// Set the color of every scanline, the ground first
+	unsigned char raster[RETRO_HEIGHT];
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		int edge = BarEdge(y, barphase);
-		RETRO_DrawLine(0, y, edge - 1, y, 1);
-		RETRO_DrawLine(edge, y, RETRO_WIDTH - 1, y, 2);
+		raster[y] = GROUND_RAMP0 + WRAP(y - (int)ground, GROUND_STEPS);
 	}
 
-	// Draw scroller
-	RETRO_ClearDepthBuffer();
-	float paintdepth = 1.0f;
-	int length = (int)strlen(ScrollText[0]);
-	double angleperpixel = 2 * M_PI / (length * WRAP_WIDTH);
-	int order[256];
-	double angle[256];
-	int cursor = 0;
-	for (int i = 0; i < length; i++) {
-		order[i] = i;
-		int width = RETRO_CharWidth(Font, (unsigned char)ScrollText[0][i]);
-		angle[i] = phase + (cursor + width / 2.0) * angleperpixel;
-		cursor += width;
-	}
-	for (int i = 1; i < length; i++) {
-		int item = order[i], j = i;
-		while (j > 0 && cos(angle[order[j - 1]]) > cos(angle[item])) {
-			order[j] = order[j - 1];
-			j--;
+	// Then the bars over it, back to front, each riding the cosine a lag behind
+	// the one before. Row j of a bar is entry j of that bar's ramp
+	for (int k = 0; k < BARS; k++) {
+		int y = lround(RETRO_HEIGHT / 2.0 + BAR_AMP * COS(bar - k * BAR_LAG)) - BAR_HEIGHT / 2;
+		int ramp = BAR_RAMP0 + k * BAR_HEIGHT;
+		int top = MAX(y, 0);
+		int bottom = MIN(y + BAR_HEIGHT, RETRO_HEIGHT);
+
+		for (int row = top; row < bottom; row++) {
+			raster[row] = ramp + row - y;
 		}
-		order[j] = item;
-	}
-	for (int n = 0; n < length; n++) {
-		int i = order[n];
-		DrawGlyph(i, angle[i], true, paintdepth);
-		DrawGlyph(i, angle[i], false, paintdepth);
 	}
 
-	// Draw neon seam
-	static const int offsets[] = { -5, -3, -1, 1, 3 };
-	static const int colors[] = { 7, 8, 9, 10, 11 };
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		int edge = BarEdge(y, barphase);
-		for (int i = 0; i < 5; i++)
-			RETRO_DrawLine(edge + offsets[i], y, edge + offsets[i] + 1, y, colors[i]);
+	// Draw scroller, a column at a time, each dropped by the sine at that column,
+	// its glyph rows clipped to the screen and painted in the colors of their
+	// scanlines
+	for (int x = 0; x < RETRO_WIDTH; x++) {
+		int top = scrolly + lround(WAVE_AMP * SIN(wave + x * WAVE_RATE));
+		int first = MAX(-top, 0);
+		int last = MIN(RETRO_HEIGHT - top, ScrollImage->height);
+
+		for (int i = first; i < last; i++) {
+			if (ScrollImage->data[i * ScrollImage->width + WRAP(x + iphase, ScrollImage->width)] != 0) {
+				RETRO_PutPixel(x, i + top, raster[i + top]);
+			}
+		}
 	}
 }
 
 void DEMO_Initialize(void)
 {
-	// Init palette
-	RETRO_SetColor(0, RETRO_BLACK);
-	RETRO_SetColor(1, RETRO_DARKMIDNIGHTBLUE);
-	RETRO_SetColor(2, RETRO_MUTEDINDIGO);
-	RETRO_SetColor(3, RETRO_LIGHTSLATEGRAY);
-	RETRO_SetColor(4, RETRO_MUTEDDARKSLATEBLUE);
-	RETRO_SetColor(5, RETRO_PALESKYBLUE);
-	RETRO_SetColor(6, RETRO_SOFTIVORY);
-	RETRO_SetColor(7, RETRO_BRIGHTBLUE);
-	RETRO_SetColor(8, RETRO_BRIGHTCYAN);
-	RETRO_SetColor(9, RETRO_SOFTGHOSTWHITE);
-	RETRO_SetColor(10, RETRO_LIGHTMAGENTA);
-	RETRO_SetColor(11, RETRO_DEEPDARKVIOLET);
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]), FONT_SCALE);
 
-	// Init font
-	Font = RETRO_LoadFont(FONT);
+	// Init palette. Entry 0 is the black background, then the cyclic ramp of
+	// the ground
+	int stops = sizeof(GroundStops) / sizeof(GroundStops[0]);
+	int length = GROUND_STEPS / stops;
+	RETRO_SetColor(0, RETRO_BLACK);
+	for (int i = 0; i < stops; i++) {
+		RETRO_CreateGradientPalette(GROUND_RAMP0 + i * length, GROUND_RAMP0 + (i + 1) * length, GroundStops[i], GroundStops[(i + 1) % stops]);
+	}
+
+	// Each bar is a tube: a dark rim rising to its own hue over most of the way
+	// in, then a white highlight over the BAR_CORE rows around the middle, and
+	// the same in reverse below it
+	for (int k = 0; k < BARS; k++) {
+		RETRO_Palette hue = BarColors[k];
+		RETRO_Palette rim = RETRO_Palette{ (unsigned char)(hue.r / 5), (unsigned char)(hue.g / 5), (unsigned char)(hue.b / 5) };
+
+		int ramp = BAR_RAMP0 + k * BAR_HEIGHT;
+		int middle = ramp + BAR_HEIGHT / 2;
+
+		RETRO_CreateGradientPalette(ramp, middle - BAR_CORE, rim, hue);
+		RETRO_CreateGradientPalette(middle - BAR_CORE, middle, hue, RETRO_WHITE);
+		RETRO_CreateGradientPalette(middle, middle + BAR_CORE, RETRO_WHITE, hue);
+		RETRO_CreateGradientPalette(middle + BAR_CORE, ramp + BAR_HEIGHT, hue, rim);
+	}
 }

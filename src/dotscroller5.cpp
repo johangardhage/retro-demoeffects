@@ -1,6 +1,8 @@
 //
-// Dot landscape scroller: terrain samples raise a fixed text mask into
-// columns of dots. The sampling window orbits the map while the patch rocks.
+// Dot landscape scroller, raised by the terrain
+//
+// Terrain samples raise a fixed text mask into columns of dots. The sampling
+// window orbits the map while the patch rocks.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -25,7 +27,7 @@
 #define EXTRUSION_MAX 22
 // Index 0 stays the screen's background black. Index 1 is reserved for the
 // flat ground; RETRO_LoadImage's own palette load fills the rest, so a
-// letter is drawn in whatever colour the colour map actually painted
+// letter is drawn in whatever color the color map actually painted
 // that texel.
 #define GROUND_COLOR_INDEX 1
 #define YAW_AMP 0.75
@@ -133,7 +135,7 @@ void DEMO_Render(double time, double deltatime)
 		for (int col = 0; col < mapwidth; col++) {
 			int cell = row * mapwidth + col;
 			int height = HeightSample[cell];
-			// Draw the top and the exposed drop to the lowest neighbour.
+			// Draw the top and the exposed drop to the lowest neighbor.
 			int bottom = height;
 			bottom = MIN(bottom, row > 0 ? HeightSample[cell - mapwidth] : 0);
 			bottom = MIN(bottom, row + 1 < mapheight ? HeightSample[cell + mapwidth] : 0);

@@ -1,7 +1,7 @@
 //
 // Gouraud Shaded Cubes
 //
-// Two equal cubes occupy the same centre and rotate independently. Their faces
+// Two equal cubes occupy the same center and rotate independently. Their faces
 // continually cut through one another, so neither cube can be drawn entirely
 // before the other: which surface is visible changes within the overlapping
 // polygons. A shared q-buffer resolves every pixel using reciprocal depth and
@@ -29,7 +29,7 @@ static Model3D *Cube2 = NULL;
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase, one per cube: different rates and different combinations
-	// of axes, while keeping both centres fixed at the origin.
+	// of axes, while keeping both centers fixed at the origin.
 	float phase1 = fmod(time * CUBE1_ROTATION_SPEED, CUBE1_ROTATION_PERIOD);
 	float phase2 = fmod(time * CUBE2_ROTATION_SPEED, CUBE2_ROTATION_PERIOD);
 	if (phase2 < 0) phase2 += CUBE2_ROTATION_PERIOD;

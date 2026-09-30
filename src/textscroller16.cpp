@@ -1,5 +1,7 @@
 //
-// Upward scroller with solid, extruded letters. The generated text mask
+// Scroller, solid extruded letters
+//
+// An upward scroller with solid, extruded letters. The generated text mask
 // becomes front/back caps and exposed contour walls, including holes.
 // Subdivided faces follow the vertical twist and share a real depth buffer.
 //

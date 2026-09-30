@@ -1,7 +1,9 @@
 //
-// Inward torus: an inward-facing OBJ shell rendered by the retro 3D pipeline.
-// The torus UVs and texture are procedural; fish paths and timing approximate
-// the original. Vertex lighting is interpolated by the Gouraud texture mapper.
+// Inward torus
+//
+// An inward-facing OBJ torus shell rendered by the retro 3D pipeline. The torus
+// UVs and texture are procedural; fish paths and timing approximate the
+// original. Vertex lighting is interpolated by the Gouraud texture mapper.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -122,7 +124,7 @@ static void InitializeTexture(void)
 	for (int y = 0; y < TEXTURE_SIZE; y++) {
 		float tube = (y + 0.5f) / TEXTURE_SIZE;
 		// At the inner equator (v = 0.5), place the solid blue/green
-		// boundary at the centre rather than the edge of a teeth row.
+		// boundary at the center rather than the edge of a teeth row.
 		float row = (tube - 0.5f) * (BAND_REPEATS * ROWS_PER_REPEAT)
 			+ BAND_REPEATS * ROWS_PER_REPEAT + 1.0f;
 		int band = (int)floorf(row) % ROWS_PER_REPEAT;

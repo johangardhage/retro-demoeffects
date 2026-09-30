@@ -1,5 +1,7 @@
 //
-// Forest scroller on a tapered ribbon that bends along a tiny heightmap.
+// Forest scroller, on a bending ribbon
+//
+// The ribbon is tapered and bends along a tiny heightmap.
 //
 // Uses the original forest with text generated from FONT on a diagonal path.
 // The wide end is shifted right; the ribbon extends below the screen until its

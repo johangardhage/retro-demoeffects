@@ -13,7 +13,7 @@
 //   column    = sample mod FONT.width
 //
 // A zero texel is transparent, so the letters slide over a cleared
-// background. phase lives on the text's pixel width. The row is centred
+// background. phase lives on the text's pixel width. The row is centered
 // vertically.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>

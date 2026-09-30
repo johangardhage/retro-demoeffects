@@ -5,7 +5,7 @@
 // shadercube.cpp. The ball is RETRO_POLY_SHADER with its vertex normals
 // interpolated, and ShadeMirror reflects each pixel's view ray about its own
 // normal, at its own point, and traces the room from there, so the floor under
-// the ball is the floor the ball stands over, not a map baked from its centre.
+// the ball is the floor the ball stands over, not a map baked from its center.
 // See matcapcube.cpp's RETRO_POLY_MATCAP for the canned-highlight technique
 // this is not.
 //
@@ -21,8 +21,8 @@
 //
 // The sun stands high behind the camera, so the ball's shadow falls away
 // from it, and the sun itself is seen in the ball, a highlight on the side
-// turned back towards it. A sphere's shadow needs no tracing: a ray towards
-// the sun is in it by how far it misses the centre, softened over a band that
+// turned back toward it. A sphere's shadow needs no tracing: a ray toward
+// the sun is in it by how far it misses the center, softened over a band that
 // widens with the distance to the ball, as a real penumbra does. It moves
 // with the ball, so the room is drawn afresh every frame.
 //
@@ -31,21 +31,20 @@
 // clouds, so they thin out there by the same footprint as the checker,
 // instead of shimmering.
 //
-// The palette is two tables. The floor is a grey ramp, the dark square
+// The palette is two tables. The floor is a gray ramp, the dark square
 // FLOOR_DARK of the way up and the shadow a darkening of either, hazed into
 // the horizon a level at a time. The sky is its ramp, each shade whitened a
 // level at a time; a cloud or the sun is a whiteness, so neither needs a
 // ramp of its own. Both fit the palette only at a few levels each, so the
 // cloud edges step, which suits the look.
 //
-// The checker is filtered over one screen pixel's footprint on the floor.
-// Seen straight from the eye that is a pixel's angle times the distance,
-// stretched by 1 / sin of the angle it meets the floor at. The ball is a
-// convex mirror and fans a pixel's rays out much further, most of all near
-// its rim, where a pixel covers a long strip of the surface; see ShadeMirror. Past
-// half a square the average is a flat gray, so from there the floor fades
-// into the horizon colour instead, and the far floor meets the sky without a
-// seam.
+// The checker is filtered over one screen pixel's footprint on the floor. Seen
+// straight from the eye that is a pixel's angle times the distance, stretched
+// by 1 / sin of the angle it meets the floor at. The ball is a convex mirror
+// and fans a pixel's rays out much further, most of all near its rim, where a
+// pixel covers a long strip of the surface; see ShadeMirror. Past half a square
+// the average is a flat gray, so from there the floor fades into the horizon
+// color instead, and the far floor meets the sky without a seam.
 //
 // The camera looks CAMERA_PITCH down onto the ball. The library's camera
 // looks straight along z, so the room is tilted up instead, by turning every
@@ -59,18 +58,18 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define ROOM_FLOOR 1.8f // room units the floor lies below the ball's centre; the ball's radius is 1
+#define ROOM_FLOOR 1.8f // room units the floor lies below the ball's center; the ball's radius is 1
 #define ROOM_TILE 1.0f // room units a checker square spans
 #define ROOM_PIXEL (1.0f / RETRO_PROJECTION_EYEDISTANCE) // radians one screen pixel spans at the eye
 #define ROOM_EYE ((float)RETRO_PROJECTION_EYEDISTANCE / RETRO_PROJECTION_SCALE) // room units from the eye to the middle of the orbit
 #define CAMERA_PITCH 0.35f // radians the view looks down onto the ball
 
-#define SUN_DIRECTION vec3{ 0.45f, -0.8f, -0.4f } // towards the sun, in the room: right, up (-y) and behind the camera (-z)
+#define SUN_DIRECTION vec3{ 0.45f, -0.8f, -0.4f } // toward the sun, in the room: right, up (-y) and behind the camera (-z)
 #define SUN_RADIUS 0.045f // radians, the disc as seen
 #define SUN_SOFTNESS 0.04f // radians, the light's disc as the shadow sees it; wider than the sun, for a softer shadow
 #define SHADOW_DEPTH 0.6f // how much of the light the shadow takes away
 
-#define CLOUD_HEIGHT 14.0f // room units the cloud plane lies above the ball's centre
+#define CLOUD_HEIGHT 14.0f // room units the cloud plane lies above the ball's center
 #define CLOUD_SCALE 9.0f // room units a noise cell spans
 #define CLOUD_COVER 0.5f // noise level where a cloud begins; higher is clearer sky
 #define CLOUD_SPEED 0.6f // room units a second the clouds drift along x
@@ -79,14 +78,14 @@
 #define FLOOR_DARK 0.18f // the dark square's brightness, of white's
 
 #define CHROME_FLOOR_SHADES 16 // black through white, shadowed or not
-#define CHROME_HAZE_LEVELS 6 // steps from the clear checker to the horizon colour
+#define CHROME_HAZE_LEVELS 6 // steps from the clear checker to the horizon color
 #define CHROME_HAZE_FOOTPRINT 0.5f // squares a pixel covers before the checker averages out and is hazed over; fully at twice this
 #define CHROME_SKY_SHADES 32 // horizon to zenith
 #define CHROME_WHITE_LEVELS 5 // steps from clear sky to white cloud or sun; 16 x 6 + 32 x 5 is the whole palette
 
 #define BALL_RADIUS 1.0f // spherequads.obj's
 #define ORBIT_SPEED 0.7f // radians a second
-#define ORBIT_RADIUS 1.6f // room units from the middle of the orbit to the ball's centre
+#define ORBIT_RADIUS 1.6f // room units from the middle of the orbit to the ball's center
 
 #define CHROME_HORIZON RETRO_Palette{ 168, 198, 224 } // pale blue at Ry = 0, where the hazed floor meets the sky
 
@@ -94,11 +93,11 @@
 #define CHROME_SKY_START (CHROME_FLOOR_START + CHROME_FLOOR_SHADES * CHROME_HAZE_LEVELS)
 
 static mat3 RoomFrame; // view space to the room's, pitched so the camera looks down
-static vec3 Sun; // unit, towards the sun, in the room
-static vec3 Ball; // the ball's centre, in the room; set every frame
+static vec3 Sun; // unit, toward the sun, in the room
+static vec3 Ball; // the ball's center, in the room; set every frame
 static float CloudDrift; // room units the clouds have moved along x
 
-// abs(fract(x) - 1/2), the distance from x to the centre of its unit cell, folded
+// abs(fract(x) - 1/2), the distance from x to the center of its unit cell, folded
 static float ChromeFold(float x)
 {
 	float f = x - floor(x);
@@ -144,7 +143,7 @@ static float Clouds(float x, float z)
 }
 
 // The share of the sun the ball hides from a point in the room. The ray
-// towards the sun passes the ball's centre closest at along, and misses it by
+// toward the sun passes the ball's center closest at along, and misses it by
 // miss; the light is a disc SUN_SOFTNESS wide, so the edge of the shadow is
 // a band that widens with along, as a real penumbra does
 static float Shadow(vec3 point)
@@ -158,8 +157,8 @@ static float Shadow(vec3 point)
 	return 1.0f - smoothstep(BALL_RADIUS - penumbra, BALL_RADIUS + penumbra, miss);
 }
 
-// The colour a ray sees leaving origin along ray, both in view space. The
-// ray's length is the distance the view has already travelled to origin,
+// The color a ray sees leaving origin along ray, both in view space. The
+// ray's length is the distance the view has already traveled to origin,
 // and spread the radians a pixel's rays fan over from there on.
 static unsigned char ShadeRoom(vec3 origin, vec3 ray, float spread)
 {
@@ -247,7 +246,7 @@ static unsigned char ShadeMirror(const Fragment &fragment)
 
 void DEMO_Render(double time, double deltatime)
 {
-	// A mirror sphere spinning about its own centre is a no-op: every rotation
+	// A mirror sphere spinning about its own center is a no-op: every rotation
 	// maps the ball onto itself, so the set of normals behind any fixed screen
 	// pixel never changes and the reflection sits dead still. Orbiting the
 	// ball over the floor instead moves what does change the picture: where
@@ -259,19 +258,19 @@ void DEMO_Render(double time, double deltatime)
 	DrawRoom();
 
 	// Draw sphere, carried from the room into view space
-	vec3 centre = transpose(RoomFrame) * Ball;
+	vec3 center = transpose(RoomFrame) * Ball;
 	RETRO_RotateModel(0, 0, 0);
-	RETRO_TranslateModel(centre.x, centre.y, centre.z);
+	RETRO_TranslateModel(center.x, center.y, center.z);
 	RETRO_ProjectModel();
 	RETRO_RenderModel(RETRO_POLY_SHADER);
 }
 
 void DEMO_Initialize(void)
 {
-	// Init palette. The floor: a grey ramp, each shade mixed further into the
+	// Init palette. The floor: a gray ramp, each shade mixed further into the
 	// horizon a haze level at a time, the last one entirely. The sky: its
 	// ramp from the horizon to the zenith, each shade mixed further into
-	// white a level at a time. The sky starts from the colour the floor's
+	// white a level at a time. The sky starts from the color the floor's
 	// haze ends in, so the far floor meets it without a seam.
 	RETRO_Palette palette[RETRO_COLORS];
 	memset(palette, 0, sizeof(palette));

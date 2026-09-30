@@ -66,7 +66,7 @@ void DEMO_Initialize(void)
 	// Init palette
 	RETRO_CreateGradientPalette(0, SHADES, RETRO_BLACK, RETRO_WHITE);
 
-	// Init stars. Fill a box centred on the eye's axis: [-W, W] x [-H, H] x [-BOX_DEPTH, BOX_DEPTH].
+	// Init stars. Fill a box centered on the eye's axis: [-W, W] x [-H, H] x [-BOX_DEPTH, BOX_DEPTH].
 	for (int i = 0; i < NUM_STARS; i++) {
 		Stars[i].pos = {
 			(float)(RANDOM(RETRO_WIDTH * 2) - RETRO_WIDTH),

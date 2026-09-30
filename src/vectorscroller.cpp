@@ -140,7 +140,7 @@ static bool ScrollPoseCompute(float letterstart, double phase, float textwidth, 
 // Extrude one atlas glyph into the working model
 //
 // Pixel (px, py) of an 8-wide cell occupies x ∈ [px − w/2, px + 1 − w/2] · Pixel
-// and y ∈ [py − h/2, py + 1 − h/2] · Pixel, so the glyph is centred on the
+// and y ∈ [py − h/2, py + 1 − h/2] · Pixel, so the glyph is centered on the
 // origin and py = 0 is the top, which is negative y. The cube is extruded to
 // z ∈ [−depth/2, +depth/2]. Winding matches retrologo.obj: the front face
 // (z = −depth/2) is listed down-left, down-right, up-right, up-left, which is

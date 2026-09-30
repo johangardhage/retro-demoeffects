@@ -7,9 +7,9 @@
 //   y' = sin(c x) - cos(d y)
 //
 // It is not a contraction and there is nothing self-similar about it, which is
-// what sets it apart from the affine systems in ifs.cpp. The orbit is chaotic:
-// two points a hair apart are anywhere at all a few hundred steps later. What
-// stays put is where the orbit is dense, and that is the picture.
+// what sets it apart from the affine systems in fractalifs.cpp. The orbit is
+// chaotic: two points a hair apart are anywhere at all a few hundred steps
+// later. What stays put is where the orbit is dense, and that is the picture.
 //
 // Both coordinates are a sine less a cosine, so the orbit can never leave
 // [-2, 2] whatever the parameters are, and the frame is fixed once rather than

@@ -11,7 +11,7 @@
 // clipped at the ball's depth. The result is the visible thickness of haze.
 // Near-plane clipping keeps this valid even when the eye enters a beam.
 //
-// Light accumulates in floating point and is mapped to red, blue and grey
+// Light accumulates in floating point and is mapped to red, blue and gray
 // palette ramps using 1 - exp(-light), approaching white as it brightens.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
@@ -41,7 +41,7 @@
 #define PATH_SPEED 0.45 // radians a second
 #define PATH_WIDTH 1.5f // ball radii the path reaches either side
 #define PATH_HEIGHT 1.0f // ball radii the path reaches above and below
-#define PATH_DEPTH 1.6f // ball radii the path reaches towards and away from the eye
+#define PATH_DEPTH 1.6f // ball radii the path reaches toward and away from the eye
 
 #define SPIN_SPEED_X 0.9 // radians a second
 #define SPIN_SPEED_Y 1.3
@@ -60,10 +60,10 @@
 
 #define LIGHT_LEVELS 78 // no light through white, per ramp
 #define BALL_SHADES 20 // the ball's own shades
-#define GREY_START 0
-#define RED_START (GREY_START + LIGHT_LEVELS)
+#define GRAY_START 0
+#define RED_START (GRAY_START + LIGHT_LEVELS)
 #define BLUE_START (RED_START + LIGHT_LEVELS)
-#define BALL_START (BLUE_START + LIGHT_LEVELS) // 3 x 78 + 20 is the palette but for two colours
+#define BALL_START (BLUE_START + LIGHT_LEVELS) // 3 x 78 + 20 is the palette but for two colors
 
 struct BeamFrustum {
 	float start, end; // distances along the beam axis
@@ -251,44 +251,44 @@ static void BuildBeam(void)
 }
 
 // Both caps and the sides are wound outward for signed volume accumulation.
-static void DrawFrustum(const BeamFrustum &frustum, const vec3 *radial, vec3 startcentre, vec3 endcentre, vec3 axis)
+static void DrawFrustum(const BeamFrustum &frustum, const vec3 *radial, vec3 startcenter, vec3 endcenter, vec3 axis)
 {
 	vec3 gradient = axis * ((frustum.enddensity - frustum.startdensity) / (frustum.end - frustum.start));
 	vec3 eye = { 0.0f, 0.0f, -(float)RETRO_PROJECTION_EYEDISTANCE / RETRO_PROJECTION_SCALE };
-	BeamFog fog = { frustum.startdensity + dot(gradient, eye - startcentre), gradient };
+	BeamFog fog = { frustum.startdensity + dot(gradient, eye - startcenter), gradient };
 	vec3 front[BEAM_SEGMENTS], back[BEAM_SEGMENTS];
 	for (int i = 0; i < BEAM_SEGMENTS; i++) {
-		front[i] = startcentre + radial[i] * frustum.startwidth;
-		back[i] = endcentre + radial[i] * frustum.endwidth;
+		front[i] = startcenter + radial[i] * frustum.startwidth;
+		back[i] = endcenter + radial[i] * frustum.endwidth;
 	}
 	for (int i = 0; i < BEAM_SEGMENTS; i++) {
 		int next = (i + 1) % BEAM_SEGMENTS;
-		DrawVolumeTriangle(startcentre, front[next], front[i], fog);
-		DrawVolumeTriangle(endcentre, back[i], back[next], fog);
+		DrawVolumeTriangle(startcenter, front[next], front[i], fog);
+		DrawVolumeTriangle(endcenter, back[i], back[next], fog);
 		DrawVolumeTriangle(front[i], front[next], back[next], fog);
 		DrawVolumeTriangle(front[i], back[next], back[i], fog);
 	}
 }
 
-static void DrawBeam(const mat3 &frame, vec3 centre)
+static void DrawBeam(const mat3 &frame, vec3 center)
 {
 	vec3 radial[BEAM_SEGMENTS];
 	for (int i = 0; i < BEAM_SEGMENTS; i++) radial[i] = frame * BeamRadial[i];
 	for (const BeamFrustum &frustum : Beam) {
-		vec3 startcentre = centre + frame.col2 * frustum.start;
-		vec3 endcentre = centre + frame.col2 * frustum.end;
-		DrawFrustum(frustum, radial, startcentre, endcentre, frame.col2);
+		vec3 startcenter = center + frame.col2 * frustum.start;
+		vec3 endcenter = center + frame.col2 * frustum.end;
+		DrawFrustum(frustum, radial, startcenter, endcenter, frame.col2);
 	}
 }
 
 static void BuildPalette(void)
 {
-	// Init palette. Each ramp adds white light to its colour, a level at a
+	// Init palette. Each ramp adds white light to its color, a level at a
 	// time, and saturates into white. The ball's shades are BALL_SHINE cos^4
-	// of the angle each stands for, lit on the grey ramp
+	// of the angle each stands for, lit on the gray ramp
 	RETRO_Palette palette[RETRO_COLORS] = {};
 	const RETRO_Palette rampcolors[] = { { 0, 0, 0 }, WALL_RED, WALL_BLUE };
-	int rampstart = GREY_START;
+	int rampstart = GRAY_START;
 	for (const RETRO_Palette &color : rampcolors) {
 		for (int level = 0; level < LIGHT_LEVELS; level++) {
 			int light = level * 255 / (LIGHT_LEVELS - 1);
@@ -306,8 +306,8 @@ static void BuildPalette(void)
 	for (int i = 0; i < BALL_SHADES; i++) {
 		float angle = (1.0f - (float)i / (BALL_SHADES - 1)) * M_PI / 2;
 		int level = (int)(BALL_SHINE * powf(cosf(angle), 4.0f) * (LIGHT_LEVELS - 1) + 0.5f);
-		RETRO_SetColor(BALL_START + i, palette[GREY_START + level], palette);
-		Base[BALL_START + i] = GREY_START;
+		RETRO_SetColor(BALL_START + i, palette[GRAY_START + level], palette);
+		Base[BALL_START + i] = GRAY_START;
 		Level[BALL_START + i] = level;
 	}
 	RETRO_SetPalette(palette);
@@ -346,22 +346,22 @@ void DEMO_Render(double time, double deltatime)
 	// keep it closed, so the wrap is seamless. Where it comes nearest the
 	// eye, at phase 3/2 pi, it passes the middle of the screen
 	float phase = fmod(time * PATH_SPEED, 2 * M_PI);
-	vec3 centre = { PATH_WIDTH * sinf(2 * phase), PATH_HEIGHT * cosf(3 * phase), PATH_Z + PATH_DEPTH * sinf(phase) };
+	vec3 center = { PATH_WIDTH * sinf(2 * phase), PATH_HEIGHT * cosf(3 * phase), PATH_Z + PATH_DEPTH * sinf(phase) };
 
 	// Draw ball, and its holes over it
 	RETRO_RotateModel(matrix, Ball);
-	RETRO_TranslateModel(centre.x, centre.y, centre.z, Ball);
+	RETRO_TranslateModel(center.x, center.y, center.z, Ball);
 	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Ball);
 	RETRO_RenderModel(RETRO_POLY_PHONG, RETRO_SHADE_NONE, Ball);
 	RETRO_RotateModel(matrix, Caps);
-	RETRO_TranslateModel(centre.x, centre.y, centre.z, Caps);
+	RETRO_TranslateModel(center.x, center.y, center.z, Caps);
 	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Caps);
 	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_NONE, Caps, false);
 
 	// Integrate the light through the polygonal beam volumes.
 	memset(Light, 0, sizeof(Light));
 	for (const mat3 &hole : HoleFrame) {
-		DrawBeam(matrix * hole, centre);
+		DrawBeam(matrix * hole, center);
 	}
 
 	// Lay the light over the picture
@@ -389,7 +389,7 @@ void DEMO_Initialize(void)
 
 	BuildWall();
 
-	// +z, -z, +x, -x, +y, -y; rotateY turns +z towards +x, rotateX towards -y
+	// +z, -z, +x, -x, +y, -y; rotateY turns +z toward +x, rotateX toward -y
 	HoleFrame[0] = identity();
 	HoleFrame[1] = rotateX(M_PI);
 	HoleFrame[2] = rotateY(M_PI / 2);
@@ -406,5 +406,5 @@ void DEMO_Initialize(void)
 
 	Caps = RETRO_Allocate3DModel();
 	BuildCaps(Caps);
-	Caps->c = GREY_START + LIGHT_LEVELS - 1;
+	Caps->c = GRAY_START + LIGHT_LEVELS - 1;
 }

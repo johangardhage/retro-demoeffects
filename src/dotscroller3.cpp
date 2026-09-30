@@ -1,9 +1,10 @@
 //
-// Dot landscape scroller over the repeating height field from dotlandscape4,
-// painted with its paired voxel_color_128x128.pcx colormap.
-// The camera cruises and turns automatically. The text strip travels with
-// the camera, scrolling sideways while each letter dot follows the terrain
-// beneath it.
+// Dot landscape scroller, cruising
+//
+// A dot scroller over the repeating height field from dotlandscape4, painted
+// with its paired voxel_color_128x128.pcx colormap. The camera cruises and
+// turns automatically. The text strip travels with the camera, scrolling
+// sideways while each letter dot follows the terrain beneath it.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

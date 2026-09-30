@@ -19,7 +19,7 @@
 // pages are a 2D array of lines rather than strings broken up by '\n', so
 // ScrollText[page][row] is already a line's own text, with no scan needed
 // to find where it ends. The inner bound is the longest page; unused
-// slots are null. Every page is drawn in a block that tall, centred, so
+// slots are null. Every page is drawn in a block that tall, centered, so
 // they all start on the same row.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>

@@ -64,7 +64,7 @@
 
 // Each band starts DROP_DISTANCE above its place and takes DROP_TIME to ease
 // onto it, RING_STAGGER after the band inside it. The distance hides even the
-// rim above the frame: laid down, its far side is a metre behind the dish,
+// rim above the frame: laid down, its far side is a meter behind the dish,
 // where perspective pulls it down to 0.62 of its height.
 #define DROP_DISTANCE 1.8f
 #define DROP_TIME 3.0f
@@ -109,7 +109,7 @@
 #define LIGHT_PHASE_2 1.62f
 
 // A small lean: the lit side rises toward white across a wide arc, and the
-// far side keeps the band's colour. A hard tilt paints a white slice.
+// far side keeps the band's color. A hard tilt paints a white slice.
 #define HIGHLIGHT_TILT 0.72f
 
 // Pitch that puts the outer edge of the last band at radius 1.
@@ -225,7 +225,7 @@ static void BuildRings(Model3D *model)
 
 // One normal per corner, leaned out along that corner's radius. Shared by
 // the two quads that meet there. Phong interpolates these across the facet
-// and renormalises, so the highlight is not a blend of the corner colours.
+// and renormalizes, so the highlight is not a blend of the corner colors.
 // Down the outer wall the lean is all that is left: the wall's normal runs
 // from the top's out to the bottom's, through the radius. The inner wall
 // leans the other way, in toward the hole.
@@ -299,7 +299,7 @@ void DEMO_Render(double time, double deltatime)
 		LIGHT_Z);
 
 	// Vertices and faces are packed one band at a time: four corners and
-	// four quads a segment. Each band is turned about the centre, then
+	// four quads a segment. Each band is turned about the center, then
 	// raised up the screen by what is left of its fall. Screen y grows
 	// downward, so the lift is subtracted.
 	Model3D *model = RETRO_Get3DModel();
@@ -312,7 +312,7 @@ void DEMO_Render(double time, double deltatime)
 		float turn = RISE_TURN * sinf(rise * (float)M_PI);
 		mat3 matrix = rotateY(turn) * rotateX(nod);
 
-		// Delay the entire pose, so the turnover travels outwards without
+		// Delay the entire pose, so the turnover travels outward without
 		// separating the rings during the quiet part of the motion.
 		double follow = time - ring * FOLLOW_DELAY;
 		double elapsed = MAX(follow - FLIP_START, 0.0);

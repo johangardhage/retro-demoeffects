@@ -6,11 +6,11 @@
 // flat shaded cube, by a light up and to the left of the camera.
 //
 // The wall is a rotator that turns slowly in its own plane: each pixel's
-// offset from screen centre is rotated by angle, and the parity of its two
+// offset from screen center is rotated by angle, and the parity of its two
 // cell indices, each floored to WALL_CELL, picks the cell's color.
 //
 // The shadow is a planar projection along the light. Each rotated vertex Q is
-// carried along the light's direction L, from the light towards the wall,
+// carried along the light's direction L, from the light toward the wall,
 // until its z reaches the wall's depth:
 //
 //   t = (WALLZ - Q.z) / L.z
@@ -20,7 +20,7 @@
 // dark color. Only the faces the light falls on come out front facing once
 // flattened, and on a convex solid those alone cover the whole shadow, so the
 // usual back face culling is right for it. The cube is drawn over it
-// afterwards, rotated afresh, and hides whatever part of the shadow lies
+// afterward, rotated afresh, and hides whatever part of the shadow lies
 // behind it. The wall goes in last, under both: every pixel still showing
 // the wall or the shadow moves to its light cell variant where the cell is
 // light.
@@ -38,7 +38,7 @@
 #define CX (RETRO_WIDTH / 2.0)
 #define CY (RETRO_HEIGHT / 2.0 - 10)
 
-#define WALLZ 3.0f // model units behind the cube's centre the wall stands
+#define WALLZ 3.0f // model units behind the cube's center the wall stands
 #define WALL_CELL 24.0 // pixels across one checker cell
 #define WALL_SPEED 0.25 // radians a second the wall turns
 #define SHADOW_LIGHT 0.4 // share of the wall's brightness left in the shadow
@@ -55,7 +55,7 @@ static void SetShadowColors(int index, RETRO_Palette wall)
 	RETRO_SetColor(index + SHADOW, (unsigned char)(wall.r * SHADOW_LIGHT), (unsigned char)(wall.g * SHADOW_LIGHT), (unsigned char)(wall.b * SHADOW_LIGHT));
 }
 
-// Every pixel's offset from centre, rotated by angle, then floored into
+// Every pixel's offset from center, rotated by angle, then floored into
 // cells whose combined parity is the checker. The wall and the shadow move
 // to their light variants on a light cell; the cube is left as it is
 static void DrawWall(double time)
@@ -87,7 +87,7 @@ void DEMO_Render(double time, double deltatime)
 
 	Model3D *model = RETRO_Get3DModel();
 
-	// Draw shadow. The light source points from the cube towards the light,
+	// Draw shadow. The light source points from the cube toward the light,
 	// so the shadow is cast the other way
 	vec3 light = -RETRO_Render.lightsource.dir;
 	RETRO_RotateModel(ax, ay, az);

@@ -47,7 +47,7 @@
 
 #define SPHERE_RADIUS 55.0f
 #define SPHERE_Z 340.0f // world z the sphere drifts and bounces at
-#define SPHERE_DRIFT_X 130.0f // world units either side of centre
+#define SPHERE_DRIFT_X 130.0f // world units either side of center
 #define SPHERE_DRIFT_SPEED 0.35 // radians a second
 #define SPHERE_BOUNCE_HEIGHT 85.0f // world units risen at the top of a bounce
 #define SPHERE_BOUNCE_SPEED 0.55 // bounces a second

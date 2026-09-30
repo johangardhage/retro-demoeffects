@@ -3,9 +3,9 @@
 //
 // The textured horizontal-scanline column from twister3, with depth shading.
 // The flowers picture already owns all 256 palette entries, so shading cannot
-// use separate palette ramps. Instead, TwisterShadeTable maps every source texel and
-// one of TWISTER_SHADES brightness levels back to the nearest color in the
-// picture's own palette.
+// use separate palette ramps. Instead, TwisterShadeTable maps every source
+// texel and one of TWISTER_SHADES brightness levels back to the nearest color
+// in the picture's own palette.
 //
 // Each row still draws the two visible faces from leftmost corner through the
 // nearest corner to the rightmost. Their corner depths provide the endpoint

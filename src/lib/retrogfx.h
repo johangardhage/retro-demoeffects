@@ -84,7 +84,7 @@ inline void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, 
 	int y = y1;
 
 	// Midpoint Bresenham: the error starts at half the major delta, so the minor
-	// axis steps where the ideal line crosses a pixel centre.
+	// axis steps where the ideal line crosses a pixel center.
 	int steps = MAX(dx, dy);
 	int error = steps;
 
@@ -131,7 +131,7 @@ inline void RETRO_DrawFireLine(int x1, int y1, int x2, int y2, unsigned char col
 	int y = y1;
 
 	// Midpoint Bresenham: the error starts at half the major delta, so the minor
-	// axis steps where the ideal line crosses a pixel centre.
+	// axis steps where the ideal line crosses a pixel center.
 	int steps = MAX(dx, dy);
 	int error = steps;
 
@@ -294,10 +294,10 @@ inline void RETRO_DrawSprite(int xc, int yc, float xsize, float ysize, int image
 //   T' = max(0, mean(T at the pattern offsets) - decay)
 //
 // FIRE's eight taps sit beside and below the pixel, so scanning top to bottom
-// lifts heat upward. DIFFUSE is the four-neighbour cross. The pass is
-// Gauss-Seidel along the scan (already-written neighbours are reused).
+// lifts heat upward. DIFFUSE is the four-neighbor cross. The pass is
+// Gauss-Seidel along the scan (already-written neighbors are reused).
 //
-// Replace every pixel with the mean of a pattern of neighbours, less decay
+// Replace every pixel with the mean of a pattern of neighbors, less decay
 //
 // Every tap reads the field as it was before the pass, not as the pass has
 // left it: a Jacobi update, so the result has no direction. No pattern
@@ -305,7 +305,7 @@ inline void RETRO_DrawSprite(int xc, int yc, float xsize, float ysize, int image
 // pass has overwritten; the rows below are still untouched.
 //
 // RETRO_BLUR_DIFFUSE is the exception and stays in place. Four edge
-// neighbours with no self term have symbol (cos kx + cos ky) / 2, which is
+// neighbors with no self term have symbol (cos kx + cos ky) / 2, which is
 // -1 at the checkerboard: that mode is undamped and inverts every step, so
 // reading the previous state would let it stand forever as dither. The
 // in-place sweep's already-written left and upper taps couple the two

@@ -15,7 +15,7 @@
 // walk up the screen reading the table, and the road ends where the table
 // runs past ROAD_DRAW_DISTANCE rather than at a far clip plane.
 //
-// Nothing knows where the road is. The centre is accumulated up the screen
+// Nothing knows where the road is. The center is accumulated up the screen
 // from the bottom, where it is under the camera, by the two step recurrence
 //
 //   x += dx,  dx += segment.curve
@@ -50,13 +50,13 @@
 // Roadside billboards ride the same walk. A segment stepped over on the way
 // up stands between the row that stepped over it and the row below, and it is
 // placed by how far between the two its own distance falls. The rows either
-// side carry the centre of the road and its half-width, so the billboard
+// side carry the center of the road and its half-width, so the billboard
 // takes its position and its scale from the same interpolation and needs no
 // projection of its own. Reading the row it landed on instead would cost
 // nothing and look far worse: one row up here spans thousands of world units,
 // so a billboard would hold a size for half a second and then jump a fifth of
 // it at once. They are collected going up, which is near to far, and drawn
-// afterwards in the order they were found reversed, so a near one paints over
+// afterward in the order they were found reversed, so a near one paints over
 // a far one. A crest clips them for nothing: the segments past it are never
 // walked into, so their billboards are never collected. What the walk cannot
 // place is a billboard nearer than the bottom row, since no row looks that
@@ -140,10 +140,10 @@ struct Billboard {
 };
 
 struct Segment {
-	float curve; // pixels across the road centre gains per scanline, per scanline
+	float curve; // pixels across the road center gains per scanline, per scanline
 	float hill; // table entries a scanline takes on top of the one the flat road takes
 	int sprite; // an index into Sprites, or -1
-	float offset; // where the sprite stands, in half-widths from the centre
+	float offset; // where the sprite stands, in half-widths from the center
 };
 
 Sprite Sprites[ROAD_SPRITES];
@@ -207,7 +207,7 @@ void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 
-	// Drive. The track loops, so the distance travelled wraps at its length
+	// Drive. The track loops, so the distance traveled wraps at its length
 	double tracklength = RoadSegments * (double)ROAD_SEGMENT_LENGTH;
 	double position = fmod(time * ROAD_SPEED, tracklength);
 
@@ -225,7 +225,7 @@ void DEMO_Render(double time, double deltatime)
 		memset(dest + y * RETRO_WIDTH, ROAD_SKY + (int)(t * t * (ROAD_SKY_SHADES - 1)), RETRO_WIDTH);
 	}
 
-	// Walk up the screen. x is where the centre of the road has reached and
+	// Walk up the screen. x is where the center of the road has reached and
 	// dx how fast it is moving sideways, zi how far into the table the walk
 	// has come. The camera's own place across the road is not part of that
 	// walk: it is worth playerx half-widths at every row, which is a wide
@@ -244,7 +244,7 @@ void DEMO_Render(double time, double deltatime)
 	int walked = (int)(position / ROAD_SEGMENT_LENGTH); // the segment under the camera
 	float zprev = 2 * ZMap[0] - ZMap[1];
 	float wprev = 2 * WidthMap[0] - WidthMap[1];
-	float centreprev = RETRO_WIDTH / 2.0f - playerx * wprev;
+	float centerprev = RETRO_WIDTH / 2.0f - playerx * wprev;
 	float yprev = RETRO_HEIGHT;
 
 	for (int y = RETRO_HEIGHT - 1; y >= ROAD_HORIZON; y--) {
@@ -266,23 +266,23 @@ void DEMO_Render(double time, double deltatime)
 
 		// Where the road is drawn on this row, once the camera's place across
 		// it is taken off at this row's scale
-		float centre = x - playerx * w;
+		float center = x - playerx * w;
 
 		unsigned char *row = dest + y * RETRO_WIDTH;
 		memset(row, grass, RETRO_WIDTH);
-		DrawSpan(row, centre - w * (1 + ROAD_RUMBLE_WIDTH), centre + w * (1 + ROAD_RUMBLE_WIDTH), rumble);
-		DrawSpan(row, centre - w, centre + w, tarmac);
+		DrawSpan(row, center - w * (1 + ROAD_RUMBLE_WIDTH), center + w * (1 + ROAD_RUMBLE_WIDTH), rumble);
+		DrawSpan(row, center - w, center + w, tarmac);
 
 		// Lane markings live on the light stripes only, which is what leaves
 		// a gap between one dash and the next
 		if (light) {
 			for (int i = 1; i < ROAD_LANES; i++) {
-				float lx = centre - w + 2 * w * i / ROAD_LANES;
+				float lx = center - w + 2 * w * i / ROAD_LANES;
 				DrawSpan(row, lx - w * ROAD_LANE_WIDTH, lx + w * ROAD_LANE_WIDTH, MATERIAL_LANE * ROAD_SHADES + shade);
 			}
 		}
 
-		// The segment this row is looking at accelerates the centre and sets
+		// The segment this row is looking at accelerates the center and sets
 		// how much of the table the next row takes
 		int number = (int)((position + z) / ROAD_SEGMENT_LENGTH); // counted along the drive, so it only grows
 		Segment *segment = &Road[number % RoadSegments];
@@ -300,7 +300,7 @@ void DEMO_Render(double time, double deltatime)
 
 				float t = (zs - zprev) / (z - zprev);
 				float sw = wprev + (w - wprev) * t;
-				float sx = centreprev + (centre - centreprev) * t + stepped->offset * sw;
+				float sx = centerprev + (center - centerprev) * t + stepped->offset * sw;
 
 				Billboards[billboards++] = { &Sprites[stepped->sprite], sx, yprev + (y - yprev) * t, sw, shade };
 			}
@@ -308,7 +308,7 @@ void DEMO_Render(double time, double deltatime)
 
 		zprev = z;
 		wprev = w;
-		centreprev = centre;
+		centerprev = center;
 		yprev = y;
 
 		dx += segment->curve;

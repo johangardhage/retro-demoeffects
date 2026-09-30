@@ -3,7 +3,7 @@
 //
 // Salt-and-pepper, then a 5-tap plus-with-center blur. Each pixel is
 // independently 0 or 255 (P = 1/2); RETRO_BLUR_SMOOTH replaces it with
-// the mean of itself and its four neighbours, every tap read from the
+// the mean of itself and its four neighbors, every tap read from the
 // field before the pass, so the softening has no direction. Averaging
 // five independent ±127.5 draws leaves a standard deviation of
 // 127.5/√5, so the result is gray grain rather than hard dots. The

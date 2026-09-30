@@ -1,6 +1,8 @@
 //
-// Receding text crawl on a tilted plane. A generated text strip supplies
-// one perspective-correct quad per line; distance fades it to black.
+// Scroller, receding crawl on a tilted plane
+//
+// A text crawl receding on a tilted plane. A generated text strip supplies one
+// perspective-correct quad per line; distance fades it to black.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

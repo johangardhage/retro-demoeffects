@@ -2,7 +2,7 @@
 // Mask demo
 //
 // One mesh, many materials. Each key selects a renderer and the maps it
-// reads: texture, shade table, matcap/env lookup, bump height. The maths of
+// reads: texture, shade table, matcap/env lookup, bump height. The math of
 // each path live in retropoly.h; this file only chooses the inputs.
 //
 // Shade-table level 0 sits at 33° of incidence, on the shoulder of the
@@ -14,7 +14,7 @@
 // A bare matcap has only the sheen to spend, so a bump uses 3/2 H. A metal
 // environment map is a Blinn/Newell sphere map of the reflection of V about
 // N, so a tilt lands on a different part of the photo rather than a
-// neighbouring shade; that bump uses 2H (half the default tilt). Euler
+// neighboring shade; that bump uses 2H (half the default tilt). Euler
 // angles live on 2π. The mesh starts at ax = −π/2, az = π so the face
 // is upright.
 //

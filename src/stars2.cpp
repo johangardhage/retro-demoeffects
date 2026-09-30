@@ -7,7 +7,7 @@
 //   sx = W/2 + x · EYE / z
 //   sy = H/2 + y · EYE / z
 //
-// so a star accelerates outwards as it nears the eye. At z = EYE it
+// so a star accelerates outward as it nears the eye. At z = EYE it
 // sits on the screen plane (at the stored offset). At z ≤ STAR_NEAR it
 // is reborn at STAR_FAR on a fresh offset — that test is before the
 // divide. Directions are uniform on the rectangle, not on a sphere.
@@ -23,7 +23,7 @@
 #include "lib/retrovector.h"
 
 #define NUM_STARS 1000
-#define SPEED 120 // depth travelled per second
+#define SPEED 120 // depth traveled per second
 #define EYE 250 // how far the eye sits from the screen
 #define STAR_NEAR 1 // nearest a star gets before it has gone past
 #define STAR_FAR 500 // and the depth it comes back at

@@ -18,7 +18,7 @@
 // The stripes flow the same way along every curve. Each curve has one color
 // on its left and the other on its right, so it flows with color A on its
 // right. On an arc that is clockwise round the corner when the corner is A,
-// and anticlockwise when it is B, and the stripes are
+// and counterclockwise when it is B, and the stripes are
 //
 //   s = ±TRUCHET_STRIPES u − phase
 //

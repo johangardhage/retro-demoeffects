@@ -41,14 +41,14 @@
 // which is what makes the column wind up tight, unwind to a straight prism
 // where the wave crosses zero, and then corkscrew the other way.
 //
-// The surface is the flowers picture, TWISTER_IMAGE_SIZE square. It is wrapped once
-// around the column rather than repeated on every face: a side carries
-// TWISTER_IMAGE_FACE = TWISTER_IMAGE_SIZE / 4 texels, and which quarter of the picture a face
-// carries is named by the corner it starts at,
+// The surface is the flowers picture, TWISTER_IMAGE_SIZE square. It is wrapped
+// once around the column rather than repeated on every face: a side carries
+// TWISTER_IMAGE_FACE = TWISTER_IMAGE_SIZE / 4 texels, and which quarter of the
+// picture a face carries is named by the corner it starts at,
 //
 //   u = corner * IMAGE_FACE .. + IMAGE_FACE   around the column
-//   v = y + TWISTER_IMAGE_SCROLL * phase
-//                                             along it, wrapped on TWISTER_IMAGE_SIZE
+//   v = y + TWISTER_IMAGE_SCROLL * phase      along it, wrapped on
+//                                             TWISTER_IMAGE_SIZE
 //
 // so the picture runs on across the crease and turns with the column, rather
 // than the same quarter appearing twice over on the two visible faces. That is

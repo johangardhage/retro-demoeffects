@@ -2,11 +2,12 @@
 // Gouraud shaded sphere
 //
 // N·L at each of spherequads.obj's 114 vertex normals (the analytic outward
-// normals of a unit sphere, 22.5° apart both ways), then ShadeFractionFromLambert,
-// then the shade is interpolated affinely in screen space so a shared edge
-// agrees. That is three times denser than a cube's eight corner normals, 70°
-// apart, so the highlight can sit tighter than gouraudcube.cpp's without
-// falling between samples and vanishing. Euler angles live on 2π.
+// normals of a unit sphere, 22.5° apart both ways), then
+// ShadeFractionFromLambert, then the shade is interpolated affinely in screen
+// space so a shared edge agrees. That is three times denser than a cube's eight
+// corner normals, 70° apart, so the highlight can sit tighter than
+// gouraudcube.cpp's without falling between samples and vanishing. Euler angles
+// live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

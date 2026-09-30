@@ -2,7 +2,7 @@
 // Flat filled landscape
 //
 // The same mesh as flatshadedlandscape.cpp with the light taken away: one
-// constant color per mesh quad, the color map at the quad's centre, so a
+// constant color per mesh quad, the color map at the quad's center, so a
 // slope is the color the map painted it and nothing else. Each quad spans
 // RETRO_TerrainView.step cells on a side. The height map is still what builds
 // the mesh, and the depth buffer still resolves it, but no normal is taken and

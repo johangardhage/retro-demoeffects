@@ -2,7 +2,7 @@
 // Mosaic
 //
 // The picture rebuilt from blocks of b by b pixels, each block filled with the
-// single source pixel nearest its centre. The block grows and shrinks:
+// single source pixel nearest its center. The block grows and shrinks:
 //
 //   b(u) = round(BLOCK_MAX^u),   u in [0, 1]
 //
@@ -13,12 +13,12 @@
 // before it starts.
 //
 // b need not divide the screen. A block is clipped where it runs off the right
-// edge or the bottom, and it is sampled at its own centre rather than the
-// centre of what is left of it, so the last column and the last row stay the
+// edge or the bottom, and it is sampled at its own center rather than the
+// center of what is left of it, so the last column and the last row stay the
 // colors the untruncated grid would have given them.
 //
 // BLOCK_MAX is the width of the screen, so the pass ends on one block: the
-// picture coarsens until it is the single color under its centre, and then
+// picture coarsens until it is the single color under its center, and then
 // sharpens back out of it.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>

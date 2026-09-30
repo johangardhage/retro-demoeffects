@@ -12,11 +12,11 @@
 //   dh/dx = (h(x+1) - h(x-1)) * LIGHT_DEPTH
 //   lookup = (lx - x + dh/dx,  ly - y + dh/dy)
 //
-// The difference spans two pixels, so the relief reads as deep as 2*LIGHT_DEPTH.
-// The lookup is brightest where the slope runs against the light, which is
-// where a Lambert term peaks as well. The map is dark on its border, so a
-// lookup that leaves it is clamped to no light rather than wrapping. The
-// light rides a 1:2 Lissajous; angle lives on 360°.
+// The difference spans two pixels, so the relief reads as deep as
+// 2*LIGHT_DEPTH. The lookup is brightest where the slope runs against the
+// light, which is where a Lambert term peaks as well. The map is dark on its
+// border, so a lookup that leaves it is clamped to no light rather than
+// wrapping. The light rides a 1:2 Lissajous; angle lives on 360°.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -88,7 +88,7 @@ void DEMO_Initialize(void)
 	// Init light map. Offset measured in units of LIGHT_SIZE, so the renderer lights a pixel by
 	// looking up its offset. This is a cone, not a Lambert term: reading the
 	// offset as the tilt of a unit normal would give sqrt(1 - r^2), which is
-	// brighter everywhere between the centre and the rim.
+	// brighter everywhere between the center and the rim.
 	for (int y = 0; y < LIGHTMAP_HEIGHT; y++) {
 		for (int x = 0; x < LIGHTMAP_WIDTH; x++) {
 			float offsetx = (x - LIGHT_SIZE) / (float)LIGHT_SIZE;

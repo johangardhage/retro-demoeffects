@@ -21,7 +21,7 @@
 #include "lib/retropalette.h"
 
 #define NUM_STARS 1400
-#define SPEED 180 // depth travelled per second
+#define SPEED 180 // depth traveled per second
 #define SPIN 1.4 // radians of θ per second, the cylinder's own turn
 #define EYE 250 // how far the eye sits from the screen
 #define STAR_NEAR 12 // nearest a star gets before it has gone past
@@ -66,7 +66,7 @@ void DEMO_Render(double time, double deltatime)
 			int color = (STAR_FAR - Stars[i].z) * (SHADES - 1) / (STAR_FAR - STAR_NEAR);
 			RETRO_PutPixel(x, y, color);
 
-			// Near stars take a neighbour so they read as a streak along the
+			// Near stars take a neighbor so they read as a streak along the
 			// vortex rather than as a single pixel.
 			if (color > SHADES / 2) {
 				int x2 = x + (x > cx ? 1 : -1);

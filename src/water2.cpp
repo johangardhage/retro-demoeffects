@@ -32,7 +32,7 @@
 
 #define WATER_DAMP 0.985 // kept per step, so how slowly a ripple dies
 #define WATER_REFRACT 18.0 // texels a unit slope slides the sample
-#define WATER_DEPTH 40.0 // height subtracted at the centre of one droplet
+#define WATER_DEPTH 40.0 // height subtracted at the center of one droplet
 #define WATER_DROP_STEPS 32 // steps between droplets
 #define WATER_DROP_RADIUS 3 // pixels of the cosine disk
 #define WATER_BUMP (1.0f / 16.0f) // scales the slope into N, so how steep the relief reads

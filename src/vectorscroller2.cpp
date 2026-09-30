@@ -7,22 +7,21 @@
 //
 //   shade = c + face->c + (N · L) · intensity
 //
-// Back faces use half the Lambert term. There is no ShadeFractionFromLambert: the
-// palette is a linear black–magenta gradient, and converting θ would
-// bend that falloff. L is (0, 0, −1), from the eye. A letter that only
-// banked with the helix would keep its front on the light, so each glyph
-// also takes the cube's turn: a full spin about y and a slow elliptic
-// rock about x and z, on top of the path tangent. A face writes one
-// shades-wide Lambert range, so a front-lit stroke stays glass; past 3 ·
-// shades the palette keeps going into white, so a genuine triple overlap
-// reads as a highlight. A voxel grid would also stack three lit faces at
-// every cube corner and speckle the glyph with that same wash, so
-// coplanar ink is merged into larger quads first: the front of a stroke
-// is one face, not one per pixel, and only the letter's own corners can
-// triple. Buried walls between cubes are still omitted, or a stroke
-// would pick up a third layer and blow out on its own. Model y is the
-// screen's, growing down, and the front of a letter faces the eye at
-// −z. Euler angles live on 2π.
+// Back faces use half the Lambert term. There is no ShadeFractionFromLambert:
+// the palette is a linear black–magenta gradient, and converting θ would bend
+// that falloff. L is (0, 0, −1), from the eye. A letter that only banked with
+// the helix would keep its front on the light, so each glyph also takes the
+// cube's turn: a full spin about y and a slow elliptic rock about x and z, on
+// top of the path tangent. A face writes one shades-wide Lambert range, so a
+// front-lit stroke stays glass; past 3 · shades the palette keeps going into
+// white, so a genuine triple overlap reads as a highlight. A voxel grid would
+// also stack three lit faces at every cube corner and speckle the glyph with
+// that same wash, so coplanar ink is merged into larger quads first: the front
+// of a stroke is one face, not one per pixel, and only the letter's own corners
+// can triple. Buried walls between cubes are still omitted, or a stroke would
+// pick up a third layer and blow out on its own. Model y is the screen's,
+// growing down, and the front of a letter faces the eye at −z. Euler angles
+// live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

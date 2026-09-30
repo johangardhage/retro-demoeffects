@@ -39,7 +39,7 @@
 
 #define TWISTER_CENTER_X (RETRO_WIDTH / 2.0)
 #define TWISTER_RADIUS 32 // half the column's width
-#define TWISTER_SWAY 32 // how far the axis wanders off centre
+#define TWISTER_SWAY 32 // how far the axis wanders off center
 #define TWISTER_TWIST 512 // angle units the twist sweeps between its extremes, two whole turns
 #define TWISTER_TWIST_WAVE 0.125 // angle units the twist wave advances per row
 #define TWISTER_SWAY_WAVE 0.5 // and the axis wave, four times as fast

@@ -7,8 +7,8 @@
 //
 // The ball is not a mesh. It is an axis-aligned ellipse. Airborne it is a
 // ballistic parabola, y = APEX + ½ g t², hitting the floor at speed v. Contact
-// is a linear spring of half-period T_contact = π / ω = π D / v, so the centre keeps
-// that speed at both ends of the squash and the compression is
+// is a linear spring of half-period T_contact = π / ω = π D / v, so the center
+// keeps that speed at both ends of the squash and the compression is
 //
 //   p = (v / ω) sin(ω τ),   ω = v / D
 //
@@ -21,7 +21,7 @@
 //
 //   d(t) = e^{−ζ ω t} (−v / ω_d) sin(ω_d t)
 //
-// which is C¹ in both the centre and the radii: the pancake unsquashes through
+// which is C¹ in both the center and the radii: the pancake unsquashes through
 // a circle into a vertical stretch and settles on the way up.
 //
 // Six stars live on the sphere. Three of them sit in the planes x = +c,
@@ -30,7 +30,7 @@
 // Euler rotation they are projected with a pinhole and then scaled by
 // (ra/R, rb/R) so they squash with the ellipse. The rotated plane normal
 // chooses the bit: facing the camera adds 4, facing away adds 2, the ellipse
-// itself is 1. Those three bits pick a colour, and a scanline above or
+// itself is 1. Those three bits pick a color, and a scanline above or
 // below the horizon picks the sky or floor palette bank.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
@@ -43,7 +43,7 @@
 #include "lib/retrovector.h"
 
 #define BALL_RADIUS 70.0f
-#define BALL_APEX 72.0f // centre at the top of the bounce
+#define BALL_APEX 72.0f // center at the top of the bounce
 #define BALL_FLOOR 200.0f // scanline the bottom of the ellipse is pinned to
 #define BALL_RBMIN (30.0f / 65.0f * BALL_RADIUS) // original 30 on a radius of 65
 #define BALL_AIR (BALL_FLOOR - BALL_RADIUS - BALL_APEX) // apex to the contact point
@@ -268,7 +268,7 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// The copper split darkens the ball and both star colours along with
+	// The copper split darkens the ball and both star colors along with
 	// the beige background. Front stars win where front and back overlap.
 	static const RETRO_Palette sky[8] = {
 		{ 172, 154, 138 }, // background

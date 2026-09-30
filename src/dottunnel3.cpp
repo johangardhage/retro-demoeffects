@@ -1,8 +1,8 @@
 //
 // Dot tunnel, trailing
 //
-// Rings of dots receding into the distance, the tunnel from Second Reality.
-// Ring i sits at depth d = (i + 1) / TUNNEL_RINGS and is projected by
+// Rings of dots receding into the distance. Ring i sits at depth d = (i + 1) /
+// TUNNEL_RINGS and is projected by
 //
 //   (sx, sy) = (ring / d) + (WIDTH/2, HEIGHT/2) + sway
 //
@@ -11,7 +11,7 @@
 // tunnel is therefore mostly off screen, which is what flying through it
 // looks like: a few dots sweeping outward past the eye.
 //
-// What bends the tunnel is a delay line. The centre line is a 2:3
+// What bends the tunnel is a delay line. The center line is a 2:3
 // Lissajous figure, and a ring is offset by where that path was
 // TUNNEL_LAG per ring ago - the mouth carries the newest point on the
 // path and the nearest ring the oldest, so the tunnel is the wake the
@@ -45,7 +45,7 @@
 #define RING_HEIGHT 37 // 31 on the original's 200 rows, scaled by 240/200 so the ellipse keeps its share of the frame
 #define TUNNEL_SHADES 16 // palette entries the depth shading steps over
 #define TUNNEL_BAND 5 // rings drawn, then the same number skipped
-#define TUNNEL_SWAY 50 // how far the centre line wanders off the axis
+#define TUNNEL_SWAY 50 // how far the center line wanders off the axis
 #define TUNNEL_SPEED 30 // angle units a second the path is walked, one ring per step at 60 Hz
 #define TUNNEL_LAG 0.5 // angle units of path between one ring and the next
 #define TUNNEL_XPHASE (RETRO_ANGLES_PER_TURN / 8.0) // offset that keeps the figure from opening on a crossing

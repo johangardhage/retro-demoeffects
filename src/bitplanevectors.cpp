@@ -2,7 +2,7 @@
 // Bitplane vectors
 //
 // Three flat plates, a triangle, a square and a hexagon, turn through one
-// another about a shared centre, drawn the way a planar display draws them:
+// another about a shared center, drawn the way a planar display draws them:
 // plate k owns bit k of the palette index, and each of its faces writes only
 // that,
 //
@@ -27,7 +27,7 @@
 
 struct Plate {
 	int sides;				// A regular polygon with this many corners
-	float radius;			// Centre to corner, in projection units
+	float radius;			// Center to corner, in projection units
 	vec3 speed;				// Radians a second about x, y, z
 	RETRO_Palette color;
 };

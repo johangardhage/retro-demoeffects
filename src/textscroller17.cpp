@@ -1,5 +1,6 @@
 //
-// Yodel - Stop Fascism (Amiga Intro Effect)
+// Scroller, on a granite plaque
+//
 // A granite plaque, a polished metal scroller and the shadow a moving distant
 // light casts from it onto the plaque.
 //

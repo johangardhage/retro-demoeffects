@@ -1,7 +1,9 @@
 //
-// Sideways Star Wars scroller: text moves up a stationary, yawed plane.
-// The right side is farther away. Roll makes upward travel lean left;
-// perspective makes baselines fan out above and below the vanishing point.
+// Scroller, sideways Star Wars crawl
+//
+// Text moves up a stationary, yawed plane. The right side is farther away. Roll
+// makes upward travel lean left; perspective makes baselines fan out above and
+// below the vanishing point.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

@@ -19,12 +19,14 @@
 // below MIN_FIRE is still catching and only grows; at or above it, heat is a
 // symmetric random walk of half-width ROOT_RAND, plus the intensity bias:
 //
-//   heat < MIN_FIRE  ∧  heat > TRICKLE :  heat' = heat + random(ignition)
-//   heat ≥ MIN_FIRE                    :  heat' = heat + U{−ROOT_RAND, …, ROOT_RAND} + bias
+//   heat < MIN_FIRE  ∧  heat > TRICKLE:
+//     heat' = heat + random(ignition)
+//   heat ≥ MIN_FIRE:
+//     heat' = heat + U{−ROOT_RAND, …, ROOT_RAND} + bias
 //
 // then clamp to [0, 255]. Both ends of the bed are watered with a square bias
 // so the fire tapers, and a 3-tap box is run in place (Gauss–Seidel: the left
-// neighbour is already the new value). The step is the unit of the rise, so
+// neighbor is already the new value). The step is the unit of the rise, so
 // the field is advanced in DEMO_FixedUpdate.
 //
 // Controls:
@@ -116,7 +118,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 
 	// Smooth the bed. A (2·SMOOTH+1)-tap box, in place, so the left
-	// neighbour is already the new value: Gauss–Seidel, not Jacobi.
+	// neighbor is already the new value: Gauss–Seidel, not Jacobi.
 	for (int x = BED_LEFT + SMOOTH; x < BED_RIGHT - SMOOTH; x++) {
 		int sum = 0;
 		for (int k = -SMOOTH; k <= SMOOTH; k++) {

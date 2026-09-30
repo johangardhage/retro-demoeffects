@@ -1,22 +1,22 @@
 //
 // Rubber vector
 //
-// A filled cube bent by three travelling sine waves before the usual rotation
-// and perspective projection.  subcubequads.obj is an ordinary unit
+// A filled cube bent by three traveling sine waves before the usual rotation
+// and perspective projection. subcubequads.obj is an ordinary unit
 // cube whose six quads arrive already subdivided into grids, and the
 // subdivision is what matters: it lets the faces themselves bow in and out
-// instead of merely carrying the cube's eight corners along.  The result is the
+// instead of merely carrying the cube's eight corners along. The result is the
 // curved, low-poly sheet appearance of the classic Amiga rubber-vector effect.
 //
 // The deformation reads nothing but a vertex's rest position, so this demo need
 // not know how finely the asset is divided, nor which vertices a face is built
-// from.  That is also what keeps the cube watertight: the seams where the
+// from. That is also what keeps the cube watertight: the seams where the
 // cube's faces meet carry coincident vertices belonging to different grids, and
 // equal positions are displaced equally.
 //
 // A deformed quad is no longer planar, and RETRO_InitializeFaceNormals takes a
 // face normal from the first of the two triangles it is drawn as, so each quad
-// is shaded and culled by one half of itself.  At this subdivision a quad
+// is shaded and culled by one half of itself. At this subdivision a quad
 // covers a few pixels and the seam does not show.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>

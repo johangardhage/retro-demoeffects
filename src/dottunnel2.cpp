@@ -8,7 +8,7 @@
 //
 // z runs from TUNNEL_START toward the eye at +EYE and never reaches it.
 // The tunnel does not slide past the eye. It stands still and bends: each
-// ring's centre (xo, yo) is a pair of sinusoids of both time and the ring
+// ring's center (xo, yo) is a pair of sinusoids of both time and the ring
 // index, so no two rings are offset alike and the tunnel writhes along its
 // length. Brightness is the ring index (the rings do not recycle, so the
 // index is depth). phase lives in [0, 256).
@@ -30,7 +30,7 @@
 #define RING_STEP 5 // depth from one ring to the next
 #define TUNNEL_START (-240) // depth of the furthest ring
 #define EYE 250 // how far the eye sits from the screen
-#define SWAY 128 // how far the tunnel's centre wanders off the axis
+#define SWAY 128 // how far the tunnel's center wanders off the axis
 #define SWAY_SPEED 100 // angle units per second
 #define SHADES 64 // palette entries the depth shading ramps over
 

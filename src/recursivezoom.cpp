@@ -13,7 +13,7 @@
 // parent arch overlapping a child's corners, even across the zoom-period
 // boundary. That starting level lies entirely inside the aperture, so
 // wrapping time only renames the levels and produces the same view - and
-// contributes no colour of its own, which a deterministic sweep of every
+// contributes no color of its own, which a deterministic sweep of every
 // phase in the cycle confirmed for both the outermost level and the one
 // below it. Always resample the original artwork, never the previous
 // frame, to avoid cumulative blur.
@@ -23,13 +23,15 @@
 // bilinear tap into a small level already blends many source pixels rather
 // than sampling one of them sparsely.
 //
+// Author: Johan Gardhage <johan.gardhage@gmail.com>
+//
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
 #define CHILD_SCALE 0.6 // child image size before clipping to the arch
 #define ZOOM_PERIOD 4.0 // seconds for one child to grow to its parent's size
-#define MAX_DEPTH 32 // bounds the singular centre pixel at odd resolutions
+#define MAX_DEPTH 32 // bounds the singular center pixel at odd resolutions
 #define ANCESTOR_LEVELS 2 // trace starts this many levels above the viewport
 #define INV_CHILD_SCALE (1.0 / CHILD_SCALE) // the trace's per-level growth is a multiply, not a divide
 
@@ -38,7 +40,7 @@
 
 static RETRO_Image *Picture;
 
-// Premultiplied colour keeps the transparent doorway from bleeding black
+// Premultiplied color keeps the transparent doorway from bleeding black
 // into the stone.
 struct Sample { float r, g, b, a; };
 struct Level { int width, height; Sample *pixels; };

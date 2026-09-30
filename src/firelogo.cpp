@@ -10,7 +10,7 @@
 // three on the row below, one two rows below and three at three rows
 // below, with no self term and nothing on its own row. Reaching further
 // down lifts heat faster, and taking no side taps on its own row keeps a
-// column from smearing into its neighbours - which is what the letters
+// column from smearing into its neighbors - which is what the letters
 // need, since a laterally spread flame closes the gaps between them and
 // the word turns into one slab.
 //
@@ -26,7 +26,8 @@
 // picture, so the wording is the two strings below. No RETRO_GenerateTextImage
 // strip is built: the subtitle is stretched in y only,
 //
-//   dest(x · xscale + sx, y · yscale + sy) = atlas[row][column] · LOGO_HEAT / 255
+//   dest(x · xscale + sx, y · yscale + sy)
+//     = atlas[row][column] · LOGO_HEAT / 255
 //
 // and GenerateTextImage scales uniformly. The lockup is the title at double
 // size over a subtitle stretched to the same height but left at single width,
@@ -52,7 +53,7 @@
 #define LOGO_TITLE "RETRO"
 #define LOGO_SUBTITLE "DEMOEFFECTS"
 #define LOGO_HEAT 56 // steady seed heat of a full-brightness texel, doubled on average by the flicker
-#define LOGO_Y 78 // top row of the lockup, which centres it once the blit shifts it down
+#define LOGO_Y 78 // top row of the lockup, which centers it once the blit shifts it down
 #define LOGO_GAP 6 // rows between the two lines
 #define LOGO_TITLE_TRACKING 8 // columns left between glyphs, at that line's scale
 #define LOGO_SUBTITLE_TRACKING 4
@@ -62,7 +63,7 @@ unsigned char LogoBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 static RETRO_Font Font;
 
 //
-// Set a string from the font atlas into the logo, centred, with every texel grown
+// Set a string from the font atlas into the logo, centered, with every texel grown
 // into an xscale by yscale block and tracking columns left between glyphs. A zero
 // texel is transparent, and the rest scale from atlas brightness to seed heat.
 //

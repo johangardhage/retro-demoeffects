@@ -19,7 +19,7 @@
 #define RETRO_SHADE_TABLE_SHADES 128
 #define RETRO_SHADE_TABLE_SIZE (RETRO_SHADE_TABLE_COLORS * RETRO_SHADE_TABLE_SHADES)
 
-// Light levels a shade table may carry beside its shade, one per coloured
+// Light levels a shade table may carry beside its shade, one per colored
 // light lifting a channel of its own
 #define RETRO_MAX_TINTS 2
 
@@ -32,7 +32,7 @@
 // at the wrong shape is read at the wrong stride.
 //
 // A table may carry further lights across it, for light that is not the same
-// in every channel: a coloured lamp beside a white one lifts one channel
+// in every channel: a colored lamp beside a white one lifts one channel
 // further than the rest, and one shade per texel cannot say how far. Each
 // such light is a tint, with tints[i] entries, and each shade holds all of
 // them in turn, the last varying fastest. With one tint the lookup is
@@ -94,6 +94,10 @@ inline void RETRO_ShadeTableTintLevels(const RETRO_ShadeTable &shadetable, int e
 // 6-bit, as a palette read from a PCX written by a VGA demo is, and only so
 // many texture colors fit in a shade table
 //
+// Every shaded component is rounded to the nearest 6-bit level. Cut off
+// instead, each would come out up to a level too dark, and half a level on
+// average
+//
 inline int RETRO_CreateShadingRamps(const RETRO_Palette *texturepalette, int texturecolors, float specularity, float falloff, RETRO_Palette *ramps)
 {
 	texturecolors = MIN(texturecolors, RETRO_SHADE_TABLE_COLORS);
@@ -105,7 +109,14 @@ inline int RETRO_CreateShadingRamps(const RETRO_Palette *texturepalette, int tex
 		texcolor.g = CLAMP64(texcolor.g);
 		texcolor.b = CLAMP64(texcolor.b);
 
-		RETRO_CreatePhongRamp(&ramps[i * RETRO_SHADE_TABLE_SHADES], RETRO_SHADE_TABLE_SHADES, texcolor, specularity, falloff, 63);
+		for (int shade = 0; shade < RETRO_SHADE_TABLE_SHADES; shade++) {
+			float theta = RETRO_IncidenceAngle(shade, RETRO_SHADE_TABLE_SHADES);
+			ramps[i * RETRO_SHADE_TABLE_SHADES + shade] = {
+				(unsigned char)(63 * RETRO_PhongIntensity(texcolor.r / 63.0f, RETRO_LIGHT_R, RETRO_AMBIENT_R, theta, specularity, falloff) + 0.5f),
+				(unsigned char)(63 * RETRO_PhongIntensity(texcolor.g / 63.0f, RETRO_LIGHT_G, RETRO_AMBIENT_G, theta, specularity, falloff) + 0.5f),
+				(unsigned char)(63 * RETRO_PhongIntensity(texcolor.b / 63.0f, RETRO_LIGHT_B, RETRO_AMBIENT_B, theta, specularity, falloff) + 0.5f),
+			};
+		}
 	}
 
 	return texturecolors * RETRO_SHADE_TABLE_SHADES;
@@ -172,7 +183,7 @@ inline void RETRO_CreatePhongShadeTable(const RETRO_Palette *texturepalette, int
 // The ambient level is where the darkest shade starts, and by default it is
 // black. A palette holding one picture's colors rather than ramps is the case
 // for raising it: an entry with no dark relatives of its own is matched to the
-// nearest thing the palette does have, and towards black that is whichever few
+// nearest thing the palette does have, and toward black that is whichever few
 // dark colors the picture happened to contain, whatever the entry started as.
 // Lighting off the bottom of such a palette turns faces into holes. A floor
 // under the darkening keeps every shade among colors it has plenty of
@@ -187,9 +198,9 @@ inline void RETRO_CreateShadeTable(const RETRO_Palette *palette, int colors, int
 			float level = RETRO_ShadeTableLevel(shade, shades);
 			float brightness = ambient + (1.0f - ambient) * level;
 			RETRO_Palette target = {
-				(unsigned char)(palette[source].r * brightness),
-				(unsigned char)(palette[source].g * brightness),
-				(unsigned char)(palette[source].b * brightness),
+				(unsigned char)(palette[source].r * brightness + 0.5f),
+				(unsigned char)(palette[source].g * brightness + 0.5f),
+				(unsigned char)(palette[source].b * brightness + 0.5f),
 			};
 			shadetable[source * shades + shade] =
 				RETRO_NearestPaletteIndex(target, palette, colors);
@@ -226,7 +237,7 @@ inline void RETRO_CreateShadeTable(const RETRO_Palette *source, const RETRO_Pale
 }
 
 //
-// Gather the colours a shade table will ask the palette for, to fit one to
+// Gather the colors a shade table will ask the palette for, to fit one to
 //
 // Every source color is handed to light at every shade and combination of
 // tint levels, as RETRO_CreateShadeTable does, and what comes back is added
@@ -236,7 +247,7 @@ inline void RETRO_CreateShadeTable(const RETRO_Palette *source, const RETRO_Pale
 // shows weighs nothing and asks for nothing.
 //
 // brightness darkens every color gathered, for the same colors under a
-// shadow remapped over them afterwards
+// shadow remapped over them afterward
 //
 inline void RETRO_AddShadeTableColors(RETRO_ColorHistogram *histogram, const RETRO_Palette *source, const float *colorweight, const RETRO_ShadeTable &shadetable, const float *lightweight, RETRO_Palette (*light)(RETRO_Palette color, float shade, const float *tint), float weight = 1.0f, float brightness = 1.0f)
 {

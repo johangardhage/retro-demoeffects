@@ -1,12 +1,12 @@
 //
-// Linedance
+// Sinus bars
 //
 // Each scanline is a horizontal bar whose half-width is
 //
 //   50 + 10 sin(2π (y+phase1)/256) + 15 cos(4π (y+phase2)/256)
 //      + 15 sin(4π (y+phase3)/256)
 //
-// Three travelling waves on a 256-pixel table: phase1 walks +100, phase2 −100,
+// Three traveling waves on a 256-pixel table: phase1 walks +100, phase2 −100,
 // phase3 −200 (pixels a second). The profile is their interference, sliding.
 // phase1, phase2, phase3 live on 256. The framebuffer is cleared each frame.
 //

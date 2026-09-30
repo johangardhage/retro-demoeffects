@@ -8,14 +8,14 @@
 //      + i [ 3 (y + 1/2 − H/2) / (zoom W) + moveY ]
 //
 // Both axes divide by W so the pixel lattice is square. The +1/2 is the
-// pixel centre: (x − W/2) on even W is one step heavy on the left.
+// pixel center: (x − W/2) on even W is one step heavy on the left.
 // Iterate
 //
 //   z' = z² + c
 //
 // until |z|² > BAILOUT or MAX_ITERATIONS.
 //
-// The colour is the normalised iteration count, the continuous potential
+// The color is the normalized iteration count, the continuous potential
 // estimate
 //
 //   mu = n + 1 − log2(log |z|)
@@ -26,7 +26,7 @@
 //
 // The zoom is exponential and pixel spacing is 3 / (zoom W), so the dive
 // lives on the phase that reaches ZOOM_LIMIT, past which double no longer
-// separates neighbouring pixels, and then restarts. zoom = RATE^phase is a
+// separates neighboring pixels, and then restarts. zoom = RATE^phase is a
 // closed form, so it is frame-rate independent.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
@@ -54,7 +54,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Map pixel
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		// z0 from the pixel centre. Both axes use the same scale, so the
+		// z0 from the pixel center. Both axes use the same scale, so the
 		// lattice is square.
 		double pi0 = scale * (y + 0.5 - RETRO_HEIGHT / 2.0) + CENTER_Y;
 

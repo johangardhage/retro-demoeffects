@@ -25,7 +25,7 @@
 //   1 − (y / PLANE_VIEW)²
 //
 // so a hunter-green tile fades through hunter green, not through a shared
-// grey. Two palettes both start at the same haze: 0–31 hunter green,
+// gray. Two palettes both start at the same haze: 0–31 hunter green,
 // 32–63 moss green. Palette 64–127 is zenith to that haze, used for the
 // sky; the sky parameter is t² so the haze hugs the horizon. xd and yd
 // are not wrapped; WRAP at the sample is one texture period. ang lives
@@ -61,7 +61,7 @@ void DEMO_Render(double time, double deltatime)
 	float yd = time * PLANE_WALK_SPEED;
 
 	// Perspective scales. v is the forward texel at this depth and does
-	// not depend on x. u stretches about the screen centre with a factor
+	// not depend on x. u stretches about the screen center with a factor
 	// (W/2) / P so a half-width of pixels is one texture period at unit
 	// depth. midx, midy are the vanishing point (the horizon is midy).
 	float xscale = PLANE_EYE * (RETRO_WIDTH / 2.0f) / PLANE_PERIOD;

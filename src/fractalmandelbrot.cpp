@@ -1,13 +1,13 @@
 //
 // Mandelbrot
 //
-// Escape-time Mandelbrot set. Same recurrence as julia.cpp, but c is the
+// Escape-time Mandelbrot set. Same recurrence as fractaljulia.cpp, but c is the
 // pixel and z starts at 0:
 //
 //   z0 = 0
 //   z' = z² + p
 //
-// p is the same square-aspect map as Julia. The colour is the normalised
+// p is the same square-aspect map as Julia. The color is the normalized
 // iteration count mu = n + 1 − log2(log |z|), offset by 32; the interior and
 // counts past 223 share 255, black in the default 8-bit palette.
 //
@@ -17,10 +17,10 @@
 //   cardioid: q = (x − 1/4)² + y²,  q (q + x − 1/4) ≤ y² / 4
 //   bulb:     (x + 1)² + y² ≤ 1/16
 //
-// The window dives toward the left cusp while the centre pans onto the
+// The window dives toward the left cusp while the center pans onto the
 // feature underneath it. zoom is RATE^phase and the pan is its integral, so
 // both are frame-rate independent. The phase lives on the dive that reaches
-// ZOOM_LIMIT, past which double no longer separates neighbouring pixels.
+// ZOOM_LIMIT, past which double no longer separates neighboring pixels.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

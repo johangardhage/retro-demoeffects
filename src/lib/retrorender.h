@@ -320,7 +320,7 @@ inline void RETRO_RenderPhongModel(Model3D *model, ClipRect clip = {})
 			Vertex *vertex = &model->vertex[face->vertex[j]];
 			point[j].pos = vertex->spos;
 			point[j].q = vertex->q;
-			// n * q; interpolating and renormalising is the same direction as /q.
+			// n * q; interpolating and renormalizing is the same direction as /q.
 			float normalscale = side * vertex->q;
 			UnitVector *normal = &model->normal[face->vertexnormal[j]];
 			point[j].n = normal->rdir * normalscale;
@@ -431,8 +431,8 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 }
 
 // True reflection: the map holds a picture of the surroundings, sampled by
-// the ray the visible surface point reflects towards. That ray times q is
-// interpolated (perspective-correct) and renormalising it is the same
+// the ray the visible surface point reflects toward. That ray times q is
+// interpolated (perspective-correct) and renormalizing it is the same
 // direction as dividing by q first, the trick RETRO_RenderPhongModel uses;
 // skipping it (interpolating the ray alone, affinely in screen space) is only
 // close on a face so gently curved that its corners barely differ, and comes apart on
@@ -512,7 +512,7 @@ inline void RETRO_RenderEnvironmentModel(Model3D *model, ClipRect clip = {})
 }
 
 // Per-pixel shading by the model's own function: each pixel is described as
-// a Fragment, and model->shader returns its colour. That reaches what no
+// a Fragment, and model->shader returns its color. That reaches what no
 // fixed drawer does, tracing a reflected ray into a scene for one, at the
 // cost of a call a pixel. flat gives every pixel of a face the face's own
 // normal; otherwise the vertex normals are interpolated across it. The eye
@@ -542,7 +542,7 @@ inline void RETRO_RenderShaderModel(Model3D *model, bool flat, ClipRect clip = {
 }
 
 // Matcap: the map holds a canned lighting response, sampled by screen-facing
-// normal. n * q is interpolated (perspective-correct) and renormalising it
+// normal. n * q is interpolated (perspective-correct) and renormalizing it
 // is the same direction as dividing by q, the same trick RETRO_RenderPhongModel
 // uses for a true per-pixel normal.
 inline void RETRO_RenderMatcapModel(Model3D *model, ClipRect clip = {})

@@ -11,7 +11,7 @@
 //
 // Each arm and leg is two line segments (p to a joint j, and q to j) lying
 // in a plane, packed with a fixed count of spheres tapering in radius along
-// the way. j is found the way two circles of radius A and B, centred at p
+// the way. j is found the way two circles of radius A and B, centered at p
 // and q, intersect: drop a perpendicular of length y from the p-q axis,
 //
 //   y = (A^2 - B^2 + D^2) / 2D,   x = sqrt(A^2 - y^2),   D = |q - p|
@@ -34,19 +34,19 @@
 // swapping which formula drives which sphere there is invisible, and a pair
 // of one-way parabolas becomes a seamless loop with no motion blending.
 //
-// This is the plain one of the three, and its technique is now the simplest
-// of them too: no colour arithmetic at all. Every hit resolves to a kind
-// (sky, a floor tile, or one of the body's materials) plus a brightness and
-// whether it is inside Eric Graham's real glint() cone, and RampIndex turns
-// that straight into an index already sitting in that kind's own two-part
-// palette ramp - black up to the kind's own hue, then that hue up to white
-// (see CreateMaterialRamp) - no colour accumulator, no palette search. The
-// highlight test itself is the exact same one juggler2.cpp and juggler3.cpp
-// use (see Glint): a hard cos² cutoff, not a blend, since any blend of a
-// ramp's hue and its white end shows as a visible band of some third
-// colour against a saturated background, however narrow. What stays plain
-// here, unlike those two files, is ambient (flat, not their sky-shaped
-// AMBIENT_SHAPE) and the mirror, which never dims what it reflects.
+// This is the plain one of the three, and its technique is the simplest of them
+// too: no color arithmetic at all. Every hit resolves to a kind (sky, a floor
+// tile, or one of the body's materials) plus a brightness and whether it is
+// inside Eric Graham's real glint() cone, and RampIndex turns that straight
+// into an index already sitting in that kind's own two-part palette ramp -
+// black up to the kind's own hue, then that hue up to white (see
+// CreateMaterialRamp) - no color accumulator, no palette search. The highlight
+// test itself is the exact same one juggler2.cpp and juggler3.cpp use (see
+// Glint): a hard cos² cutoff, not a blend, since any blend of a ramp's hue and
+// its white end shows as a visible band of some third color against a saturated
+// background, however narrow. What stays plain here, unlike those two files, is
+// ambient (flat, not their sky-shaped AMBIENT_SHAPE) and the mirror, which
+// never dims what it reflects.
 //
 // One camera ray a pixel, retraced live from continuous time every
 // displayed frame, the same as juggler2.cpp.

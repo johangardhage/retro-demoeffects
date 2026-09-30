@@ -15,13 +15,13 @@
 // from its first to its second in RGB and looked up in an inverse color
 // table of the palette the two pictures share.
 //
-// Each flight has its own origin, a random point on the picture, and the
-// blast spreads out from it: a particle sets off after a delay in proportion
-// to its distance from the origin. It lands at a moment of its own, drawn at
-// random from the last part of the flight, so the picture does not close in
-// a wave behind the blast but fills in everywhere at once, pixel by pixel.
-// Between the two, t runs from 0 to 1. It is carried from a to b by a smoothstep,
-// and blown outward, away from the origin, by a burst
+// Each flight has its own origin, a random point on the picture, and the blast
+// spreads out from it: a particle sets off after a delay in proportion to its
+// distance from the origin. It lands at a moment of its own, drawn at random
+// from the last part of the flight, so the picture does not close in a wave
+// behind the blast but fills in everywhere at once, pixel by pixel. Between the
+// two, t runs from 0 to 1. It is carried from a to b by a smoothstep, and blown
+// outward, away from the origin, by a burst
 //
 //   p(t) = a + (b − a) (3t² − 2t³) + d · 27/4 t (1 − t)²
 //

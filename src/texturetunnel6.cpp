@@ -1,7 +1,7 @@
 //
 // Tunnel, fixed bend
 //
-// Reuses texturetunnel6's ring mesh, perspective-correct textured quads,
+// Reuses texturetunnel7's ring mesh, perspective-correct textured quads,
 // generated triangle tile and Gouraud shade table. The camera and bend
 // stay fixed; scrolling the wrapping V coordinate gives forward travel.
 // Geometry and lighting are built once, leaving only the textured draw

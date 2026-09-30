@@ -1,8 +1,8 @@
 //
-// Spiral image distortion
+// Swirl
 //
-// Rotate each source sample about the picture centre by an angle depending
-// on radius. The centre twists most; angle and slope fall to zero at the
+// Rotate each source sample about the picture center by an angle depending
+// on radius. The center twists most; angle and slope fall to zero at the
 // outer circle, joining the untouched picture without a hard rim:
 //
 //   angle = TWIST_AMOUNT sin(2pi t / TWIST_PERIOD) (1 - r²/R²)²
@@ -13,11 +13,13 @@
 // themselves must never be interpolated. The twist winds, unwinds, then
 // reverses direction, returning to the original picture twice per cycle.
 //
+// Author: Johan Gardhage <johan.gardhage@gmail.com>
+//
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TWIST_AMOUNT (3.0 * M_PI) // maximum rotation at the centre, radians
+#define TWIST_AMOUNT (3.0 * M_PI) // maximum rotation at the center, radians
 #define TWIST_PERIOD 12.0 // seconds for a clockwise/counterclockwise cycle
 
 static RETRO_Image *Picture;

@@ -2,28 +2,30 @@
 // Waves
 //
 // A multi-layered ocean wave demo effect featuring parallax sine wave layers.
-// "RETRO" floats in the back wave layer, while "DEMOEFFECTS" floats in the middle wave.
+// "RETRO" floats in the back wave layer, while "DEMOEFFECTS" floats in the
+// middle wave.
 //
-// Each letter is drawn before its own wave, so that wave's surface cuts it at the
-// waterline. Each letter chases the surface under its center on a damped spring, so it
-// lags and overshoots like something afloat.
+// Each letter is drawn before its own wave, so that wave's surface cuts it at
+// the waterline. Each letter chases the surface under its center on a damped
+// spring, so it lags and overshoots like something afloat.
 //
-// The layers are spaced so the next one never reaches the text: the middle wave stays
-// far enough below the back wave to clear "DEMOEFFECTS" above its waterline, and the
-// front wave never rises over the middle one. Worst case is both waves' sines at their
-// extremes at once:
+// The layers are spaced so the next one never reaches the text: the middle wave
+// stays far enough below the back wave to clear "DEMOEFFECTS" above its
+// waterline, and the front wave never rises over the middle one. Worst case is
+// both waves' sines at their extremes at once:
 //
-//   middle.base - back.base   - (back amplitudes + middle amplitudes) = 137 - 85 - 33 = 19
-//   front.base  - middle.base - (middle amplitudes + front amplitudes) = 178 - 137 - 40 = 1
+//   middle.base - back.base - (back amplitudes + middle amplitudes)
+//     = 137 - 85 - 33 = 19
+//   front.base - middle.base - (middle amplitudes + front amplitudes)
+//     = 178 - 137 - 40 = 1
 //
-// "DEMOEFFECTS" shows at most FLOAT_DRAFT rows above its surface, plus however far its
-// spring lags, which stays under 5 pixels, so 19 leaves it clear of "RETRO"'s waterline.
+// "DEMOEFFECTS" shows at most FLOAT_DRAFT rows above its surface, plus however
+// far its spring lags, which stays under 5 pixels, so 19 leaves it clear of
+// "RETRO"'s waterline.
 //
-// Distance is carried by the palette: each layer is the water color hazed toward the
-// horizon by how far away it is, and the sky darkens from the horizon upward. A lighter
-// foam line tops every layer.
-//
-// Inspired by retro Amiga/VGA demo effects.
+// Distance is carried by the palette: each layer is the water color hazed
+// toward the horizon by how far away it is, and the sky darkens from the
+// horizon upward. A lighter foam line tops every layer.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -74,7 +76,7 @@ enum {
 
 static RETRO_Font Font;
 
-// A wave layer: a base height plus two travelling sines, amplitude * sin(k * x + speed * time)
+// A wave layer: a base height plus two traveling sines, amplitude * sin(k * x + speed * time)
 struct Wave {
 	float base;
 	float amplitude1, k1, speed1;

@@ -22,8 +22,8 @@
 // picture. SUBDIV quads cover each cell exactly, so a face is only ever wholly
 // blue or wholly gold and the cross stays sharp however coarse the mesh is.
 // Each color owns a ramp: the flat renderer places a face at c + face->c +
-// ShadeFractionFromLambert(N . L) * shades, so the face color picks the ramp and the
-// Lambert term picks the entry within it.
+// ShadeFractionFromLambert(N . L) * shades, so the face color picks the ramp
+// and the Lambert term picks the entry within it.
 //
 // The asset carries each quad twice, once in each winding, because the
 // renderer culls back faces and a flag is seen from both sides. Without the

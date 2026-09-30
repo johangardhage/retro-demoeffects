@@ -161,6 +161,18 @@ inline vec3 lerp(vec3 a, vec3 b, float t) { return a + (b - a) * t; }
 // its length. I points toward the surface, the result away from it.
 inline vec3 reflect(vec3 I, vec3 N) { return I - N * (2.0f * dot(N, I)); }
 
+// GLSL's refract: the incident direction I bent through the surface whose
+// normal is N, by Snell's law, with eta the ratio of the refractive indices,
+// the side I comes from over the side it enters. I and N must be unit length
+// and N must face against I. Past the critical angle the light cannot leave,
+// and the result is zero.
+inline vec3 refract(vec3 I, vec3 N, float eta)
+{
+	float d = dot(N, I);
+	float k = 1.0f - eta * eta * (1.0f - d * d);
+	return k < 0.0f ? vec3{ 0.0f, 0.0f, 0.0f } : I * eta - N * (eta * d + sqrtf(k));
+}
+
 inline vec3 min(vec3 a, vec3 b) { return { MIN(a.x, b.x), MIN(a.y, b.y), MIN(a.z, b.z) }; }
 inline vec3 max(vec3 a, vec3 b) { return { MAX(a.x, b.x), MAX(a.y, b.y), MAX(a.z, b.z) }; }
 inline vec3 abs(vec3 v) { return { fabs(v.x), fabs(v.y), fabs(v.z) }; }

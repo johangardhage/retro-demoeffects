@@ -3,15 +3,15 @@
 //
 // A field of value noise built by diamond-square, scrolled under a palette that
 // cycles. Nothing is drawn: the picture is one 256x256 field, sampled once per
-// pixel, and everything that moves is an index. Bilinear subpixel sampling ensures
-// butter-smooth continuous scrolling without integer pixel jitter.
+// pixel, and everything that moves is an index. Bilinear subpixel sampling
+// ensures butter-smooth continuous scrolling without integer pixel jitter.
 //
 // Diamond-square fills the field one level at a time, halving the step and the
-// displacement together. At step s the diamond pass takes each square's centre
-// from its four corners, and the square pass takes each diamond's centre from
-// its four neighbours, both plus a uniform jitter of the current amplitude:
+// displacement together. At step s the diamond pass takes each square's center
+// from its four corners, and the square pass takes each diamond's center from
+// its four neighbors, both plus a uniform jitter of the current amplitude:
 //
-//   h(centre) = mean(neighbours) + U(-A, A),   A' = ROUGHNESS * A
+//   h(center) = mean(neighbors) + U(-A, A),   A' = ROUGHNESS * A
 //
 // Amplitude halves as frequency doubles, so a detail s cells wide stands A(s)
 // high with A proportional to s, and the field is fractional Brownian motion
@@ -56,7 +56,7 @@ static void BuildField(void)
 	for (int step = MAP_SIZE; step > 1; step /= 2) {
 		int half = step / 2;
 
-		// Diamond: each square's centre, from the four corners
+		// Diamond: each square's center, from the four corners
 		for (int y = 0; y < MAP_SIZE; y += step) {
 			for (int x = 0; x < MAP_SIZE; x += step) {
 				float mean = (Cell(field, x, y) + Cell(field, x + step, y) +
@@ -65,7 +65,7 @@ static void BuildField(void)
 			}
 		}
 
-		// Square: each diamond's centre, from the four points around it. Rows
+		// Square: each diamond's center, from the four points around it. Rows
 		// alternate which column they start on, which is the half-step offset
 		// that makes the two passes interleave
 		for (int y = 0; y < MAP_SIZE; y += half) {

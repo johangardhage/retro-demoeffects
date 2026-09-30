@@ -14,7 +14,7 @@
 // with D = 1 / tan(fov / 2) the distance to the projection plane, so a wider
 // field of view pulls the vanishing point closer and flattens the road. Only
 // the segment boundaries are projected; a quad is the band between the two
-// boundaries it shares with its neighbours, and the centre and half-width of
+// boundaries it shares with its neighbors, and the center and half-width of
 // a scanline inside it are linear in y between them. That is the affine
 // shortcut the whole effect rests on: the divide happens once per boundary,
 // not once per scanline.
@@ -24,10 +24,10 @@
 //
 //   x += dx,  dx += segment.curve
 //
-// so the centre traces a parabola per section and joins smoothly. The camera
+// so the center traces a parabola per section and joins smoothly. The camera
 // sits between boundaries, and the part of the near segment already behind it
 // must not bend the road ahead, so the walk starts at dx = -curve p with p
-// the fraction of that segment already travelled. Without it the whole road
+// the fraction of that segment already traveled. Without it the whole road
 // would twitch sideways once per segment.
 //
 // Hills are real geometry, not a stretched z-map: segment.y is the height the
@@ -46,7 +46,7 @@
 // makes them dashes rather than lines.
 //
 // The camera weaves: a curve pushes it toward the outside of the bend and it
-// eases back to the centre, which is a first order response to segment.curve
+// eases back to the center, which is a first order response to segment.curve
 // rather than a steering wheel.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
@@ -85,11 +85,11 @@ enum { COLOR_GRASS_DARK = 1, COLOR_GRASS_LIGHT, COLOR_RUMBLE_DARK, COLOR_RUMBLE_
 	COLOR_TARMAC_DARK, COLOR_TARMAC_LIGHT, COLOR_LANE };
 
 struct Segment {
-	float curve; // world units of x the centre gains per segment, per segment
+	float curve; // world units of x the center gains per segment, per segment
 	float y; // the height the road stands at where the segment begins
 };
 
-// A projected segment boundary: the centre of the road, the scanline it falls
+// A projected segment boundary: the center of the road, the scanline it falls
 // on, and its half-width in pixels
 struct Edge {
 	float x;
@@ -120,7 +120,7 @@ void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 
-	// Drive. The track loops, so the distance travelled wraps at its length
+	// Drive. The track loops, so the distance traveled wraps at its length
 	double tracklength = RoadSegments * (double)ROAD_SEGMENT_LENGTH;
 	double position = fmod(time * ROAD_SPEED, tracklength);
 
@@ -139,9 +139,9 @@ void DEMO_Render(double time, double deltatime)
 	float cameray = Road[base].y + (Road[(base + 1) % RoadSegments].y - Road[base].y) * percent + ROAD_CAMERA_HEIGHT;
 	float depth = ROAD_CAMERA_DEPTH;
 
-	// Project the boundaries, walking outward. x is where the centre of the
+	// Project the boundaries, walking outward. x is where the center of the
 	// road has reached and dx how fast it is moving sideways; curve
-	// accelerates dx, and the travelled part of the near segment is taken off
+	// accelerates dx, and the traveled part of the near segment is taken off
 	// it so the road ahead does not jump as the camera crosses a boundary
 	float x = 0;
 	float dx = -Road[base].curve * percent;
@@ -184,7 +184,7 @@ void DEMO_Render(double time, double deltatime)
 		int y2 = MIN((int)ybottom, RETRO_HEIGHT);
 
 		for (int y = y1; y < y2; y++) {
-			// The centre and the half-width are linear in y inside the quad
+			// The center and the half-width are linear in y inside the quad
 			float k = (y - ytop) * step;
 			float cx = Edges[n + 1].x + (Edges[n].x - Edges[n + 1].x) * k;
 			float cw = Edges[n + 1].w + (Edges[n].w - Edges[n + 1].w) * k;

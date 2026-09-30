@@ -11,10 +11,10 @@
 //
 // so the letters follow hills and valleys. phase lives on
 // MAP_WIDTH + stripwidth · LETTER_DOT_SPACING, in world units per second.
-// A zero texel is a gap, never a colour: the strip's own palette is unused.
+// A zero texel is a gap, never a color: the strip's own palette is unused.
 //
 // The camera stands outside the finite patch, pitched down so the island
-// fills the frame; the patch turns about its own centre under it rather than
+// fills the frame; the patch turns about its own center under it rather than
 // the camera turning. Left and Right rotate the terrain and text. Up/W and
 // Down/S dolly the camera forward and backward, held between stops that keep
 // the patch in frame.
@@ -57,7 +57,7 @@ static RETRO_Image *HeightMap, *ColorMap, *ScrollImage;
 
 // The camera's dolly stops and the height its pitch was posed at, all fixed
 // once the map is loaded: the patch turns and the camera dollies, but the
-// pose that keeps the view centred on it never moves.
+// pose that keeps the view centered on it never moves.
 static float IslandHeight, IslandNearestZ, IslandFarthestZ;
 
 static unsigned char TerrainSample(int x, int z)
@@ -152,9 +152,9 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(LETTER_COLOR_BASE, LETTER_COLOR_BASE + ScrollImage->height, RETRO_GOLD, RETRO_WHITE);
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
 
-	// The near stop is the centre plus the circumradius of the patch plus the
+	// The near stop is the center plus the circumradius of the patch plus the
 	// near plane, not the unrotated south edge: the island turns about its
-	// centre, and a stop at the south edge would let a 45 degree yaw put the
+	// center, and a stop at the south edge would let a 45 degree yaw put the
 	// camera inside it looking at a corner.
 	IslandNearestZ = CENTER_Z + hypotf(CENTER_X, CENTER_Z) + NEAR_PLANE;
 	IslandFarthestZ = MAP_HEIGHT + 70.0f;

@@ -3,7 +3,7 @@
 //
 // The 1024x1024 voxel height and color maps drawn as a wrapping triangle mesh.
 // Each mesh quad spans RETRO_TerrainView.step cells on a side and becomes two
-// flat-shaded polygons. Their color is the color map at the quad's centre and
+// flat-shaded polygons. Their color is the color map at the quad's center and
 // their light is the triangle normal, quantized through eight palette-matched
 // brightness levels. A depth buffer resolves the mesh without requiring a
 // painter's sort.
@@ -174,7 +174,7 @@ void DEMO_Initialize(void)
 	// map through the same table, one shade per vertex instead of per face.
 	//
 	// The ambient floor is what makes that affordable. A photographed palette
-	// carries a picture's colors and not ramps, so an entry darkened towards
+	// carries a picture's colors and not ramps, so an entry darkened toward
 	// black finds nothing near it but the few dark colors the picture happened
 	// to contain, and the ground it was lighting drops to one of those: a hole
 	// in the hillside rather than a shadow on it. This palette holds two pure

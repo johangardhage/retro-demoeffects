@@ -18,7 +18,7 @@
 //
 // Chaining those steps through RAMP_COLORS gives a cyclic ramp of
 // SHADES = 4 (RAMP_COLORS − 1) entries, the last color being the first.
-// Each cell takes the plasma at its centre, in cell units,
+// Each cell takes the plasma at its center, in cell units,
 //
 //   v = sin(0.16 x + 1.3 t) + sin(0.21 y − 0.9 t)
 //     + sin(0.11 (x + y) + 0.7 t) + sin(0.19 |(x, y) − c(t)|)
@@ -102,7 +102,7 @@ static void DrawText(void)
 
 void DEMO_Render(double time, double deltatime)
 {
-	// Calculate centre of the radial term
+	// Calculate center of the radial term
 	float t = (float)fmod(time, 1000 * 2 * M_PI);
 	float cx = 40 + 30 * sinf(0.37f * t);
 	float cy = 25 + 18 * cosf(0.29f * t);

@@ -2,8 +2,8 @@
 // Crossfade
 //
 // Two still pictures, smoothly blended in 24-bit RGB space using a 256-color
-// optimal palette shared between both pictures, indexed via a 3D inverse color LUT.
-// Hardware DAC palette fade-in for the monkey picture at startup.
+// optimal palette shared between both pictures, indexed via a 3D inverse color
+// LUT. Hardware DAC palette fade-in for the monkey picture at startup.
 //
 //   C(t) = (1 − t) A[i] + t B[i]
 //

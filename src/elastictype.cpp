@@ -18,7 +18,7 @@
 //   sy     = (y − top) · fontheight / rectheight
 //
 // Two frequencies keep the squash from marching in lockstep, and φ is per
-// letter. The glyph stays centred on its fixed wordmark position as the
+// letter. The glyph stays centered on its fixed wordmark position as the
 // rectangle changes. A zero texel is transparent.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
@@ -79,7 +79,7 @@ static void DrawGlyph(const Glyph &glyph, float time, int xoffset, int yoffset, 
 	int rectheight = MAX(bottom - top + 1, 1);
 	unsigned char *buffer = RETRO_FrameBuffer();
 
-	// Nearest-neighbour into the animated bounds. Clip to the coloured panel
+	// Nearest-neighbor into the animated bounds. Clip to the colored panel
 	// so deformed letters cannot spill into the surrounding black border.
 	for (int y = MAX(top, PANEL_TOP); y <= MIN(bottom, PANEL_BOTTOM); y++) {
 		int sy = CLAMP((y - top) * Font.height / rectheight, 0, Font.height - 1);

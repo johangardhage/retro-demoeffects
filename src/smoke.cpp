@@ -43,7 +43,7 @@
 
 #define EMIT_RADIUS 4.0f // cells, the 1/e radius of a nozzle
 #define EMIT_SPEED 70.0f // cells per second along the jet
-#define EMIT_DENSITY 0.35f // added at a nozzle's centre each step
+#define EMIT_DENSITY 0.35f // added at a nozzle's center each step
 #define EMIT_SWING 0.6f // radians the jet swings either side of vertical
 #define EMIT_PERIOD 9.0 // seconds for the slower nozzle's swing
 #define BUOYANCY 30.0f // upward acceleration per unit of density
@@ -74,7 +74,7 @@ static inline int Cell(int x, int y)
 // The component normal to a wall is mirrored with its sign flipped, so the
 // wall face sees zero flow through it. Everything else is copied, so its
 // gradient across the wall is zero. A corner is the mean of its two
-// neighbours.
+// neighbors.
 //
 static void SetBoundary(int boundary, float *field)
 {
@@ -165,7 +165,7 @@ static void Project(void)
 }
 
 //
-// Vorticity confinement: push along N × ω, toward the centre of each swirl
+// Vorticity confinement: push along N × ω, toward the center of each swirl
 //
 static void Confine(float dt)
 {
@@ -262,8 +262,8 @@ void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 
-	// Draw smoke. Screen pixel x covers grid cell x / 2 + 1, whose centre is
-	// at screen x = 2 (cell − 1) + 1, so the pixel centre sits at cell
+	// Draw smoke. Screen pixel x covers grid cell x / 2 + 1, whose center is
+	// at screen x = 2 (cell − 1) + 1, so the pixel center sits at cell
 	// (x + 0.5) / 2 + 0.5.
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		float gy = (y + 0.5f) * GRID_HEIGHT / RETRO_HEIGHT + 0.5f;

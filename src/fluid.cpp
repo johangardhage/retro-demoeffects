@@ -7,7 +7,7 @@
 // and trailing its own ink. Each fixed step:
 //
 //   1. Stir     paddle k sits at
-//                 p_k(phase) = centre + (STIR_REACH_X sin(a_k phase + α_k),
+//                 p_k(phase) = center + (STIR_REACH_X sin(a_k phase + α_k),
 //                                        STIR_REACH_Y sin(b_k phase + β_k))
 //               with (a, b) = (3, 2) and (2, 3), and moves at
 //                 dp_k/dt = dp_k/dphase · 2π / STIR_PERIOD.
@@ -21,14 +21,14 @@
 //               are advected along that velocity, then ×= DENSITY_KEEP.
 //
 // The tank is closed. Each ink's opacity is o = 1 − exp(−ρ), and √o is
-// quantized to INK_LEVELS levels with a 4×4 Bayer threshold, so the pair
-// fits the palette as index = level1 · INK_LEVELS + level2. The palette
-// squares the level back, o = (level / (INK_LEVELS − 1))², which spends the
-// levels where they show: the first step above clear water is 1/225 of full
-// ink, so thin ink dithers the dark water only faintly. Ink 2 uses the
-// inverted threshold, 1 − t, so where both inks are dithered one steps up
-// where the other steps down and the brightness holds steadier. The entry is the water plus both inks added, so where they
-// cross the orange and the azure sum toward white.
+// quantized to INK_LEVELS levels with a 4×4 Bayer threshold, so the pair fits
+// the palette as index = level1 · INK_LEVELS + level2. The palette squares the
+// level back, o = (level / (INK_LEVELS − 1))², which spends the levels where
+// they show: the first step above clear water is 1/225 of full ink, so thin ink
+// dithers the dark water only faintly. Ink 2 uses the inverted threshold, 1 −
+// t, so where both inks are dithered one steps up where the other steps down
+// and the brightness holds steadier. The entry is the water plus both inks
+// added, so where they cross the orange and the azure sum toward white.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -42,9 +42,9 @@
 #define GRID_SIZE (GRID_STRIDE * (GRID_HEIGHT + 2))
 
 #define EMIT_RADIUS 5.0f // cells, the 1/e radius of a paddle
-#define EMIT_DENSITY 0.3f // ink added at a paddle's centre each step
-#define STIR_REACH_X (GRID_WIDTH * 0.36f) // cells either side of the centre
-#define STIR_REACH_Y (GRID_HEIGHT * 0.32f) // cells above and below the centre
+#define EMIT_DENSITY 0.3f // ink added at a paddle's center each step
+#define STIR_REACH_X (GRID_WIDTH * 0.36f) // cells either side of the center
+#define STIR_REACH_Y (GRID_HEIGHT * 0.32f) // cells above and below the center
 #define STIR_PERIOD 24.0 // seconds for both paddles to close their paths
 #define CONFINEMENT 20.0f // strength of the vorticity confinement
 #define PROJECT_ITERATIONS 20 // Gauss-Seidel sweeps of the pressure solve
@@ -86,7 +86,7 @@ static inline int Cell(int x, int y)
 // The component normal to a wall is mirrored with its sign flipped, so the
 // wall face sees zero flow through it. Everything else is copied, so its
 // gradient across the wall is zero. A corner is the mean of its two
-// neighbours.
+// neighbors.
 //
 static void SetBoundary(int boundary, float *field)
 {
@@ -177,7 +177,7 @@ static void Project(void)
 }
 
 //
-// Vorticity confinement: push along N × ω, toward the centre of each swirl
+// Vorticity confinement: push along N × ω, toward the center of each swirl
 //
 static void Confine(float dt)
 {
@@ -219,7 +219,7 @@ static void Emit(float cx, float cy, float vx, float vy, float *density)
 }
 
 //
-// A paddle at (sin(a phase + α), sin(b phase + β)) about the centre, and its velocity
+// A paddle at (sin(a phase + α), sin(b phase + β)) about the center, and its velocity
 //
 static void Stir(double phase, int a, double alpha, int b, double beta, float *density)
 {
@@ -280,8 +280,8 @@ void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 
-	// Draw ink. Screen pixel x covers grid cell x / 2 + 1, whose centre is
-	// at screen x = 2 (cell − 1) + 1, so the pixel centre sits at cell
+	// Draw ink. Screen pixel x covers grid cell x / 2 + 1, whose center is
+	// at screen x = 2 (cell − 1) + 1, so the pixel center sits at cell
 	// (x + 0.5) / 2 + 0.5. The Bayer entry is the quantizing threshold.
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		float gy = (y + 0.5f) * GRID_HEIGHT / RETRO_HEIGHT + 0.5f;

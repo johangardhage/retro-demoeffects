@@ -13,7 +13,7 @@
 //
 // x is the sample index, not a screen column. SAMPLE_WIDTH is 3 × WIDTH, so
 // three samples share a screen column, and each sample draws the strip's
-// own height in pixels, spread sideways and centred on sx. Samples run that
+// own height in pixels, spread sideways and centered on sx. Samples run that
 // same width, scaled to sample space, past both ends, so a stamp that
 // begins off-screen still paints the columns it overlaps. A letter's own
 // rows land across the wave rather than along it, which is what lets the
@@ -36,7 +36,7 @@
 // were a cylinder. It is in [−1, 1], front-facing when negative. Shade is
 // MID − AMP · depth, so the chrome brightens and darkens as the bar turns.
 // The back (depth > 0) is scaled again by BACK_DIM. The palette is a ramp
-// of the atlas greys, so a texel at full shade is the original colour and a
+// of the atlas grays, so a texel at full shade is the original color and a
 // darker shade is the same chrome, dimmed. A zero texel is transparent. The
 // back is drawn first so the front occludes it, and nothing marks where the
 // bar itself is: the twirl shows only in how the letters move, foreshorten
@@ -65,7 +65,7 @@
 #define SAMPLE_RUN ((double)RETRO_WIDTH / SAMPLE_WIDTH) // screen columns a sample steps sideways
 #define SHADE_MID 100
 #define SHADE_AMP 80 // shade is in [20, 180] as depth runs through [−1, 1]
-#define SHADE_MAX (SHADE_MID + SHADE_AMP) // full shade, so ink · SHADE_MAX / SHADE_MAX is the atlas grey
+#define SHADE_MAX (SHADE_MID + SHADE_AMP) // full shade, so ink · SHADE_MAX / SHADE_MAX is the atlas gray
 #define BACK_DIM 0.4 // extra scale on the back
 
 static const char *const ScrollText[] = { "                               RETRO DEMOEFFECTS..." };
@@ -135,7 +135,7 @@ void DEMO_Initialize(void)
 {
 	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
 
-	// Remember the darkest and lightest greys the atlas actually uses so the
+	// Remember the darkest and lightest grays the atlas actually uses so the
 	// shade ramp can be built from them
 	int dim = 255, lit = 0;
 	for (int i = 0; i < ScrollImage->width * ScrollImage->height; i++) {
@@ -146,9 +146,9 @@ void DEMO_Initialize(void)
 		}
 	}
 
-	// Init palette. A ramp of the atlas greys: black up to the darkest
+	// Init palette. A ramp of the atlas grays: black up to the darkest
 	// letter, then up to the lightest, then that chrome for the rest. A
-	// texel at full shade is the original colour; a darker shade is the
+	// texel at full shade is the original color; a darker shade is the
 	// same chrome, dimmed
 	RETRO_Palette *fontpal = ScrollImage->palette;
 	RETRO_CreateGradientPalette(0, dim, RETRO_BLACK, fontpal[dim]);

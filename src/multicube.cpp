@@ -8,7 +8,7 @@
 //
 //   dots (a 7×7-subdivided cube, so the band is a grid of vertices),
 //   noise texture, Glenz orange, checker, wireframe, flat purple.
-// Every filled band is Lambert-flat, so neighbouring faces keep a hard
+// Every filled band is Lambert-flat, so neighboring faces keep a hard
 // shade step all the way around the cube.
 //
 // Each band is a full cube draw, clipped to [y0, y1) by RETRO_RenderModel so
@@ -111,7 +111,7 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_RenderModel(RETRO_POLY_TEXTURE, RETRO_SHADE_FLAT, Cube, true, { .y0 = y[3], .y1 = y[4] });
 
 	// Oldest ghost first so the plain wireframe overwrite leaves the current
-	// cube on top. Put Cube back at ax, ay, az afterwards: the purple band
+	// cube on top. Put Cube back at ax, ay, az afterward: the purple band
 	// assumes it is still at the current time.
 	static const int trail[] = { COL_WHITE, COL_TRAIL0, COL_TRAIL1, COL_TRAIL2 };
 	for (int i = WIRE_TRAIL_COUNT - 1; i >= 0; i--) {

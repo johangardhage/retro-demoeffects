@@ -1,24 +1,24 @@
 //
 // Classic Amiga rubber vector
 //
-// The cube itself never bends.  One rigid cube is rendered per simulation step
-// and each of its scanlines is packed into a few colored spans.  Old scanlines
+// The cube itself never bends. One rigid cube is rendered per simulation step
+// and each of its scanlines is packed into a few colored spans. Old scanlines
 // are retained in a ring buffer, then the displayed picture is assembled one
-// line at a time: a travelling sine chooses how old the source line is.
+// line at a time: a traveling sine chooses how old the source line is.
 // Straight polygon edges therefore appear curved even though every source
 // image contains an ordinary six-face cube.
 //
 // The ring is a number of steps deep rather than a number of seconds, so the
-// cubes are produced in DEMO_FixedUpdate at the fixed simulation rate.  Producing
-// one per displayed frame instead would hand the amount of bend to the refresh
-// rate: the same 24 copies span 0.4s at 60Hz and 0.17s at 144Hz, so the cube
-// shreds into disconnected slabs on a slow display and flattens toward a rigid
-// cube on a fast one.
+// cubes are produced in DEMO_FixedUpdate at the fixed simulation rate.
+// Producing one per displayed frame instead would hand the amount of bend to
+// the refresh rate: the same 24 copies span 0.4s at 60Hz and 0.17s at 144Hz, so
+// the cube shreds into disconnected slabs on a slow display and flattens toward
+// a rigid cube on a fast one.
 //
-// A face takes the ramp of the axis it faces.  Opposite faces share a ramp and
+// A face takes the ramp of the axis it faces. Opposite faces share a ramp and
 // a convex cube never shows both of a pair, so the three faces on screen are
 // always three different colors and the multiplexing bends three distinct
-// bands rather than one silhouette.  Every ramp is matte and starts at black,
+// bands rather than one silhouette. Every ramp is matte and starts at black,
 // which disposes of the flat renderer's lower clamp at model->c: a face turned
 // away from the light goes dark rather than picking up the first ramp's hue.
 //

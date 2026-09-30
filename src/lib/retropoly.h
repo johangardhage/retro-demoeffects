@@ -118,7 +118,7 @@ inline bool RETRO_DepthTest(int offset, float q)
 // onto its mirror (Nx, Ny, -Nz), so the lookup turns back inward from the rim
 // and N = (0, 0, 1) reads the middle. Scaling Nxy out to the unit circle
 // would pin every such normal on the horizon, so an upward one would read
-// pale sky instead of the zenith and a downward one would read grey instead
+// pale sky instead of the zenith and a downward one would read gray instead
 // of the checker. The radius is unused on this path: the sphere map covers
 // the image.
 //
@@ -175,7 +175,7 @@ inline vec3 RETRO_ReflectionHalfway(vec3 r, vec3 fallback)
 // agree only on a front face: past the silhouette R's half-way vector is -N.
 // Taken as it is, that is the Blinn/Newell flip, and a ray passing I0 jumps
 // to the opposite side of the rim, which in a baked disk is a different
-// colour. So this path folds as the one above does: n, the unit normal R was
+// color. So this path folds as the one above does: n, the unit normal R was
 // reflected about, says which side of the disk it is on, and a half-way
 // vector facing away from it is turned round, so the lookup comes back
 // inward from the rim it reached. r need not be unit. For R = I0, where there
@@ -193,7 +193,7 @@ inline void RETRO_GetReflectionMapCoordinates(vec3 r, vec3 n, int envmapwidth, i
 }
 
 //
-// Horizontal coverage of a triangle at pixel centres (x+1/2, y+1/2).
+// Horizontal coverage of a triangle at pixel centers (x+1/2, y+1/2).
 //
 // The value it returns,
 //
@@ -365,7 +365,7 @@ inline void RETRO_DrawGlenzPolygon(PolygonPoint *point, int points, unsigned cha
 // Pass what is already drawn through a table, where the polygon is in front
 // of it. An 8-bit framebuffer holds palette entries, not colors, so blending
 // is a lookup: a table that darkens every entry makes a translucent shadow,
-// one that tints them a coloured glass. Depth is tested but not written, so
+// one that tints them a colored glass. Depth is tested but not written, so
 // the polygon lies over what is there without hiding what comes after.
 //
 // Remapping goes in passes, and a pass takes each pixel through the table
@@ -459,7 +459,7 @@ inline void RETRO_DrawGouraudPolygon(PolygonPoint *point, int points, ClipRect c
 // Phong shaded polygon
 //
 // Vertex normals arrive as n * q. Interpolating that product and
-// renormalising is the same direction as divide-by-q then renormalise
+// renormalizing is the same direction as divide-by-q then renormalize
 // (q > 0 in front of the near plane). The pixel is then
 //
 //   I = ShadeFractionFromLambert(max(N · L, 0))

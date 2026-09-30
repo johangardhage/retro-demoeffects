@@ -8,7 +8,7 @@
 //   z = BALL_WAVE sin(phase + WAVES a)
 //
 // WAVES is a whole number, so the wave closes around the ring: ball 0 and
-// ball BALLS - 1 are neighbours on the same wave rather than either side of a
+// ball BALLS - 1 are neighbors on the same wave rather than either side of a
 // step. The ring is rebuilt every frame, then rotated and projected as loose
 // vertices, the way stars3.cpp carries its box of stars.
 //
@@ -16,7 +16,7 @@
 // once, along with the hemisphere's depth, and RETRO_DrawDepthSprite scales
 // it to BALL_SIZE * EYE * q, so it grows and shrinks with the same divide
 // that places it. That drawer writes every pixel at the depth of the surface
-// under it rather than the centre's, so two balls resolve on the curve where
+// under it rather than the center's, so two balls resolve on the curve where
 // the spheres meet and there is no order to keep: the balls are drawn in the
 // order they were laid out.
 //
@@ -35,7 +35,7 @@
 
 #define BALLS 32
 #define BALL_MAP 48 // the lit sphere is drawn once at this size and scaled from it
-#define BALL_SIZE 27 // pixels across at the depth the ring's centre stands
+#define BALL_SIZE 27 // pixels across at the depth the ring's center stands
 #define BALL_RADIUS 72 // the ring, in pixels, since the projection adds no scale
 #define BALL_WAVE 34 // pixels either way the ripple carries a ball out of the plane
 #define BALL_WAVES 3 // whole waves around the ring

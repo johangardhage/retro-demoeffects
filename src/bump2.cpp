@@ -48,7 +48,7 @@ vec3 SurfaceNormals[RETRO_HEIGHT * RETRO_WIDTH];
 // Slope of the height map along x, second-order finite difference
 //
 // Interior: (h[x+1] - h[x-1]) / 2. On the border the same order, one-sided:
-// (-3 h0 + 4 h1 - h2) / 2 forwards, and its mirror backwards.
+// (-3 h0 + 4 h1 - h2) / 2 forward, and its mirror backward.
 //
 static float HeightSlopeX(unsigned char *heightmap, int x, int y)
 {

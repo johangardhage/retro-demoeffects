@@ -1,8 +1,8 @@
 //
 // Copperbars
 //
-// Seven horizontal bars, one per rainbow color, on black: the Amiga effect where
-// the copper rewrites the background color once per scanline. Here every
+// Seven horizontal bars, one per rainbow color, on black: the Amiga effect
+// where the copper rewrites the background color once per scanline. Here every
 // scanline is a palette index instead, and each bar owns a ramp of
 // COPPER_BARHEIGHT entries, so a whole frame is a memset per row and all the
 // tube shading comes out of the palette.

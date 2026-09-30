@@ -37,7 +37,7 @@ unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 // Advance the field one fixed step
 //
 // A spark writes 255 into the bottom FIRE_HEIGHT pixels of a column. The blur then
-// replaces every cell with the mean of eight neighbours - left and right on its own
+// replaces every cell with the mean of eight neighbors - left and right on its own
 // row, and the three cells one and two rows below - and subtracts FIRE_DECAY:
 //
 //   T'(x, y) = max(0, (T(x-1, y) + T(x+1, y)
@@ -48,14 +48,14 @@ unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 // There is no self term, so a cell keeps none of its own heat. Six of the eight taps
 // sit below it, so the mean is a sample of the heat underneath, which is what makes
 // the field rise: each step copies heat from y+1, y+2 up onto y. The two side taps
-// smear a column into its neighbours, and wrapping those in x lets a flame at the
+// smear a column into its neighbors, and wrapping those in x lets a flame at the
 // edge continue on the other side.
 //
 // RETRO_Blur keeps the rows it has already written, so every tap reads the previous
 // step: a Jacobi update on both axes, and the flame rises straight.
 //
 // A uniform column that only decayed would fall from 255 to 0 in 255 / FIRE_DECAY
-// steps, about eighty-five here. Averaging with cooler neighbours kills a flame
+// steps, about eighty-five here. Averaging with cooler neighbors kills a flame
 // sooner, so the visible height is shorter than that and set by how often the bed
 // is re-sparked.
 //

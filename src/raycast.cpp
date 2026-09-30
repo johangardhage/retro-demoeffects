@@ -13,7 +13,7 @@
 // is 1 and the t of the last line crossed is the wall's distance z along d,
 // not along the ray. That keeps straight walls straight, where the ray's own
 // length would bow them. A wall of height 1 at z covers F / z rows, with
-// F = W / (2 tan) so that the pixels come out square, centred on the
+// F = W / (2 tan) so that the pixels come out square, centered on the
 // horizon with the eye halfway up. Where the ray hits the wall gives the
 // texture's column, and the row runs down it evenly.
 //
@@ -111,7 +111,7 @@ static const int Ceilings[MAP_SIZE][MAP_SIZE] = {
 unsigned char *Textures; // the texture sheet
 float RowDistance[RETRO_HEIGHT];
 vec2 Position = { 6.5f, 5.5f }; // the camera, in cells
-float Angle = (float)M_PI; // the way it looks, from x towards y
+float Angle = (float)M_PI; // the way it looks, from x toward y
 
 //
 // A texel of a tile of a sheet

@@ -86,11 +86,11 @@ inline void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NUL
 }
 
 // p' = R p + t, the translation half of a model's placement. It goes on the
-// rotated coordinates, so the model turns about its own centre and is then
+// rotated coordinates, so the model turns about its own center and is then
 // carried to where it stands. Added to the model's own vertices instead it
 // would be rotated too, and the model would swing around the origin.
 //
-// RETRO_ProjectModel's screen centre cannot stand in for this. That offset is
+// RETRO_ProjectModel's screen center cannot stand in for this. That offset is
 // in pixels, applied after the divide, so it neither shrinks with distance nor
 // moves the model in z at all.
 inline void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = NULL)

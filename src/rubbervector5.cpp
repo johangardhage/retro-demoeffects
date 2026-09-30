@@ -1,11 +1,11 @@
 //
 // Vector slime
 //
-// The multiplexed rubber cube of rubbervector4, cut finer.  Rigid cube images
+// The multiplexed rubber cube of rubbervector4, cut finer. Rigid cube images
 // are retained in a ring, one per simulation step, but the displayed picture is
-// assembled from narrow vertical strips rather than whole scanlines.  Two sines
-// travelling down the screen choose how old each row's source image is, and a
-// third travelling across it adds a little more age strip by strip, so the
+// assembled from narrow vertical strips rather than whole scanlines. Two sines
+// traveling down the screen choose how old each row's source image is, and a
+// third traveling across it adds a little more age strip by strip, so the
 // cube wobbles sideways as well as bending from top to bottom.
 //
 // The images are kept whole rather than packed into spans as rubbervector4

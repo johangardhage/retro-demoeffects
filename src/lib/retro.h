@@ -118,7 +118,7 @@ inline int CLAMP(unsigned long n, int l, int h) { return CLAMP((int)n, l, h); }
 inline float CLAMP01(float n) { return n < 0 ? 0 : (n > 1 ? 1 : n); }
 inline double CLAMP01(double n) { return n < 0 ? 0 : (n > 1 ? 1 : n); }
 
-// Move n towards target by step, stopping on it rather than passing it
+// Move n toward target by step, stopping on it rather than passing it
 inline float APPROACH(float n, float target, float step) { return n > target + step ? n - step : (n < target - step ? n + step : target); }
 
 // Wrap n into [0, h). Negative input wraps from the top, so WRAP(-1, 64) is 63.
@@ -142,7 +142,7 @@ inline int WRAP(unsigned long n, int h) { return WRAP((int)n, h); }
 #define WRAPHEIGHT(n) WRAP((n), RETRO_HEIGHT)
 
 // Integer hash of a grid position. The same (x, y) always gives the same bits
-// and neighbouring positions give unrelated ones, so a pattern built from it
+// and neighboring positions give unrelated ones, so a pattern built from it
 // repeats exactly and stays anchored to its grid. The odd multipliers spread
 // each coordinate over the word; the xor-shifts fold the well-mixed high bits
 // back into the low ones a caller masks off. Unsigned arithmetic keeps the

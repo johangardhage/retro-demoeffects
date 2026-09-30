@@ -1,12 +1,11 @@
 //
 // XOR circles
 //
-// A shaded concentric wave XOR'd with alternating solid rings. XOR with
-// 255 reverses the shade, giving curved checkerboard tiles with rounded
-// lavender highlights and dark grooves. Two independently moving centers
-// turn the checkerboard into ripples whenever the centers approach.
-// After five seconds, a traveling horizontal sine distortion builds up
-// on the solid rings, following Second Reality's TECHNO/KOEA.ASM effect.
+// A shaded concentric wave XOR'd with alternating solid rings. XOR with 255
+// reverses the shade, giving curved checkerboard tiles with rounded lavender
+// highlights and dark grooves. Two independently moving centers turn the
+// checkerboard into ripples whenever the centers approach. After five seconds,
+// a traveling horizontal sine distortion builds up on the solid rings.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

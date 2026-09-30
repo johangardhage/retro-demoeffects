@@ -1,13 +1,14 @@
 //
 // Blinds
 //
-// A vertical-blind transition inspired by Sanity's Interference. A white
-// screen is split into narrow vertical slats. Each slat folds around its
-// centre, so its projected width contracts to a line and reveals the black
-// curtain behind it. Each slat starts its fold a little later than the one to
-// its right - the delay is a linear ramp across the screen - so the fold
-// travels leftwards instead of closing every slat at once. The transition runs
-// once and remains on black when it is finished.
+// A vertical-blind transition. A white screen is split into narrow vertical
+// slats. Each slat folds around its center, so its projected width contracts to
+// a line and reveals the black curtain behind it. Each slat starts its fold a
+// little later than the one to its right - the delay is a linear ramp across
+// the screen - so the fold travels leftwards instead of closing every slat at
+// once. The finished transition rests on black for a moment, then runs
+// backwards: the slats unfold from black to the white screen, the unfolding
+// traveling rightwards, and the cycle starts over.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -19,15 +20,18 @@
 #define BLINDS ((RETRO_WIDTH + BLIND_WIDTH - 1) / BLIND_WIDTH)
 #define PHASE_WINDOW 0.72 // part of the transition spent rotating one slat
 #define TIME_TRANSITION 2.0
-#define TIME_HOLD 0.75
+#define TIME_HOLD 1.0 // seconds held on the white screen or on the curtain
+#define TIME_CYCLE (2 * (TIME_HOLD + TIME_TRANSITION))
 #define CURTAIN 0
 #define FIRST_SHADE 1
 #define SHADES 32
 
 void DEMO_Render(double time, double deltatime)
 {
-	// Calculate phase
-	double phase = CLAMP01((time - TIME_HOLD) / TIME_TRANSITION);
+	// Calculate phase: it rises to 1 as the slats fold away, stays there over
+	// the curtain, and falls back to 0 over the last TIME_TRANSITION of the cycle
+	double cycle = fmod(time, TIME_CYCLE);
+	double phase = CLAMP01(MIN(cycle - TIME_HOLD, TIME_CYCLE - cycle) / TIME_TRANSITION);
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 
@@ -44,8 +48,8 @@ void DEMO_Render(double time, double deltatime)
 		double rotation = CLAMP01((phase - delay) / PHASE_WINDOW);
 		double fold = fabs(cos(rotation * 1.5 * M_PI));
 
-		// Project the rotating slat about its centre: the visible span is the
-		// width foreshortened, laid out centred on the slat's own centre. An
+		// Project the rotating slat about its center: the visible span is the
+		// width foreshortened, laid out centered on the slat's own center. An
 		// odd leftover splits half a pixel to the left, which is invisible
 		// against a 16-pixel slat.
 		int visible = lround(width * fold);
@@ -64,7 +68,7 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(CURTAIN, RETRO_BLACK);
 
 	// The original transition does not leave the rotating faces flat white.
-	// They lose reflected light as they turn, passing through cold blue-grey
+	// They lose reflected light as they turn, passing through cold blue-gray
 	// to the deep blue visible just before a slat becomes edge-on.
 	for (int shade = 0; shade < SHADES; shade++) {
 		double light = (double)shade / (SHADES - 1);

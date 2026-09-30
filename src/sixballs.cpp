@@ -2,14 +2,13 @@
 // Six balls
 //
 // Six flat, differently colored balls sit at the corners of a regular hexagon.
-// The hexagon tumbles as one rigid plane while its centre moves back and forth
+// The hexagon tumbles as one rigid plane while its center moves back and forth
 // through the camera. Perspective turns the ring into a line, a flower, six
-// huge overlapping color fields, and a small distant wheel -- the sequence
-// used in Sanity's Interference.
+// huge overlapping color fields, and a small distant wheel.
 //
-// The balls are billboards: their centres are projected as 3-D points, but the
+// The balls are billboards: their centers are projected as 3-D points, but the
 // discs always face the screen. Their radii use the same perspective divide as
-// their centres. Sorting the six centres from back to front makes overlaps read
+// their centers. Sorting the six centers from back to front makes overlaps read
 // consistently without needing a depth buffer.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
@@ -48,7 +47,7 @@ void DEMO_Render(double time, double deltatime)
 	float phase = fmod(time, CYCLE) * 2.0f * M_PI / CYCLE;
 
 	// Ease at both ends of the trip. The small sideways loop prevents the six
-	// projected centres from expanding forever around one perfectly fixed point.
+	// projected centers from expanding forever around one perfectly fixed point.
 	float travel = 0.5f - 0.5f * cos(phase);
 	float zoffset = FAR_Z + (NEAR_Z - FAR_Z) * travel;
 	float cx = RETRO_WIDTH / 2.0f + DRIFT_X * sin(phase);

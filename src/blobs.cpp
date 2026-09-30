@@ -2,7 +2,7 @@
 // Blobs
 //
 // A swarm of additive blobs on a random walk. Every blob is the same
-// precalculated Wyvill kernel of the normalised squared radius s = r²/R²:
+// precalculated Wyvill kernel of the normalized squared radius s = r²/R²:
 //
 //   K(s) = (1 − s)² (9 − 4s) / 9     (= 1 − 22/9 s + 17/9 s² − 4/9 s³)
 //   I(p) = min(255, sum_i  PEAK · K(|p − x_i|² / R²))
@@ -16,7 +16,7 @@
 // per step, so after n steps the RMS displacement is √(2n) pixels per axis.
 // The shorter half-screen is 120: √(2n) = 120 at n = 7200, about two
 // minutes at 60 steps/s. One step is a square; many steps are an isotropic
-// Gaussian (CLT). The edge absorbs, the centre emits, so the swarm stays
+// Gaussian (CLT). The edge absorbs, the center emits, so the swarm stays
 // a cloud, not a uniform haze.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
@@ -59,7 +59,7 @@ void DEMO_FixedUpdate(double timestep)
 		BlobPositions[i] += ivec2{ RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP, RANDOM(BLOB_STEP * 2 + 1) - BLOB_STEP };
 
 		// The kernel covers [center - R, center + R]. Once it has left the screen
-		// the edge absorbs the blob and the centre emits a new one, so the swarm
+		// the edge absorbs the blob and the center emits a new one, so the swarm
 		// stays a cloud brightest in the middle rather than an even haze.
 		if (BlobPositions[i].x + BLOB_RADIUS < 0 || BlobPositions[i].x - BLOB_RADIUS >= RETRO_WIDTH ||
 			BlobPositions[i].y + BLOB_RADIUS < 0 || BlobPositions[i].y - BLOB_RADIUS >= RETRO_HEIGHT) {

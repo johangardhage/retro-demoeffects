@@ -5,11 +5,11 @@
 // FLARE_WIDTH angular bins by FLARE_RADII radial bins, one row per radius, and
 // the screen is only a lookup into it: a pixel reads the bin its own (angle,
 // radius) falls in. The strip itself is the rising-fire cellular automaton
-// turned inside out - a ring of noise is seeded into one row near the centre
+// turned inside out - a ring of noise is seeded into one row near the center
 // and RETRO_Blur lifts it toward row 0, which is the rim, so the flames crawl
 // outward instead of upward.
 //
-// A pixel is sampled at its own centre, (dx, dy) = (ix + 1/2, iy + 1/2), so the
+// A pixel is sampled at its own center, (dx, dy) = (ix + 1/2, iy + 1/2), so the
 // origin falls on the corner shared by the four middle pixels and the map is
 // symmetric under (dx, dy) -> (-dx, -dy). The angle is a full turn measured
 // from +y,
@@ -22,23 +22,25 @@
 //
 //   r = (FLARE_RADII - 1) * (1 - |(dx, dy)| / rmax)     in [0, FLARE_RADII)
 //
-// with rmax the distance to the outermost pixel centre, a corner, so the
+// with rmax the distance to the outermost pixel center, a corner, so the
 // corners land exactly on row 0 and no radial bin is wasted.
 //
 // The seeded ring is a fixed pattern of noise, swung back and forth by
 //
-//   swirl  = (FLARE_SWIRL + FLARE_EBB) / 2 + (FLARE_SWIRL - FLARE_EBB) / 2 * SIN(phase)
+//   swirl  = (FLARE_SWIRL + FLARE_EBB) / 2
+//          + (FLARE_SWIRL - FLARE_EBB) / 2 * SIN(phase)
 //   offset = swirl * SIN(SUN_SWIRLS * phase)
 //
-// a fast swing whose width a slower swell walks between FLARE_EBB and FLARE_SWIRL
-// bins. Written as a bare product of the two sines the swell would instead run from
-// -FLARE_SWIRL to FLARE_SWIRL, and passing through zero costs twice a turn: the
-// swing shrinks away until the ring sits still at neutral, then opens back up
-// inverted, because the width came out the far side with the opposite sign. Held
-// off zero by FLARE_EBB it keeps its sign and its stroke, so the ring still
-// reverses - a bounded offset has to - but it turns over briskly every time
-// instead of unwinding and starting over. Both live on phase, an angle in the
-// library's RETRO_ANGLES_PER_TURN units per turn, wrapping on one turn of the swell.
+// a fast swing whose width a slower swell walks between FLARE_EBB and
+// FLARE_SWIRL bins. Written as a bare product of the two sines the swell would
+// instead run from -FLARE_SWIRL to FLARE_SWIRL, and passing through zero costs
+// twice a turn: the swing shrinks away until the ring sits still at neutral,
+// then opens back up inverted, because the width came out the far side with the
+// opposite sign. Held off zero by FLARE_EBB it keeps its sign and its stroke,
+// so the ring still reverses - a bounded offset has to - but it turns over
+// briskly every time instead of unwinding and starting over. Both live on
+// phase, an angle in the library's RETRO_ANGLES_PER_TURN units per turn,
+// wrapping on one turn of the swell.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -66,17 +68,17 @@ unsigned char LightMap[RETRO_WIDTH * RETRO_HEIGHT]; // the strip is its top FLAR
 // Advance the flare one fixed step
 //
 // The ring of noise is written into row FLARE_SEED and the blur then replaces every
-// cell with the mean of seven neighbours - three copies of the cell one row inward,
+// cell with the mean of seven neighbors - three copies of the cell one row inward,
 // one two rows inward, and three side by side three rows inward - less FLARE_DECAY:
 //
 //   L'(a, r) = max(0, (3*L(a, r+1) + L(a, r+2)
 //                    + L(a-1, r+3) + L(a, r+3) + L(a+1, r+3)) / 7 - FLARE_DECAY)
 //
 // Every tap sits inward of the cell it feeds, so each step carries the ring one row
-// out toward the rim, and the three-wide tap smears a ray into its neighbours. The
+// out toward the rim, and the three-wide tap smears a ray into its neighbors. The
 // weights sum to the tap count, so a flat field is carried unchanged and only
 // FLARE_DECAY cools it: a ray fades over 255 / FLARE_DECAY steps at the most, and
-// sooner where it averages with darker neighbours beside it.
+// sooner where it averages with darker neighbors beside it.
 //
 // The blur wraps both axes. Wrapping the angle is what makes the strip a full turn,
 // joining bin FLARE_WIDTH - 1 to bin 0 so a ray crosses the seam instead of ending

@@ -10,7 +10,7 @@
 //   Y(y, t) = 75 + 2 cos(y + 2t) + cos(2y + t/2) + 2 cos(y + t)
 //   color   = (X Y) mod 252
 //
-// Each term is a travelling wave; the product beats them into the
+// Each term is a traveling wave; the product beats them into the
 // classic plasma blobs. The 252-entry palette is one RGB cycle
 // (black-red-yellow-white-cyan-blue-black), so the wrap is a
 // continuous color cycle.

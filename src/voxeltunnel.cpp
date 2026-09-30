@@ -25,7 +25,7 @@
 // the same choice the terrain lens makes with a shorter focaly, and not
 // a pixel-aspect correction. The framebuffer's pixels are square.
 //
-// (cx, cy) is the principal point, and it sits at the centre of the
+// (cx, cy) is the principal point, and it sits at the center of the
 // framebuffer and stays there. Nothing turns and nothing sways: the
 // flight down the axis is the whole of the movement, and the tunnel is
 // whatever the map holds at the depth it has reached.

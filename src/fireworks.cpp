@@ -16,12 +16,12 @@
 //
 // At apogee (vy ≥ 0) it is replaced by SPARKS sparks whose directions
 // are uniform in angle and speed, not in a square — a square sample
-// favours the corners and the burst would be a four-pointed star. Each
-// spark then falls under the same g, and its colour walks down the heat
-// ramp as life runs out. One ramp, so the trail blur stays a fire colour
+// favors the corners and the burst would be a four-pointed star. Each
+// spark then falls under the same g, and its color walks down the heat
+// ramp as life runs out. One ramp, so the trail blur stays a fire color
 // rather than averaging across unrelated hues.
 //
-// The framebuffer is never cleared. A 4-neighbour diffuse blur (no
+// The framebuffer is never cleared. A 4-neighbor diffuse blur (no
 // self) subtracts TRAIL_DECAY each step, which is the trail.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>

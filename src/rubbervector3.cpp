@@ -1,8 +1,10 @@
 //
-// Flubber: a faceted rubber column with black and gold bands.
-// Both sides are drawn with additive Glenz polygons. Palette banks encode
-// black/black, black/gold and gold/gold overlaps, with lighting in the low
-// six bits. Weak perspective keeps the rings aligned.
+// Flubber
+//
+// A faceted rubber column with black and gold bands. Both sides are drawn with
+// additive Glenz polygons. Palette banks encode black/black, black/gold and
+// gold/gold overlaps, with lighting in the low six bits. Weak perspective keeps
+// the rings aligned.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

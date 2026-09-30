@@ -34,7 +34,7 @@
 
 #define BOB_SCREENS 8 // screens drawn in turn, and the chain's spacing in steps
 #define BOB_SIZE 24 // pixels across
-#define BOB_AMPX 136 // pixels either side of the centre
+#define BOB_AMPX 136 // pixels either side of the center
 #define BOB_AMPY 96
 #define BOB_SPEEDX 0.9 // radians a second
 #define BOB_SPEEDY 1.3

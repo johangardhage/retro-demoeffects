@@ -2,9 +2,9 @@
 // Crossfade 2 (Dithered)
 //
 // Two still pictures, smoothly blended in 24-bit RGB space using a 256-color
-// optimal palette shared between both pictures, indexed via a 3D inverse color LUT
-// with 4x4 ordered Bayer dithering during rendering.
-// Hardware DAC palette fade-in for the monkey picture at startup.
+// optimal palette shared between both pictures, indexed via a 3D inverse color
+// LUT with 4x4 ordered Bayer dithering during rendering. Hardware DAC palette
+// fade-in for the monkey picture at startup.
 //
 //   C(t) = (1 − t) A[i] + t B[i]
 //

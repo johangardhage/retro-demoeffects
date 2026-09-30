@@ -4,7 +4,8 @@
 // Lit cloth in the parameter frame: x along the hoist–fly axis, y down the
 // hoist (screen y), z toward the viewer. The surface is
 //
-//   h(x, y, t) = A(x) * sum_i a_i sin(2π (x/λx_i − t SPEED/λx_i + y/λy_i + φ_i))
+//   h(x, y, t) = A(x) * sum_i a_i
+//                sin(2π (x/λx_i − t SPEED/λx_i + y/λy_i + φ_i))
 //
 // A(x) = AMPLITUDE sin(π x / 2 W) is the held-free fundamental (A(0) = 0,
 // A'(W) = 0). All modes share the same phase speed SPEED, so a crest keeps
@@ -17,7 +18,7 @@
 // The print is inextensible along x (the fly pulls in where the cloth
 // folds) and shears with the silhouette in y. Lighting is Blinn-Phong of
 // a directional sun L and an orthographic V = (0, 0, 1). L is (−5, −2, 4)
-// normalised: 37° above the cloth, from the left. Swing does not rotate N.
+// normalized: 37° above the cloth, from the left. Swing does not rotate N.
 // Ambient occlusion 1/(1 + k max(hxx, 0)) shuts out the sky in valleys
 // only; the sun is not scaled.
 //
@@ -29,7 +30,7 @@
 #include "lib/retrovector.h"
 
 // Flag of Sweden, SFS 1982:269. The proportions are 16:10, divided 5:2:9 along the flag and
-// 4:2:4 across it, which puts the cross off centre towards the hoist and makes both arms the
+// 4:2:4 across it, which puts the cross off center toward the hoist and makes both arms the
 // same thickness. 256 by 160 is exactly 16:10, so none of that has to be compromised.
 #define FLAG_WIDTH 256
 #define FLAG_HEIGHT 160
@@ -59,7 +60,7 @@
 // wavelengths 240, 155, 100, 65, 42, 27, 18 = 2^4·3^3·5^2·7·13·31 pixels.
 #define CLOTH_PERIOD (16.0 * 27 * 25 * 7 * 13 * 31)
 
-// Sunlight, so one direction serves the whole surface. (−5, −2, 4) normalised:
+// Sunlight, so one direction serves the whole surface. (−5, −2, 4) normalized:
 // 37° above the cloth, from the left, well off the viewer's axis, so the
 // shading changes as the surface tilts.
 #define LIGHT_DIRX -0.74536f

@@ -1,5 +1,5 @@
 //
-// Twister 6
+// Twister 5
 //
 // The flowers-wrapped square column from twister3, chrome-shaded and
 // allowed to change thickness. twister3's torsion still winds the square
@@ -7,8 +7,8 @@
 // in y, so the silhouette is an hourglass that snakes rather than a prism
 // of constant width.
 //
-//   radius(y)   = R + WAVE · sin(phase_r + y · RADIUS_WAVE)
-//   center_x(y) = CX + SWAY · sin(phase_s + y · SWAY_WAVE)
+//   radius(y)   = RADIUS + RADIUS_WAVE · sin(phase_r + y · RADIUS_Y)
+//   center_x(y) = CENTER_X + SWAY · sin(phase_s + y · SWAY_Y)
 //   θ(y)        = (y · torsion(phase) + phase) · TURNS
 //
 // torsion is twister3's envelope, TORSION · sin(7 phase) · cos(phase). The
@@ -36,7 +36,7 @@
 #define TWISTER_CENTER_X (RETRO_WIDTH / 2.0)
 #define TWISTER_RADIUS 70 // mean radius of the circle the four corners ride
 #define TWISTER_RADIUS_WAVE 42 // how far the radius walks off that mean
-#define TWISTER_SWAY 44 // how far the axis wanders off centre
+#define TWISTER_SWAY 44 // how far the axis wanders off center
 #define TWISTER_TURNS 1.5
 #define TWISTER_TORSION 1.2
 #define TWISTER_TORSION_WAVE 7
@@ -63,7 +63,7 @@ unsigned char TwisterShadeTable[RETRO_COLORS * TWISTER_SHADES];
 //
 // Map every source texel through a chrome ramp and back into the picture's
 // own palette. The lower TWISTER_DIFFUSE entries run from ambient to the
-// face colour; the remaining TWISTER_SPECULAR entries walk from that colour
+// face color; the remaining TWISTER_SPECULAR entries walk from that color
 // toward white, which is the metal highlight.
 //
 static void CreateChromeShadeTable(const RETRO_Palette *palette)

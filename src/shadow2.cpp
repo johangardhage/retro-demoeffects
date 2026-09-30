@@ -31,8 +31,8 @@
 // a point light out, or down level with any of the object, there is none
 // from it.
 //
-// The screen's palette is fitted as the demo starts, to the colours those
-// tables will ask for: each texture's colours, as often as its texels have
+// The screen's palette is fitted as the demo starts, to the colors those
+// tables will ask for: each texture's colors, as often as its texels have
 // them, under each light as often as the ground sees it with the point
 // lights at points round their paths, and the ground's again in shadow.
 // Changing a light changes the palette with it.
@@ -71,16 +71,16 @@
 #define POINT_LIGHT_KL 0.001f // green, attenuation per world unit
 #define POINT_LIGHT2_KL 0.002f // red
 #define POINT_LIGHT_RATE (30 * DEG2RAD) // radians a second round the world
-#define POINT_LIGHT_ORBIT WORLD(500) // green, radius about the world's centre
+#define POINT_LIGHT_ORBIT WORLD(500) // green, radius about the world's center
 #define POINT_LIGHT2_ORBIT WORLD(200) // red, twice as fast the other way
 #define POINT_LIGHT_ALTITUDE WORLD(500) // where both start
 #define POINT_LIGHT_RAISE WORLD(300) // a second, while 1 to 4 is held
 #define POINT_LIGHT_TOP WORLD(2000) // the highest 1 to 4 raise a light, and the ground's base the lowest
 #define LIGHT_LEVELS 32 // neutral light, in the tables
-#define TINT_LEVELS 8 // and each point light's colour beyond it
+#define TINT_LEVELS 8 // and each point light's color beyond it
 
 #define OBJECT_SCALE WORLD(40)
-#define OBJECT_ORBIT WORLD(150) // radius of the orbit about the world's centre
+#define OBJECT_ORBIT WORLD(150) // radius of the orbit about the world's center
 #define OBJECT_ALTITUDE WORLD(200) // mean height of the orbit
 #define OBJECT_BOB WORLD(75) // and how far it rises and falls, once a lap
 #define OBJECT_RATE (30 * DEG2RAD) // radians a second round the orbit
@@ -125,14 +125,14 @@ static unsigned char LightTableData[TEXTURES][RETRO_COLORS][LIGHT_LEVELS][TINT_L
 static unsigned char ShadowTable[RETRO_COLORS];
 static unsigned char ColorBlack, ColorTextGreen, ColorWhite, ColorCubeGreen, ColorCubeRed, ColorSky, ColorGround;
 static Model3D *Models[MODELS];
-static const vec3 Sun = normalize(vec3{ 1, 1, -1 }); // the infinite light, towards it
+static const vec3 Sun = normalize(vec3{ 1, 1, -1 }); // the infinite light, toward it
 
 // The screen's palette, and what it is fitted to
 static RETRO_Palette ScreenPalette[RETRO_COLORS];
 static RETRO_ColorHistogram Histogram;
 static float LightWeight[LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS]; // how often the ground sees each light
 
-// The colours drawn besides the textures, held in the palette exactly
+// The colors drawn besides the textures, held in the palette exactly
 static const RETRO_Palette CubeGreen = { 0, 255, 10 }, CubeRed = { 255, 0, 0 }, Sky = { 50, 50, 200 }, Ground = { 25, 50, 110 };
 static const RETRO_Palette Held[] = { RETRO_BLACK, RETRO_GREEN, RETRO_WHITE, CubeGreen, CubeRed, Sky, Ground };
 static constexpr int HELD = sizeof(Held) / sizeof(Held[0]);
@@ -166,7 +166,7 @@ static float PointLightTerm(vec3 p, vec3 n, vec3 light, float kl)
 	return POINT_LIGHT * MAX(dot(n, l) / distance, 0.0f) / (kl * TO_WORLD(distance));
 }
 
-// A colour under the light: the neutral level as the shade, and green and
+// A color under the light: the neutral level as the shade, and green and
 // red beyond it as the tints
 static RETRO_Palette Modulate(RETRO_Palette color, float neutral, const float *tint)
 {
@@ -207,7 +207,7 @@ static RETRO_TerrainVertex MakeVertex(vec3 p, vec2 uv, Light light)
 	return vertex;
 }
 
-// A texture's light table, from its own colours to the screen's
+// A texture's light table, from its own colors to the screen's
 static RETRO_ShadeTable LightTable(int texture)
 {
 	return { &LightTableData[texture - ASSET_TERRAIN][0][0][0][0], RETRO_COLORS, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
@@ -215,7 +215,7 @@ static RETRO_ShadeTable LightTable(int texture)
 
 //
 // One polygon, through the near plane and onto the screen: textured and lit
-// when there is a texture, a flat colour when there is not. Flat colours
+// when there is a texture, a flat color when there is not. Flat colors
 // are black with the lighting off.
 //
 static void DrawPolygon(const RETRO_TerrainVertex *vertex, int count, int texture, unsigned char color)
@@ -296,7 +296,7 @@ static void DrawShadow(const Model3D *model, vec3 position, float scale, vec3 li
 	int z = (int)floorf(center.z);
 	if (x < 0 || z < 0 || x >= RETRO_Terrain.width - 1 || z >= RETRO_Terrain.height - 1) return;
 
-	// Two directions across the ray to the object's centre, taken off
+	// Two directions across the ray to the object's center, taken off
 	// whichever axis is not along it, and the model's corners as the light
 	// sees them: across the ray over the distance along it. A corner level
 	// with the light or behind it has no ray to the ground
@@ -324,9 +324,9 @@ static void DrawShadow(const Model3D *model, vec3 position, float scale, vec3 li
 	}
 	// Each corner lands at its own height, so the outline is not flat and can
 	// turn concave on screen, where a fan from one of its corners reaches
-	// past it. Fanned from the centre's shadow instead, the triangles stay
+	// past it. Fanned from the center's shadow instead, the triangles stay
 	// inside the outline; each is clipped on its own, so the near plane
-	// cannot move the fan off that centre
+	// cannot move the fan off that center
 	RETRO_TerrainVertex middle = MakeVertex({ center.x, center.y + SHADOW_LIFT, center.z }, { 0, 0 }, { 1, {} });
 	for (int i = 0; i < corners; i++) {
 		RETRO_TerrainVertex triangle[3] = { middle, shadow[i], shadow[(i + 1) % corners] };
@@ -366,7 +366,7 @@ static void DrawText(void)
 	RETRO_PutString(text, 0, RETRO_HEIGHT - 37, ColorTextGreen);
 }
 
-// The point lights on their paths about the world's centre
+// The point lights on their paths about the world's center
 static void PlacePointLights(double time)
 {
 	vec3 center = WorldCenter();
@@ -376,7 +376,7 @@ static void PlacePointLights(double time)
 }
 
 //
-// The screen's palette, fitted to the colours the light tables will ask for
+// The screen's palette, fitted to the colors the light tables will ask for
 //
 static void FitScreenPalette(void)
 {
@@ -397,7 +397,7 @@ static void FitScreenPalette(void)
 		}
 	}
 
-	// Each texture's colours, as often as its texels have them, under those
+	// Each texture's colors, as often as its texels have them, under those
 	// lights: the ground's, then the objects' with less say, since they
 	// cover less of the screen, and the ground's again in shadow
 	for (int texture = ASSET_TERRAIN; texture < ASSET_TERRAIN + TEXTURES; texture++) {
@@ -454,7 +454,7 @@ void DEMO_Render(double time, double deltatime)
 	const Object &selected = Objects[CurrentObject];
 	const Model3D *model = Models[selected.model];
 
-	// The sky, and a band of ground colour below it for wherever the
+	// The sky, and a band of ground color below it for wherever the
 	// landscape does not reach
 	RETRO_Clear(ColorSky);
 	RETRO_DrawRectangle(0, (int)(RETRO_HEIGHT * 0.38f), RETRO_WIDTH - 1, RETRO_HEIGHT - 1, ColorGround);
@@ -492,7 +492,7 @@ void DEMO_Initialize(void)
 	FitScreenPalette();
 	const RETRO_Palette *palette = ScreenPalette;
 
-	// The colours drawn besides the textures, each held in the palette
+	// The colors drawn besides the textures, each held in the palette
 	ColorBlack = RETRO_NearestPaletteIndex(RETRO_BLACK, palette);
 	ColorTextGreen = RETRO_NearestPaletteIndex(RETRO_GREEN, palette);
 	ColorWhite = RETRO_NearestPaletteIndex(RETRO_WHITE, palette);
@@ -501,7 +501,7 @@ void DEMO_Initialize(void)
 	ColorSky = RETRO_NearestPaletteIndex(Sky, palette);
 	ColorGround = RETRO_NearestPaletteIndex(Ground, palette);
 
-	// A light table per texture, from its own colours to the screen's
+	// A light table per texture, from its own colors to the screen's
 	for (int texture = ASSET_TERRAIN; texture < ASSET_TERRAIN + TEXTURES; texture++) {
 		RETRO_CreateShadeTable(RETRO_ImagePalette(texture), palette, LightTable(texture), Modulate);
 	}
@@ -517,7 +517,7 @@ void DEMO_Initialize(void)
 	RETRO_TerrainView.distance = RETRO_Terrain.width * 3 / 2;
 	RETRO_TerrainView.nearplane = WORLD(10);
 
-	// The camera starts 500 up and 400 short of the centre, looking at it,
+	// The camera starts 500 up and 400 short of the center, looking at it,
 	// and falls onto the ground
 	vec3 center = WorldCenter();
 	RETRO_Camera.x = center.x;

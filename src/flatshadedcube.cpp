@@ -5,10 +5,10 @@
 //
 //   c + intensity · ShadeFractionFromLambert(N · L)
 //
-// with L = (0, 0, −1) and ShadeFractionFromLambert = 1 − acos(N·L)/(π/2), so the
-// shades are even in θ, matching the palette. The palette is matte: a
-// specular highlight would flash the whole face at once because the
-// face has only one normal. Euler angles live on 2π.
+// with L = (0, 0, −1) and ShadeFractionFromLambert = 1 − acos(N·L)/(π/2), so
+// the shades are even in θ, matching the palette. The palette is matte: a
+// specular highlight would flash the whole face at once because the face has
+// only one normal. Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

@@ -15,7 +15,7 @@
 // walk up the screen reading the table, and the road ends where the table
 // runs past ROAD_DRAW_DISTANCE rather than at a far clip plane.
 //
-// Nothing knows where the road is. The centre is accumulated up the screen
+// Nothing knows where the road is. The center is accumulated up the screen
 // from the bottom, where it is under the camera, by the two step recurrence
 //
 //   x += dx,  dx += segment.curve
@@ -91,7 +91,7 @@ enum { COLOR_GRASS_DARK = 1, COLOR_GRASS_LIGHT, COLOR_RUMBLE_DARK, COLOR_RUMBLE_
 	COLOR_TARMAC_DARK, COLOR_TARMAC_LIGHT, COLOR_LANE };
 
 struct Segment {
-	float curve; // pixels across the road centre gains per scanline, per scanline
+	float curve; // pixels across the road center gains per scanline, per scanline
 	float hill; // table entries a scanline takes on top of the one the flat road takes
 };
 
@@ -120,7 +120,7 @@ void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 
-	// Drive. The track loops, so the distance travelled wraps at its length
+	// Drive. The track loops, so the distance traveled wraps at its length
 	double tracklength = RoadSegments * (double)ROAD_SEGMENT_LENGTH;
 	double position = fmod(time * ROAD_SPEED, tracklength);
 
@@ -130,7 +130,7 @@ void DEMO_Render(double time, double deltatime)
 	static float playerx = 0;
 	playerx += deltatime * (-Road[base].curve * ROAD_CENTRIFUGAL - playerx * ROAD_RECENTER);
 
-	// Walk up the screen. x is where the centre of the road has reached and
+	// Walk up the screen. x is where the center of the road has reached and
 	// dx how fast it is moving sideways, zi how far into the table the walk
 	// has come. The camera's own place across the road is not part of that
 	// walk: it is worth playerx half-widths at every row, which is a wide
@@ -159,23 +159,23 @@ void DEMO_Render(double time, double deltatime)
 
 		// Where the road is drawn on this row, once the camera's place across
 		// it is taken off at this row's scale
-		float centre = x - playerx * w;
+		float center = x - playerx * w;
 
 		unsigned char *row = dest + y * RETRO_WIDTH;
 		memset(row, grass, RETRO_WIDTH);
-		DrawSpan(row, centre - w * (1 + ROAD_RUMBLE_WIDTH), centre + w * (1 + ROAD_RUMBLE_WIDTH), rumble);
-		DrawSpan(row, centre - w, centre + w, tarmac);
+		DrawSpan(row, center - w * (1 + ROAD_RUMBLE_WIDTH), center + w * (1 + ROAD_RUMBLE_WIDTH), rumble);
+		DrawSpan(row, center - w, center + w, tarmac);
 
 		// Lane markings live on the light stripes only, which is what leaves
 		// a gap between one dash and the next
 		if (light) {
 			for (int i = 1; i < ROAD_LANES; i++) {
-				float lx = centre - w + 2 * w * i / ROAD_LANES;
+				float lx = center - w + 2 * w * i / ROAD_LANES;
 				DrawSpan(row, lx - w * ROAD_LANE_WIDTH, lx + w * ROAD_LANE_WIDTH, COLOR_LANE);
 			}
 		}
 
-		// The segment this row is looking at accelerates the centre and sets
+		// The segment this row is looking at accelerates the center and sets
 		// how much of the table the next row takes
 		Segment *segment = &Road[(int)((position + z) / ROAD_SEGMENT_LENGTH) % RoadSegments];
 

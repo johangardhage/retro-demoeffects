@@ -1,7 +1,7 @@
 //
 // Scroller, vertical pages
 //
-// Pages of centred text (see ScrollText below) rise from below the
+// Pages of centered text (see ScrollText below) rise from below the
 // screen to above it at a constant rate,
 //
 //   top = RETRO_HEIGHT - phase

@@ -1,7 +1,7 @@
 //
 // Shadow 4
 //
-// A flat, lit, sandstone plain to drive over, a fan spinning over its centre,
+// A flat, lit, sandstone plain to drive over, a fan spinning over its center,
 // and four lights - ambient, a sun, and a green and a red point light
 // circling the world - with a cube marking each point light, and either can
 // be lowered and raised. The fan's shadow is not cast by any of them, but
@@ -18,7 +18,7 @@
 //
 //   table[t][n][g][r] = nearest(texture[t] · (min(n + r, 1), min(n + g, 1), n))
 //
-// The fan is untextured, a plain grey, and is lit like the textures through
+// The fan is untextured, a plain gray, and is lit like the textures through
 // a table of its own, as a texture of one texel.
 //
 // A lightmap is a level of light for every texel of the ground's texture,
@@ -31,11 +31,11 @@
 // The fan's four blades repeat every quarter turn, so nine lightmaps, a
 // ninth of that apart, hold every turn of its shadow, and the one nearest the
 // fan's own turn is laid on the texture whenever it changes. The texture's
-// palette holds the sandstone's shadowed colours besides its own.
+// palette holds the sandstone's shadowed colors besides its own.
 //
-// The screen's palette is fitted as the demo starts, to the colours those
+// The screen's palette is fitted as the demo starts, to the colors those
 // tables will ask for: the ground's, as often as its texels have them under
-// the lightmaps, and the fan's grey, each under each light as often as the
+// the lightmaps, and the fan's gray, each under each light as often as the
 // ground sees it with the point lights at points round their paths.
 // Changing a light changes the palette with it.
 //
@@ -72,16 +72,16 @@
 #define POINT_LIGHT_KL 0.001f // green, attenuation per world unit
 #define POINT_LIGHT2_KL 0.002f // red
 #define POINT_LIGHT_RATE (30 * DEG2RAD) // radians a second round the world
-#define POINT_LIGHT_ORBIT WORLD(500) // green, radius about the world's centre
+#define POINT_LIGHT_ORBIT WORLD(500) // green, radius about the world's center
 #define POINT_LIGHT2_ORBIT WORLD(200) // red, twice as fast the other way
 #define POINT_LIGHT_ALTITUDE WORLD(500) // where both start
 #define POINT_LIGHT_RAISE WORLD(300) // a second, while 1 to 4 is held
 #define POINT_LIGHT_TOP WORLD(2000) // the highest 1 to 4 raise a light, and the ground's base the lowest
 #define LIGHT_LEVELS 32 // neutral light, in the tables
-#define TINT_LEVELS 8 // and each point light's colour beyond it
+#define TINT_LEVELS 8 // and each point light's color beyond it
 
 #define OBJECT_SCALE WORLD(20)
-#define OBJECT_ALTITUDE WORLD(200) // over the world's centre
+#define OBJECT_ALTITUDE WORLD(200) // over the world's center
 #define OBJECT_RATE (300 * DEG2RAD) // radians a second it spins
 #define LIGHT_OBJECT_SCALE WORLD(10)
 
@@ -96,7 +96,7 @@
 
 enum { ASSET_TERRAIN, ASSET_LIGHTMAPS };
 #define NO_TEXTURE -1
-#define GREY -2 // no texture, but lit: the fan's plain grey
+#define GRAY -2 // no texture, but lit: the fan's plain gray
 enum { MODEL_FAN, MODEL_CUBE, MODELS };
 enum { LIGHT_GREEN, LIGHT_RED, POINT_LIGHTS };
 
@@ -108,23 +108,23 @@ struct Light {
 static_assert(POINT_LIGHTS <= RETRO_MAX_TINTS, "Each point light needs a tint of its own");
 
 static unsigned char LightTableData[RETRO_COLORS][LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS]; // the ground's
-static unsigned char GreyTable[LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS]; // and on the fan's grey
-static unsigned char GreyTexel; // the one texel of the grey, the table's only row
+static unsigned char GrayTable[LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS]; // and on the fan's gray
+static unsigned char GrayTexel; // the one texel of the gray, the table's only row
 static unsigned char LightmapTable[RETRO_COLORS][RETRO_COLORS]; // a texel at each lightmap level
 static unsigned char Sandstone[TEXTURE_SIZE * TEXTURE_SIZE]; // the ground's texture under no lightmap
 static int AppliedLightmap = NO_LIGHTMAP; // none yet
 static unsigned char ColorBlack, ColorTextGreen, ColorWhite, ColorCubeGreen, ColorCubeRed, ColorSky, ColorGround;
 static Model3D *Models[MODELS];
 static unsigned char FlatGround[16 * 16]; // the height map
-static const RETRO_Palette Grey = { 191, 191, 191 };
-static const vec3 Sun = normalize(vec3{ 1, 1, -1 }); // the infinite light, towards it
+static const RETRO_Palette Gray = { 191, 191, 191 };
+static const vec3 Sun = normalize(vec3{ 1, 1, -1 }); // the infinite light, toward it
 
 // The screen's palette, and what it is fitted to
 static RETRO_Palette ScreenPalette[RETRO_COLORS];
 static RETRO_ColorHistogram Histogram;
 static float LightWeight[LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS]; // how often the ground sees each light
 
-// The colours drawn besides the textures, held in the palette exactly
+// The colors drawn besides the textures, held in the palette exactly
 static const RETRO_Palette CubeGreen = { 0, 255, 10 }, CubeRed = { 255, 0, 0 }, Sky = { 50, 50, 200 }, Ground = { 25, 50, 110 };
 static const RETRO_Palette Held[] = { RETRO_BLACK, RETRO_GREEN, RETRO_WHITE, CubeGreen, CubeRed, Sky, Ground };
 static constexpr int HELD = sizeof(Held) / sizeof(Held[0]);
@@ -156,7 +156,7 @@ static float PointLightTerm(vec3 p, vec3 n, vec3 light, float kl)
 	return POINT_LIGHT * MAX(dot(n, l) / distance, 0.0f) / (kl * TO_WORLD(distance));
 }
 
-// A colour under the light: the neutral level as the shade, and green and
+// A color under the light: the neutral level as the shade, and green and
 // red beyond it as the tints
 static RETRO_Palette Modulate(RETRO_Palette color, float neutral, const float *tint)
 {
@@ -197,23 +197,23 @@ static RETRO_TerrainVertex MakeVertex(vec3 p, vec2 uv, Light light)
 	return vertex;
 }
 
-// The ground's light table, from its texture's own colours to the screen's
+// The ground's light table, from its texture's own colors to the screen's
 static RETRO_ShadeTable LightTable(void)
 {
 	return { &LightTableData[0][0][0][0], RETRO_COLORS, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
 }
 
-// The fan's grey's, as a texture of one texel
-static RETRO_ShadeTable GreyLightTable(void)
+// The fan's gray's, as a texture of one texel
+static RETRO_ShadeTable GrayLightTable(void)
 {
-	return { &GreyTable[0][0][0], 1, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
+	return { &GrayTable[0][0][0], 1, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
 }
 
 //
 // One polygon, through the near plane and onto the screen: the ground's
-// texture, lit, for ASSET_TERRAIN, grey and lit for GREY, a flat colour
+// texture, lit, for ASSET_TERRAIN, gray and lit for GRAY, a flat color
 // otherwise.
-// Flat colours are black with the lighting off.
+// Flat colors are black with the lighting off.
 //
 static void DrawPolygon(const RETRO_TerrainVertex *vertex, int count, int texture, unsigned char color)
 {
@@ -222,8 +222,8 @@ static void DrawPolygon(const RETRO_TerrainVertex *vertex, int count, int textur
 	if (points < 3) return;
 
 	if (!Lighting) color = ColorBlack;
-	if (texture == GREY) {
-		RETRO_DrawTexMapGouraudPolygon(polygon, points, &GreyTexel, 1, 1, GreyLightTable());
+	if (texture == GRAY) {
+		RETRO_DrawTexMapGouraudPolygon(polygon, points, &GrayTexel, 1, 1, GrayLightTable());
 	} else if (texture != NO_TEXTURE) {
 		RETRO_DrawTexMapGouraudPolygon(polygon, points, RETRO_ImageData(texture), TEXTURE_SIZE, TEXTURE_SIZE, LightTable());
 	} else {
@@ -315,7 +315,7 @@ static void DrawText(void)
 	RETRO_PutString(text, 0, RETRO_HEIGHT - 28, ColorTextGreen);
 }
 
-// The point lights on their paths about the world's centre
+// The point lights on their paths about the world's center
 static void PlacePointLights(double time)
 {
 	vec3 center = WorldCenter();
@@ -325,7 +325,7 @@ static void PlacePointLights(double time)
 }
 
 //
-// The screen's palette, fitted to the colours the light tables will ask for
+// The screen's palette, fitted to the colors the light tables will ask for
 //
 static void FitScreenPalette(void)
 {
@@ -346,8 +346,8 @@ static void FitScreenPalette(void)
 		}
 	}
 
-	// The ground's colours, as often as its texels have them under the
-	// lightmaps, under those lights, then the fan's grey with less say, since
+	// The ground's colors, as often as its texels have them under the
+	// lightmaps, under those lights, then the fan's gray with less say, since
 	// it covers less of the screen
 	float texels[RETRO_COLORS] = {};
 	for (int lightmap = 0; lightmap < LIGHTMAPS; lightmap++) {
@@ -355,8 +355,8 @@ static void FitScreenPalette(void)
 		for (int i = 0; i < TEXTURE_SIZE * TEXTURE_SIZE; i++) texels[LightmapTable[Sandstone[i]][level[i]]] += 1.0f / LIGHTMAPS;
 	}
 	RETRO_AddShadeTableColors(&Histogram, RETRO_ImagePalette(ASSET_TERRAIN), texels, LightTable(), &LightWeight[0][0][0], Modulate);
-	float greytexels = TEXTURE_SIZE * TEXTURE_SIZE; // as many as the ground's
-	RETRO_AddShadeTableColors(&Histogram, &Grey, &greytexels, GreyLightTable(), &LightWeight[0][0][0], Modulate, OBJECT_WEIGHT);
+	float graytexels = TEXTURE_SIZE * TEXTURE_SIZE; // as many as the ground's
+	RETRO_AddShadeTableColors(&Histogram, &Gray, &graytexels, GrayLightTable(), &LightWeight[0][0][0], Modulate, OBJECT_WEIGHT);
 
 	RETRO_CreateHistogramPalette(&Histogram, ScreenPalette, Held, HELD);
 	RETRO_SetPalette(ScreenPalette);
@@ -395,7 +395,7 @@ void DEMO_Render(double time, double deltatime)
 	PlacePointLights(time);
 	vec3 center = WorldCenter();
 
-	// The object over the centre, spinning. The world is the mirror of the
+	// The object over the center, spinning. The world is the mirror of the
 	// book's, so it turns the other way round y to look the same
 	float ay = fmod(time * OBJECT_RATE, 2 * M_PI);
 	mat3 spin = rotateY(-ay);
@@ -408,13 +408,13 @@ void DEMO_Render(double time, double deltatime)
 		AppliedLightmap = lightmap;
 	}
 
-	// The sky, and a band of ground colour below it for wherever the
+	// The sky, and a band of ground color below it for wherever the
 	// landscape does not reach
 	RETRO_Clear(ColorSky);
 	RETRO_DrawRectangle(0, (int)(RETRO_HEIGHT * 0.38f), RETRO_WIDTH - 1, RETRO_HEIGHT - 1, ColorGround);
 	RETRO_ClearDepthBuffer();
 	DrawTerrain(mesh);
-	DrawModel(Models[MODEL_FAN], spin, object, OBJECT_SCALE, GREY, 0, true);
+	DrawModel(Models[MODEL_FAN], spin, object, OBJECT_SCALE, GRAY, 0, true);
 	DrawModel(Models[MODEL_CUBE], identity(), PointLightPosition[LIGHT_GREEN], LIGHT_OBJECT_SCALE, NO_TEXTURE, ColorCubeGreen, false);
 	DrawModel(Models[MODEL_CUBE], identity(), PointLightPosition[LIGHT_RED], LIGHT_OBJECT_SCALE, NO_TEXTURE, ColorCubeRed, false);
 
@@ -439,7 +439,7 @@ void DEMO_Initialize(void)
 	FitScreenPalette();
 	const RETRO_Palette *palette = ScreenPalette;
 
-	// The colours drawn besides the textures, each held in the palette
+	// The colors drawn besides the textures, each held in the palette
 	ColorBlack = RETRO_NearestPaletteIndex(RETRO_BLACK, palette);
 	ColorTextGreen = RETRO_NearestPaletteIndex(RETRO_GREEN, palette);
 	ColorWhite = RETRO_NearestPaletteIndex(RETRO_WHITE, palette);
@@ -448,10 +448,10 @@ void DEMO_Initialize(void)
 	ColorSky = RETRO_NearestPaletteIndex(Sky, palette);
 	ColorGround = RETRO_NearestPaletteIndex(Ground, palette);
 
-	// The ground's light table, from its texture's own colours to the
-	// screen's, and the fan's grey's
+	// The ground's light table, from its texture's own colors to the
+	// screen's, and the fan's gray's
 	RETRO_CreateShadeTable(RETRO_ImagePalette(ASSET_TERRAIN), palette, LightTable(), Modulate);
-	RETRO_CreateShadeTable(&Grey, palette, GreyLightTable(), Modulate);
+	RETRO_CreateShadeTable(&Gray, palette, GrayLightTable(), Modulate);
 
 	// The lens: 90 degrees across, square pixels, pitched by the jeep
 	RETRO_TerrainView.focalx = RETRO_WIDTH / 2.0f;
@@ -460,7 +460,7 @@ void DEMO_Initialize(void)
 	RETRO_TerrainView.distance = RETRO_Terrain.width * 3 / 2;
 	RETRO_TerrainView.nearplane = WORLD(10);
 
-	// The camera starts 500 up and 400 short of the centre, looking at it,
+	// The camera starts 500 up and 400 short of the center, looking at it,
 	// and falls onto the ground
 	vec3 center = WorldCenter();
 	RETRO_Camera.x = center.x;

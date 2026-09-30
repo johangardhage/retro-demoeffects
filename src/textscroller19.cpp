@@ -8,7 +8,7 @@
 // the sine at that column,
 //
 //   texel = strip[row][(x + phase) mod stripwidth]
-//   y     = SCROLL_Y + AMP sin(wave + x RATE)
+//   y     = scrolly + WAVE_AMP sin(wave + x WAVE_RATE)
 //
 // so a letter is sheared up and down, never bent sideways.
 //

@@ -9,7 +9,7 @@
 //
 // Quadrant (sx, sy) samples the texture at (±d_x + dz, ±d_y + dw) with the
 // signs of that quadrant. The four walks start at (W/2, H/2) and step away,
-// so the centre is one pixel (the second write) rather than two copies of
+// so the center is one pixel (the second write) rather than two copies of
 // table (0, 0). Row 0 and column 0 sit outside those walks and take the
 // outer table entry. dz, dw and the two phases live on the wall clock.
 //
@@ -42,7 +42,7 @@ void DEMO_Render(double time, double deltatime)
 	unsigned char *image = RETRO_ImageData();
 
 	// Draw warp. p1/p3 walk left, p2/p4 walk right, all four starting on
-	// the centre pixel so that one texel is the seam.
+	// the center pixel so that one texel is the seam.
 	for (int y = 0; y < WARP_HEIGHT; y++) {
 		unsigned char *p1 = buffer + (WARP_HEIGHT - y) * RETRO_WIDTH + WARP_WIDTH;
 		unsigned char *p2 = p1;
@@ -60,7 +60,7 @@ void DEMO_Render(double time, double deltatime)
 		}
 	}
 
-	// The walks stop at row 1 and column 1. Copy the outer neighbour so
+	// The walks stop at row 1 and column 1. Copy the outer neighbor so
 	// the leftover line is not the cleared background.
 	memcpy(buffer, buffer + RETRO_WIDTH, RETRO_WIDTH);
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

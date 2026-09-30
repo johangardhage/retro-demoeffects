@@ -6,27 +6,27 @@
 // Every step rebuilds the buffer from itself, one 16x16 tile at a time, and a
 // tile copies a whole block from somewhere near where it already sits. The
 // offset is affine in the tile index rather than in the pixel, so for tile
-// (i, j) centred as (u, v):
+// (i, j) centered as (u, v):
 //
 //   source = tile origin + (z*u - r*v, z*v + r*u)
 //
 // which is the linear part of a rotozoom - a scale by z, a rotation by r -
 // evaluated once per tile instead of once per pixel. Sampling the previous step
 // through it applies the transform again and again, dragging a fleck seeded at
-// the centre outwards and spinning it further every step. Copying whole blocks
+// the center outward and spinning it further every step. Copying whole blocks
 // is what gives the look: a mosaic that shears at every tile seam, not a smooth
 // warp. z and r are whole pixels per tile, so both are -1, 0 or 1, which at 16
 // pixels per tile is a scale of 1 +- 1/16 and about 3.6 degrees a step.
 //
-// Random color is seeded into a 9x9 patch at the centre, the one point the
-// transform leaves standing, and the fire palette turns the drift outwards into
+// Random color is seeded into a 9x9 patch at the center, the one point the
+// transform leaves standing, and the fire palette turns the drift outward into
 // a cooling curve.
 //
-// Each step also picks a shift s in [0, 16), samples every tile s pixels further
-// along both axes, then writes the mosaic back s pixels down and right. Those
-// cancel, so the picture does not drift. What is left is that the tile seams no
-// longer fall on a fixed grid, so the mosaic edges dance instead of standing
-// still.
+// Each step also picks a shift s in [0, 16), samples every tile s pixels
+// further along both axes, then writes the mosaic back s pixels down and right.
+// Those cancel, so the picture does not drift. What is left is that the tile
+// seams no longer fall on a fixed grid, so the mosaic edges dance instead of
+// standing still.
 //
 // Controls:
 //   R - cycle rotation through -1, 0 and 1 pixels per tile
@@ -86,7 +86,7 @@ void DEMO_FixedUpdate(double timestep)
 	// Pick this step's sub-tile shift
 	int shift = doshift ? RANDOM(PIECE_SIZE) : 0;
 
-	// Seed random color at the centre, the one point the transform leaves standing
+	// Seed random color at the center, the one point the transform leaves standing
 	for (int y = 0; y <= PIECE_SIZE / 2; y++) {
 		for (int x = 0; x <= PIECE_SIZE / 2; x++) {
 			FrameBuffer[(BUFFER_HEIGHT / 2 + y) * BUFFER_WIDTH + BUFFER_WIDTH / 2 + x] = RANDOM(RETRO_COLORS);
@@ -105,7 +105,7 @@ void DEMO_FixedUpdate(double timestep)
 		}
 	}
 
-	// Write the mosaic back shifted, cancelling the shift the sampling added. Row by
+	// Write the mosaic back shifted, canceling the shift the sampling added. Row by
 	// row, so a row that runs off the right edge is dropped instead of continuing at
 	// the left of the next one. The top and left the shift vacates keep the previous
 	// step, which the margin hides.

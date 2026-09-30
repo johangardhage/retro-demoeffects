@@ -12,7 +12,7 @@
 // stepped by forward differences rather than recomputed.
 // One ball alone meets T on the circle of radius R_i:
 // T R² / R² = T. Where fields overlap, F exceeds T between them, so
-// the discs merge. |p−c|² is floored at 10⁻⁴ so a sample on a centre
+// the discs merge. |p−c|² is floored at 10⁻⁴ so a sample on a center
 // does not divide by zero. The balls fly at constant speed and bounce
 // elastically (reflect pos, flip v) off the box.
 //

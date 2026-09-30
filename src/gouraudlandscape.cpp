@@ -185,7 +185,7 @@ void DEMO_Initialize(void)
 	// same map through the same table, one shade per face instead of per vertex.
 	//
 	// The ambient floor is what makes that affordable. A photographed palette
-	// carries a picture's colors and not ramps, so an entry darkened towards
+	// carries a picture's colors and not ramps, so an entry darkened toward
 	// black finds nothing near it but the few dark colors the picture happened
 	// to contain, and the ground it was lighting drops to one of those: a hole
 	// in the hillside rather than a shadow on it. This palette holds two pure

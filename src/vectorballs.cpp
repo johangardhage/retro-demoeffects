@@ -21,7 +21,7 @@
 // order they were laid out.
 //
 // Depth is also a color. The palette holds LEVELS ramps of SHADES, each the
-// same black to hue to white but dimmer than the one before, and a sprite is
+// same shadow to hue to white but dimmer than the one before, and a sprite is
 // built per ramp, so choosing the sprite by rotated depth dims the whole ball
 // without touching its shading. Entry 0 is left as the transparent one.
 //
@@ -42,6 +42,7 @@
 #define BALL_LEVELS 8 // depth ramps, and sprites, one per step of dimming
 #define BALL_SHADES 30 // palette entries a ramp spends on one ball
 #define BALL_DIM 0.35 // how much of its color the furthest ball keeps
+#define BALL_SHADOW 0.6 // brightness of a ramp's darkest shade, as a fraction of its hue
 #define BALL_DEPTH 110 // rotated depth the ramps cover, either side of the middle
 #define BALL_HUE RETRO_CYAN
 #define BALL_PROJECTION 1.0 // the ring is built in pixels, so the projection adds no scale
@@ -92,8 +93,10 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette. One ramp per depth, black to hue to white, each dimmer than
-	// the one in front of it. Entry 0 is the background and the sprites' alpha
+	// Init palette. One ramp per depth, shadow to hue to white, each dimmer than
+	// the one in front of it. Entry 0 is the background and the sprites' alpha.
+	// The shadow is a dim hue, not black, so where a ball covers another its
+	// unlit side shows as a soft rim in its own color rather than a black one
 	RETRO_SetColor(0, RETRO_BLACK);
 
 	RETRO_Palette hue = BALL_HUE;
@@ -101,11 +104,12 @@ void DEMO_Initialize(void)
 		float dim = 1.0f - (1.0f - BALL_DIM) * k / (BALL_LEVELS - 1);
 		RETRO_Palette lit = RETRO_Palette{ (unsigned char)(hue.r * dim), (unsigned char)(hue.g * dim), (unsigned char)(hue.b * dim) };
 		RETRO_Palette top = RETRO_Palette{ (unsigned char)(255 * dim), (unsigned char)(255 * dim), (unsigned char)(255 * dim) };
+		RETRO_Palette shadow = RETRO_Palette{ (unsigned char)(lit.r * BALL_SHADOW), (unsigned char)(lit.g * BALL_SHADOW), (unsigned char)(lit.b * BALL_SHADOW) };
 
 		int ramp = 1 + k * BALL_SHADES;
 		int middle = ramp + (BALL_SHADES * 2) / 3;
 
-		RETRO_CreateGradientPalette(ramp, middle, RETRO_BLACK, lit);
+		RETRO_CreateGradientPalette(ramp, middle, shadow, lit);
 		RETRO_CreateGradientPalette(middle, ramp + BALL_SHADES, lit, top);
 	}
 

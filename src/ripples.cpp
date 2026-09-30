@@ -1,48 +1,94 @@
 //
 // Ripples
 //
-// A reflection of the still picture in a horizontal trough at WATER_YPOS
-// (the first water row; on this photo that is the hot-spring surface).
-// Row y ≥ WATER_YPOS samples
+// A reflection of the still picture in the water below WATER_YPOS (on this
+// photo the hot-spring surface, the mirror plane), broken up by waves seen
+// in perspective. The row d pixels below the plane mirrors the row d above
+// it, and the water it shows lies at depth
 //
-//   ysrc = 2 WATER_YPOS − y + A sin(2π N_waves (y + t) / N)
+//   z = WATER_EYE / d
 //
-// the integer mirror of y in the trough, plus a sine of WATER_WAVES
-// cycles over the N-entry table. N holds a whole number of waves so the
-// wrap is exact; t lives on N. With A = 3 the source stays on the
-// picture (ysrc ∈ [128, 188]). The source is the already-blitted
-// framebuffer, so a sample that lands on a previous water row reads the
-// reflection of the reflection; that is occasional and is the look.
+// since rows closer to the plane look further out. The waves are a function
+// of that depth, so they bunch up into the distance, and they tilt the
+// reflected ray by the surface slope, which moves the sample by
+//
+//   ysrc = WATER_YPOS − d + d WATER_TILT sin(WATER_KZ z − WATER_SPEED t)
+//
+// The offset scales with d, so at the waterline the waves are too small to
+// move a row and the reflection is still, while toward the bottom of the
+// screen rows break up by up to WATER_TILT d. With these values the source
+// stays above the plane, so it is always the picture and never the water.
+//
+// The water also gives back less light than the picture sends it, and less
+// the nearer it is, so each reflected color is mixed toward the water's own
+// dark blue, from WATER_MIX in the distance to WATER_MIX + WATER_MIXSTEP at
+// the bottom of the screen. The picture has all 256 colors, so the mixes are
+// a shade table of WATER_LEVELS levels, each mixed color remapped to the
+// nearest one the picture has, and the level rises with d, ordered-dithered
+// between neighbours so the steps do not show as bands.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retroshadetable.h"
 
-#define WATER_YPOS 185 // first water row; mirror plane
-#define WATER_WAVES 11 // cycles packed into the table
-#define WATER_AMPLITUDE 3 // peak row offset, pixels
-#define SINE_VALUES 100 // table length; 11 waves so the wrap is exact
-#define WATER_SPEED 30 // table entries travelled per second
+#define WATER_YPOS 185 // mirror plane; the first water row is the one below
+#define WATER_EYE 60.0 // scales rows to depth
+#define WATER_TILT 0.1 // row offset per pixel below the plane
+#define WATER_KZ 14.0 // wave number along the depth
+#define WATER_SPEED 3.0 // radians a second
+#define WATER_LEVELS 16 // shades of reflection, far to near
+#define WATER_MIX 0.15f // how much water color the far level takes
+#define WATER_MIXSTEP 0.35f // and the near level this much more
 
-int SinTable[SINE_VALUES];
+static const RETRO_Palette WaterColor = { 20, 34, 56 };
+
+// 4×4 ordered dither thresholds, (i + 0.5) / 16
+static const float Bayer[4][4] = {
+	{ 0.5f / 16, 8.5f / 16, 2.5f / 16, 10.5f / 16 },
+	{ 12.5f / 16, 4.5f / 16, 14.5f / 16, 6.5f / 16 },
+	{ 3.5f / 16, 11.5f / 16, 1.5f / 16, 9.5f / 16 },
+	{ 15.5f / 16, 7.5f / 16, 13.5f / 16, 5.5f / 16 },
+};
+
+unsigned char WaterTable[RETRO_COLORS * WATER_LEVELS];
+
+//
+// A picture color as the water reflects it, level going from far to near
+//
+static RETRO_Palette Water(RETRO_Palette color, float level, const float *tint)
+{
+	float mix = WATER_MIX + WATER_MIXSTEP * level;
+	return {
+		(unsigned char)(color.r + (WaterColor.r - color.r) * mix),
+		(unsigned char)(color.g + (WaterColor.g - color.g) * mix),
+		(unsigned char)(color.b + (WaterColor.b - color.b) * mix),
+	};
+}
 
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	double phase = fmod(time * WATER_SPEED, SINE_VALUES);
-	int iphase = (int)phase;
+	double phase = fmod(time * WATER_SPEED, 2 * M_PI);
 
 	unsigned char *buffer = RETRO_FrameBuffer();
+	unsigned char *image = RETRO_ImageData();
 
 	// Draw background
-	RETRO_Blit(RETRO_ImageData());
+	RETRO_Blit(image);
 
-	// Draw ripples
-	for (int y = WATER_YPOS; y < RETRO_HEIGHT; y++) {
-		int ysrc = WATER_YPOS + (WATER_YPOS - y) + SinTable[WRAP(y + iphase, SINE_VALUES)];
+	// Draw ripples, each row reading the picture at its rippled mirror row,
+	// darkened toward the viewer
+	for (int y = WATER_YPOS + 1; y < RETRO_HEIGHT; y++) {
+		int d = y - WATER_YPOS;
+		int ysrc = WATER_YPOS - d + (int)lround(d * WATER_TILT * sin(WATER_KZ * WATER_EYE / d - phase));
+		float fade = (float)(d - 1) * (WATER_LEVELS - 1) / (RETRO_HEIGHT - WATER_YPOS - 1);
 
-		RETRO_Blit(buffer + ysrc * RETRO_WIDTH, RETRO_WIDTH, buffer + y * RETRO_WIDTH);
+		for (int x = 0; x < RETRO_WIDTH; x++) {
+			int level = MIN((int)(fade + Bayer[y & 3][x & 3]), WATER_LEVELS - 1);
+			buffer[y * RETRO_WIDTH + x] = WaterTable[image[ysrc * RETRO_WIDTH + x] * WATER_LEVELS + level];
+		}
 	}
 }
 
@@ -50,8 +96,7 @@ void DEMO_Initialize(void)
 {
 	RETRO_LoadImage("assets/monkey_320x240.pcx", true);
 
-	// Init sine table with a whole number of waves, so it wraps smoothly
-	for (int i = 0; i < SINE_VALUES; i++) {
-		SinTable[i] = lround(WATER_AMPLITUDE * sin(2 * M_PI * i * WATER_WAVES / SINE_VALUES));
-	}
+	// Init water table, every picture color at every level, remapped to the picture's own
+	RETRO_ShadeTable watertable = { WaterTable, RETRO_COLORS, WATER_LEVELS };
+	RETRO_CreateShadeTable(RETRO_ImagePalette(), RETRO_ImagePalette(), watertable, Water);
 }

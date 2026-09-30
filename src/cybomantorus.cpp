@@ -21,7 +21,7 @@
 #define FISH_ANIMATION_OFFSET 0.13f
 #define FISH_LANE_OFFSET 0.28f
 #define FISH_DRIFT 0.08f
-#define FISH_FRAMES 17
+#define FISH_MD3_SCALE 5840.0f // steps per unit fish.md3 was packed at
 #define CAMERA_FOV 0.82f
 #define MODEL_SCALE 100.0f
 #define TEXTURE_SIZE 1024
@@ -161,7 +161,7 @@ static void InitializeModels(void)
 	Torus->shadetable = Shades;
 	Torus->shades = RETRO_SHADE_TABLE_SHADES;
 
-	Fish = RETRO_Load3DModel("assets/fish_00.obj", "assets/fish_%02d.obj", FISH_FRAMES);
+	Fish = RETRO_LoadMD3Model("assets/fish.md3", FISH_MD3_SCALE);
 	// Scale every morph target once so swimming never restores the old size.
 	for (int i = 0; i < Fish->frames * Fish->vertices * 3; i++) {
 		Fish->frame[i] *= FISH_SCALE;

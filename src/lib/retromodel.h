@@ -882,6 +882,161 @@ inline Model3D *RETRO_LoadMD2Model(const char *filename)
 	return model;
 }
 
+inline int RETRO_ReadMD3Int(const unsigned char *data)
+{
+	return (int)((uint32_t)data[0] | (uint32_t)data[1] << 8 | (uint32_t)data[2] << 16 | (uint32_t)data[3] << 24);
+}
+
+//
+// Load a Quake III MD3 model, and every frame it holds as a pose of it
+//
+// The file keeps each point as three shorts, and scale says how many of those
+// steps make one model unit. Quake III's own is 64, a step being 1/64 of a
+// Quake unit, which is the default; a model packed at another scale is loaded
+// at the one it was packed at. The surfaces follow one another in one vertex
+// list, all posed by the same frames. The turn from Quake's z up, the reversed
+// triangles and the texture coordinates are handled as for MD2, except that
+// the coordinates are already 0 to 1 and are only scaled to texels. The first
+// frame stands as the model's own vertex list, and the normals the frames
+// carry, two bytes each, are not read: the model's are derived from its first
+// frame, and a pose leaves them as they were, as an OBJ animation's does
+//
+inline Model3D *RETRO_LoadMD3Model(const char *filename, float scale = 64.0f)
+{
+	FILE *fp = fopen(filename, "rb");
+	if (fp == NULL) {
+		RETRO_RageQuit("Cannot open file: %s\n", filename);
+	}
+	fseek(fp, 0, SEEK_END);
+	long size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+	unsigned char *data = (unsigned char *)malloc(size > 0 ? size : 1);
+	if (data == NULL) {
+		RETRO_RageQuit("Cannot allocate model file memory\n");
+	}
+	if (size < 108 || fread(data, size, 1, fp) != 1) {
+		RETRO_RageQuit("Cannot read file: %s\n", filename);
+	}
+	fclose(fp);
+
+	// The header: the magic, the version and the name, then nine ints
+	int frames = RETRO_ReadMD3Int(&data[76]);
+	int surfaces = RETRO_ReadMD3Int(&data[84]);
+	int surfaceoffset = RETRO_ReadMD3Int(&data[100]);
+
+	if (memcmp(data, "IDP3", 4) != 0 || RETRO_ReadMD3Int(&data[4]) != 15) {
+		RETRO_RageQuit("Not an MD3 model: %s\n", filename);
+	}
+	if (frames <= 0 || surfaces <= 0) {
+		RETRO_RageQuit("MD3 model has no frames or no surfaces: %s\n", filename);
+	}
+
+	// Walk the surfaces once to count them into the model lists, checking each
+	// part against the end of the file before it is read
+	int vertices = 0, faces = 0;
+	long offset = surfaceoffset;
+
+	for (int s = 0; s < surfaces; s++) {
+		if (offset < 108 || offset > size - 108 || memcmp(&data[offset], "IDP3", 4) != 0) {
+			RETRO_RageQuit("MD3 surface runs past the end of its file: %s\n", filename);
+		}
+		const unsigned char *surface = &data[offset];
+		int surfaceframes = RETRO_ReadMD3Int(&surface[72]);
+		int surfacevertices = RETRO_ReadMD3Int(&surface[80]);
+		int surfacefaces = RETRO_ReadMD3Int(&surface[84]);
+		int faceoffset = RETRO_ReadMD3Int(&surface[88]);
+		int uvoffset = RETRO_ReadMD3Int(&surface[96]);
+		int pointoffset = RETRO_ReadMD3Int(&surface[100]);
+		int endoffset = RETRO_ReadMD3Int(&surface[104]);
+		long remaining = size - offset;
+
+		if (surfaceframes != frames) {
+			RETRO_RageQuit("MD3 surface holds %d frames, the model %d: %s\n", surfaceframes, frames, filename);
+		}
+		if (surfacevertices <= 0 || surfacevertices > RETRO_MAX_VERTICES - vertices || surfacefaces <= 0 || surfacefaces > RETRO_MAX_FACES - faces) {
+			RETRO_RageQuit("MD3 model does not fit the model lists: %s\n", filename);
+		}
+		// Division avoids overflowing on a malformed count
+		if (faceoffset < 108 || faceoffset > remaining || surfacefaces > (remaining - faceoffset) / 12 || uvoffset < 108 || uvoffset > remaining || surfacevertices > (remaining - uvoffset) / 8 || pointoffset < 108 || pointoffset > remaining || (long)surfacevertices * frames > (remaining - pointoffset) / 8 || endoffset < 108 || endoffset > remaining) {
+			RETRO_RageQuit("MD3 surface runs past the end of its file: %s\n", filename);
+		}
+
+		vertices += surfacevertices;
+		faces += surfacefaces;
+		offset += endoffset;
+	}
+
+	Model3D *model = RETRO_Allocate3DModel();
+	model->vertices = vertices;
+	model->uvs = vertices;
+	model->faces = faces;
+
+	model->frame = (float *)malloc((size_t)frames * vertices * 3 * sizeof(float));
+	if (model->frame == NULL) {
+		RETRO_RageQuit("Cannot allocate animation memory\n");
+	}
+	model->frames = frames;
+
+	int firstvertex = 0, firstface = 0;
+	offset = surfaceoffset;
+
+	for (int s = 0; s < surfaces; s++) {
+		const unsigned char *surface = &data[offset];
+		int surfacevertices = RETRO_ReadMD3Int(&surface[80]);
+		int surfacefaces = RETRO_ReadMD3Int(&surface[84]);
+		const unsigned char *triangle = &surface[RETRO_ReadMD3Int(&surface[88])];
+		const unsigned char *uv = &surface[RETRO_ReadMD3Int(&surface[96])];
+		const unsigned char *point = &surface[RETRO_ReadMD3Int(&surface[100])];
+
+		// One UV per vertex, so a vertex names its UV by its own index
+		for (int i = 0; i < surfacevertices; i++) {
+			int u = RETRO_ReadMD3Int(&uv[i * 8]), v = RETRO_ReadMD3Int(&uv[i * 8 + 4]);
+			float x, y;
+			memcpy(&x, &u, sizeof(float));
+			memcpy(&y, &v, sizeof(float));
+			model->uv[firstvertex + i] = { x * RETRO_TEXMAP_SIZE, y * RETRO_TEXMAP_SIZE };
+		}
+
+		for (int i = 0; i < surfacefaces; i++) {
+			Face *face = &model->face[firstface + i];
+			face->vertices = 3;
+			for (int j = 0; j < 3; j++) {
+				int vertex = RETRO_ReadMD3Int(&triangle[i * 12 + (2 - j) * 4]);
+				if (vertex < 0 || vertex >= surfacevertices) {
+					RETRO_RageQuit("Face names a vertex the file does not define: %s\n", filename);
+				}
+				face->vertex[j] = firstvertex + vertex;
+				face->uv[j] = firstvertex + vertex;
+			}
+		}
+
+		for (int frame = 0; frame < frames; frame++) {
+			const unsigned char *source = &point[(size_t)frame * surfacevertices * 8];
+			float *pose = &model->frame[((size_t)frame * vertices + firstvertex) * 3];
+			for (int i = 0; i < surfacevertices; i++) {
+				float x = (short)(source[i * 8] | source[i * 8 + 1] << 8) / scale;
+				float y = (short)(source[i * 8 + 2] | source[i * 8 + 3] << 8) / scale;
+				float z = (short)(source[i * 8 + 4] | source[i * 8 + 5] << 8) / scale;
+				pose[i * 3] = x;
+				pose[i * 3 + 1] = z;
+				pose[i * 3 + 2] = -y;
+			}
+		}
+
+		firstvertex += surfacevertices;
+		firstface += surfacefaces;
+		offset += RETRO_ReadMD3Int(&surface[104]);
+	}
+	free(data);
+
+	RETRO_BlendModelPoses(0, 0, 0, model);
+	RETRO_InitializeFaceNormals(model);
+	RETRO_InitializeFaceTangents(model);
+	RETRO_InitializeVertexNormals(model);
+
+	return model;
+}
+
 inline void RETRO_Save3DModel(const char *filename, Model3D *model)
 {
 	FILE *fp = fopen(filename, "wb");

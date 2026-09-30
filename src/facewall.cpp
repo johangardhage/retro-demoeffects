@@ -13,7 +13,7 @@
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
 
-#define FACE_FRAMES 11
+#define FACE_MD3_SCALE 256.0f // steps per unit facewall.md3 was packed at
 #define FACE_VERTS 529
 #define FACE_TRIS 968
 #define WALL_SCALE 21
@@ -57,9 +57,9 @@ void DEMO_Initialize(void)
 	RETRO_Set6bitPalette(palette);
 
 	// Load model
-	Wall = RETRO_Load3DModel("assets/facewall.obj", "assets/facewall_%02d.obj", FACE_FRAMES);
+	Wall = RETRO_LoadMD3Model("assets/facewall.md3", FACE_MD3_SCALE);
 	if (Wall->vertices != FACE_VERTS || Wall->faces != FACE_TRIS) {
-		RETRO_RageQuit("facewall.obj has %d vertices, %d faces (expected %d, %d)\n", Wall->vertices, Wall->faces, FACE_VERTS, FACE_TRIS);
+		RETRO_RageQuit("facewall.md3 has %d vertices, %d faces (expected %d, %d)\n", Wall->vertices, Wall->faces, FACE_VERTS, FACE_TRIS);
 	}
 	Wall->twosided = true;
 	Wall->c = 0;

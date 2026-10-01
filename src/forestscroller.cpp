@@ -19,6 +19,7 @@
 
 #include "lib/retro.h"
 #include "lib/retrofont.h"
+#include "lib/retrovector.h"
 #include "lib/retromain.h"
 
 #define FOREST_BACKGROUND "assets/forest_320x200.pcx"
@@ -98,7 +99,7 @@ void DEMO_FixedUpdate(double timestep)
 			if (t > 0) {
 				taper += PATH_TAPER_CURVE * t * t * (1 - t);
 			}
-			double height = PATH_HEIGHT_MIN + (PATH_HEIGHT_PEAK - PATH_HEIGHT_MIN) * taper;
+			double height = mix(PATH_HEIGHT_MIN, PATH_HEIGHT_PEAK, taper);
 			if (s < -height / 2 || s >= height / 2) {
 				continue;
 			}

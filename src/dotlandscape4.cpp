@@ -94,9 +94,9 @@ static bool TerrainOccludes(const ProjectedDot &dot)
 	for (float distance = RETRO_TerrainView.nearplane + samplestep;
 		distance < dot.depth - samplestep; distance += samplestep) {
 		float t = distance / dot.depth;
-		float x = RETRO_Camera.x + (dot.worldx - RETRO_Camera.x) * t;
-		float z = RETRO_Camera.z + (dot.worldz - RETRO_Camera.z) * t;
-		float rayheight = RETRO_Camera.height + (height - RETRO_Camera.height) * t;
+		float x = mix(RETRO_Camera.x, dot.worldx, t);
+		float z = mix(RETRO_Camera.z, dot.worldz, t);
+		float rayheight = mix(RETRO_Camera.height, height, t);
 		if (RETRO_TerrainHeightLinear(x, z) > rayheight + 1.0f) return true;
 	}
 	return false;

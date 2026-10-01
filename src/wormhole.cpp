@@ -32,6 +32,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrovector.h"
 
 #define WORM_XDIR -1
 #define WORM_YDIR 1
@@ -93,7 +94,7 @@ void DEMO_Initialize(void)
 				double f = e / 4 - a * a - b * b;
 				double df = e / 2 - 2 * k * b;
 				if (fabs(df) < 1.0e-14) break;
-				double next = CLAMP01((t - f / df - tmin) / (tmax - tmin)) * (tmax - tmin) + tmin;
+				double next = clamp(t - f / df, tmin, tmax);
 				if (fabs(next - t) < 1.0e-13) {
 					t = next;
 					break;

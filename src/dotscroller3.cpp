@@ -83,9 +83,9 @@ static float TerrainHeight(float x, float z)
 {
 	int ix = (int)floorf(x), iz = (int)floorf(z);
 	float fx = x - ix, fz = z - iz;
-	float top = TerrainSample(ix, iz) * (1 - fx) + TerrainSample(ix + 1, iz) * fx;
-	float bottom = TerrainSample(ix, iz + 1) * (1 - fx) + TerrainSample(ix + 1, iz + 1) * fx;
-	return (top * (1 - fz) + bottom * fz) * WORLD_HEIGHT_SCALE;
+	float top = mix(TerrainSample(ix, iz), TerrainSample(ix + 1, iz), fx);
+	float bottom = mix(TerrainSample(ix, iz + 1), TerrainSample(ix + 1, iz + 1), fx);
+	return mix(top, bottom, fz) * WORLD_HEIGHT_SCALE;
 }
 
 // Scroll the text strip sideways with the camera, following the terrain

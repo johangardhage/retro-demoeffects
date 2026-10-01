@@ -62,7 +62,7 @@ static void RenderFish(double time, float phase, float focal)
 	for (int i = 0; i < FISH_COUNT; i++) {
 		float swim = time * FISH_SWIM_SPEED + FISH_START_PHASE + i * (2.0f * M_PI / FISH_COUNT);
 		float cycle = time * FISH_ANIMATION_SPEED + i * FISH_ANIMATION_OFFSET;
-		RETRO_MorphModel(cycle - floorf(cycle), Fish);
+		RETRO_MorphModel(fract(cycle), Fish);
 		RETRO_InitializeFaceNormals(Fish);
 		RETRO_InitializeVertexNormals(Fish);
 		RETRO_RotateModel(swim + M_PI * 0.5f, 0.0f, phase, Fish);
@@ -97,7 +97,7 @@ static void InitializePalette(void)
 			}
 			// Blend toward white instead of clipping each channel at a
 			// different shade, which creates abrupt highlight transitions.
-			r += (245 - r) * glow; g += (250 - g) * glow; b += (250 - b) * glow;
+			r = mix(r, 245, glow); g = mix(g, 250, glow); b = mix(b, 250, glow);
 			RETRO_SetColor(material * MATERIAL_SHADES + shade, CLAMP256(r), CLAMP256(g), CLAMP256(b));
 		}
 	}
@@ -128,7 +128,7 @@ static void InitializeTexture(void)
 		float row = (tube - 0.5f) * (BAND_REPEATS * ROWS_PER_REPEAT)
 			+ BAND_REPEATS * ROWS_PER_REPEAT + 1.0f;
 		int band = (int)floorf(row) % ROWS_PER_REPEAT;
-		float across = row - floorf(row);
+		float across = fract(row);
 		for (int x = 0; x < TEXTURE_SIZE; x++) {
 			float ring = (x + 0.5f) / TEXTURE_SIZE;
 			float toothcell = ring * TEETH_PER_RING;
@@ -138,7 +138,7 @@ static void InitializeTexture(void)
 			} else if (band == 1) {
 				value = MATERIAL_GREEN;
 			} else {
-				float tooth = toothcell - floorf(toothcell);
+				float tooth = fract(toothcell);
 				// Start the teeth row in blue against the preceding green
 				// band, and finish in green against the next blue band.
 				// Reversing these merges the teeth into the solid ribbons.

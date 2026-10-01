@@ -37,8 +37,8 @@
 #include "lib/retropalette.h"
 
 #define DROPS 500
-#define RAIN_MINSPEED 220.0 // pixels a second, farthest layer
-#define RAIN_MAXSPEED 520.0 // nearest layer
+#define RAIN_MINSPEED 220.0f // pixels a second, farthest layer
+#define RAIN_MAXSPEED 520.0f // nearest layer
 #define RAIN_SLANT 0.18 // sideways pixels per pixel of fall
 #define RAIN_STREAK 0.03 // seconds of travel a streak spans
 #define STREET_TOP 176 // the street's far edge, where the city stands
@@ -135,11 +135,11 @@ void DEMO_FixedUpdate(double timestep)
 {
 	// Move the drops, landing them on the street at their depth
 	for (Drop &drop : Drops) {
-		float speed = RAIN_MINSPEED + drop.z * (RAIN_MAXSPEED - RAIN_MINSPEED);
+		float speed = mix(RAIN_MINSPEED, RAIN_MAXSPEED, drop.z);
 		drop.x += speed * RAIN_SLANT * timestep;
 		drop.y += speed * timestep;
 
-		float landing = STREET_TOP + drop.z * (RETRO_HEIGHT - STREET_TOP);
+		float landing = mix(STREET_TOP, RETRO_HEIGHT, drop.z);
 		if (drop.y >= landing) {
 			Land(drop, landing);
 			Respawn(&drop, true);
@@ -191,12 +191,8 @@ void DEMO_Render(double time, double deltatime)
 
 	// Mix the palette toward the lightning
 	for (int i = 0; i < PALETTE_COLORS; i++) {
-		RETRO_Palette color = Colors[i];
 		float flash = Flash * Lit[i];
-		color.r = color.r + (215 - color.r) * flash;
-		color.g = color.g + (220 - color.g) * flash;
-		color.b = color.b + (255 - color.b) * flash;
-		RETRO_SetColor(i, color);
+		RETRO_SetColor(i, mix(Colors[i], RETRO_Palette{ 215, 220, 255 }, flash));
 	}
 
 	// Draw sky and city, then the street
@@ -227,7 +223,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Draw the streaks, far to near so the near ones cross in front
 	for (Drop &drop : Drops) {
-		float speed = RAIN_MINSPEED + drop.z * (RAIN_MAXSPEED - RAIN_MINSPEED);
+		float speed = mix(RAIN_MINSPEED, RAIN_MAXSPEED, drop.z);
 		float length = speed * RAIN_STREAK;
 		unsigned char color = RAIN + MIN((int)(drop.z * RAIN_COLORS), RAIN_COLORS - 1);
 		int x1 = (int)floorf(drop.x);

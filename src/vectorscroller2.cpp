@@ -112,7 +112,7 @@ struct ScrollPose {
 // raw = letterstart - phase is the letter's place on an unwrapped line; it is
 // brought to the representative closest to 0 every frame rather than
 // carrying a wrap decision forward from the last one. phase itself resets
-// by -textwidth once a lap (it is a fmod), which jumps raw by +textwidth for
+// by -textwidth once a lap (it is a mod), which jumps raw by +textwidth for
 // every letter at once, not just the one due to cross -cull; recomputing
 // fresh from letterstart and the current phase keeps a letter already inside
 // the visible window from being caught by that reset and culled a lap early.
@@ -395,10 +395,7 @@ static Model3D *GetGlyph(unsigned char character)
 
 void DEMO_Render(double time, double deltatime)
 {
-	double phase = fmod(time * SCROLL_SPEED, TextWidth);
-	if (phase < 0) {
-		phase += TextWidth;
-	}
+	double phase = mod(time * SCROLL_SPEED, (double)TextWidth);
 	float spin = (float)(time * HELIX_SPIN);
 
 	for (int i = 0; i < TextLength; i++) {

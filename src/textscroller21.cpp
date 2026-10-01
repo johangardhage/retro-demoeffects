@@ -140,7 +140,7 @@ static void DrawLetters(float ax, float phase, bool facing, bool solidity)
 		// The side that is seen is lit, less the further back on the ring it is.
 		vec3 normal = matrix * vec3{ 0, 0, -1 };
 		float lambert = MAX(dot(facing ? normal : -normal, normalize(LIGHT)), 0.0f);
-		float light = GLEAM_START * (AMBIENT + (1 - AMBIENT) * lambert) + (1 - GLEAM_START) * powf(lambert, SHININESS);
+		float light = GLEAM_START * mix(AMBIENT, 1, lambert) + (1 - GLEAM_START) * powf(lambert, SHININESS);
 		float dim = 1 - (1 - BACK_LIGHT) * (normal.z + 1) / 2;
 		int shade = CLAMP((int)(light * dim * SHADES), 0, SHADES);
 		RETRO_DrawTexMapPolygon(quad, 4, TextStrip[shade], Strip->width, Strip->height);

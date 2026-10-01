@@ -141,19 +141,6 @@ inline int WRAP(unsigned long n, int h) { return WRAP((int)n, h); }
 #define WRAPWIDTH(n) WRAP((n), RETRO_WIDTH)
 #define WRAPHEIGHT(n) WRAP((n), RETRO_HEIGHT)
 
-// Integer hash of a grid position. The same (x, y) always gives the same bits
-// and neighboring positions give unrelated ones, so a pattern built from it
-// repeats exactly and stays anchored to its grid. The odd multipliers spread
-// each coordinate over the word; the xor-shifts fold the well-mixed high bits
-// back into the low ones a caller masks off. Unsigned arithmetic keeps the
-// overflow defined.
-inline unsigned int RETRO_Hash(int x, int y)
-{
-	unsigned int hash = (unsigned int)x * 374761393u + (unsigned int)y * 668265263u;
-	hash = (hash ^ (hash >> 13)) * 1274126177u;
-	return hash ^ (hash >> 16);
-}
-
 // For building an lcm from. Both signs are folded so a non-positive length
 // cannot make a later width / GCD period blow up.
 inline int GCD(int a, int b) { a = abs(a); b = abs(b); return b == 0 ? a : GCD(b, a % b); }

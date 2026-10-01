@@ -78,15 +78,15 @@ static vec3 Sample(float x, float y)
 	float u = fx - ix;
 	float v = fy - iy;
 
-	vec3 top = lerp(Texel(ix, iy), Texel(ix + 1, iy), u);
-	vec3 bottom = lerp(Texel(ix, iy + 1), Texel(ix + 1, iy + 1), u);
-	return lerp(top, bottom, v);
+	vec3 top = mix(Texel(ix, iy), Texel(ix + 1, iy), u);
+	vec3 bottom = mix(Texel(ix, iy + 1), Texel(ix + 1, iy + 1), u);
+	return mix(top, bottom, v);
 }
 
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase. The dome rides a 2:3 Lissajous figure
-	double phase = fmod(time / DOME_PERIOD, 1) * 2 * M_PI;
+	double phase = fract(time / DOME_PERIOD) * 2 * M_PI;
 	float swingx = RETRO_WIDTH / 2.0f - DOME_RADIUS - DOME_MARGIN;
 	float swingy = RETRO_HEIGHT / 2.0f - DOME_RADIUS - DOME_MARGIN;
 	float cx = RETRO_WIDTH / 2.0f + swingx * sin(2 * phase + M_PI / 4);
@@ -116,16 +116,16 @@ void DEMO_Render(double time, double deltatime)
 
 				// Off the glass
 				vec3 bounce = reflect(d, n);
-				vec3 sky = lerp(SKY_LOW, SKY_HIGH, 0.5f - 0.5f * bounce.y);
+				vec3 sky = mix(SKY_LOW, SKY_HIGH, 0.5f - 0.5f * bounce.y);
 				float highlight = 255 * powf(MAX(0.0f, dot(bounce, light)), SHININESS);
-				float fresnel = f0 + (1 - f0) * powf(1 + dot(d, n), 5);
+				float fresnel = mix(f0, 1, powf(1 + dot(d, n), 5));
 
-				color = lerp(refracted, sky, fresnel) + vec3{ highlight, highlight, highlight };
+				color = mix(refracted, sky, fresnel) + vec3{ highlight, highlight, highlight };
 			} else {
 				// The picture, in the dome's shadow
 				float sx = px - SHADOW_OFFSET;
 				float sy = py - SHADOW_OFFSET;
-				float edge = CLAMP01((r - sqrtf(sx * sx + sy * sy)) / SHADOW_SOFTNESS);
+				float edge = CLAMP01((r - length(vec2{ sx, sy })) / SHADOW_SOFTNESS);
 				color = Texel(x, y) * (1 - SHADOW_DEPTH * edge);
 			}
 

@@ -58,6 +58,6 @@ void DEMO_Initialize(void)
 
 	// Init tables
 	for (int i = 0; i < RETRO_DEGREES_PER_TURN; i++) {
-		CosTable[i] = cos(i * DEG2RAD);
+		CosTable[i] = cos(radians(i));
 	}
 }

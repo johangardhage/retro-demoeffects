@@ -8,6 +8,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrovector.h"
 
 // The reference advances about 125 video pixels/sec at roughly 2x scale.
 static constexpr double ScrollSpeed = 64.0;
@@ -60,7 +61,7 @@ static void DrawStrokeSegment(const StrokePoint &a, const StrokePoint &b)
 			double t = length2 > 0.0 ? CLAMP01(((x - a.x) * dx + (y - a.y) * dy) / length2) : 0.0;
 			double distance = hypot(x - a.x - t * dx, y - a.y - t * dy);
 			double coverage = MAX(0.0, 1.0 - distance);
-			float shade = (float)(coverage * (a.light + t * (b.light - a.light)));
+			float shade = (float)(coverage * mix(a.light, b.light, t));
 			float &ink = Ink[t < 0.5 ? a.cyan : b.cyan][y * RETRO_WIDTH + x];
 			ink = MAX(ink, shade);
 		}
@@ -74,8 +75,8 @@ static void Stroke(double origin, double x0, double y0, double x1, double y1, do
 	StrokePoint previous = {};
 	for (int i = 0; i <= steps; i++) {
 		double t = (double)i / steps;
-		double x = origin + (x0 + (x1 - x0) * t) * 4.5;
-		double v = (y0 + (y1 - y0) * t) / 6.0 - 0.5;
+		double x = origin + mix(x0, x1, t) * 4.5;
+		double v = mix(y0, y1, t) / 6.0 - 0.5;
 		// A smaller traveling ripple bends the strokes themselves. Keep the
 		// broad ribbon shallow; shortening its wavelength only tilts the text.
 		double ripple = x * 0.11 - time * RippleSpeed;

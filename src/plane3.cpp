@@ -69,8 +69,8 @@ void DEMO_Render(double time, double deltatime)
 	// Yaw the texture axes about Y, and walk along those axes. Wrapping
 	// (xd, yd) on P is one texture period, so the floor does not jump.
 	float ang = fmod(time * PLANE_YAW_SPEED, 360.0);
-	float cosa = cos(ang * DEG2RAD);
-	float sina = sin(ang * DEG2RAD);
+	float cosa = cos(radians(ang));
+	float sina = sin(radians(ang));
 
 	float xd = fmod(time * PLANE_WALK_SPEED, PLANE_PERIOD);
 	float yd = fmod(time * PLANE_WALK_SPEED, PLANE_PERIOD);

@@ -49,7 +49,7 @@ void DEMO_Render(double time, double deltatime)
 	// Ease at both ends of the trip. The small sideways loop prevents the six
 	// projected centers from expanding forever around one perfectly fixed point.
 	float travel = 0.5f - 0.5f * cos(phase);
-	float zoffset = FAR_Z + (NEAR_Z - FAR_Z) * travel;
+	float zoffset = mix(FAR_Z, NEAR_Z, travel);
 	float cx = RETRO_WIDTH / 2.0f + DRIFT_X * sin(phase);
 	float cy = RETRO_HEIGHT / 2.0f + DRIFT_Y * sin(phase * 2.0f + 0.7f);
 

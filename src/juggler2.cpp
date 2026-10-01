@@ -63,6 +63,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrovector.h"
+#include "lib/retromath.h"
 #include "lib/retropalette.h"
 
 #define NEAR_T 0.001f // t past which a hit counts, so a ray does not re-hit its own origin
@@ -184,26 +185,6 @@ static PhongMaterial CreateMatte(vec3 color)
 	return { MATTE_AMBIENT, MATTE_DIFFUSE, 0.0f, color, { 0, 0, 0 }, { 0, 0, 0 } };
 }
 
-static bool IntersectSphere(const JugglerSphere &sphere, vec3 origin, vec3 dir, float &t, bool allowinside = true)
-{
-	vec3 oc = origin - sphere.center;
-	float b = dot(dir, oc);
-	float c = dot(oc, oc) - sphere.radius * sphere.radius;
-	float disc = b * b - c;
-	if (disc < 0.0f) return false;
-
-	float root = sqrtf(disc);
-	float tt = -b - root;
-	if (tt <= NEAR_T) {
-		if (!allowinside) return false;
-		tt = -b + root;
-	}
-	if (tt <= NEAR_T) return false;
-
-	t = tt;
-	return true;
-}
-
 // Eric Graham's real glint(): is p inside the tight cone where the light's
 // reflection about normal lines up with the view direction? A hard cutoff
 // on cos^2 of that angle, not a Phong falloff - see MINGLINT. r here is the
@@ -227,7 +208,7 @@ static bool Shadowed(vec3 origin, vec3 dir, float maxdist, bool full)
 	int end = full ? JUGGLER_SPHERES : 5;
 	for (int i = 2; i < end; i++) {
 		float t;
-		if (IntersectSphere(Body[i], origin, dir, t, false) && t < maxdist) return true;
+		if (RETRO_IntersectSphere(origin, dir, Body[i].center, Body[i].radius, NEAR_T, t, false) && t < maxdist) return true;
 	}
 	return false;
 }
@@ -256,7 +237,7 @@ static vec3 TraceScene(vec3 origin, vec3 dir)
 		int hit = -1;
 		for (int i = 2; i < JUGGLER_SPHERES; i++) {
 			float t;
-			if (IntersectSphere(Body[i], origin, dir, t) && t < nearest) {
+			if (RETRO_IntersectSphere(origin, dir, Body[i].center, Body[i].radius, NEAR_T, t) && t < nearest) {
 				nearest = t;
 				hit = i;
 				floorhit = false;
@@ -264,7 +245,7 @@ static vec3 TraceScene(vec3 origin, vec3 dir)
 		}
 
 		if (hit < 0 && !floorhit) {
-			pixel += throughput * lerp(SkyMin, SkyMax, CLAMP01(dir.y));
+			pixel += throughput * mix(SkyMin, SkyMax, CLAMP01(dir.y));
 			break;
 		}
 
@@ -321,7 +302,7 @@ static vec3 TraceScene(vec3 origin, vec3 dir)
 static void UpdateAppendage(int sceneindex, vec3 p, vec3 q, vec3 w, float A, float B)
 {
 	vec3 V = normalize(q - p);
-	float D = length(q - p);
+	float D = distance(q, p);
 	vec3 W = normalize(w);
 	vec3 U = cross(V, W);
 
@@ -393,7 +374,7 @@ static void UpdateScene(double T)
 	double angle = HIPS_ANGLE_MULTIPLIER * T;
 	double oscillation = 0.5 * (1.0 + cos(angle));
 
-	vec3 o = { 151, (float)(HIPS_MIN_Y + (HIPS_MAX_Y - HIPS_MIN_Y) * oscillation), -151 };
+	vec3 o = { 151, (float)mix(HIPS_MIN_Y, HIPS_MAX_Y, oscillation), -151 };
 	vec3 v = normalize(vec3{ 0, 70, (float)((HIPS_MIN_Y - HIPS_MAX_Y) * sin(angle)) });
 	vec3 u = { 0, v.z, -v.y };
 
@@ -517,7 +498,7 @@ void DEMO_Initialize(void)
 		}
 	}
 	for (int shade = 0; shade < PALETTE_SKY_SHADES; shade++) {
-		Palette[index++] = lerp(Byte(0xBDBDFF), Byte(0x2223F6), shade / (float)(PALETTE_SKY_SHADES - 1));
+		Palette[index++] = mix(Byte(0xBDBDFF), Byte(0x2223F6), shade / (float)(PALETTE_SKY_SHADES - 1));
 	}
 	for (int shade = 0; shade < PALETTE_WHITE_SHADES; shade++) {
 		Palette[index++] = vec3{ 1, 1, 1 } * (shade / (float)(PALETTE_WHITE_SHADES - 1));

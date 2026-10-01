@@ -102,9 +102,9 @@ void DEMO_Initialize(void)
 	RETRO_Palette hue = BALL_HUE;
 	for (int k = 0; k < BALL_LEVELS; k++) {
 		float dim = 1.0f - (1.0f - BALL_DIM) * k / (BALL_LEVELS - 1);
-		RETRO_Palette lit = RETRO_Palette{ (unsigned char)(hue.r * dim), (unsigned char)(hue.g * dim), (unsigned char)(hue.b * dim) };
-		RETRO_Palette top = RETRO_Palette{ (unsigned char)(255 * dim), (unsigned char)(255 * dim), (unsigned char)(255 * dim) };
-		RETRO_Palette shadow = RETRO_Palette{ (unsigned char)(lit.r * BALL_SHADOW), (unsigned char)(lit.g * BALL_SHADOW), (unsigned char)(lit.b * BALL_SHADOW) };
+		RETRO_Palette lit = hue * dim;
+		RETRO_Palette top = RETRO_WHITE * dim;
+		RETRO_Palette shadow = lit * BALL_SHADOW;
 
 		int ramp = 1 + k * BALL_SHADES;
 		int middle = ramp + (BALL_SHADES * 2) / 3;

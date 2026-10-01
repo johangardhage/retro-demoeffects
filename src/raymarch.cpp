@@ -78,7 +78,7 @@ static vec3 SphereCenter;
 // The exact signed distance from p to the sphere's surface
 static float SphereSDF(vec3 p)
 {
-	return length(p - SphereCenter) - SPHERE_RADIUS;
+	return distance(p, SphereCenter) - SPHERE_RADIUS;
 }
 
 // Sphere tracing against SphereSDF; a ray that would pass behind the floor
@@ -152,7 +152,7 @@ static EnvironmentHit TraceEnvironment(vec3 origin, vec3 dir, vec3 light, float 
 		float albedo = ((tilex + tilez) & 1) == 0 ? FLOOR_ALBEDO_LIGHT : FLOOR_ALBEDO_DARK;
 
 		hit.floor = true;
-		hit.brightness = CLAMP01(albedo * (ambient + (1.0f - ambient) * diffuse) * fog);
+		hit.brightness = CLAMP01(albedo * mix(ambient, 1.0f, diffuse) * fog);
 		return hit;
 	}
 
@@ -196,7 +196,7 @@ void DEMO_Render(double time, double deltatime)
 {
 	// raytrace.cpp's own bounce, boingball's parabola: w = 2 frac(phase) - 1,
 	// height = PEAK (1 - w^2), and the same side-to-side drift
-	float bouncephase = fmod(time * SPHERE_BOUNCE_SPEED, 1.0);
+	float bouncephase = fract(time * SPHERE_BOUNCE_SPEED);
 	float w = 2.0f * bouncephase - 1.0f;
 	float bounce = SPHERE_BOUNCE_HEIGHT * (1.0f - w * w);
 

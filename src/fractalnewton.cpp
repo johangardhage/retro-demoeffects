@@ -46,7 +46,7 @@
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase. One turn of the triangle.
-	double phase = fmod(time * TURN_SPEED, 1.0);
+	double phase = fract(time * TURN_SPEED);
 
 	// Place the roots
 	double rootre[ROOTS];

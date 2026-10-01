@@ -51,7 +51,7 @@ void DEMO_Initialize(void)
 				128.0 + (128.0 * sin(x / 32.0))
 				+ 128.0 + (128.0 * sin(y / 16.0))
 				+ 128.0 + (128.0 * sin((x + y) / 32.0))
-				+ 128.0 + (128.0 * sin(sqrt((double)(x * x + y * y)) / 16.0))
+				+ 128.0 + (128.0 * sin(hypot(x, y) / 16.0))
 			) / 4;
 			Plasma[y][x] = color;
 		}

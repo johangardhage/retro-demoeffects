@@ -79,7 +79,7 @@ void DEMO_Initialize(void)
 			int dx = x - RETRO_WIDTH / 2;
 			int dy = y - RETRO_HEIGHT / 2;
 			AngleTable[y][x] = atan2(dx, dy) * TEXTURE_WIDTH / M_PI;
-			DepthTable[y][x] = TUNNEL_RATIO / MAX(1.0, sqrt((double)dx * dx + (double)dy * dy));
+			DepthTable[y][x] = TUNNEL_RATIO / MAX(1.0, hypot(dx, dy));
 		}
 	}
 }

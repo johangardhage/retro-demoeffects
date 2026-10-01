@@ -75,7 +75,7 @@
 
 #define ROAD_HORIZON (RETRO_HEIGHT / 2)
 #define ROAD_ZMAP_SIZE ROAD_HORIZON // one entry per row the ground can be seen on
-#define ROAD_CAMERA_DEPTH (1.0 / tan((ROAD_FIELD_OF_VIEW / 2.0) * DEG2RAD))
+#define ROAD_CAMERA_DEPTH (1.0 / tan(radians(ROAD_FIELD_OF_VIEW / 2.0)))
 
 // Curve is an acceleration, in pixels across per scanline squared; hill is a
 // rate, the table entries a scanline takes on top of the one it would take on

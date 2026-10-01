@@ -52,8 +52,8 @@ static unsigned char ColorLUT[64][64][64];
 
 static Sample Mix(Sample a, Sample b, float t)
 {
-	return { a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t,
-		a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t };
+	return { mix(a.r, b.r, t), mix(a.g, b.g, t),
+		mix(a.b, b.b, t), mix(a.a, b.a, t) };
 }
 
 // Sampling within a level, for the recursive trace: continuous, so a
@@ -96,7 +96,7 @@ void DEMO_Render(double time, double deltatime)
 	int mip[MAX_DEPTH];
 	float blend[MAX_DEPTH];
 	for (int depth = 0; depth < MAX_DEPTH; depth++) {
-		double lod = MAX(0.0, MIN(log2(footprint), (double)LevelCount - 1));
+		double lod = clamp(log2(footprint), 0.0, LevelCount - 1.0);
 		mip[depth] = (int)lod;
 		blend[depth] = lod - mip[depth];
 		footprint /= CHILD_SCALE;

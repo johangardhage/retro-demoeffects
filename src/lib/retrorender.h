@@ -171,7 +171,7 @@ inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible =
 				// the floor to the background color well before the
 				// silhouette actually cuts it, which is indistinguishable
 				// from the pop this was meant to soften.
-				color = lround(model->c + fade * (color - model->c));
+				color = lround(mix(model->c, color, fade));
 			}
 			int x = (int)model->vertex[i].spos.x;
 			int y = (int)model->vertex[i].spos.y;
@@ -467,8 +467,7 @@ inline vec3 RETRO_ViewRay(vec3 rpos, float eye)
 
 inline vec3 RETRO_ReflectionVector(vec3 n, vec3 rpos, float eye)
 {
-	vec3 i = RETRO_ViewRay(rpos, eye);
-	return i - n * (2.0f * dot(n, i));
+	return reflect(RETRO_ViewRay(rpos, eye), n);
 }
 
 inline vec3 RETRO_ReflectionNormal(vec3 n, vec3 rpos, float eye)

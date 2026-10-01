@@ -196,7 +196,7 @@ inline void RETRO_CreateShadeTable(const RETRO_Palette *palette, int colors, int
 	for (int source = 0; source < colors; source++) {
 		for (int shade = 0; shade < shades; shade++) {
 			float level = RETRO_ShadeTableLevel(shade, shades);
-			float brightness = ambient + (1.0f - ambient) * level;
+			float brightness = mix(ambient, 1.0f, level);
 			RETRO_Palette target = {
 				(unsigned char)(palette[source].r * brightness + 0.5f),
 				(unsigned char)(palette[source].g * brightness + 0.5f),
@@ -263,8 +263,7 @@ inline void RETRO_AddShadeTableColors(RETRO_ColorHistogram *histogram, const RET
 			RETRO_ShadeTableTintLevels(shadetable, entry, t);
 			for (int color = 0; color < shadetable.colors; color++) {
 				if (colorweight[color] <= 0) continue;
-				RETRO_Palette lit = light(source[color], s, t);
-				lit = { (unsigned char)(lit.r * brightness), (unsigned char)(lit.g * brightness), (unsigned char)(lit.b * brightness) };
+				RETRO_Palette lit = light(source[color], s, t) * brightness;
 				RETRO_AddHistogramColor(histogram, lit, colorweight[color] * w);
 			}
 		}

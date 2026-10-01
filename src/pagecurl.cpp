@@ -59,7 +59,7 @@ void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase. Each turn one picture peels off the other
 	double phase = fmod(time, 2 * TIME_TURN);
-	int top = phase < TIME_TURN ? 0 : 1;
+	int top = step(TIME_TURN, phase);
 	double turntime = phase - top * TIME_TURN;
 	float progress = smoothstep(0.0, 1.0, (turntime - TIME_HOLD) / TIME_CURL);
 
@@ -74,9 +74,9 @@ void DEMO_Render(double time, double deltatime)
 	float r = CURL_RADIUS;
 	float cstart = RETRO_WIDTH * n.x + RETRO_HEIGHT * n.y + 1;
 	float cend = -M_PI * r - 1;
-	float c = cstart + (cend - cstart) * progress;
+	float c = mix(cstart, cend, progress);
 
-	float lightlength = sqrt(LIGHT_N * LIGHT_N + LIGHT_Z * LIGHT_Z);
+	float lightlength = hypotf(LIGHT_N, LIGHT_Z);
 	float lightn = LIGHT_N / lightlength;
 	float lightz = LIGHT_Z / lightlength;
 
@@ -118,7 +118,7 @@ void DEMO_Render(double time, double deltatime)
 				float theta = s <= 0 ? 0 : (s >= M_PI * r ? M_PI : s / r);
 				float lambert = -sin(theta) * lightn + cos(theta) * lightz;
 				lambert = back[i] ? -lambert : lambert;
-				float shade = MIN(1.0f, AMBIENT + (1 - AMBIENT) * MAX(0.0f, lambert) / lightz);
+				float shade = MIN(1.0f, mix(AMBIENT, 1, MAX(0.0f, lambert) / lightz));
 
 				RETRO_Palette color = palette[front[sy * RETRO_WIDTH + sx]];
 				red = color.r;
@@ -126,9 +126,9 @@ void DEMO_Render(double time, double deltatime)
 				blue = color.b;
 
 				if (back[i]) {
-					red += (PAPER.r - red) * BACK_TINT;
-					green += (PAPER.g - green) * BACK_TINT;
-					blue += (PAPER.b - blue) * BACK_TINT;
+					red = mix(red, PAPER.r, BACK_TINT);
+					green = mix(green, PAPER.g, BACK_TINT);
+					blue = mix(blue, PAPER.b, BACK_TINT);
 				}
 
 				red *= shade;

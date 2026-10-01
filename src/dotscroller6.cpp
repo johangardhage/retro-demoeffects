@@ -105,13 +105,7 @@ static void PlotDot(float x, float y, float z, int base, int shades, float contr
 	float depth = DepthFar - vertex.rpos.z;
 	float t = depth / (DepthFar - DepthNear);
 	t = 0.5f + (t - 0.5f) * contrast;
-	int shade = (int)(t * (shades - 1));
-	if (shade < 1) {
-		shade = 1;
-	}
-	if (shade > shades - 1) {
-		shade = shades - 1;
-	}
+	int shade = CLAMP(t * (shades - 1), 1, shades);
 
 	if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, depth)) {
 		RETRO_PutPixel(sx, sy, base + shade);
@@ -195,7 +189,7 @@ void DEMO_Initialize(void)
 	float halfw = OriginX * DOT_SPACING;
 	float halfd = OriginZ * DOT_SPACING;
 	float halfh = WAVE_AMP + (LETTER_GAP + EXTRUSION) * DOT_SPACING;
-	float radius = sqrtf(halfw * halfw + halfd * halfd + halfh * halfh);
+	float radius = length(vec3{ halfw, halfd, halfh });
 	DepthNear = OBJECT_Z - radius;
 	DepthFar = OBJECT_Z + radius;
 }

@@ -31,8 +31,7 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate phase, one per cube: different rates and different combinations
 	// of axes, while keeping both centers fixed at the origin.
 	float phase1 = fmod(time * CUBE1_ROTATION_SPEED, CUBE1_ROTATION_PERIOD);
-	float phase2 = fmod(time * CUBE2_ROTATION_SPEED, CUBE2_ROTATION_PERIOD);
-	if (phase2 < 0) phase2 += CUBE2_ROTATION_PERIOD;
+	float phase2 = mod(time * CUBE2_ROTATION_SPEED, CUBE2_ROTATION_PERIOD);
 
 	// Both models must use the same depth buffer. Clearing before either draw
 	// would make the second cube overwrite the first regardless of its depth.

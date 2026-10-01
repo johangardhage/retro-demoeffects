@@ -64,11 +64,11 @@
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	double phase = fmod(time / BOING_PERIOD, 1.0);
+	double phase = fract(time / BOING_PERIOD);
 
 	// Cross the room and come back, bouncing on the way
-	double sweep = fmod(phase * BOING_SWEEPS, 1.0);
-	float w = 2 * fmod(phase * BOING_BOUNCES, 1.0) - 1;
+	double sweep = fract(phase * BOING_SWEEPS);
+	float w = 2 * fract(phase * BOING_BOUNCES) - 1;
 	int x = lround(BOING_CX + BOING_AMP * (2 * fabs(2 * sweep - 1) - 1));
 	int y = lround(BOING_FLOOR - BOING_HEIGHT * (1 - w * w));
 

@@ -77,7 +77,7 @@ void DEMO_Initialize(void)
 		for (int x = 0; x < RETRO_WIDTH * 2; x++) {
 			int dx = x - RETRO_WIDTH;
 			int dy = y - RETRO_HEIGHT;
-			double r = sqrt((double)dx * dx + (double)dy * dy);
+			double r = hypot(dx, dy);
 
 			AngleTable[y][x] = atan2(dx, dy) * TEXTURE_WIDTH / M_PI;
 			DepthTable[y][x] = TUNNEL_RATIO / MAX(1.0, r);

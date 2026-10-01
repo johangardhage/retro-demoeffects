@@ -75,15 +75,11 @@ static void CreateChromeShadeTable(const RETRO_Palette *palette)
 			RETRO_Palette target;
 			if (shade < TWISTER_DIFFUSE) {
 				float level = TWISTER_DIFFUSE > 1 ? (float)shade / (TWISTER_DIFFUSE - 1) : 1.0f;
-				float brightness = TWISTER_AMBIENT + (1.0f - TWISTER_AMBIENT) * level;
-				target.r = (unsigned char)(color.r * brightness);
-				target.g = (unsigned char)(color.g * brightness);
-				target.b = (unsigned char)(color.b * brightness);
+				float brightness = mix(TWISTER_AMBIENT, 1.0f, level);
+				target = color * brightness;
 			} else {
 				float t = (float)(shade - TWISTER_DIFFUSE + 1) / TWISTER_SPECULAR * TWISTER_SPECULAR_MIX;
-				target.r = (unsigned char)(color.r + (255 - color.r) * t);
-				target.g = (unsigned char)(color.g + (255 - color.g) * t);
-				target.b = (unsigned char)(color.b + (255 - color.b) * t);
+				target = mix(color, RETRO_WHITE, t);
 			}
 			TwisterShadeTable[source * TWISTER_SHADES + shade] =
 				RETRO_NearestPaletteIndex(target, palette, RETRO_COLORS);

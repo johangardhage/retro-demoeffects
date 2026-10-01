@@ -118,9 +118,9 @@ static const Word WordMain = { TextMain, sizeof(TextMain) - 1, 24, 2.5f, 0.9f, W
 static RETRO_Palette Mix(RETRO_Palette a, RETRO_Palette b, float t)
 {
 	return RETRO_Palette{
-		(unsigned char)lroundf(a.r + (b.r - a.r) * t),
-		(unsigned char)lroundf(a.g + (b.g - a.g) * t),
-		(unsigned char)lroundf(a.b + (b.b - a.b) * t) };
+		(unsigned char)lroundf(mix(a.r, b.r, t)),
+		(unsigned char)lroundf(mix(a.g, b.g, t)),
+		(unsigned char)lroundf(mix(a.b, b.b, t)) };
 }
 
 // Fill a wave layer from its surface down, the surface row in foam

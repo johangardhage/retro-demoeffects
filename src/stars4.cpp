@@ -38,7 +38,7 @@ void DEMO_Render(double time, double deltatime)
 	float az = fmod(time * SPEED, 2 * M_PI);
 	mat3 matrix = rotate(ax, ay, az);
 
-	double furthest = sqrt((double)RETRO_WIDTH * RETRO_WIDTH + (double)RETRO_HEIGHT * RETRO_HEIGHT + (double)BOX_DEPTH * BOX_DEPTH);
+	double furthest = length(vec3{ RETRO_WIDTH, RETRO_HEIGHT, BOX_DEPTH });
 
 	// Draw stars
 	for (int i = 0; i < NUM_STARS; i++) {

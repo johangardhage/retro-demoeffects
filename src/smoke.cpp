@@ -99,15 +99,15 @@ static void SetBoundary(int boundary, float *field)
 //
 static float Sample(const float *field, float x, float y)
 {
-	x = MIN(MAX(x, 0.5f), GRID_WIDTH + 0.5f);
-	y = MIN(MAX(y, 0.5f), GRID_HEIGHT + 0.5f);
+	x = clamp(x, 0.5f, GRID_WIDTH + 0.5f);
+	y = clamp(y, 0.5f, GRID_HEIGHT + 0.5f);
 	int x0 = (int)x;
 	int y0 = (int)y;
 	float fx = x - x0;
 	float fy = y - y0;
-	float top = field[Cell(x0, y0)] + (field[Cell(x0 + 1, y0)] - field[Cell(x0, y0)]) * fx;
-	float bottom = field[Cell(x0, y0 + 1)] + (field[Cell(x0 + 1, y0 + 1)] - field[Cell(x0, y0 + 1)]) * fx;
-	return top + (bottom - top) * fy;
+	float top = mix(field[Cell(x0, y0)], field[Cell(x0 + 1, y0)], fx);
+	float bottom = mix(field[Cell(x0, y0 + 1)], field[Cell(x0 + 1, y0 + 1)], fx);
+	return mix(top, bottom, fy);
 }
 
 //
@@ -181,7 +181,7 @@ static void Confine(float dt)
 			int i = Cell(x, y);
 			float nx = 0.5f * (fabsf(Curl[i + 1]) - fabsf(Curl[i - 1]));
 			float ny = 0.5f * (fabsf(Curl[i + GRID_STRIDE]) - fabsf(Curl[i - GRID_STRIDE]));
-			float length = sqrtf(nx * nx + ny * ny) + 1e-5f;
+			float length = hypotf(nx, ny) + 1e-5f;
 			U[i] += CONFINEMENT * dt * (ny / length) * Curl[i];
 			V[i] -= CONFINEMENT * dt * (nx / length) * Curl[i];
 		}
@@ -201,8 +201,8 @@ static void Emit(float cx, float cy, float angle)
 			int i = Cell(x, y);
 			float r2 = (x - cx) * (x - cx) + (y - cy) * (y - cy);
 			float weight = expf(-r2 / (EMIT_RADIUS * EMIT_RADIUS));
-			U[i] += (vx - U[i]) * weight;
-			V[i] += (vy - V[i]) * weight;
+			U[i] = mix(U[i], vx, weight);
+			V[i] = mix(V[i], vy, weight);
 			Density[i] += EMIT_DENSITY * weight;
 		}
 	}

@@ -61,8 +61,7 @@ static float SampleLogo(float x, float y)
 	int ix = (int)x, iy = (int)y;
 	float fx = x - ix, fy = y - iy;
 	const unsigned char *p = Logo->data + iy * RETRO_WIDTH + ix;
-	return ((p[0] * (1 - fx) + p[1] * fx) * (1 - fy)
-		+ (p[RETRO_WIDTH] * (1 - fx) + p[RETRO_WIDTH + 1] * fx) * fy) / 255.0f;
+	return mix(mix(p[0], p[1], fx), mix(p[RETRO_WIDTH], p[RETRO_WIDTH + 1], fx), fy) / 255.0f;
 }
 
 //
@@ -119,7 +118,7 @@ static vec3 ShadeBall(float sx, float sy)
 	}
 
 	vec3 white = {255, 255, 255};
-	return min(surroundings * (1 - ink) + lettering * ink + white * glint, white);
+	return min(mix(surroundings, lettering, ink) + white * glint, white);
 }
 
 void DEMO_Render(double time, double deltatime)
@@ -194,7 +193,7 @@ void DEMO_Initialize(void)
 		for (int column = 0; column < 18; column++) {
 			float blue = 20 + 140 * row / 6.0f, white = (column + 1) / 19.0f;
 			unsigned char gray = (unsigned char)(255 * white);
-			palette[count++] = {gray, gray, (unsigned char)(blue + (255 - blue) * white)};
+			palette[count++] = {gray, gray, (unsigned char)mix(blue, 255, white)};
 		}
 	}
 	if (count != 256) RETRO_RageQuit("Crystal ball palette must fill all 256 colors\n");

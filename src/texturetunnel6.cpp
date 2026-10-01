@@ -131,7 +131,7 @@ static void BuildTunnel(void)
 			UnitVector inward = RETRO_NormalizeUnitVector({ negradial.pos });
 			RETRO_ViewUnitVector(&inward, &camera);
 			float lambert = RETRO_RotatedDot(inward, Light);
-			float lit = AMBIENT + (1.0f - AMBIENT) * RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f));
+			float lit = mix(AMBIENT, 1.0f, RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f)));
 			p->shade = lit * depth * (FOG_SHADES - 1);
 		}
 	}
@@ -140,7 +140,7 @@ static void BuildTunnel(void)
 
 void DEMO_Render(double time, double deltatime)
 {
-	float scroll = fmod(time * FLIGHT_SPEED / RING_SPACING, 1.0) * TEXTURE_SIZE;
+	float scroll = fract(time * FLIGHT_SPEED / RING_SPACING) * TEXTURE_SIZE;
 	RETRO_ClearDepthBuffer();
 
 	for (int i = RING_COUNT - 2; i >= 0; i--) {

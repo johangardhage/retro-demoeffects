@@ -94,7 +94,7 @@
 
 #define ROAD_HORIZON (RETRO_HEIGHT / 2)
 #define ROAD_ZMAP_SIZE ROAD_HORIZON // one entry per row the ground can be seen on
-#define ROAD_CAMERA_DEPTH (1.0 / tan((ROAD_FIELD_OF_VIEW / 2.0) * DEG2RAD))
+#define ROAD_CAMERA_DEPTH (1.0 / tan(radians(ROAD_FIELD_OF_VIEW / 2.0)))
 
 // Curve is an acceleration, in pixels across per scanline squared; hill is a
 // rate, the table entries a scanline takes on top of the one it would take on
@@ -299,10 +299,10 @@ void DEMO_Render(double time, double deltatime)
 				}
 
 				float t = (zs - zprev) / (z - zprev);
-				float sw = wprev + (w - wprev) * t;
-				float sx = centerprev + (center - centerprev) * t + stepped->offset * sw;
+				float sw = mix(wprev, w, t);
+				float sx = mix(centerprev, center, t) + stepped->offset * sw;
 
-				Billboards[billboards++] = { &Sprites[stepped->sprite], sx, yprev + (y - yprev) * t, sw, shade };
+				Billboards[billboards++] = { &Sprites[stepped->sprite], sx, mix(yprev, y, t), sw, shade };
 			}
 		}
 

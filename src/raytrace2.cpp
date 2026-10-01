@@ -13,6 +13,7 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
+#include "lib/retromath.h"
 
 #define FOCAL 260.0f // pixels; sets the field of view
 
@@ -43,37 +44,11 @@
 struct Sphere { vec3 center; float radius; };
 static Sphere Balls[SPHERES];
 
-// The nearer root of |O + tD - C|^2 = r^2, D unit. allowinside also returns
-// the far root when the near one is behind the origin, which a reflection
-// bounce needs when it starts fractionally inside the sphere it just left -
-// but a shadow ray, always cast from outside every sphere, must not get: a
-// graze it should clear would otherwise read as a hit on the sphere's far
-// side.
-static bool IntersectSphere(const Sphere &sphere, vec3 origin, vec3 dir, float &t, bool allowinside = true)
-{
-	vec3 oc = origin - sphere.center;
-	float b = dot(dir, oc);
-	float c = dot(oc, oc) - sphere.radius * sphere.radius;
-	float disc = b * b - c;
-	if (disc < 0.0f) return false;
-
-	float root = sqrtf(disc);
-	float tt = -b - root;
-	if (tt <= NEAR_T) {
-		if (!allowinside) return false;
-		tt = -b + root;
-	}
-	if (tt <= NEAR_T) return false;
-
-	t = tt;
-	return true;
-}
-
 static bool SphereShadowed(vec3 origin, vec3 dir, float maxdist)
 {
 	for (const Sphere &sphere : Balls) {
 		float t;
-		if (IntersectSphere(sphere, origin, dir, t, false) && t < maxdist) return true;
+		if (RETRO_IntersectSphere(origin, dir, sphere.center, sphere.radius, NEAR_T, t, false) && t < maxdist) return true;
 	}
 	return false;
 }
@@ -107,7 +82,7 @@ static EnvironmentHit TraceEnvironment(vec3 origin, vec3 dir, vec3 light)
 			float albedo = ((tilex + tilez) & 1) == 0 ? FLOOR_ALBEDO_LIGHT : FLOOR_ALBEDO_DARK;
 
 			hit.floor = true;
-			hit.brightness = CLAMP01(albedo * (ambient + (1.0f - ambient) * diffuse) * fog);
+			hit.brightness = CLAMP01(albedo * mix(ambient, 1.0f, diffuse) * fog);
 			return hit;
 		}
 	}
@@ -134,7 +109,7 @@ static unsigned char TraceScene(vec3 origin, vec3 dir, vec3 light)
 		int hit = -1;
 		for (int i = 0; i < SPHERES; i++) {
 			float t;
-			if (IntersectSphere(Balls[i], origin, dir, t) && t < nearest) {
+			if (RETRO_IntersectSphere(origin, dir, Balls[i].center, Balls[i].radius, NEAR_T, t) && t < nearest) {
 				nearest = t;
 				hit = i;
 			}

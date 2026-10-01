@@ -90,11 +90,11 @@ void DEMO_FixedUpdate(double timestep)
 {
 	// Calculate phase. Feed and kill ease from coral to mitosis and back
 	static double phase = 0;
-	phase = fmod(phase + timestep / DRIFT_PERIOD, 1);
+	phase = fract(phase + timestep / DRIFT_PERIOD);
 
 	float t = 0.5f - 0.5f * cos(2 * M_PI * phase);
-	float feed = CORAL_FEED + (MITOSIS_FEED - CORAL_FEED) * t;
-	float kill = CORAL_KILL + (MITOSIS_KILL - CORAL_KILL) * t;
+	float feed = mix(CORAL_FEED, MITOSIS_FEED, t);
+	float kill = mix(CORAL_KILL, MITOSIS_KILL, t);
 
 	for (int i = 0; i < ITERATIONS; i++) {
 		Step(feed, kill);

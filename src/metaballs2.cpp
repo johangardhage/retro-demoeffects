@@ -76,8 +76,8 @@ void DEMO_Initialize(void)
 {
 	// Init tables
 	for (int i = 0; i < SINE_VALUES; i++) {
-		SinTable[i] = sin(i / 180.0 * M_PI);
-		CosTable[i] = cos(i / 180.0 * M_PI);
+		SinTable[i] = sin(radians(i));
+		CosTable[i] = cos(radians(i));
 	}
 
 	// Init palette. Density index → Lambert-like I, then plastic Phong

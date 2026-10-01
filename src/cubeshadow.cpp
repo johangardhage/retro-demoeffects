@@ -52,7 +52,7 @@
 static void SetShadowColors(int index, RETRO_Palette wall)
 {
 	RETRO_SetColor(index + WALL, wall);
-	RETRO_SetColor(index + SHADOW, (unsigned char)(wall.r * SHADOW_LIGHT), (unsigned char)(wall.g * SHADOW_LIGHT), (unsigned char)(wall.b * SHADOW_LIGHT));
+	RETRO_SetColor(index + SHADOW, wall * SHADOW_LIGHT);
 }
 
 // Every pixel's offset from center, rotated by angle, then floored into

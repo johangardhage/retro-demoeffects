@@ -74,6 +74,6 @@ void DEMO_Initialize(void)
 
 	// Init tables
 	for (int i = 0; i < RETRO_DEGREES_PER_TURN; i++) {
-		SinTable[i] = sin(i * DEG2RAD);
+		SinTable[i] = sin(radians(i));
 	}
 }

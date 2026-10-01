@@ -44,16 +44,9 @@ static RETRO_Camera Turn(double angle)
 	return camera;
 }
 
-// Smooth starts and stops, including acceleration at phase boundaries.
-static double Ease(double t)
-{
-	t = CLAMP01(t);
-	return t * t * t * (t * (t * 6 - 15) + 10);
-}
-
 static double Wrap(double value)
 {
-	return value - 2 * STAR_FAR * floor((value + STAR_FAR) / (2 * STAR_FAR));
+	return 2 * STAR_FAR * fract((value + STAR_FAR) / (2 * STAR_FAR)) - STAR_FAR;
 }
 
 void DEMO_Render(double time, double deltatime)
@@ -69,8 +62,8 @@ void DEMO_Render(double time, double deltatime)
 	}
 	// Turn from seconds two to seven; overlap with a faster roll from five to ten.
 	// Choose turns from CameraStart so up/down remain correct after any turn.
-	RETRO_Camera camera = Turn(1.15 * Ease((phase - 2) / 5));
-	RETRO_RollCamera(&camera, 2 * M_PI * Ease((phase - 5) / 5));
+	RETRO_Camera camera = Turn(1.15 * smootherstep(2.0, 7.0, phase));
+	RETRO_RollCamera(&camera, 2 * M_PI * smootherstep(5.0, 10.0, phase));
 	double travel = SPEED * deltatime;
 
 	for (int i = 0; i < NUM_STARS; i++) {

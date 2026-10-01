@@ -59,12 +59,8 @@ unsigned char WaterTable[RETRO_COLORS * WATER_LEVELS];
 //
 static RETRO_Palette Water(RETRO_Palette color, float level, const float *tint)
 {
-	float mix = WATER_MIX + WATER_MIXSTEP * level;
-	return {
-		(unsigned char)(color.r + (WaterColor.r - color.r) * mix),
-		(unsigned char)(color.g + (WaterColor.g - color.g) * mix),
-		(unsigned char)(color.b + (WaterColor.b - color.b) * mix),
-	};
+	float blend = WATER_MIX + WATER_MIXSTEP * level;
+	return mix(color, WaterColor, blend);
 }
 
 void DEMO_Render(double time, double deltatime)

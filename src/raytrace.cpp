@@ -38,6 +38,7 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
+#include "lib/retromath.h"
 
 #define FOCAL 260.0f // pixels; sets the field of view
 
@@ -71,32 +72,10 @@
 
 static vec3 SphereCenter;
 
-// The nearer root of |O + tD - C|^2 = r^2, D unit
-static bool IntersectSphere(vec3 origin, vec3 dir, float &t)
-{
-	vec3 oc = origin - SphereCenter;
-	float b = dot(dir, oc);
-	float c = dot(oc, oc) - SPHERE_RADIUS * SPHERE_RADIUS;
-	float disc = b * b - c;
-	if (disc < 0.0f) return false;
-
-	float tt = -b - sqrtf(disc);
-	if (tt <= NEAR_T) return false;
-
-	t = tt;
-	return true;
-}
-
 static bool SphereShadowed(vec3 origin, vec3 dir, float maxdist)
 {
-	vec3 oc = origin - SphereCenter;
-	float b = dot(dir, oc);
-	float c = dot(oc, oc) - SPHERE_RADIUS * SPHERE_RADIUS;
-	float disc = b * b - c;
-	if (disc < 0.0f) return false;
-
-	float t = -b - sqrtf(disc);
-	return t > NEAR_T && t < maxdist;
+	float t;
+	return RETRO_IntersectSphere(origin, dir, SphereCenter, SPHERE_RADIUS, NEAR_T, t, false) && t < maxdist;
 }
 
 struct EnvironmentHit {
@@ -134,7 +113,7 @@ static EnvironmentHit TraceEnvironment(vec3 origin, vec3 dir, vec3 light)
 			float albedo = ((tilex + tilez) & 1) == 0 ? FLOOR_ALBEDO_LIGHT : FLOOR_ALBEDO_DARK;
 
 			hit.floor = true;
-			hit.brightness = CLAMP01(albedo * (ambient + (1.0f - ambient) * diffuse) * fog);
+			hit.brightness = CLAMP01(albedo * mix(ambient, 1.0f, diffuse) * fog);
 			return hit;
 		}
 	}
@@ -152,7 +131,7 @@ static EnvironmentHit TraceEnvironment(vec3 origin, vec3 dir, vec3 light)
 static unsigned char TraceScene(vec3 origin, vec3 dir, vec3 light)
 {
 	float t;
-	if (IntersectSphere(origin, dir, t)) {
+	if (RETRO_IntersectSphere(origin, dir, SphereCenter, SPHERE_RADIUS, NEAR_T, t, false)) {
 		vec3 p = origin + dir * t;
 		vec3 normal = normalize(p - SphereCenter);
 		vec3 reflected = reflect(dir, normal);
@@ -171,7 +150,7 @@ void DEMO_Render(double time, double deltatime)
 {
 	// The sphere bounces on boingball's own parabola, w = 2 frac(phase) - 1,
 	// height = PEAK (1 - w^2), and drifts back and forth across the floor
-	float bouncephase = fmod(time * SPHERE_BOUNCE_SPEED, 1.0);
+	float bouncephase = fract(time * SPHERE_BOUNCE_SPEED);
 	float w = 2.0f * bouncephase - 1.0f;
 	float bounce = SPHERE_BOUNCE_HEIGHT * (1.0f - w * w);
 

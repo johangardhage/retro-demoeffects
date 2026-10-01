@@ -213,7 +213,7 @@ void DEMO_Render(double time, double deltatime)
 			UnitVector inward = RETRO_NormalizeUnitVector({ negradial.pos });
 			RETRO_ViewUnitVector(&inward, &camera);
 			float lambert = RETRO_RotatedDot(inward, Light);
-			float lit = AMBIENT + (1.0f - AMBIENT) * RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f));
+			float lit = mix(AMBIENT, 1.0f, RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f)));
 			p->shade = lit * depth * (FOG_SHADES - 1);
 		}
 	}

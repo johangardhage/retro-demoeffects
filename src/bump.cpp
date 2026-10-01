@@ -45,8 +45,8 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate light. Lissajous: twice around vertically for every turn horizontally.
 	double angle = fmod(time * LIGHT_SPEED, RETRO_DEGREES_PER_TURN);
 
-	int lx = RETRO_WIDTH / 2.0 + LIGHT_ORBIT * cos(angle * DEG2RAD);
-	int ly = RETRO_HEIGHT / 2.0 + LIGHT_ORBIT * sin(2 * angle * DEG2RAD);
+	int lx = RETRO_WIDTH / 2.0 + LIGHT_ORBIT * cos(radians(angle));
+	int ly = RETRO_HEIGHT / 2.0 + LIGHT_ORBIT * sin(radians(2 * angle));
 
 	int maporiginx = lx + LIGHT_SIZE;
 	int maporiginy = ly + LIGHT_SIZE;
@@ -93,7 +93,7 @@ void DEMO_Initialize(void)
 		for (int x = 0; x < LIGHTMAP_WIDTH; x++) {
 			float offsetx = (x - LIGHT_SIZE) / (float)LIGHT_SIZE;
 			float offsety = (y - LIGHT_SIZE) / (float)LIGHT_SIZE;
-			float distance = sqrt(offsetx * offsetx + offsety * offsety);
+			float distance = hypotf(offsetx, offsety);
 
 			float intensity = distance < 1 ? 1 - distance : 0;
 

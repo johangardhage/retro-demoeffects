@@ -54,6 +54,7 @@
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retromath.h"
 
 #define HAZE_SIZE 256 // pixels the field repeats after, both ways
 #define HAZE_WAVES 24

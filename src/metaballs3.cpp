@@ -97,7 +97,7 @@ static vec3 FieldNormal(vec3 p)
 		return { 0.0f, 0.0f, -1.0f };
 	}
 
-	return g * (-1.0f / sqrt(glen2));
+	return g * -inversesqrt(glen2);
 }
 
 // Unit-D ray against a sphere. tEnter can be negative when the eye is inside.

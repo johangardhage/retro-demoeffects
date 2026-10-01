@@ -70,7 +70,7 @@ static void Respawn(Drop *drop)
 {
 	drop->column = RANDOM(COLUMNS);
 	drop->row = -RAND() * ROWS;
-	drop->speed = DROP_MINSPEED + RAND() * (DROP_MAXSPEED - DROP_MINSPEED);
+	drop->speed = mix(DROP_MINSPEED, DROP_MAXSPEED, RAND());
 }
 
 //

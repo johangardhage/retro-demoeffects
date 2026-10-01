@@ -596,9 +596,9 @@ inline void RETRO_BlendModelPoses(int a, int b, float s, Model3D *model = NULL)
 
 	for (int i = 0; i < model->vertices; i++) {
 		model->vertex[i].pos = {
-			from[i * 3] * (1.0f - s) + to[i * 3] * s,
-			from[i * 3 + 1] * (1.0f - s) + to[i * 3 + 1] * s,
-			from[i * 3 + 2] * (1.0f - s) + to[i * 3 + 2] * s
+			mix(from[i * 3], to[i * 3], s),
+			mix(from[i * 3 + 1], to[i * 3 + 1], s),
+			mix(from[i * 3 + 2], to[i * 3 + 2], s)
 		};
 	}
 }

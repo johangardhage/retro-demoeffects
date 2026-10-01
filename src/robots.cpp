@@ -72,7 +72,7 @@
 #define POINT_LIGHT (255 / 256.0f)
 #define POINT_LIGHT_KL 0.001f // orange, attenuation per world unit
 #define POINT_LIGHT2_KL 0.002f // yellow
-#define POINT_LIGHT_RATE (30 * DEG2RAD) // radians a second round the world
+#define POINT_LIGHT_RATE radians(30) // radians a second round the world
 #define POINT_LIGHT_ORBIT WORLD(500) // orange, radius about the world's center
 #define POINT_LIGHT2_ORBIT WORLD(200) // yellow, twice as fast the other way
 #define POINT_LIGHT_ALTITUDE WORLD(500)
@@ -163,11 +163,6 @@ static bool AmbientLight = true;
 static bool InfiniteLight = true;
 static bool PointLight[POINT_LIGHTS] = { true, true };
 static bool Help = true;
-
-static vec3 WorldCenter(void)
-{
-	return { (RETRO_Terrain.width - 1) * 0.5f, 0, (RETRO_Terrain.height - 1) * 0.5f };
-}
 
 // The camera's frame, taken once a frame
 static RETRO_TerrainBasis View;
@@ -309,7 +304,7 @@ static void DrawShadow(const Model3D *model, vec3 position, float scale, vec3 li
 	for (int i = 0; i < model->vertices; i++) {
 		vec3 p = position + model->vertex[i].pos * scale;
 		if (p.y >= light.y) return;
-		flat[i] = light + (p - light) * ((light.y - SHADOW_PLANE) / (light.y - p.y));
+		flat[i] = mix(light, p, (light.y - SHADOW_PLANE) / (light.y - p.y));
 	}
 
 	for (int i = 0; i < model->faces; i++) {
@@ -347,7 +342,7 @@ static void PoseRobot(double time)
 		frame = MIN(time * animation.rate, frames - 1.0);
 		next = MIN((int)frame + 1, frames - 1);
 	}
-	RETRO_BlendModelPoses(animation.first + (int)frame, animation.first + next, frame - (int)frame, Models[MODEL_ROBOT]);
+	RETRO_BlendModelPoses(animation.first + (int)frame, animation.first + next, fract(frame), Models[MODEL_ROBOT]);
 	RETRO_InitializeFaceNormals(Models[MODEL_ROBOT]);
 	RETRO_InitializeVertexNormals(Models[MODEL_ROBOT]);
 	AnimationFrame = animation.first + frame;
@@ -384,7 +379,7 @@ static void DrawText(void)
 	}
 
 	// CELL is the cell the camera is over
-	vec3 center = WorldCenter();
+	vec3 center = RETRO_TerrainCenter();
 	// Each line within the screen's 40 columns
 	snprintf(text, sizeof(text), "CAM [%5.0f,%5.0f,%5.0f] CELL [%d, %d]\nLighting [%s]: Amb=%d Inf=%d O=%d Y=%d\nAnim[%d]=%s Frm=%.1f",
 			 TO_WORLD(RETRO_Camera.x - center.x), TO_WORLD(RETRO_Camera.height), TO_WORLD(RETRO_Camera.z - center.z), (int)floorf(RETRO_Camera.x), (int)floorf(RETRO_Camera.z),
@@ -426,7 +421,7 @@ void DEMO_Render(double time, double deltatime)
 	View = mesh.basis;
 
 	// The point lights on their paths about the world's center
-	vec3 center = WorldCenter();
+	vec3 center = RETRO_TerrainCenter();
 	float angle = fmod(time * POINT_LIGHT_RATE, 2 * M_PI);
 	PointLightPosition[LIGHT_ORANGE] = { center.x - POINT_LIGHT_ORBIT * cosf(angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_ORBIT * sinf(angle) };
 	PointLightPosition[LIGHT_YELLOW] = { center.x - POINT_LIGHT2_ORBIT * cosf(-2 * angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT2_ORBIT * sinf(-2 * angle) };
@@ -507,7 +502,7 @@ void DEMO_Initialize(void)
 
 	// The camera starts 500 up and 400 in front of the mechs, halfway between
 	// them and looking them in the face, along +x, and falls onto the ground
-	vec3 center = WorldCenter();
+	vec3 center = RETRO_TerrainCenter();
 	RETRO_Camera.x = center.x - WORLD(400);
 	RETRO_Camera.z = center.z + ROBOT_SPACING / 2;
 	RETRO_Camera.height = WORLD(500);
@@ -517,15 +512,15 @@ void DEMO_Initialize(void)
 	RETRO_Vehicle.acceleration = WORLD(900);
 	RETRO_Vehicle.friction = WORLD(225);
 	RETRO_Vehicle.maxspeed = WORLD(600);
-	RETRO_Vehicle.turnspeed = 150 * DEG2RAD;
+	RETRO_Vehicle.turnspeed = radians(150);
 	RETRO_Vehicle.gravity = WORLD(360);
 	RETRO_Vehicle.spring = 22.5f;
 	RETRO_Vehicle.lift = 10.7f; // -ln(0.7) * 30
 	RETRO_Vehicle.clearance = WORLD(150);
 	RETRO_Vehicle.floor = WORLD(50);
-	RETRO_Vehicle.restpitch = RETRO_Vehicle.pitch = 10 * DEG2RAD;
-	RETRO_Vehicle.pitchkick = 0.6f * DEG2RAD / WORLD(1);
-	RETRO_Vehicle.pitchreturn = 10 * DEG2RAD;
+	RETRO_Vehicle.restpitch = RETRO_Vehicle.pitch = radians(10);
+	RETRO_Vehicle.pitchkick = radians(0.6f) / WORLD(1);
+	RETRO_Vehicle.pitchreturn = radians(10);
 
 	RETRO_SetFont(RETRO_FONT_VGA_8X8);
 }

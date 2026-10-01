@@ -38,6 +38,7 @@
 #include "retro.h"
 #include "retrovector.h"
 #include "retropoly.h"
+#include "retromath.h"
 
 // The most corners a polygon handed to RETRO_ClipProjectTerrainPolygon may
 // have. Clipping adds at most one more.
@@ -388,6 +389,13 @@ inline void RETRO_LoadTerrain(const char *colorfile, const char *heightfile, flo
 	RETRO_SetTerrain(heightmap->width, heightmap->height, scale, heightmap->data, colormap->data, wrap);
 }
 
+// The middle of the map, at its zero: halfway from the first sample to the
+// last along each side.
+inline vec3 RETRO_TerrainCenter(void)
+{
+	return { (RETRO_Terrain.width - 1) * 0.5f, 0, (RETRO_Terrain.height - 1) * 0.5f };
+}
+
 // tan of half the view: a point at this side-per-depth sits on the screen
 // edge. The voxel slice half-width at depth z is z times this, so the
 // column walk and the wrapping pinhole share one number. After LookDown
@@ -434,7 +442,7 @@ inline bool RETRO_KeepTerrainDot(int x, int z, float distance2, float falloff = 
 		x = WRAP(x, RETRO_Terrain.width);
 		z = WRAP(z, RETRO_Terrain.height);
 	}
-	float random = (RETRO_Hash(x, z) & 65535u) / 65535.0f;
+	float random = RETRO_HashUnit(x, z);
 	float density = 1.0f / (1.0f + distance2 / (falloff * falloff));
 	return random < density;
 }
@@ -526,9 +534,9 @@ inline float RETRO_TerrainHeightLinear(float x, float z)
 	float h01 = heightmap[z1 + x0];
 	float h11 = heightmap[z1 + x1];
 
-	float top = h00 + fx * (h10 - h00);
-	float bottom = h01 + fx * (h11 - h01);
-	return (top + fz * (bottom - top)) * RETRO_Terrain.scale;
+	float top = mix(h00, h10, fx);
+	float bottom = mix(h01, h11, fx);
+	return mix(top, bottom, fz) * RETRO_Terrain.scale;
 }
 
 //
@@ -578,7 +586,7 @@ inline bool RETRO_TerrainRayHit(vec3 origin, vec3 direction, float step, vec3 &h
 {
 	float top = 255 * RETRO_Terrain.scale;
 	float limit = RETRO_Terrain.width + RETRO_Terrain.height;
-	float across = sqrtf(direction.x * direction.x + direction.z * direction.z);
+	float across = hypotf(direction.x, direction.z);
 
 	float t = 0;
 	vec3 p = origin;
@@ -939,13 +947,13 @@ inline int RETRO_ClipProjectTerrainPolygon(const RETRO_TerrainVertex *vertex, in
 		if (ainside != binside) {
 			float t = (nearplane - a.eye.depth) / (b.eye.depth - a.eye.depth);
 			RETRO_TerrainVertex &v = clipped[points++];
-			v.eye.side = a.eye.side + (b.eye.side - a.eye.side) * t;
-			v.eye.height = a.eye.height + (b.eye.height - a.eye.height) * t;
+			v.eye.side = mix(a.eye.side, b.eye.side, t);
+			v.eye.height = mix(a.eye.height, b.eye.height, t);
 			v.eye.depth = nearplane;
-			v.uv = a.uv + (b.uv - a.uv) * t;
-			v.c = a.c + (b.c - a.c) * t;
+			v.uv = mix(a.uv, b.uv, t);
+			v.c = mix(a.c, b.c, t);
 			for (int j = 0; j < RETRO_MAX_TINTS; j++) {
-				v.tint[j] = a.tint[j] + (b.tint[j] - a.tint[j]) * t;
+				v.tint[j] = mix(a.tint[j], b.tint[j], t);
 			}
 		}
 	}
@@ -965,17 +973,17 @@ inline int RETRO_ClipProjectTerrainPolygon(const RETRO_TerrainVertex *vertex, in
 }
 
 //
-// Wrap a position into [0, size), keeping its fractional part
+// Wrap a position into [0, size], keeping its fractional part
 //
 // WRAP answers which cell a coordinate falls in and so returns an integer. A
 // camera being carried across the torus needs the fraction kept: a step
 // shorter than one unit would otherwise be truncated away every frame and
-// the movement stall.
+// the movement stall. The answer reaches size only for a position so little
+// below zero that adding size to it gives size.
 //
 inline float RETRO_WrapCoordinate(float coordinate, float size)
 {
-	coordinate = fmodf(coordinate, size);
-	return coordinate < 0 ? coordinate + size : coordinate;
+	return mod(coordinate, size);
 }
 
 //
@@ -1018,7 +1026,7 @@ inline void RETRO_UpdateTerrainCamera(float timestep)
 	if (RETRO_KeyState(SDL_SCANCODE_DOWN) || RETRO_KeyState(SDL_SCANCODE_S)) forward -= 1;
 	if (RETRO_KeyState(SDL_SCANCODE_A)) strafe -= 1;
 	if (RETRO_KeyState(SDL_SCANCODE_D)) strafe += 1;
-	float length = sqrtf(forward * forward + strafe * strafe);
+	float length = hypotf(forward, strafe);
 	if (length > 0) {
 		forward /= length;
 		strafe /= length;
@@ -1032,20 +1040,18 @@ inline void RETRO_UpdateTerrainCamera(float timestep)
 
 	if (RETRO_KeyState(SDL_SCANCODE_PAGEUP)) RETRO_TerrainView.horizon += timestep * RETRO_TerrainView.horizonspeed;
 	if (RETRO_KeyState(SDL_SCANCODE_PAGEDOWN)) RETRO_TerrainView.horizon -= timestep * RETRO_TerrainView.horizonspeed;
-	if (RETRO_TerrainView.horizon < 0) RETRO_TerrainView.horizon = 0;
-	if (RETRO_TerrainView.horizon > RETRO_HEIGHT) RETRO_TerrainView.horizon = RETRO_HEIGHT;
+	RETRO_TerrainView.horizon = clamp(RETRO_TerrainView.horizon, 0.0f, (float)RETRO_HEIGHT);
 
 	if (RETRO_Terrain.wrap) {
 		RETRO_Camera.x = RETRO_WrapCoordinate(RETRO_Camera.x, RETRO_Terrain.width);
 		RETRO_Camera.z = RETRO_WrapCoordinate(RETRO_Camera.z, RETRO_Terrain.height);
 	}
-	RETRO_Camera.heading = fmodf(RETRO_Camera.heading, (float)(2 * M_PI));
-	if (RETRO_Camera.heading < 0) RETRO_Camera.heading += (float)(2 * M_PI);
+	RETRO_Camera.heading = mod(RETRO_Camera.heading, (float)(2 * M_PI));
 
 	if (!RETRO_Camera.flycam) {
 		float ground = RETRO_TerrainHeightLinear(RETRO_Camera.x, RETRO_Camera.z);
 		float target = ground + RETRO_Camera.eye;
-		RETRO_Camera.height += (target - RETRO_Camera.height) * (1.0f - expf(-timestep / RETRO_Camera.follow));
+		RETRO_Camera.height = mix(RETRO_Camera.height, target, 1.0f - expf(-timestep / RETRO_Camera.follow));
 		if (RETRO_Camera.height < ground + RETRO_Camera.clearance) RETRO_Camera.height = ground + RETRO_Camera.clearance;
 	}
 }
@@ -1067,8 +1073,7 @@ inline void RETRO_UpdateTerrainVehicle(float timestep)
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_LEFT)) RETRO_Camera.heading += v.turnspeed * timestep;
 	if (RETRO_KeyState(SDL_SCANCODE_RIGHT)) RETRO_Camera.heading -= v.turnspeed * timestep;
-	RETRO_Camera.heading = fmodf(RETRO_Camera.heading, (float)(2 * M_PI));
-	if (RETRO_Camera.heading < 0) RETRO_Camera.heading += (float)(2 * M_PI);
+	RETRO_Camera.heading = mod(RETRO_Camera.heading, (float)(2 * M_PI));
 
 	// The ground the vehicle is over is the height halfway across its cell,
 	// the average of the cell's corners
@@ -1151,8 +1156,9 @@ inline void RETRO_ScaleTerrainWorld(float worldscale)
 inline RETRO_TerrainIslandFrame RETRO_BuildTerrainIslandFrame(void)
 {
 	RETRO_TerrainIslandFrame frame;
-	frame.centerx = (RETRO_Terrain.width - 1) * 0.5f;
-	frame.centerz = (RETRO_Terrain.height - 1) * 0.5f;
+	vec3 center = RETRO_TerrainCenter();
+	frame.centerx = center.x;
+	frame.centerz = center.z;
 	frame.sinpitch = sinf(RETRO_Island.pitch);
 	frame.cospitch = cosf(RETRO_Island.pitch);
 	frame.sinrot = sinf(RETRO_Island.rotation);
@@ -1194,15 +1200,14 @@ inline void RETRO_LookDownAtTerrain(void)
 	RETRO_TerrainView.horizon = RETRO_HEIGHT * 0.46f;
 	RETRO_TerrainView.nearplane = 4.0f;
 
-	float centerx = (RETRO_Terrain.width - 1) * 0.5f;
-	float centerz = (RETRO_Terrain.height - 1) * 0.5f;
-	RETRO_Island.x = centerx;
+	vec3 center = RETRO_TerrainCenter();
+	RETRO_Island.x = center.x;
 	RETRO_Island.z = RETRO_Terrain.height + 35.0f;
 	RETRO_Island.rotation = 0;
 	RETRO_Island.pitch = 0.70f;
-	RETRO_Island.nearestz = centerz + hypotf(centerx, centerz) + RETRO_TerrainView.nearplane;
+	RETRO_Island.nearestz = center.z + hypotf(center.x, center.z) + RETRO_TerrainView.nearplane;
 	RETRO_Island.farthestz = RETRO_Terrain.height + 70.0f;
-	RETRO_Island.height = RETRO_TerrainHeight(centerx, centerz) + tanf(RETRO_Island.pitch) * (RETRO_Island.z - centerz);
+	RETRO_Island.height = RETRO_TerrainHeight(center.x, center.z) + tanf(RETRO_Island.pitch) * (RETRO_Island.z - center.z);
 }
 
 //
@@ -1248,8 +1253,7 @@ inline void RETRO_UpdateTerrainIsland(float timestep)
 	if (RETRO_KeyState(SDL_SCANCODE_RIGHT)) RETRO_Island.rotation -= rotation;
 	if (RETRO_KeyState(SDL_SCANCODE_UP) || RETRO_KeyState(SDL_SCANCODE_W)) RETRO_Island.z -= distance;
 	if (RETRO_KeyState(SDL_SCANCODE_DOWN) || RETRO_KeyState(SDL_SCANCODE_S)) RETRO_Island.z += distance;
-	if (RETRO_Island.z < RETRO_Island.nearestz) RETRO_Island.z = RETRO_Island.nearestz;
-	if (RETRO_Island.z > RETRO_Island.farthestz) RETRO_Island.z = RETRO_Island.farthestz;
+	RETRO_Island.z = clamp(RETRO_Island.z, RETRO_Island.nearestz, RETRO_Island.farthestz);
 	RETRO_Island.rotation = fmodf(RETRO_Island.rotation, (float)(2.0 * M_PI));
 }
 

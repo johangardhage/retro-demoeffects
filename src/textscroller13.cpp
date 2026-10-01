@@ -89,9 +89,7 @@ void DEMO_Render(double time, double deltatime)
 	unsigned char *screen = RETRO_FrameBuffer();
 	memset(screen, 0, sizeof(Background));
 	double flash = exp(-fmod(time, FLASH_PERIOD) / FLASH_DECAY);
-	RETRO_SetColor(3, (unsigned char)(INK.r + (255 - INK.r) * flash),
-		(unsigned char)(INK.g + (255 - INK.g) * flash),
-		(unsigned char)(INK.b + (255 - INK.b) * flash));
+	RETRO_SetColor(3, mix(INK, RETRO_WHITE, flash));
 
 	double firstrow = ENTRY_Y - fmod(time, PASS_CYCLE) * SCROLL_SPEED;
 	RETRO_ClearDepthBuffer();
@@ -140,7 +138,7 @@ void DEMO_Initialize(void)
 	for (int segment = 0; segment < 8; segment++) {
 		vec2 a = edge[segment], b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
-			int right = (int)(a.x + (b.x - a.x) * (y - a.y) / (b.y - a.y));
+			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
 			for (int x = RETRO_WIDTH - right; x < RETRO_WIDTH; x++)
 				Background[y * RETRO_WIDTH + x] = y < 133 ? 1 : 2;
 		}

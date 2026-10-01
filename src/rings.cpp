@@ -147,9 +147,9 @@ static RETRO_Palette ColorAt(float t)
 		const RingStop &a = RingColors[i - 1];
 		const RingStop &b = RingColors[i];
 		return {
-			(unsigned char)(a.r + (b.r - a.r) * k),
-			(unsigned char)(a.g + (b.g - a.g) * k),
-			(unsigned char)(a.b + (b.b - a.b) * k)
+			(unsigned char)mix(a.r, b.r, k),
+			(unsigned char)mix(a.g, b.g, k),
+			(unsigned char)mix(a.b, b.b, k)
 		};
 	}
 	const RingStop &last = RingColors[stops - 1];
@@ -320,7 +320,7 @@ void DEMO_Render(double time, double deltatime)
 		double duration = fmod(cycle, 2.0) < 1.0 ? FLIP_TIME : FLIP_TIME_SLOW;
 		double u = MIN((elapsed - cycle * FLIP_PERIOD) / duration, 1.0);
 		// Quintic easing joins the hold with zero velocity and acceleration.
-		double eased = u * u * u * (u * (u * 6.0 - 15.0) + 10.0);
+		double eased = smootherstep(0.0, 1.0, u);
 		float flip = (float)(M_PI * (fmod(cycle, 2.0) + eased));
 		float axis = (float)fmod(AXIS_AT_FIRST_FLIP +
 			AXIS_SPEED * (follow - FLIP_START - FLIP_TIME * 0.5), 2.0 * M_PI);
@@ -352,18 +352,10 @@ void DEMO_Initialize(void)
 	for (int ring = 0; ring < RING_COUNT; ring++) {
 		float t = ring / (float)(RING_COUNT - 1);
 		RETRO_Palette bright = ColorAt(t);
-		RETRO_Palette dark = {
-			(unsigned char)(bright.r * SHADE_FLOOR),
-			(unsigned char)(bright.g * SHADE_FLOOR),
-			(unsigned char)(bright.b * SHADE_FLOOR)
-		};
+		RETRO_Palette dark = bright * SHADE_FLOOR;
 		int start = 1 + ring * BAND_SHADES;
 		int body = start + BAND_SHADES * 3 / 4;
-		RETRO_Palette hot = {
-			(unsigned char)(bright.r + (255 - bright.r) * 0.45f),
-			(unsigned char)(bright.g + (255 - bright.g) * 0.45f),
-			(unsigned char)(bright.b + (255 - bright.b) * 0.45f)
-		};
+		RETRO_Palette hot = mix(bright, RETRO_WHITE, 0.45f);
 		RETRO_CreateGradientPalette(start, body, dark, bright);
 		RETRO_CreateGradientPalette(body, start + BAND_SHADES, bright, hot);
 	}

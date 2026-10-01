@@ -325,7 +325,7 @@ void DEMO_Render(double time, double deltatime)
 		bool near = dx * dx + dy * dy < DOOR_RANGE * DOOR_RANGE;
 		door.open = CLAMP01(door.open + (float)((near ? 1 : -1) * DOOR_SPEED * deltatime));
 	}
-	float halfwidth = (float)tan(RAYCAST_FOV * M_PI / 360);
+	float halfwidth = (float)tan(radians(RAYCAST_FOV / 2.0));
 	float dirx = cosf(Angle), diry = sinf(Angle);
 	float planex = -diry * halfwidth, planey = dirx * halfwidth;
 	float focal = RETRO_WIDTH / (2 * halfwidth);
@@ -384,7 +384,7 @@ void DEMO_Render(double time, double deltatime)
 		// light tiles join from cell to cell, and the texture's turned so no wall reads mirrored
 		// A door carries its texture as it slides
 		float hit = alongx ? Position.y + z * rayy : Position.x + z * rayx;
-		float across = hit - floorf(hit) - (door ? door->open : 0);
+		float across = fract(hit) - (door ? door->open : 0);
 		int lightu = CLAMP(across * TILE_SIZE, 0, TILE_SIZE);
 		int u = (alongx && rayx < 0) || (!alongx && rayy > 0) ? TILE_SIZE - 1 - lightu : lightu;
 		int walltile = door ? DOOR_TILE : Walls[cellx][celly] - 1;

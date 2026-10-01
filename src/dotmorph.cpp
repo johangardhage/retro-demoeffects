@@ -44,7 +44,7 @@ Vertex Morph[POINTS];
 static void MorphShapes(Vertex *from, Vertex *to, float t)
 {
 	for (int i = 0; i < POINTS; i++) {
-		Morph[i].pos = from[i].pos + (to[i].pos - from[i].pos) * t;
+		Morph[i].pos = mix(from[i].pos, to[i].pos, t);
 	}
 }
 
@@ -54,7 +54,7 @@ void DEMO_Render(double time, double deltatime)
 	double phase = fmod(time * MORPH_SPEED, CYCLE_STEPS);
 	int iphase = phase;
 
-	double angle = fmod(time * ROTATION_SPEED * DEG2RAD, 2 * M_PI);
+	double angle = fmod(radians(time * ROTATION_SPEED), 2 * M_PI);
 	mat3 matrix = rotate(0, angle, angle);
 
 	// Morph shapes

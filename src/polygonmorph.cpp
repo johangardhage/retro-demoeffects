@@ -144,7 +144,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Morph shapes
 	for (int i = 0; i < Solid->vertices; i++) {
-		Solid->vertex[i].pos = lerp(ShapeVertex[from][i], ShapeVertex[to][i], t);
+		Solid->vertex[i].pos = mix(ShapeVertex[from][i], ShapeVertex[to][i], t);
 	}
 
 	RETRO_InitializeFaceNormals(Solid);
@@ -175,17 +175,17 @@ void DEMO_Initialize(void)
 		float m = MAX(fabs(u.x), MAX(fabs(u.y), fabs(u.z)));
 
 		float core = 1 - ROUNDED_RADIUS;
-		vec3 q = {MAX(-core, MIN(core, p.x)), MAX(-core, MIN(core, p.y)), MAX(-core, MIN(core, p.z))};
-		vec3 line = {0, MAX(-CAPSULE_CORE, MIN(CAPSULE_CORE, p.y)), 0};
+		vec3 q = clamp(p, -core, core);
+		vec3 line = {0, clamp(p.y, -CAPSULE_CORE, CAPSULE_CORE), 0};
 
 		// Radii from the y axis, each divided by the vertex's own so that
 		// scaling (x, z) by it lands on that radius
 		float square = MAX(fabs(p.x), fabs(p.z));
-		float axis = sqrt(p.x * p.x + p.z * p.z);
+		float axis = hypotf(p.x, p.z);
 		float saucer = SAUCER_RADIUS * square / axis;
 		float cylinder = CYLINDER_RADIUS * square / axis;
-		float barrel = cylinder * (BARREL_END + (1 - BARREL_END) * (1 - p.y * p.y));
-		float hourglass = cylinder * (HOURGLASS_WAIST + (1 - HOURGLASS_WAIST) * p.y * p.y);
+		float barrel = cylinder * mix(BARREL_END, 1, 1 - p.y * p.y);
+		float hourglass = cylinder * mix(HOURGLASS_WAIST, 1, p.y * p.y);
 		float bucket = cylinder * (1 + BUCKET_TAPER * p.y);
 
 		float dome = copysign(SAUCER_DOME * (1 - square * square), p.y);

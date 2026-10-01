@@ -90,22 +90,6 @@ static float Light[RETRO_WIDTH * RETRO_HEIGHT]; // light each pixel has taken th
 static unsigned char Base[RETRO_COLORS]; // the ramp a palette entry is lit on
 static unsigned char Level[RETRO_COLORS]; // and how far up it already is
 
-// The noise lattice's value at a grid point, in [0, 1]
-static float Lattice(int x, int y)
-{
-	return (RETRO_Hash(x, y) & 65535u) / 65535.0f;
-}
-
-static float Noise(float x, float y)
-{
-	int ix = (int)floorf(x), iy = (int)floorf(y);
-	float fx = smoothstep(0.0f, 1.0f, x - ix);
-	float fy = smoothstep(0.0f, 1.0f, y - iy);
-	float a = Lattice(ix, iy), b = Lattice(ix + 1, iy);
-	float c = Lattice(ix, iy + 1), d = Lattice(ix + 1, iy + 1);
-	return (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy;
-}
-
 // The six caps, each a disc of the sphere about its axis: a middle, then
 // HOLE_RINGS rings out to HOLE_ANGLE, the middle closed by triangles, quads
 // whose last corner repeats. All are wound so that (v1 - v0) x (v2 - v0)
@@ -195,7 +179,7 @@ static int ProjectBeamTriangle(const vec3 *input, PolygonPoint *output)
 		float depth = RETRO_PROJECTION_SCALE * current.z + RETRO_PROJECTION_EYEDISTANCE;
 		if ((previousdepth >= BEAM_NEAR_DEPTH) != (depth >= BEAM_NEAR_DEPTH)) {
 			float t = (BEAM_NEAR_DEPTH - previousdepth) / (depth - previousdepth);
-			count = AppendBeamPoint(output, count, previous + (current - previous) * t, BEAM_NEAR_DEPTH);
+			count = AppendBeamPoint(output, count, mix(previous, current, t), BEAM_NEAR_DEPTH);
 		}
 		if (depth >= BEAM_NEAR_DEPTH) count = AppendBeamPoint(output, count, current, depth);
 		previous = current;
@@ -323,10 +307,10 @@ static void BuildWall(void)
 			float py = (y / WALL_PIXEL + 0.5f) * WALL_PIXEL;
 			float dx = px - RETRO_WIDTH / 2.0f;
 			float dy = py - RETRO_HEIGHT / 2.0f;
-			float r = sqrt(dx * dx + dy * dy);
+			float r = hypotf(dx, dy);
 			float a = atan2(dy, dx);
 			float spiral = 0.5f + 0.5f * cosf(WALL_ARMS * (a + WALL_TWIST * r));
-			float noise = (2.0f * Noise(px / WALL_CELL, py / WALL_CELL) + Noise(2.0f * px / WALL_CELL + 17.0f, 2.0f * py / WALL_CELL + 31.0f)) / 3.0f;
+			float noise = (2.0f * RETRO_ValueNoise(px / WALL_CELL, py / WALL_CELL) + RETRO_ValueNoise(2.0f * px / WALL_CELL + 17.0f, 2.0f * py / WALL_CELL + 31.0f)) / 3.0f;
 			float arms = spiral + WALL_ROUGHNESS * (noise - 0.5f) - 0.3f * (1.0f - smoothstep(0.0f, WALL_CORE, r));
 			Wall[y * RETRO_WIDTH + x] = arms > WALL_THRESHOLD ? BLUE_START : RED_START;
 		}
@@ -381,7 +365,7 @@ void DEMO_Initialize(void)
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			float dx = (x + 0.5f - RETRO_WIDTH / 2.0f) / RETRO_PROJECTION_EYEDISTANCE;
 			float dy = (y + 0.5f - RETRO_HEIGHT / 2.0f) / RETRO_PROJECTION_EYEDISTANCE;
-			RayLength[y * RETRO_WIDTH + x] = sqrtf(1.0f + dx * dx + dy * dy);
+			RayLength[y * RETRO_WIDTH + x] = length(vec3{ dx, dy, 1.0f });
 		}
 	}
 

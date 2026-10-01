@@ -92,7 +92,7 @@ void DEMO_Render(double time, double deltatime)
 	double phase = fmod(time * COLUMN_SPEED, columnperiod);
 
 	// Constant over the column, so worked out once rather than per slice
-	double twist = COLUMN_TWIST_MIN + (COLUMN_TWIST_MAX - COLUMN_TWIST_MIN) * (1 + COS(phase / 5.0)) / 2;
+	double twist = mix(COLUMN_TWIST_MIN, COLUMN_TWIST_MAX, (1 + COS(phase / 5.0)) / 2);
 
 	// Draw column slices
 	for (int x = 0; x < RETRO_WIDTH; x++) {

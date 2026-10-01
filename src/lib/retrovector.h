@@ -60,6 +60,68 @@ inline double smoothstep(double edge0, double edge1, double x)
 	return t * t * (3.0 - 2.0 * t);
 }
 
+// smoothstep's quintic, 6t⁵ - 15t⁴ + 10t³: the curvature is zero at both ends
+// as well as the slope, so what it eases meets a hold with no jolt in its
+// acceleration either.
+inline float smootherstep(float edge0, float edge1, float x)
+{
+	float t = CLAMP01((x - edge0) / (edge1 - edge0));
+	return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
+}
+
+inline double smootherstep(double edge0, double edge1, double x)
+{
+	double t = CLAMP01((x - edge0) / (edge1 - edge0));
+	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+}
+
+// GLSL's clamp: x held to [low, high], both ends included, where CLAMP
+// stops one short of its upper end.
+inline float clamp(float x, float low, float high) { return x < low ? low : (x > high ? high : x); }
+inline double clamp(double x, double low, double high) { return x < low ? low : (x > high ? high : x); }
+
+// GLSL's mix: x at a = 0, y at a = 1 and the straight line between them,
+// which carries on past either end when a does.
+inline float mix(float x, float y, float a) { return x + (y - x) * a; }
+inline double mix(double x, double y, double a) { return x + (y - x) * a; }
+
+// GLSL's fract: what x has above the whole number below it, in [0, 1]. A
+// negative x is measured from the whole number below it too, so fract(-0.25)
+// is 0.75. The answer reaches 1 only for a negative x too small to tell from
+// zero once it is added to 1, so a caller indexing with it clamps.
+inline float fract(float x) { return x - floorf(x); }
+inline double fract(double x) { return x - floor(x); }
+
+// GLSL's step: 0 while x is below edge, 1 from edge on.
+inline float step(float edge, float x) { return x < edge ? 0 : 1; }
+inline double step(double edge, double x) { return x < edge ? 0 : 1; }
+
+// GLSL's mod: x - y * floor(x / y), the remainder that takes the sign of y,
+// so a negative x wraps up into [0, y] where fmod would leave it negative.
+// It is taken from fmod, which is exact, and not from the quotient, which
+// rounds. The answer reaches y only for a negative x too small to tell from
+// zero once it is added to y, so a caller indexing with it clamps.
+inline float mod(float x, float y)
+{
+	float r = fmodf(x, y);
+	return r != 0 && (r < 0) != (y < 0) ? r + y : r;
+}
+
+inline double mod(double x, double y)
+{
+	double r = fmod(x, y);
+	return r != 0 && (r < 0) != (y < 0) ? r + y : r;
+}
+
+// GLSL's inversesqrt: one over the square root of x, which is what scales a
+// vector to unit length when x is its length squared.
+inline float inversesqrt(float x) { return 1.0f / sqrtf(x); }
+inline double inversesqrt(double x) { return 1.0 / sqrt(x); }
+
+// GLSL's radians: an angle in degrees as radians. It takes and gives a
+// double, so a whole number of degrees needs no cast.
+inline double radians(double degrees) { return degrees * (M_PI / 180); }
+
 //
 // vec2
 //
@@ -107,7 +169,10 @@ inline vec2 normalize(vec2 v)
 	return v * invlen;
 }
 
-inline vec2 lerp(vec2 a, vec2 b, float t) { return a + (b - a) * t; }
+inline vec2 mix(vec2 a, vec2 b, float t) { return a + (b - a) * t; }
+
+inline vec2 min(vec2 a, vec2 b) { return { MIN(a.x, b.x), MIN(a.y, b.y) }; }
+inline vec2 max(vec2 a, vec2 b) { return { MAX(a.x, b.x), MAX(a.y, b.y) }; }
 
 //
 // vec3
@@ -154,7 +219,7 @@ inline vec3 normalize(vec3 v)
 	return v * invlen;
 }
 
-inline vec3 lerp(vec3 a, vec3 b, float t) { return a + (b - a) * t; }
+inline vec3 mix(vec3 a, vec3 b, float t) { return a + (b - a) * t; }
 
 // GLSL's reflect: the incident direction I mirrored about the surface whose
 // normal is N. N must be unit length; I need not be, and the result keeps
@@ -176,6 +241,7 @@ inline vec3 refract(vec3 I, vec3 N, float eta)
 inline vec3 min(vec3 a, vec3 b) { return { MIN(a.x, b.x), MIN(a.y, b.y), MIN(a.z, b.z) }; }
 inline vec3 max(vec3 a, vec3 b) { return { MAX(a.x, b.x), MAX(a.y, b.y), MAX(a.z, b.z) }; }
 inline vec3 abs(vec3 v) { return { fabs(v.x), fabs(v.y), fabs(v.z) }; }
+inline vec3 clamp(vec3 v, float low, float high) { return { clamp(v.x, low, high), clamp(v.y, low, high), clamp(v.z, low, high) }; }
 
 //
 // vec4
@@ -212,7 +278,7 @@ inline vec4 normalize(vec4 v)
 	return v * invlen;
 }
 
-inline vec4 lerp(vec4 a, vec4 b, float t) { return a + (b - a) * t; }
+inline vec4 mix(vec4 a, vec4 b, float t) { return a + (b - a) * t; }
 
 //
 // ivec2

@@ -70,7 +70,7 @@
 #define ROAD_CENTRIFUGAL 0.06 // half-widths a second the camera is pushed out per unit of curve
 #define ROAD_RECENTER 1.1 // how quickly it eases back to the middle
 
-#define ROAD_CAMERA_DEPTH (1.0 / tan((ROAD_FIELD_OF_VIEW / 2.0) * DEG2RAD))
+#define ROAD_CAMERA_DEPTH (1.0 / tan(radians(ROAD_FIELD_OF_VIEW / 2.0)))
 
 // Curve is an acceleration, in world units of x per segment squared, and a
 // hill is given in segment lengths of climb over the section it belongs to
@@ -136,7 +136,7 @@ void DEMO_Render(double time, double deltatime)
 	// The camera rides above the road it stands on, which is what lifts the
 	// horizon over a crest
 	float camerax = playerx * ROAD_WIDTH;
-	float cameray = Road[base].y + (Road[(base + 1) % RoadSegments].y - Road[base].y) * percent + ROAD_CAMERA_HEIGHT;
+	float cameray = mix(Road[base].y, Road[(base + 1) % RoadSegments].y, percent) + ROAD_CAMERA_HEIGHT;
 	float depth = ROAD_CAMERA_DEPTH;
 
 	// Project the boundaries, walking outward. x is where the center of the
@@ -186,8 +186,8 @@ void DEMO_Render(double time, double deltatime)
 		for (int y = y1; y < y2; y++) {
 			// The center and the half-width are linear in y inside the quad
 			float k = (y - ytop) * step;
-			float cx = Edges[n + 1].x + (Edges[n].x - Edges[n + 1].x) * k;
-			float cw = Edges[n + 1].w + (Edges[n].w - Edges[n + 1].w) * k;
+			float cx = mix(Edges[n + 1].x, Edges[n].x, k);
+			float cw = mix(Edges[n + 1].w, Edges[n].w, k);
 
 			unsigned char *row = dest + y * RETRO_WIDTH;
 			memset(row, grass, RETRO_WIDTH);
@@ -230,7 +230,7 @@ static void AddRoad(int enter, int hold, int leave, float curve, float height)
 
 		Segment *segment = &Road[RoadSegments++];
 		segment->curve = curve * in * in * (1 + cos(out * M_PI)) / 2;
-		segment->y = starty + (endy - starty) * ease;
+		segment->y = mix(starty, endy, ease);
 	}
 
 	RoadHeight = endy;

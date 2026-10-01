@@ -46,10 +46,7 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate phase
 	double phase = fmod(time * TUNNEL_SPEED, spacing);
 
-	double twist = fmod(-time * TWIST_SPEED, RETRO_ANGLES_PER_TURN);
-	if (twist < 0) {
-		twist += RETRO_ANGLES_PER_TURN;
-	}
+	double twist = mod(-time * TWIST_SPEED, RETRO_ANGLES_PER_TURN);
 
 	// Draw rings
 	for (int i = 0; i < RING_COUNT; i++) {

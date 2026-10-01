@@ -54,8 +54,8 @@ void DEMO_Render(double time, double deltatime)
 	// Yaw the sampled (u, v) in the plane, and walk (xd, yd) in texture
 	// space. WRAP at the sample is one texture period.
 	float ang = fmod(time * PLANE_YAW_SPEED, 360.0);
-	float cosa = cos(ang * DEG2RAD);
-	float sina = sin(ang * DEG2RAD);
+	float cosa = cos(radians(ang));
+	float sina = sin(radians(ang));
 
 	float xd = time * PLANE_WALK_SPEED;
 	float yd = time * PLANE_WALK_SPEED;

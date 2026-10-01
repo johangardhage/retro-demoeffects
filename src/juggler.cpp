@@ -57,6 +57,7 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
+#include "lib/retromath.h"
 
 #define NEAR_T 0.001f // t past which a hit counts, so a ray does not re-hit its own origin
 #define MAX_BOUNCES 10
@@ -102,29 +103,11 @@ static Sphere Body[SPHERE_COUNT];
 static vec3 CamEye, CamCenter, CamU, CamV;
 static vec3 LightPos = { -564, 686, 147 };
 
-static bool IntersectSphere(const Sphere &s, vec3 origin, vec3 dir, float &t, bool allowinside = true)
-{
-	vec3 oc = origin - s.center;
-	float b = dot(dir, oc);
-	float c = dot(oc, oc) - s.radius * s.radius;
-	float disc = b * b - c;
-	if (disc < 0.0f) return false;
-	float root = sqrtf(disc);
-	float tt = -b - root;
-	if (tt <= NEAR_T) {
-		if (!allowinside) return false;
-		tt = -b + root;
-	}
-	if (tt <= NEAR_T) return false;
-	t = tt;
-	return true;
-}
-
 static bool Shadowed(vec3 origin, vec3 dir, float maxdist)
 {
 	for (int i = 2; i < SPHERE_COUNT; i++) {
 		float t;
-		if (IntersectSphere(Body[i], origin, dir, t, false) && t < maxdist) return true;
+		if (RETRO_IntersectSphere(origin, dir, Body[i].center, Body[i].radius, NEAR_T, t, false) && t < maxdist) return true;
 	}
 	return false;
 }
@@ -193,7 +176,7 @@ static unsigned char TraceScene(vec3 origin, vec3 dir)
 		int hit = -1;
 		for (int i = 2; i < SPHERE_COUNT; i++) {
 			float t;
-			if (IntersectSphere(Body[i], origin, dir, t) && t < nearest) { nearest = t; hit = i; floorhit = false; }
+			if (RETRO_IntersectSphere(origin, dir, Body[i].center, Body[i].radius, NEAR_T, t) && t < nearest) { nearest = t; hit = i; floorhit = false; }
 		}
 		if (hit < 0 && !floorhit) { brightness = CLAMP01(dir.y); break; }
 
@@ -233,7 +216,7 @@ static unsigned char TraceScene(vec3 origin, vec3 dir)
 static void UpdateAppendage(int sceneindex, vec3 p, vec3 q, vec3 w, float A, float B)
 {
 	vec3 V = normalize(q - p);
-	float D = length(q - p);
+	float D = distance(q, p);
 	vec3 U = cross(V, normalize(w));
 	float y = (A * A - B * B + D * D) / (2.0f * D);
 	float x = sqrtf(MAX(A * A - y * y, 0.0f));

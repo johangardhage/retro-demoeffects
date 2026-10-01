@@ -366,12 +366,77 @@ inline int RETRO_ConvexOutline(const vec2 *point, int count, int *outline, int m
 		for (int i = 0; i < count; i++) {
 			vec2 a = point[next] - point[current];
 			vec2 b = point[i] - point[current];
-			float turn = a.x * b.y - a.y * b.x;
+			float turn = cross(a, b);
 			if (turn < 0 || (turn == 0 && dot(b, b) > dot(a, a))) next = i;
 		}
 		current = next;
 	} while (!(point[current] == point[start]));
 	return corners;
+}
+
+//
+// Where a ray meets a sphere: the nearer root of |O + tD - C|² = r², D unit
+//
+// A root counts once it is past neart, which keeps a ray leaving a surface
+// from meeting that surface again at its own origin. allowinside also returns
+// the far root when the near one is behind the origin, which a reflection
+// bounce needs when it starts fractionally inside the sphere it just left -
+// but a shadow ray, always cast from outside every sphere, must not get: a
+// graze it should clear would otherwise read as a hit on the sphere's far
+// side.
+//
+inline bool RETRO_IntersectSphere(vec3 origin, vec3 direction, vec3 center, float radius, float neart, float &t, bool allowinside = true)
+{
+	vec3 oc = origin - center;
+	float b = dot(direction, oc);
+	float c = dot(oc, oc) - radius * radius;
+	float disc = b * b - c;
+	if (disc < 0.0f) return false;
+
+	float root = sqrtf(disc);
+	float tt = -b - root;
+	if (tt <= neart) {
+		if (!allowinside) return false;
+		tt = -b + root;
+	}
+	if (tt <= neart) return false;
+
+	t = tt;
+	return true;
+}
+
+// Integer hash of a grid position. The same (x, y) always gives the same bits
+// and neighboring positions give unrelated ones, so a pattern built from it
+// repeats exactly and stays anchored to its grid. The odd multipliers spread
+// each coordinate over the word; the xor-shifts fold the well-mixed high bits
+// back into the low ones a caller masks off. Unsigned arithmetic keeps the
+// overflow defined.
+inline unsigned int RETRO_Hash(int x, int y)
+{
+	unsigned int hash = (unsigned int)x * 374761393u + (unsigned int)y * 668265263u;
+	hash = (hash ^ (hash >> 13)) * 1274126177u;
+	return hash ^ (hash >> 16);
+}
+
+// The hash of a grid position as a fraction, in [0, 1]
+inline float RETRO_HashUnit(int x, int y)
+{
+	return (RETRO_Hash(x, y) & 65535u) / 65535.0f;
+}
+
+// Value noise, in [0, 1]: the fractions hashed at the four grid points around
+// (x, y), blended across the cell. The blend rides on smoothstep, flat at
+// both ends, so the noise crosses from one cell into the next without a
+// crease. One grid unit is one feature; a caller scales x and y for the size
+// it wants and sums octaves for detail.
+inline float RETRO_ValueNoise(float x, float y)
+{
+	int ix = (int)floorf(x), iy = (int)floorf(y);
+	float fx = smoothstep(0.0f, 1.0f, x - ix);
+	float fy = smoothstep(0.0f, 1.0f, y - iy);
+	float a = RETRO_HashUnit(ix, iy), b = RETRO_HashUnit(ix + 1, iy);
+	float c = RETRO_HashUnit(ix, iy + 1), d = RETRO_HashUnit(ix + 1, iy + 1);
+	return mix(mix(a, b, fx), mix(c, d, fx), fy);
 }
 
 #endif

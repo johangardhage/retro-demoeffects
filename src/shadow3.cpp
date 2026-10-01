@@ -73,7 +73,7 @@
 #define POINT_LIGHT (255 / 256.0f)
 #define POINT_LIGHT_KL 0.001f // green, attenuation per world unit
 #define POINT_LIGHT2_KL 0.002f // red
-#define POINT_LIGHT_RATE (30 * DEG2RAD) // radians a second round the world
+#define POINT_LIGHT_RATE radians(30) // radians a second round the world
 #define POINT_LIGHT_ORBIT WORLD(500) // green, radius about the world's center
 #define POINT_LIGHT2_ORBIT WORLD(200) // red, twice as fast the other way
 #define POINT_LIGHT_ALTITUDE WORLD(500) // where both start
@@ -84,7 +84,7 @@
 
 #define OBJECT_SCALE WORLD(10)
 #define OBJECT_ALTITUDE WORLD(150) // over the world's center
-#define OBJECT_RATE (60 * DEG2RAD) // radians a second it spins
+#define OBJECT_RATE radians(60) // radians a second it spins
 #define LIGHT_OBJECT_SCALE WORLD(10)
 
 #define SHADOW_PLANE WORLD(10) // height of the plane the shadows lie on
@@ -154,11 +154,6 @@ static bool InfiniteLight = true;
 static bool PointLight[POINT_LIGHTS] = { true, true };
 static bool Help = true;
 static bool CastFromAbove = false; // or from the point lights
-
-static vec3 WorldCenter(void)
-{
-	return { (RETRO_Terrain.width - 1) * 0.5f, 0, (RETRO_Terrain.height - 1) * 0.5f };
-}
 
 // The camera's frame, taken once a frame
 static RETRO_TerrainBasis View;
@@ -302,7 +297,7 @@ static void DrawShadow(const Model3D *model, const mat3 &rotation, vec3 position
 	for (int i = 0; i < model->vertices; i++) {
 		vec3 p = position + rotation * model->vertex[i].pos * scale;
 		if (p.y >= light.y) return;
-		flat[i] = light + (p - light) * ((light.y - SHADOW_PLANE) / (light.y - p.y));
+		flat[i] = mix(light, p, (light.y - SHADOW_PLANE) / (light.y - p.y));
 	}
 
 	// One pass for all the faces, so that where they overlap the ground is
@@ -344,7 +339,7 @@ static void DrawText(void)
 	}
 
 	// CELL is the cell the camera is over
-	vec3 center = WorldCenter();
+	vec3 center = RETRO_TerrainCenter();
 	// Each line within the screen's 40 columns
 	snprintf(text, sizeof(text), "CAM [%5.0f,%5.0f,%5.0f] CELL [%d, %d]\nLighting [%s]: Amb=%d Inf=%d G=%d R=%d\nGreen y=%.0f Red y=%.0f\nShadow cast from [%s]",
 			 TO_WORLD(RETRO_Camera.x - center.x), TO_WORLD(RETRO_Camera.height), TO_WORLD(RETRO_Camera.z - center.z), (int)floorf(RETRO_Camera.x), (int)floorf(RETRO_Camera.z),
@@ -356,7 +351,7 @@ static void DrawText(void)
 // The point lights on their paths about the world's center
 static void PlacePointLights(double time)
 {
-	vec3 center = WorldCenter();
+	vec3 center = RETRO_TerrainCenter();
 	float angle = fmod(time * POINT_LIGHT_RATE, 2 * M_PI);
 	PointLightPosition[LIGHT_GREEN] = { center.x - POINT_LIGHT_ORBIT * cosf(angle), PointLightAltitude[LIGHT_GREEN], center.z + POINT_LIGHT_ORBIT * sinf(angle) };
 	PointLightPosition[LIGHT_RED] = { center.x - POINT_LIGHT2_ORBIT * cosf(-2 * angle), PointLightAltitude[LIGHT_RED], center.z + POINT_LIGHT2_ORBIT * sinf(-2 * angle) };
@@ -427,7 +422,7 @@ void DEMO_Render(double time, double deltatime)
 	if (RETRO_KeyState(SDL_SCANCODE_3)) PointLightAltitude[LIGHT_RED] -= raise;
 	if (RETRO_KeyState(SDL_SCANCODE_4)) PointLightAltitude[LIGHT_RED] += raise;
 	for (float &altitude : PointLightAltitude) {
-		altitude = MIN(MAX(altitude, 0.0f), POINT_LIGHT_TOP);
+		altitude = clamp(altitude, 0.0f, POINT_LIGHT_TOP);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_C)) CastFromAbove = !CastFromAbove;
 
@@ -435,7 +430,7 @@ void DEMO_Render(double time, double deltatime)
 	View = mesh.basis;
 
 	PlacePointLights(time);
-	vec3 center = WorldCenter();
+	vec3 center = RETRO_TerrainCenter();
 
 	// The object over the center, spinning. The world is the mirror of the
 	// book's, so it turns the other way round y to look the same
@@ -511,7 +506,7 @@ void DEMO_Initialize(void)
 
 	// The camera starts 500 up and 400 short of the center, looking at it,
 	// and falls onto the ground
-	vec3 center = WorldCenter();
+	vec3 center = RETRO_TerrainCenter();
 	RETRO_Camera.x = center.x;
 	RETRO_Camera.z = center.z - WORLD(400);
 	RETRO_Camera.height = WORLD(500);
@@ -521,15 +516,15 @@ void DEMO_Initialize(void)
 	RETRO_Vehicle.acceleration = WORLD(900);
 	RETRO_Vehicle.friction = WORLD(225);
 	RETRO_Vehicle.maxspeed = WORLD(600);
-	RETRO_Vehicle.turnspeed = 150 * DEG2RAD;
+	RETRO_Vehicle.turnspeed = radians(150);
 	RETRO_Vehicle.gravity = WORLD(360);
 	RETRO_Vehicle.spring = 22.5f;
 	RETRO_Vehicle.lift = 10.7f; // -ln(0.7) * 30
 	RETRO_Vehicle.clearance = WORLD(125);
 	RETRO_Vehicle.floor = WORLD(50);
-	RETRO_Vehicle.restpitch = RETRO_Vehicle.pitch = 10 * DEG2RAD;
-	RETRO_Vehicle.pitchkick = 0.6f * DEG2RAD / WORLD(1);
-	RETRO_Vehicle.pitchreturn = 10 * DEG2RAD;
+	RETRO_Vehicle.restpitch = RETRO_Vehicle.pitch = radians(10);
+	RETRO_Vehicle.pitchkick = radians(0.6f) / WORLD(1);
+	RETRO_Vehicle.pitchreturn = radians(10);
 
 	RETRO_SetFont(RETRO_FONT_VGA_8X8);
 }

@@ -16,6 +16,7 @@
 #include "lib/retromain.h"
 #include "lib/retrovector.h"
 #include "lib/retromatrix.h"
+#include "lib/retromath.h"
 
 #define FOCAL 250.0f // pixels; matches the polygon demos
 
@@ -57,22 +58,6 @@
 static vec3 CameraRay[RETRO_WIDTH * RETRO_HEIGHT]; // fixed pinhole rays, before ball rotation
 static unsigned char Wall[RETRO_WIDTH * RETRO_HEIGHT]; // RED_START or BLUE_START, per pixel
 
-// The noise lattice's value at a grid point, in [0, 1]
-static float Lattice(int x, int y)
-{
-	return (RETRO_Hash(x, y) & 65535u) / 65535.0f;
-}
-
-static float Noise(float x, float y)
-{
-	int ix = (int)floorf(x), iy = (int)floorf(y);
-	float fx = smoothstep(0.0f, 1.0f, x - ix);
-	float fy = smoothstep(0.0f, 1.0f, y - iy);
-	float a = Lattice(ix, iy), b = Lattice(ix + 1, iy);
-	float c = Lattice(ix, iy + 1), d = Lattice(ix + 1, iy + 1);
-	return (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy;
-}
-
 static float BeamDensity(vec3 q)
 {
 	float r2 = dot(q, q);
@@ -94,7 +79,7 @@ static float ShadeBall(vec3 normal, vec3 direction, float pixel)
 	// Blend the hole rim across a pixel, including the surface foreshortening.
 	float rim = 0.5f * sinf(HOLE_ANGLE) * pixel / MAX(facing, 0.1f);
 	float hole = smoothstep(cosf(HOLE_ANGLE) - rim, cosf(HOLE_ANGLE) + rim, holeaxis);
-	return shade + (1.0f - shade) * hole;
+	return mix(shade, 1.0f, hole);
 }
 
 // Narrow [entry, exit] to where margin + rate * t stays non-negative.
@@ -193,10 +178,10 @@ static void BuildWall(void)
 			float py = (y / WALL_PIXEL + 0.5f) * WALL_PIXEL;
 			float dx = px - RETRO_WIDTH / 2.0f;
 			float dy = py - RETRO_HEIGHT / 2.0f;
-			float r = sqrt(dx * dx + dy * dy);
+			float r = hypotf(dx, dy);
 			float a = atan2(dy, dx);
 			float spiral = 0.5f + 0.5f * cosf(WALL_ARMS * (a + WALL_TWIST * r));
-			float noise = (2.0f * Noise(px / WALL_CELL, py / WALL_CELL) + Noise(2.0f * px / WALL_CELL + 17.0f, 2.0f * py / WALL_CELL + 31.0f)) / 3.0f;
+			float noise = (2.0f * RETRO_ValueNoise(px / WALL_CELL, py / WALL_CELL) + RETRO_ValueNoise(2.0f * px / WALL_CELL + 17.0f, 2.0f * py / WALL_CELL + 31.0f)) / 3.0f;
 			float arms = spiral + WALL_ROUGHNESS * (noise - 0.5f) - 0.3f * (1.0f - smoothstep(0.0f, WALL_CORE, r));
 			Wall[y * RETRO_WIDTH + x] = arms > WALL_THRESHOLD ? BLUE_START : RED_START;
 		}

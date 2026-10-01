@@ -414,6 +414,20 @@ inline RETRO_Palette RETRO_LinearToColor(vec3 color, int colormax = 255)
 	};
 }
 
+// GLSL's mix for colors: each component of a taken t of the way toward b, the
+// fraction dropped.
+inline RETRO_Palette mix(RETRO_Palette a, RETRO_Palette b, float t)
+{
+	return { (unsigned char)mix(a.r, b.r, t), (unsigned char)mix(a.g, b.g, t), (unsigned char)mix(a.b, b.b, t) };
+}
+
+// GLSL's vector times scalar for colors: each component scaled by s, the
+// fraction dropped.
+inline RETRO_Palette operator*(RETRO_Palette color, float s)
+{
+	return { (unsigned char)(color.r * s), (unsigned char)(color.g * s), (unsigned char)(color.b * s) };
+}
+
 //
 // Fill [start, end) with a linear interpolation from one color toward another.
 // to is the color at end, which is not written, so the next ramp can start
@@ -432,12 +446,7 @@ inline void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, 
 	for (int i = 0; i < steps; i++) {
 		float k = (float)i / steps;
 
-		RETRO_Palette color;
-		color.r = from.r + (to.r - from.r) * k;
-		color.g = from.g + (to.g - from.g) * k;
-		color.b = from.b + (to.b - from.b) * k;
-
-		RETRO_SetColor(start + i, color, palette);
+		RETRO_SetColor(start + i, mix(from, to, k), palette);
 	}
 }
 
@@ -544,7 +553,7 @@ inline void RETRO_CreateRoundAnglePhongMap(unsigned char *buffer, int width, int
 		float dy = (y - centery) / centery;
 		for (int x = 0; x < width; x++) {
 			float dx = (x - centerx) / centerx;
-			float radius = sqrt(dx * dx + dy * dy);
+			float radius = hypotf(dx, dy);
 
 			int paletteindex = 0;
 			if (radius < 1.0f) {

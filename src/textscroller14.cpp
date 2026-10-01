@@ -91,8 +91,8 @@ void DEMO_Render(double time, double deltatime)
 		// The letter's screen bounds; nothing outside them is cleared, drawn or read.
 		vec2 low = quad[0].pos, high = quad[0].pos;
 		for (const PolygonPoint &point : quad) {
-			low = { MIN(low.x, point.pos.x), MIN(low.y, point.pos.y) };
-			high = { MAX(high.x, point.pos.x), MAX(high.y, point.pos.y) };
+			low = min(low, point.pos);
+			high = max(high, point.pos);
 		}
 		ClipRect box = { MAX((int)floor(low.x), 0), MIN((int)ceil(high.x) + 1, RETRO_WIDTH),
 			MAX((int)floor(low.y), TOP), MIN((int)ceil(high.y) + 1, BOTTOM) };
@@ -159,7 +159,7 @@ void DEMO_Initialize(void)
 	for (int segment = 0; segment < 8; segment++) {
 		vec2 a = edge[segment], b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
-			int right = (int)(a.x + (b.x - a.x) * (y - a.y) / (b.y - a.y));
+			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
 			for (int x = 0; x < right; x++)
 				Background[y * RETRO_WIDTH + x] = y < 133 ? 1 : 2;
 		}

@@ -9,6 +9,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrofont.h"
+#include "lib/retrovector.h"
 
 static constexpr int GlyphWidth = 256;
 static constexpr int GlyphHeight = 128;
@@ -33,14 +34,7 @@ static double Sample(unsigned char character, double u, double v)
 	double fx = u - x, fy = v - y;
 	const unsigned char *top = Font.atlas->data + y * Font.atlas->width + glyph * GlyphWidth;
 	const unsigned char *bottom = Font.atlas->data + nexty * Font.atlas->width + glyph * GlyphWidth;
-	return 255.0 * (((1.0 - fx) * top[x] + fx * top[nextx]) * (1.0 - fy)
-		+ ((1.0 - fx) * bottom[x] + fx * bottom[nextx]) * fy);
-}
-
-static double Ease(double t)
-{
-	t = CLAMP01(t);
-	return t * t * (3.0 - 2.0 * t);
+	return 255.0 * mix(mix(top[x], top[nextx], fx), mix(bottom[x], bottom[nextx], fx), fy);
 }
 
 void DEMO_Render(double time, double deltatime)
@@ -56,7 +50,7 @@ void DEMO_Render(double time, double deltatime)
 	// continuously. Cosine is a sine wave shifted by a quarter turn.
 	double zoom = 0.60 + 0.40 * cos(bounce * (2.0 * M_PI / BouncePeriod));
 	double sinetime = MAX(0.0, time - SineStart);
-	double sineamplitude = 26.0 * Ease(sinetime);
+	double sineamplitude = 26.0 * smoothstep(0.0, 1.0, sinetime);
 	double height = 100.0;
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		double py = (y - RETRO_HEIGHT / 2.0) / zoom;

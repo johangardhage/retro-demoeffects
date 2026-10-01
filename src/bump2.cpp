@@ -81,8 +81,8 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate light
 	double angle = fmod(time * LIGHT_SPEED, RETRO_DEGREES_PER_TURN);
 
-	float lx = RETRO_WIDTH / 2.0 + LIGHT_ORBIT * cos(angle * DEG2RAD);
-	float ly = RETRO_HEIGHT / 2.0 + LIGHT_ORBIT * sin(2 * angle * DEG2RAD);
+	float lx = RETRO_WIDTH / 2.0 + LIGHT_ORBIT * cos(radians(angle));
+	float ly = RETRO_HEIGHT / 2.0 + LIGHT_ORBIT * sin(radians(2 * angle));
 
 	// Draw bump
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
@@ -92,7 +92,7 @@ void DEMO_Render(double time, double deltatime)
 
 			vec3 lightvec = { lx - x, ly - y, LIGHT_HEIGHT };
 			float distancesquared = dot(lightvec, lightvec);
-			vec3 lightdir = lightvec * (1.0f / sqrt(distancesquared));
+			vec3 lightdir = lightvec * inversesqrt(distancesquared);
 
 			float cosangle = dot(normal, lightdir);
 			float lambert = CLAMP01(cosangle);

@@ -99,7 +99,7 @@ void DEMO_Render(double time, double deltatime)
 			double theta = WAVE_START + y * WAVE_RATE;
 			double depth = sin(theta);
 			double run = RIBBON_AMP * WAVE_RATE * depth; // d(AMP cos θ)/dy, up to sign
-			arc += sqrt(run * run + SAMPLE_RISE * SAMPLE_RISE);
+			arc += hypot(run, SAMPLE_RISE);
 
 			bool facing = (depth <= 0);
 			if (facing != front) {

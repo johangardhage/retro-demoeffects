@@ -107,8 +107,7 @@ static float CloudDrift; // room units the clouds have moved along x
 // abs(fract(x) - 1/2), the distance from x to the center of its unit cell, folded
 static float ChromeFold(float x)
 {
-	float f = x - floor(x);
-	return fabs(f - 0.5f);
+	return fabs(fract(x) - 0.5f);
 }
 
 // Integral of one checker axis across a box of width w, in tile units
@@ -125,27 +124,11 @@ static float ChromeChecker(float x, float z, float wx, float wz)
 	return 0.5f - 0.5f * ChromeBox(x, wx) * ChromeBox(z, wz);
 }
 
-// The noise lattice's value at a grid point, in [0, 1]
-static float Lattice(int x, int y)
-{
-	return (RETRO_Hash(x, y) & 65535u) / 65535.0f;
-}
-
-static float Noise(float x, float y)
-{
-	int ix = (int)floorf(x), iy = (int)floorf(y);
-	float fx = smoothstep(0.0f, 1.0f, x - ix);
-	float fy = smoothstep(0.0f, 1.0f, y - iy);
-	float a = Lattice(ix, iy), b = Lattice(ix + 1, iy);
-	float c = Lattice(ix, iy + 1), d = Lattice(ix + 1, iy + 1);
-	return (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy;
-}
-
 // Cloud cover at a point of the cloud plane, in noise cells: three octaves,
 // cut at CLOUD_COVER with a soft edge
 static float Clouds(float x, float z)
 {
-	float n = (4.0f * Noise(x, z) + 2.0f * Noise(2.0f * x + 17.0f, 2.0f * z + 31.0f) + Noise(4.0f * x + 53.0f, 4.0f * z + 7.0f)) / 7.0f;
+	float n = (4.0f * RETRO_ValueNoise(x, z) + 2.0f * RETRO_ValueNoise(2.0f * x + 17.0f, 2.0f * z + 31.0f) + RETRO_ValueNoise(4.0f * x + 53.0f, 4.0f * z + 7.0f)) / 7.0f;
 	return smoothstep(CLOUD_COVER, CLOUD_COVER + 0.2f, n);
 }
 
@@ -198,9 +181,9 @@ static unsigned char ShadeRoom(vec3 origin, vec3 ray)
 {
 	vec3 o = RoomFrame * origin;
 	vec3 d = RoomFrame * ray;
-	float length = sqrt(dot(d, d));
+	float raylength = length(d);
 	// Sine of the ray's dip below the horizon; +y is down
-	float dip = d.y / length;
+	float dip = d.y / raylength;
 
 	if (dip <= 0.0f) {
 		// sqrt: a linear ramp is horizon-white over most of the sky
@@ -210,14 +193,14 @@ static unsigned char ShadeRoom(vec3 origin, vec3 ray)
 		// the ray as on the floor, grows to a sizeable part of a noise cell
 		float cloud = 0.0f;
 		float t = (-CLOUD_HEIGHT - o.y) / d.y;
-		float footprint = length * (1.0f + t) * ROOM_PIXEL / (-dip * CLOUD_SCALE);
+		float footprint = raylength * (1.0f + t) * ROOM_PIXEL / (-dip * CLOUD_SCALE);
 		if (footprint < CLOUD_FOOTPRINT) {
 			float x = (o.x + t * d.x + CloudDrift) / CLOUD_SCALE;
 			float z = (o.z + t * d.z) / CLOUD_SCALE;
 			cloud = Clouds(x, z) * (1.0f - smoothstep(0.5f * CLOUD_FOOTPRINT, CLOUD_FOOTPRINT, footprint));
 		}
 		// The sun: a disc, anti-aliased over its rim, in a glow
-		float facing = dot(d, Sun) / length;
+		float facing = dot(d, Sun) / raylength;
 		float sun = 0.0f;
 		if (facing > 0.0f) {
 			float angle = acos(MIN(facing, 1.0f));
@@ -236,16 +219,16 @@ static unsigned char ShadeRoom(vec3 origin, vec3 ray)
 	// The footprint: a pixel wide across the ray, at the whole distance from
 	// the eye, and that over sin of the dip along it, laid onto the floor's
 	// axes by the ray's heading
-	float distance = length * (1.0f + t);
+	float distance = raylength * (1.0f + t);
 	float across = distance * ROOM_PIXEL / ROOM_TILE;
 	float along = across / dip;
-	float heading = sqrt(d.x * d.x + d.z * d.z);
+	float heading = length(vec2{ d.x, d.z });
 	float hx = heading > 1.0e-6f ? fabs(d.x) / heading : 0.0f;
 	float hz = heading > 1.0e-6f ? fabs(d.z) / heading : 1.0f;
 	float wx = along * hx + across * hz;
 	float wz = along * hz + across * hx;
 	float shown = CLAMP01(ChromeChecker(x, z, wx, wz));
-	float light = (FLOOR_DARK + (1.0f - FLOOR_DARK) * shown) * (1.0f - SHADOW_DEPTH * Shadow(floorpoint));
+	float light = mix(FLOOR_DARK, 1.0f, shown) * (1.0f - SHADOW_DEPTH * Shadow(floorpoint));
 
 	// Haze wherever a pixel covers so much of a square that the checker is
 	// only its average
@@ -323,27 +306,21 @@ void DEMO_Initialize(void)
 		for (int i = 0; i < CHROME_FLOOR_SHADES; i++) {
 			float k = (float)i / (CHROME_FLOOR_SHADES - 1);
 			RETRO_Palette color;
-			color.r = RETRO_WHITE.r * k + (CHROME_HORIZON.r - RETRO_WHITE.r * k) * h;
-			color.g = RETRO_WHITE.g * k + (CHROME_HORIZON.g - RETRO_WHITE.g * k) * h;
-			color.b = RETRO_WHITE.b * k + (CHROME_HORIZON.b - RETRO_WHITE.b * k) * h;
+			color.r = mix(RETRO_WHITE.r * k, CHROME_HORIZON.r, h);
+			color.g = mix(RETRO_WHITE.g * k, CHROME_HORIZON.g, h);
+			color.b = mix(RETRO_WHITE.b * k, CHROME_HORIZON.b, h);
 			RETRO_SetColor(CHROME_FLOOR_START + j * CHROME_FLOOR_SHADES + i, color, palette);
 		}
 	}
 	RETRO_Palette sky[CHROME_SKY_SHADES];
 	for (int i = 0; i < CHROME_SKY_SHADES; i++) {
 		float k = (float)i / (CHROME_SKY_SHADES - 1);
-		sky[i].r = CHROME_HORIZON.r + (RETRO_MIDNIGHTBLUE.r - CHROME_HORIZON.r) * k;
-		sky[i].g = CHROME_HORIZON.g + (RETRO_MIDNIGHTBLUE.g - CHROME_HORIZON.g) * k;
-		sky[i].b = CHROME_HORIZON.b + (RETRO_MIDNIGHTBLUE.b - CHROME_HORIZON.b) * k;
+		sky[i] = mix(CHROME_HORIZON, RETRO_MIDNIGHTBLUE, k);
 	}
 	for (int j = 0; j < CHROME_WHITE_LEVELS; j++) {
 		float w = (float)j / (CHROME_WHITE_LEVELS - 1);
 		for (int i = 0; i < CHROME_SKY_SHADES; i++) {
-			RETRO_Palette color;
-			color.r = sky[i].r + (RETRO_WHITE.r - sky[i].r) * w;
-			color.g = sky[i].g + (RETRO_WHITE.g - sky[i].g) * w;
-			color.b = sky[i].b + (RETRO_WHITE.b - sky[i].b) * w;
-			RETRO_SetColor(CHROME_SKY_START + j * CHROME_SKY_SHADES + i, color, palette);
+			RETRO_SetColor(CHROME_SKY_START + j * CHROME_SKY_SHADES + i, mix(sky[i], RETRO_WHITE, w), palette);
 		}
 	}
 	RETRO_SetPalette(palette);

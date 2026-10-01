@@ -95,7 +95,7 @@ static void DrawSection(Model3D *cubemodel, vec3 normal)
 			if (da < 0) clipped[count++] = a;
 			if ((da < 0) != (db < 0)) {
 				float t = da / (da - db);
-				clipped[count++] = a + (b - a) * t;
+				clipped[count++] = mix(a, b, t);
 			}
 		}
 

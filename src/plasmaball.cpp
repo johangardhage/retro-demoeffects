@@ -183,7 +183,7 @@ static void DrawPath(const vec2 *point, int count, float start, float end)
 		for (int k = 0; k < steps; k++) {
 			float t = (k + 0.5f) / steps;
 			float u = (i + t) / (count - 1);
-			Splat(lerp(a, b, t), start + (end - start) * u);
+			Splat(mix(a, b, t), mix(start, end, u));
 		}
 	}
 }
@@ -242,7 +242,7 @@ void DEMO_FixedUpdate(double timestep)
 		}
 		arc.spin = (arc.spin + (ARC_REPEL * push + ARC_DRIFT * Noise()) * dt) * ARC_SPIN_KEEP;
 		arc.angle = fmodf(arc.angle + arc.spin * dt, 2 * (float)M_PI);
-		arc.tilt = MIN(MAX(arc.tilt + TILT_DRIFT * Noise(), 0.0f), TILT_MAX);
+		arc.tilt = clamp(arc.tilt + TILT_DRIFT * Noise(), 0.0f, TILT_MAX);
 
 		// Writhe and redraw the filament
 		for (float &offset : arc.offset) {

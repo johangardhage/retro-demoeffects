@@ -75,8 +75,8 @@ static RETRO_TerrainEye CutAtNearPlane(RETRO_TerrainEye behind, RETRO_TerrainEye
 {
 	float t = (RETRO_TerrainView.nearplane - behind.depth) / (front.depth - behind.depth);
 	return {
-		behind.side + (front.side - behind.side) * t,
-		behind.height + (front.height - behind.height) * t,
+		mix(behind.side, front.side, t),
+		mix(behind.height, front.height, t),
 		RETRO_TerrainView.nearplane,
 	};
 }

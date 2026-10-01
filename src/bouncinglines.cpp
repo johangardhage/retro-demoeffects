@@ -59,10 +59,7 @@ static const Line Lines[LINES] = {
 //
 static int Bounce(double position, int size)
 {
-	double m = fmod(position, 2 * (size - 1));
-	if (m < 0) {
-		m += 2 * (size - 1);
-	}
+	double m = mod(position, 2 * (size - 1));
 	return lround(m > size - 1 ? 2 * (size - 1) - m : m);
 }
 
@@ -72,7 +69,7 @@ static int Bounce(double position, int size)
 //
 static RETRO_Palette Hue(double turns)
 {
-	double sixths = (turns - floor(turns)) * 6;
+	double sixths = fract(turns) * 6;
 	return {
 		(unsigned char)(255 * CLAMP01(fabs(sixths - 3) - 1)),
 		(unsigned char)(255 * CLAMP01(2 - fabs(sixths - 2))),

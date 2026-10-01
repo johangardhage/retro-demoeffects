@@ -102,11 +102,7 @@ void DEMO_Initialize(void)
 		float position = (float)i * 4 / (SHADES - 1);
 		int band = MIN((int)position, 3);
 		float blend = position - band;
-		RETRO_Palette a = chrome[band], b = chrome[band + 1];
-		RETRO_SetColor(INK_BASE + i, RETRO_Palette{
-			(unsigned char)(a.r + (b.r - a.r) * blend),
-			(unsigned char)(a.g + (b.g - a.g) * blend),
-			(unsigned char)(a.b + (b.b - a.b) * blend) });
+		RETRO_SetColor(INK_BASE + i, mix(chrome[band], chrome[band + 1], blend));
 		InkShades[SHADES + i] = (unsigned char)(INK_BASE + i);
 	}
 
@@ -128,7 +124,7 @@ void DEMO_Initialize(void)
 	for (int segment = 0; segment < 8; segment++) {
 		vec2 a = edge[segment], b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
-			int right = (int)(a.x + (b.x - a.x) * (y - a.y) / (b.y - a.y));
+			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
 			for (int x = 0; x < right; x++)
 				Background[y * RETRO_WIDTH + x] = y < 133 ? 1 : 2;
 		}

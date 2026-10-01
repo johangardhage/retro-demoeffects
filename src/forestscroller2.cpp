@@ -108,7 +108,7 @@ void DEMO_FixedUpdate(double timestep)
 			if (t > 0) {
 				taper += PATH_TAPER_CURVE * t * t * (1 - t);
 			}
-			double height = PATH_HEIGHT_MIN + (PATH_HEIGHT_PEAK - PATH_HEIGHT_MIN) * taper;
+			double height = mix(PATH_HEIGHT_MIN, PATH_HEIGHT_PEAK, taper);
 
 			// Bend the ribbon's spine to follow HeightMap along its length, smoothly
 			// interpolated between control points, rather than a dead-straight line.
@@ -117,7 +117,7 @@ void DEMO_FixedUpdate(double timestep)
 			int u1 = u0 + 1 < HEIGHTMAP_POINTS ? u0 + 1 : u0;
 			double ufrac = u - u0;
 			double uweight = smoothstep(0.0, 1.0, ufrac);
-			double bend = HeightMap[u0] + (HeightMap[u1] - HeightMap[u0]) * uweight;
+			double bend = mix(HeightMap[u0], HeightMap[u1], uweight);
 			double ssampled = s + bend;
 			if (ssampled < -height / 2 || ssampled >= height / 2) {
 				continue;

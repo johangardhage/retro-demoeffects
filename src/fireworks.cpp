@@ -108,8 +108,7 @@ void DEMO_FixedUpdate(double timestep)
 		}
 
 		Particles[i].vel.y += GRAVITY;
-		Particles[i].pos.x += Particles[i].vel.x;
-		Particles[i].pos.y += Particles[i].vel.y;
+		Particles[i].pos += Particles[i].vel;
 
 		if (Particles[i].kind == ROCKET) {
 			if (Particles[i].vel.y >= 0) {

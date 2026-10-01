@@ -150,8 +150,8 @@ static void StepSlide(void)
 	Slide *slide = &Slides[Current];
 
 	int length = strlen(slide->sequence);
-	float cosine = cos(slide->turn * DEG2RAD);
-	float sine = sin(slide->turn * DEG2RAD);
+	float cosine = cos(radians(slide->turn));
+	float sine = sin(radians(slide->turn));
 
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		float v = slide->halfheight * (1 - (y + 0.5f) * 2 / RETRO_HEIGHT);
@@ -179,7 +179,7 @@ static void StepSlide(void)
 						value += (slide->shift - 1) * (rate - 2) / 4;
 					}
 				} else {
-					bool upper = fmodf(value, M_PI) >= M_PI / 2;
+					bool upper = fract(value / (float)M_PI) >= 0.5f;
 					float angle = value + rate;
 
 					slope *= fabsf(slide->gain * sinf(2 * angle));

@@ -40,8 +40,8 @@
 #include "lib/retropalette.h"
 
 #define FLAKES 900
-#define SNOW_MINSPEED 12.0 // pixels a second, farthest layer
-#define SNOW_MAXSPEED 46.0 // nearest layer
+#define SNOW_MINSPEED 12.0f // pixels a second, farthest layer
+#define SNOW_MAXSPEED 46.0f // nearest layer
 #define SNOW_SWAY 10.0 // pixels a second of each flake's own sway
 #define SNOW_WIND 28.0 // pixels a second, the gusts' strength
 #define SNOW_SETTLE 0.6 // flakes nearer than this land
@@ -140,7 +140,7 @@ void DEMO_FixedUpdate(double timestep)
 
 		flake.swayphase = fmodf(flake.swayphase + flake.swayspeed * timestep, 2 * M_PI);
 		flake.x += (wind * (0.3f + flake.z) + SNOW_SWAY * sinf(flake.swayphase)) * timestep;
-		flake.y += (SNOW_MINSPEED + flake.z * (SNOW_MAXSPEED - SNOW_MINSPEED)) * timestep;
+		flake.y += mix(SNOW_MINSPEED, SNOW_MAXSPEED, flake.z) * timestep;
 
 		if (flake.z >= SNOW_SETTLE) {
 			int x = (int)floorf(flake.x);

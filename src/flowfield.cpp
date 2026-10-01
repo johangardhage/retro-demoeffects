@@ -80,16 +80,6 @@ static float Gradient(int hash, float x, float y, float z)
 	return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
 }
 
-static float Fade(float t)
-{
-	return t * t * t * (t * (t * 6 - 15) + 10);
-}
-
-static float Blend(float a, float b, float t)
-{
-	return a + t * (b - a);
-}
-
 //
 // Perlin noise, in [-1, 1]
 //
@@ -99,13 +89,13 @@ static float Noise(float x, float y, float z)
 	int cellx = (int)floorf(x) & (NOISE_PERIOD - 1);
 	int celly = (int)floorf(y) & (NOISE_PERIOD - 1);
 	int cellz = (int)floorf(z) & (NOISE_PERIOD - 1);
-	x -= floorf(x);
-	y -= floorf(y);
-	z -= floorf(z);
+	x = fract(x);
+	y = fract(y);
+	z = fract(z);
 
-	float u = Fade(x);
-	float v = Fade(y);
-	float w = Fade(z);
+	float u = smootherstep(0.0f, 1.0f, x);
+	float v = smootherstep(0.0f, 1.0f, y);
+	float w = smootherstep(0.0f, 1.0f, z);
 
 	// Hash the eight corners
 	int a = Permutation[cellx] + celly;
@@ -116,12 +106,12 @@ static float Noise(float x, float y, float z)
 	int bb = Permutation[b + 1] + cellz;
 
 	// Blend along x, then y, then z
-	float near = Blend(Blend(Gradient(Permutation[aa], x, y, z), Gradient(Permutation[ba], x - 1, y, z), u),
-					   Blend(Gradient(Permutation[ab], x, y - 1, z), Gradient(Permutation[bb], x - 1, y - 1, z), u), v);
-	float far = Blend(Blend(Gradient(Permutation[aa + 1], x, y, z - 1), Gradient(Permutation[ba + 1], x - 1, y, z - 1), u),
-					  Blend(Gradient(Permutation[ab + 1], x, y - 1, z - 1), Gradient(Permutation[bb + 1], x - 1, y - 1, z - 1), u), v);
+	float near = mix(mix(Gradient(Permutation[aa], x, y, z), Gradient(Permutation[ba], x - 1, y, z), u),
+					 mix(Gradient(Permutation[ab], x, y - 1, z), Gradient(Permutation[bb], x - 1, y - 1, z), u), v);
+	float far = mix(mix(Gradient(Permutation[aa + 1], x, y, z - 1), Gradient(Permutation[ba + 1], x - 1, y, z - 1), u),
+					mix(Gradient(Permutation[ab + 1], x, y - 1, z - 1), Gradient(Permutation[bb + 1], x - 1, y - 1, z - 1), u), v);
 
-	return Blend(near, far, w);
+	return mix(near, far, w);
 }
 
 static void SowParticle(Particle *particle)

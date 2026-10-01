@@ -70,7 +70,7 @@ void DEMO_Render(double time, double deltatime)
 	for (int i = 0; i < SEEDS; i++) {
 		for (int j = 0; j < SEEDS; j++) {
 			float dx = seedx[j] - seedx[i], dy = seedy[j] - seedy[i];
-			invgap[i][j] = i == j ? 0 : 0.5f / MAX(sqrtf(dx * dx + dy * dy), 0.001f);
+			invgap[i][j] = i == j ? 0 : 0.5f / MAX(hypotf(dx, dy), 0.001f);
 		}
 	}
 

@@ -87,7 +87,7 @@ void DEMO_Initialize(void)
 		int ramp = 1 + k * BOB_SHADES;
 		int middle = ramp + (BOB_SHADES * 2) / 3;
 		RETRO_Palette hue = BobHues[k];
-		RETRO_Palette shadow = { (unsigned char)(hue.r * BOB_SHADOW), (unsigned char)(hue.g * BOB_SHADOW), (unsigned char)(hue.b * BOB_SHADOW) };
+		RETRO_Palette shadow = hue * BOB_SHADOW;
 
 		RETRO_CreateGradientPalette(ramp, middle, shadow, hue);
 		RETRO_CreateGradientPalette(middle, ramp + BOB_SHADES, hue, RETRO_WHITE);

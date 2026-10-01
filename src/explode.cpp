@@ -35,6 +35,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
+#include "lib/retromath.h"
 
 #define PARTICLES (RETRO_WIDTH * RETRO_HEIGHT)
 #define HOLD_TIME 2.0 // seconds a picture stands whole
@@ -103,7 +104,7 @@ void DEMO_Render(double time, double deltatime)
 	bool back = flight & 1;
 	float originx = RETRO_Hash(flight, 0) % RETRO_WIDTH;
 	float originy = RETRO_Hash(flight, 1) % RETRO_HEIGHT;
-	float farthest = sqrtf(RETRO_WIDTH * RETRO_WIDTH + RETRO_HEIGHT * RETRO_HEIGHT);
+	float farthest = hypotf(RETRO_WIDTH, RETRO_HEIGHT);
 	RETRO_Palette *palette = PictureA->palette;
 
 	for (Particle &particle : Particles) {
@@ -115,7 +116,7 @@ void DEMO_Render(double time, double deltatime)
 		// The particle's own time, from its departure, delayed by its distance
 		// from the origin, to its landing
 		float dx = fromx - originx, dy = fromy - originy;
-		float distance = sqrtf(dx * dx + dy * dy);
+		float distance = length(vec2{ dx, dy });
 		float departure = BLAST_SPREAD * distance / farthest;
 		float landing = 1 - LAND_SPREAD * particle.landing;
 		float t = CLAMP01((float)(progress - departure) / (landing - departure));
@@ -129,21 +130,21 @@ void DEMO_Render(double time, double deltatime)
 		}
 
 		// Carry it across and blow it outward
-		float carry = t * t * (3 - 2 * t);
+		float carry = smoothstep(0.0f, 1.0f, t);
 		float burst = 27.0f / 4 * t * (1 - t) * (1 - t);
 		float angle = atan2f(dy, dx) + BLAST_TURN * particle.turn;
 		float reach = BLAST_DISTANCE * particle.strength * burst;
-		int x = (int)floorf(fromx + (tox - fromx) * carry + reach * cosf(angle));
-		int y = (int)floorf(fromy + (toy - fromy) * carry + reach * sinf(angle));
+		int x = (int)floorf(mix(fromx, tox, carry) + reach * cosf(angle));
+		int y = (int)floorf(mix(fromy, toy, carry) + reach * sinf(angle));
 		if (x < 0 || x >= RETRO_WIDTH || y < 0 || y >= RETRO_HEIGHT) {
 			continue;
 		}
 
 		// Blend its color on the way
 		RETRO_Palette ca = palette[from], cb = palette[to];
-		int r = ca.r + (int)((cb.r - ca.r) * carry);
-		int g = ca.g + (int)((cb.g - ca.g) * carry);
-		int b = ca.b + (int)((cb.b - ca.b) * carry);
+		int r = (int)(mix(ca.r, cb.r, carry) + 0.5f);
+		int g = (int)(mix(ca.g, cb.g, carry) + 0.5f);
+		int b = (int)(mix(ca.b, cb.b, carry) + 0.5f);
 		buffer[y * RETRO_WIDTH + x] = ColorLUT[r * LUT_SIZE / 256][g * LUT_SIZE / 256][b * LUT_SIZE / 256];
 	}
 }

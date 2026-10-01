@@ -250,7 +250,7 @@ void DEMO_Render(double time, double deltatime)
 		Position.y = nexty;
 	}
 
-	float halfwidth = (float)tan(RAYCAST_FOV * M_PI / 360);
+	float halfwidth = (float)tan(radians(RAYCAST_FOV / 2.0));
 	float dirx = cosf(Angle), diry = sinf(Angle);
 	float planex = -diry * halfwidth, planey = dirx * halfwidth;
 	float focal = RETRO_WIDTH / (2 * halfwidth);
@@ -293,7 +293,7 @@ void DEMO_Render(double time, double deltatime)
 		// Find the columns where the ray met the wall: the light tile's along the grid, so
 		// light tiles join from cell to cell, and the texture's turned so no wall reads mirrored
 		float hit = alongx ? Position.y + z * rayy : Position.x + z * rayx;
-		int lightu = CLAMP((hit - floorf(hit)) * TILE_SIZE, 0, TILE_SIZE);
+		int lightu = CLAMP(fract(hit) * TILE_SIZE, 0, TILE_SIZE);
 		int u = (alongx && rayx < 0) || (!alongx && rayy > 0) ? TILE_SIZE - 1 - lightu : lightu;
 		int walltile = Walls[cellx][celly] - 1;
 		int walllight = WallLight(cellx, celly, alongx ? cellx - stepx : cellx, alongx ? celly : celly - stepy);

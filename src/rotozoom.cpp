@@ -15,6 +15,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrovector.h"
 
 #define TEXTURE_WIDTH 256
 #define TEXTURE_HEIGHT 256
@@ -28,8 +29,8 @@ void DEMO_Render(double time, double deltatime)
 	unsigned char *image = RETRO_ImageData();
 
 	// Calculate movement
-	float sina = sin(angle * DEG2RAD);
-	float cosa = cos(angle * DEG2RAD);
+	float sina = sin(radians(angle));
+	float cosa = cos(radians(angle));
 
 	float scale = sina + 1.0f;
 	float dtx = cosa * scale;

@@ -11,6 +11,7 @@
 #include "lib/retro.h"
 #include "lib/retrofont.h"
 #include "lib/retropalette.h"
+#include "lib/retromath.h"
 #include "lib/retromain.h"
 #include <cmath>
 
@@ -31,21 +32,10 @@ static const char *const ScrollText[] = {
 	"RETRO DEMOEFFECTS...           "
 };
 
-// The noise lattice's value at a grid point, in [-1, 1].
-static float Lattice(int x, int y)
-{
-	return (RETRO_Hash(x, y) & 65535u) / 32767.5f - 1.0f;
-}
-
+// Value noise, in [-1, 1]
 static float Noise(float x, float y)
 {
-	int ix = (int)floorf(x), iy = (int)floorf(y);
-	float fx = x - ix, fy = y - iy;
-	fx = smoothstep(0.0f, 1.0f, fx);
-	fy = smoothstep(0.0f, 1.0f, fy);
-	float a = Lattice(ix, iy), b = Lattice(ix + 1, iy);
-	float c = Lattice(ix, iy + 1), d = Lattice(ix + 1, iy + 1);
-	return (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy;
+	return 2.0f * RETRO_ValueNoise(x, y) - 1.0f;
 }
 
 static bool TextPixel(int x, int y)
@@ -68,9 +58,9 @@ static float ShadowCoverage(float x, float y, int phase)
 {
 	int ix = (int)floorf(x), iy = (int)floorf(y);
 	float fx = x - ix, fy = y - iy;
-	float top = (1 - fx) * ShadowInk(ix, iy, phase) + fx * ShadowInk(ix + 1, iy, phase);
-	float bottom = (1 - fx) * ShadowInk(ix, iy + 1, phase) + fx * ShadowInk(ix + 1, iy + 1, phase);
-	return top * (1 - fy) + bottom * fy;
+	float top = mix(ShadowInk(ix, iy, phase), ShadowInk(ix + 1, iy, phase), fx);
+	float bottom = mix(ShadowInk(ix, iy + 1, phase), ShadowInk(ix + 1, iy + 1, phase), fx);
+	return mix(top, bottom, fy);
 }
 
 void DEMO_Render(double time, double deltatime)
@@ -191,8 +181,7 @@ void DEMO_Initialize(void)
 			int up = CLAMP(y - 1, 0, WallHeight), down = CLAMP(y + 1, 0, WallHeight);
 			float nx = (height[y][left] - height[y][right]) * 1.5f;
 			float ny = (height[up][x] - height[down][x]) * 1.5f;
-			float inverselength = 1.0f / sqrtf(nx * nx + ny * ny + 1.0f);
-			StoneNormals[y][x] = { nx * inverselength, ny * inverselength, inverselength };
+			StoneNormals[y][x] = normalize(vec3{ nx, ny, 1.0f });
 		}
 	}
 	RETRO_Font font = RETRO_LoadFont(RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 });

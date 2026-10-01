@@ -231,12 +231,9 @@ void DEMO_Render(double time, double deltatime)
 		rotate = false;
 		az -= ROTATION_SPEED * deltatime;
 	}
-	ax = fmod(ax, 2 * M_PI);
-	if (ax < 0) ax += 2 * M_PI;
-	ay = fmod(ay, 2 * M_PI);
-	if (ay < 0) ay += 2 * M_PI;
-	az = fmod(az, 2 * M_PI);
-	if (az < 0) az += 2 * M_PI;
+	ax = mod(ax, (float)(2 * M_PI));
+	ay = mod(ay, (float)(2 * M_PI));
+	az = mod(az, (float)(2 * M_PI));
 	if (RETRO_KeyState(SDL_SCANCODE_COMMA)) {
 		distance += 1 * deltatime;
 	}

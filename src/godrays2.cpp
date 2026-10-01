@@ -70,22 +70,6 @@ static vec3 BallCenter; // C, in view space, this frame
 static vec3 BeamAxis; // a, unit, in view space, of the beam being drawn
 static float BallDepth[RETRO_WIDTH * RETRO_HEIGHT]; // the depth buffer as the ball left it, q per pixel, 0 off the ball
 
-// The noise lattice's value at a grid point, in [0, 1]
-static float Lattice(int x, int y)
-{
-	return (RETRO_Hash(x, y) & 65535u) / 65535.0f;
-}
-
-static float Noise(float x, float y)
-{
-	int ix = (int)floorf(x), iy = (int)floorf(y);
-	float fx = smoothstep(0.0f, 1.0f, x - ix);
-	float fy = smoothstep(0.0f, 1.0f, y - iy);
-	float a = Lattice(ix, iy), b = Lattice(ix + 1, iy);
-	float c = Lattice(ix, iy + 1), d = Lattice(ix + 1, iy + 1);
-	return (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy;
-}
-
 static unsigned char ShadeBall(const Fragment &fragment)
 {
 	vec3 normal = normalize(fragment.position - BallCenter);
@@ -99,7 +83,7 @@ static unsigned char ShadeBall(const Fragment &fragment)
 	float pixel = 1.0f / (RETRO_PROJECTION_SCALE * RETRO_PROJECTION_EYEDISTANCE * fragment.q * MAX(facing, 0.1f));
 	float rim = 0.5f * sinf(HOLE_ANGLE) * pixel;
 	float hole = smoothstep(cosf(HOLE_ANGLE) - rim, cosf(HOLE_ANGLE) + rim, MAX(fabs(q.x), MAX(fabs(q.y), fabs(q.z))));
-	shade += (1.0f - shade) * hole;
+	shade = mix(shade, 1.0f, hole);
 	return GRAY_START + (int)(shade * (LIGHT_LEVELS - 1) + 0.5f);
 }
 
@@ -266,10 +250,10 @@ static void BuildWall(void)
 			float py = (y / WALL_PIXEL + 0.5f) * WALL_PIXEL;
 			float dx = px - RETRO_WIDTH / 2.0f;
 			float dy = py - RETRO_HEIGHT / 2.0f;
-			float r = sqrt(dx * dx + dy * dy);
+			float r = hypotf(dx, dy);
 			float a = atan2(dy, dx);
 			float spiral = 0.5f + 0.5f * cosf(WALL_ARMS * (a + WALL_TWIST * r));
-			float noise = (2.0f * Noise(px / WALL_CELL, py / WALL_CELL) + Noise(2.0f * px / WALL_CELL + 17.0f, 2.0f * py / WALL_CELL + 31.0f)) / 3.0f;
+			float noise = (2.0f * RETRO_ValueNoise(px / WALL_CELL, py / WALL_CELL) + RETRO_ValueNoise(2.0f * px / WALL_CELL + 17.0f, 2.0f * py / WALL_CELL + 31.0f)) / 3.0f;
 			float arms = spiral + WALL_ROUGHNESS * (noise - 0.5f) - 0.3f * (1.0f - smoothstep(0.0f, WALL_CORE, r));
 			Wall[y * RETRO_WIDTH + x] = arms > WALL_THRESHOLD ? BLUE_START : RED_START;
 		}

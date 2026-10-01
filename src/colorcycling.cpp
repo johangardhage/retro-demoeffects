@@ -16,8 +16,8 @@
 // of the shift rotates the entries, and the fraction blends each entry with
 // the one behind it, so the colors glide rather than step:
 //
-//   color_i = lerp(base[(i − ⌊shift⌋) mod n],
-//                  base[(i − ⌊shift⌋ − 1) mod n], frac(shift))
+//   color_i = mix(base[(i − ⌊shift⌋) mod n],
+//                 base[(i − ⌊shift⌋ − 1) mod n], fract(shift))
 //
 // A range marked reverse runs the other way. A ping-pong range runs to the
 // end and back, and a sine range swings back and forth by a quarter or half
@@ -33,6 +33,7 @@
 
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retropalette.h"
 
 #define CYCLE_UNITS 280.0 // rate units per entry a second
 
@@ -101,10 +102,7 @@ void DEMO_Render(double time, double deltatime)
 		for (int i = 0; i < n; i++) {
 			RETRO_Palette from = base[range.low + WRAP(i - whole, n)];
 			RETRO_Palette to = base[range.low + WRAP(i - whole - 1, n)];
-			RETRO_SetColor(range.low + i,
-				from.r + (to.r - from.r) * blend,
-				from.g + (to.g - from.g) * blend,
-				from.b + (to.b - from.b) * blend);
+			RETRO_SetColor(range.low + i, mix(from, to, blend));
 		}
 	}
 

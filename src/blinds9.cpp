@@ -48,7 +48,7 @@
 #define SHADES 16
 #define AMBIENT 0.25f // light left on a slat that is nearly edge-on
 #define GLINTS 16
-#define GLINT_ANGLE (35 * M_PI / 180) // turn at which a face mirrors a lamp
+#define GLINT_ANGLE radians(35) // turn at which a face mirrors a lamp
 #define GLINT_FALLOFF 24.0 // higher is a narrower, briefer flash
 #define GLINT_STRENGTH 0.85f // how far toward white the peak of the flash goes
 
@@ -149,9 +149,9 @@ void DEMO_Initialize(void)
 		for (int glint = 0; glint < GLINTS; glint++) {
 			float level = GLINT_STRENGTH * glint / (GLINTS - 1);
 			RETRO_Palette target = {
-				(unsigned char)(palette[color].r + (255 - palette[color].r) * level + 0.5f),
-				(unsigned char)(palette[color].g + (255 - palette[color].g) * level + 0.5f),
-				(unsigned char)(palette[color].b + (255 - palette[color].b) * level + 0.5f),
+				(unsigned char)(mix(palette[color].r, 255, level) + 0.5f),
+				(unsigned char)(mix(palette[color].g, 255, level) + 0.5f),
+				(unsigned char)(mix(palette[color].b, 255, level) + 0.5f),
 			};
 			GlintTable[color][glint] = RETRO_NearestPaletteIndex(target, palette);
 		}

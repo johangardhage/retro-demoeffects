@@ -26,13 +26,14 @@
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
+#include "lib/retromath.h"
 
 #define DEPTH 11 // levels of branches, the trunk included
 #define TRUNK_LENGTH 50.0f // pixels
 #define SHRINK 0.74f // length of a child relative to its parent
-#define SPREAD (24 * DEG2RAD) // turn of a child away from its parent
+#define SPREAD radians(24) // turn of a child away from its parent
 #define JITTER 0.25f // largest relative change the hash makes to a branch
-#define SWAY (7 * DEG2RAD) // the tips' bend at the peak of a gust
+#define SWAY radians(7) // the tips' bend at the peak of a gust
 #define WIND_SPEED 0.35 // gusts a second
 #define WIND_LAG 0.45 // radians of gust phase each level lags the one below
 #define BASE_WIDTH 6 // pixels, the trunk's thickness
@@ -98,7 +99,7 @@ void DEMO_Render(double time, double deltatime)
 	Growth = MIN(grow, 1.0) * DEPTH;
 
 	// A gust that starts at the trunk and travels up
-	double wind = fmod(time * WIND_SPEED, 1) * 2 * M_PI;
+	double wind = fract(time * WIND_SPEED) * 2 * M_PI;
 	for (int depth = 0; depth < DEPTH; depth++) {
 		Sway[depth] = SWAY * (depth + 1) / DEPTH * sin(wind - WIND_LAG * depth);
 	}

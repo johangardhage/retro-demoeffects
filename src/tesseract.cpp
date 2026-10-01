@@ -143,8 +143,8 @@ void DEMO_Render(double time, double deltatime)
 
 		for (int step = 0; step <= steps; step++) {
 			float t = (float)step / steps;
-			vec3 r = lerp(a, b, t);
-			float ballradius = radius[edge.a] + (radius[edge.b] - radius[edge.a]) * t;
+			vec3 r = mix(a, b, t);
+			float ballradius = mix(radius[edge.a], radius[edge.b], t);
 			float q = 1.0f / (SCALE * r.z + RETRO_PROJECTION_EYEDISTANCE);
 			vec2 spos = { RETRO_WIDTH / 2.0f + focal * r.x * q, RETRO_HEIGHT / 2.0f + focal * r.y * q };
 			RETRO_DrawDepthSprite(spos, q, 2 * ballradius * focal * q, SCALE * ballradius, BallMap, BallDepth, BEAM_MAP);
@@ -176,8 +176,8 @@ void DEMO_Initialize(void)
 		float cover = 1 - pow(1 - GLASS_ALPHA, level);
 		for (int shade = 0; shade < BEAM_SHADES; shade++) {
 			float k = (shade - 1.0f) / (BEAM_SHADES - 2);
-			vec3 base = shade ? lerp(vec3{ BEAM_DARK.r, BEAM_DARK.g, BEAM_DARK.b }, vec3{ BEAM_LIGHT.r, BEAM_LIGHT.g, BEAM_LIGHT.b }, k) : vec3{};
-			vec3 color = lerp(base, vec3{ GLASS.r, GLASS.g, GLASS.b }, cover);
+			vec3 base = shade ? mix(vec3{ BEAM_DARK.r, BEAM_DARK.g, BEAM_DARK.b }, vec3{ BEAM_LIGHT.r, BEAM_LIGHT.g, BEAM_LIGHT.b }, k) : vec3{};
+			vec3 color = mix(base, vec3{ GLASS.r, GLASS.g, GLASS.b }, cover);
 			RETRO_SetColor(level * BEAM_SHADES + shade, color.x, color.y, color.z);
 		}
 	}

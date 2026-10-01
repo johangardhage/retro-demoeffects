@@ -89,8 +89,7 @@ void DEMO_FixedUpdate(double timestep)
 		// Symplectic Euler: v' = v + g, then x' = x + v'
 		Particles[i].dir.y += PARTICLE_GRAVITY;
 
-		Particles[i].pos.x += Particles[i].dir.x;
-		Particles[i].pos.y += Particles[i].dir.y;
+		Particles[i].pos += Particles[i].dir;
 
 		// Floor and ceiling
 		bool onfloor = false;

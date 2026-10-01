@@ -114,7 +114,7 @@ void DEMO_Render(double time, double deltatime)
 		for (int column = 0; column < COLUMNS; column++) {
 			float x = column + 0.5f;
 			float v = sinf(0.16f * x + 1.3f * t) + sinf(0.21f * y - 0.9f * t)
-				+ sinf(0.11f * (x + y) + 0.7f * t) + sinf(0.19f * sqrtf((x - cx) * (x - cx) + (y - cy) * (y - cy)));
+				+ sinf(0.11f * (x + y) + 0.7f * t) + sinf(0.19f * hypotf(x - cx, y - cy));
 			int shade = WRAP((v + 4) / 8 * SHADES * PLASMA_BANDS + shift, SHADES);
 			TextBuffer[row * COLUMNS + column] = Ramp[shade];
 		}

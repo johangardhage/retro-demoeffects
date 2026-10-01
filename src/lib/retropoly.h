@@ -131,7 +131,7 @@ inline void RETRO_GetEnvMapCoordinates(vec3 n, bool lightingmap, int envmapwidth
 		if (n.z > 0.0f) {
 			vec2 r = { n.x, n.y };
 			float radiallengthsquared = dot(r, r);
-			radial = radiallengthsquared > epsilon ? r * (1.0f / sqrt(radiallengthsquared)) : vec2{ 1.0f, 0.0f };
+			radial = radiallengthsquared > epsilon ? r * inversesqrt(radiallengthsquared) : vec2{ 1.0f, 0.0f };
 		} else {
 			vec3 normalized = normalize(n);
 			radial = { normalized.x, normalized.y };
@@ -164,7 +164,7 @@ inline vec3 RETRO_ReflectionHalfway(vec3 r, vec3 fallback)
 
 	vec3 h = normalize(r) - vec3{ 0.0f, 0.0f, 1.0f };
 	float lengthsquared = dot(h, h);
-	return lengthsquared > epsilon ? h * (1.0f / sqrt(lengthsquared)) : fallback;
+	return lengthsquared > epsilon ? h * inversesqrt(lengthsquared) : fallback;
 }
 
 //
@@ -501,7 +501,7 @@ inline void RETRO_DrawPhongPolygon(PolygonPoint *point, int points, PhongLight l
 
 				// Interpolated normals must be normalized before lighting.
 				if (normallengthsquared > epsilon) {
-					float inversenormallength = 1.0f / sqrt(normallengthsquared);
+					float inversenormallength = inversesqrt(normallengthsquared);
 					intensity = MAX(dot(n, light.dir) * inversenormallength, 0.0f);
 				}
 
@@ -695,7 +695,7 @@ inline vec3 RETRO_BumpNormal(vec3 n, float dhx, float dhy, const TangentFrame &f
 	vec3 t = frame.t - n * dot(n, frame.t);
 	float tlengthsquared = dot(t, t);
 	if (tlengthsquared > epsilon) {
-		t = t * (1.0f / sqrt(tlengthsquared));
+		t = t * inversesqrt(tlengthsquared);
 	} else {
 		// If +u is parallel to N, recover it from projected +v. Keep the sign
 		// that is closest to the face's original +u direction.
@@ -704,7 +704,7 @@ inline vec3 RETRO_BumpNormal(vec3 n, float dhx, float dhy, const TangentFrame &f
 		if (blengthsquared <= epsilon) {
 			return n;
 		}
-		b = b * (1.0f / sqrt(blengthsquared));
+		b = b * inversesqrt(blengthsquared);
 		t = cross(b, n);
 		if (dot(t, frame.t) < 0.0f) {
 			t = -t;
@@ -727,7 +727,7 @@ inline vec3 RETRO_BumpNormal(vec3 n, float dhx, float dhy, const TangentFrame &f
 		return n;
 	}
 
-	return bumped * (1.0f / sqrt(lengthsquared));
+	return bumped * inversesqrt(lengthsquared);
 }
 
 //
@@ -816,7 +816,7 @@ inline void RETRO_DrawTexMapBumpPolygon(PolygonPoint *point, int points, unsigne
 					float dhy = gy * bumptiltv;
 					// Interpolated normals must be normalized before lighting.
 					float normallengthsquared = dot(n, n);
-					float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
+					float inversenormallength = normallengthsquared > epsilon ? inversesqrt(normallengthsquared) : 0.0f;
 					vec3 unitn = n * inversenormallength;
 					// The shade moves by as much as the tilt changes the lighting
 					// here, so a flat patch of the bump map is left shaded exactly
@@ -992,7 +992,7 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(PolygonPoint *point, int points, u
 					// Both maps are functions of the unit normal, so both tilt N and
 					// look the result up. A unit N' always lands inside either map.
 					float normallengthsquared = dot(n, n);
-					float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
+					float inversenormallength = normallengthsquared > epsilon ? inversesqrt(normallengthsquared) : 0.0f;
 					vec3 unitn = n * inversenormallength;
 					vec3 bumpednormal = RETRO_BumpNormal(unitn, gx * bumptiltu, gy * bumptiltv, frame);
 					RETRO_GetEnvMapCoordinates(bumpednormal, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
@@ -1057,7 +1057,7 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 				float e, w;
 				if (reflectedray) {
 					vec3 normal = normalize(n);
-					RETRO_GetReflectionMapCoordinates(p - normal * (2.0f * dot(normal, p)), normal, envmapwidth, envmapheight, e, w);
+					RETRO_GetReflectionMapCoordinates(reflect(p, normal), normal, envmapwidth, envmapheight, e, w);
 				} else {
 					RETRO_GetEnvMapCoordinates(n, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
 				}
@@ -1207,7 +1207,7 @@ inline void RETRO_DrawEnvMapBumpPolygon(PolygonPoint *point, int points, unsigne
 					// Both maps are functions of the unit normal, so both tilt N and
 					// look the result up. A unit N' always lands inside either map.
 					float normallengthsquared = dot(n, n);
-					float inversenormallength = normallengthsquared > epsilon ? 1.0f / sqrt(normallengthsquared) : 0.0f;
+					float inversenormallength = normallengthsquared > epsilon ? inversesqrt(normallengthsquared) : 0.0f;
 					vec3 unitn = n * inversenormallength;
 					vec3 bumpednormal = RETRO_BumpNormal(unitn, gx * bumptiltu, gy * bumptiltv, frame);
 					RETRO_GetEnvMapCoordinates(bumpednormal, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);

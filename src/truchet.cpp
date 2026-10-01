@@ -33,6 +33,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
+#include "lib/retromath.h"
 
 #define TILE_SIZE 32.0 // pixels across a tile, halfway through the zoom
 #define TILE_ZOOM 12.0 // pixels either side of TILE_SIZE
@@ -59,7 +60,7 @@ void DEMO_Render(double time, double deltatime)
 	double zoomphase = fmod(time * ZOOM_SPEED, 2 * M_PI);
 	double turnphase = fmod(time * TURN_SPEED, 2 * M_PI);
 	double swayphase = fmod(time * SWAY_SPEED, 2 * M_PI);
-	double phase = fmod(time * FLOW_SPEED, 1.0);
+	double phase = fract(time * FLOW_SPEED);
 	double size = TILE_SIZE + TILE_ZOOM * sin(zoomphase);
 	double angle = TURN_ANGLE * sin(turnphase);
 	double camerax = time * SCROLL_SPEED;
@@ -94,9 +95,9 @@ void DEMO_Render(double time, double deltatime)
 				// Tube, a cylinder with stripes flowing along it
 				double across = off / (TUBE_WIDTH / 2);
 				double a = atan2(vy, vx) / (M_PI / 2);
-				double u = a - floor(a);
+				double u = fract(a);
 				double s = (parity ? -1 : 1) * TRUCHET_STRIPES * u - phase;
-				int stripe = s - floor(s) < 0.5;
+				int stripe = fract(s) < 0.5;
 				*pixel = TUBE + stripe * SHADES + CLAMP(sqrt(1 - across * across) * SHADES, 0, SHADES);
 			} else if (off < TUBE_WIDTH / 2 + outline) {
 				*pixel = 0;

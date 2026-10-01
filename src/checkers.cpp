@@ -104,9 +104,9 @@ void DEMO_Render(double time, double deltatime)
 		double depth = layer * CHECKER_SPACING + fmin(nearest, CHECKER_SPACING);
 		double shade = exp(-depth * 0.16);
 		RETRO_Palette color;
-		color.r = (unsigned char)((colors[first].r * (1.0 - blend) + colors[next].r * blend) * shade);
-		color.g = (unsigned char)((colors[first].g * (1.0 - blend) + colors[next].g * blend) * shade);
-		color.b = (unsigned char)((colors[first].b * (1.0 - blend) + colors[next].b * blend) * shade);
+		color.r = (unsigned char)(mix(colors[first].r, colors[next].r, blend) * shade);
+		color.g = (unsigned char)(mix(colors[first].g, colors[next].g, blend) * shade);
+		color.b = (unsigned char)(mix(colors[first].b, colors[next].b, blend) * shade);
 		RETRO_SetColor(layer + 1, color);
 	}
 

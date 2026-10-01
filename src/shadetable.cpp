@@ -171,8 +171,8 @@ static vec3 Lab(vec3 color)
 //
 static vec2 LabError(vec3 asked, vec3 got)
 {
-	float chroma = sqrtf(asked.y * asked.y + asked.z * asked.z);
-	float dc = sqrtf(got.y * got.y + got.z * got.z) - chroma;
+	float chroma = hypotf(asked.y, asked.z);
+	float dc = hypotf(got.y, got.z) - chroma;
 	float da = got.y - asked.y;
 	float db = got.z - asked.z;
 	float dh2 = MAX(da * da + db * db - dc * dc, 0.0f);
@@ -214,7 +214,7 @@ static unsigned char HueChannel(float n, float hue, float saturation, float ligh
 {
 	float k = fmodf(n + hue * 12, 12);
 	float a = saturation * MIN(lightness, 1 - lightness);
-	return CLAMP256((lightness - a * MAX(-1.0f, MIN(MIN(k - 3, 9 - k), 1.0f))) * 255 + 0.5f);
+	return CLAMP256((lightness - a * clamp(MIN(k - 3, 9 - k), -1.0f, 1.0f)) * 255 + 0.5f);
 }
 
 //
@@ -251,7 +251,7 @@ static void SortColors(Subject *subject)
 	for (int color = 0; color < subject->colors; color++) {
 		vec3 lab = Lab(ColorVector(subject->source[color]));
 		float lightness = lab.x / 100;
-		if (sqrtf(lab.y * lab.y + lab.z * lab.z) < GRAY_CHROMA) {
+		if (hypotf(lab.y, lab.z) < GRAY_CHROMA) {
 			key[color] = lightness;
 		} else {
 			int sector = CLAMP((atan2f(lab.z, lab.y) + M_PI) / (2 * M_PI) * HUE_SECTORS, 0, HUE_SECTORS);
@@ -494,7 +494,7 @@ static void DrawTable(const Subject &subject, const unsigned char *entries)
 static void DrawPicture(const Subject &subject, double time)
 {
 	// Calculate phase. The light rides a 2:3 Lissajous figure
-	double phase = fmod(time / LIGHT_PERIOD, 1) * 2 * M_PI;
+	double phase = fract(time / LIGHT_PERIOD) * 2 * M_PI;
 	float lightx = RETRO_WIDTH / 2.0f + RETRO_WIDTH / 3.0f * sin(2 * phase + M_PI / 4);
 	float lighty = VIEW_HEIGHT / 2.0f + VIEW_HEIGHT / 3.0f * sin(3 * phase);
 
@@ -506,7 +506,7 @@ static void DrawPicture(const Subject &subject, double time)
 		for (int x = left; x < left + subject.width; x++) {
 			float dx = x + 0.5f - lightx;
 			float dy = y + 0.5f - lighty;
-			float level = CLAMP01(1 - sqrtf(dx * dx + dy * dy) / LIGHT_REACH);
+			float level = CLAMP01(1 - hypotf(dx, dy) / LIGHT_REACH);
 			int shade = level * (subject.shades - 1) + 0.5f;
 			int texel = subject.picture[(y - top) * subject.width + x - left];
 			buffer[y * RETRO_WIDTH + x] = subject.table[texel * subject.shades + shade];
@@ -521,7 +521,7 @@ static void DrawPicture(const Subject &subject, double time)
 static void DrawMatch(const Subject &subject, double time)
 {
 	// Calculate phase
-	double phase = fmod(time / FIELD_PERIOD, 1) * 2 * M_PI;
+	double phase = fract(time / FIELD_PERIOD) * 2 * M_PI;
 	float saturation = 0.5f - 0.5f * cos(phase);
 
 	unsigned char *buffer = RETRO_FrameBuffer();

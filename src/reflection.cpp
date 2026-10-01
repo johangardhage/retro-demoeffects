@@ -101,7 +101,7 @@ void DEMO_Render(double time, double deltatime)
 	int suny = SUN_Y + SUN_SWING * sin(fmod(time * SUN_SPEED, 2 * M_PI));
 	for (int y = MAX(suny - SUN_RADIUS, 0); y < MIN(suny + SUN_RADIUS, HORIZON); y++) {
 		for (int x = SUN_X - SUN_RADIUS; x < SUN_X + SUN_RADIUS; x++) {
-			float r = sqrtf((float)((x - SUN_X) * (x - SUN_X) + (y - suny) * (y - suny))) / SUN_RADIUS;
+			float r = hypotf(x - SUN_X, y - suny) / SUN_RADIUS;
 			if (r < 1.0f) {
 				buffer[y * RETRO_WIDTH + x] = SUN + (int)(r * r * SUN_COLORS);
 			}
@@ -140,13 +140,9 @@ void DEMO_Initialize(void)
 
 	// Then the water levels, the scene again mixed toward the water's color
 	for (int level = 1; level <= WATER_LEVELS; level++) {
-		float mix = WATER_MIX + WATER_MIXSTEP * (level - 1);
+		float blend = WATER_MIX + WATER_MIXSTEP * (level - 1);
 		for (int i = 0; i < SCENE_COLORS; i++) {
-			RETRO_Palette color = RETRO_GetColor(i);
-			color.r = color.r + (WaterColor.r - color.r) * mix;
-			color.g = color.g + (WaterColor.g - color.g) * mix;
-			color.b = color.b + (WaterColor.b - color.b) * mix;
-			RETRO_SetColor(level * SCENE_COLORS + i, color);
+			RETRO_SetColor(level * SCENE_COLORS + i, mix(RETRO_GetColor(i), WaterColor, blend));
 		}
 	}
 }

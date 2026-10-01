@@ -25,13 +25,13 @@ void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
 	double phase = fmod(time * LINE_SPEED, RETRO_DEGREES_PER_TURN);
-	double a = phase * M_PI / 180;
+	double a = radians(phase);
 
 	// Every term is 2π periodic in b, so one extra degree closes the loop
 	double prevx = 0, prevy = 0;
 
 	for (int i = 0; i <= RETRO_DEGREES_PER_TURN; i++) {
-		double b = i * M_PI / 180;
+		double b = radians(i);
 		double x = RETRO_WIDTH / 2.0 + 50 * sin(b + a * 2) + 25 * sin(a + b * 2) - 50 * sin(a + b);
 		double y = RETRO_HEIGHT / 2.0 + 20 * sin(a + b * 2) + 15 * sin(b + a * 2) + 20 * sin(a + b);
 

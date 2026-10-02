@@ -76,8 +76,7 @@ struct TextCell {
 
 static TextCell TextBuffer[ROWS * COLUMNS];
 static TextCell Ramp[SHADES];
-
-unsigned char Heat[(ROWS + FIRE_HIDDEN) * COLUMNS];
+static unsigned char Heat[(ROWS + FIRE_HIDDEN) * COLUMNS];
 
 //
 // The 8×8 glyph of a character, from the font or, for the block characters, the table above

@@ -54,7 +54,6 @@
 #include "lib/retromain.h"
 #include "lib/retropoly.h"
 #include "lib/retromodel.h"
-#include "lib/retromath.h"
 #include "lib/retroterrain.h"
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
@@ -132,7 +131,7 @@ static const Animation Animations[] = {
 	{ "DEATH_FORWARD", 184, 189, 7.5f },
 	{ "DEATH_SLOW", 190, 197, 7.5f }
 };
-static constexpr int ANIMATIONS = sizeof(Animations) / sizeof(Animations[0]);
+#define ANIMATIONS (int)(sizeof(Animations) / sizeof(Animations[0]))
 
 // Light as summed, reduced to the numbers that differ
 struct Light {

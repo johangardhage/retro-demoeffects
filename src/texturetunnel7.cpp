@@ -91,15 +91,8 @@ static UnitVector PathTangent(float t)
 
 static void BuildBrick(void)
 {
-	// 4×4 Bayer. The triangle is mixed with the brick rather than filled
-	// solid, which is the dithered mortar-and-wedge look of the reference.
-	static const int bayer[4][4] = {
-		{ 0, 8, 2, 10 },
-		{ 12, 4, 14, 6 },
-		{ 3, 11, 1, 9 },
-		{ 15, 7, 13, 5 }
-	};
-
+	// The triangle is mixed with the brick rather than filled solid, which
+	// is the dithered mortar-and-wedge look of the reference.
 	for (int y = 0; y < TEXTURE_SIZE; y++) {
 		for (int x = 0; x < TEXTURE_SIZE; x++) {
 			unsigned char color;
@@ -110,7 +103,7 @@ static void BuildBrick(void)
 				float ny = (y + 0.5f) / TEXTURE_SIZE;
 				// Apex at +v, base at v = 0: the triangle points down the tube.
 				bool wedge = nx > ny * 0.62f && nx < 1.0f - ny * 0.62f;
-				int dither = bayer[y & 3][x & 3];
+				int dither = RETRO_DitherLevel(x, y);
 				if (wedge) {
 					color = dither < 10 ? 102 : 148;
 				} else {

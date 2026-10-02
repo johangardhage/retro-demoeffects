@@ -29,61 +29,6 @@
 
 static unsigned char Metal[METAL_SIZE * METAL_SIZE];
 
-static void DrawStencilFace(Face *face, Model3D *model, int scroll)
-{
-	PolygonPoint point[RETRO_MAX_FACEVERTICES];
-	float minx = RETRO_WIDTH;
-	float miny = RETRO_HEIGHT;
-
-	for (int j = 0; j < face->vertices; j++) {
-		Vertex *vertex = &model->vertex[face->vertex[j]];
-		point[j].pos = vertex->spos;
-		point[j].q = vertex->q;
-		minx = MIN(minx, vertex->spos.x);
-		miny = MIN(miny, vertex->spos.y);
-	}
-
-	int ox = (int)minx + scroll;
-	int oy = (int)miny + scroll / 2;
-
-	for (int triangle = 1; triangle < face->vertices - 1; triangle++) {
-		PolygonPoint *p0 = &point[0];
-		PolygonPoint *p1 = &point[triangle];
-		PolygonPoint *p2 = &point[triangle + 1];
-		TriangleSpan span[RETRO_HEIGHT];
-		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (determinant == 0.0f) {
-			continue;
-		}
-
-		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
-		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
-
-		for (int y = ystart; y < yend; y++) {
-			if (span[y].left > span[y].right) {
-				continue;
-			}
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
-			float px = xstart + 0.5f;
-			float py = y + 0.5f;
-			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
-
-			unsigned char *buffer = RETRO_FrameBuffer();
-			for (int x = xstart; x < xend; x++) {
-				int offset = y * RETRO_WIDTH + x;
-				if (RETRO_DepthTest(offset, q)) {
-					int u = WRAP(x - ox, METAL_SIZE);
-					int v = WRAP(y - oy, METAL_SIZE);
-					buffer[offset] = Metal[v * METAL_SIZE + u];
-				}
-				q += dqdx;
-			}
-		}
-	}
-}
-
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate rotation
@@ -96,14 +41,10 @@ void DEMO_Render(double time, double deltatime)
 	int iscroll = (int)scroll;
 
 	// Draw cube
-	Model3D *model = RETRO_Get3DModel();
+	RETRO_Get3DModel()->stencilmaporigin = { (float)iscroll, (float)(iscroll / 2) };
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
-	RETRO_SortFaces(false, model);
-	RETRO_ClearDepthBuffer();
-	for (int i = 0; i < model->drawfaces; i++) {
-		DrawStencilFace(&model->face[model->drawface[i]], model, iscroll);
-	}
+	RETRO_RenderModel(RETRO_POLY_STENCIL);
 }
 
 void DEMO_Initialize(void)
@@ -119,5 +60,8 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(80, 180, RETRO_SIENNA, RETRO_GOLD);
 	RETRO_CreateGradientPalette(180, RETRO_COLORS, RETRO_GOLD, RETRO_WHITE);
 
-	RETRO_Load3DModel("assets/cubequads.obj");
+	Model3D *model = RETRO_Load3DModel("assets/cubequads.obj");
+	model->stencilmap = Metal;
+	model->stencilmapwidth = METAL_SIZE;
+	model->stencilmapheight = METAL_SIZE;
 }

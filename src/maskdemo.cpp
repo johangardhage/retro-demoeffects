@@ -3,7 +3,7 @@
 //
 // One mesh, many materials. Each key selects a renderer and the maps it
 // reads: texture, shade table, matcap/env lookup, bump height. The math of
-// each path live in retropoly.h; this file only chooses the inputs.
+// each path lives in retropoly.h; this file only chooses the inputs.
 //
 // Shade-table level 0 sits at 33° of incidence, on the shoulder of the
 // highlight: high enough that the material shows, low enough that the
@@ -29,7 +29,6 @@
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
-
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
@@ -37,8 +36,6 @@
 #include "lib/retroshadetable.h"
 #include "lib/retrofont.h"
 
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 256
 #define ROTATION_SPEED 1 // radians a second, about each axis
 #define MATCAP_SIZE 256 // the matcaps are square, and this is their side in pixels
 #define MATCAP_FACE vec3{ 0.86f, 0.23f, 0.59f } // the material, as intensities

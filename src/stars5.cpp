@@ -22,7 +22,7 @@
 
 static Vertex Stars[NUM_STARS]; // World position in x, y, z; view and screen space filled per frame
 
-static RETRO_Camera CameraStart = { {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
+static RETRO_Camera CameraStart;
 
 // Turned from CameraStart by angle, about the axis direction names - down
 // for a left/right turn, right for an up/down one - so up/down stays correct

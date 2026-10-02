@@ -41,11 +41,21 @@
 #define HEX_HALF 0.5f
 #define HEX_SQRT3_2 0.86602540378f // √3/2
 
-static const float GhostS[] = { 0.22f, 0.45f, 0.70f, 1.00f, 1.28f, 1.55f };
-static const float GhostR[] = { 10, 16, 8, 22, 11, 7 };
-static const float GhostPeak[] = { 90, 55, 70, 40, 50, 80 };
-static const bool GhostHex[] = { false, true, false, true, true, false };
-#define NUM_GHOSTS 6
+// One reflection of the aperture: where on the axis it sits, how large and
+// how bright it is, and whether it takes the iris's six sides.
+static const struct Ghost {
+	float s;
+	float radius;
+	int peak;
+	bool hex;
+} Ghosts[] = {
+	{ 0.22f, 10, 90, false },
+	{ 0.45f, 16, 55, true },
+	{ 0.70f, 8, 70, false },
+	{ 1.00f, 22, 40, true },
+	{ 1.28f, 11, 50, true },
+	{ 1.55f, 7, 80, false },
+};
 
 static void AddPixel(int x, int y, int add)
 {
@@ -138,13 +148,13 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Ghosts on the optical axis
-	for (int i = 0; i < NUM_GHOSTS; i++) {
-		float gx = cx + GhostS[i] * (cx - lx);
-		float gy = cy + GhostS[i] * (cy - ly);
-		if (GhostHex[i]) {
-			AddHex(gx, gy, GhostR[i], GhostPeak[i]);
+	for (const Ghost &ghost : Ghosts) {
+		float gx = cx + ghost.s * (cx - lx);
+		float gy = cy + ghost.s * (cy - ly);
+		if (ghost.hex) {
+			AddHex(gx, gy, ghost.radius, ghost.peak);
 		} else {
-			AddDisc(gx, gy, GhostR[i], GhostPeak[i]);
+			AddDisc(gx, gy, ghost.radius, ghost.peak);
 		}
 	}
 }

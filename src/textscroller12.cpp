@@ -10,7 +10,6 @@
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
 #include "lib/retropoly.h"
-#include "lib/retropalette.h"
 #include "lib/retromath.h"
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }

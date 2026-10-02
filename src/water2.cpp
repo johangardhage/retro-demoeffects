@@ -26,7 +26,6 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
 #include "lib/retrovector.h"
 

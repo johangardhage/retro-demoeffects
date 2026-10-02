@@ -329,6 +329,51 @@ inline void RETRO_DrawMaskedPolygon(const PolygonPoint *point, int points, unsig
 }
 
 //
+// Stencil polygon
+// Fill a convex polygon with a map read in screen space: the polygon is a
+// window cut onto the map, not a surface the map is stretched over. The texel
+// under pixel (x, y) is (x - originx, y - originy), wrapped, so the map is
+// neither turned nor foreshortened with the polygon, and moving the origin
+// slides the picture behind the window.
+//
+inline void RETRO_DrawStencilPolygon(const PolygonPoint *point, int points, unsigned char *stencilmap, int stencilmapwidth, int stencilmapheight, int originx, int originy, ClipRect clip = {})
+{
+	if (stencilmap == NULL) return;
+
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		const PolygonPoint *p0 = &point[0];
+		const PolygonPoint *p1 = &point[triangle];
+		const PolygonPoint *p2 = &point[triangle + 1];
+		TriangleSpan span[RETRO_HEIGHT];
+		int ystart, yend;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
+		if (determinant == 0.0f) continue;
+
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
+
+		for (int y = ystart; y < yend; y++) {
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
+			float px = xstart + 0.5f;
+			float py = y + 0.5f;
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
+			int v = WRAP(y - originy, stencilmapheight);
+
+			for (int x = xstart; x < xend; x++) {
+				int offset = y * RETRO_WIDTH + x;
+				if (RETRO_DepthTest(offset, q)) {
+					int u = WRAP(x - originx, stencilmapwidth);
+					RETRO.framebuffer[offset] = stencilmap[v * stencilmapwidth + u];
+				}
+				q += dqdx;
+			}
+		}
+	}
+}
+
+//
 // Glenz shaded polygon
 // Add one color to the framebuffer, allowing sorted polygons to show through.
 // colormax is the top of the add; a model opts into a lower one (see

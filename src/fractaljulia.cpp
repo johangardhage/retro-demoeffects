@@ -4,8 +4,8 @@
 // Escape-time Julia set of z ↦ z² + c, with a fixed
 // c = CONST_RE + i CONST_IM. Pixel (x, y) is the start
 //
-//   z0 = 3 (x + 1/2 − W/2) / (zoom W) + moveX
-//      + i [ 3 (y + 1/2 − H/2) / (zoom W) + moveY ]
+//   z0 = 3 (x + 1/2 − W/2) / (zoom W) + CENTER_X
+//      + i [ 3 (y + 1/2 − H/2) / (zoom W) + CENTER_Y ]
 //
 // Both axes divide by W so the pixel lattice is square. The +1/2 is the
 // pixel center: (x − W/2) on even W is one step heavy on the left.

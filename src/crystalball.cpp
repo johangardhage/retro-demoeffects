@@ -16,8 +16,8 @@
 
 static const float Radius = 29.0f;
 static const float PanelDistance = 80.0f;
-static const vec3 Background = {0, 0, 45};
-static const vec3 ViewRay = {0, 0, -1}; // Orthographic, z toward the viewer.
+static const vec3 Background = { 0, 0, 45 };
+static const vec3 ViewRay = { 0, 0, -1 }; // Orthographic, z toward the viewer.
 
 //
 // A glint is placed where it shows on the ball, as the normal (nx, ny) seen
@@ -32,14 +32,14 @@ struct Glint {
 };
 
 static const Glint Glints[] = {
-	{0.40f, -0.18f, 0.980f},
-	{-0.47f, 0.05f, 0.985f},
-	{-0.40f, 0.33f, 0.997f},
-	{0.06f, -0.84f, 0.988f},
-	{0.87f, -0.25f, 0.996f},
-	{-0.90f, 0.05f, 0.996f},
-	{0.45f, 0.50f, 0.998f},
-	{0.70f, 0.45f, 0.998f}
+	{ 0.40f, -0.18f, 0.980f },
+	{ -0.47f, 0.05f, 0.985f },
+	{ -0.40f, 0.33f, 0.997f },
+	{ 0.06f, -0.84f, 0.988f },
+	{ 0.87f, -0.25f, 0.996f },
+	{ -0.90f, 0.05f, 0.996f },
+	{ 0.45f, 0.50f, 0.998f },
+	{ 0.70f, 0.45f, 0.998f }
 };
 
 static RETRO_Image *Logo;
@@ -69,7 +69,7 @@ static float SampleLogo(float x, float y)
 //
 static vec3 ShadeBall(float sx, float sy)
 {
-	vec3 n = {(sx - BallX) / Radius, (BallY - sy) / Radius, 0};
+	vec3 n = { (sx - BallX) / Radius, (BallY - sy) / Radius, 0 };
 	float radius2 = n.x * n.x + n.y * n.y;
 	if (radius2 >= 1) return Background;
 	n.z = sqrtf(1 - radius2);
@@ -91,8 +91,8 @@ static vec3 ShadeBall(float sx, float sy)
 	// crescent lies below the equator. Reflected lettering covers both.
 	float band = (n.y + 0.77f) / 0.18f;
 	float crescent = expf(-band * band) * (1 - n.x * n.x) * (1 - n.x * n.x);
-	vec3 surroundings = {0, 0, 40 * radius2 + 125 * crescent};
-	vec3 lettering = vec3{158, 255, 190} * (0.65f + 0.15f * n.z);
+	vec3 surroundings = { 0, 0, 40 * radius2 + 125 * crescent };
+	vec3 lettering = vec3{ 158, 255, 190 } * (0.65f + 0.15f * n.z);
 
 	// Finite light discs, not Gaussian dots. A glint is measured by the chord
 	// |reflected - light|, which grows linearly with the angle, and its border
@@ -100,8 +100,8 @@ static vec3 ShadeBall(float sx, float sy)
 	// plus along y. With dn.z = -(n.x dn.x + n.y dn.y) / n.z, dn.x = 1 / R
 	// along x and dn.y = -1 / R along y, differentiating the reflection gives:
 	float dzx = -n.x / n.z, dzy = n.y / n.z;
-	vec3 alongx = vec3{n.z + n.x * dzx, n.y * dzx, 2 * n.z * dzx} * (2 / Radius);
-	vec3 alongy = vec3{n.x * dzy, -n.z + n.y * dzy, 2 * n.z * dzy} * (2 / Radius);
+	vec3 alongx = vec3{ n.z + n.x * dzx, n.y * dzx, 2 * n.z * dzx } * (2 / Radius);
+	vec3 alongy = vec3{ n.x * dzy, -n.z + n.y * dzy, 2 * n.z * dzy } * (2 / Radius);
 	float glint = 0;
 	for (int i = 0; i < GlintCount; i++) {
 		vec3 toward = reflected - GlintLights[i];
@@ -117,7 +117,7 @@ static vec3 ShadeBall(float sx, float sy)
 		glint += disc * size / drawn;
 	}
 
-	vec3 white = {255, 255, 255};
+	vec3 white = { 255, 255, 255 };
 	return min(mix(surroundings, lettering, ink) + white * glint, white);
 }
 
@@ -144,7 +144,7 @@ void DEMO_Render(double time, double deltatime)
 				// too. The squeezed lettering and the lights near the rim get a
 				// finer grid.
 				int samples = distance2 > 0.45f ? 6 : 5;
-				vec3 sum = {0, 0, 0};
+				vec3 sum = { 0, 0, 0 };
 				for (int j = 0; j < samples; j++) {
 					for (int i = 0; i < samples; i++) {
 						sum += ShadeBall(x + (i + 0.5f) / samples, y + (j + 0.5f) / samples);
@@ -169,7 +169,7 @@ void DEMO_Initialize(void)
 
 	for (int i = 0; i < GlintCount; i++) {
 		const Glint &g = Glints[i];
-		GlintLights[i] = reflect(ViewRay, vec3{g.nx, g.ny, sqrtf(1 - g.nx * g.nx - g.ny * g.ny)});
+		GlintLights[i] = reflect(ViewRay, vec3{ g.nx, g.ny, sqrtf(1 - g.nx * g.nx - g.ny * g.ny) });
 		GlintSizes[i] = sqrtf(2 * (1 - g.edge));
 	}
 
@@ -181,23 +181,23 @@ void DEMO_Initialize(void)
 	// the small glints flicker as the ball glides.
 	RETRO_Palette palette[RETRO_COLORS];
 	int count = 0;
-	palette[count++] = {0, 0, 45};
+	palette[count++] = { 0, 0, 45 };
 	for (int i = 0; i < 64; i++) {
 		float shade = i / 63.0f;
-		palette[count++] = {(unsigned char)(158 * shade), (unsigned char)(255 * shade), (unsigned char)(190 * shade)};
+		palette[count++] = { (unsigned char)(158 * shade), (unsigned char)(255 * shade), (unsigned char)(190 * shade) };
 	}
 	for (int i = 0; i < 32; i++) {
-		palette[count++] = {0, 0, (unsigned char)(3 + 180 * i / 31)};
+		palette[count++] = { 0, 0, (unsigned char)(3 + 180 * i / 31) };
 	}
 	for (int i = 0; i < 33; i++) {
 		unsigned char gray = i * 255 / 32;
-		palette[count++] = {gray, gray, gray};
+		palette[count++] = { gray, gray, gray };
 	}
 	for (int row = 0; row < 7; row++) {
 		for (int column = 0; column < 18; column++) {
 			float blue = 20 + 140 * row / 6.0f, white = (column + 1) / 19.0f;
 			unsigned char gray = (unsigned char)(255 * white);
-			palette[count++] = {gray, gray, (unsigned char)mix(blue, 255, white)};
+			palette[count++] = { gray, gray, (unsigned char)mix(blue, 255, white) };
 		}
 	}
 	if (count != RETRO_COLORS) RETRO_RageQuit("Crystal ball palette must fill all 256 colors\n");

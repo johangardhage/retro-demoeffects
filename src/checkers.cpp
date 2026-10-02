@@ -103,11 +103,7 @@ void DEMO_Render(double time, double deltatime)
 	for (int layer = 0; layer < CHECKER_LAYERS; layer++) {
 		double depth = layer * CHECKER_SPACING + MIN(nearest, CHECKER_SPACING);
 		double shade = exp(-depth * 0.16);
-		RETRO_Palette color;
-		color.r = (unsigned char)(mix(Colors[first].r, Colors[next].r, blend) * shade);
-		color.g = (unsigned char)(mix(Colors[first].g, Colors[next].g, blend) * shade);
-		color.b = (unsigned char)(mix(Colors[first].b, Colors[next].b, blend) * shade);
-		RETRO_SetColor(layer + 1, color);
+		RETRO_SetColor(layer + 1, mix(Colors[first], Colors[next], blend) * shade);
 	}
 
 	// Paint far to near. Each board is offset by its own point on the weave

@@ -90,8 +90,7 @@ void DEMO_Render(double time, double deltatime)
 		for (int j = TRAIL - 1; j >= 0; j--) {
 			double t = phase - j * TRAIL_STEP;
 			int entry = LINE_RAMP0 + i * TRAIL + j;
-			RETRO_Palette color = Hue(line.hue + t / HUE_PERIOD);
-			RETRO_SetColor(entry, color.r * (TRAIL - j) / TRAIL, color.g * (TRAIL - j) / TRAIL, color.b * (TRAIL - j) / TRAIL);
+			RETRO_SetColor(entry, Hue(line.hue + t / HUE_PERIOD) * ((float)(TRAIL - j) / TRAIL));
 
 			int x1 = Bounce(line.from.x + line.fromspeed.x * t, RETRO_WIDTH);
 			int y1 = Bounce(line.from.y + line.fromspeed.y * t, RETRO_HEIGHT);

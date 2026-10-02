@@ -44,7 +44,6 @@ static void BuildRibbons(Model3D *model)
 		float phase = RibbonPhase[r];
 
 		for (int i = 0; i < RIBBON_SEGMENTS; i++) {
-
 			float t = tmax * i / (RIBBON_SEGMENTS - 1);
 			float a = t + phase;
 			float ca = cos(a);

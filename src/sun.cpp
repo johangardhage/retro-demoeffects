@@ -132,9 +132,7 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(SUN_RAMP / 4, SUN_RAMP * 3 / 8, RETRO_RED, RETRO_ORANGE);
 	RETRO_CreateGradientPalette(SUN_RAMP * 3 / 8, SUN_RAMP * 5 / 8, RETRO_ORANGE, RETRO_YELLOW);
 	RETRO_CreateGradientPalette(SUN_RAMP * 5 / 8, SUN_RAMP, RETRO_YELLOW, RETRO_WHITE);
-	for (int i = SUN_RAMP; i < RETRO_COLORS; i++) {
-		RETRO_SetColor(i, RETRO_WHITE);
-	}
+	RETRO_CreateGradientPalette(SUN_RAMP, RETRO_COLORS, RETRO_WHITE, RETRO_WHITE);
 
 	// Init flare offset table, one strip bin per pixel
 	double rmax = hypot(RETRO_WIDTH / 2.0 - 0.5, RETRO_HEIGHT / 2.0 - 0.5);

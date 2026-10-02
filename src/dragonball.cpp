@@ -259,7 +259,6 @@ void DEMO_Render(double time, double deltatime)
 		unsigned char bit = normal.rdir.z < 0.0f ? BIT_FRONT : BIT_BACK;
 		FillStar(pts, STAR_VERTS, bit);
 	}
-
 }
 
 void DEMO_Initialize(void)

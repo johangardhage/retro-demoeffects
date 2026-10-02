@@ -22,13 +22,6 @@ static RETRO_Image *PictureA;
 static RETRO_Image *PictureB;
 static unsigned char ColorLUT[32][32][32];
 
-static const int Bayer4x4[4][4] = {
-	{ -7,  1, -5,  3 },
-	{  5, -3,  7, -1 },
-	{ -4,  4, -6,  2 },
-	{  6, -2,  8,  0 }
-};
-
 void DEMO_Render(double time, double deltatime)
 {
 	if (time < TIME_FADEIN) {
@@ -66,7 +59,7 @@ void DEMO_Render(double time, double deltatime)
 			int g = s * ca.g + t * cb.g;
 			int bch = s * ca.b + t * cb.b;
 
-			int dither = Bayer4x4[y & 3][x & 3];
+			int dither = RETRO_DitherLevel(x, y) - 7; // -7..8, about zero
 			int rd = CLAMP256(r + dither);
 			int gd = CLAMP256(g + dither);
 			int bd = CLAMP256(bch + dither);

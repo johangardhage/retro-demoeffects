@@ -55,13 +55,6 @@ static const RETRO_Palette Water = { 2, 8, 24 };
 static const RETRO_Palette Ink1 = RETRO_ORANGE;
 static const RETRO_Palette Ink2 = RETRO_AZURE;
 
-static const int Bayer4x4[4][4] = {
-	{  0,  8,  2, 10 },
-	{ 12,  4, 14,  6 },
-	{  3, 11,  1,  9 },
-	{ 15,  7, 13,  5 }
-};
-
 enum { BOUNDARY_SCALAR, BOUNDARY_U, BOUNDARY_V };
 
 static float U[GRID_SIZE];
@@ -287,7 +280,7 @@ void DEMO_Render(double time, double deltatime)
 		float gy = (y + 0.5f) * GRID_HEIGHT / RETRO_HEIGHT + 0.5f;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			float gx = (x + 0.5f) * GRID_WIDTH / RETRO_WIDTH + 0.5f;
-			float threshold = (Bayer4x4[y & 3][x & 3] + 0.5f) / 16.0f;
+			float threshold = RETRO_DitherThreshold(x, y);
 			float ink1 = sqrtf(1.0f - expf(-Sample(Density1, gx, gy)));
 			float ink2 = sqrtf(1.0f - expf(-Sample(Density2, gx, gy)));
 			int level1 = CLAMP(ink1 * (INK_LEVELS - 1) + threshold, 0, INK_LEVELS);

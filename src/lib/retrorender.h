@@ -26,7 +26,8 @@ enum RETRO_POLY_TYPE {
 	RETRO_POLY_TEXTURE,
 	RETRO_POLY_ENVIRONMENT,	// a true Blinn/Newell reflection map, sampled by the reflected view ray
 	RETRO_POLY_SHADER,		// each pixel handed to model->shader as a Fragment; face normals with RETRO_SHADE_FLAT
-	RETRO_POLY_MASKED		// bitmasked polygon write using model->mask
+	RETRO_POLY_MASKED,		// bitmasked polygon write using model->mask
+	RETRO_POLY_STENCIL		// each face a window onto model->stencilmap, read in screen space from the face's own top-left
 };
 
 enum RETRO_POLY_SHADE {
@@ -588,6 +589,31 @@ inline void RETRO_RenderMaskedModel(Model3D *model, ClipRect clip = {})
 	}
 }
 
+//
+// Faces as masks: each is filled with model->stencilmap unprojected, its
+// origin pinned to the top-left of the face's screen bounding box. The picture
+// travels with the face but never turns or shrinks with it, and
+// model->stencilmaporigin slides it under all of them.
+//
+inline void RETRO_RenderStencilModel(Model3D *model, ClipRect clip = {})
+{
+	RETRO_SortFaces(model->twosided, model);
+
+	for (int i = 0; i < model->drawfaces; i++) {
+		Face *face = &model->face[model->drawface[i]];
+		PolygonPoint point[RETRO_MAX_FACEVERTICES];
+		vec2 topleft = model->vertex[face->vertex[0]].spos;
+		for (int j = 0; j < face->vertices; j++) {
+			point[j].pos = model->vertex[face->vertex[j]].spos;
+			point[j].q = model->vertex[face->vertex[j]].q;
+			topleft = min(topleft, point[j].pos);
+		}
+		int originx = (int)topleft.x + (int)model->stencilmaporigin.x;
+		int originy = (int)topleft.y + (int)model->stencilmaporigin.y;
+		RETRO_DrawStencilPolygon(point, face->vertices, model->stencilmap, model->stencilmapwidth, model->stencilmapheight, originx, originy, clip);
+	}
+}
+
 // One model, one depth range, so the depth buffer is cleared here by default.
 // A demo drawing several models that interleave passes cleardepth false and
 // clears once a frame itself, or each model would erase the depth of the ones
@@ -644,6 +670,9 @@ inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shade
 		break;
 	case RETRO_POLY_MASKED:
 		RETRO_RenderMaskedModel(model, clip);
+		break;
+	case RETRO_POLY_STENCIL:
+		RETRO_RenderStencilModel(model, clip);
 		break;
 	}
 }

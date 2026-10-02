@@ -733,6 +733,34 @@ inline void RETRO_CreateColorLUT(const RETRO_Palette *palette, int cuberes, unsi
 }
 
 //
+// Ordered dither
+//
+// The 4×4 Bayer matrix, tiled over the screen: every level 0..15 once in each
+// tile, laid out so that any run of them is spread as evenly as sixteen
+// pixels allow. A value that falls between two steps of whatever it is
+// quantized to is drawn as a mix of both, more of the nearer one, instead of
+// a hard edge where it crosses from one to the next.
+//
+inline int RETRO_DitherLevel(int x, int y)
+{
+	static const unsigned char bayer[4][4] = {
+		{ 0, 8, 2, 10 },
+		{ 12, 4, 14, 6 },
+		{ 3, 11, 1, 9 },
+		{ 15, 7, 13, 5 },
+	};
+	return bayer[y & 3][x & 3];
+}
+
+// The same as a threshold in (0, 1), (level + 0.5) / 16. Added to a value
+// before it is truncated to a step, it rounds the value up in as many pixels
+// of each tile as its fraction is sixteenths.
+inline float RETRO_DitherThreshold(int x, int y)
+{
+	return (RETRO_DitherLevel(x, y) + 0.5f) / 16;
+}
+
+//
 // Colors gathered for fitting a palette to
 //
 // Each color lands in a cell of a 32x32x32 RGB grid, five bits a channel,

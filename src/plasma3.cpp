@@ -18,9 +18,9 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define PLASMA_WIDTH (RETRO_WIDTH / 4)
-#define PLASMA_HEIGHT (RETRO_HEIGHT / 4)
-#define PLASMA_SCALE 4
+#define PLASMA_SCALE 4 // pixels on a side of the block a sample is expanded to
+#define PLASMA_WIDTH (RETRO_WIDTH / PLASMA_SCALE)
+#define PLASMA_HEIGHT (RETRO_HEIGHT / PLASMA_SCALE)
 #define PLASMA_SPEED 70
 #define SINE_VALUES 256 // entries in the sine table, covering one whole turn
 

@@ -105,7 +105,7 @@ void DEMO_Render(double time, double deltatime)
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			double u = ((x + 0.5) / RETRO_WIDTH - 0.5) * scale;
 			double v = v0;
-			Sample color = {0, 0, 0, 0};
+			Sample color = { 0, 0, 0, 0 };
 			float remaining = 1;
 			for (int depth = 0; depth < MAX_DEPTH; depth++) {
 				Sample stone = Bilinear(mip[depth], u, v);
@@ -141,7 +141,7 @@ void DEMO_Initialize(void)
 	for (int i = 0; i < picture->width * picture->height; i++) {
 		int index = picture->data[i];
 		RETRO_Palette c = picture->palette[index];
-		base.pixels[i] = index ? Sample{(float)c.r, (float)c.g, (float)c.b, 1} : Sample{0, 0, 0, 0};
+		base.pixels[i] = index ? Sample{ (float)c.r, (float)c.g, (float)c.b, 1 } : Sample{ 0, 0, 0, 0 };
 	}
 	// Bilinear clamps an out-of-range sample to the border, so the ancestor
 	// levels sampled outside [-0.5, 0.5] read as stone rather than as more

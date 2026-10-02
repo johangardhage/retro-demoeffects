@@ -34,21 +34,6 @@
 static Model3D *Flubber;
 static Vertex RestVertex[RETRO_MAX_VERTICES];
 
-static void AddTriangle(Model3D *model, int a, int b, int c, int color)
-{
-	if (model->faces >= RETRO_MAX_FACES) {
-		RETRO_RageQuit("Too many flubber faces\n");
-	}
-
-	Face *face = &model->face[model->faces++];
-	face->vertices = 3;
-	face->vertex[0] = a;
-	face->vertex[1] = b;
-	face->vertex[2] = c;
-	face->c = color;
-	face->backc = color;
-}
-
 static void BuildFlubber(Model3D *model)
 {
 	for (int r = 0; r <= FLUBBER_STACKS; r++) {
@@ -72,8 +57,8 @@ static void BuildFlubber(Model3D *model)
 			// Outward winding in this y-down, +z-away frame. The shared
 			// diagonal is i0–i2 on every quad, so the far side's diagonals
 			// cross the near ones into diamonds once Glenz draws both.
-			AddTriangle(model, i0, i2, i1, color);
-			AddTriangle(model, i0, i3, i2, color);
+			RETRO_AddModelTriangle(model, i0, i2, i1, color, color);
+			RETRO_AddModelTriangle(model, i0, i3, i2, color, color);
 		}
 	}
 

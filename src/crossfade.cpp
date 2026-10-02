@@ -30,12 +30,8 @@ void DEMO_Render(double time, double deltatime)
 		return;
 	}
 
-	// Ensure full palette brightness once fade-in completes
-	static bool paletterestored = false;
-	if (!paletterestored) {
-		RETRO_SetPalette(PictureA->palette);
-		paletterestored = true;
-	}
+	// Full palette brightness once the fade-in completes
+	RETRO_SetPalette(PictureA->palette);
 
 	// Crossfade transition
 	double phase = fmod((time - TIME_FADEIN) * CROSSFADE_SPEED, 2 * M_PI);

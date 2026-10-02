@@ -87,14 +87,6 @@ static unsigned char *FadeStrip[FADE_LEVELS];
 static unsigned char Background[RETRO_WIDTH * RETRO_HEIGHT];
 static unsigned char Scene[RETRO_WIDTH * RETRO_HEIGHT];
 
-// 4×4 ordered dither thresholds, in sixteenths
-static const unsigned char Bayer[4][4] = {
-	{ 0, 8, 2, 10 },
-	{ 12, 4, 14, 6 },
-	{ 3, 11, 1, 9 },
-	{ 15, 7, 13, 5 },
-};
-
 static PolygonPoint Project(const mat3 &matrix, float x, float y, vec2 uv)
 {
 	Vertex vertex = {};
@@ -162,7 +154,7 @@ void DEMO_Render(double time, double deltatime)
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int pixel = y * RETRO_WIDTH + x;
-			if (screen[pixel] <= Bayer[y & 3][x & 3]) Scene[pixel] = Background[pixel];
+			if (screen[pixel] <= RETRO_DitherLevel(x, y)) Scene[pixel] = Background[pixel];
 		}
 	}
 

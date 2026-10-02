@@ -105,14 +105,10 @@ void DEMO_Render(double time, double deltatime)
 		if (line == NULL) {
 			continue;
 		}
-		int width = 0;
-		for (const char *character = line; *character != 0; character++) {
-			width += RETRO_CharWidth(Font, (unsigned char)*character);
-		}
 
 		int y = top + row * Font.height;
 		if (y + Font.height > 0 && y < RETRO_HEIGHT) {
-			int x = (RETRO_WIDTH - width) / 2;
+			int x = (RETRO_WIDTH - RETRO_TextLineWidth(Font, line)) / 2;
 			for (const char *character = line; *character != 0; character++) {
 				DrawChar((unsigned char)*character, x, y);
 				x += RETRO_CharWidth(Font, (unsigned char)*character);

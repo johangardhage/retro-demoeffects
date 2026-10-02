@@ -12,7 +12,6 @@
 #include "lib/retromain.h"
 #include "lib/retromath.h"
 #include "lib/retropoly.h"
-#include <vector>
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
 static const char ScrollText[] = "RETRO DEMOEFFECTS...";
@@ -21,6 +20,7 @@ static const char ScrollText[] = "RETRO DEMOEFFECTS...";
 #define LETTER_HEIGHT 48.0f
 #define LETTER_DEPTH 10.0f
 #define ROW_SEGMENTS 3 // keep the twist smooth between font rows
+#define MAX_FACES 8192 // across every letter of the text, which takes 4434
 #define LINE_SPACING 60.0
 #define SCROLL_SPEED 115.0
 #define ROTATION_SPEED -1.8
@@ -43,11 +43,17 @@ struct GlyphFace {
 	vec3 corner[4];
 	vec3 normal;
 };
-static std::vector<GlyphFace> Glyphs[LETTERS];
+// Every letter's faces, packed back to back: letter i owns
+// Faces[GlyphStart[i]] up to Faces[GlyphStart[i + 1]].
+static GlyphFace Faces[MAX_FACES];
+static int GlyphStart[LETTERS + 1];
 
 static void AddFace(int letter, vec3 a, vec3 b, vec3 c, vec3 d, vec3 normal)
 {
-	Glyphs[letter].push_back({ { a, b, c, d }, normal });
+	if (GlyphStart[letter + 1] >= MAX_FACES) {
+		RETRO_RageQuit("Too many letter faces\n");
+	}
+	Faces[GlyphStart[letter + 1]++] = { { a, b, c, d }, normal };
 }
 
 static bool Ink(int letter, int x, int y)
@@ -60,6 +66,7 @@ static void BuildGlyph(int letter)
 {
 	float dx = LETTER_WIDTH / Font.width, dy = LETTER_HEIGHT / Font.height;
 	float front = -LETTER_DEPTH / 2, back = LETTER_DEPTH / 2;
+	GlyphStart[letter + 1] = GlyphStart[letter];
 	for (int y = 0; y < Font.height; y++) {
 		// Merge horizontal ink runs into caps instead of making cubes for
 		// every bitmap pixel. Internal walls would never be visible.
@@ -130,10 +137,10 @@ void DEMO_Render(double time, double deltatime)
 	for (int i = 0; i < LETTERS; i++) {
 		float top = (float)(ENTRY_Y + i * LINE_SPACING - phase);
 		if (top > ENTRY_Y || top + LETTER_HEIGHT < -CULL_MARGIN) continue;
-		for (const GlyphFace &face : Glyphs[i]) {
+		for (int f = GlyphStart[i]; f < GlyphStart[i + 1]; f++) {
 			PolygonPoint quad[4];
 			for (int j = 0; j < 4; j++) {
-				quad[j] = Project(face.corner[j], face.normal, top, time);
+				quad[j] = Project(Faces[f].corner[j], Faces[f].normal, top, time);
 			}
 			RETRO_DrawGouraudPolygon(quad, 4);
 		}

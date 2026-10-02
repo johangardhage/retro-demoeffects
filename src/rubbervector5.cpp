@@ -34,9 +34,9 @@
 #define SLIME_AMBIENT 16         // shade every face starts from, however it faces the light
 #define SLIME_SHADES 63          // entries in the cube's ramp, the top of the DAC's six-bit scale
 
-static constexpr int SlimeCopies = SLIME_HISTORY / RETRO_SIMULATION_STEP + 1;
+#define SLIME_COPIES (int)(SLIME_HISTORY / RETRO_SIMULATION_STEP + 1)
 
-static unsigned char History[SlimeCopies][RETRO_HEIGHT][RETRO_WIDTH];
+static unsigned char History[SLIME_COPIES][RETRO_HEIGHT][RETRO_WIDTH];
 static int HistoryHead;
 
 //
@@ -62,7 +62,7 @@ void DEMO_FixedUpdate(double timestep)
 	angle = fmod(angle + timestep * ROTATION_SPEED, 2 * M_PI);
 
 	// The head is the newest image, as in rubbervector4
-	HistoryHead = (HistoryHead + 1) % SlimeCopies;
+	HistoryHead = (HistoryHead + 1) % SLIME_COPIES;
 
 	RetainCubeImage(angle, History[HistoryHead][0]);
 }
@@ -85,8 +85,8 @@ void DEMO_Render(double time, double deltatime)
 		for (int x = 0; x < RETRO_WIDTH; x += SLIME_STRIP) {
 			float wavestrip = sin(phasestrip + (x - RETRO_WIDTH / 2.0) * STRIP_WAVES * 2 * M_PI / RETRO_WIDTH);
 			float stripage = (1 - wavestrip) / 2 * STRIP_REACH;
-			int age = CLAMP((rowage + stripage) / RETRO_SIMULATION_STEP, 0, SlimeCopies);
-			int source = WRAP(HistoryHead - age, SlimeCopies);
+			int age = CLAMP((rowage + stripage) / RETRO_SIMULATION_STEP, 0, SLIME_COPIES);
+			int source = WRAP(HistoryHead - age, SLIME_COPIES);
 			memcpy(buffer + y * RETRO_WIDTH + x, History[source][y] + x, SLIME_STRIP);
 		}
 	}
@@ -112,5 +112,5 @@ void DEMO_Initialize(void)
 	// Fill the ring with the cube at rest, so the first displayed frame has a
 	// full history to multiplex rather than a black trail
 	RetainCubeImage(0, History[0][0]);
-	for (int i = 1; i < SlimeCopies; i++) memcpy(History[i], History[0], sizeof(History[i]));
+	for (int i = 1; i < SLIME_COPIES; i++) memcpy(History[i], History[0], sizeof(History[i]));
 }

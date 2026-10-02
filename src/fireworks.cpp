@@ -51,46 +51,46 @@ static struct FireParticle {
 	unsigned char kind;
 } Particles[NUM_PARTICLES];
 
-static int AllocParticle(void)
+static FireParticle *AllocParticle(void)
 {
-	for (int i = 0; i < NUM_PARTICLES; i++) {
-		if (Particles[i].kind == DEAD) {
-			return i;
+	for (FireParticle &particle : Particles) {
+		if (particle.kind == DEAD) {
+			return &particle;
 		}
 	}
-	return -1;
+	return NULL;
 }
 
 static void LaunchRocket(void)
 {
-	int i = AllocParticle();
-	if (i < 0) {
+	FireParticle *particle = AllocParticle();
+	if (!particle) {
 		return;
 	}
 
-	Particles[i].kind = ROCKET;
-	Particles[i].pos = { (float)mix(40, RETRO_WIDTH - 40, RAND()), RETRO_HEIGHT - 1.0f };
-	Particles[i].vel.x = mix(-0.6, 0.6, RAND());
+	particle->kind = ROCKET;
+	particle->pos = { (float)mix(40, RETRO_WIDTH - 40, RAND()), RETRO_HEIGHT - 1.0f };
+	particle->vel.x = mix(-0.6, 0.6, RAND());
 	float climb = RETRO_HEIGHT - 1 - mix(BURST_HIGH, BURST_LOW, RANDOMF(1));
-	Particles[i].vel.y = -sqrtf(2 * GRAVITY * climb);
-	Particles[i].life = 0;
+	particle->vel.y = -sqrtf(2 * GRAVITY * climb);
+	particle->life = 0;
 }
 
 static void Explode(vec2 pos)
 {
 	for (int n = 0; n < SPARKS; n++) {
-		int i = AllocParticle();
-		if (i < 0) {
+		FireParticle *particle = AllocParticle();
+		if (!particle) {
 			return;
 		}
 
 		float angle = RANDOMF(2 * M_PI);
 		float speed = RANDOMF(SPARK_SPEED);
 
-		Particles[i].kind = SPARK;
-		Particles[i].pos = pos;
-		Particles[i].vel = { (float)(speed * cos(angle)), (float)(speed * sin(angle)) };
-		Particles[i].life = SPARK_LIFE - RANDOM(20);
+		particle->kind = SPARK;
+		particle->pos = pos;
+		particle->vel = { (float)(speed * cos(angle)), (float)(speed * sin(angle)) };
+		particle->life = SPARK_LIFE - RANDOM(20);
 	}
 }
 
@@ -102,35 +102,35 @@ void DEMO_FixedUpdate(double timestep)
 		LaunchRocket();
 	}
 
-	for (int i = 0; i < NUM_PARTICLES; i++) {
-		if (Particles[i].kind == DEAD) {
+	for (FireParticle &particle : Particles) {
+		if (particle.kind == DEAD) {
 			continue;
 		}
 
-		Particles[i].vel.y += GRAVITY;
-		Particles[i].pos += Particles[i].vel;
+		particle.vel.y += GRAVITY;
+		particle.pos += particle.vel;
 
-		if (Particles[i].kind == ROCKET) {
-			if (Particles[i].vel.y >= 0) {
-				Explode(Particles[i].pos);
-				Particles[i].kind = DEAD;
+		if (particle.kind == ROCKET) {
+			if (particle.vel.y >= 0) {
+				Explode(particle.pos);
+				particle.kind = DEAD;
 				continue;
 			}
-			if (Particles[i].pos.x >= 0 && Particles[i].pos.x < RETRO_WIDTH &&
-				Particles[i].pos.y >= 0 && Particles[i].pos.y < RETRO_HEIGHT) {
-				RETRO_PutPixel(Particles[i].pos.x, Particles[i].pos.y, RETRO_COLORS - 1);
+			if (particle.pos.x >= 0 && particle.pos.x < RETRO_WIDTH &&
+				particle.pos.y >= 0 && particle.pos.y < RETRO_HEIGHT) {
+				RETRO_PutPixel(particle.pos.x, particle.pos.y, RETRO_COLORS - 1);
 			}
 		} else {
-			Particles[i].life--;
-			if (Particles[i].life <= 0 ||
-				Particles[i].pos.x < 0 || Particles[i].pos.x >= RETRO_WIDTH ||
-				Particles[i].pos.y < 0 || Particles[i].pos.y >= RETRO_HEIGHT) {
-				Particles[i].kind = DEAD;
+			particle.life--;
+			if (particle.life <= 0 ||
+				particle.pos.x < 0 || particle.pos.x >= RETRO_WIDTH ||
+				particle.pos.y < 0 || particle.pos.y >= RETRO_HEIGHT) {
+				particle.kind = DEAD;
 				continue;
 			}
-			int shade = 40 + Particles[i].life * 215 / SPARK_LIFE;
-			int ix = (int)Particles[i].pos.x;
-			int iy = (int)Particles[i].pos.y;
+			int shade = 40 + particle.life * 215 / SPARK_LIFE;
+			int ix = (int)particle.pos.x;
+			int iy = (int)particle.pos.y;
 			unsigned char color = CLAMP256(shade);
 			RETRO_PutPixel(ix, iy, color);
 			if (ix + 1 < RETRO_WIDTH) {
@@ -152,10 +152,6 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(0, 64, RETRO_BLACK, RETRO_RED);
 	RETRO_CreateGradientPalette(64, 160, RETRO_RED, RETRO_YELLOW);
 	RETRO_CreateGradientPalette(160, RETRO_COLORS, RETRO_YELLOW, RETRO_WHITE);
-
-	for (int i = 0; i < NUM_PARTICLES; i++) {
-		Particles[i].kind = DEAD;
-	}
 
 	LaunchRocket();
 	LaunchRocket();

@@ -109,7 +109,7 @@ void DEMO_Render(double time, double deltatime)
 		quad[1] = Project((right - center) * GLYPH_WIDTH, top, { right, v });
 		quad[2] = Project((right - center) * GLYPH_WIDTH, bottom, { right, v + Font.height });
 		quad[3] = Project((left - center) * GLYPH_WIDTH, bottom, { left, v + Font.height });
-		RETRO_DrawTexMapPolygon(quad, 4, TextStrip->data, TextStrip->width, TextStrip->height, false, {});
+		RETRO_DrawTexMapPolygon(quad, 4, TextStrip->data, TextStrip->width, TextStrip->height);
 	}
 
 	// The lines share one plane and never overlap, so a single mask of all

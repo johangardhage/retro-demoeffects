@@ -44,14 +44,6 @@
 
 static const RETRO_Palette WaterColor = { 20, 34, 56 };
 
-// 4×4 ordered dither thresholds, (i + 0.5) / 16
-static const float Bayer[4][4] = {
-	{ 0.5f / 16, 8.5f / 16, 2.5f / 16, 10.5f / 16 },
-	{ 12.5f / 16, 4.5f / 16, 14.5f / 16, 6.5f / 16 },
-	{ 3.5f / 16, 11.5f / 16, 1.5f / 16, 9.5f / 16 },
-	{ 15.5f / 16, 7.5f / 16, 13.5f / 16, 5.5f / 16 },
-};
-
 static unsigned char WaterTable[RETRO_COLORS * WATER_LEVELS];
 
 //
@@ -82,7 +74,7 @@ void DEMO_Render(double time, double deltatime)
 		float fade = (float)(d - 1) * (WATER_LEVELS - 1) / (RETRO_HEIGHT - WATER_YPOS - 1);
 
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int level = MIN((int)(fade + Bayer[y & 3][x & 3]), WATER_LEVELS - 1);
+			int level = MIN((int)(fade + RETRO_DitherThreshold(x, y)), WATER_LEVELS - 1);
 			buffer[y * RETRO_WIDTH + x] = WaterTable[image[ysrc * RETRO_WIDTH + x] * WATER_LEVELS + level];
 		}
 	}

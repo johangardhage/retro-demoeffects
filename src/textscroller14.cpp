@@ -11,6 +11,7 @@
 #include "lib/retro.h"
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
+#include "lib/retropalette.h"
 #include "lib/retromath.h"
 #include "lib/retropoly.h"
 
@@ -44,10 +45,6 @@ static RETRO_Image *TextStrip;
 static unsigned char Background[RETRO_WIDTH * RETRO_HEIGHT];
 static unsigned char Scene[RETRO_WIDTH * RETRO_HEIGHT];
 static float SceneDepth[RETRO_WIDTH * RETRO_HEIGHT];
-static const int Dither[4][4] = {
-	{ 0, 8, 2, 10 }, { 12, 4, 14, 6 },
-	{ 3, 11, 1, 9 }, { 15, 7, 13, 5 }
-};
 
 static PolygonPoint Project(const mat3 &matrix, float offset, float x, float y, vec2 uv)
 {
@@ -127,7 +124,7 @@ void DEMO_Render(double time, double deltatime)
 					vec3 halfway = normalize(normalize(LIGHT - point) + view);
 					float shade = 3.0f * pow(MAX(dot(facing, halfway), 0.0f), SHININESS);
 					int level = (int)shade;
-					if (shade - level > (Dither[y & 3][x & 3] + 0.5f) / 16.0f) level++;
+					if (shade - level > RETRO_DitherThreshold(x, y)) level++;
 					color = (unsigned char)(6 + level);
 				}
 				Scene[pixel] = color;

@@ -179,9 +179,11 @@ static unsigned char SampleFloor(float x, float z)
 	return COL_FLOOR_DARK + ((row + col + 1) & 1);
 }
 
-static unsigned char ReflectFloor(vec3 p, vec3 n)
+// One pixel of glass: a planar bounce of the view ray onto y = 0.
+static unsigned char ReflectFloor(const Fragment &fragment)
 {
-	vec3 reflected = reflect(p - CameraScene, n);
+	vec3 p = fragment.position;
+	vec3 reflected = reflect(fragment.view, fragment.normal);
 
 	if (fabsf(reflected.y) < 1.0e-6f) {
 		return COL_GLASS;
@@ -195,46 +197,6 @@ static unsigned char ReflectFloor(vec3 p, vec3 n)
 	return SampleFloor(p.x + t * reflected.x, p.z + t * reflected.z);
 }
 
-// Perspective-correct scene position, then a planar bounce onto y = 0.
-// n holds P · q at the corners so dividing by the interpolated q recovers P.
-static void DrawGlassPolygon(PolygonPoint *point, int points, vec3 normal)
-{
-	for (int triangle = 1; triangle < points - 1; triangle++) {
-		PolygonPoint *p0 = &point[0];
-		PolygonPoint *p1 = &point[triangle];
-		PolygonPoint *p2 = &point[triangle + 1];
-		TriangleSpan span[RETRO_HEIGHT];
-		int ystart, yend;
-		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend);
-		if (determinant == 0.0f) continue;
-
-		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
-		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
-		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
-		vec3 dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
-
-		for (int y = ystart; y < yend; y++) {
-			if (span[y].left > span[y].right) continue;
-			int xstart = MAX((int)ceil(span[y].left - 0.5f), 0);
-			int xend = MIN((int)ceil(span[y].right - 0.5f), RETRO_WIDTH);
-			float px = xstart + 0.5f;
-			float py = y + 0.5f;
-			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
-			vec3 pq = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
-
-			for (int x = xstart; x < xend; x++) {
-				int offset = y * RETRO_WIDTH + x;
-				if (RETRO_DepthTest(offset, q) && q != 0.0f) {
-					vec3 p = pq / q;
-					RETRO.framebuffer[offset] = ReflectFloor(p, normal);
-				}
-				q += dqdx;
-				pq += dndx;
-			}
-		}
-	}
-}
-
 static void RenderMirror(void)
 {
 	RETRO_SortFaces(false, Mirror);
@@ -246,7 +208,8 @@ static void RenderMirror(void)
 			Vertex *vertex = &Mirror->vertex[face->vertex[j]];
 			point[j].pos = vertex->spos;
 			point[j].q = vertex->q;
-			point[j].n = vertex->pos * vertex->q;
+			point[j].p = vertex->pos * vertex->q;
+			point[j].n = face->facenormal.dir;
 		}
 
 		if (face->c == COL_RIM) {
@@ -254,8 +217,9 @@ static void RenderMirror(void)
 			continue;
 		}
 
-		vec3 normal = face->facenormal.dir;
-		DrawGlassPolygon(point, face->vertices, normal);
+		// The scene position is perspective-correct: p holds P · q at the
+		// corners, and dividing by the interpolated q recovers P.
+		RETRO_DrawShaderPolygon(point, face->vertices, CameraScene, ReflectFloor);
 	}
 }
 

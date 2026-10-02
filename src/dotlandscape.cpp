@@ -15,6 +15,7 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 #include "lib/retropoly.h"
+#include "lib/retroterrain.h"
 
 #define CAMERA_X 128.0f
 #define CAMERA_HEIGHT 20.0f
@@ -23,18 +24,6 @@
 #define VIEW_DISTANCE 100.0f
 #define WORLD_HEIGHT_SCALE (1.0f / 16.0f)
 #define FORWARD_SPEED 30.0f
-
-static RETRO_Image *HeightMap, *ColorMap;
-
-static unsigned char TerrainSample(int x, int z)
-{
-	return HeightMap->data[WRAP(z, HeightMap->height) * HeightMap->width + WRAP(x, HeightMap->width)];
-}
-
-static unsigned char ColorSample(int x, int z)
-{
-	return ColorMap->data[WRAP(z, ColorMap->height) * ColorMap->width + WRAP(x, ColorMap->width)];
-}
 
 // The pitched camera's perspective, into a pixel depth buffer.
 static void PlotDot(float side, float forward, float height, unsigned char color)
@@ -62,7 +51,7 @@ static void DrawTerrainDots(float cameraz)
 		for (int x = minx; x <= maxx; x++) {
 			// The camera cruises straight ahead, so a cell's offset from it is
 			// already its side and forward distance.
-			PlotDot(x - CAMERA_X, z - cameraz, TerrainSample(x, z) * WORLD_HEIGHT_SCALE, ColorSample(x, z));
+			PlotDot(x - CAMERA_X, z - cameraz, RETRO_TerrainHeight(x, z), RETRO_TerrainColor(x, z));
 		}
 	}
 }
@@ -70,7 +59,7 @@ static void DrawTerrainDots(float cameraz)
 void DEMO_Render(double time, double deltatime)
 {
 	static float cameraz = 236;
-	cameraz = fmodf(cameraz + FORWARD_SPEED * deltatime + HeightMap->height, HeightMap->height);
+	cameraz = fmodf(cameraz + FORWARD_SPEED * deltatime + RETRO_Terrain.height, RETRO_Terrain.height);
 
 	RETRO_ClearDepthBuffer();
 	DrawTerrainDots(cameraz);
@@ -78,7 +67,6 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	HeightMap = RETRO_LoadImage("assets/voxel_height_256x256.pcx");
-	ColorMap = RETRO_LoadImage("assets/voxel_color_256x256.pcx", true);
+	RETRO_LoadTerrain("assets/voxel_color_256x256.pcx", "assets/voxel_height_256x256.pcx", WORLD_HEIGHT_SCALE);
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
 }

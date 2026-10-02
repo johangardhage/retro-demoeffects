@@ -303,11 +303,7 @@ void DEMO_Initialize(void)
 		float h = (float)j / (CHROME_HAZE_LEVELS - 1);
 		for (int i = 0; i < CHROME_FLOOR_SHADES; i++) {
 			float k = (float)i / (CHROME_FLOOR_SHADES - 1);
-			RETRO_Palette color;
-			color.r = mix(RETRO_WHITE.r * k, CHROME_HORIZON.r, h);
-			color.g = mix(RETRO_WHITE.g * k, CHROME_HORIZON.g, h);
-			color.b = mix(RETRO_WHITE.b * k, CHROME_HORIZON.b, h);
-			RETRO_SetColor(CHROME_FLOOR_START + j * CHROME_FLOOR_SHADES + i, color);
+			RETRO_SetColor(CHROME_FLOOR_START + j * CHROME_FLOOR_SHADES + i, mix(RETRO_WHITE * k, CHROME_HORIZON, h));
 		}
 	}
 	RETRO_Palette sky[CHROME_SKY_SHADES];

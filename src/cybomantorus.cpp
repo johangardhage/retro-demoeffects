@@ -44,41 +44,6 @@ static Model3D *Fish;
 static unsigned char Texture[TEXTURE_SIZE * TEXTURE_SIZE];
 static unsigned char Shades[RETRO_SHADE_TABLE_SIZE];
 
-static void RenderTorus(float phase, float focal)
-{
-	// Spin the texture around the ring, then roll its axis in the screen.
-	// This keeps the camera inside the tube throughout the rotation.
-	RETRO_RotateModel(phase * 0.61f, 0.0f, phase, Torus);
-	RETRO_TranslateModel(0.0f, 0.0f, CAMERA_DISTANCE - focal / MODEL_SCALE, Torus);
-	RETRO_ProjectModel(MODEL_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Torus, focal);
-	RETRO_RenderModel(RETRO_POLY_TEXTURE, RETRO_SHADE_GOURAUD, Torus);
-}
-
-static void RenderFish(double time, float phase, float focal)
-{
-	// The final pose repeats pose zero so the last-to-first blend is smooth.
-	// Reuse one model instance; the shared depth buffer resolves every fish
-	// against the torus and previously drawn fish.
-	for (int i = 0; i < FISH_COUNT; i++) {
-		float swim = time * FISH_SWIM_SPEED + FISH_START_PHASE + i * (2.0f * M_PI / FISH_COUNT);
-		float cycle = time * FISH_ANIMATION_SPEED + i * FISH_ANIMATION_OFFSET;
-		RETRO_MorphModel(fract(cycle), Fish);
-		RETRO_InitializeFaceNormals(Fish);
-		RETRO_InitializeVertexNormals(Fish);
-		RETRO_RotateModel(swim + M_PI * 0.5f, 0.0f, phase, Fish);
-		float ringy = RING_RADIUS * sinf(swim);
-		float ringz = -RING_RADIUS * cosf(swim);
-		// Two shallow lanes leave the central bands clear more often.
-		float lane = (i & 1) ? -FISH_LANE_OFFSET : FISH_LANE_OFFSET;
-		float drift = lane + FISH_DRIFT * sinf(swim * 2.0f + i);
-		RETRO_TranslateModel(drift * cosf(phase) - ringy * sinf(phase),
-			drift * sinf(phase) + ringy * cosf(phase),
-			ringz + CAMERA_DISTANCE - focal / MODEL_SCALE, Fish);
-		RETRO_ProjectModel(MODEL_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Fish, focal);
-		RETRO_RenderModel(RETRO_POLY_GOURAUD, RETRO_SHADE_NONE, Fish, false);
-	}
-}
-
 static void InitializePalette(void)
 {
 	// Blue and green also form the two halves of each triangle cell.
@@ -91,13 +56,19 @@ static void InitializePalette(void)
 			float glow = powf(s, 6.0f);
 			int r, g, b;
 			if (material == MATERIAL_GREEN) {
-				r = 18 + 70*s; g = 36 + 125*s; b = 20 + 66*s;
+				r = 18 + 70 * s;
+				g = 36 + 125 * s;
+				b = 20 + 66 * s;
 			} else {
-				r = 2 + 12*s; g = 32 + 120*s; b = 40 + 128*s;
+				r = 2 + 12 * s;
+				g = 32 + 120 * s;
+				b = 40 + 128 * s;
 			}
 			// Blend toward white instead of clipping each channel at a
 			// different shade, which creates abrupt highlight transitions.
-			r = mix(r, 245, glow); g = mix(g, 250, glow); b = mix(b, 250, glow);
+			r = mix(r, 245, glow);
+			g = mix(g, 250, glow);
+			b = mix(b, 250, glow);
 			RETRO_SetColor(material * MATERIAL_SHADES + shade, CLAMP256(r), CLAMP256(g), CLAMP256(b));
 		}
 	}
@@ -159,7 +130,8 @@ static void InitializeModels(void)
 		Torus->uv[i] = Torus->uv[i] * ((float)TEXTURE_SIZE / RETRO_TEXMAP_SIZE);
 	}
 	Torus->texmap = Texture;
-	Torus->texmapwidth = Torus->texmapheight = TEXTURE_SIZE;
+	Torus->texmapwidth = TEXTURE_SIZE;
+	Torus->texmapheight = TEXTURE_SIZE;
 	Torus->shadetable = Shades;
 	Torus->shades = RETRO_SHADE_TABLE_SHADES;
 
@@ -176,8 +148,35 @@ void DEMO_Render(double time, double deltatime)
 {
 	float phase = time * ROTATION_SPEED + START_ROTATION;
 	float focal = RETRO_HEIGHT * 0.5f / CAMERA_FOV;
-	RenderTorus(phase, focal);
-	RenderFish(time, phase, focal);
+
+	// Spin the texture around the ring, then roll its axis in the screen.
+	// This keeps the camera inside the tube throughout the rotation.
+	RETRO_RotateModel(phase * 0.61f, 0.0f, phase, Torus);
+	RETRO_TranslateModel(0.0f, 0.0f, CAMERA_DISTANCE - focal / MODEL_SCALE, Torus);
+	RETRO_ProjectModel(MODEL_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Torus, focal);
+	RETRO_RenderModel(RETRO_POLY_TEXTURE, RETRO_SHADE_GOURAUD, Torus);
+
+	// The final pose repeats pose zero so the last-to-first blend is smooth.
+	// Reuse one model instance; the shared depth buffer resolves every fish
+	// against the torus and previously drawn fish.
+	for (int i = 0; i < FISH_COUNT; i++) {
+		float swim = time * FISH_SWIM_SPEED + FISH_START_PHASE + i * (2.0f * M_PI / FISH_COUNT);
+		float cycle = time * FISH_ANIMATION_SPEED + i * FISH_ANIMATION_OFFSET;
+		RETRO_MorphModel(fract(cycle), Fish);
+		RETRO_InitializeFaceNormals(Fish);
+		RETRO_InitializeVertexNormals(Fish);
+		RETRO_RotateModel(swim + M_PI * 0.5f, 0.0f, phase, Fish);
+		float ringy = RING_RADIUS * sinf(swim);
+		float ringz = -RING_RADIUS * cosf(swim);
+		// Two shallow lanes leave the central bands clear more often.
+		float lane = (i & 1) ? -FISH_LANE_OFFSET : FISH_LANE_OFFSET;
+		float drift = lane + FISH_DRIFT * sinf(swim * 2.0f + i);
+		RETRO_TranslateModel(drift * cosf(phase) - ringy * sinf(phase),
+			drift * sinf(phase) + ringy * cosf(phase),
+			ringz + CAMERA_DISTANCE - focal / MODEL_SCALE, Fish);
+		RETRO_ProjectModel(MODEL_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Fish, focal);
+		RETRO_RenderModel(RETRO_POLY_GOURAUD, RETRO_SHADE_NONE, Fish, false);
+	}
 }
 
 void DEMO_Initialize(void)

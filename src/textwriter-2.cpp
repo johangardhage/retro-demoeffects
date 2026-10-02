@@ -73,15 +73,10 @@ void DEMO_Render(double time, double deltatime)
 
 	for (int row = 0; row < lines && ScrollText[page][row] != NULL && remaining > 0; row++) {
 		const char *line = ScrollText[page][row];
-		int length = 0;
-		int width = 0;
-		for (const char *character = line; *character != 0; character++) {
-			width += RETRO_CharWidth(Font, (unsigned char)*character);
-			length++;
-		}
+		int length = (int)strlen(line);
 		int visible = MIN(remaining, length);
 
-		int screenx = (RETRO_WIDTH - width) / 2;
+		int screenx = (RETRO_WIDTH - RETRO_TextLineWidth(Font, line)) / 2;
 		int screeny = texty + row * Font.height;
 
 		for (int character = 0; character < visible; character++) {

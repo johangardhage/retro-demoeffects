@@ -13,7 +13,7 @@
 //
 // in table units. The twist amplitude breathes over five turns of the table,
 // so it does not lock to the lean and still closes with the rest of the
-// motion on ColumnPeriod. An edge is drawn when its first screen coordinate
+// motion on columnperiod. An edge is drawn when its first screen coordinate
 // is less than its second; the two ascending edges are the visible faces and
 // the descending edges face away. Each face is centered on the strip's own
 // rows at their native size, with a 1/z shade
@@ -23,7 +23,7 @@
 // added to a letter (COLUMN_TEXT_SHADE) or the background (0). The strip's u
 // scrolls with x + 2 phase, a flat pixel rate independent of FONT_SCALE, so
 // a larger strip crosses the screen at the same speed and simply takes
-// longer to pass in full. ColumnPeriod is the lcm of the 256-table, the
+// longer to pass in full. columnperiod is the lcm of the 256-table, the
 // twist's five-turn breathing, and the strip's own width. The column is
 // centered at y = 159.
 //

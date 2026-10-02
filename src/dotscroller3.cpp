@@ -14,6 +14,7 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 #include "lib/retropoly.h"
+#include "lib/retroterrain.h"
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
 //#define FONT RETRO_FONT_MINECRAFT_8X8
@@ -35,17 +36,7 @@
 #define FORWARD_SPEED 30.0f
 
 static const char *const ScrollText[] = { " RETRO DEMOEFFECTS..." };
-static RETRO_Image *HeightMap, *ColorMap, *ScrollImage;
-
-static unsigned char TerrainSample(int x, int z)
-{
-	return HeightMap->data[WRAP(z, HeightMap->height) * HeightMap->width + WRAP(x, HeightMap->width)];
-}
-
-static unsigned char ColorSample(int x, int z)
-{
-	return ColorMap->data[WRAP(z, ColorMap->height) * ColorMap->width + WRAP(x, ColorMap->width)];
-}
+static RETRO_Image *ScrollImage;
 
 // Terrain and letters use the same perspective and pixel depth buffer.
 static void PlotDot(float side, float forward, float height, unsigned char color)
@@ -75,18 +66,9 @@ static void DrawTerrainDots(float camerax, float cameraz, float cs, float sn)
 			// Turned into camera space by the heading: this camera turns, dotlandscape's does not.
 			float side = dx * cs - dz * sn;
 			float forward = dx * sn + dz * cs;
-			PlotDot(side, forward, TerrainSample(x, z) * WORLD_HEIGHT_SCALE, ColorSample(x, z));
+			PlotDot(side, forward, RETRO_TerrainHeight(x, z), RETRO_TerrainColor(x, z));
 		}
 	}
-}
-
-static float TerrainHeight(float x, float z)
-{
-	int ix = (int)floorf(x), iz = (int)floorf(z);
-	float fx = x - ix, fz = z - iz;
-	float top = mix(TerrainSample(ix, iz), TerrainSample(ix + 1, iz), fx);
-	float bottom = mix(TerrainSample(ix, iz + 1), TerrainSample(ix + 1, iz + 1), fx);
-	return mix(top, bottom, fz) * WORLD_HEIGHT_SCALE;
 }
 
 // Scroll the text strip sideways with the camera, following the terrain
@@ -109,7 +91,7 @@ static void DrawScrollerDots(double time, float camerax, float cameraz, float cs
 			if (side < -farforward || side > farforward) continue;
 			float x = camerax + side * cs + forward * sn;
 			float z = cameraz - side * sn + forward * cs;
-			PlotDot(side, forward, TerrainHeight(x, z) + LETTER_HEIGHT_OFFSET, LETTER_COLOR_BASE + row);
+			PlotDot(side, forward, RETRO_TerrainHeightLinear(x, z) + LETTER_HEIGHT_OFFSET, LETTER_COLOR_BASE + row);
 		}
 	}
 }
@@ -119,8 +101,8 @@ void DEMO_Render(double time, double deltatime)
 	static float camerax = 64, cameraz = 118, heading = 0;
 	heading = fmodf(heading + TURN_SPEED * deltatime, 2.0f * M_PI);
 	float cs = cosf(heading), sn = sinf(heading);
-	camerax = fmodf(camerax + sn * FORWARD_SPEED * deltatime + HeightMap->width, HeightMap->width);
-	cameraz = fmodf(cameraz + cs * FORWARD_SPEED * deltatime + HeightMap->height, HeightMap->height);
+	camerax = fmodf(camerax + sn * FORWARD_SPEED * deltatime + RETRO_Terrain.width, RETRO_Terrain.width);
+	cameraz = fmodf(cameraz + cs * FORWARD_SPEED * deltatime + RETRO_Terrain.height, RETRO_Terrain.height);
 
 	RETRO_ClearDepthBuffer();
 	DrawTerrainDots(camerax, cameraz, cs, sn);
@@ -129,8 +111,7 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	HeightMap = RETRO_LoadImage("assets/voxel_height_128x128.pcx");
-	ColorMap = RETRO_LoadImage("assets/voxel_color_128x128.pcx", true);
+	RETRO_LoadTerrain("assets/voxel_color_128x128.pcx", "assets/voxel_height_128x128.pcx", WORLD_HEIGHT_SCALE);
 	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
 	if (ScrollImage->height > RETRO_COLORS - LETTER_COLOR_BASE) {
 		RETRO_RageQuit("Scroller font is too tall for the letter palette\n");

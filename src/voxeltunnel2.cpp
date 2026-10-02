@@ -302,8 +302,7 @@ void DEMO_Initialize(void)
 			(unsigned char)(g * level),
 			(unsigned char)(b * level),
 		};
-		RETRO_SetColor(TUNNEL_FADE_RAMP + i, palette[TUNNEL_FADE_RAMP + i].r,
-			palette[TUNNEL_FADE_RAMP + i].g, palette[TUNNEL_FADE_RAMP + i].b);
+		RETRO_SetColor(TUNNEL_FADE_RAMP + i, palette[TUNNEL_FADE_RAMP + i]);
 	}
 
 	RETRO_CreateShadeTable(palette, RETRO_COLORS, TUNNEL_FOG_SHADES, FogTable);

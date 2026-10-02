@@ -118,17 +118,17 @@ static const float RING_WIDTH = RING_FILL * RING_PITCH;
 
 struct RingStop {
 	float t;
-	unsigned char r, g, b;
+	RETRO_Palette color;
 };
 
 // Silver at the hole, magenta through the middle, blue at the rim.
 static const RingStop RingColors[] = {
-	{ 0.00f, 228, 228, 234 },
-	{ 0.12f, 186, 124, 180 },
-	{ 0.34f, 140, 38, 142 },
-	{ 0.58f, 64, 24, 138 },
-	{ 0.82f, 16, 16, 108 },
-	{ 1.00f, 8, 10, 46 },
+	{ 0.00f, { 228, 228, 234 } },
+	{ 0.12f, { 186, 124, 180 } },
+	{ 0.34f, { 140, 38, 142 } },
+	{ 0.58f, { 64, 24, 138 } },
+	{ 0.82f, { 16, 16, 108 } },
+	{ 1.00f, { 8, 10, 46 } },
 };
 
 static RETRO_Palette ColorAt(float t)
@@ -136,7 +136,7 @@ static RETRO_Palette ColorAt(float t)
 	const int stops = (int)(sizeof(RingColors) / sizeof(RingColors[0]));
 
 	if (t <= RingColors[0].t) {
-		return { RingColors[0].r, RingColors[0].g, RingColors[0].b };
+		return RingColors[0].color;
 	}
 	for (int i = 1; i < stops; i++) {
 		if (t > RingColors[i].t) {
@@ -144,16 +144,9 @@ static RETRO_Palette ColorAt(float t)
 		}
 		float span = RingColors[i].t - RingColors[i - 1].t;
 		float k = span > 0.0f ? (t - RingColors[i - 1].t) / span : 0.0f;
-		const RingStop &a = RingColors[i - 1];
-		const RingStop &b = RingColors[i];
-		return {
-			(unsigned char)mix(a.r, b.r, k),
-			(unsigned char)mix(a.g, b.g, k),
-			(unsigned char)mix(a.b, b.b, k)
-		};
+		return mix(RingColors[i - 1].color, RingColors[i].color, k);
 	}
-	const RingStop &last = RingColors[stops - 1];
-	return { last.r, last.g, last.b };
+	return RingColors[stops - 1].color;
 }
 
 // Four corners of one segment, in this order.

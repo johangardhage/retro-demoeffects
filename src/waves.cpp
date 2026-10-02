@@ -113,15 +113,6 @@ static Buoy BuoysMain[sizeof(TextMain) - 1];
 static const Word WordTop  = { TextTop,  sizeof(TextTop) - 1,  28, 2.0f, 0.8f, WaveBack, COLOR_TEXT_TOP,  BuoysTop };
 static const Word WordMain = { TextMain, sizeof(TextMain) - 1, 24, 2.5f, 0.9f, WaveMid,  COLOR_TEXT_BODY, BuoysMain };
 
-// Mix a toward b by t
-static RETRO_Palette Mix(RETRO_Palette a, RETRO_Palette b, float t)
-{
-	return RETRO_Palette{
-		(unsigned char)lroundf(mix(a.r, b.r, t)),
-		(unsigned char)lroundf(mix(a.g, b.g, t)),
-		(unsigned char)lroundf(mix(a.b, b.b, t)) };
-}
-
 // Fill a wave layer from its surface down, the surface row in foam
 static void DrawLayer(const int *surface, unsigned char color, unsigned char foam)
 {
@@ -241,16 +232,16 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette. The farther a layer, the more of the horizon it takes on
-	RETRO_Palette back = Mix(WATER, HORIZON, HAZE_BACK);
-	RETRO_Palette mid = Mix(WATER, HORIZON, HAZE_MID);
-	RETRO_Palette front = Mix(WATER, HORIZON, HAZE_FRONT);
+	RETRO_Palette back = mix(WATER, HORIZON, HAZE_BACK);
+	RETRO_Palette mid = mix(WATER, HORIZON, HAZE_MID);
+	RETRO_Palette front = mix(WATER, HORIZON, HAZE_FRONT);
 
 	RETRO_SetColor(COLOR_WAVE_BACK, back);
 	RETRO_SetColor(COLOR_WAVE_MID, mid);
 	RETRO_SetColor(COLOR_WAVE_FRONT, front);
-	RETRO_SetColor(COLOR_FOAM_BACK, Mix(back, FOAM, FOAM_MIX));
-	RETRO_SetColor(COLOR_FOAM_MID, Mix(mid, FOAM, FOAM_MIX));
-	RETRO_SetColor(COLOR_FOAM_FRONT, Mix(front, FOAM, FOAM_MIX));
+	RETRO_SetColor(COLOR_FOAM_BACK, mix(back, FOAM, FOAM_MIX));
+	RETRO_SetColor(COLOR_FOAM_MID, mix(mid, FOAM, FOAM_MIX));
+	RETRO_SetColor(COLOR_FOAM_FRONT, mix(front, FOAM, FOAM_MIX));
 	RETRO_SetColor(COLOR_TEXT_BODY, 231, 228, 190); // soft pastel cream
 	RETRO_SetColor(COLOR_TEXT_TOP, 244, 240, 208); // cream white
 	RETRO_CreateGradientPalette(COLOR_SKY, COLOR_SKY + SKY_SHADES, SKY_TOP, HORIZON);

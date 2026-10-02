@@ -91,9 +91,8 @@ static unsigned char Base[RETRO_COLORS]; // the ramp a palette entry is lit on
 static unsigned char Level[RETRO_COLORS]; // and how far up it already is
 
 // The six caps, each a disc of the sphere about its axis: a middle, then
-// HOLE_RINGS rings out to HOLE_ANGLE, the middle closed by triangles, quads
-// whose last corner repeats. All are wound so that (v1 - v0) x (v2 - v0)
-// points out of the ball
+// HOLE_RINGS rings out to HOLE_ANGLE, the middle closed by triangles. All are
+// wound so that (v1 - v0) x (v2 - v0) points out of the ball
 static void BuildCaps(Model3D *model)
 {
 	for (const mat3 &frame : HoleFrame) {
@@ -110,7 +109,7 @@ static void BuildCaps(Model3D *model)
 		}
 		for (int i = 0; i < HOLE_SEGMENTS; i++) {
 			int j = (i + 1) % HOLE_SEGMENTS;
-			RETRO_AddModelQuad(model, middle, ring[1][i], ring[1][j], ring[1][j]);
+			RETRO_AddModelTriangle(model, middle, ring[1][i], ring[1][j]);
 			for (int k = 1; k < HOLE_RINGS; k++) {
 				RETRO_AddModelQuad(model, ring[k][i], ring[k + 1][i], ring[k + 1][j], ring[k][j]);
 			}

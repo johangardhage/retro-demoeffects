@@ -70,7 +70,7 @@ static void PackCubeImage(RubberLine *image, const unsigned char *source)
 			int left = x++;
 			while (x < RETRO_WIDTH && source[y * RETRO_WIDTH + x] == color) x++;
 
-			// Background is implicit.  A convex cube produces only a handful of
+			// Background is implicit. A convex cube produces only a handful of
 			// nonzero runs even where several differently shaded faces meet.
 			if (color != 0 && line.spans < MAX_LINE_SPANS) {
 				RubberSpan &span = line.span[line.spans++];
@@ -126,7 +126,7 @@ void DEMO_Render(double time, double deltatime)
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 
-	// Multiplex the retained copies by scanline.  Quantizing the sine to an
+	// Multiplex the retained copies by scanline. Quantizing the sine to an
 	// image age is intentional: every line comes wholly from one retained cube
 	// image, with age zero selecting the newest.
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
@@ -144,8 +144,8 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette.  One ramp per axis of the cube, each out of the black it sits
-	// against.  Matte, for the reason RETRO_CreateMattePalette gives: a flat lit
+	// Init palette. One ramp per axis of the cube, each out of the black it sits
+	// against. Matte, for the reason RETRO_CreateMattePalette gives: a flat lit
 	// face has one normal for all of it, so a specular highlight would flash the
 	// whole face at once
 	RETRO_SetColor(0, RETRO_BLACK);
@@ -160,19 +160,16 @@ void DEMO_Initialize(void)
 	// The ramp a face is shaded in is the one of the axis it faces
 	for (int i = 0; i < Cube->faces; i++) {
 		vec3 n = abs(Cube->face[i].facenormal.dir);
-		float x = n.x;
-		float y = n.y;
-		float z = n.z;
-		Cube->face[i].c = (x > y && x > z ? 0 : (y > z ? 1 : 2)) * RUBBER_SHADES;
+		Cube->face[i].c = (n.x > n.y && n.x > n.z ? 0 : (n.y > n.z ? 1 : 2)) * RUBBER_SHADES;
 	}
 
-	// Head on, as the other flat shaded cubes have it.  The three faces on screen
+	// Head on, as the other flat shaded cubes have it. The three faces on screen
 	// are already told apart by their ramps, so the light is left to shade them
 	// rather than to separate them
 	RETRO_InitializeLightSource(0, 0, -1);
 
 	// Fill the ring with the cube at rest, so the first displayed frame has a
-	// full history to multiplex rather than a black trail.  From the first step
+	// full history to multiplex rather than a black trail. From the first step
 	// onward each slot is replaced naturally as the ring advances.
 	RetainCubeImage(0, 0, 0, LineHistory[0]);
 	for (int i = 1; i < RUBBER_COPIES; i++) memcpy(LineHistory[i], LineHistory[0], sizeof(LineHistory[i]));

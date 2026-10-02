@@ -65,14 +65,6 @@
 #define ROTATION_SPEED_Y 0.5 // radians per second
 #define ROTATION_SPEED_Z 0.17
 
-// 4×4 ordered dither thresholds, (i + 0.5) / 16
-static const float Bayer[4][4] = {
-	{ 0.5f / 16, 8.5f / 16, 2.5f / 16, 10.5f / 16 },
-	{ 12.5f / 16, 4.5f / 16, 14.5f / 16, 6.5f / 16 },
-	{ 3.5f / 16, 11.5f / 16, 1.5f / 16, 9.5f / 16 },
-	{ 15.5f / 16, 7.5f / 16, 13.5f / 16, 5.5f / 16 },
-};
-
 static unsigned char FogTable[RETRO_COLORS * TUNNEL_FOG_SHADES];
 
 void DEMO_Render(double time, double deltatime)
@@ -104,7 +96,7 @@ void DEMO_Render(double time, double deltatime)
 
 			int tx = WRAP(atan2f(hit.y, hit.x) / (2 * M_PI) * TEXTURE_TURNS * TEXTURE_WIDTH, TEXTURE_WIDTH);
 			int ty = WRAP(hit.z / TEXTURE_LENGTH * TEXTURE_HEIGHT, TEXTURE_HEIGHT);
-			int shade = (1 - distance / TUNNEL_FOG) * (TUNNEL_FOG_SHADES - 1) + Bayer[y & 3][x & 3];
+			int shade = (1 - distance / TUNNEL_FOG) * (TUNNEL_FOG_SHADES - 1) + RETRO_DitherThreshold(x, y);
 			unsigned char color = image[ty * TEXTURE_WIDTH + tx];
 
 			RETRO_PutPixel(x, y, FogTable[color * TUNNEL_FOG_SHADES + shade]);

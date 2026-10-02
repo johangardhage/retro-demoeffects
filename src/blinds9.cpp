@@ -148,12 +148,7 @@ void DEMO_Initialize(void)
 	for (int color = 0; color < RETRO_COLORS; color++) {
 		for (int glint = 0; glint < GLINTS; glint++) {
 			float level = GLINT_STRENGTH * glint / (GLINTS - 1);
-			RETRO_Palette target = {
-				(unsigned char)(mix(palette[color].r, 255, level) + 0.5f),
-				(unsigned char)(mix(palette[color].g, 255, level) + 0.5f),
-				(unsigned char)(mix(palette[color].b, 255, level) + 0.5f),
-			};
-			GlintTable[color][glint] = RETRO_NearestPaletteIndex(target, palette);
+			GlintTable[color][glint] = RETRO_NearestPaletteIndex(mix(palette[color], RETRO_WHITE, level), palette);
 		}
 	}
 }

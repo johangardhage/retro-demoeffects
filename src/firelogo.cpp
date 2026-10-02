@@ -70,13 +70,7 @@ static RETRO_Font Font;
 static void DrawText(const char *text, int y, int xscale, int yscale, int tracking)
 {
 	int length = (int)strlen(text);
-	int linewidth = 0;
-	for (int i = 0; i < length; i++) {
-		linewidth += RETRO_CharWidth(Font, (unsigned char)text[i]) * xscale;
-		if (i + 1 < length) {
-			linewidth += tracking;
-		}
-	}
+	int linewidth = RETRO_TextLineWidth(Font, text, xscale) + (length - 1) * tracking;
 	int x = (RETRO_WIDTH - linewidth) / 2;
 
 	for (int i = 0; i < length; i++) {

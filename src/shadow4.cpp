@@ -126,7 +126,7 @@ static float LightWeight[LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS]; // how often t
 // The colors drawn besides the textures, held in the palette exactly
 static const RETRO_Palette CubeGreen = { 0, 255, 10 }, CubeRed = { 255, 0, 0 }, Sky = { 50, 50, 200 }, Ground = { 25, 50, 110 };
 static const RETRO_Palette Held[] = { RETRO_BLACK, RETRO_GREEN, RETRO_WHITE, CubeGreen, CubeRed, Sky, Ground };
-static constexpr int HELD = sizeof(Held) / sizeof(Held[0]);
+#define HELD (int)(sizeof(Held) / sizeof(Held[0]))
 
 static const float PointLightKL[POINT_LIGHTS] = { POINT_LIGHT_KL, POINT_LIGHT2_KL };
 static vec3 PointLightPosition[POINT_LIGHTS];

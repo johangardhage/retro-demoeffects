@@ -134,7 +134,6 @@ static void BuildTunnel(void)
 			p->shade = lit * depth * (FOG_SHADES - 1);
 		}
 	}
-
 }
 
 void DEMO_Render(double time, double deltatime)
@@ -148,6 +147,7 @@ void DEMO_Render(double time, double deltatime)
 			DrawQuad(Ring[i][s], Ring[i + 1][s], Ring[i + 1][s1], Ring[i][s1], scroll);
 		}
 	}
+
 	// Ordered two-by-two dithering into sixteen orange intensity levels.
 	static const int threshold[2][2] = { { 0, 2 }, { 3, 1 } };
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
@@ -159,7 +159,6 @@ void DEMO_Render(double time, double deltatime)
 			RETRO.framebuffer[offset] = MIN(level, 15) * 17;
 		}
 	}
-
 }
 
 void DEMO_Initialize(void)

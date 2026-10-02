@@ -159,6 +159,11 @@ struct Model3D {
 	int bumpmapwidth = RETRO_TEXMAP_SIZE;		// Bump texture width, which need not match the texture's
 	int bumpmapheight = RETRO_TEXMAP_SIZE;		// Bump texture height
 	int bumpgrazing = RETRO_BUMP_GRAZING;		// Height difference that tilts a normal to grazing
+	unsigned char *stencilmap = NULL;			// Stencil picture, read in screen space behind each face
+	int stencilmapwidth = RETRO_TEXMAP_SIZE;	// Stencil picture width
+	int stencilmapheight = RETRO_TEXMAP_SIZE;	// Stencil picture height
+	vec2 stencilmaporigin;						// Where the picture's first texel sits, in pixels right
+												// of and below each face's own top-left
 	unsigned char (*shader)(const Fragment &fragment) = NULL;	// RETRO_POLY_SHADER's per-pixel function: the color of one
 												// Fragment of the surface
 	float eye;									// Model units from the rotated origin back to the eye,
@@ -218,6 +223,8 @@ inline Model3D *RETRO_Allocate3DModel(void)
 	model->envmapheight = RETRO_ENVMAP_SIZE;
 	model->bumpmapwidth = RETRO_TEXMAP_SIZE;
 	model->bumpmapheight = RETRO_TEXMAP_SIZE;
+	model->stencilmapwidth = RETRO_TEXMAP_SIZE;
+	model->stencilmapheight = RETRO_TEXMAP_SIZE;
 	model->envmapradius = RETRO_ENVMAP_SIZE / 2;
 	model->bumpgrazing = RETRO_BUMP_GRAZING;
 	model->mask = 0xff;
@@ -253,12 +260,33 @@ inline int RETRO_AddModelVertex(Model3D *model, float x, float y, float z)
 }
 
 //
-// Append one quad face, referencing vertices already added
+// Append one triangle face, referencing vertices already added
 //
 // facec is the face's own offset from the model's c (see Model3D::c); it
-// defaults to 0, which is every renderer's neutral value.
+// defaults to 0, which is every renderer's neutral value. backc is the same
+// for the side facing away, and its 0 leaves that side transparent.
 //
-inline void RETRO_AddModelQuad(Model3D *model, int a, int b, int c, int d, int facec = 0)
+inline void RETRO_AddModelTriangle(Model3D *model, int a, int b, int c, int facec = 0, int backc = 0)
+{
+	if (model->faces >= RETRO_MAX_FACES) {
+		RETRO_RageQuit("Too many model faces\n");
+	}
+
+	Face *face = &model->face[model->faces++];
+	memset(face, 0, sizeof(Face));
+	face->vertices = 3;
+	face->vertex[0] = a;
+	face->vertex[1] = b;
+	face->vertex[2] = c;
+	face->c = facec;
+	face->backc = backc;
+}
+
+//
+// Append one quad face, referencing vertices already added. facec and backc
+// are RETRO_AddModelTriangle's.
+//
+inline void RETRO_AddModelQuad(Model3D *model, int a, int b, int c, int d, int facec = 0, int backc = 0)
 {
 	if (model->faces >= RETRO_MAX_FACES) {
 		RETRO_RageQuit("Too many model faces\n");
@@ -272,6 +300,7 @@ inline void RETRO_AddModelQuad(Model3D *model, int a, int b, int c, int d, int f
 	face->vertex[2] = c;
 	face->vertex[3] = d;
 	face->c = facec;
+	face->backc = backc;
 }
 
 // Area-weighted average of the adjacent face normals (Hearn & Baker / Foley).

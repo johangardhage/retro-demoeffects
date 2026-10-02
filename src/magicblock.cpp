@@ -49,12 +49,12 @@
 
 // Face colors, in the order the assets list their faces. The block's broad
 // faces, then its edges; the cube's outside faces, then its inside ones.
-static constexpr int BlockColors[] = { 8, 8, 4, 12, 4, 12 };
-static constexpr int CubeColors[] = { 1, 2, 3, 2, 3, 1, 5, 6, 7, 6, 7, 5 };
+static const int BlockColors[] = { 8, 8, 4, 12, 4, 12 };
+static const int CubeColors[] = { 1, 2, 3, 2, 3, 1, 5, 6, 7, 6, 7, 5 };
 
 // 0 is the background and 1 to 7 are blues, for the stars and the cube. 8 to
 // 15, bit 3 set, are purples, for the slab over whatever lies behind it.
-static constexpr RETRO_Palette Palette[] = {
+static const RETRO_Palette Palette[] = {
 	{ 0, 0, 0 }, { 0, 28, 36 }, { 0, 56, 72 }, { 0, 84, 108 },
 	{ 0, 102, 146 }, { 0, 129, 183 }, { 0, 154, 222 }, { 0, 183, 255 },
 	{ 49, 5, 47 }, { 47, 24, 63 }, { 46, 40, 81 }, { 48, 60, 100 },

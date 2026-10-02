@@ -1,5 +1,5 @@
 //
-// Flubber
+// Flubber, as glenz polygons
 //
 // A faceted rubber column with black and gold bands. Both sides are drawn with
 // additive Glenz polygons. Palette banks encode black/black, black/gold and
@@ -54,12 +54,8 @@ static void BuildFlubber(Model3D *model)
 	for (int r = 0; r <= FLUBBER_STACKS; r++) {
 		float y = FLUBBER_HEIGHT * ((float)r / FLUBBER_STACKS - 0.5f);
 		for (int s = 0; s < FLUBBER_SEGMENTS; s++) {
-			if (model->vertices >= RETRO_MAX_VERTICES) {
-				RETRO_RageQuit("Too many flubber vertices\n");
-			}
 			float theta = s * (float)M_PI * 2 / FLUBBER_SEGMENTS;
-			model->vertex[model->vertices].pos = { FLUBBER_RX * (float)cos(theta), y, FLUBBER_RZ * (float)sin(theta) };
-			model->vertices++;
+			RETRO_AddModelVertex(model, FLUBBER_RX * (float)cos(theta), y, FLUBBER_RZ * (float)sin(theta));
 		}
 	}
 

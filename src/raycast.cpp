@@ -108,10 +108,7 @@ static const int Ceilings[MAP_SIZE][MAP_SIZE] = {
 	{ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 },
 };
 
-unsigned char *Textures; // the texture sheet
-float RowDistance[RETRO_HEIGHT];
-vec2 Position = { 6.5f, 5.5f }; // the camera, in cells
-float Angle = (float)M_PI; // the way it looks, from x toward y
+static unsigned char *Textures; // the texture sheet
 
 //
 // A texel of a tile of a sheet
@@ -138,42 +135,46 @@ static bool Blocked(float x, float y)
 
 void DEMO_Render(double time, double deltatime)
 {
+	static vec2 position = { 6.5f, 5.5f }; // the camera, in cells
+	static float angle = (float)M_PI; // the way it looks, from x toward y
+
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Move the camera under the arrow keys
 	bool left = RETRO_KeyState(SDL_SCANCODE_LEFT), right = RETRO_KeyState(SDL_SCANCODE_RIGHT);
 	bool up = RETRO_KeyState(SDL_SCANCODE_UP), down = RETRO_KeyState(SDL_SCANCODE_DOWN);
-	Angle = (float)fmod(Angle + ((right ? 1 : 0) - (left ? 1 : 0)) * TURN_SPEED * deltatime, 2 * M_PI);
+	angle = (float)fmod(angle + ((right ? 1 : 0) - (left ? 1 : 0)) * TURN_SPEED * deltatime, 2 * M_PI);
 	float step = (float)(((up ? 1 : 0) - (down ? 1 : 0)) * WALK_SPEED * deltatime);
-	float nextx = Position.x + step * cosf(Angle), nexty = Position.y + step * sinf(Angle);
-	if (!Blocked(nextx, Position.y)) {
-		Position.x = nextx;
+	float nextx = position.x + step * cosf(angle), nexty = position.y + step * sinf(angle);
+	if (!Blocked(nextx, position.y)) {
+		position.x = nextx;
 	}
-	if (!Blocked(Position.x, nexty)) {
-		Position.y = nexty;
+	if (!Blocked(position.x, nexty)) {
+		position.y = nexty;
 	}
 
 	float halfwidth = (float)tan(radians(RAYCAST_FOV / 2.0));
-	float dirx = cosf(Angle), diry = sinf(Angle);
+	float dirx = cosf(angle), diry = sinf(angle);
 	float planex = -diry * halfwidth, planey = dirx * halfwidth;
 	float focal = RETRO_WIDTH / (2 * halfwidth);
 	float horizon = RETRO_HEIGHT / 2.0f;
 
 	// Find the distance to the floor or the ceiling on every row
+	float rowdistance[RETRO_HEIGHT];
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		RowDistance[y] = focal / (2 * fabsf(y + 0.5f - horizon));
+		rowdistance[y] = focal / (2 * fabsf(y + 0.5f - horizon));
 	}
 
 	for (int x = 0; x < RETRO_WIDTH; x++) {
 		// Walk the column's ray across the grid to the first wall
 		float camera = 2.0f * (x + 0.5f) / RETRO_WIDTH - 1;
 		float rayx = dirx + planex * camera, rayy = diry + planey * camera;
-		int cellx = (int)floorf(Position.x), celly = (int)floorf(Position.y);
+		int cellx = (int)floorf(position.x), celly = (int)floorf(position.y);
 		float deltax = rayx != 0 ? fabsf(1 / rayx) : 1e30f;
 		float deltay = rayy != 0 ? fabsf(1 / rayy) : 1e30f;
 		int stepx = rayx < 0 ? -1 : 1, stepy = rayy < 0 ? -1 : 1;
-		float sidex = (rayx < 0 ? Position.x - cellx : cellx + 1 - Position.x) * deltax;
-		float sidey = (rayy < 0 ? Position.y - celly : celly + 1 - Position.y) * deltay;
+		float sidex = (rayx < 0 ? position.x - cellx : cellx + 1 - position.x) * deltax;
+		float sidey = (rayy < 0 ? position.y - celly : celly + 1 - position.y) * deltay;
 		bool alongx;
 		float z;
 		for (;;) {
@@ -194,7 +195,7 @@ void DEMO_Render(double time, double deltatime)
 		}
 
 		// Find the texture's column where the ray met the wall, turned so no wall reads mirrored
-		float hit = alongx ? Position.y + z * rayy : Position.x + z * rayx;
+		float hit = alongx ? position.y + z * rayy : position.x + z * rayx;
 		int u = CLAMP(fract(hit) * TILE_SIZE, 0, TILE_SIZE);
 		if ((alongx && rayx < 0) || (!alongx && rayy > 0)) {
 			u = TILE_SIZE - 1 - u;
@@ -213,8 +214,8 @@ void DEMO_Render(double time, double deltatime)
 			}
 
 			// Floor below the wall, ceiling above, the texel's row along y and its column along x
-			float rowdistance = RowDistance[y];
-			float floorx = Position.x + rowdistance * rayx, floory = Position.y + rowdistance * rayy;
+			float distance = rowdistance[y];
+			float floorx = position.x + distance * rayx, floory = position.y + distance * rayy;
 			int mapx = (int)floorf(floorx), mapy = (int)floorf(floory);
 			int tx = CLAMP((floorx - mapx) * TILE_SIZE, 0, TILE_SIZE);
 			int ty = CLAMP((floory - mapy) * TILE_SIZE, 0, TILE_SIZE);

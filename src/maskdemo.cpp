@@ -52,152 +52,86 @@ static unsigned char PhongMap[MATCAP_SIZE * MATCAP_SIZE];
 static unsigned char MiniPhongMap[MATCAP_SIZE * MATCAP_SIZE];
 static RETRO_Palette PhongPalette[RETRO_COLORS];
 
+// What a key selects: a renderer and the maps it reads. A mode names only what
+// it changes from these defaults
+struct Mode {
+	RETRO_POLY_TYPE rendertype;
+	RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE;
+	unsigned char *shadetable = NULL;
+	unsigned char *envmap = NULL;
+	unsigned char color = 0;
+	int envmapradius = 0;
+	int bumpgrazing = RETRO_BUMP_GRAZING;
+};
+
 void DEMO_Render(double time, double deltatime)
 {
-	static RETRO_POLY_TYPE rendertype = RETRO_POLY_TEXTURE;
-	static RETRO_POLY_SHADE shadertype = RETRO_SHADE_NONE;
-	static unsigned char *texmap = RETRO_ImageData(ASSET_TEXMAP);
-	static unsigned char *shadetable = NULL;
-	static unsigned char *envmap = NULL;
+	static Mode mode = { .rendertype = RETRO_POLY_TEXTURE, .color = 64 };
 	static unsigned char *bumpmap = NULL;
-	static unsigned char color = 64;
-	static int envmapradius = 0;
-	static int bumpgrazing = RETRO_BUMP_GRAZING;
-
-	static bool bumpmapping = false;
 	static bool rotate = true;
 	static bool usage = true;
 
 	// Handle keys
 	if (RETRO_KeyPressed(SDL_SCANCODE_H)) {
-		usage = (usage == false);
+		usage = !usage;
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_R)) {
-		rotate = (rotate == false);
+		rotate = !rotate;
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_B)) {
-		bumpmapping = (bumpmapping == false);
-		bumpmap = bumpmapping ? RETRO_ImageData(ASSET_BUMPMAP) : NULL;
+		bumpmap = bumpmap ? NULL : RETRO_ImageData(ASSET_BUMPMAP);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_T)) {
-		rendertype = RETRO_POLY_TEXTURE;
-		shadertype = RETRO_SHADE_NONE;
-		texmap = RETRO_ImageData(ASSET_TEXMAP);
-		shadetable = NULL;
-		envmap = NULL;
-		color = 0;
-		envmapradius = 0;
-		bumpgrazing = RETRO_BUMP_GRAZING;
+		mode = { .rendertype = RETRO_POLY_TEXTURE };
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_TEXMAP));
 		RETRO_SetColor(0, RETRO_BLACK);
 		RETRO_SetColor(255, RETRO_PERIWINKLE);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_0)) {
-		rendertype = RETRO_POLY_TEXTURE;
-		shadertype = RETRO_SHADE_TABLE;
-		texmap = RETRO_ImageData(ASSET_TEXMAP);
-		envmap = NULL;
-		color = RETRO_SHADE_TABLE_SHADES * 5 / 8;
-		envmapradius = 0;
-		bumpgrazing = RETRO_BUMP_GRAZING;
-		shadetable = MaterialShadeTables[MATERIAL_GOURAUD];
+		mode = { .rendertype = RETRO_POLY_TEXTURE, .shadertype = RETRO_SHADE_TABLE, .shadetable = MaterialShadeTables[MATERIAL_GOURAUD], .color = RETRO_SHADE_TABLE_SHADES * 5 / 8 };
 		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_1)) {
-		rendertype = RETRO_POLY_TEXTURE;
-		shadertype = RETRO_SHADE_FLAT;
-		texmap = RETRO_ImageData(ASSET_TEXMAP);
-		envmap = NULL;
-		color = 0;
-		envmapradius = 0;
-		bumpgrazing = RETRO_BUMP_GRAZING;
-		shadetable = MaterialShadeTables[MATERIAL_FLAT];
+		mode = { .rendertype = RETRO_POLY_TEXTURE, .shadertype = RETRO_SHADE_FLAT, .shadetable = MaterialShadeTables[MATERIAL_FLAT] };
 		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_2)) {
-		rendertype = RETRO_POLY_TEXTURE;
-		shadertype = RETRO_SHADE_GOURAUD;
-		texmap = RETRO_ImageData(ASSET_TEXMAP);
-		envmap = NULL;
-		color = 0;
-		envmapradius = 0;
-		bumpgrazing = RETRO_BUMP_GRAZING;
-		shadetable = MaterialShadeTables[MATERIAL_GOURAUD];
+		mode = { .rendertype = RETRO_POLY_TEXTURE, .shadertype = RETRO_SHADE_GOURAUD, .shadetable = MaterialShadeTables[MATERIAL_GOURAUD] };
 		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_3)) {
-		rendertype = RETRO_POLY_TEXTURE;
-		shadertype = RETRO_SHADE_MATCAP;
-		texmap = RETRO_ImageData(ASSET_TEXMAP);
-		envmap = MiniPhongMap;
-		color = 128;
-		envmapradius = 90;
-		bumpgrazing = RETRO_BUMP_GRAZING;
-		shadetable = MaterialShadeTables[MATERIAL_PHONG];
+		mode = { .rendertype = RETRO_POLY_TEXTURE, .shadertype = RETRO_SHADE_MATCAP, .shadetable = MaterialShadeTables[MATERIAL_PHONG], .envmap = MiniPhongMap, .color = 128, .envmapradius = 90 };
 		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_D)) {
-		rendertype = RETRO_POLY_DOT;
-		shadertype = RETRO_SHADE_NONE;
-		texmap = RETRO_ImageData(ASSET_TEXMAP);
-		shadetable = NULL;
-		envmap = NULL;
-		color = 255;
-		envmapradius = 0;
-		bumpgrazing = RETRO_BUMP_GRAZING;
+		mode = { .rendertype = RETRO_POLY_DOT, .color = 255 };
 		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_W)) {
-		rendertype = RETRO_POLY_WIREFRAME;
-		shadertype = RETRO_SHADE_NONE;
-		texmap = RETRO_ImageData(ASSET_TEXMAP);
-		shadetable = NULL;
-		envmap = NULL;
-		color = 255;
-		envmapradius = 0;
-		bumpgrazing = RETRO_BUMP_GRAZING;
+		mode = { .rendertype = RETRO_POLY_WIREFRAME, .color = 255 };
 		RETRO_Set6bitPalette(MaterialPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
-		rendertype = RETRO_POLY_MATCAP;
-		shadertype = RETRO_SHADE_NONE;
-		shadetable = NULL;
-		envmap = PhongMap;
-		color = 128;
-		envmapradius = 90;
-		bumpgrazing = RETRO_BUMP_GRAZING * 3 / 2;
+		mode = { .rendertype = RETRO_POLY_MATCAP, .envmap = PhongMap, .color = 128, .envmapradius = 90, .bumpgrazing = RETRO_BUMP_GRAZING * 3 / 2 };
 		RETRO_Set6bitPalette(PhongPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_O)) {
-		rendertype = RETRO_POLY_MATCAP;
-		shadertype = RETRO_SHADE_NONE;
-		shadetable = NULL;
-		envmap = MiniPhongMap;
-		color = 128;
-		envmapradius = 90;
-		bumpgrazing = RETRO_BUMP_GRAZING * 3 / 2;
+		mode = { .rendertype = RETRO_POLY_MATCAP, .envmap = MiniPhongMap, .color = 128, .envmapradius = 90, .bumpgrazing = RETRO_BUMP_GRAZING * 3 / 2 };
 		RETRO_Set6bitPalette(PhongPalette);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_M)) {
-		rendertype = RETRO_POLY_ENVIRONMENT;
-		shadertype = RETRO_SHADE_NONE;
-		shadetable = NULL;
-		envmap = RETRO_ImageData(ASSET_ENVMAP);
-		color = 128;
-		envmapradius = 90;
-		bumpgrazing = RETRO_BUMP_GRAZING * 2;
+		mode = { .rendertype = RETRO_POLY_ENVIRONMENT, .envmap = RETRO_ImageData(ASSET_ENVMAP), .color = 128, .envmapradius = 90, .bumpgrazing = RETRO_BUMP_GRAZING * 2 };
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_ENVMAP));
 	}
 
 	// Update model
 	Model3D *model = RETRO_Get3DModel();
-	model->texmap = texmap;
-	model->shadetable = shadetable;
-	model->envmap = envmap;
+	model->shadetable = mode.shadetable;
+	model->envmap = mode.envmap;
 	model->bumpmap = bumpmap;
-	model->c = color;
-	model->envmapradius = envmapradius;
-	model->bumpgrazing = bumpgrazing;
+	model->c = mode.color;
+	model->envmapradius = mode.envmapradius;
+	model->bumpgrazing = mode.bumpgrazing;
 
 	// Start with the mask's authored face upright before rotating all three axes.
 	static float ax = -M_PI / 2, ay = 0, az = M_PI, distance = 0.5;
@@ -244,7 +178,7 @@ void DEMO_Render(double time, double deltatime)
 	// Draw model
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel(distance);
-	RETRO_RenderModel(rendertype, shadertype);
+	RETRO_RenderModel(mode.rendertype, mode.shadertype);
 
 	// Draw help
 	if (usage) {
@@ -294,8 +228,9 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(255, RETRO_PERIWINKLE);
 	RETRO_SetFont(RETRO_FONT_VGA_8X8);
 
-	// Load model
-	RETRO_Load3DModel("assets/mask.obj");
+	// Load model. Every mode that reads a texture reads the same one
+	Model3D *model = RETRO_Load3DModel("assets/mask.obj");
+	model->texmap = RETRO_ImageData(ASSET_TEXMAP);
 
 	// Set up light source
 	RETRO_InitializeLightSource(0, 0, -1);

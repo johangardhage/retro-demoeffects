@@ -97,16 +97,15 @@ static unsigned char Level[RETRO_COLORS]; // and how far up it already is
 static void BuildCaps(Model3D *model)
 {
 	for (const mat3 &frame : HoleFrame) {
-		int middle = RETRO_AddModelVertex(model, 0.0f, 0.0f, 0.0f);
-		model->vertex[middle].pos = frame * vec3{ 0.0f, 0.0f, BALL_LIFT };
+		vec3 top = frame * vec3{ 0.0f, 0.0f, BALL_LIFT };
+		int middle = RETRO_AddModelVertex(model, top.x, top.y, top.z);
 		int ring[HOLE_RINGS + 1][HOLE_SEGMENTS];
 		for (int k = 1; k <= HOLE_RINGS; k++) {
 			float angle = HOLE_ANGLE * k / HOLE_RINGS;
 			for (int i = 0; i < HOLE_SEGMENTS; i++) {
 				float around = 2.0f * M_PI * i / HOLE_SEGMENTS;
-				vec3 p = vec3{ sinf(angle) * cosf(around), sinf(angle) * sinf(around), cosf(angle) } * BALL_LIFT;
-				ring[k][i] = RETRO_AddModelVertex(model, 0.0f, 0.0f, 0.0f);
-				model->vertex[ring[k][i]].pos = frame * p;
+				vec3 p = frame * (vec3{ sinf(angle) * cosf(around), sinf(angle) * sinf(around), cosf(angle) } * BALL_LIFT);
+				ring[k][i] = RETRO_AddModelVertex(model, p.x, p.y, p.z);
 			}
 		}
 		for (int i = 0; i < HOLE_SEGMENTS; i++) {
@@ -319,7 +318,7 @@ static void BuildWall(void)
 
 void DEMO_Render(double time, double deltatime)
 {
-	memcpy(RETRO.framebuffer, Wall, sizeof(Wall));
+	RETRO_Blit(Wall);
 
 	float ax = fmod(time * SPIN_SPEED_X, 2 * M_PI);
 	float ay = fmod(time * SPIN_SPEED_Y, 2 * M_PI);

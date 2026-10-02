@@ -55,10 +55,7 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_Palette palette[RETRO_COLORS];
-	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK,
-		RETRO_Palette{ 255, 72, 0 }, palette);
-	RETRO_SetPalette(palette);
+	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_Palette{ 255, 72, 0 });
 
 	for (int y = 0; y < TEXTURE_SIZE; y++) {
 		for (int x = 0; x < TEXTURE_SIZE; x++) {

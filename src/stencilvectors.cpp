@@ -28,7 +28,6 @@
 #define METAL_SCROLL 40 // texels of the map a second
 
 static unsigned char Metal[METAL_SIZE * METAL_SIZE];
-static Model3D *Cube;
 
 static void DrawStencilFace(Face *face, Model3D *model, int scroll)
 {
@@ -91,16 +90,19 @@ void DEMO_Render(double time, double deltatime)
 	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
 	float ay = fmod(time * ROTATION_SPEED * 0.83f, 2 * M_PI);
 	float az = fmod(time * ROTATION_SPEED * 0.61f, 2 * M_PI);
+
+	// Calculate phase
 	double scroll = fmod(time * METAL_SCROLL, METAL_SIZE);
-
-	RETRO_RotateModel(ax, ay, az, Cube);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Cube);
-	RETRO_SortFaces(false, Cube);
-	RETRO_ClearDepthBuffer();
-
 	int iscroll = (int)scroll;
-	for (int i = 0; i < Cube->drawfaces; i++) {
-		DrawStencilFace(&Cube->face[Cube->drawface[i]], Cube, iscroll);
+
+	// Draw cube
+	Model3D *model = RETRO_Get3DModel();
+	RETRO_RotateModel(ax, ay, az);
+	RETRO_ProjectModel();
+	RETRO_SortFaces(false, model);
+	RETRO_ClearDepthBuffer();
+	for (int i = 0; i < model->drawfaces; i++) {
+		DrawStencilFace(&model->face[model->drawface[i]], model, iscroll);
 	}
 }
 
@@ -117,5 +119,5 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(80, 180, RETRO_SIENNA, RETRO_GOLD);
 	RETRO_CreateGradientPalette(180, RETRO_COLORS, RETRO_GOLD, RETRO_WHITE);
 
-	Cube = RETRO_Load3DModel("assets/cubequads.obj");
+	RETRO_Load3DModel("assets/cubequads.obj");
 }

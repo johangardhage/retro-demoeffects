@@ -224,7 +224,7 @@ static void StartSlide(void)
 		StepSlide();
 	}
 
-	memset(Sum, 0, sizeof Sum);
+	memset(Sum, 0, sizeof(Sum));
 	Updates = 0;
 }
 

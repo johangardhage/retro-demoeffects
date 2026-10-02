@@ -88,7 +88,7 @@ static unsigned char SwatchColor(int row, int col)
 	return PAINT_PALETTE_OFFSET + row + col * SWATCH_ROWS;
 }
 
-unsigned char Canvas[RETRO_WIDTH * RETRO_HEIGHT];
+static unsigned char Canvas[RETRO_WIDTH * RETRO_HEIGHT];
 
 static void DrawSwatches(void)
 {
@@ -220,22 +220,24 @@ void DEMO_Render2(double time, double deltatime)
 		SDL_WarpMouseInWindow(RETRO.window, realx, realy);
 	}
 
+	int px = (int)x, py = (int)y;
+
 	// Swap Amiga pointer style
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
 		wb2pointer = !wb2pointer;
 	}
 
 	// Pick a brush size/shape from the top of the panel
-	if (mouse.leftbutton && (int)x >= CANVAS_RIGHT && (int)y >= BRUSH_SELECTOR_TOP && (int)y < BRUSH_SELECTOR_BOTTOM) {
-		bool spray = (int)y >= BRUSH_SPRAY_TOP || ((int)x >= 618 && (int)y >= 38);
-		brushkind = spray ? BRUSH_SPRAY : (int)y >= BRUSH_SELECTOR_SPLIT ? BRUSH_SQUARE : BRUSH_ROUND;
+	if (mouse.leftbutton && px >= CANVAS_RIGHT && py >= BRUSH_SELECTOR_TOP && py < BRUSH_SELECTOR_BOTTOM) {
+		bool spray = py >= BRUSH_SPRAY_TOP || (px >= 618 && py >= 38);
+		brushkind = spray ? BRUSH_SPRAY : py >= BRUSH_SELECTOR_SPLIT ? BRUSH_SQUARE : BRUSH_ROUND;
 		if (spray) {
-			brushcol = (int)x >= 617 ? 1 : 0;
+			brushcol = px >= 617 ? 1 : 0;
 			brushsize = brushcol;
 		} else {
 			const int *edges = BrushColumnEdges[brushkind == BRUSH_SQUARE ? 1 : 0];
 			brushcol = 0;
-			while (brushcol < 3 && (int)x >= edges[brushcol + 1]) {
+			while (brushcol < 3 && px >= edges[brushcol + 1]) {
 				brushcol++;
 			}
 			// Square icons shrink left to right; round icons grow.
@@ -244,30 +246,30 @@ void DEMO_Render2(double time, double deltatime)
 	}
 
 	// Pick a color from the palette swatches
-	if (mouse.leftbutton && (int)x >= SWATCH_LEFT && (int)y >= SwatchRowEdges[0] && (int)y < SwatchRowEdges[SWATCH_ROWS]) {
+	if (mouse.leftbutton && px >= SWATCH_LEFT && py >= SwatchRowEdges[0] && py < SwatchRowEdges[SWATCH_ROWS]) {
 		selectedrow = 0;
-		while ((int)y >= SwatchRowEdges[selectedrow + 1]) {
+		while (py >= SwatchRowEdges[selectedrow + 1]) {
 			selectedrow++;
 		}
-		selectedcol = (int)x >= SWATCH_COL_SPLIT ? 1 : 0;
+		selectedcol = px >= SWATCH_COL_SPLIT ? 1 : 0;
 		paintcolor = SwatchColor(selectedrow, selectedcol);
 	}
 
 	// Tool actions are placeholders for now; clicking only changes selection.
-	if (mouse.leftcount == 1 && (int)x >= CANVAS_RIGHT &&
-		(int)y >= TOOL_TOP && (int)y < TOOL_TOP + TOOL_ROWS * TOOL_CELL_SIZE) {
-		int col = ((int)x - CANVAS_RIGHT) / TOOL_CELL_SIZE;
-		int row = ((int)y - TOOL_TOP) / TOOL_CELL_SIZE;
+	if (mouse.leftcount == 1 && px >= CANVAS_RIGHT &&
+		py >= TOOL_TOP && py < TOOL_TOP + TOOL_ROWS * TOOL_CELL_SIZE) {
+		int col = (px - CANVAS_RIGHT) / TOOL_CELL_SIZE;
+		int row = (py - TOOL_TOP) / TOOL_CELL_SIZE;
 		selectedtool = row * TOOL_COLUMNS + col;
 	}
 
 	// Paint (into the persistent canvas, not the framebuffer), but not over
 	// the menu bar or right panel
-	if ((int)y >= CANVAS_TOP && (int)x < CANVAS_RIGHT) {
+	if (py >= CANVAS_TOP && px < CANVAS_RIGHT) {
 		if (mouse.leftbutton) {
-			PaintBrush((int)x, (int)y, brushkind, brushsize, paintcolor);
+			PaintBrush(px, py, brushkind, brushsize, paintcolor);
 		} else if (mouse.rightbutton) {
-			PaintBrush((int)x, (int)y, brushkind, brushsize, 0);
+			PaintBrush(px, py, brushkind, brushsize, 0);
 		}
 	}
 
@@ -278,7 +280,7 @@ void DEMO_Render2(double time, double deltatime)
 	DrawSwatchSelection(selectedrow, selectedcol);
 	InvertBrushCell(brushkind, brushcol);
 	InvertToolButton(selectedtool, RETRO.framebuffer);
-	RETRO_DrawSprite((int)x + POINTER_HOTSPOT_OFFSET, (int)y + POINTER_HOTSPOT_OFFSET, POINTER_SIZE, POINTER_SIZE,
+	RETRO_DrawSprite(px + POINTER_HOTSPOT_OFFSET, py + POINTER_HOTSPOT_OFFSET, POINTER_SIZE, POINTER_SIZE,
 		POINTER_SIZE, POINTER_SIZE, RETRO_ImageData(wb2pointer ? 2 : 1), 0);
 
 	RETRO_Flip();
@@ -289,8 +291,8 @@ void DEMO_Initialize(void)
 	// Load the DeluxePaint chrome (black/white UI, paint colors at 32-47) and seed
 	// the persistent canvas with it. No swatch has a baked-in selection
 	// border, so DrawSwatchSelection is the only one ever shown.
-	RETRO_LoadImage("assets/dpaint_640x480.pcx", true);
-	RETRO_Blit(RETRO_ImageData(0), RETRO_WIDTH * RETRO_HEIGHT, Canvas);
+	RETRO_Image *chrome = RETRO_LoadImage("assets/dpaint_640x480.pcx", true);
+	RETRO_Blit(chrome->data, RETRO_WIDTH * RETRO_HEIGHT, Canvas);
 
 	// Load the Amiga pointer sprites. Their colors are pre-baked into
 	// indices 16-19 (Workbench 1.3) and 20-22 (Workbench 2.0) so they can
@@ -298,11 +300,11 @@ void DEMO_Initialize(void)
 	// defaults to false).
 	RETRO_Image *wb13 = RETRO_LoadImage("assets/pointer_wb13_32x32.pcx");
 	for (int i = 16; i <= 19; i++) {
-		RETRO_SetColor(i, wb13->palette[i].r, wb13->palette[i].g, wb13->palette[i].b);
+		RETRO_SetColor(i, wb13->palette[i]);
 	}
 	RETRO_Image *wb2 = RETRO_LoadImage("assets/pointer_wb20_32x32.pcx");
 	for (int i = 20; i <= 22; i++) {
-		RETRO_SetColor(i, wb2->palette[i].r, wb2->palette[i].g, wb2->palette[i].b);
+		RETRO_SetColor(i, wb2->palette[i]);
 	}
 
 	RETRO_Palette vga[RETRO_COLORS];
@@ -311,7 +313,7 @@ void DEMO_Initialize(void)
 		RETRO_SetColor(PAINT_PALETTE_OFFSET + i, vga[i]);
 	}
 
-	// Set relative mouse mode
+	// Start in absolute mouse mode
 	RETRO_SetMouseMode(false);
 
 	// Move mouse cursor to middle of screen

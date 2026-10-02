@@ -87,7 +87,6 @@ static PolygonPoint Project(float x, float y, vec2 uv)
 void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *screen = RETRO_FrameBuffer();
-	memset(screen, 0, sizeof(Background));
 	double flash = exp(-fmod(time, FLASH_PERIOD) / FLASH_DECAY);
 	RETRO_SetColor(3, mix(INK, RETRO_WHITE, flash));
 
@@ -115,21 +114,23 @@ void DEMO_Render(double time, double deltatime)
 
 	// The lines share one plane and never overlap, so a single mask of all
 	// of them is enough: the background shows wherever it holds no ink.
-	for (int pixel = 0; pixel < RETRO_WIDTH * RETRO_HEIGHT; pixel++)
+	for (int pixel = 0; pixel < RETRO_WIDTH * RETRO_HEIGHT; pixel++) {
 		if (!screen[pixel]) screen[pixel] = Background[pixel];
+	}
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_SetColor(0, RETRO_Palette{ 0, 0, 0 });
+	RETRO_SetColor(0, RETRO_BLACK);
 	RETRO_SetColor(1, RETRO_Palette{ 68, 82, 118 });
 	RETRO_SetColor(2, RETRO_Palette{ 33, 49, 84 });
 
 	Font = RETRO_LoadFont(FONT);
 	TextStrip = RETRO_GenerateTextImage(Font, CrawlText, LINES);
 	// Use a two-color ink mask for nearest-neighbor texture sampling.
-	for (int i = 0; i < TextStrip->width * TextStrip->height; i++)
+	for (int i = 0; i < TextStrip->width * TextStrip->height; i++) {
 		TextStrip->data[i] = TextStrip->data[i] != 0 ? 3 : 0;
+	}
 	CameraMatrix = rotateZ(CRAWL_ROLL) * rotateY(CRAWL_YAW);
 
 	const vec2 edge[] = { { 205, 24 }, { 233, 51 }, { 219, 66 },
@@ -139,8 +140,9 @@ void DEMO_Initialize(void)
 		vec2 a = edge[segment], b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
 			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
-			for (int x = RETRO_WIDTH - right; x < RETRO_WIDTH; x++)
+			for (int x = RETRO_WIDTH - right; x < RETRO_WIDTH; x++) {
 				Background[y * RETRO_WIDTH + x] = y < 133 ? 1 : 2;
+			}
 		}
 	}
 }

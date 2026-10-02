@@ -44,7 +44,7 @@
 #define TEXTURE_WIDTH 15
 #define TEXTURE_HEIGHT 15
 
-unsigned char WormHole[RETRO_WIDTH * RETRO_HEIGHT];
+static unsigned char WormHole[RETRO_WIDTH * RETRO_HEIGHT];
 
 void DEMO_Render(double time, double deltatime)
 {

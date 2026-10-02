@@ -25,6 +25,7 @@
 
 #define SPHERES 3
 #define MAX_BOUNCES 6
+#define SCENE_PERIOD 20.0 // seconds for the spheres and the light to come round
 #define SPHERE_Z 340.0f // world z the sphere drifts and bounces at
 #define MIRROR_REFLECTIVITY 0.92f // short of 1, so the ball reads darker than what it reflects
 
@@ -41,7 +42,11 @@
 #define MIRROR_START (FLOOR_START + FLOOR_SHADES)
 #define MIRROR_SHADES 128
 
-struct Sphere { vec3 center; float radius; };
+struct Sphere {
+	vec3 center;
+	float radius;
+};
+
 static Sphere Balls[SPHERES];
 
 static bool SphereShadowed(vec3 origin, vec3 dir, float maxdist)
@@ -133,11 +138,14 @@ static unsigned char TraceScene(vec3 origin, vec3 dir, vec3 light)
 
 void DEMO_Render(double time, double deltatime)
 {
-	double phase = fmod(time, 20.0) * (2 * M_PI / 20.0);
-	Balls[0] = {{-83.0f + 12.0f * (float)sin(phase), FLOOR_Y + 62.0f, 325.0f + 20.0f * (float)cos(phase)}, 62.0f};
-	Balls[1] = {{ 83.0f + 12.0f * (float)sin(phase + M_PI), FLOOR_Y + 62.0f, 350.0f - 20.0f * (float)cos(phase)}, 62.0f};
-	Balls[2] = {{24.0f * (float)sin(phase), FLOOR_Y + 72.0f + 48.0f * (float)(1 - cos(phase)), 480.0f}, 72.0f};
-	vec3 light = {LIGHT_ORBIT_RADIUS * (float)cos(phase), LIGHT_Y, SPHERE_Z + LIGHT_ORBIT_RADIUS * (float)sin(phase)};
+	// Calculate phase
+	double phase = fmod(time, SCENE_PERIOD) * (2 * M_PI / SCENE_PERIOD);
+
+	Balls[0] = { { -83.0f + 12.0f * (float)sin(phase), FLOOR_Y + 62.0f, 325.0f + 20.0f * (float)cos(phase) }, 62.0f };
+	Balls[1] = { { 83.0f + 12.0f * (float)sin(phase + M_PI), FLOOR_Y + 62.0f, 350.0f - 20.0f * (float)cos(phase) }, 62.0f };
+	Balls[2] = { { 24.0f * (float)sin(phase), FLOOR_Y + 72.0f + 48.0f * (float)(1 - cos(phase)), 480.0f }, 72.0f };
+	vec3 light = { LIGHT_ORBIT_RADIUS * (float)cos(phase), LIGHT_Y, SPHERE_Z + LIGHT_ORBIT_RADIUS * (float)sin(phase) };
+
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			vec3 origin = { 0, 0, 0 };

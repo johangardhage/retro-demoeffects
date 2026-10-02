@@ -28,8 +28,8 @@
 #define TIME_HOLD 1.0 // seconds held on either picture
 #define TIME_CYCLE (2 * (TIME_HOLD + TIME_TRANSITION))
 
-RETRO_Image *PictureA;
-RETRO_Image *PictureB;
+static RETRO_Image *PictureA;
+static RETRO_Image *PictureB;
 
 void DEMO_Render(double time, double deltatime)
 {

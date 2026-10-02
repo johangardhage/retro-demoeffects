@@ -145,9 +145,11 @@ void DEMO_Render(double time, double deltatime)
 				// finer grid.
 				int samples = distance2 > 0.45f ? 6 : 5;
 				vec3 sum = {0, 0, 0};
-				for (int j = 0; j < samples; j++)
-					for (int i = 0; i < samples; i++)
+				for (int j = 0; j < samples; j++) {
+					for (int i = 0; i < samples; i++) {
 						sum += ShadeBall(x + (i + 0.5f) / samples, y + (j + 0.5f) / samples);
+					}
+				}
 				sum = sum / (float)(samples * samples);
 				color = ColorLookup[(((int)sum.x >> 3) * 32 + ((int)sum.y >> 3)) * 32 + ((int)sum.z >> 3)];
 			}
@@ -161,8 +163,9 @@ void DEMO_Initialize(void)
 	// Blobby lettering in the style of the reference's logo; the palette index
 	// is the ink, 255 on the face and 178 on its shade.
 	Logo = RETRO_LoadImage("assets/retrologo_320x240.pcx");
-	if (Logo->width != RETRO_WIDTH || Logo->height != RETRO_HEIGHT)
+	if (Logo->width != RETRO_WIDTH || Logo->height != RETRO_HEIGHT) {
 		RETRO_RageQuit("Crystal ball logo must match the framebuffer dimensions\n");
+	}
 
 	for (int i = 0; i < GlintCount; i++) {
 		const Glint &g = Glints[i];
@@ -176,15 +179,16 @@ void DEMO_Initialize(void)
 	// amounts of white for glints over the crescent. Without that last group a
 	// glint's border on blue has no near color, and coarse steps there make
 	// the small glints flicker as the ball glides.
-	RETRO_Palette palette[256];
+	RETRO_Palette palette[RETRO_COLORS];
 	int count = 0;
 	palette[count++] = {0, 0, 45};
 	for (int i = 0; i < 64; i++) {
 		float shade = i / 63.0f;
 		palette[count++] = {(unsigned char)(158 * shade), (unsigned char)(255 * shade), (unsigned char)(190 * shade)};
 	}
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < 32; i++) {
 		palette[count++] = {0, 0, (unsigned char)(3 + 180 * i / 31)};
+	}
 	for (int i = 0; i < 33; i++) {
 		unsigned char gray = i * 255 / 32;
 		palette[count++] = {gray, gray, gray};
@@ -196,7 +200,7 @@ void DEMO_Initialize(void)
 			palette[count++] = {gray, gray, (unsigned char)mix(blue, 255, white)};
 		}
 	}
-	if (count != 256) RETRO_RageQuit("Crystal ball palette must fill all 256 colors\n");
+	if (count != RETRO_COLORS) RETRO_RageQuit("Crystal ball palette must fill all 256 colors\n");
 	RETRO_SetPalette(palette);
 	// Prequantize RGB to the shared 8-bit palette; no color searches per frame.
 	RETRO_CreateColorLUT(palette, 32, ColorLookup);

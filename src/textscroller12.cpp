@@ -59,7 +59,7 @@ static RETRO_Font Font;
 static RETRO_Image *TextStrip;
 static mat3 CameraMatrix;
 static unsigned char InkShades[2 * SHADES];
-static RETRO_ShadeTable TextShades = { InkShades, 2, SHADES };
+static const RETRO_ShadeTable TextShades = { InkShades, 2, SHADES };
 
 // Full ink at ZNEAR, black from ZFAR on.
 static float Shade(double depth)
@@ -78,6 +78,7 @@ static PolygonPoint Project(float x, float z, vec2 uv, float shade)
 
 void DEMO_Render(double time, double deltatime)
 {
+	// Calculate phase
 	double phase = fmod(time, PASS_CYCLE) * SCROLL_SPEED;
 	RETRO_ClearDepthBuffer();
 	for (int i = 0; i < LINES; i++) {
@@ -117,7 +118,8 @@ void DEMO_Initialize(void)
 	// Zero texels stay black; ink texels use the line's distance shade.
 	Font = RETRO_LoadFont(FONT);
 	TextStrip = RETRO_GenerateTextImage(Font, CrawlText, LINES);
-	for (int i = 0; i < TextStrip->width * TextStrip->height; i++)
+	for (int i = 0; i < TextStrip->width * TextStrip->height; i++) {
 		TextStrip->data[i] = TextStrip->data[i] != 0;
+	}
 	CameraMatrix = rotateX((float)CRAWL_TILT);
 }

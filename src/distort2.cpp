@@ -26,8 +26,8 @@
 
 // Displacements are signed. Plain char is unsigned on some targets, which would
 // turn every negative shift into a large positive one.
-signed char ShiftX[DISTORT_WIDTH * DISTORT_HEIGHT];
-signed char ShiftY[DISTORT_WIDTH * DISTORT_HEIGHT];
+static signed char ShiftX[DISTORT_WIDTH * DISTORT_HEIGHT];
+static signed char ShiftY[DISTORT_WIDTH * DISTORT_HEIGHT];
 
 void DEMO_Render(double time, double deltatime)
 {

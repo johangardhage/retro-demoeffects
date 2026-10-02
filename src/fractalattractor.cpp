@@ -95,10 +95,10 @@
 #define ORBIT_STALL (ORBIT_SPREAD / 8) // pixels a step reaches below which it is drawing no attractor
 #define DRIFT_HURRY 4 // times its usual speed the drift crosses a window the orbit has stalled in
 
-unsigned char Density[RETRO_WIDTH * RETRO_HEIGHT];
-unsigned char Landed[RETRO_WIDTH * RETRO_HEIGHT];
-unsigned char Shade[DENSITY_MAX + 1];
-double PointX, PointY;
+static unsigned char Density[RETRO_WIDTH * RETRO_HEIGHT];
+static unsigned char Landed[RETRO_WIDTH * RETRO_HEIGHT];
+static unsigned char Shade[DENSITY_MAX + 1];
+static double PointX, PointY;
 
 //
 // Follow the orbit in fixed steps, so what the picture holds is a fixed span of

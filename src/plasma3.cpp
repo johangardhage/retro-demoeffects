@@ -22,26 +22,27 @@
 #define PLASMA_HEIGHT (RETRO_HEIGHT / 4)
 #define PLASMA_SCALE 4
 #define PLASMA_SPEED 70
+#define SINE_VALUES 256 // entries in the sine table, covering one whole turn
 
-unsigned char Sin256[256];
+static unsigned char SinTable[SINE_VALUES];
 
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate phase
-	double phase = fmod(time * PLASMA_SPEED, 256);
+	double phase = fmod(time * PLASMA_SPEED, SINE_VALUES);
 	int iphase = phase;
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 
-	int slopex = Sin256[WRAP256(iphase * 3)];
-	int slopey = Sin256[WRAP256(64 + iphase * 5)];
+	int slopex = SinTable[WRAP256(iphase * 3)];
+	int slopey = SinTable[WRAP256(64 + iphase * 5)];
 
 	for (int y = 0; y < PLASMA_HEIGHT; y++) {
-		int vertical = Sin256[WRAP256(y * 3 + iphase * 3)];
+		int vertical = SinTable[WRAP256(y * 3 + iphase * 3)];
 
 		for (int x = 0; x < PLASMA_WIDTH; x++) {
-			int horizontal = Sin256[WRAP256(x * 3 + iphase * 2)];
-			int diagonal = Sin256[WRAP256((x * slopex) / PLASMA_WIDTH + (y * slopey) / PLASMA_HEIGHT + iphase)];
+			int horizontal = SinTable[WRAP256(x * 3 + iphase * 2)];
+			int diagonal = SinTable[WRAP256((x * slopex) / PLASMA_WIDTH + (y * slopey) / PLASMA_HEIGHT + iphase)];
 			unsigned char color = (horizontal + diagonal + vertical) / 3;
 
 			int left = x * PLASMA_SCALE;
@@ -55,15 +56,16 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init colors
+	// Init palette
 	RETRO_CreateGradientPalette(0, 8, RETRO_BLACK, RETRO_BLUEBLACK);
 	RETRO_CreateGradientPalette(8, 24, RETRO_BLUEBLACK, RETRO_DARKRED);
 	RETRO_CreateGradientPalette(24, 56, RETRO_DARKRED, RETRO_SCARLET);
 	RETRO_CreateGradientPalette(56, 192, RETRO_SCARLET, RETRO_YELLOW);
-	RETRO_CreateGradientPalette(192, 256, RETRO_YELLOW, RETRO_WHITE);
+	RETRO_CreateGradientPalette(192, RETRO_COLORS, RETRO_YELLOW, RETRO_WHITE);
 
-	// Init tables
-	for (int i = 0; i < 256; i++) {
-		Sin256[i] = 255 * (sin(2 * M_PI * i / 255.0) + 1) / 2;
+	// Init tables. One whole turn over the table, so it meets itself where the
+	// index wraps
+	for (int i = 0; i < SINE_VALUES; i++) {
+		SinTable[i] = 255 * (sin(2 * M_PI * i / SINE_VALUES) + 1) / 2;
 	}
 }

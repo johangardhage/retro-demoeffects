@@ -39,7 +39,6 @@
 #include "lib/retromain.h"
 #include "lib/retromath.h"
 #include "lib/retrogfx.h"
-#include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
 #define BALL_RADIUS 70.0f
@@ -251,10 +250,7 @@ void DEMO_Render(double time, double deltatime)
 		ivec2 pts[STAR_VERTS];
 		for (int i = 0; i < STAR_VERTS; i++) {
 			RETRO_RotateVertex(&star[i], matrix);
-			float depth = BALL_EYE + star[i].rpos.z;
-			if (depth < 0.1f) {
-				depth = 0.1f;
-			}
+			float depth = MAX(BALL_EYE + star[i].rpos.z, 0.1f);
 			float q = 1.0f / depth;
 			pts[i].x = lround(BALL_CX + ra * star[i].rpos.x * BALL_EYE * q);
 			pts[i].y = lround(cy + rb * star[i].rpos.y * BALL_EYE * q);

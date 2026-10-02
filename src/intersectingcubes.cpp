@@ -1,5 +1,5 @@
 //
-// Gouraud Shaded Cubes
+// Intersecting gouraud shaded cubes
 //
 // Two equal cubes occupy the same center and rotate independently. Their faces
 // continually cut through one another, so neither cube can be drawn entirely
@@ -48,10 +48,8 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette
-	RETRO_Palette palette[RETRO_COLORS];
-	memset(palette, 0, sizeof(palette));
-	RETRO_SetColor(0, RETRO_BLACK, palette);
+	// Init palette. Entry 0 stays black, the background
+	RETRO_Palette palette[RETRO_COLORS] = {};
 	RETRO_CreatePhongRamp(&palette[1], 127, RETRO_AZURE, RETRO_K_SPECULAR, 5.0f, 255);
 	RETRO_CreatePhongRamp(&palette[128], 127, RETRO_SPRINGGREEN, RETRO_K_SPECULAR, 5.0f, 255);
 	RETRO_SetPalette(palette);

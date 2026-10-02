@@ -23,7 +23,7 @@
 #define BOB_SPEED1 200 // table units per second
 #define BOB_SPEED2 300
 
-unsigned char Image[] = {
+static const unsigned char Image[] = {
 	 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
 	 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
 	 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0,

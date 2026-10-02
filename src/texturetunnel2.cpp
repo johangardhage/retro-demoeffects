@@ -33,10 +33,10 @@
 #define TUNNEL_FOG_SHADES 32 // steps from black to full color
 #define TUNNEL_FOG_RADIUS (RETRO_WIDTH * 0.6) // screen-space radius fog climbs across
 
-int DepthTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
-int AngleTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
-unsigned char ShadeTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
-unsigned char FogTable[RETRO_COLORS * TUNNEL_FOG_SHADES];
+static int DepthTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
+static int AngleTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
+static unsigned char ShadeTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
+static unsigned char FogTable[RETRO_COLORS * TUNNEL_FOG_SHADES];
 
 void DEMO_Render(double time, double deltatime)
 {

@@ -41,8 +41,7 @@ struct RingVertex {
 static RingVertex Ring[RING_COUNT][RING_SIDES];
 static unsigned char Brick[TEXTURE_SIZE * TEXTURE_SIZE];
 static unsigned char FogTable[RETRO_COLORS * FOG_SHADES];
-static RETRO_Palette Palette[RETRO_COLORS];
-static RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
+static const RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
 static UnitVector Light;
 
 // A single left bend continues out of sight instead of waving back.
@@ -165,9 +164,10 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, BRIGHT_ORANGE, Palette);
-	RETRO_SetPalette(Palette);
-	RETRO_CreateShadeTable(Palette, RETRO_COLORS, FOG_SHADES, FogTable);
+	RETRO_Palette palette[RETRO_COLORS];
+	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, BRIGHT_ORANGE, palette);
+	RETRO_SetPalette(palette);
+	RETRO_CreateShadeTable(palette, RETRO_COLORS, FOG_SHADES, FogTable);
 
 	BuildBrick();
 

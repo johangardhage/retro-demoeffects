@@ -91,8 +91,8 @@
 // it is read from and not by where they came from, so these are handed to it
 // exactly as a loaded map's would be, and the camera below rides them without
 // knowing the difference.
-unsigned char HeightMap[MAP_WIDTH * MAP_HEIGHT];
-unsigned char ColorMap[MAP_WIDTH * MAP_HEIGHT];
+static unsigned char HeightMap[MAP_WIDTH * MAP_HEIGHT];
+static unsigned char ColorMap[MAP_WIDTH * MAP_HEIGHT];
 
 void DEMO_Render(double time, double deltatime)
 {

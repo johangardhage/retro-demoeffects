@@ -58,20 +58,16 @@
 #define BISECT_STEPS 8 // halvings of the crossing step
 #define ORBIT_SPEED 1.0 // radians of the base orbit per second; the rates below multiply it
 
-struct MetaBall {
-	vec3 pos;
-	float bound;
-} Balls[NUM_BALLS];
-
-float Charge[NUM_BALLS];
-
+static vec3 Balls[NUM_BALLS]; // centers
+static float Charge[NUM_BALLS];
+static float BallBound; // radius about each center that the isosurface stays within
 static const float BallRadius[NUM_BALLS] = { 36, 32, 28, 34 };
 
 static float Field(vec3 p)
 {
 	float sum = 0;
 	for (int i = 0; i < NUM_BALLS; i++) {
-		vec3 d = p - Balls[i].pos;
+		vec3 d = p - Balls[i];
 		float r2 = MAX(dot(d, d), 0.0001f);
 		sum += Charge[i] / r2;
 	}
@@ -86,7 +82,7 @@ static vec3 FieldNormal(vec3 p)
 {
 	vec3 g = { 0.0f, 0.0f, 0.0f };
 	for (int i = 0; i < NUM_BALLS; i++) {
-		vec3 d = p - Balls[i].pos;
+		vec3 d = p - Balls[i];
 		float r2 = MAX(dot(d, d), 0.0001f);
 		float k = -2 * Charge[i] / (r2 * r2);
 		g += d * k;
@@ -100,7 +96,7 @@ static vec3 FieldNormal(vec3 p)
 	return g * -inversesqrt(glen2);
 }
 
-// Unit-D ray against a sphere. tEnter can be negative when the eye is inside.
+// Unit-D ray against a sphere. tenter can be negative when the eye is inside.
 static bool RaySphere(vec3 o, vec3 d, vec3 c, float radius, float *tenter, float *tleave)
 {
 	vec3 oc = o - c;
@@ -149,7 +145,7 @@ void DEMO_Render(double time, double deltatime)
 	float cz = 0;
 
 	for (int i = 0; i < NUM_BALLS; i++) {
-		Balls[i].pos = {
+		Balls[i] = {
 			cx + amplitudex[i] * (float)sin(ratex[i] * phase + offsetx[i]),
 			cy + amplitudey[i] * (float)sin(ratey[i] * phase + offsety[i]),
 			cz + amplitudez[i] * (float)sin(ratez[i] * phase + offsetz[i])
@@ -175,12 +171,10 @@ void DEMO_Render(double time, double deltatime)
 			bool hitbound = false;
 			for (int i = 0; i < NUM_BALLS; i++) {
 				float tenter, tleave;
-				if (!RaySphere(o, d, Balls[i].pos, Balls[i].bound, &tenter, &tleave)) {
+				if (!RaySphere(o, d, Balls[i], BallBound, &tenter, &tleave)) {
 					continue;
 				}
-				if (tenter < 0) {
-					tenter = 0;
-				}
+				tenter = MAX(tenter, 0.0f);
 				if (tleave > tenter) {
 					tmin = MIN(tmin, tenter);
 					tmax = MAX(tmax, tleave);
@@ -197,7 +191,7 @@ void DEMO_Render(double time, double deltatime)
 			float distancesquared[NUM_BALLS];
 			float slope[NUM_BALLS];
 			for (int i = 0; i < NUM_BALLS; i++) {
-				vec3 oc = o - Balls[i].pos;
+				vec3 oc = o - Balls[i];
 				float doc = dot(d, oc);
 				distancesquared[i] = dot(oc, oc) + 2 * tmin * doc + tmin * tmin;
 				slope[i] = 2 * h * (doc + tmin) + h * h;
@@ -259,8 +253,5 @@ void DEMO_Initialize(void)
 		Charge[i] = THRESHOLD * BallRadius[i] * BallRadius[i];
 		sumr2 += BallRadius[i] * BallRadius[i];
 	}
-	float bound = sqrt(sumr2);
-	for (int i = 0; i < NUM_BALLS; i++) {
-		Balls[i].bound = bound;
-	}
+	BallBound = sqrt(sumr2);
 }

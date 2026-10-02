@@ -270,9 +270,9 @@ static void BuildHighlightNormals(Model3D *model)
 	}
 }
 
-// How far above its place this band still is. Zero once it has landed. Ring 0 is the middle and leaves at time 0; each band outward
-// waits another RING_STAGGER. Half-cosine, so a band comes in off the top
-// and settles.
+// How far above its place this band still is. Zero once it has landed. Ring 0
+// is the middle and leaves at time 0; each band outward waits another
+// RING_STAGGER. Half-cosine, so a band comes in off the top and settles.
 static float RingFall(double time, int ring)
 {
 	double t = time - ring * (double)RING_STAGGER;

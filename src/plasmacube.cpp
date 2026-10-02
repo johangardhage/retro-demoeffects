@@ -25,8 +25,8 @@
 #define TEXTURE_HEIGHT 256
 #define ROTATION_SPEED 2 // radians a second, about each axis
 
-float SinTable[RETRO_DEGREES_PER_TURN];
-unsigned char image[TEXTURE_WIDTH * TEXTURE_HEIGHT];
+static float SinTable[RETRO_DEGREES_PER_TURN];
+static unsigned char Texture[TEXTURE_WIDTH * TEXTURE_HEIGHT];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -43,7 +43,7 @@ void DEMO_Render(double time, double deltatime)
 
 			// Wrap into the 252-entry palette cycle
 			unsigned char color = (int)(yc * xc) % 252;
-			image[y * TEXTURE_WIDTH + x] = color;
+			Texture[y * TEXTURE_WIDTH + x] = color;
 		}
 	}
 
@@ -52,6 +52,7 @@ void DEMO_Render(double time, double deltatime)
 	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
 	float az = fmod(time * ROTATION_SPEED, 2 * M_PI);
 
+	// Draw cube
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
 	RETRO_RenderModel(RETRO_POLY_TEXTURE);
@@ -70,7 +71,7 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(210, 252, RETRO_BLUE, RETRO_BLACK);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
-	model->texmap = image;
+	model->texmap = Texture;
 
 	// Init tables
 	for (int i = 0; i < RETRO_DEGREES_PER_TURN; i++) {

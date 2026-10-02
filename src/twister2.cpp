@@ -7,7 +7,7 @@
 // are waves running down the column off one clock:
 //
 //   θ(y)  = TWIST · (1 + sin(phase + y · TWIST_WAVE)) / 2
-//   center_x(y) = CENTER_X + SWAY · sin(phase + y · SWAY_WAVE)
+//   centerx(y) = CENTER_X + SWAY · sin(phase + y · SWAY_WAVE)
 //
 // So the twist is not linear in y the way twister.cpp's is. It is a sine of
 // y whose amplitude is TWIST, two whole turns, which is what lets the column
@@ -26,8 +26,11 @@
 // starts at its own base color and steps one entry along the palette per
 // pixel drawn. A face that is nearly edge on gets a short ramp and a face
 // turned toward the viewer a long one, so the sheen stretches and squeezes
-// as the column turns. The palette carries that sheen from dark wine into
-// muted pink.
+// as the column turns. Each face has a palette ramp of its own, as long as
+// the widest face is, running from a dark shade of its hue up to a bright
+// one: pink, lilac, sky blue and gold. A face on face therefore sweeps its
+// whole ramp, an edge on one stays in the dark end of it, and at every
+// shared vertex the bright end of one hue meets the dark start of the next.
 //
 // phase lives on the 256-unit angle table.
 //
@@ -46,8 +49,8 @@
 #define TWISTER_SPEED 70 // angle units a second, the original's one a frame at the VGA's 70 Hz
 #define TWISTER_PERIOD RETRO_ANGLES_PER_TURN
 
-#define TWISTER_FACE_COLOR 33 // base color of the first face
-#define TWISTER_FACE_STEP 16 // and the step from one face's base to the next
+#define TWISTER_FACE_COLOR 64 // base color of the first face
+#define TWISTER_FACE_STEP 48 // and the step from one face's base to the next, the widest face rounded up
 
 //
 // One scanline of one face, half-open in x
@@ -77,19 +80,19 @@ void DEMO_Render(double time, double deltatime)
 	// Draw column
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		double twist = TWISTER_TWIST * (1 + SIN(phase + y * TWISTER_TWIST_WAVE)) / 2;
-		double center_x = TWISTER_CENTER_X + TWISTER_SWAY * SIN(phase + y * TWISTER_SWAY_WAVE);
+		double centerx = TWISTER_CENTER_X + TWISTER_SWAY * SIN(phase + y * TWISTER_SWAY_WAVE);
 
-		double sin_radius = TWISTER_RADIUS * SIN(twist);
-		double cos_radius = TWISTER_RADIUS * COS(twist);
-		int corner_x[4] = {
-			(int)lround(center_x + sin_radius),
-			(int)lround(center_x + cos_radius),
-			(int)lround(center_x - sin_radius),
-			(int)lround(center_x - cos_radius),
+		double sinradius = TWISTER_RADIUS * SIN(twist);
+		double cosradius = TWISTER_RADIUS * COS(twist);
+		int cornerx[4] = {
+			(int)lround(centerx + sinradius),
+			(int)lround(centerx + cosradius),
+			(int)lround(centerx - sinradius),
+			(int)lround(centerx - cosradius),
 		};
 
 		for (int corner = 0; corner < 4; corner++) {
-			DrawSpan(corner_x[corner], corner_x[(corner + 1) & 3], y, TWISTER_FACE_COLOR + corner * TWISTER_FACE_STEP);
+			DrawSpan(cornerx[corner], cornerx[(corner + 1) & 3], y, TWISTER_FACE_COLOR + corner * TWISTER_FACE_STEP);
 		}
 	}
 }
@@ -97,9 +100,8 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_CreateGradientPalette(0, 8, RETRO_BLACK, RETRO_BLUEBLACK);
-	RETRO_CreateGradientPalette(8, 32, RETRO_BLUEBLACK, RETRO_WINE);
-	RETRO_CreateGradientPalette(32, 96, RETRO_WINE, RETRO_ROSE);
-	RETRO_CreateGradientPalette(96, 192, RETRO_ROSE, RETRO_PINK);
-	RETRO_CreateGradientPalette(192, RETRO_COLORS, RETRO_PINK, RETRO_WHITE);
+	RETRO_CreateGradientPalette(64, 112, RETRO_WINE, RETRO_PINK);
+	RETRO_CreateGradientPalette(112, 160, RETRO_INDIGOBLACK, RETRO_LILAC);
+	RETRO_CreateGradientPalette(160, 208, RETRO_NAVY, RETRO_LIGHTSKYBLUE);
+	RETRO_CreateGradientPalette(208, RETRO_COLORS, RETRO_SCORCHED, RETRO_MARIGOLD);
 }

@@ -1,5 +1,5 @@
 //
-// God rays
+// God rays, from fragment shaders
 //
 // A rotating ball with six glowing holes and volumetric beams, rendered
 // through polygon coverage and fragment shaders. godrays3.cpp traces the
@@ -63,7 +63,6 @@ static Model3D *Screen; // stands in for a beam that reaches past the eye
 static mat3 HoleFrame[6]; // turns the beam model's +z onto each hole's axis
 static unsigned char Wall[RETRO_WIDTH * RETRO_HEIGHT]; // RED_START or BLUE_START, per pixel
 
-static mat3 BallMatrix; // R, this frame
 static mat3 BallInverse; // R^T, shared by all ball fragments
 static float Light[RETRO_WIDTH * RETRO_HEIGHT];
 static vec3 BallCenter; // C, in view space, this frame
@@ -262,13 +261,13 @@ static void BuildWall(void)
 
 void DEMO_Render(double time, double deltatime)
 {
-	memcpy(RETRO.framebuffer, Wall, sizeof(Wall));
+	RETRO_Blit(Wall);
 
 	float ax = fmod(time * SPIN_SPEED_X, 2 * M_PI);
 	float ay = fmod(time * SPIN_SPEED_Y, 2 * M_PI);
 	float az = fmod(time * SPIN_SPEED_Z, 2 * M_PI);
-	BallMatrix = rotate(ax, ay, az);
-	BallInverse = transpose(BallMatrix);
+	mat3 ballmatrix = rotate(ax, ay, az);
+	BallInverse = transpose(ballmatrix);
 
 	// The ball's path is a Lissajous figure; whole multiples of one phase
 	// keep it closed, so the wrap is seamless. Where it comes nearest the
@@ -277,7 +276,7 @@ void DEMO_Render(double time, double deltatime)
 	BallCenter = { PATH_WIDTH * sinf(2 * phase), PATH_HEIGHT * cosf(3 * phase), PATH_Z + PATH_DEPTH * sinf(phase) };
 
 	// Draw ball
-	RETRO_RotateModel(BallMatrix, Ball);
+	RETRO_RotateModel(ballmatrix, Ball);
 	RETRO_TranslateModel(BallCenter.x, BallCenter.y, BallCenter.z, Ball);
 	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Ball);
 	RETRO_RenderModel(RETRO_POLY_SHADER, RETRO_SHADE_NONE, Ball);
@@ -287,7 +286,7 @@ void DEMO_Render(double time, double deltatime)
 	// Draw beams. Each is a depth range of its own, cleared as it is drawn:
 	// ShadeBeam hides what lies behind the ball itself
 	for (const mat3 &frame : HoleFrame) {
-		mat3 matrix = BallMatrix * frame;
+		mat3 matrix = ballmatrix * frame;
 		BeamAxis = matrix * vec3{ 0.0f, 0.0f, 1.0f };
 		RETRO_RotateModel(matrix, Beam);
 		RETRO_TranslateModel(BallCenter.x, BallCenter.y, BallCenter.z, Beam);

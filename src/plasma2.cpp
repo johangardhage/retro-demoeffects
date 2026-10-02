@@ -18,7 +18,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-int Plasma[RETRO_HEIGHT][RETRO_WIDTH];
+static int Plasma[RETRO_HEIGHT][RETRO_WIDTH];
 
 void DEMO_Render(double time, double deltatime)
 {

@@ -60,9 +60,9 @@
 #define SHADES 16
 #define AMBIENT 0.25f // light left on a slat that is nearly edge-on
 
-RETRO_Image *PictureA;
-RETRO_Image *PictureB;
-unsigned char ShadeTable[RETRO_COLORS][SHADES];
+static RETRO_Image *PictureA;
+static RETRO_Image *PictureB;
+static unsigned char ShadeTable[RETRO_COLORS][SHADES];
 
 void DEMO_Render(double time, double deltatime)
 {

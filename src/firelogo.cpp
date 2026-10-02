@@ -58,8 +58,8 @@
 #define LOGO_TITLE_TRACKING 8 // columns left between glyphs, at that line's scale
 #define LOGO_SUBTITLE_TRACKING 4
 
-unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
-unsigned char LogoBuffer[RETRO_HEIGHT * RETRO_WIDTH];
+static unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
+static unsigned char LogoBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 static RETRO_Font Font;
 
 //

@@ -43,17 +43,18 @@
 
 enum BlindOrder { ORDER_CENTER, ORDER_SHUFFLE, ORDER_MODES };
 
-BlindOrder Order = ORDER_CENTER;
-int Rank[ORDER_MODES][BLINDS];
-int LastRank[ORDER_MODES];
-RETRO_Image *PictureA;
-RETRO_Image *PictureB;
-unsigned char ShadeTable[RETRO_COLORS][SHADES];
+static int Rank[ORDER_MODES][BLINDS];
+static int LastRank[ORDER_MODES];
+static RETRO_Image *PictureA;
+static RETRO_Image *PictureB;
+static unsigned char ShadeTable[RETRO_COLORS][SHADES];
 
 void DEMO_Render(double time, double deltatime)
 {
+	static BlindOrder order = ORDER_CENTER;
+
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
-		Order = Order == ORDER_CENTER ? ORDER_SHUFFLE : ORDER_CENTER;
+		order = order == ORDER_CENTER ? ORDER_SHUFFLE : ORDER_CENTER;
 	}
 
 	// Calculate phase: it rises to 1 as the slats turn over, stays there over
@@ -72,7 +73,7 @@ void DEMO_Render(double time, double deltatime)
 		// The rotation starts at the slat ranked first and ends at the one
 		// ranked last. Each slat turns through 180 degrees: front broadside,
 		// edge-on, back broadside.
-		double delay = (double)Rank[Order][blind] / LastRank[Order]
+		double delay = (double)Rank[order][blind] / LastRank[order]
 			* (1 - PHASE_WINDOW);
 		double rotation = CLAMP01((phase - delay) / PHASE_WINDOW);
 		double facing = cos(rotation * M_PI);

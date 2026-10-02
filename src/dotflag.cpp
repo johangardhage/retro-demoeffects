@@ -33,7 +33,7 @@
 #define WAVE_SPEED 200 // table entries traveled per second
 
 // Flag of Sweden, SFS 1982:269: 16:10, divided 5:2:9 across and 4:2:4 down.
-unsigned char SwedishFlag[10][16] = {
+static const unsigned char SwedishFlag[10][16] = {
 	{1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -46,7 +46,7 @@ unsigned char SwedishFlag[10][16] = {
 	{1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 };
 
-int SineTable[SINE_VALUES];
+static int SineTable[SINE_VALUES];
 
 void DEMO_Render(double time, double deltatime)
 {

@@ -134,26 +134,26 @@ void DEMO_Render(double time, double deltatime)
 		unsigned char *texels = image + v * TWISTER_IMAGE_SIZE;
 
 		double angle = index * TWISTER_TURNS * TWISTER_CYCLE;
-		double sin_radius = TWISTER_RADIUS * SIN(angle);
-		double cos_radius = TWISTER_RADIUS * COS(angle);
-		int corner_x[4] = {
-			(int)lround(TWISTER_CENTER_X - cos_radius),
-			(int)lround(TWISTER_CENTER_X + sin_radius),
-			(int)lround(TWISTER_CENTER_X + cos_radius),
-			(int)lround(TWISTER_CENTER_X - sin_radius),
+		double sinradius = TWISTER_RADIUS * SIN(angle);
+		double cosradius = TWISTER_RADIUS * COS(angle);
+		int cornerx[4] = {
+			(int)lround(TWISTER_CENTER_X - cosradius),
+			(int)lround(TWISTER_CENTER_X + sinradius),
+			(int)lround(TWISTER_CENTER_X + cosradius),
+			(int)lround(TWISTER_CENTER_X - sinradius),
 		};
 
 		int face = 0;
 		for (int corner = 1; corner < 4; corner++) {
-			if (corner_x[corner] < corner_x[face]) {
+			if (cornerx[corner] < cornerx[face]) {
 				face = corner;
 			}
 		}
 
 		// The two faces turned toward the viewer, leftmost to nearest to rightmost, each
 		// carrying the quarter of the picture that its own corner starts
-		DrawSpan(corner_x[face], corner_x[(face + 1) & 3], y, texels, face * TWISTER_IMAGE_FACE);
-		DrawSpan(corner_x[(face + 1) & 3], corner_x[(face + 2) & 3], y, texels, ((face + 1) & 3) * TWISTER_IMAGE_FACE);
+		DrawSpan(cornerx[face], cornerx[(face + 1) & 3], y, texels, face * TWISTER_IMAGE_FACE);
+		DrawSpan(cornerx[(face + 1) & 3], cornerx[(face + 2) & 3], y, texels, ((face + 1) & 3) * TWISTER_IMAGE_FACE);
 	}
 }
 

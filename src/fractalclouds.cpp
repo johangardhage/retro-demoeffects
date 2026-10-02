@@ -35,7 +35,7 @@
 #define SCROLL_Y 7.0 // cells a second it drifts down
 #define CYCLE_SPEED 24.0 // palette entries a second the colors travel
 
-unsigned char Field[MAP_SIZE * MAP_SIZE];
+static unsigned char Field[MAP_SIZE * MAP_SIZE];
 
 //
 // The field's value at a wrapped cell
@@ -61,7 +61,7 @@ static void BuildField(void)
 			for (int x = 0; x < MAP_SIZE; x += step) {
 				float mean = (Cell(field, x, y) + Cell(field, x + step, y) +
 							  Cell(field, x, y + step) + Cell(field, x + step, y + step)) / 4;
-				field[(y + half) * MAP_SIZE + x + half] = mean + RANDOMF(2 * amplitude) - amplitude;
+				field[(y + half) * MAP_SIZE + x + half] = mean + mix(-amplitude, amplitude, RANDOMF(1));
 			}
 		}
 
@@ -72,7 +72,7 @@ static void BuildField(void)
 			for (int x = (y / half) % 2 == 0 ? half : 0; x < MAP_SIZE; x += step) {
 				float mean = (Cell(field, x - half, y) + Cell(field, x + half, y) +
 							  Cell(field, x, y - half) + Cell(field, x, y + half)) / 4;
-				field[y * MAP_SIZE + x] = mean + RANDOMF(2 * amplitude) - amplitude;
+				field[y * MAP_SIZE + x] = mean + mix(-amplitude, amplitude, RANDOMF(1));
 			}
 		}
 
@@ -121,13 +121,12 @@ void DEMO_Render(double time, double deltatime)
 			float v01 = Field[row1 + x0];
 			float v11 = Field[row1 + x1];
 
-			float val = (1.0f - fx) * (1.0f - fy) * v00 +
-			            fx * (1.0f - fy) * v10 +
-			            (1.0f - fx) * fy * v01 +
-			            fx * fy * v11;
+			float value = (1.0f - fx) * (1.0f - fy) * v00 +
+			              fx * (1.0f - fy) * v10 +
+			              (1.0f - fx) * fy * v01 +
+			              fx * fy * v11;
 
-			int color_idx = ((int)(val + shift)) & 0xff;
-			buffer[y * RETRO_WIDTH + x] = color_idx;
+			buffer[y * RETRO_WIDTH + x] = (int)(value + shift) & 0xff;
 		}
 	}
 }

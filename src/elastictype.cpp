@@ -82,9 +82,9 @@ static void DrawGlyph(const Glyph &glyph, float time, int xoffset, int yoffset, 
 	// Nearest-neighbor into the animated bounds. Clip to the colored panel
 	// so deformed letters cannot spill into the surrounding black border.
 	for (int y = MAX(top, PANEL_TOP); y <= MIN(bottom, PANEL_BOTTOM); y++) {
-		int sy = CLAMP((y - top) * Font.height / rectheight, 0, Font.height - 1);
+		int sy = CLAMP((y - top) * Font.height / rectheight, 0, Font.height);
 		for (int x = MAX(left, PANEL_LEFT); x <= MIN(right, PANEL_RIGHT); x++) {
-			int sx = CLAMP((x - left) * Font.width / rectwidth, 0, Font.width - 1);
+			int sx = CLAMP((x - left) * Font.width / rectwidth, 0, Font.width);
 			if (Font.atlas->data[sy * Font.atlas->width + sourcex + sx] != 0) {
 				buffer[y * RETRO_WIDTH + x] = color;
 			}

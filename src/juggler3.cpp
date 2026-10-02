@@ -1,5 +1,5 @@
 //
-// Amiga Juggler
+// Amiga Juggler, antialiased
 //
 // In 1986 Eric Graham found his Amiga 1000 could ray trace: three chrome
 // balls tossed by a humanoid built entirely out of spheres, one second of
@@ -81,7 +81,7 @@
 
 #define FOCAL_DISTANCE 50.0f // world units from the eye to the virtual screen
 #define SCREEN_WIDTH 100.0f // world units the virtual screen spans; with FOCAL_DISTANCE this sets the field of view
-#define SUPERSAMPLE 2 // SUPERSAMPLE x SUPERSAMPLE camera rays a pixel, averaged before quantizing to a palette index
+#define SUPERSAMPLE 2 // SUPERSAMPLE x SUPERSAMPLE camera rays a pixel, each quantized to a palette index, the most common one drawn
 
 #define FLOOR_TILE 107.0f // world units per checker tile
 
@@ -155,7 +155,7 @@ struct JugglerSphere {
 static JugglerSphere Body[JUGGLER_SPHERES];
 
 static vec3 CamEye, CamCenter, CamU, CamV;
-static vec3 LightPos = { -564, 686, 147 };
+static const vec3 LightPos = { -564, 686, 147 };
 
 // One material per Phong term (see the file header) - ambient, diffuse and
 // specular, plus the color each tints. specular is a weight, not a curve -

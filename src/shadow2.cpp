@@ -137,7 +137,6 @@ static const RETRO_Palette CubeGreen = { 0, 255, 10 }, CubeRed = { 255, 0, 0 }, 
 static const RETRO_Palette Held[] = { RETRO_BLACK, RETRO_GREEN, RETRO_WHITE, CubeGreen, CubeRed, Sky, Ground };
 static constexpr int HELD = sizeof(Held) / sizeof(Held[0]);
 
-static int CurrentObject;
 static const float PointLightKL[POINT_LIGHTS] = { POINT_LIGHT_KL, POINT_LIGHT2_KL };
 static vec3 PointLightPosition[POINT_LIGHTS];
 static float PointLightAltitude[POINT_LIGHTS] = { POINT_LIGHT_ALTITUDE, POINT_LIGHT_ALTITUDE };
@@ -415,6 +414,8 @@ void DEMO_FixedUpdate(double timestep)
 
 void DEMO_Render(double time, double deltatime)
 {
+	static int currentobject;
+
 	if (RETRO_KeyPressed(SDL_SCANCODE_L)) Lighting = !Lighting;
 	if (RETRO_KeyPressed(SDL_SCANCODE_A)) AmbientLight = !AmbientLight;
 	if (RETRO_KeyPressed(SDL_SCANCODE_I)) InfiniteLight = !InfiniteLight;
@@ -426,7 +427,7 @@ void DEMO_Render(double time, double deltatime)
 	if (RETRO_KeyPressed(SDL_SCANCODE_G)) PointLight[LIGHT_GREEN] = !PointLight[LIGHT_GREEN];
 	if (RETRO_KeyPressed(SDL_SCANCODE_R)) PointLight[LIGHT_RED] = !PointLight[LIGHT_RED];
 	if (RETRO_KeyPressed(SDL_SCANCODE_H)) Help = !Help;
-	if (RETRO_KeyPressed(SDL_SCANCODE_O)) CurrentObject = (CurrentObject + 1) % OBJECTS;
+	if (RETRO_KeyPressed(SDL_SCANCODE_O)) currentobject = (currentobject + 1) % OBJECTS;
 	float raise = POINT_LIGHT_RAISE * deltatime;
 	if (RETRO_KeyState(SDL_SCANCODE_1)) PointLightAltitude[LIGHT_GREEN] -= raise;
 	if (RETRO_KeyState(SDL_SCANCODE_2)) PointLightAltitude[LIGHT_GREEN] += raise;
@@ -446,7 +447,7 @@ void DEMO_Render(double time, double deltatime)
 	// The object on its orbit, bobbing once a lap
 	float orbit = fmod(time * OBJECT_RATE, 2 * M_PI);
 	vec3 object = { center.x - OBJECT_ORBIT * cosf(orbit), OBJECT_ALTITUDE + OBJECT_BOB * sinf(orbit), center.z + OBJECT_ORBIT * sinf(orbit) };
-	const Object &selected = Objects[CurrentObject];
+	const Object &selected = Objects[currentobject];
 	const Model3D *model = Models[selected.model];
 
 	// The sky, and a band of ground color below it for wherever the

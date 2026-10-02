@@ -1,5 +1,5 @@
 //
-// God rays
+// God rays, traced per pixel
 //
 // A rotating ball with six glowing holes and light beams, traced per pixel.
 // Camera rays are rotated into the ball's frame, where its holes and beams

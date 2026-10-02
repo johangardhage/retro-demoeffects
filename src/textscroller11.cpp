@@ -66,7 +66,7 @@ static const RETRO_Palette GroundStops[] = {
 // One color per bar, in draw order
 static const RETRO_Palette BarColors[BARS] = { RETRO_RED, RETRO_ORANGE, RETRO_YELLOW, RETRO_GREEN };
 
-RETRO_Image *ScrollImage;
+static RETRO_Image *ScrollImage;
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -134,7 +134,7 @@ void DEMO_Initialize(void)
 	// the same in reverse below it
 	for (int k = 0; k < BARS; k++) {
 		RETRO_Palette hue = BarColors[k];
-		RETRO_Palette rim = RETRO_Palette{ (unsigned char)(hue.r / 5), (unsigned char)(hue.g / 5), (unsigned char)(hue.b / 5) };
+		RETRO_Palette rim = hue * 0.2f;
 
 		int ramp = BAR_RAMP0 + k * BAR_HEIGHT;
 		int middle = ramp + BAR_HEIGHT / 2;

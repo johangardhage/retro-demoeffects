@@ -1,5 +1,5 @@
 //
-// Amiga Juggler
+// Amiga Juggler, in linear RGB
 //
 // In 1986 Eric Graham found his Amiga 1000 could ray trace: three chrome
 // balls tossed by a humanoid built entirely out of spheres, one second of
@@ -144,7 +144,7 @@ struct JugglerSphere {
 static JugglerSphere Body[JUGGLER_SPHERES];
 
 static vec3 CamEye, CamCenter, CamU, CamV;
-static vec3 LightPos = { -564, 686, 147 };
+static const vec3 LightPos = { -564, 686, 147 };
 
 // One material per Phong term (see the file header) - ambient, diffuse and
 // specular, plus the color each tints. specular is a weight, not a curve -

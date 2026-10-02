@@ -41,7 +41,7 @@
 // also the order of the bow: red on the outer edge with the longest wavelength
 // down to violet on the inner edge with the shortest. Entry 0 is the black
 // background, so bar k ramps over [COPPER_RAMP0 + k * COPPER_BARHEIGHT, ...)
-RETRO_Palette BarColors[COPPER_BARS] = {
+static const RETRO_Palette BarColors[COPPER_BARS] = {
 	RETRO_RED, RETRO_ORANGE, RETRO_YELLOW, RETRO_GREEN,
 	RETRO_BLUE, RETRO_INDIGO, RETRO_VIOLET };
 
@@ -75,7 +75,7 @@ void DEMO_Initialize(void)
 	// and the same in reverse below it
 	for (int k = 0; k < COPPER_BARS; k++) {
 		RETRO_Palette hue = BarColors[k];
-		RETRO_Palette rim = RETRO_Palette{ (unsigned char)(hue.r / 5), (unsigned char)(hue.g / 5), (unsigned char)(hue.b / 5) };
+		RETRO_Palette rim = hue * 0.2f;
 
 		int ramp = COPPER_RAMP0 + k * COPPER_BARHEIGHT;
 		int middle = ramp + COPPER_BARHEIGHT / 2;

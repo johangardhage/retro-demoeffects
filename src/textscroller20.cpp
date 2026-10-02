@@ -39,10 +39,9 @@ static double Sample(unsigned char character, double u, double v)
 
 void DEMO_Render(double time, double deltatime)
 {
-	RETRO_Clear(0);
-	constexpr int TextLength = sizeof(ScrollText) - 1;
+	constexpr int textlength = sizeof(ScrollText) - 1;
 	double distance = time * ScrollSpeed;
-	double phase = fmod(distance, TextLength * LetterWidth);
+	double phase = fmod(distance, textlength * LetterWidth);
 	// After five seconds, smoothly repeat a deeper 1.8-second sinusoidal zoom.
 	// Sine scrolling joins after one bounce.
 	double bounce = MAX(0.0, time - BounceStart);
@@ -64,7 +63,7 @@ void DEMO_Render(double time, double deltatime)
 			double position = sx + phase - RETRO_WIDTH;
 			int letter = (int)floor(position / LetterWidth);
 			double u = (position - letter * LetterWidth - (LetterWidth - InkWidth) / 2.0) * GlyphWidth / InkWidth;
-			unsigned char character = ScrollText[WRAP(letter, TextLength)];
+			unsigned char character = ScrollText[WRAP(letter, textlength)];
 			RETRO_PutPixel(x, y, (unsigned char)lround(Sample(character, u, v)));
 		}
 	}

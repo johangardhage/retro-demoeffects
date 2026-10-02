@@ -16,6 +16,7 @@
 #include "lib/retropalette.h"
 #include "lib/retropoly.h"
 
+#define CAMERA_X 128.0f
 #define CAMERA_HEIGHT 20.0f
 #define PITCH -0.5f
 #define NEAR_PLANE 1.0f
@@ -35,7 +36,7 @@ static unsigned char ColorSample(int x, int z)
 	return ColorMap->data[WRAP(z, ColorMap->height) * ColorMap->width + WRAP(x, ColorMap->width)];
 }
 
-// Terrain and letters use the same perspective and pixel depth buffer.
+// The pitched camera's perspective, into a pixel depth buffer.
 static void PlotDot(float side, float forward, float height, unsigned char color)
 {
 	float up = (height - CAMERA_HEIGHT) * cosf(PITCH) - forward * sinf(PITCH);
@@ -51,30 +52,28 @@ static void PlotDot(float side, float forward, float height, unsigned char color
 }
 
 // Scan the view radius around the camera and plot every terrain cell in it.
-static void DrawTerrainDots(float camerax, float cameraz)
+static void DrawTerrainDots(float cameraz)
 {
-	int minx = (int)floorf(camerax - VIEW_DISTANCE);
-	int maxx = (int)ceilf(camerax + VIEW_DISTANCE);
+	int minx = (int)floorf(CAMERA_X - VIEW_DISTANCE);
+	int maxx = (int)ceilf(CAMERA_X + VIEW_DISTANCE);
 	int minz = (int)floorf(cameraz - VIEW_DISTANCE);
 	int maxz = (int)ceilf(cameraz + VIEW_DISTANCE);
 	for (int z = minz; z <= maxz; z++) {
 		for (int x = minx; x <= maxx; x++) {
-			float dx = x - camerax, dz = z - cameraz;
-			// No heading to turn by: this camera cruises straight, unlike dotscroller3's.
-			float side = dx;
-			float forward = dz;
-			PlotDot(side, forward, TerrainSample(x, z) * WORLD_HEIGHT_SCALE, ColorSample(x, z));
+			// The camera cruises straight ahead, so a cell's offset from it is
+			// already its side and forward distance.
+			PlotDot(x - CAMERA_X, z - cameraz, TerrainSample(x, z) * WORLD_HEIGHT_SCALE, ColorSample(x, z));
 		}
 	}
 }
 
 void DEMO_Render(double time, double deltatime)
 {
-	static float camerax = 128, cameraz = 236;
+	static float cameraz = 236;
 	cameraz = fmodf(cameraz + FORWARD_SPEED * deltatime + HeightMap->height, HeightMap->height);
 
 	RETRO_ClearDepthBuffer();
-	DrawTerrainDots(camerax, cameraz);
+	DrawTerrainDots(cameraz);
 }
 
 void DEMO_Initialize(void)

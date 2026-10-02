@@ -255,8 +255,6 @@ void DEMO_Initialize(void)
 	// ramp from the horizon to the zenith, each shade mixed further into
 	// white a level at a time. The sky starts from the color the floor's
 	// haze ends in, so the far floor meets it without a seam.
-	RETRO_Palette palette[RETRO_COLORS];
-	memset(palette, 0, sizeof(palette));
 	for (int j = 0; j < CHROME_HAZE_LEVELS; j++) {
 		float h = (float)j / (CHROME_HAZE_LEVELS - 1);
 		for (int i = 0; i < CHROME_FLOOR_SHADES; i++) {
@@ -265,7 +263,7 @@ void DEMO_Initialize(void)
 			color.r = mix(RETRO_WHITE.r * k, CHROME_HORIZON.r, h);
 			color.g = mix(RETRO_WHITE.g * k, CHROME_HORIZON.g, h);
 			color.b = mix(RETRO_WHITE.b * k, CHROME_HORIZON.b, h);
-			RETRO_SetColor(CHROME_FLOOR_START + j * CHROME_FLOOR_SHADES + i, color, palette);
+			RETRO_SetColor(CHROME_FLOOR_START + j * CHROME_FLOOR_SHADES + i, color);
 		}
 	}
 	RETRO_Palette sky[CHROME_SKY_SHADES];
@@ -276,10 +274,9 @@ void DEMO_Initialize(void)
 	for (int j = 0; j < CHROME_WHITE_LEVELS; j++) {
 		float w = (float)j / (CHROME_WHITE_LEVELS - 1);
 		for (int i = 0; i < CHROME_SKY_SHADES; i++) {
-			RETRO_SetColor(CHROME_SKY_START + j * CHROME_SKY_SHADES + i, mix(sky[i], RETRO_WHITE, w), palette);
+			RETRO_SetColor(CHROME_SKY_START + j * CHROME_SKY_SHADES + i, mix(sky[i], RETRO_WHITE, w));
 		}
 	}
-	RETRO_SetPalette(palette);
 
 	// Tilting the room up by the pitch is the camera looking down by it
 	RoomFrame = rotateX(-CAMERA_PITCH);

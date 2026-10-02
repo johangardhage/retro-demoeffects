@@ -54,30 +54,6 @@ static Model3D *Mirror;
 static Vertex MirrorRest[RETRO_MAX_VERTICES];
 static vec3 CameraScene;
 
-static void AddVertex(Model3D *model, float x, float y, float z)
-{
-	if (model->vertices >= RETRO_MAX_VERTICES) {
-		RETRO_RageQuit("Too many vertices\n");
-	}
-	model->vertex[model->vertices].pos = { x, y, z };
-	model->vertices++;
-}
-
-static void AddQuad(Model3D *model, int a, int b, int c, int d, int color)
-{
-	if (model->faces >= RETRO_MAX_FACES) {
-		RETRO_RageQuit("Too many faces\n");
-	}
-	Face *face = &model->face[model->faces++];
-	face->vertices = 4;
-	face->vertex[0] = a;
-	face->vertex[1] = b;
-	face->vertex[2] = c;
-	face->vertex[3] = d;
-	face->c = color;
-	face->backc = 0;
-}
-
 static void BuildFloor(Model3D *model)
 {
 	float y0 = 0.0f;
@@ -93,11 +69,11 @@ static void BuildFloor(Model3D *model)
 			int color = (row + col + 1) & 1;
 
 			int v = model->vertices;
-			AddVertex(model, x0, y0, z0);
-			AddVertex(model, x1, y0, z0);
-			AddVertex(model, x1, y0, z1);
-			AddVertex(model, x0, y0, z1);
-			AddQuad(model, v, v + 1, v + 2, v + 3, color);
+			RETRO_AddModelVertex(model, x0, y0, z0);
+			RETRO_AddModelVertex(model, x1, y0, z0);
+			RETRO_AddModelVertex(model, x1, y0, z1);
+			RETRO_AddModelVertex(model, x0, y0, z1);
+			RETRO_AddModelQuad(model, v, v + 1, v + 2, v + 3, color);
 		}
 	}
 
@@ -108,11 +84,11 @@ static void BuildFloor(Model3D *model)
 		float z = origin;
 		int color = (col + 1) & 1;
 		int v = model->vertices;
-		AddVertex(model, x0, y0, z);
-		AddVertex(model, x1, y0, z);
-		AddVertex(model, x1, y1, z);
-		AddVertex(model, x0, y1, z);
-		AddQuad(model, v, v + 3, v + 2, v + 1, color);
+		RETRO_AddModelVertex(model, x0, y0, z);
+		RETRO_AddModelVertex(model, x1, y0, z);
+		RETRO_AddModelVertex(model, x1, y1, z);
+		RETRO_AddModelVertex(model, x0, y1, z);
+		RETRO_AddModelQuad(model, v, v + 3, v + 2, v + 1, color);
 	}
 
 	// Back side
@@ -122,11 +98,11 @@ static void BuildFloor(Model3D *model)
 		float z = FLOOR_EXTENT;
 		int color = col & 1;
 		int v = model->vertices;
-		AddVertex(model, x0, y0, z);
-		AddVertex(model, x0, y1, z);
-		AddVertex(model, x1, y1, z);
-		AddVertex(model, x1, y0, z);
-		AddQuad(model, v, v + 1, v + 2, v + 3, color);
+		RETRO_AddModelVertex(model, x0, y0, z);
+		RETRO_AddModelVertex(model, x0, y1, z);
+		RETRO_AddModelVertex(model, x1, y1, z);
+		RETRO_AddModelVertex(model, x1, y0, z);
+		RETRO_AddModelQuad(model, v, v + 1, v + 2, v + 3, color);
 	}
 
 	// Left side
@@ -136,11 +112,11 @@ static void BuildFloor(Model3D *model)
 		float x = origin;
 		int color = (row + 1) & 1;
 		int v = model->vertices;
-		AddVertex(model, x, y0, z0);
-		AddVertex(model, x, y1, z0);
-		AddVertex(model, x, y1, z1);
-		AddVertex(model, x, y0, z1);
-		AddQuad(model, v, v + 1, v + 2, v + 3, color);
+		RETRO_AddModelVertex(model, x, y0, z0);
+		RETRO_AddModelVertex(model, x, y1, z0);
+		RETRO_AddModelVertex(model, x, y1, z1);
+		RETRO_AddModelVertex(model, x, y0, z1);
+		RETRO_AddModelQuad(model, v, v + 1, v + 2, v + 3, color);
 	}
 
 	// Right side
@@ -150,11 +126,11 @@ static void BuildFloor(Model3D *model)
 		float x = FLOOR_EXTENT;
 		int color = row & 1;
 		int v = model->vertices;
-		AddVertex(model, x, y0, z0);
-		AddVertex(model, x, y0, z1);
-		AddVertex(model, x, y1, z1);
-		AddVertex(model, x, y1, z0);
-		AddQuad(model, v, v + 1, v + 2, v + 3, color);
+		RETRO_AddModelVertex(model, x, y0, z0);
+		RETRO_AddModelVertex(model, x, y0, z1);
+		RETRO_AddModelVertex(model, x, y1, z1);
+		RETRO_AddModelVertex(model, x, y1, z0);
+		RETRO_AddModelQuad(model, v, v + 1, v + 2, v + 3, color);
 	}
 
 	RETRO_InitializeFaceNormals(model);
@@ -163,22 +139,22 @@ static void BuildFloor(Model3D *model)
 static void BuildMirror(Model3D *model)
 {
 	float hx = MIRROR_HX, hy = MIRROR_HY, hz = MIRROR_HZ;
-	AddVertex(model, -hx, -hy, -hz); // 0
-	AddVertex(model, hx, -hy, -hz);  // 1
-	AddVertex(model, hx, hy, -hz);   // 2
-	AddVertex(model, -hx, hy, -hz);  // 3
-	AddVertex(model, -hx, -hy, hz);  // 4
-	AddVertex(model, hx, -hy, hz);   // 5
-	AddVertex(model, hx, hy, hz);    // 6
-	AddVertex(model, -hx, hy, hz);   // 7
+	RETRO_AddModelVertex(model, -hx, -hy, -hz); // 0
+	RETRO_AddModelVertex(model, hx, -hy, -hz);  // 1
+	RETRO_AddModelVertex(model, hx, hy, -hz);   // 2
+	RETRO_AddModelVertex(model, -hx, hy, -hz);  // 3
+	RETRO_AddModelVertex(model, -hx, -hy, hz);  // 4
+	RETRO_AddModelVertex(model, hx, -hy, hz);   // 5
+	RETRO_AddModelVertex(model, hx, hy, hz);    // 6
+	RETRO_AddModelVertex(model, -hx, hy, hz);   // 7
 
 	// Outward winding. Opposite ±Z faces are the glass (face.c == 0).
-	AddQuad(model, 0, 3, 2, 1, 0); // −Z
-	AddQuad(model, 4, 5, 6, 7, 0); // +Z
-	AddQuad(model, 1, 2, 6, 5, COL_RIM); // +X
-	AddQuad(model, 0, 4, 7, 3, COL_RIM); // −X
-	AddQuad(model, 2, 3, 7, 6, COL_RIM); // +Y
-	AddQuad(model, 0, 1, 5, 4, COL_RIM); // −Y
+	RETRO_AddModelQuad(model, 0, 3, 2, 1, 0); // −Z
+	RETRO_AddModelQuad(model, 4, 5, 6, 7, 0); // +Z
+	RETRO_AddModelQuad(model, 1, 2, 6, 5, COL_RIM); // +X
+	RETRO_AddModelQuad(model, 0, 4, 7, 3, COL_RIM); // −X
+	RETRO_AddModelQuad(model, 2, 3, 7, 6, COL_RIM); // +Y
+	RETRO_AddModelQuad(model, 0, 1, 5, 4, COL_RIM); // −Y
 
 	RETRO_InitializeFaceNormals(model);
 }
@@ -205,9 +181,7 @@ static unsigned char SampleFloor(float x, float z)
 
 static unsigned char ReflectFloor(vec3 p, vec3 n)
 {
-	vec3 incident = p - CameraScene;
-	float idotn = dot(incident, n);
-	vec3 reflected = incident - n * (2.0f * idotn);
+	vec3 reflected = reflect(p - CameraScene, n);
 
 	if (fabsf(reflected.y) < 1.0e-6f) {
 		return COL_GLASS;

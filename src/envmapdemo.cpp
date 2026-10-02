@@ -112,11 +112,8 @@ static const Matcap Matcaps[] = {
 static const int MatcapCount = sizeof(Matcaps) / sizeof(Matcaps[0]);
 
 static RETRO_POLY_TYPE RenderType = RETRO_POLY_MATCAP;
-static int MeshIndex = 0;
 static int MatcapIndex = MATCAP_ROUND;
 static bool Perspective = true;
-static bool Paused = false;
-static double RotationTime = 0; // seconds the mesh has turned for, which stops while paused
 
 static void SelectMode(void)
 {
@@ -146,6 +143,10 @@ static void SelectMode(void)
 
 void DEMO_Render(double time, double deltatime)
 {
+	static int meshindex = 0;
+	static bool paused = false;
+	static double rotationtime = 0; // seconds the mesh has turned for, which stops while paused
+
 	// Handle keys
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
 		if (RenderType == RETRO_POLY_MATCAP) {
@@ -158,11 +159,11 @@ void DEMO_Render(double time, double deltatime)
 		SelectMode();
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_M)) {
-		MeshIndex = (MeshIndex + 1) % MeshCount;
+		meshindex = (meshindex + 1) % MeshCount;
 		SelectMode();
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_P) && RenderType == RETRO_POLY_ENVIRONMENT) {
-		Perspective = (Perspective == false);
+		Perspective = !Perspective;
 		SelectMode();
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_C)) {
@@ -170,19 +171,19 @@ void DEMO_Render(double time, double deltatime)
 		SelectMode();
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_SPACE)) {
-		Paused = (Paused == false);
+		paused = !paused;
 	}
 
-	const Mesh *mesh = &Meshes[MeshIndex];
-	Model3D *model = RETRO_Get3DModel(MeshIndex);
+	const Mesh *mesh = &Meshes[meshindex];
+	Model3D *model = RETRO_Get3DModel(meshindex);
 
 	// Calculate rotation
-	if (Paused == false) {
-		RotationTime += deltatime;
+	if (!paused) {
+		rotationtime += deltatime;
 	}
-	float ax = fmod(mesh->ax + RotationTime * ROTATION_SPEED, 2 * M_PI);
-	float ay = fmod(RotationTime * ROTATION_SPEED, 2 * M_PI);
-	float az = fmod(mesh->az + RotationTime * ROTATION_SPEED, 2 * M_PI);
+	float ax = fmod(mesh->ax + rotationtime * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(rotationtime * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(mesh->az + rotationtime * ROTATION_SPEED, 2 * M_PI);
 
 	// Draw mesh
 	RETRO_RotateModel(ax, ay, az, model);

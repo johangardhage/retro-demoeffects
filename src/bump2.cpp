@@ -42,7 +42,7 @@
 #define MATERIAL_SPECULAR 0.50
 #define MATERIAL_SHININESS 8 // specular exponent, low enough to keep the highlight wider than a pixel
 
-vec3 SurfaceNormals[RETRO_HEIGHT * RETRO_WIDTH];
+static vec3 SurfaceNormals[RETRO_HEIGHT * RETRO_WIDTH];
 
 //
 // Slope of the height map along x, second-order finite difference

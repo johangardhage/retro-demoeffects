@@ -32,8 +32,8 @@
 #define BLOB_PEAK 80 // peak of one kernel; three overlaps almost fill the ramp, four saturate
 #define BLOB_STEP 2 // maximum walk on one axis per simulation step
 
-unsigned char BlobShape[BLOB_SIZE * BLOB_SIZE];
-ivec2 BlobPositions[NUM_BLOBS];
+static unsigned char BlobShape[BLOB_SIZE * BLOB_SIZE];
+static ivec2 BlobPositions[NUM_BLOBS];
 
 //
 // Advance the walk one fixed step

@@ -51,9 +51,8 @@
 #define BALL_SPEEDZ 0.4
 #define BALL_WAVESPEED 60 // table units a second
 
-Vertex Balls[BALLS];
-unsigned char BallMap[BALL_LEVELS][BALL_MAP * BALL_MAP];
-float BallDepth[BALL_MAP * BALL_MAP]; // the front hemisphere, the same for every ramp
+static unsigned char BallMap[BALL_LEVELS][BALL_MAP * BALL_MAP];
+static float BallDepth[BALL_MAP * BALL_MAP]; // the front hemisphere, the same for every ramp
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -67,23 +66,24 @@ void DEMO_Render(double time, double deltatime)
 	double phase = fmod(time * BALL_WAVESPEED, RETRO_ANGLES_PER_TURN);
 
 	// Lay the ring out, ripple it, and carry it to the screen
+	Vertex balls[BALLS];
 	for (int i = 0; i < BALLS; i++) {
 		float a = (float)RETRO_ANGLES_PER_TURN * i / BALLS;
-		Balls[i].pos = {
+		balls[i].pos = {
 			BALL_RADIUS * (float)COS(a),
 			BALL_RADIUS * (float)SIN(a),
 			BALL_WAVE * (float)SIN(phase + BALL_WAVES * a)
 		};
 
-		RETRO_RotateVertex(&Balls[i], matrix);
-		RETRO_ProjectVertex(&Balls[i], BALL_PROJECTION);
+		RETRO_RotateVertex(&balls[i], matrix);
+		RETRO_ProjectVertex(&balls[i], BALL_PROJECTION);
 	}
 
 	// Draw them, every pixel at the depth of the sphere's surface under it
 	RETRO_ClearDepthBuffer();
 
 	for (int i = 0; i < BALLS; i++) {
-		Vertex *ball = &Balls[i];
+		Vertex *ball = &balls[i];
 		float size = BALL_SIZE * RETRO_PROJECTION_EYEDISTANCE * ball->q;
 		int level = CLAMP((BALL_DEPTH + ball->rpos.z) * BALL_LEVELS / (2 * BALL_DEPTH), 0, BALL_LEVELS);
 

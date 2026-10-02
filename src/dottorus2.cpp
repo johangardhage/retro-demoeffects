@@ -43,7 +43,7 @@
 #define PROJECTION_SCALE 1 // the model is built in pixels, so the projection adds no scale
 #define SINE_VALUES 720
 
-unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
+static const unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 	{BLOB_LEVEL * 0, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 0},
 	{BLOB_LEVEL * 2, BLOB_LEVEL * 4, BLOB_LEVEL * 4, BLOB_LEVEL * 4, BLOB_LEVEL * 2},
 	{BLOB_LEVEL * 3, BLOB_LEVEL * 4, BLOB_LEVEL * 5, BLOB_LEVEL * 4, BLOB_LEVEL * 3},
@@ -51,8 +51,8 @@ unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 	{BLOB_LEVEL * 0, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 0}
 };
 
-float SinTable[SINE_VALUES];
-float CosTable[SINE_VALUES];
+static float SinTable[SINE_VALUES];
+static float CosTable[SINE_VALUES];
 
 void DEMO_FixedUpdate(double timestep)
 {
@@ -63,17 +63,14 @@ void DEMO_FixedUpdate(double timestep)
 	int iphase = phase;
 
 	// Stamp every table slot crossed this step so the trail has no gaps.
-	int slots = (int)ceil(moved);
-	if (slots < 1) {
-		slots = 1;
-	}
+	int slots = MAX((int)ceil(moved), 1);
 
 	Model3D *model = RETRO_Get3DModel();
 	Vertex *vertex = model->vertex;
 
 	// Draw blobs
 	for (int step = 0; step < slots; step++) {
-		int turn = (iphase - slots + 1 + step + SINE_VALUES) % SINE_VALUES;
+		int turn = WRAP(iphase - slots + 1 + step, SINE_VALUES);
 		// Not a rotation: the same (cos, sin) pair on all three axes. Each
 		// plane map scales that plane by r = sqrt(cos^2+sin^2) and leaves its
 		// axis alone, so a pair that is not unit squashes the model as it
@@ -116,7 +113,7 @@ void DEMO_Initialize(void)
 	// Init palette. Where the dots pile up, red ~ intensity² and white ~ intensity⁷, so the
 	// glow stays red for a long time and only the hottest pile-ups go white.
 	for (int i = 0; i < GLOW_COLORS; i++) {
-		double intensity = (double) i / (GLOW_COLORS - 10);
+		double intensity = (double)i / (GLOW_COLORS - 10);
 		unsigned char red = GLOW_COLORS * pow(intensity, 2);
 		unsigned char white = GLOW_COLORS * pow(intensity, 7);
 		RETRO_SetColor(i, red, white, white);

@@ -23,6 +23,7 @@
 #define RIBBON_COUNT 3
 #define RIBBON_SEGMENTS 80 // samples along t, so this many − 1 quads
 #define RIBBON_TURNS 2 // how many times the helix wraps
+#define RIBBON_SCALE 90 // pixels a model unit covers
 #define ROTATION_SPEED 0.7 // radians a second about the middle axis
 #define ROTATION_SPREAD 0.25
 
@@ -30,22 +31,6 @@ static const float RibbonRadius[RIBBON_COUNT] = { 1.15f, 0.78f, 0.48f };
 static const float RibbonWidth[RIBBON_COUNT] = { 0.20f, 0.16f, 0.13f };
 static const float RibbonHeight[RIBBON_COUNT] = { 2.1f, 2.1f, 2.1f };
 static const float RibbonPhase[RIBBON_COUNT] = { 0.0f, 2.1f, 4.2f };
-
-static void AddQuad(Model3D *model, int a, int b, int c, int d)
-{
-	if (model->faces >= RETRO_MAX_FACES) {
-		RETRO_RageQuit("Too many ribbon faces\n");
-	}
-
-	Face *face = &model->face[model->faces++];
-	face->vertices = 4;
-	face->vertex[0] = a;
-	face->vertex[1] = b;
-	face->vertex[2] = c;
-	face->vertex[3] = d;
-	face->c = 0;
-	face->backc = 0;
-}
 
 static void BuildRibbons(Model3D *model)
 {
@@ -59,9 +44,6 @@ static void BuildRibbons(Model3D *model)
 		float phase = RibbonPhase[r];
 
 		for (int i = 0; i < RIBBON_SEGMENTS; i++) {
-			if (model->vertices + 2 > RETRO_MAX_VERTICES) {
-				RETRO_RageQuit("Too many ribbon vertices\n");
-			}
 
 			float t = tmax * i / (RIBBON_SEGMENTS - 1);
 			float a = t + phase;
@@ -69,11 +51,8 @@ static void BuildRibbons(Model3D *model)
 			float sa = sin(a);
 			float y = height * (t / tmax - 0.5f);
 
-			model->vertex[model->vertices].pos = { (radius - width) * ca, y, (radius - width) * sa };
-			model->vertices++;
-
-			model->vertex[model->vertices].pos = { (radius + width) * ca, y, (radius + width) * sa };
-			model->vertices++;
+			RETRO_AddModelVertex(model, (radius - width) * ca, y, (radius - width) * sa);
+			RETRO_AddModelVertex(model, (radius + width) * ca, y, (radius + width) * sa);
 		}
 
 		for (int i = 0; i < RIBBON_SEGMENTS - 1; i++) {
@@ -81,8 +60,8 @@ static void BuildRibbons(Model3D *model)
 			int r0 = l0 + 1;
 			int l1 = l0 + 2;
 			int r1 = l0 + 3;
-			AddQuad(model, l0, l1, r1, r0);
-			AddQuad(model, l0, r0, r1, l1);
+			RETRO_AddModelQuad(model, l0, l1, r1, r0);
+			RETRO_AddModelQuad(model, l0, r0, r1, l1);
 		}
 	}
 
@@ -96,8 +75,9 @@ void DEMO_Render(double time, double deltatime)
 	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
 	float az = fmod(time * ROTATION_SPEED * (1 + ROTATION_SPREAD), 2 * M_PI);
 
+	// Draw ribbons
 	RETRO_RotateModel(ax, ay, az);
-	RETRO_ProjectModel(90);
+	RETRO_ProjectModel(RIBBON_SCALE);
 	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT);
 }
 

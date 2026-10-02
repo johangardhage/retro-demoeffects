@@ -57,7 +57,7 @@
 #define BLOB_SIZE 5 // the splat stamped at each point, in pixels
 #define BLUR_DECAY 3 // brightness the blur takes off, so the smear stays a halo
 
-unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
+static const unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 	{ 0, 17, 22, 17,  0},
 	{17, 26, 29, 26, 17},
 	{22, 29, 31, 29, 22},
@@ -65,7 +65,7 @@ unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 	{ 0, 17, 22, 17,  0}
 };
 
-Vertex Shape[NUM_POINTS];
+static Vertex Shape[NUM_POINTS];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -112,7 +112,7 @@ void DEMO_Initialize(void)
 
 	// Init sphere
 	for (int i = 0; i < NUM_POINTS; i++) {
-		float z = 2.0f * RANDOMF(1) - 1.0f;
+		float z = mix(-1, 1, RAND());
 		float phi = RANDOMF(2 * M_PI);
 		float r = sqrtf(1.0f - z * z);
 		Shape[i].pos = { r * cosf(phi), r * sinf(phi), z };

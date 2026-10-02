@@ -20,23 +20,21 @@
 #define SHADES 64
 #define FLIGHT_PERIOD 10.0
 
-Vertex Stars[NUM_STARS]; // World position in x, y, z; view and screen space filled per frame
+static Vertex Stars[NUM_STARS]; // World position in x, y, z; view and screen space filled per frame
 
 static RETRO_Camera CameraStart = { {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1} };
-static long long FlightCycle = -1;
-static int TurnDirection = 0; // right, left, up, down
 
-// Turned from CameraStart by angle, about the axis TurnDirection names -
-// down for a left/right turn, right for an up/down one - so up/down stays
-// correct after any sequence of turns.
-static RETRO_Camera Turn(double angle)
+// Turned from CameraStart by angle, about the axis direction names - down
+// for a left/right turn, right for an up/down one - so up/down stays correct
+// after any sequence of turns. direction is right, left, up, down.
+static RETRO_Camera Turn(int direction, double angle)
 {
 	RETRO_Camera camera = CameraStart;
-	if (TurnDirection == 0) {
+	if (direction == 0) {
 		RETRO_YawCamera(&camera, angle);
-	} else if (TurnDirection == 1) {
+	} else if (direction == 1) {
 		RETRO_YawCamera(&camera, -angle);
-	} else if (TurnDirection == 2) {
+	} else if (direction == 2) {
 		RETRO_PitchCamera(&camera, -angle);
 	} else {
 		RETRO_PitchCamera(&camera, angle);
@@ -51,18 +49,21 @@ static double Wrap(double value)
 
 void DEMO_Render(double time, double deltatime)
 {
-	long long cycle = (long long)floor(time / FLIGHT_PERIOD);
+	static int flightcycle = -1;
+	static int turndirection = 0;
+
+	int cycle = (int)floor(time / FLIGHT_PERIOD);
 	double phase = time - cycle * FLIGHT_PERIOD;
-	while (FlightCycle < cycle) {
-		if (FlightCycle >= 0) {
-			CameraStart = Turn(1.15);
+	while (flightcycle < cycle) {
+		if (flightcycle >= 0) {
+			CameraStart = Turn(turndirection, 1.15);
 		}
-		TurnDirection = RANDOM(4);
-		++FlightCycle;
+		turndirection = RANDOM(4);
+		flightcycle++;
 	}
 	// Turn from seconds two to seven; overlap with a faster roll from five to ten.
 	// Choose turns from CameraStart so up/down remain correct after any turn.
-	RETRO_Camera camera = Turn(1.15 * smootherstep(2.0, 7.0, phase));
+	RETRO_Camera camera = Turn(turndirection, 1.15 * smootherstep(2.0, 7.0, phase));
 	RETRO_RollCamera(&camera, 2 * M_PI * smootherstep(5.0, 10.0, phase));
 	double travel = SPEED * deltatime;
 
@@ -94,13 +95,12 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_InitializeCamera(&CameraStart);
-	FlightCycle = -1;
 	RETRO_CreateGradientPalette(0, SHADES, RETRO_BLACK, RETRO_WHITE);
 	for (int i = 0; i < NUM_STARS; i++) {
 		Stars[i].pos = {
-			(float)(RANDOM(2 * STAR_FAR) - STAR_FAR),
-			(float)(RANDOM(2 * STAR_FAR) - STAR_FAR),
-			(float)(RANDOM(2 * STAR_FAR) - STAR_FAR)
+			(float)mix(-STAR_FAR, STAR_FAR, RAND()),
+			(float)mix(-STAR_FAR, STAR_FAR, RAND()),
+			(float)mix(-STAR_FAR, STAR_FAR, RAND())
 		};
 	}
 }

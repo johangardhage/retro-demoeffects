@@ -52,10 +52,10 @@
 #define GLINT_FALLOFF 24.0 // higher is a narrower, briefer flash
 #define GLINT_STRENGTH 0.85f // how far toward white the peak of the flash goes
 
-RETRO_Image *PictureA;
-RETRO_Image *PictureB;
-unsigned char ShadeTable[RETRO_COLORS][SHADES];
-unsigned char GlintTable[RETRO_COLORS][GLINTS];
+static RETRO_Image *PictureA;
+static RETRO_Image *PictureB;
+static unsigned char ShadeTable[RETRO_COLORS][SHADES];
+static unsigned char GlintTable[RETRO_COLORS][GLINTS];
 
 void DEMO_Render(double time, double deltatime)
 {

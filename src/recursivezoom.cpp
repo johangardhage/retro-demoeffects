@@ -38,8 +38,6 @@
 #define MAX_LEVELS 16 // generous bound for a mip pyramid down from RETRO_WIDTH x RETRO_HEIGHT to 1x1
 #define MAX_PIXELS (RETRO_WIDTH * RETRO_HEIGHT * 4 / 3 + 64) // geometric series bound, each level near a quarter of its parent
 
-static RETRO_Image *Picture;
-
 // Premultiplied color keeps the transparent doorway from bleeding black
 // into the stone.
 struct Sample { float r, g, b, a; };
@@ -47,7 +45,6 @@ struct Level { int width, height; Sample *pixels; };
 static Level Levels[MAX_LEVELS];
 static int LevelCount;
 static Sample PixelPool[MAX_PIXELS]; // every level's pixels, packed back to back
-static int PixelPoolUsed;
 static unsigned char ColorLUT[64][64][64];
 
 static Sample Mix(Sample a, Sample b, float t)
@@ -129,33 +126,33 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	Picture = RETRO_LoadImage("assets/recursivezoom_320x240.pcx", true);
-	if (Picture->width != RETRO_WIDTH || Picture->height != RETRO_HEIGHT) {
+	RETRO_Image *picture = RETRO_LoadImage("assets/recursivezoom_320x240.pcx", true);
+	if (picture->width != RETRO_WIDTH || picture->height != RETRO_HEIGHT) {
 		RETRO_RageQuit("Recursivezoom picture must match the screen size\n");
 	}
 	LevelCount = 0;
-	PixelPoolUsed = 0;
+	int pixelpoolused = 0;
 
 	Level &base = Levels[LevelCount++];
-	base.width = Picture->width;
-	base.height = Picture->height;
-	base.pixels = &PixelPool[PixelPoolUsed];
-	PixelPoolUsed += base.width * base.height;
-	for (int i = 0; i < Picture->width * Picture->height; i++) {
-		int index = Picture->data[i];
-		RETRO_Palette c = Picture->palette[index];
+	base.width = picture->width;
+	base.height = picture->height;
+	base.pixels = &PixelPool[pixelpoolused];
+	pixelpoolused += base.width * base.height;
+	for (int i = 0; i < picture->width * picture->height; i++) {
+		int index = picture->data[i];
+		RETRO_Palette c = picture->palette[index];
 		base.pixels[i] = index ? Sample{(float)c.r, (float)c.g, (float)c.b, 1} : Sample{0, 0, 0, 0};
 	}
 	// Bilinear clamps an out-of-range sample to the border, so the ancestor
 	// levels sampled outside [-0.5, 0.5] read as stone rather than as more
 	// aperture only if that border is fully opaque.
-	for (int x = 0; x < Picture->width; x++) {
-		if (Picture->data[x] == 0 || Picture->data[(Picture->height - 1) * Picture->width + x] == 0) {
+	for (int x = 0; x < picture->width; x++) {
+		if (picture->data[x] == 0 || picture->data[(picture->height - 1) * picture->width + x] == 0) {
 			RETRO_RageQuit("Recursivezoom picture's border must be fully opaque\n");
 		}
 	}
-	for (int y = 0; y < Picture->height; y++) {
-		if (Picture->data[y * Picture->width] == 0 || Picture->data[y * Picture->width + Picture->width - 1] == 0) {
+	for (int y = 0; y < picture->height; y++) {
+		if (picture->data[y * picture->width] == 0 || picture->data[y * picture->width + picture->width - 1] == 0) {
 			RETRO_RageQuit("Recursivezoom picture's border must be fully opaque\n");
 		}
 	}
@@ -164,13 +161,13 @@ void DEMO_Initialize(void)
 		Level &next = Levels[LevelCount++];
 		next.width = MAX(1, parent.width / 2);
 		next.height = MAX(1, parent.height / 2);
-		next.pixels = &PixelPool[PixelPoolUsed];
-		PixelPoolUsed += next.width * next.height;
+		next.pixels = &PixelPool[pixelpoolused];
+		pixelpoolused += next.width * next.height;
 		for (int y = 0; y < next.height; y++) {
 			for (int x = 0; x < next.width; x++) {
 				next.pixels[y * next.width + x] = DownsampleTexel(parent, x, y);
 			}
 		}
 	}
-	RETRO_CreateColorLUT(Picture->palette, 64, &ColorLUT[0][0][0]);
+	RETRO_CreateColorLUT(picture->palette, 64, &ColorLUT[0][0][0]);
 }

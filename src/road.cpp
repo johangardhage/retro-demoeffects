@@ -95,12 +95,12 @@ struct Segment {
 	float hill; // table entries a scanline takes on top of the one the flat road takes
 };
 
-Segment Road[ROAD_MAX_SEGMENTS];
-int RoadSegments = 0;
+static Segment Road[ROAD_MAX_SEGMENTS];
+static int RoadSegments = 0;
 
-float ZMap[ROAD_ZMAP_SIZE]; // the distance the row looks at, nearest first
-float WidthMap[ROAD_ZMAP_SIZE]; // half the road, in pixels, at that distance
-int ZMapEntries = 0; // the entries inside the draw distance, so the walk stops at one test
+static float ZMap[ROAD_ZMAP_SIZE]; // the distance the row looks at, nearest first
+static float WidthMap[ROAD_ZMAP_SIZE]; // half the road, in pixels, at that distance
+static int ZMapEntries = 0; // the entries inside the draw distance, so the walk stops at one test
 
 //
 // Fill a scanline from x1 to x2, clipped to the screen. The ends are pixel

@@ -63,11 +63,11 @@
 #define FIRE_BIAS_MAX 4
 #define FIRE_BIAS_START 1
 
-int FireBed[RETRO_WIDTH];
-unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
-static int firebias = FIRE_BIAS_START;
-static int ignition = IGNITION_WOOD;
-static bool strikematch = false;
+static int FireBed[RETRO_WIDTH];
+static unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
+static int FireBias = FIRE_BIAS_START;
+static int Ignition = IGNITION_WOOD;
+static bool StrikeMatch = false;
 
 //
 // Advance the field one fixed step
@@ -83,10 +83,10 @@ void DEMO_FixedUpdate(double timestep)
 	static int startmatches = MATCH_START_STEPS;
 
 	// Strike a match across MATCH_WIDTH columns of the bed
-	if ((RANDOM(MATCH_CHANCE) == 0) || strikematch || startmatches > 0) {
-		strikematch = false;
+	if (RANDOM(MATCH_CHANCE) == 0 || StrikeMatch || startmatches > 0) {
+		StrikeMatch = false;
 		if (startmatches > 0) {
-			--startmatches;
+			startmatches--;
 		}
 		int x = BED_LEFT + RANDOM(BED_SPAN - MATCH_WIDTH + 1);
 		for (int k = 0; k < MATCH_WIDTH; k++) {
@@ -100,12 +100,12 @@ void DEMO_FixedUpdate(double timestep)
 
 		if (heat < MIN_FIRE) {
 			if (heat > TRICKLE) {
-				heat += RANDOM(ignition);
+				heat += RANDOM(Ignition);
 			}
 		} else {
-			heat += RANDOM(ROOT_RAND * 2 + 1) - ROOT_RAND + firebias;
+			heat += RANDOM(ROOT_RAND * 2 + 1) - ROOT_RAND + FireBias;
 		}
-		FireBed[x] = CLAMP(heat, 0, 256);
+		FireBed[x] = CLAMP256(heat);
 	}
 
 	// Water both sides so the fire tapers. U², U ~ [0, 1), has density
@@ -158,12 +158,10 @@ void DEMO_Render(double time, double deltatime)
 	};
 
 	if (RETRO_KeyPressed(SDL_SCANCODE_MINUS)) {
-		if (firebias > FIRE_BIAS_MIN)
-			--firebias;
+		FireBias = MAX(FireBias - 1, FIRE_BIAS_MIN);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_EQUALS)) {
-		if (firebias < FIRE_BIAS_MAX)
-			++firebias;
+		FireBias = MIN(FireBias + 1, FIRE_BIAS_MAX);
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_C)) {
 		memset(FireBed, 0, sizeof(FireBed));
@@ -175,11 +173,11 @@ void DEMO_Render(double time, double deltatime)
 	}
 	for (int n = 0; n < 9; n++) {
 		if (RETRO_KeyPressed(ignitionkeys[n])) {
-			ignition = IGNITION_WOOD + n * n;
+			Ignition = IGNITION_WOOD + n * n;
 		}
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_RETURN)) {
-		strikematch = true;
+		StrikeMatch = true;
 	}
 
 	RETRO_Blit(FireBuffer);

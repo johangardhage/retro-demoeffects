@@ -111,7 +111,7 @@ static PolygonPoint Project(const mat3 &matrix, float x, float y, vec2 uv)
 // screen.
 static void DrawLetters(float ax, float phase, bool facing, bool solidity)
 {
-	memset(RETRO_FrameBuffer(), 0, RETRO_WIDTH * RETRO_HEIGHT);
+	RETRO_Clear();
 	RETRO_ClearDepthBuffer();
 	float step = (float)(2 * M_PI / RING_LETTERS);
 	int first = (int)ceilf(phase - RING_LETTERS / 2.0f);
@@ -159,20 +159,22 @@ void DEMO_Render(double time, double deltatime)
 	// A pixel of the far half keeps its ink where its letter is solid enough
 	// for the dither there. Where there is no letter it is not solid at all.
 	DrawLetters(ax, phase, false, true);
-	for (int y = 0; y < RETRO_HEIGHT; y++)
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int pixel = y * RETRO_WIDTH + x;
 			if (screen[pixel] <= Bayer[y & 3][x & 3]) Scene[pixel] = Background[pixel];
 		}
+	}
 
 	DrawLetters(ax, phase, true, false);
-	for (int pixel = 0; pixel < RETRO_WIDTH * RETRO_HEIGHT; pixel++)
+	for (int pixel = 0; pixel < RETRO_WIDTH * RETRO_HEIGHT; pixel++) {
 		if (!screen[pixel]) screen[pixel] = Scene[pixel];
+	}
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_SetColor(0, RETRO_Palette{ 0, 0, 0 });
+	RETRO_SetColor(0, RETRO_BLACK);
 	int gleam = INK + (int)(GLEAM_START * SHADES);
 	RETRO_CreateGradientPalette(INK, gleam, RETRO_Palette{ 40, 28, 8 }, RETRO_Palette{ 255, 200, 90 });
 	RETRO_CreateGradientPalette(gleam, INK + SHADES, RETRO_Palette{ 255, 200, 90 }, RETRO_Palette{ 255, 250, 215 });
@@ -188,15 +190,18 @@ void DEMO_Initialize(void)
 	Strip = RETRO_GenerateTextImage(Font, Message, 1);
 	for (int shade = 0; shade < SHADES; shade++) {
 		TextStrip[shade] = (unsigned char *)malloc(Strip->width * Strip->height);
-		for (int i = 0; i < Strip->width * Strip->height; i++)
+		for (int i = 0; i < Strip->width * Strip->height; i++) {
 			TextStrip[shade][i] = Strip->data[i] != 0 ? INK + shade : 0;
+		}
 	}
 	for (int level = 0; level < FADE_LEVELS; level++) {
 		FadeStrip[level] = (unsigned char *)malloc(Strip->width * Strip->height);
-		for (int i = 0; i < Strip->width * Strip->height; i++)
+		for (int i = 0; i < Strip->width * Strip->height; i++) {
 			FadeStrip[level][i] = Strip->data[i] != 0 ? level + 1 : 0;
+		}
 	}
 
-	for (int y = 0; y < RETRO_HEIGHT; y++)
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		memset(Background + y * RETRO_WIDTH, SKY + y * SKY_SHADES / RETRO_HEIGHT, RETRO_WIDTH);
+	}
 }

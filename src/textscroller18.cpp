@@ -100,7 +100,6 @@ static void Stroke(double origin, double x0, double y0, double x1, double y1, do
 
 void DEMO_Render(double time, double deltatime)
 {
-	RETRO_Clear(0);
 	memset(Ink, 0, sizeof(Ink));
 
 	double period = TextWidth;
@@ -150,7 +149,7 @@ void DEMO_Initialize(void)
 	TextWidth = 0.0;
 	for (int i = 0; ScrollText[i]; i++) {
 		LetterOffsets[i] = TextWidth;
-		LetterPaths[i] = nullptr;
+		LetterPaths[i] = NULL;
 		for (const Glyph &glyph : Glyphs) {
 			if (glyph.character == ScrollText[i]) LetterPaths[i] = glyph.path;
 		}

@@ -53,15 +53,15 @@
 
 enum { BOUNDARY_SCALAR, BOUNDARY_U, BOUNDARY_V };
 
-float U[GRID_SIZE];
-float V[GRID_SIZE];
-float UPrevious[GRID_SIZE];
-float VPrevious[GRID_SIZE];
-float Density[GRID_SIZE];
-float DensityPrevious[GRID_SIZE];
-float Pressure[GRID_SIZE];
-float Divergence[GRID_SIZE];
-float Curl[GRID_SIZE];
+static float U[GRID_SIZE];
+static float V[GRID_SIZE];
+static float UPrevious[GRID_SIZE];
+static float VPrevious[GRID_SIZE];
+static float Density[GRID_SIZE];
+static float DensityPrevious[GRID_SIZE];
+static float Pressure[GRID_SIZE];
+static float Divergence[GRID_SIZE];
+static float Curl[GRID_SIZE];
 
 static inline int Cell(int x, int y)
 {

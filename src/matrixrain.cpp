@@ -51,9 +51,9 @@ struct Drop {
 	double speed;
 };
 
-Drop Drops[DROPS];
-unsigned char Characters[ROWS * COLUMNS];
-float Brightness[ROWS * COLUMNS];
+static Drop Drops[DROPS];
+static unsigned char Characters[ROWS * COLUMNS];
+static float Brightness[ROWS * COLUMNS];
 
 //
 // A random printable character, space excluded
@@ -120,7 +120,6 @@ void DEMO_FixedUpdate(double timestep)
 void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
-	memset(buffer, 0, RETRO_WIDTH * RETRO_HEIGHT);
 
 	// Draw the trails
 	for (int row = 0; row < ROWS; row++) {
@@ -162,6 +161,6 @@ void DEMO_Initialize(void)
 	}
 	for (Drop &drop : Drops) {
 		Respawn(&drop);
-		drop.row = RAND() * 2 * ROWS - ROWS;
+		drop.row = mix(-ROWS, ROWS, RAND());
 	}
 }

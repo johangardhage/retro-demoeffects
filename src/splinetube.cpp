@@ -150,10 +150,8 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette, one ramp per color of the squares
-	RETRO_Palette palette[RETRO_COLORS];
-	memset(palette, 0, sizeof(palette));
-	RETRO_SetColor(0, RETRO_BLACK, palette);
+	// Init palette, one ramp per color of the squares. Entry 0 stays black
+	RETRO_Palette palette[RETRO_COLORS] = {};
 	RETRO_CreatePhongRamp(&palette[1], TUBE_SHADES, RETRO_AZURE, RETRO_K_SPECULAR, 30, 255);
 	RETRO_CreatePhongRamp(&palette[1 + TUBE_SHADES], TUBE_SHADES, RETRO_WHITE, RETRO_K_SPECULAR, 30, 255);
 	RETRO_SetPalette(palette);

@@ -98,14 +98,9 @@ void DEMO_Render(double time, double deltatime)
 			continue;
 		}
 
-		double progress;
-		if (t < ENTRANCE_TIME) {
-			progress = t / ENTRANCE_TIME;
-		} else if (t < ENTRANCE_TIME + HOLD_TIME) {
-			progress = 1.0;
-		} else {
-			progress = 1.0 - (t - ENTRANCE_TIME - HOLD_TIME) / EXIT_TIME;
-		}
+		// It rises to 1 as the row flies in, stays there while it is held,
+		// and falls back to 0 over the last EXIT_TIME
+		double progress = MIN(MIN(t / ENTRANCE_TIME, (cycle - t) / EXIT_TIME), 1.0);
 		double eased = smoothstep(0.0, 1.0, progress); // ease gently through both ends
 
 		int x = startx + (int)round((restx - startx) * eased);

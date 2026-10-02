@@ -56,17 +56,17 @@ void DEMO_Render(double time, double deltatime)
 	// Draw column
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		double theta = phase + torsion * y / RETRO_HEIGHT;
-		double sin_radius = TWISTER_RADIUS * sin(theta);
-		double cos_radius = TWISTER_RADIUS * cos(theta);
-		int corner_x[4] = {
-			(int)lround(TWISTER_CENTER_X + sin_radius),
-			(int)lround(TWISTER_CENTER_X + cos_radius),
-			(int)lround(TWISTER_CENTER_X - sin_radius),
-			(int)lround(TWISTER_CENTER_X - cos_radius),
+		double sinradius = TWISTER_RADIUS * sin(theta);
+		double cosradius = TWISTER_RADIUS * cos(theta);
+		int cornerx[4] = {
+			(int)lround(TWISTER_CENTER_X + sinradius),
+			(int)lround(TWISTER_CENTER_X + cosradius),
+			(int)lround(TWISTER_CENTER_X - sinradius),
+			(int)lround(TWISTER_CENTER_X - cosradius),
 		};
 
 		for (int corner = 0; corner < 4; corner++) {
-			DrawSpan(corner_x[corner], corner_x[(corner + 1) & 3], y, TWISTER_FACE_COLOR + corner * TWISTER_FACE_STEP);
+			DrawSpan(cornerx[corner], cornerx[(corner + 1) & 3], y, TWISTER_FACE_COLOR + corner * TWISTER_FACE_STEP);
 		}
 	}
 }

@@ -37,7 +37,7 @@
 #define LENS_XPHASE (RETRO_ANGLES_PER_TURN / 16) // offset that keeps the figure from opening on a crossing
 #define LENS_PERIOD 14.6 // seconds for the figure to close
 
-struct Lens {
+static struct Lens {
 	double x;
 	double y;
 	int buffer[LENS_WIDTH * LENS_HEIGHT];

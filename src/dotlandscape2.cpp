@@ -6,8 +6,7 @@
 // look is the terrain library's: the camera is pitched down so the island
 // fills the frame, the patch turns about its center, and the camera dollies
 // along the viewing axis between stops that keep the finite patch in view.
-// The same look as dotscroller3.cpp and dotscroller4.cpp, which share these
-// assets.
+// The same look as dotscroller4.cpp, which shares these assets.
 // Left and Right rotate the terrain. Up/W and Down/S move the camera forward
 // and backward.
 //

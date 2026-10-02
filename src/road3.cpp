@@ -97,10 +97,8 @@ struct Edge {
 	float w;
 };
 
-Segment Road[ROAD_MAX_SEGMENTS];
-Edge Edges[ROAD_DRAW_DISTANCE + 1];
-int RoadSegments = 0;
-float RoadHeight = 0; // the height the track has reached, so a section starts where the last one ended
+static Segment Road[ROAD_MAX_SEGMENTS];
+static int RoadSegments = 0;
 
 //
 // Fill a scanline from x1 to x2, clipped to the screen. The ends are pixel
@@ -145,6 +143,7 @@ void DEMO_Render(double time, double deltatime)
 	// it so the road ahead does not jump as the camera crosses a boundary
 	float x = 0;
 	float dx = -Road[base].curve * percent;
+	Edge edges[ROAD_DRAW_DISTANCE + 1];
 
 	for (int n = 0; n <= ROAD_DRAW_DISTANCE; n++) {
 		Segment *segment = &Road[(base + n) % RoadSegments];
@@ -152,9 +151,9 @@ void DEMO_Render(double time, double deltatime)
 		double dz = (base + n) * (double)ROAD_SEGMENT_LENGTH - position;
 		float scale = depth / MAX(dz, (double)ROAD_NEAR_CLIP);
 
-		Edges[n].x = RETRO_WIDTH / 2.0f + scale * (x - camerax) * (RETRO_WIDTH / 2.0f);
-		Edges[n].y = RETRO_HEIGHT / 2.0f - scale * (segment->y - cameray) * (RETRO_HEIGHT / 2.0f);
-		Edges[n].w = scale * ROAD_WIDTH * (RETRO_WIDTH / 2.0f);
+		edges[n].x = RETRO_WIDTH / 2.0f + scale * (x - camerax) * (RETRO_WIDTH / 2.0f);
+		edges[n].y = RETRO_HEIGHT / 2.0f - scale * (segment->y - cameray) * (RETRO_HEIGHT / 2.0f);
+		edges[n].w = scale * ROAD_WIDTH * (RETRO_WIDTH / 2.0f);
 
 		x += dx;
 		dx += segment->curve;
@@ -172,8 +171,8 @@ void DEMO_Render(double time, double deltatime)
 		// The quad spans the scanlines between its far and its near boundary.
 		// Both are still projected when the near one is behind the camera,
 		// where it lands far below the screen and only the clipping is left
-		float ytop = Edges[n + 1].y;
-		float ybottom = Edges[n].y;
+		float ytop = edges[n + 1].y;
+		float ybottom = edges[n].y;
 
 		if (ybottom <= ytop || ybottom <= 0 || ytop >= RETRO_HEIGHT) {
 			continue;
@@ -186,8 +185,8 @@ void DEMO_Render(double time, double deltatime)
 		for (int y = y1; y < y2; y++) {
 			// The center and the half-width are linear in y inside the quad
 			float k = (y - ytop) * step;
-			float cx = mix(Edges[n + 1].x, Edges[n].x, k);
-			float cw = mix(Edges[n + 1].w, Edges[n].w, k);
+			float cx = mix(edges[n + 1].x, edges[n].x, k);
+			float cw = mix(edges[n + 1].w, edges[n].w, k);
 
 			unsigned char *row = dest + y * RETRO_WIDTH;
 			memset(row, grass, RETRO_WIDTH);
@@ -214,8 +213,10 @@ void DEMO_Render(double time, double deltatime)
 //
 static void AddRoad(int enter, int hold, int leave, float curve, float height)
 {
+	static float roadheight = 0; // the height the track has reached, so a section starts where the last one ended
+
 	int total = enter + hold + leave;
-	float starty = RoadHeight;
+	float starty = roadheight;
 	float endy = starty + height * ROAD_SEGMENT_LENGTH;
 
 	for (int n = 0; n < total; n++) {
@@ -233,7 +234,7 @@ static void AddRoad(int enter, int hold, int leave, float curve, float height)
 		segment->y = mix(starty, endy, ease);
 	}
 
-	RoadHeight = endy;
+	roadheight = endy;
 }
 
 void DEMO_Initialize(void)

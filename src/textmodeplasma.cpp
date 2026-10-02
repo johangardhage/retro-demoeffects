@@ -61,8 +61,8 @@ struct TextCell {
 	unsigned char attribute;
 };
 
-TextCell TextBuffer[ROWS * COLUMNS];
-TextCell Ramp[SHADES];
+static TextCell TextBuffer[ROWS * COLUMNS];
+static TextCell Ramp[SHADES];
 
 //
 // The 8×8 glyph of a character, from the font or, for the block characters, the table above
@@ -130,10 +130,10 @@ void DEMO_Initialize(void)
 
 	// Init ramp. From each color to the next: the color alone, then ░ ▒ ▓ of
 	// the next one over it.
-	static const unsigned char Steps[4] = { ' ', 176, 177, 178 };
+	static const unsigned char steps[4] = { ' ', 176, 177, 178 };
 	for (int i = 0; i < SHADES; i++) {
 		int from = RampColors[i / 4];
 		int to = RampColors[i / 4 + 1];
-		Ramp[i] = { Steps[i % 4], (unsigned char)(from << 4 | to) };
+		Ramp[i] = { steps[i % 4], (unsigned char)(from << 4 | to) };
 	}
 }

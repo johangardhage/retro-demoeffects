@@ -35,6 +35,8 @@
 
 #define MAP_WIDTH 80 // cells across the platform
 #define MAP_DEPTH 40 // and along it
+#define ORIGIN_X ((MAP_WIDTH - 1) / 2.0f) // the patch's own center, in cells
+#define ORIGIN_Z ((MAP_DEPTH - 1) / 2.0f)
 #define DOT_SPACING 3.0f // pixels between neighboring dots, the same in x, y and z
 #define EXTRUSION 8 // levels a lit texel stands above the landscape
 #define LETTER_GAP 3 // levels of clearance between the floor and a letter's underside
@@ -58,13 +60,11 @@
 
 static const char *const ScrollText[] = { "     RETRO DEMOEFFECTS..." };
 
-RETRO_Image *ScrollImage;
+static RETRO_Image *ScrollImage;
 
-float OriginX;
-float OriginZ;
-int TextRow0;
-float DepthNear;
-float DepthFar;
+// The nearest and farthest a dot can come as the patch turns
+static float DepthNear;
+static float DepthFar;
 
 static float LandscapeY(float x, float z, float time)
 {
@@ -132,6 +132,7 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_ClearDepthBuffer();
 
 	float phase = fmod(time * SCROLL_SPEED, (double)ScrollImage->width);
+	int textrow0 = (MAP_DEPTH - ScrollImage->height) / 2;
 
 	bool occupied[MAP_DEPTH][MAP_WIDTH] = {};
 
@@ -150,10 +151,10 @@ void DEMO_Render(double time, double deltatime)
 					continue;
 				}
 
-				occupied[TextRow0 + sy][(int)lround(col)] = true;
+				occupied[textrow0 + sy][(int)lround(col)] = true;
 
-				float x = (col - OriginX) * DOT_SPACING;
-				float z = (OriginZ - (TextRow0 + sy)) * DOT_SPACING;
+				float x = (col - ORIGIN_X) * DOT_SPACING;
+				float z = (ORIGIN_Z - (textrow0 + sy)) * DOT_SPACING;
 				PlotLetterColumn(x, z, (float)time, wall, matrix);
 			}
 		}
@@ -164,8 +165,8 @@ void DEMO_Render(double time, double deltatime)
 			if (occupied[row][col]) {
 				continue;
 			}
-			float x = (col - OriginX) * DOT_SPACING;
-			float z = (OriginZ - row) * DOT_SPACING;
+			float x = (col - ORIGIN_X) * DOT_SPACING;
+			float z = (ORIGIN_Z - row) * DOT_SPACING;
 			PlotDot(x, -LandscapeY(x, z, (float)time), z, 1, GROUND_SHADES, GROUND_CONTRAST, matrix);
 		}
 	}
@@ -182,12 +183,8 @@ void DEMO_Initialize(void)
 		RETRO_RageQuit("Scroll strip is taller than the landscape\n");
 	}
 
-	OriginX = (MAP_WIDTH - 1) / 2.0f;
-	OriginZ = (MAP_DEPTH - 1) / 2.0f;
-	TextRow0 = (MAP_DEPTH - ScrollImage->height) / 2;
-
-	float halfw = OriginX * DOT_SPACING;
-	float halfd = OriginZ * DOT_SPACING;
+	float halfw = ORIGIN_X * DOT_SPACING;
+	float halfd = ORIGIN_Z * DOT_SPACING;
 	float halfh = WAVE_AMP + (LETTER_GAP + EXTRUSION) * DOT_SPACING;
 	float radius = length(vec3{ halfw, halfd, halfh });
 	DepthNear = OBJECT_Z - radius;

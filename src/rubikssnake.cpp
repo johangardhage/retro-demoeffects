@@ -71,7 +71,7 @@
 #define ROTATION_SPEED_Z 0.3
 
 // Quarter turns at each joint, from the first to the last
-static const char *Shapes[] = {
+static const char *const Shapes[] = {
 	"00000000000000000000000", // bar
 	"13113133131131331311313", // ball
 	"01011201011201011201011", // ring
@@ -87,7 +87,7 @@ static const char *Shapes[] = {
 // The twists that take each shape to the one after it, and the last back to
 // the first, in the order they are made: the joint, a for the first, then + or
 // - for a quarter turn one way or the other, twice over for a half turn
-static const char *Twists[NUM_SHAPES] = {
+static const char *const Twists[NUM_SHAPES] = {
 	"w-v+u-t+r-q+p-o-n+m-k+l+j-i+g-h-f+e-c+a+d+b+b++u++s+u++",
 	"u--s-u--b--a-e++c-h++g+i-j--m+o+p--r-u+w--l+f+",
 	"v++w++u++j--d++r++q--r--p++l++k++l++o++f++i++e++f--c++",
@@ -99,7 +99,6 @@ static const char *Twists[NUM_SHAPES] = {
 };
 
 static double TwistTime[NUM_SHAPES]; // seconds the twists out of each shape take
-static bool Careful = true; // the way the next shape is to be made
 
 // The corners of a wedge in its own frame: the triangle at z = -½, then at ½
 static const vec3 PrismCorners[PRISM_VERTICES] = {
@@ -123,8 +122,9 @@ void DEMO_Render(double time, double deltatime)
 	float ay = fmod(time * ROTATION_SPEED_Y, 2 * M_PI);
 	float az = fmod(time * ROTATION_SPEED_Z, 2 * M_PI);
 
+	static bool nextcareful = true; // the way the next shape is to be made
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
-		Careful = !Careful;
+		nextcareful = !nextcareful;
 	}
 
 	// Calculate phase: the shape the snake is leaving, and how long ago it made it
@@ -138,7 +138,7 @@ void DEMO_Render(double time, double deltatime)
 		iphase = (iphase + 1) % NUM_SHAPES;
 	}
 	if (phase < SHAPE_HOLD) {
-		careful = Careful;
+		careful = nextcareful;
 	}
 
 	float quarters[JOINTS];
@@ -211,8 +211,8 @@ void DEMO_Render(double time, double deltatime)
 	// Draw state: the way in use, and the way waiting to be taken up if Tab has
 	// changed it since
 	RETRO_PutString(careful ? "CAREFUL" : "QUICK", 10, 10, TEXT_COLOR);
-	if (Careful != careful) {
-		RETRO_PutString(Careful ? "NEXT CAREFUL" : "NEXT QUICK", 10, 20, TEXT_COLOR);
+	if (nextcareful != careful) {
+		RETRO_PutString(nextcareful ? "NEXT CAREFUL" : "NEXT QUICK", 10, 20, TEXT_COLOR);
 	}
 	RETRO_PutString("TAB MODE", 10, 222, TEXT_COLOR);
 }

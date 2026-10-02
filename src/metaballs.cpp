@@ -26,7 +26,7 @@
 #define NUM_BALLS 5
 #define THRESHOLD 50 // F = T on the circle of radius R around one ball
 
-struct MetaBall {
+static struct MetaBall {
 	vec2 pos;
 	vec2 vel;
 	float radius;
@@ -92,7 +92,7 @@ void DEMO_Initialize(void)
 	// Init balls
 	for (int i = 0; i < NUM_BALLS; i++) {
 		Balls[i].pos = { (float)RANDOM(RETRO_WIDTH), (float)RANDOM(RETRO_HEIGHT) };
-		Balls[i].vel = { RANDOMF(240) - 120, RANDOMF(240) - 120 };
+		Balls[i].vel = { (float)mix(-120, 120, RAND()), (float)mix(-120, 120, RAND()) };
 		Balls[i].radius = RANDOM(10) + 10;
 	}
 }

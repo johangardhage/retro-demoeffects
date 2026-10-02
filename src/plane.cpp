@@ -37,7 +37,7 @@
 #define PLANE_PERIOD 256 // one texture width; u, v, xd and yd share it
 #define FIELD_TILE 64
 
-unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
+static unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
 
 void DEMO_Render(double time, double deltatime)
 {

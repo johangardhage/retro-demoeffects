@@ -1,5 +1,5 @@
 //
-// Amiga Juggler — basic variant
+// Amiga Juggler, on palette ramps
 //
 // In 1986 Eric Graham found his Amiga 1000 could ray trace: three chrome
 // balls tossed by a humanoid built entirely out of spheres, one second of
@@ -101,7 +101,7 @@ struct Sphere {
 static Sphere Body[SPHERE_COUNT];
 
 static vec3 CamEye, CamCenter, CamU, CamV;
-static vec3 LightPos = { -564, 686, 147 };
+static const vec3 LightPos = { -564, 686, 147 };
 
 static bool Shadowed(vec3 origin, vec3 dir, float maxdist)
 {

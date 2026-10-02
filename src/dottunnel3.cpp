@@ -51,9 +51,9 @@
 #define TUNNEL_XPHASE (RETRO_ANGLES_PER_TURN / 8.0) // offset that keeps the figure from opening on a crossing
 #define TUNNEL_PERIOD (5 * RETRO_ANGLES_PER_TURN) // five turns of the figure, the shortest span the bands also close over
 
-double RingX[RING_DOTS];
-double RingY[RING_DOTS];
-double RingScale[TUNNEL_RINGS];
+static double RingX[RING_DOTS];
+static double RingY[RING_DOTS];
+static double RingScale[TUNNEL_RINGS];
 
 void DEMO_Render(double time, double deltatime)
 {

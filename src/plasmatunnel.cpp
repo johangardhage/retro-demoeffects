@@ -47,28 +47,29 @@
 #define TUNNEL_RING_STEP 0.5 // ring spacing, in ring radius units
 #define TUNNEL_RING_GAIN 1.035 // texture rows gained per ring inward
 
-unsigned char AngleMap[MAP_SIZE];
-unsigned char DepthMap[MAP_SIZE];
-unsigned char Texture[TEXTURE_SIZE * TEXTURE_SIZE];
-unsigned char TunnelBuffer[MAP_SIZE];
-unsigned char Scroll;
+static unsigned char AngleMap[MAP_SIZE];
+static unsigned char DepthMap[MAP_SIZE];
+static unsigned char Texture[TEXTURE_SIZE * TEXTURE_SIZE];
+static unsigned char TunnelBuffer[MAP_SIZE];
 
 void DEMO_FixedUpdate(double timestep)
 {
+	static unsigned char scroll;
+
 	// Fade first so the blit shows this step's add, matching the original
 	// order: accumulate, display, then fade for the next step. Fading up
 	// front is that same cycle entered one phase earlier; nothing here
 	// depends on another pixel, so fade and add can share one pass.
 	for (int i = 0; i < MAP_SIZE; i++) {
 		unsigned char depth = DepthMap[i];
-		unsigned char u = AngleMap[i] + Scroll;
-		unsigned char v = depth + Scroll;
+		unsigned char u = AngleMap[i] + scroll;
+		unsigned char v = depth + scroll;
 		unsigned char color = Texture[(v << 8) | u] + depth;
 
 		TunnelBuffer[i] = CLAMP256(TunnelBuffer[i] * 5 / 6 + color);
 	}
 
-	Scroll++;
+	scroll++;
 }
 
 void DEMO_Render(double time, double deltatime)
@@ -110,11 +111,9 @@ void DEMO_Initialize(void)
 	// palette indices, not brightness, so they cannot be summed as they
 	// are, and the load leaves the palette set above active rather than
 	// the photo's own.
-	RETRO_LoadImage("assets/flowers_256x256.pcx");
-	unsigned char *photo = RETRO_ImageData();
-	RETRO_Palette *photopalette = RETRO_ImagePalette();
+	RETRO_Image *photo = RETRO_LoadImage("assets/flowers_256x256.pcx");
 	for (int i = 0; i < TEXTURE_SIZE * TEXTURE_SIZE; i++) {
-		RETRO_Palette color = photopalette[photo[i]];
+		RETRO_Palette color = photo->palette[photo->data[i]];
 		int luminance = (color.r * 76 + color.g * 150 + color.b * 29) >> 8;
 		Texture[i] = luminance >> 2;
 	}

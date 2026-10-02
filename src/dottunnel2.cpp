@@ -34,7 +34,7 @@
 #define SWAY_SPEED 100 // angle units per second
 #define SHADES 64 // palette entries the depth shading ramps over
 
-vec2 Circle[RING_DOTS];
+static vec2 Circle[RING_DOTS];
 
 void DEMO_Render(double time, double deltatime)
 {

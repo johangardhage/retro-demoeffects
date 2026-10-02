@@ -86,12 +86,14 @@ static void BuildGlyph(int letter)
 			if (!Ink(letter, x, y)) continue;
 			float left = x * dx - LETTER_WIDTH / 2, right = left + dx;
 			float top = y * dy, bottom = top + dy;
-			if (!Ink(letter, x, y - 1))
+			if (!Ink(letter, x, y - 1)) {
 				AddFace(letter, { left, top, front }, { right, top, front },
 					{ right, top, back }, { left, top, back }, { 0, -1, 0 });
-			if (!Ink(letter, x, y + 1))
+			}
+			if (!Ink(letter, x, y + 1)) {
 				AddFace(letter, { left, bottom, front }, { right, bottom, front },
 					{ right, bottom, back }, { left, bottom, back }, { 0, 1, 0 });
+			}
 		}
 	}
 }
@@ -122,7 +124,7 @@ static PolygonPoint Project(vec3 point, vec3 normal, float top, double time)
 
 void DEMO_Render(double time, double deltatime)
 {
-	memcpy(RETRO_FrameBuffer(), Background, sizeof(Background));
+	RETRO_Blit(Background);
 	RETRO_ClearDepthBuffer();
 	double phase = fmod(time, PASS_CYCLE) * SCROLL_SPEED;
 	for (int i = 0; i < LETTERS; i++) {
@@ -130,8 +132,9 @@ void DEMO_Render(double time, double deltatime)
 		if (top > ENTRY_Y || top + LETTER_HEIGHT < -CULL_MARGIN) continue;
 		for (const GlyphFace &face : Glyphs[i]) {
 			PolygonPoint quad[4];
-			for (int j = 0; j < 4; j++)
+			for (int j = 0; j < 4; j++) {
 				quad[j] = Project(face.corner[j], face.normal, top, time);
+			}
 			RETRO_DrawGouraudPolygon(quad, 4);
 		}
 	}
@@ -139,7 +142,7 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_SetColor(0, RETRO_Palette{ 0, 0, 0 });
+	RETRO_SetColor(0, RETRO_BLACK);
 	RETRO_SetColor(1, RETRO_Palette{ 68, 82, 118 });
 	RETRO_SetColor(2, RETRO_Palette{ 33, 49, 84 });
 	const RETRO_Palette chrome[] = { { 63, 27, 54 }, { 93, 91, 124 },
@@ -170,8 +173,9 @@ void DEMO_Initialize(void)
 		vec2 a = edge[segment], b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
 			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
-			for (int x = 0; x < right; x++)
+			for (int x = 0; x < right; x++) {
 				Background[y * RETRO_WIDTH + x] = y < 133 ? 1 : 2;
+			}
 		}
 	}
 }

@@ -52,8 +52,8 @@
 #define TIME_CURL 3.0         // seconds a picture takes to peel off
 #define TIME_TURN (TIME_HOLD + TIME_CURL)
 
-RETRO_Image *Picture[2];
-unsigned char ColorLUT[32][32][32];
+static RETRO_Image *Picture[2];
+static unsigned char ColorLUT[32][32][32];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -84,29 +84,22 @@ void DEMO_Render(double time, double deltatime)
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			float d = (x + 0.5f) * n.x + (y + 0.5f) * n.y - c;
 
-			// The page points over this pixel, highest first
+			// The page points over this pixel, highest first: the back side,
+			// then the front under it. Past the roll there are none
 			float candidate[2];
-			bool back[2];
 			int candidates = 0;
-
-			if (d < 0) {
-				candidate[candidates] = M_PI * r - d;
-				back[candidates++] = true;
-				candidate[candidates] = d;
-				back[candidates++] = false;
-			} else if (d <= r) {
-				float arc = r * asin(d / r);
-				candidate[candidates] = M_PI * r - arc;
-				back[candidates++] = true;
-				candidate[candidates] = arc;
-				back[candidates++] = false;
+			if (d <= r) {
+				float arc = d < 0 ? d : r * asin(d / r);
+				candidate[0] = M_PI * r - arc;
+				candidate[1] = arc;
+				candidates = 2;
 			}
-
 			float red = 0, green = 0, blue = 0;
 			bool covered = false;
 
 			for (int i = 0; i < candidates && !covered; i++) {
 				float s = candidate[i];
+				bool back = i == 0;
 				int sx = floor(x + (s - d) * n.x);
 				int sy = floor(y + (s - d) * n.y);
 
@@ -117,7 +110,7 @@ void DEMO_Render(double time, double deltatime)
 				// Lambert on the side that faces up, relative to flat paper
 				float theta = s <= 0 ? 0 : (s >= M_PI * r ? M_PI : s / r);
 				float lambert = -sin(theta) * lightn + cos(theta) * lightz;
-				lambert = back[i] ? -lambert : lambert;
+				lambert = back ? -lambert : lambert;
 				float shade = MIN(1.0f, mix(AMBIENT, 1, MAX(0.0f, lambert) / lightz));
 
 				RETRO_Palette color = palette[front[sy * RETRO_WIDTH + sx]];
@@ -125,7 +118,7 @@ void DEMO_Render(double time, double deltatime)
 				green = color.g;
 				blue = color.b;
 
-				if (back[i]) {
+				if (back) {
 					red = mix(red, PAPER.r, BACK_TINT);
 					green = mix(green, PAPER.g, BACK_TINT);
 					blue = mix(blue, PAPER.b, BACK_TINT);

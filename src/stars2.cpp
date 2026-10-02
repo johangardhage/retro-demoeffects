@@ -29,13 +29,13 @@
 #define STAR_FAR 500 // and the depth it comes back at
 #define SHADES 64 // palette entries the depth shading ramps over
 
-vec3 Stars[NUM_STARS];
+static vec3 Stars[NUM_STARS];
 
 // Direction is measured on the screen, so a star at STAR_FAR lands within a screen of the middle.
 static void PlaceStar(vec3 *star, float depth)
 {
-	star->x = RANDOM(RETRO_WIDTH) - (RETRO_WIDTH / 2);
-	star->y = RANDOM(RETRO_HEIGHT) - (RETRO_HEIGHT / 2);
+	star->x = mix(-RETRO_WIDTH / 2, RETRO_WIDTH / 2, RAND());
+	star->y = mix(-RETRO_HEIGHT / 2, RETRO_HEIGHT / 2, RAND());
 	star->z = depth;
 }
 
@@ -67,6 +67,6 @@ void DEMO_Initialize(void)
 
 	// Init stars. Spread through the whole field so it starts full rather than filling from the back.
 	for (int i = 0; i < NUM_STARS; i++) {
-		PlaceStar(&Stars[i], RANDOM(STAR_FAR - STAR_NEAR) + STAR_NEAR);
+		PlaceStar(&Stars[i], mix(STAR_NEAR, STAR_FAR, RAND()));
 	}
 }

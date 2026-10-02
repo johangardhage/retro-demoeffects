@@ -28,7 +28,7 @@
 #define STAR_NEAREST (-150) // nearest a star may come before it would streak, in rotated depth
 #define SHADES 64 // palette entries the depth shading ramps over
 
-Vertex Stars[NUM_STARS];
+static Vertex Stars[NUM_STARS];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -69,9 +69,9 @@ void DEMO_Initialize(void)
 	// Init stars. Fill a box centered on the eye's axis: [-W, W] x [-H, H] x [-BOX_DEPTH, BOX_DEPTH].
 	for (int i = 0; i < NUM_STARS; i++) {
 		Stars[i].pos = {
-			(float)(RANDOM(RETRO_WIDTH * 2) - RETRO_WIDTH),
-			(float)(RANDOM(RETRO_HEIGHT * 2) - RETRO_HEIGHT),
-			(float)(RANDOM(BOX_DEPTH * 2) - BOX_DEPTH)
+			(float)mix(-RETRO_WIDTH, RETRO_WIDTH, RAND()),
+			(float)mix(-RETRO_HEIGHT, RETRO_HEIGHT, RAND()),
+			(float)mix(-BOX_DEPTH, BOX_DEPTH, RAND())
 		};
 	}
 }

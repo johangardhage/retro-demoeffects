@@ -69,7 +69,7 @@
 #define PLANE_EPSILON 65536.0f // closest |c| gets before 1/c is capped
 #define FIELD_TILE 64
 
-unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
+static unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
 
 void DEMO_Render(double time, double deltatime)
 {

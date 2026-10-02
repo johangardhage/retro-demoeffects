@@ -70,7 +70,6 @@
 #define MATERIAL_AMBIENT 0.34f // cloth is lit by the whole sky, not only by the sun
 #define MATERIAL_DIFFUSE 0.60f
 #define MATERIAL_SPECULAR 0.16f // cloth has a broad sheen, not a highlight
-#define MATERIAL_SHININESS 12 // fixed: the specular is unrolled as x⁴·x⁴·x⁴
 
 //
 // One mode of the surface
@@ -86,7 +85,7 @@ struct ClothWave {
 	float phase; // in turns, so the modes do not all start from the same crest
 };
 
-ClothWave ClothWaves[CLOTH_WAVES] = {
+static const ClothWave ClothWaves[CLOTH_WAVES] = {
 	{ 240, 430, 0.293f, 0.00f },
 	{ 155, -310, 0.208f, 0.37f },
 	{ 100, 720, 0.146f, 0.71f },
@@ -105,22 +104,22 @@ struct ClothPhasor {
 	float sine, cosine;
 };
 
-float ClothStepSin[CLOTH_WAVES];
-float ClothStepCos[CLOTH_WAVES];
+static float ClothStepSin[CLOTH_WAVES];
+static float ClothStepCos[CLOTH_WAVES];
 
 // 2π / λ for each mode, along the flag and across it. Constant, and the inner
 // loop runs once per mode per pixel, so they are divided out once at startup
 // rather than 2 · CLOTH_WAVES times for every pixel of every frame.
-float ClothTurnX[CLOTH_WAVES];
-float ClothTurnY[CLOTH_WAVES];
+static float ClothTurnX[CLOTH_WAVES];
+static float ClothTurnY[CLOTH_WAVES];
 
 // The envelope A(x) and its first two derivatives, which depend only on the distance from
 // the mast and so are the same in every row and every frame
-float ClothEnvelope[FLAG_WIDTH];
-float ClothEnvelopeSlope[FLAG_WIDTH];
-float ClothEnvelopeCurve[FLAG_WIDTH];
+static float ClothEnvelope[FLAG_WIDTH];
+static float ClothEnvelopeSlope[FLAG_WIDTH];
+static float ClothEnvelopeCurve[FLAG_WIDTH];
 
-vec3 Halfway;
+static vec3 Halfway;
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -204,8 +203,8 @@ void DEMO_Render(double time, double deltatime)
 			if (lambert > 0) {
 				float normalhalfway = CLAMP01(dot(normal, Halfway));
 
-				// (N·H)^12 by squaring: x², x⁴, x⁸ · x⁴. Four multiplies rather
-				// than a call to pow for an exponent known at compile time.
+				// A shininess of 12, as (N·H)^12 by squaring: x², x⁴, x⁴ · x⁴ · x⁴.
+				// Four multiplies rather than a call to pow for a fixed exponent.
 				float squared = normalhalfway * normalhalfway;
 				float fourth = squared * squared;
 				specular = fourth * fourth * fourth;
@@ -216,7 +215,7 @@ void DEMO_Render(double time, double deltatime)
 			float occlusion = 1.0f / (1.0f + CLOTH_OCCLUSION * MAX(0.0f, curvex));
 
 			float intensity = MATERIAL_AMBIENT * occlusion + MATERIAL_DIFFUSE * lambert + MATERIAL_SPECULAR * specular;
-			int shade = (RETRO_COLORS / 2.0f - 1) * CLAMP01(intensity) + 0.5f;
+			int shade = (FLAG_COLORS - 1) * CLAMP01(intensity) + 0.5f;
 
 			// The cross is tested in (along, up): arc length along the cloth,
 			// sheared screen row across it. Not screen (x, y).

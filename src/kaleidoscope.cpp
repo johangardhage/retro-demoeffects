@@ -29,10 +29,10 @@
 #define ZOOM_SHIFT 8
 #define ANIMATION_SPEED 0.25 // radians a second; the complete motion repeats at 2pi
 
-int RadiusTable[RETRO_HEIGHT][RETRO_WIDTH];
-int AngleTable[RETRO_HEIGHT][RETRO_WIDTH];
-int SinTable[ANGLE_STEPS];
-int CosTable[ANGLE_STEPS];
+static int RadiusTable[RETRO_HEIGHT][RETRO_WIDTH];
+static int AngleTable[RETRO_HEIGHT][RETRO_WIDTH];
+static int SinTable[ANGLE_STEPS];
+static int CosTable[ANGLE_STEPS];
 
 void DEMO_Render(double time, double deltatime)
 {

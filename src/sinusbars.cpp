@@ -48,7 +48,7 @@ void DEMO_Render(double time, double deltatime)
 		// two half-palettes centered on the neutral, white midpoint
 		unsigned char color = 128 + CLAMP(w * 127 / 40, -127, 128);
 
-		RETRO_DrawLine(x1, y, x2, y, color);
+		RETRO_DrawHline(x1, x2, y, color);
 	}
 }
 

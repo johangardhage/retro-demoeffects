@@ -8,7 +8,7 @@
 // of constant width.
 //
 //   radius(y)   = RADIUS + RADIUS_WAVE · sin(phase_r + y · RADIUS_Y)
-//   center_x(y) = CENTER_X + SWAY · sin(phase_s + y · SWAY_Y)
+//   centerx(y) = CENTER_X + SWAY · sin(phase_s + y · SWAY_Y)
 //   θ(y)        = (y · torsion(phase) + phase) · TURNS
 //
 // torsion is twister3's envelope, TORSION · sin(7 phase) · cos(phase). The
@@ -58,7 +58,7 @@
 #define TWISTER_AMBIENT 0.32f
 #define TWISTER_SPECULAR_MIX 0.50f // how far the highlight walks toward white
 
-unsigned char TwisterShadeTable[RETRO_COLORS * TWISTER_SHADES];
+static unsigned char TwisterShadeTable[RETRO_COLORS * TWISTER_SHADES];
 
 //
 // Map every source texel through a chrome ramp and back into the picture's
@@ -74,7 +74,7 @@ static void CreateChromeShadeTable(const RETRO_Palette *palette)
 		for (int shade = 0; shade < TWISTER_SHADES; shade++) {
 			RETRO_Palette target;
 			if (shade < TWISTER_DIFFUSE) {
-				float level = TWISTER_DIFFUSE > 1 ? (float)shade / (TWISTER_DIFFUSE - 1) : 1.0f;
+				float level = (float)shade / (TWISTER_DIFFUSE - 1);
 				float brightness = mix(TWISTER_AMBIENT, 1.0f, level);
 				target = color * brightness;
 			} else {
@@ -95,7 +95,7 @@ static void CreateChromeShadeTable(const RETRO_Palette *palette)
 // this row's; shade mixes a broad phong of that normal with a tight one.
 // A face turned edge on has right <= left and covers nothing.
 //
-static void DrawSpan(int left, int right, int y, unsigned char *texels, int base, double center_x, double radius)
+static void DrawSpan(int left, int right, int y, unsigned char *texels, int base, double centerx, double radius)
 {
 	if (right <= left) {
 		return;
@@ -105,14 +105,14 @@ static void DrawSpan(int left, int right, int y, unsigned char *texels, int base
 	int x0 = MAX(left, 0);
 	int x1 = MIN(right, RETRO_WIDTH);
 	float u = base + (x0 - left) * du;
-	float inv_radius = radius > 0.5 ? 1.0f / (float)radius : 0.0f;
+	float invradius = radius > 0.5 ? 1.0f / (float)radius : 0.0f;
 
 	unsigned char *row = RETRO_FrameBuffer() + y * RETRO_WIDTH;
 	for (int x = x0; x < x1; x++, u += du) {
 		unsigned char texel = texels[(int)u];
-		float nx = ((float)x - (float)center_x) * inv_radius;
-		float nz_squared = 1.0f - nx * nx;
-		float nz = nz_squared > 0.0f ? sqrtf(nz_squared) : 0.0f;
+		float nx = ((float)x - (float)centerx) * invradius;
+		float nzsquared = 1.0f - nx * nx;
+		float nz = sqrtf(MAX(nzsquared, 0.0f));
 		float light = 0.62f * powf(nz, TWISTER_FORM) + 0.38f * powf(nz, TWISTER_FALLOFF);
 		int shade = (int)(light * (TWISTER_SHADES - 1));
 		row[x] = TwisterShadeTable[texel * TWISTER_SHADES + CLAMP(shade, 0, TWISTER_SHADES)];
@@ -121,46 +121,44 @@ static void DrawSpan(int left, int right, int y, unsigned char *texels, int base
 
 void DEMO_Render(double time, double deltatime)
 {
+	// Calculate phase
 	double phase = fmod(time * TWISTER_SPEED, TWISTER_PERIOD);
 	double torsion = TWISTER_TORSION * SIN(phase * TWISTER_TORSION_WAVE * TWISTER_CYCLE) * COS(phase * TWISTER_CYCLE);
 	double scroll = phase * TWISTER_IMAGE_SCROLL;
-	double radius_clock = phase * TWISTER_RADIUS_PHASE;
-	double sway_clock = phase * TWISTER_SWAY_PHASE;
+	double radiusclock = phase * TWISTER_RADIUS_PHASE;
+	double swayclock = phase * TWISTER_SWAY_PHASE;
 
 	unsigned char *image = RETRO_ImageData();
-	double radius_step = TWISTER_RADIUS_Y * RETRO_ANGLES_PER_TURN / RETRO_HEIGHT;
-	double sway_step = TWISTER_SWAY_Y * RETRO_ANGLES_PER_TURN / RETRO_HEIGHT;
+	double radiusstep = TWISTER_RADIUS_Y * RETRO_ANGLES_PER_TURN / RETRO_HEIGHT;
+	double swaystep = TWISTER_SWAY_Y * RETRO_ANGLES_PER_TURN / RETRO_HEIGHT;
 
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		double radius = TWISTER_RADIUS + TWISTER_RADIUS_WAVE * SIN(radius_clock + y * radius_step);
-		double center_x = TWISTER_CENTER_X + TWISTER_SWAY * SIN(sway_clock + y * sway_step);
-		if (radius < 8.0) {
-			radius = 8.0;
-		}
+		double radius = MAX(TWISTER_RADIUS + TWISTER_RADIUS_WAVE * SIN(radiusclock + y * radiusstep), 8.0);
+		double centerx = TWISTER_CENTER_X + TWISTER_SWAY * SIN(swayclock + y * swaystep);
 
 		double index = y * torsion + phase;
 		int v = WRAP(y + scroll, TWISTER_IMAGE_SIZE);
 		unsigned char *texels = image + v * TWISTER_IMAGE_SIZE;
 
 		double angle = index * TWISTER_TURNS * TWISTER_CYCLE;
-		double sin_radius = radius * SIN(angle);
-		double cos_radius = radius * COS(angle);
-		int corner_x[4] = {
-			(int)lround(center_x - cos_radius),
-			(int)lround(center_x + sin_radius),
-			(int)lround(center_x + cos_radius),
-			(int)lround(center_x - sin_radius),
+		double sinradius = radius * SIN(angle);
+		double cosradius = radius * COS(angle);
+		int cornerx[4] = {
+			(int)lround(centerx - cosradius),
+			(int)lround(centerx + sinradius),
+			(int)lround(centerx + cosradius),
+			(int)lround(centerx - sinradius),
 		};
 
 		int face = 0;
 		for (int corner = 1; corner < 4; corner++) {
-			if (corner_x[corner] < corner_x[face]) {
+			if (cornerx[corner] < cornerx[face]) {
 				face = corner;
 			}
 		}
 
-		DrawSpan(corner_x[face], corner_x[(face + 1) & 3], y, texels, face * TWISTER_IMAGE_FACE, center_x, radius);
-		DrawSpan(corner_x[(face + 1) & 3], corner_x[(face + 2) & 3], y, texels, ((face + 1) & 3) * TWISTER_IMAGE_FACE, center_x, radius);
+		DrawSpan(cornerx[face], cornerx[(face + 1) & 3], y, texels, face * TWISTER_IMAGE_FACE, centerx, radius);
+		DrawSpan(cornerx[(face + 1) & 3], cornerx[(face + 2) & 3], y, texels, ((face + 1) & 3) * TWISTER_IMAGE_FACE, centerx, radius);
 	}
 }
 

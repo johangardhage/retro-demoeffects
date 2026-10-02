@@ -73,7 +73,7 @@ static const float Bayer[4][4] = {
 	{ 15.5f / 16, 7.5f / 16, 13.5f / 16, 5.5f / 16 },
 };
 
-unsigned char FogTable[RETRO_COLORS * TUNNEL_FOG_SHADES];
+static unsigned char FogTable[RETRO_COLORS * TUNNEL_FOG_SHADES];
 
 void DEMO_Render(double time, double deltatime)
 {

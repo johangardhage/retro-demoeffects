@@ -33,8 +33,8 @@
 #define TUNNEL_MOUTH_RADIUS 10.0 // pixels, the hole cut at the vanishing point
 #define TUNNEL_HOLE_THRESHOLD (TUNNEL_RATIO / TUNNEL_MOUTH_RADIUS)
 
-int DepthTable[RETRO_HEIGHT][RETRO_WIDTH];
-int AngleTable[RETRO_HEIGHT][RETRO_WIDTH];
+static int DepthTable[RETRO_HEIGHT][RETRO_WIDTH];
+static int AngleTable[RETRO_HEIGHT][RETRO_WIDTH];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -50,9 +50,9 @@ void DEMO_Render(double time, double deltatime)
 	// Draw tunnel
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
+			// The hole is the cleared framebuffer, left as it is
 			int depth = DepthTable[y][x];
 			if (depth > TUNNEL_HOLE_THRESHOLD) {
-				RETRO_PutPixel(x, y, 0);
 				continue;
 			}
 

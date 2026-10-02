@@ -31,7 +31,7 @@
 #define FIRE_CHAOS 6 // a column is sparked with probability 1 / FIRE_CHAOS each step
 #define FIRE_DECAY 3 // subtracted after the 8-tap average, so how fast a flame dies as it rises
 
-unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
+static unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 
 //
 // Advance the field one fixed step

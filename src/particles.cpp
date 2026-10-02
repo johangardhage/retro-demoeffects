@@ -43,7 +43,7 @@
 
 #define TRAIL_DECAY 3 // brightness the blur takes off each step, so the trails fade
 
-struct Particle {
+static struct Particle {
 	vec2 pos;
 	vec2 dir;
 	unsigned char color;

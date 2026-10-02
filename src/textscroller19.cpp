@@ -48,7 +48,7 @@ static const RETRO_Palette ColorStops[] = {
 	{ 200, 160, 255 }, // lavender
 };
 
-RETRO_Image *ScrollImage;
+static RETRO_Image *ScrollImage;
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -60,8 +60,6 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate the phases of the wave the columns ride and of the color ramp
 	double wave = fmod(time * WAVE_SPEED, RETRO_ANGLES_PER_TURN);
 	double colorphase = fmod(time * COLOR_SPEED, COLOR_STEPS);
-
-	RETRO_Clear(0);
 
 	// Draw scroller, a column at a time, each dropped by the sine at that column,
 	// painted in that column's color and its glyph rows clipped to the screen

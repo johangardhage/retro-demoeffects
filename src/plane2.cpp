@@ -45,7 +45,7 @@
 #define PLANE_PERIOD 256 // one texture width; u, v, xd and yd share it
 #define FIELD_TILE 64
 
-unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
+static unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -112,13 +112,11 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(0, 32, RETRO_HAZE, RETRO_HUNTERGREEN);
 	RETRO_SetColor(31, RETRO_HUNTERGREEN);
 	RETRO_CreateGradientPalette(32, 64, RETRO_HAZE, RETRO_MOSSGREEN);
-	RETRO_SetColor(32, RETRO_HAZE);
 	RETRO_SetColor(63, RETRO_MOSSGREEN);
 
 	RETRO_CreateGradientPalette(64, 96, RETRO_SPACECADET, RETRO_GLAUCOUS);
 	RETRO_CreateGradientPalette(96, 127, RETRO_GLAUCOUS, RETRO_HAZE);
 	RETRO_SetColor(127, RETRO_HAZE);
-	RETRO_SetColor(0, RETRO_HAZE);
 
 	// Init field. Bit 5 selects the ramp; 27–30 is the unfogged shade,
 	// so near tiles sit at the saturated end of the ramp.

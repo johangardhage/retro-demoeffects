@@ -83,7 +83,7 @@ void DEMO_Render(double time, double deltatime)
 		RETRO_DrawVline(gx, 0, RETRO_HEIGHT - 1, BOING_GRID);
 	}
 	for (int gy = 0; gy < RETRO_HEIGHT; gy += BOING_GRIDY) {
-		RETRO_DrawLine(0, gy, RETRO_WIDTH - 1, gy, BOING_GRID);
+		RETRO_DrawHline(0, RETRO_WIDTH - 1, gy, BOING_GRID);
 	}
 
 	// Draw the ball twice from one rotation: the shadow on the wall behind, then

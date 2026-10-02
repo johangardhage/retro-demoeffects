@@ -22,7 +22,6 @@
 #define FACE_FALLOFF 16.0f
 #define FACE_COLORS 8
 
-static Model3D *Wall;
 static unsigned char WallShadeTable[RETRO_SHADE_TABLE_SIZE];
 
 void DEMO_Render(double time, double deltatime)
@@ -36,12 +35,14 @@ void DEMO_Render(double time, double deltatime)
 
 	// Ping-pong the captured frames: flat, the head leans in, then it lets go.
 	float u = phase < 0.5f ? phase * 2.0f : 2.0f - phase * 2.0f;
-	RETRO_MorphModel(u, Wall);
-	RETRO_InitializeFaceNormals(Wall);
-	RETRO_InitializeVertexNormals(Wall);
-	RETRO_RotateModel(pitch, yaw, roll, Wall);
-	RETRO_ProjectModel(WALL_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Wall);
-	RETRO_RenderModel(RETRO_POLY_TEXTURE, RETRO_SHADE_GOURAUD, Wall);
+	RETRO_MorphModel(u);
+	RETRO_InitializeFaceNormals();
+	RETRO_InitializeVertexNormals();
+
+	// Draw wall
+	RETRO_RotateModel(pitch, yaw, roll);
+	RETRO_ProjectModel(WALL_SCALE);
+	RETRO_RenderModel(RETRO_POLY_TEXTURE, RETRO_SHADE_GOURAUD);
 }
 
 void DEMO_Initialize(void)
@@ -57,15 +58,15 @@ void DEMO_Initialize(void)
 	RETRO_Set6bitPalette(palette);
 
 	// Load model
-	Wall = RETRO_LoadMD3Model("assets/facewall.md3", FACE_MD3_SCALE);
-	if (Wall->vertices != FACE_VERTS || Wall->faces != FACE_TRIS) {
-		RETRO_RageQuit("facewall.md3 has %d vertices, %d faces (expected %d, %d)\n", Wall->vertices, Wall->faces, FACE_VERTS, FACE_TRIS);
+	Model3D *model = RETRO_LoadMD3Model("assets/facewall.md3", FACE_MD3_SCALE);
+	if (model->vertices != FACE_VERTS || model->faces != FACE_TRIS) {
+		RETRO_RageQuit("facewall.md3 has %d vertices, %d faces (expected %d, %d)\n", model->vertices, model->faces, FACE_VERTS, FACE_TRIS);
 	}
-	Wall->twosided = true;
-	Wall->c = 0;
-	Wall->shades = RETRO_SHADE_TABLE_SHADES;
-	Wall->texmap = RETRO_ImageData();
-	Wall->shadetable = WallShadeTable;
+	model->twosided = true;
+	model->c = 0;
+	model->shades = RETRO_SHADE_TABLE_SHADES;
+	model->texmap = RETRO_ImageData();
+	model->shadetable = WallShadeTable;
 
 	// Init lightsource
 	RETRO_InitializeLightSource(-0.28f, -0.42f, -0.86f);

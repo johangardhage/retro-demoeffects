@@ -50,7 +50,7 @@
 
 static const char *const ScrollText[] = { "           RETRO DEMOEFFECTS..." };
 
-RETRO_Image *ScrollImage;
+static RETRO_Image *ScrollImage;
 
 //
 // One vertical slice of one face, half-open in y. The strip's own rows are

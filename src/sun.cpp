@@ -60,9 +60,9 @@
 #define SUN_SWIRLS 8 // swings the ring makes per turn of the swell
 #define SUN_RAMP 128 // heat the palette ramp spans; the flare never quite reaches it, and anything hotter is white
 
-unsigned char Flare[FLARE_WIDTH];
-int FlareOffset[RETRO_WIDTH * RETRO_HEIGHT];
-unsigned char LightMap[RETRO_WIDTH * RETRO_HEIGHT]; // the strip is its top FLARE_RADII rows, but RETRO_Blur wants a full buffer
+static unsigned char Flare[FLARE_WIDTH];
+static int FlareOffset[RETRO_WIDTH * RETRO_HEIGHT];
+static unsigned char LightMap[RETRO_WIDTH * RETRO_HEIGHT]; // the strip is its top FLARE_RADII rows, but RETRO_Blur wants a full buffer
 
 //
 // Advance the flare one fixed step

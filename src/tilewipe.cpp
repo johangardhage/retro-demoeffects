@@ -44,43 +44,29 @@
 
 enum WipeMode { WIPE_SHUFFLE, WIPE_CHECKERBOARD, WIPE_MODES };
 
-WipeMode Mode = WIPE_SHUFFLE;
-int Rank[WIPE_MODES][TILES];
-
-//
-// How much of the picture has been dealt at this point of the cycle
-//
-static double Progress(double phase)
-{
-	if (phase < TIME_HOLD) {
-		return 1;
-	}
-	if (phase < TIME_HOLD + TIME_WIPE) {
-		return 1 - (phase - TIME_HOLD) / TIME_WIPE;
-	}
-	if (phase < 2 * TIME_HOLD + TIME_WIPE) {
-		return 0;
-	}
-	return (phase - 2 * TIME_HOLD - TIME_WIPE) / TIME_WIPE;
-}
+static int Rank[WIPE_MODES][TILES];
 
 void DEMO_Render(double time, double deltatime)
 {
+	static WipeMode mode = WIPE_SHUFFLE;
+
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
-		Mode = Mode == WIPE_SHUFFLE ? WIPE_CHECKERBOARD : WIPE_SHUFFLE;
+		mode = mode == WIPE_SHUFFLE ? WIPE_CHECKERBOARD : WIPE_SHUFFLE;
 	}
 
-	// Calculate phase
-	double phase = fmod(time, TIME_CYCLE);
-	double progress = Progress(phase);
+	// Calculate phase, how much of the picture has been dealt: it falls to 0 as
+	// the tiles close, stays there over the curtain, and rises back to 1 over
+	// the last TIME_WIPE of the cycle
+	double cycle = fmod(time, TIME_CYCLE);
+	double phase = 1 - CLAMP01(MIN(cycle - TIME_HOLD, TIME_CYCLE - cycle) / TIME_WIPE);
 
 	unsigned char *image = RETRO_ImageData();
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Draw the open box of every tile
 	for (int tile = 0; tile < TILES; tile++) {
-		double start = (double)Rank[Mode][tile] / (TILES - 1) * (1 - TILE_WINDOW);
-		double opening = CLAMP01((progress - start) / TILE_WINDOW);
+		double start = (double)Rank[mode][tile] / (TILES - 1) * (1 - TILE_WINDOW);
+		double opening = CLAMP01((phase - start) / TILE_WINDOW);
 		int half = lround(opening * TILE_SIZE / 2);
 
 		if (half == 0) {

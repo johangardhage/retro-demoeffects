@@ -1,5 +1,5 @@
 //
-// Linked Gouraud Shaded Toruses
+// Linked gouraud shaded toruses
 //
 // Two gouraud shaded toruses form a permanent two-ring link. Their planes are
 // perpendicular and their centers are separated by one ring radius, so each
@@ -89,10 +89,8 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	// Init palette
-	RETRO_Palette palette[RETRO_COLORS];
-	memset(palette, 0, sizeof(palette));
-	RETRO_SetColor(0, RETRO_BLACK, palette);
+	// Init palette. Entry 0 stays black, the background
+	RETRO_Palette palette[RETRO_COLORS] = {};
 	RETRO_CreatePhongRamp(&palette[1], 127, RETRO_AZURE, RETRO_K_SPECULAR, 5.0f, 255);
 	RETRO_CreatePhongRamp(&palette[128], 127, RETRO_SPRINGGREEN, RETRO_K_SPECULAR, 5.0f, 255);
 	RETRO_SetPalette(palette);

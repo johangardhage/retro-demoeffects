@@ -51,12 +51,12 @@
 
 #define MAX_SCATTER_POINTS 8192
 
-unsigned short ScatterAddr[SCATTER_SETS][MAX_SCATTER_POINTS];
-int ScatterOffset[SCATTER_SETS][CELL_ROWS * CELL_COLS];
-int ScatterCount[SCATTER_SETS][CELL_ROWS * CELL_COLS];
+static unsigned short ScatterAddr[SCATTER_SETS][MAX_SCATTER_POINTS];
+static int ScatterOffset[SCATTER_SETS][CELL_ROWS * CELL_COLS];
+static int ScatterCount[SCATTER_SETS][CELL_ROWS * CELL_COLS];
 
-unsigned char *Background;
-RETRO_Image *Band;
+static unsigned char *Background;
+static RETRO_Image *Band;
 
 // A scatter map is, cell-major over CELL_ROWS x CELL_COLS cells, a u16 point
 // count followed by that many u16 screen addresses. Loading it fills addr as

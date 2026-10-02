@@ -1,5 +1,5 @@
 //
-// Flubber
+// Flubber, as textured spans
 //
 // A 32-span elliptic cylinder, one scanline at a time. The cross-section is
 // one 2D ellipse, reused on every row:
@@ -75,13 +75,13 @@
 
 static_assert(SHADE_LUT_WIDTH == 256, "lumel is an 8-bit index into a 256-wide LUT row");
 
-long TextureScroll;
-unsigned char LightTable[RETRO_COLORS];
-unsigned char FlubberShadeTable[RETRO_COLORS * SHADE_LUT_WIDTH];
-float ZBuffer[RETRO_WIDTH * RETRO_HEIGHT];
+static long TextureScroll;
+static unsigned char LightTable[RETRO_COLORS];
+static unsigned char FlubberShadeTable[RETRO_COLORS * SHADE_LUT_WIDTH];
+static float ZBuffer[RETRO_WIDTH * RETRO_HEIGHT];
 
-vec3 EllipsePoints[SPANS];
-vec3 EllipseTangents[SPANS];
+static vec3 EllipsePoints[SPANS];
+static vec3 EllipseTangents[SPANS];
 
 //
 // One scanline of one face, half-open in x. A back-facing edge has

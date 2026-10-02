@@ -23,7 +23,7 @@
 
 #define PLASMA_FRAMES 720
 
-float CosTable[RETRO_DEGREES_PER_TURN];
+static float CosTable[RETRO_DEGREES_PER_TURN];
 
 void DEMO_Render(double time, double deltatime)
 {

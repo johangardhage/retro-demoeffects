@@ -36,8 +36,8 @@
 #define SWAY_RADIUS 260 // how far that turn throws a ring's center off the axis
 #define TWIST_SPEED (RETRO_ANGLES_PER_TURN * 5.0 / 3.0) // 600°/s, in angle units
 
-double RingX[RING_DOTS];
-double RingY[RING_DOTS];
+static double RingX[RING_DOTS];
+static double RingY[RING_DOTS];
 
 void DEMO_Render(double time, double deltatime)
 {

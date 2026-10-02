@@ -151,10 +151,9 @@ static const float PointLightKL[POINT_LIGHTS] = { POINT_LIGHT_KL, POINT_LIGHT2_K
 static const float PointLightTint[POINT_LIGHTS][TINTS] = { { 1, 128 / 255.0f }, { 1, 1 } }; // orange, and yellow
 static vec3 PointLightPosition[POINT_LIGHTS];
 
-// The animation playing, since when, and where it has got to
+// The animation playing, and where it has got to
 static int CurrentAnimation;
 static bool Looped = true;
-static double AnimationStart;
 static float AnimationFrame;
 
 // The switches
@@ -395,6 +394,8 @@ void DEMO_FixedUpdate(double timestep)
 
 void DEMO_Render(double time, double deltatime)
 {
+	static double animationstart; // when the animation playing began
+
 	if (RETRO_KeyPressed(SDL_SCANCODE_L)) Lighting = !Lighting;
 	if (RETRO_KeyPressed(SDL_SCANCODE_A)) AmbientLight = !AmbientLight;
 	if (RETRO_KeyPressed(SDL_SCANCODE_I)) InfiniteLight = !InfiniteLight;
@@ -414,7 +415,7 @@ void DEMO_Render(double time, double deltatime)
 	if (next) CurrentAnimation = (CurrentAnimation + 1) % ANIMATIONS;
 	if (previous || next || once || looped) {
 		Looped = looped;
-		AnimationStart = time;
+		animationstart = time;
 	}
 
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
@@ -427,7 +428,7 @@ void DEMO_Render(double time, double deltatime)
 	PointLightPosition[LIGHT_YELLOW] = { center.x - POINT_LIGHT2_ORBIT * cosf(-2 * angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT2_ORBIT * sinf(-2 * angle) };
 
 	// The mechs, side by side at the world's center
-	PoseRobot(time - AnimationStart);
+	PoseRobot(time - animationstart);
 	vec3 robots[] = { { center.x, ROBOT_ALTITUDE, center.z }, { center.x, ROBOT_ALTITUDE, center.z + ROBOT_SPACING } };
 
 	DrawSky(time);

@@ -58,8 +58,7 @@ void DEMO_Initialize(void)
 {
 	// Init palette. Every combination of the three plates gets its own entry,
 	// the sum of their colors
-	RETRO_Palette palette[RETRO_COLORS];
-	memset(palette, 0, sizeof(palette));
+	RETRO_Palette palette[RETRO_COLORS] = {};
 	for (int i = 0; i < 1 << PLATE_COUNT; i++) {
 		int r = 0, g = 0, b = 0;
 		for (int k = 0; k < PLATE_COUNT; k++) {

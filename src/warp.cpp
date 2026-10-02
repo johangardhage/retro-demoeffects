@@ -26,7 +26,7 @@
 #define WARP_ALPHA_SPEED 0.12 // radians per second
 #define WARP_BETA_SPEED 0.264
 
-ivec2 DistortTable[WARP_HEIGHT * WARP_WIDTH];
+static ivec2 DistortTable[WARP_HEIGHT * WARP_WIDTH];
 
 void DEMO_Render(double time, double deltatime)
 {

@@ -70,11 +70,9 @@ struct RingVertex {
 	float shade;
 };
 
-static RingVertex Ring[RING_COUNT][RING_SIDES];
 static unsigned char Brick[TEXTURE_SIZE * TEXTURE_SIZE];
 static unsigned char FogTable[RETRO_COLORS * FOG_SHADES];
-static RETRO_Palette Palette[RETRO_COLORS];
-static RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
+static const RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
 static UnitVector Light;
 
 // The axis at t, and the orthonormal frame a ring there is built in.
@@ -162,6 +160,7 @@ void DEMO_Render(double time, double deltatime)
 	// least RING_NEAR in front of the eye.
 	int first = (int)ceilf((t + RING_NEAR) / RING_SPACING);
 	float far = RING_SPACING * RING_COUNT;
+	RingVertex ring[RING_COUNT][RING_SIDES];
 
 	for (int i = 0; i < RING_COUNT; i++) {
 		float along = (first + i) * (float)RING_SPACING;
@@ -196,7 +195,7 @@ void DEMO_Render(double time, double deltatime)
 			Vertex radial = RETRO_AddVertex(alongright, alongdown);
 			Vertex wall = RETRO_ScaleVertex(radial, TUNNEL_RADIUS);
 
-			RingVertex *p = &Ring[i][s];
+			RingVertex *p = &ring[i][s];
 			p->vertex = RETRO_AddVertex(center, wall);
 
 			RETRO_ViewVertex(&p->vertex, &camera);
@@ -223,16 +222,17 @@ void DEMO_Render(double time, double deltatime)
 	for (int i = RING_COUNT - 2; i >= 0; i--) {
 		for (int s = 0; s < RING_SIDES; s++) {
 			int s1 = (s + 1) % RING_SIDES;
-			DrawQuad(Ring[i][s], Ring[i + 1][s], Ring[i + 1][s1], Ring[i][s1]);
+			DrawQuad(ring[i][s], ring[i + 1][s], ring[i + 1][s1], ring[i][s1]);
 		}
 	}
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, BRIGHT_ORANGE, Palette);
-	RETRO_SetPalette(Palette);
-	RETRO_CreateShadeTable(Palette, RETRO_COLORS, FOG_SHADES, FogTable);
+	RETRO_Palette palette[RETRO_COLORS];
+	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, BRIGHT_ORANGE, palette);
+	RETRO_SetPalette(palette);
+	RETRO_CreateShadeTable(palette, RETRO_COLORS, FOG_SHADES, FogTable);
 
 	BuildBrick();
 

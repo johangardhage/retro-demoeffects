@@ -38,7 +38,6 @@
 #define BULGE_AMOUNT 0.12f // extra scale the traveling wave adds
 #define BULGE_WAVE 1.8f // radians of that wave per model unit of rest y
 
-static Model3D *Jelly;
 static Vertex RestVertex[RETRO_MAX_VERTICES];
 
 void DEMO_Render(double time, double deltatime)
@@ -54,28 +53,30 @@ void DEMO_Render(double time, double deltatime)
 	float sy = 1 + PULSE_AMOUNT * sin(pulse + 2 * M_PI / 3);
 	float sz = 1 + PULSE_AMOUNT * sin(pulse + 4 * M_PI / 3);
 
-	for (int i = 0; i < Jelly->vertices; i++) {
+	Model3D *model = RETRO_Get3DModel();
+	for (int i = 0; i < model->vertices; i++) {
 		const vec3 &v = RestVertex[i].pos;
 		float b = 1 + BULGE_AMOUNT * (float)sin(BULGE_WAVE * v.y + bulge);
-		Jelly->vertex[i].pos = { v.x * sx * b, v.y * sy, v.z * sz * b };
+		model->vertex[i].pos = { v.x * sx * b, v.y * sy, v.z * sz * b };
 	}
 
-	RETRO_InitializeFaceNormals(Jelly);
+	RETRO_InitializeFaceNormals(model);
 
-	RETRO_RotateModel(ax, ay, az, Jelly);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Jelly);
-	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT, Jelly);
+	// Draw cube
+	RETRO_RotateModel(ax, ay, az);
+	RETRO_ProjectModel();
+	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT);
 }
 
 void DEMO_Initialize(void)
 {
 	RETRO_CreateMattePalette(RETRO_SPRINGGREEN);
 
-	Jelly = RETRO_Load3DModel("assets/subcubequads.obj");
-	Jelly->c = RETRO_PHONG_OFFSET;
-	Jelly->shades = RETRO_PHONG_SHADES;
-	for (int i = 0; i < Jelly->vertices; i++) {
-		RestVertex[i] = Jelly->vertex[i];
+	Model3D *model = RETRO_Load3DModel("assets/subcubequads.obj");
+	model->c = RETRO_PHONG_OFFSET;
+	model->shades = RETRO_PHONG_SHADES;
+	for (int i = 0; i < model->vertices; i++) {
+		RestVertex[i] = model->vertex[i];
 	}
 
 	RETRO_InitializeLightSource(0, 0, -1);

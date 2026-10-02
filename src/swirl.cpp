@@ -46,6 +46,7 @@ static unsigned char SamplePicture(double x, double y)
 
 void DEMO_Render(double time, double deltatime)
 {
+	// Calculate phase
 	double phase = fmod(time, TWIST_PERIOD) / TWIST_PERIOD;
 	double twist = TWIST_AMOUNT * sin(2 * M_PI * phase);
 	double cx = (RETRO_WIDTH - 1) / 2.0, cy = (RETRO_HEIGHT - 1) / 2.0;
@@ -53,7 +54,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Preserve the exact source palette indices at the untwisted moments.
 	if (fabs(twist) < 1e-12) {
-		memcpy(buffer, Picture->data, RETRO_WIDTH * RETRO_HEIGHT);
+		RETRO_Blit(Picture->data);
 		return;
 	}
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
@@ -75,7 +76,7 @@ void DEMO_Initialize(void)
 {
 	Picture = RETRO_LoadImage("assets/monkey_320x240.pcx", true);
 	if (Picture->width != RETRO_WIDTH || Picture->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("Spiral picture must match the screen size\n");
+		RETRO_RageQuit("The image must be the size of the screen\n");
 	}
 	double cx = (RETRO_WIDTH - 1) / 2.0, cy = (RETRO_HEIGHT - 1) / 2.0;
 	double radius = MIN(cx, cy);

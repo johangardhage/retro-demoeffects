@@ -20,6 +20,7 @@
 #include "lib/retropalette.h"
 
 #define ROTATION_SPEED 2 // radians a second, about each axis
+#define FACE_SHADE 30 // palette entries a face adds before its Lambert term
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -41,10 +42,11 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(8, 190, RETRO_BLACK, RETRO_MAGENTA);
 	RETRO_CreateGradientPalette(190, RETRO_COLORS, RETRO_MAGENTA, RETRO_WHITE);
 
+	// Every face starts FACE_SHADE entries up the ramp, so even one turned
+	// edge-on adds something
 	Model3D *model = RETRO_Load3DModel("assets/cubequads.obj");
-	int c[6] = {30, 30, 30, 30, 30, 30};
 	for (int i = 0; i < model->faces; i++) {
-		model->face[i].c = c[i];
+		model->face[i].c = FACE_SHADE;
 	}
 	model->c = 0;
 	model->shades = 64;

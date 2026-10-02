@@ -54,7 +54,7 @@ struct System {
 	RETRO_Palette low, high; // the ramp a pixel's density is shaded through
 };
 
-System Systems[] = {
+static System Systems[] = {
 	{ // Barnsley fern
 		{ { 0.00f,  0.00f,  0.00f, 0.16f, 0.00f, 0.00f, 0.01f },
 		  { 0.85f,  0.04f, -0.04f, 0.85f, 0.00f, 1.60f, 0.85f },
@@ -80,12 +80,12 @@ System Systems[] = {
 
 #define SYSTEMS ((int)(sizeof(Systems) / sizeof(Systems[0])))
 
-unsigned char Density[RETRO_WIDTH * RETRO_HEIGHT];
-unsigned char Shade[DENSITY_MAX + 1];
-float Cumulative[MAX_TRANSFORMS]; // the draw's cut points, so one RAND picks a map
-float PointX, PointY;
-float ScreenScale, ScreenX, ScreenY;
-int Current = 0;
+static unsigned char Density[RETRO_WIDTH * RETRO_HEIGHT];
+static unsigned char Shade[DENSITY_MAX + 1];
+static float Cumulative[MAX_TRANSFORMS]; // the draw's cut points, so one RAND picks a map
+static float PointX, PointY;
+static float ScreenScale, ScreenX, ScreenY;
+static int Current = 0;
 
 //
 // Carry the point by one map, drawn at random
@@ -119,7 +119,7 @@ static void StartSystem(void)
 	RETRO_SetColor(0, RETRO_BLACK);
 	RETRO_CreateGradientPalette(1, RETRO_COLORS, system->low, system->high);
 
-	memset(Density, 0, sizeof Density);
+	memset(Density, 0, sizeof(Density));
 	RETRO_Clear();
 
 	// Fit the window to the screen, keeping the plane's aspect
@@ -145,19 +145,13 @@ void DEMO_Render2(double time, double deltatime)
 {
 	static double phase = 0;
 
-	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
-		phase = 0;
-		Current = (Current + 1) % SYSTEMS;
-		StartSystem();
-	}
-
+	// Calculate phase. A system is dealt and held, then the next one starts
 	phase += deltatime;
-	if (phase > TIME_DRAW + TIME_HOLD) {
+	if (RETRO_KeyPressed(SDL_SCANCODE_TAB) || phase > TIME_DRAW + TIME_HOLD) {
 		phase = 0;
 		Current = (Current + 1) % SYSTEMS;
 		StartSystem();
 	}
-
 	System *system = &Systems[Current];
 	unsigned char *buffer = RETRO_FrameBuffer();
 

@@ -60,7 +60,7 @@
 #define PLANE_FIRST_ROW 140 // skip rows near the horizon at H/2
 #define FIELD_TILE 64
 
-unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
+static unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
 
 void DEMO_Render(double time, double deltatime)
 {

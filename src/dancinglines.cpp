@@ -27,20 +27,20 @@
 #define LINE_SPEED 2.5
 #define LINE_PERIOD (2 * M_PI * 19715670.0) // 2π · 2 · 3³ · 5 · 13 · 41 · 137
 
-vec2 Points[POINTS];
-
 static void DrawLines(int x, int y, float k)
 {
-	Points[0] = { (float)x, (float)y };
+	static vec2 points[POINTS];
+
+	points[0] = { (float)x, (float)y };
 
 	for (int i = 1; i < POINTS; i++) {
-		Points[i] = (Points[i] + Points[i - 1]) / (float)(2.0 + k / POINTS);
+		points[i] = (points[i] + points[i - 1]) / (float)(2.0 + k / POINTS);
 
 		// Not clamped: clamping x and y apart bends the segment. DrawLine clips.
-		int x1 = lround(Points[i].x);
-		int x2 = lround(Points[i - 1].x);
-		int y1 = lround(Points[i].y);
-		int y2 = lround(Points[i - 1].y);
+		int x1 = lround(points[i].x);
+		int x2 = lround(points[i - 1].x);
+		int y1 = lround(points[i].y);
+		int y2 = lround(points[i - 1].y);
 
 		RETRO_DrawLine(x1, y1, x2, y2, 255);
 		RETRO_DrawLine(x1, (RETRO_HEIGHT - 1) - y1, x2, (RETRO_HEIGHT - 1) - y2, 255);

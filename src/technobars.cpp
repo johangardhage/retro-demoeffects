@@ -145,7 +145,3 @@ void DEMO_Render(double time, double deltatime)
 		}
 	}
 }
-
-void DEMO_Initialize(void)
-{
-}

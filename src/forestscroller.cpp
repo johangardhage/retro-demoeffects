@@ -25,8 +25,8 @@
 #define FOREST_BACKGROUND "assets/forest_320x200.pcx"
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
 
-#define CELL_COLS 237 // forestscroller.cpp's grid along the spray, so CELL_XOFFSET is the same lead-in
-#define CELL_XOFFSET 104 // lap's lead-in gap, same role as forestscroller.cpp's
+#define CELL_COLS 237 // forestscroller3.cpp's grid along the spray, so CELL_XOFFSET is the same lead-in
+#define CELL_XOFFSET 104 // lap's lead-in gap, same role as forestscroller3.cpp's
 #define BAND_CYCLE (Band->width + CELL_XOFFSET) // one lap of the window, band plus its lead-in gap
 #define TICKS_PER_WINDOW 2.5 // average ticks per column (20% faster than three ticks)
 #define END_ACCELERATION 0.10 // reduce column density near the narrow tip, ramping back to normal by the wide end
@@ -49,8 +49,8 @@
 #define VX 0.93969262
 #define VY 0.34202014
 
-unsigned char *Background;
-RETRO_Image *Band;
+static unsigned char *Background;
+static RETRO_Image *Band;
 
 static const char *const ScrollText[] = { "RETRO DEMOEFFECTS..." };
 

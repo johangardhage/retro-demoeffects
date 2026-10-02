@@ -45,10 +45,10 @@ void DEMO_Render(double time, double deltatime)
 			float radius2 = dx * dx + dy * dy;
 			float angle = atan2(dy, dx);
 
-			// The far end is deliberately an irregular black opening.
+			// The far end is deliberately an irregular black opening: the
+			// cleared framebuffer, left as it is.
 			float mouth = MOUTH_RADIUS + MOUTH_RIPPLE * sin(angle * 5.0f + time * 1.7f);
 			if (radius2 < mouth * mouth) {
-				RETRO_PutPixel(x, y, 0);
 				continue;
 			}
 

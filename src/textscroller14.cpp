@@ -77,7 +77,7 @@ void DEMO_Render(double time, double deltatime)
 		if (angle > M_PI) offset = (float)((M_PI - angle) * RADIUS);
 		if (angle < 0) offset = (float)(angle * RADIUS);
 		if (angle < 0 && offset < EXIT_OFFSET) continue;
-		double turn = angle > M_PI ? M_PI : MAX(angle, 0.0);
+		double turn = clamp(angle, 0.0, M_PI);
 		mat3 matrix = rotateY((float)-turn);
 		vec3 normal = matrix * vec3{ 0, 0, -1 };
 		float u = (float)(i * Font.width);
@@ -106,7 +106,7 @@ void DEMO_Render(double time, double deltatime)
 		}
 		RETRO_DrawTexMapPolygon(quad, 4, TextStrip->data,
 			TextStrip->width, TextStrip->height, false, box);
-		for (int y = box.y0; y < box.y1; y++)
+		for (int y = box.y0; y < box.y1; y++) {
 			for (int x = box.x0; x < box.x1; x++) {
 				int pixel = y * RETRO_WIDTH + x;
 				float q = RETRO_DepthBuffer[pixel];
@@ -132,8 +132,9 @@ void DEMO_Render(double time, double deltatime)
 				}
 				Scene[pixel] = color;
 			}
+		}
 	}
-	memcpy(screen, Scene, sizeof(Scene));
+	RETRO_Blit(Scene);
 }
 
 void DEMO_Initialize(void)
@@ -143,14 +144,14 @@ void DEMO_Initialize(void)
 		{ 85, 132, 81 }, { 66, 102, 116 }, { 40, 78, 89 },
 		{ 125, 202, 55 }, { 166, 224, 99 }, { 208, 242, 150 }, { 239, 255, 196 }
 	};
-	for (int i = 0; i < (int)(sizeof(colors) / sizeof(colors[0])); i++)
-		RETRO_SetColor(i, colors[i]);
+	RETRO_SetPalette(colors, sizeof(colors) / sizeof(colors[0]));
 
 	Font = RETRO_LoadFont(FONT);
 	LetterCount = (int)strlen(ScrollText[0]);
 	TextStrip = RETRO_GenerateTextImage(Font, ScrollText, 1);
-	for (int i = 0; i < TextStrip->width * TextStrip->height; i++)
+	for (int i = 0; i < TextStrip->width * TextStrip->height; i++) {
 		TextStrip->data[i] = TextStrip->data[i] != 0;
+	}
 
 	// Fixed zigzag silhouette, split into two blue bands.
 	const vec2 edge[] = { { 160, TOP }, { 188, 51 }, { 174, 66 },
@@ -160,8 +161,9 @@ void DEMO_Initialize(void)
 		vec2 a = edge[segment], b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
 			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
-			for (int x = 0; x < right; x++)
+			for (int x = 0; x < right; x++) {
 				Background[y * RETRO_WIDTH + x] = y < 133 ? 1 : 2;
+			}
 		}
 	}
 }

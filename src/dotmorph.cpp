@@ -37,9 +37,9 @@
 #define CYCLE_STEPS (2 * (MORPH_STEPS + HOLD_STEPS)) // morph, hold, morph back, hold
 #define MORPH_SPEED 200 // steps per second
 
-Vertex Sphere[POINTS];
-Vertex Torus[POINTS];
-Vertex Morph[POINTS];
+static Vertex Sphere[POINTS];
+static Vertex Torus[POINTS];
+static Vertex Morph[POINTS];
 
 static void MorphShapes(Vertex *from, Vertex *to, float t)
 {
@@ -98,7 +98,7 @@ void DEMO_Initialize(void)
 	//   r = sqrt(1 - z^2),   (x, y) = r (cos φ, sin φ)
 	//
 	for (int i = 0; i < POINTS; i++) {
-		float z = 1 - RANDOMF(2);
+		float z = mix(1, -1, RAND());
 		float r = sqrt(1 - z * z);
 		float phi = RANDOMF(2 * M_PI);
 

@@ -54,8 +54,8 @@
 #define SKY_LOW vec3{ 30, 30, 45 }
 #define SKY_HIGH vec3{ 215, 225, 255 }
 
-RETRO_Image *Picture;
-unsigned char ColorLUT[32][32][32];
+static RETRO_Image *Picture;
+static unsigned char ColorLUT[32][32][32];
 
 //
 // The picture's color at a texel, wrapped onto it
@@ -129,9 +129,9 @@ void DEMO_Render(double time, double deltatime)
 				color = Texel(x, y) * (1 - SHADOW_DEPTH * edge);
 			}
 
-			int red = CLAMP(color.x, 0, 256);
-			int green = CLAMP(color.y, 0, 256);
-			int blue = CLAMP(color.z, 0, 256);
+			int red = CLAMP256(color.x);
+			int green = CLAMP256(color.y);
+			int blue = CLAMP256(color.z);
 			buffer[y * RETRO_WIDTH + x] = ColorLUT[red >> 3][green >> 3][blue >> 3];
 		}
 	}

@@ -94,7 +94,7 @@ static Quad Faces[FACES];
 static unsigned char BallMap[BEAM_MAP * BEAM_MAP];
 static float BallDepth[BEAM_MAP * BEAM_MAP];
 static unsigned char GlassTable[GLASS_PANES + GLASS_GLINT + 1][RETRO_COLORS];
-static vec3 Light = { -0.4f, -0.4f, -0.82f }; // toward the light, in view space
+static const vec3 Light = { -0.4f, -0.4f, -0.82f }; // toward the light, in view space
 
 //
 // Turn the pair (p, q) by angle in their own plane

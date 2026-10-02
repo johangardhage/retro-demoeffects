@@ -47,7 +47,7 @@
 #define COPPER_SPEED 55 // table units per second
 
 // One color per band and one band per color, in the order of the bow
-RETRO_Palette BarColors[COPPER_BARS] = {
+static const RETRO_Palette BarColors[COPPER_BARS] = {
 	RETRO_RED, RETRO_ORANGE, RETRO_YELLOW, RETRO_GREEN,
 	RETRO_CYAN, RETRO_AZURE, RETRO_INDIGO, RETRO_VIOLET };
 
@@ -88,7 +88,7 @@ void DEMO_Initialize(void)
 	// around the middle, and the same in reverse on the far side
 	for (int k = 0; k < COPPER_BARS; k++) {
 		RETRO_Palette hue = BarColors[k];
-		RETRO_Palette rim = RETRO_Palette{ (unsigned char)(hue.r / 5), (unsigned char)(hue.g / 5), (unsigned char)(hue.b / 5) };
+		RETRO_Palette rim = hue * 0.2f;
 
 		int ramp = COPPER_RAMP0 + k * COPPER_BARWIDTH;
 		int middle = ramp + COPPER_BARWIDTH / 2;

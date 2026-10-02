@@ -32,25 +32,25 @@
 #define TWISTER_IMAGE_SCROLL 2.0
 #define TWISTER_SHADES 64
 
-unsigned char TwisterShadeTable[RETRO_COLORS * TWISTER_SHADES];
+static unsigned char TwisterShadeTable[RETRO_COLORS * TWISTER_SHADES];
 
 //
 // One scanline of one face, half-open in x. Texture position and depth shade
 // both advance from where the unclipped span begins.
 //
-static void DrawSpan(int left, int right, int y, unsigned char *texels, int base, float left_shade, float right_shade)
+static void DrawSpan(int left, int right, int y, unsigned char *texels, int base, float leftshade, float rightshade)
 {
 	if (right <= left) {
 		return;
 	}
 
 	float du = (float)TWISTER_IMAGE_FACE / (right - left);
-	float ds = (right_shade - left_shade) / (right - left);
+	float ds = (rightshade - leftshade) / (right - left);
 
 	int x0 = MAX(left, 0);
 	int x1 = MIN(right, RETRO_WIDTH);
 	float u = base + (x0 - left) * du;
-	float shade = left_shade + (x0 - left) * ds;
+	float shade = leftshade + (x0 - left) * ds;
 
 	unsigned char *row = RETRO_FrameBuffer() + y * RETRO_WIDTH;
 	for (int x = x0; x < x1; x++, u += du, shade += ds) {
@@ -75,24 +75,24 @@ void DEMO_Render(double time, double deltatime)
 		unsigned char *texels = image + v * TWISTER_IMAGE_SIZE;
 
 		double angle = index * TWISTER_TURNS * TWISTER_CYCLE;
-		double sin_radius = TWISTER_RADIUS * SIN(angle);
-		double cos_radius = TWISTER_RADIUS * COS(angle);
-		int corner_x[4] = {
-			(int)lround(TWISTER_CENTER_X - cos_radius),
-			(int)lround(TWISTER_CENTER_X + sin_radius),
-			(int)lround(TWISTER_CENTER_X + cos_radius),
-			(int)lround(TWISTER_CENTER_X - sin_radius),
+		double sinradius = TWISTER_RADIUS * SIN(angle);
+		double cosradius = TWISTER_RADIUS * COS(angle);
+		int cornerx[4] = {
+			(int)lround(TWISTER_CENTER_X - cosradius),
+			(int)lround(TWISTER_CENTER_X + sinradius),
+			(int)lround(TWISTER_CENTER_X + cosradius),
+			(int)lround(TWISTER_CENTER_X - sinradius),
 		};
-		double corner_z[4] = {
-			sin_radius,
-			cos_radius,
-			-sin_radius,
-			-cos_radius,
+		double cornerz[4] = {
+			sinradius,
+			cosradius,
+			-sinradius,
+			-cosradius,
 		};
 
 		int face = 0;
 		for (int corner = 1; corner < 4; corner++) {
-			if (corner_x[corner] < corner_x[face]) {
+			if (cornerx[corner] < cornerx[face]) {
 				face = corner;
 			}
 		}
@@ -100,12 +100,12 @@ void DEMO_Render(double time, double deltatime)
 		int corner0 = face;
 		int corner1 = (face + 1) & 3;
 		int corner2 = (face + 2) & 3;
-		float shade0 = (TWISTER_DEPTH_RATE * (TWISTER_SHADES - 1)) / (TWISTER_RADIUS - corner_z[corner0] + TWISTER_DEPTH_RATE);
-		float shade1 = (TWISTER_DEPTH_RATE * (TWISTER_SHADES - 1)) / (TWISTER_RADIUS - corner_z[corner1] + TWISTER_DEPTH_RATE);
-		float shade2 = (TWISTER_DEPTH_RATE * (TWISTER_SHADES - 1)) / (TWISTER_RADIUS - corner_z[corner2] + TWISTER_DEPTH_RATE);
+		float shade0 = (TWISTER_DEPTH_RATE * (TWISTER_SHADES - 1)) / (TWISTER_RADIUS - cornerz[corner0] + TWISTER_DEPTH_RATE);
+		float shade1 = (TWISTER_DEPTH_RATE * (TWISTER_SHADES - 1)) / (TWISTER_RADIUS - cornerz[corner1] + TWISTER_DEPTH_RATE);
+		float shade2 = (TWISTER_DEPTH_RATE * (TWISTER_SHADES - 1)) / (TWISTER_RADIUS - cornerz[corner2] + TWISTER_DEPTH_RATE);
 
-		DrawSpan(corner_x[corner0], corner_x[corner1], y, texels, corner0 * TWISTER_IMAGE_FACE, shade0, shade1);
-		DrawSpan(corner_x[corner1], corner_x[corner2], y, texels, corner1 * TWISTER_IMAGE_FACE, shade1, shade2);
+		DrawSpan(cornerx[corner0], cornerx[corner1], y, texels, corner0 * TWISTER_IMAGE_FACE, shade0, shade1);
+		DrawSpan(cornerx[corner1], cornerx[corner2], y, texels, corner1 * TWISTER_IMAGE_FACE, shade1, shade2);
 	}
 }
 

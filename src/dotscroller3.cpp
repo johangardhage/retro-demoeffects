@@ -1,8 +1,9 @@
 //
 // Dot landscape scroller, cruising
 //
-// A dot scroller over the repeating height field from dotlandscape4, painted
-// with its paired voxel_color_128x128.pcx colormap. The camera cruises and
+// A dot scroller over the 128x128 voxel_height_128x128.pcx height field,
+// tiled without limit and painted with its paired voxel_color_128x128.pcx
+// colormap, as in dotlandscape.cpp. The camera cruises and
 // turns automatically. The text strip travels with the camera, scrolling
 // sideways while each letter dot follows the terrain beneath it.
 //
@@ -71,7 +72,7 @@ static void DrawTerrainDots(float camerax, float cameraz, float cs, float sn)
 	for (int z = minz; z <= maxz; z++) {
 		for (int x = minx; x <= maxx; x++) {
 			float dx = x - camerax, dz = z - cameraz;
-			// Turned into camera space by the heading: this camera turns, dotlandscape4's does not.
+			// Turned into camera space by the heading: this camera turns, dotlandscape's does not.
 			float side = dx * cs - dz * sn;
 			float forward = dx * sn + dz * cs;
 			PlotDot(side, forward, TerrainSample(x, z) * WORLD_HEIGHT_SCALE, ColorSample(x, z));
@@ -131,7 +132,7 @@ void DEMO_Initialize(void)
 	HeightMap = RETRO_LoadImage("assets/voxel_height_128x128.pcx");
 	ColorMap = RETRO_LoadImage("assets/voxel_color_128x128.pcx", true);
 	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
-	if (ScrollImage->height > 256 - LETTER_COLOR_BASE) {
+	if (ScrollImage->height > RETRO_COLORS - LETTER_COLOR_BASE) {
 		RETRO_RageQuit("Scroller font is too tall for the letter palette\n");
 	}
 

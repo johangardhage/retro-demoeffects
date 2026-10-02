@@ -50,7 +50,7 @@
 // Near enough that a camera flown down onto the ground still sees it
 #define LANDSCAPE_NEARPLANE 0.25f
 
-unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
+static unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
 
 //
 // The sun, carried round the sky once every this many seconds
@@ -205,7 +205,7 @@ void DEMO_Initialize(void)
 
 	// Sky, in an entry the color map never uses. The table above matched against
 	// the image's own palette, which keeps its copy of entry 0, so this changes
-	// only what the entry displays as. The two the sun is drawn in are claimed
+	// only what the entry displays as. The three the sun is drawn in are claimed
 	// the same way.
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
 	RETRO_SetColor(SunColor[0], RETRO_UMBER);

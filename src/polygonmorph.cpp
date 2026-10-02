@@ -126,7 +126,6 @@ enum Shape {
 	SHAPES
 };
 
-static Model3D *Solid;
 static vec3 ShapeVertex[SHAPES][RETRO_MAX_VERTICES];
 
 void DEMO_Render(double time, double deltatime)
@@ -143,16 +142,17 @@ void DEMO_Render(double time, double deltatime)
 	float t = smoothstep(0.0, 1.0, (phase - from * TIME_SHAPE - TIME_HOLD) / TIME_MORPH);
 
 	// Morph shapes
-	for (int i = 0; i < Solid->vertices; i++) {
-		Solid->vertex[i].pos = mix(ShapeVertex[from][i], ShapeVertex[to][i], t);
+	Model3D *model = RETRO_Get3DModel();
+	for (int i = 0; i < model->vertices; i++) {
+		model->vertex[i].pos = mix(ShapeVertex[from][i], ShapeVertex[to][i], t);
 	}
 
-	RETRO_InitializeFaceNormals(Solid);
+	RETRO_InitializeFaceNormals(model);
 
 	// Draw solid
-	RETRO_RotateModel(ax, ay, az, Solid);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Solid);
-	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT, Solid);
+	RETRO_RotateModel(ax, ay, az);
+	RETRO_ProjectModel();
+	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT);
 }
 
 void DEMO_Initialize(void)
@@ -161,22 +161,22 @@ void DEMO_Initialize(void)
 	// it and a specular highlight would flash the whole facet at once
 	RETRO_CreateMattePalette(RETRO_GOLD);
 
-	Solid = RETRO_Load3DModel("assets/subcubequads.obj");
-	Solid->c = RETRO_PHONG_OFFSET;
-	Solid->shades = RETRO_PHONG_SHADES;
+	Model3D *model = RETRO_Load3DModel("assets/subcubequads.obj");
+	model->c = RETRO_PHONG_OFFSET;
+	model->shades = RETRO_PHONG_SHADES;
 
 	// Init shapes. The first three are a radius along the vertex's rest
 	// direction, the rounded cube and the capsule stand off a smaller cube
 	// and a line inside them, the next five are a radius from the y axis
 	// and the last two stay cubes
-	for (int i = 0; i < Solid->vertices; i++) {
-		vec3 p = Solid->vertex[i].pos;
+	for (int i = 0; i < model->vertices; i++) {
+		vec3 p = model->vertex[i].pos;
 		vec3 u = normalize(p);
 		float m = MAX(fabs(u.x), MAX(fabs(u.y), fabs(u.z)));
 
 		float core = 1 - ROUNDED_RADIUS;
 		vec3 q = clamp(p, -core, core);
-		vec3 line = {0, clamp(p.y, -CAPSULE_CORE, CAPSULE_CORE), 0};
+		vec3 line = { 0, clamp(p.y, -CAPSULE_CORE, CAPSULE_CORE), 0 };
 
 		// Radii from the y axis, each divided by the vertex's own so that
 		// scaling (x, z) by it lands on that radius
@@ -202,13 +202,13 @@ void DEMO_Initialize(void)
 		ShapeVertex[SHAPE_SPHERE][i] = u * SPHERE_RADIUS;
 		ShapeVertex[SHAPE_STAR][i] = u * (STAR_RADIUS * (1 - STAR_SPIKE + STAR_SPIKE * (float)pow(m, STAR_SHARPNESS)));
 		ShapeVertex[SHAPE_ROUNDED][i] = (q + normalize(p - q) * ROUNDED_RADIUS) * ROUNDED_SIZE;
-		ShapeVertex[SHAPE_SAUCER][i] = {p.x * saucer, p.y * SAUCER_RIM + dome, p.z * saucer};
+		ShapeVertex[SHAPE_SAUCER][i] = { p.x * saucer, p.y * SAUCER_RIM + dome, p.z * saucer };
 		ShapeVertex[SHAPE_CAPSULE][i] = line * (CAPSULE_HEIGHT / CAPSULE_CORE) + normalize(p - line) * CAPSULE_RADIUS;
-		ShapeVertex[SHAPE_CYLINDER][i] = {p.x * cylinder, p.y * CYLINDER_HEIGHT, p.z * cylinder};
-		ShapeVertex[SHAPE_BARREL][i] = {p.x * barrel, p.y * CYLINDER_HEIGHT, p.z * barrel};
-		ShapeVertex[SHAPE_HOURGLASS][i] = {p.x * hourglass, p.y * CYLINDER_HEIGHT, p.z * hourglass};
-		ShapeVertex[SHAPE_BUCKET][i] = {p.x * bucket, p.y * CYLINDER_HEIGHT, p.z * bucket};
-		ShapeVertex[SHAPE_TWIST][i] = {p.x * twistcos - p.z * twistsin, p.y, p.x * twistsin + p.z * twistcos};
+		ShapeVertex[SHAPE_CYLINDER][i] = { p.x * cylinder, p.y * CYLINDER_HEIGHT, p.z * cylinder };
+		ShapeVertex[SHAPE_BARREL][i] = { p.x * barrel, p.y * CYLINDER_HEIGHT, p.z * barrel };
+		ShapeVertex[SHAPE_HOURGLASS][i] = { p.x * hourglass, p.y * CYLINDER_HEIGHT, p.z * hourglass };
+		ShapeVertex[SHAPE_BUCKET][i] = { p.x * bucket, p.y * CYLINDER_HEIGHT, p.z * bucket };
+		ShapeVertex[SHAPE_TWIST][i] = { p.x * twistcos - p.z * twistsin, p.y, p.x * twistsin + p.z * twistcos };
 		ShapeVertex[SHAPE_PINCHED][i] = p * (PINCHED_SIZE * (1 - PINCHED_DEPTH * dent));
 	}
 

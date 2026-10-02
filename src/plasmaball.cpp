@@ -99,13 +99,12 @@ struct Arc {
 	Branch branch[BRANCHES];
 };
 
-Arc Arcs[ARCS];
+static Arc Arcs[ARCS];
 
-float Glass[RETRO_WIDTH * RETRO_HEIGHT];
-float Core[RETRO_WIDTH * RETRO_HEIGHT];
-float Tight[RETRO_WIDTH * RETRO_HEIGHT];
-float Wide[RETRO_WIDTH * RETRO_HEIGHT];
-float Scratch[RETRO_WIDTH * RETRO_HEIGHT]; // BoxBlur's rows, between its two passes
+static float Glass[RETRO_WIDTH * RETRO_HEIGHT];
+static float Core[RETRO_WIDTH * RETRO_HEIGHT];
+static float Tight[RETRO_WIDTH * RETRO_HEIGHT];
+static float Wide[RETRO_WIDTH * RETRO_HEIGHT];
 
 //
 // A sum of three uniforms, zero mean and unit variance
@@ -145,8 +144,8 @@ static void Respawn(Branch *branch)
 {
 	branch->root = ARC_POINTS / 4 + RANDOM(ARC_POINTS / 2);
 	branch->life = 2 + RANDOM(BRANCH_LIFE - 1);
-	branch->bend = (0.3f + RANDOMF(0.6)) * (RANDOM(2) ? 1.0f : -1.0f);
-	branch->reach = 0.25f + RANDOMF(0.25);
+	branch->bend = (float)mix(0.3, 0.9, RAND()) * (RANDOM(2) ? 1.0f : -1.0f);
+	branch->reach = mix(0.25, 0.5, RAND());
 	for (float &offset : branch->offset) {
 		offset = Noise();
 	}
@@ -194,6 +193,8 @@ static void DrawPath(const vec2 *point, int count, float start, float end)
 //
 static void BoxBlur(const float *source, float *dest, int radius)
 {
+	static float scratch[RETRO_WIDTH * RETRO_HEIGHT]; // the rows, between the two passes
+
 	float scale = 1.0f / (2 * radius + 1);
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		const float *row = source + y * RETRO_WIDTH;
@@ -205,7 +206,7 @@ static void BoxBlur(const float *source, float *dest, int radius)
 			if (x + radius < RETRO_WIDTH) {
 				sum += row[x + radius];
 			}
-			Scratch[y * RETRO_WIDTH + x] = sum * scale;
+			scratch[y * RETRO_WIDTH + x] = sum * scale;
 			if (x - radius >= 0) {
 				sum -= row[x - radius];
 			}
@@ -214,15 +215,15 @@ static void BoxBlur(const float *source, float *dest, int radius)
 	for (int x = 0; x < RETRO_WIDTH; x++) {
 		float sum = 0;
 		for (int y = 0; y < radius; y++) {
-			sum += Scratch[y * RETRO_WIDTH + x];
+			sum += scratch[y * RETRO_WIDTH + x];
 		}
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
 			if (y + radius < RETRO_HEIGHT) {
-				sum += Scratch[(y + radius) * RETRO_WIDTH + x];
+				sum += scratch[(y + radius) * RETRO_WIDTH + x];
 			}
 			dest[y * RETRO_WIDTH + x] = sum * scale;
 			if (y - radius >= 0) {
-				sum -= Scratch[(y - radius) * RETRO_WIDTH + x];
+				sum -= scratch[(y - radius) * RETRO_WIDTH + x];
 			}
 		}
 	}

@@ -52,8 +52,7 @@ static void AddPixel(int x, int y, int add)
 	if (x < 0 || x >= RETRO_WIDTH || y < 0 || y >= RETRO_HEIGHT || add <= 0) {
 		return;
 	}
-	int color = RETRO_GetPixel(x, y) + add;
-	RETRO_PutPixel(x, y, color > 255 ? 255 : color);
+	RETRO_PutPixel(x, y, CLAMP256(RETRO_GetPixel(x, y) + add));
 }
 
 // Radial disc, brightness (1 − r/R)² peak. r² is compared to R² first so
@@ -103,8 +102,7 @@ static void AddHex(float cx, float cy, float radius, int peak)
 			float d = fabs(px);
 			float d2 = fabs(px * HEX_HALF + py * HEX_SQRT3_2);
 			float d3 = fabs(-px * HEX_HALF + py * HEX_SQRT3_2);
-			float hex = MAX(d, d2);
-			hex = MAX(hex, d3);
+			float hex = MAX(d, MAX(d2, d3));
 			if (hex >= 1.0f) {
 				continue;
 			}

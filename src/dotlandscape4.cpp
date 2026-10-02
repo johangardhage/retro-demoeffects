@@ -65,21 +65,22 @@ static int ProjectedDotCount = 0;
 // is the order the collector met them in, which is fixed by the map rather than
 // by whichever way a sort happened to break the tie.
 static int DotOrder[MAX_PROJECTED_DOTS];
-static int DotsAtDepth[WORLD_MAX_DISTANCE + 1];
 
 static void OrderDotsByDepth(void)
 {
-	memset(DotsAtDepth, 0, sizeof(DotsAtDepth));
+	int dotsatdepth[WORLD_MAX_DISTANCE + 1];
+
+	memset(dotsatdepth, 0, sizeof(dotsatdepth));
 	for (int i = 0; i < ProjectedDotCount; i++) {
-		DotsAtDepth[(int)ProjectedDots[i].depth]++;
+		dotsatdepth[(int)ProjectedDots[i].depth]++;
 	}
 	for (int depth = 0, place = 0; depth <= WORLD_MAX_DISTANCE; depth++) {
-		int dots = DotsAtDepth[depth];
-		DotsAtDepth[depth] = place;
+		int dots = dotsatdepth[depth];
+		dotsatdepth[depth] = place;
 		place += dots;
 	}
 	for (int i = 0; i < ProjectedDotCount; i++) {
-		DotOrder[DotsAtDepth[(int)ProjectedDots[i].depth]++] = i;
+		DotOrder[dotsatdepth[(int)ProjectedDots[i].depth]++] = i;
 	}
 }
 

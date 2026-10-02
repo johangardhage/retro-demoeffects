@@ -146,15 +146,14 @@ struct Segment {
 	float offset; // where the sprite stands, in half-widths from the center
 };
 
-Sprite Sprites[ROAD_SPRITES];
-Segment Road[ROAD_MAX_SEGMENTS];
-Billboard Billboards[ROAD_MAX_BILLBOARDS];
-int RoadSegments = 0;
+static Sprite Sprites[ROAD_SPRITES];
+static Segment Road[ROAD_MAX_SEGMENTS];
+static int RoadSegments = 0;
 
-float ZMap[ROAD_ZMAP_SIZE]; // the distance the row looks at, nearest first
-float WidthMap[ROAD_ZMAP_SIZE]; // half the road, in pixels, at that distance
-unsigned char FogMap[ROAD_ZMAP_SIZE]; // the shade that distance is seen through
-int ZMapEntries = 0; // the entries inside the draw distance, so the walk stops at one test
+static float ZMap[ROAD_ZMAP_SIZE]; // the distance the row looks at, nearest first
+static float WidthMap[ROAD_ZMAP_SIZE]; // half the road, in pixels, at that distance
+static unsigned char FogMap[ROAD_ZMAP_SIZE]; // the shade that distance is seen through
+static int ZMapEntries = 0; // the entries inside the draw distance, so the walk stops at one test
 
 //
 // Fill a scanline from x1 to x2, clipped to the screen. The ends are pixel
@@ -240,7 +239,8 @@ void DEMO_Render(double time, double deltatime)
 	// placed between the row that stepped over it and the row below. The walk
 	// starts a row under the bottom of the screen, so the first row has a row
 	// below it to place against
-	int billboards = 0;
+	Billboard billboards[ROAD_MAX_BILLBOARDS];
+	int billboardcount = 0;
 	int walked = (int)(position / ROAD_SEGMENT_LENGTH); // the segment under the camera
 	float zprev = 2 * ZMap[0] - ZMap[1];
 	float wprev = 2 * WidthMap[0] - WidthMap[1];
@@ -290,7 +290,7 @@ void DEMO_Render(double time, double deltatime)
 		// A far row can step over several segments at once, so none of their
 		// billboards is missed, and each is placed by its own distance rather
 		// than by the row that found it
-		while (walked < number && billboards < ROAD_MAX_BILLBOARDS) {
+		while (walked < number && billboardcount < ROAD_MAX_BILLBOARDS) {
 			Segment *stepped = &Road[++walked % RoadSegments];
 			if (stepped->sprite >= 0) {
 				float zs = walked * (double)ROAD_SEGMENT_LENGTH - position;
@@ -302,7 +302,7 @@ void DEMO_Render(double time, double deltatime)
 				float sw = mix(wprev, w, t);
 				float sx = mix(centerprev, center, t) + stepped->offset * sw;
 
-				Billboards[billboards++] = { &Sprites[stepped->sprite], sx, mix(yprev, y, t), sw, shade };
+				billboards[billboardcount++] = { &Sprites[stepped->sprite], sx, mix(yprev, y, t), sw, shade };
 			}
 		}
 
@@ -318,8 +318,8 @@ void DEMO_Render(double time, double deltatime)
 
 	// The walk found them near to far, so they are drawn the other way about
 	// and a near billboard paints over the one behind it
-	while (billboards--) {
-		Billboard *billboard = &Billboards[billboards];
+	while (billboardcount--) {
+		Billboard *billboard = &billboards[billboardcount];
 		DrawSprite(dest, billboard->sprite, billboard->x, billboard->y, billboard->w, billboard->shade);
 	}
 }
@@ -408,7 +408,7 @@ void DEMO_Initialize(void)
 			Road[i].offset = (i % 20) ? 1.6 : -1.6;
 		} else if (RANDOM(5) == 0) {
 			Road[i].sprite = SPRITE_TREE;
-			Road[i].offset = (RANDOM(2) ? 1 : -1) * (2.0 + RANDOMF(3.0));
+			Road[i].offset = (RANDOM(2) ? 1 : -1) * mix(2.0, 5.0, RAND());
 		}
 	}
 

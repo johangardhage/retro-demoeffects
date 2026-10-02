@@ -47,9 +47,9 @@
 
 static const RETRO_Palette BobHues[BOB_COLORS] = { RETRO_CYAN, RETRO_ORANGE, RETRO_SPRINGGREEN, RETRO_HOTPINK };
 
-unsigned char Screens[BOB_SCREENS][RETRO_WIDTH * RETRO_HEIGHT];
-unsigned char BobMap[BOB_COLORS][BOB_SIZE * BOB_SIZE];
-int Step;
+static unsigned char Screens[BOB_SCREENS][RETRO_WIDTH * RETRO_HEIGHT];
+static unsigned char BobMap[BOB_COLORS][BOB_SIZE * BOB_SIZE];
+static int Step;
 
 void DEMO_FixedUpdate(double timestep)
 {
@@ -72,7 +72,7 @@ void DEMO_FixedUpdate(double timestep)
 void DEMO_Render(double time, double deltatime)
 {
 	// Show the screen the last bob went into
-	memcpy(RETRO_FrameBuffer(), Screens[Step], RETRO_WIDTH * RETRO_HEIGHT);
+	RETRO_Blit(Screens[Step]);
 }
 
 void DEMO_Initialize(void)
@@ -95,6 +95,6 @@ void DEMO_Initialize(void)
 
 	// Init bob sprites, one per ramp
 	for (int k = 0; k < BOB_COLORS; k++) {
-		RETRO_CreateBallMap(BobMap[k], nullptr, BOB_SIZE, 1 + k * BOB_SHADES, BOB_SHADES);
+		RETRO_CreateBallMap(BobMap[k], NULL, BOB_SIZE, 1 + k * BOB_SHADES, BOB_SHADES);
 	}
 }

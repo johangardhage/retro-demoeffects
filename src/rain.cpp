@@ -87,21 +87,21 @@ struct Splash {
 	bool alive;
 };
 
-Drop Drops[DROPS];
-Ripple Ripples[RIPPLES];
-Splash Splashes[SPLASHES];
-int NextRipple, NextSplash;
-unsigned char City[RETRO_WIDTH * STREET_TOP]; // the city's palette entries, 0 where the sky shows
-RETRO_Palette Colors[PALETTE_COLORS]; // the palette before lightning
-float Lit[PALETTE_COLORS]; // how much of a flash each color takes
-double Flash; // brightness of the lightning, 0 to 1
+static Drop Drops[DROPS];
+static Ripple Ripples[RIPPLES];
+static Splash Splashes[SPLASHES];
+static int NextRipple, NextSplash;
+static unsigned char City[RETRO_WIDTH * STREET_TOP]; // the city's palette entries, 0 where the sky shows
+static RETRO_Palette Colors[PALETTE_COLORS]; // the palette before lightning
+static float Lit[PALETTE_COLORS]; // how much of a flash each color takes
+static double Flash; // brightness of the lightning, 0 to 1
 
 //
 // Start a drop at a random place at its depth, above the top of the screen when fresh
 //
 static void Respawn(Drop *drop, bool fresh)
 {
-	drop->x = RANDOMF(RETRO_WIDTH + RETRO_HEIGHT * RAIN_SLANT) - RETRO_HEIGHT * RAIN_SLANT;
+	drop->x = mix(-RETRO_HEIGHT * RAIN_SLANT, RETRO_WIDTH, RAND());
 	drop->y = fresh ? -RANDOMF(RETRO_HEIGHT / 2) : RANDOMF(RETRO_HEIGHT);
 }
 
@@ -123,8 +123,8 @@ static void Land(const Drop &drop, float landing)
 			NextSplash = (NextSplash + 1) % SPLASHES;
 			splash->x = drop.x;
 			splash->y = landing - 1;
-			splash->vx = (RANDOMF(2) - 1) * SPLASH_SPEED * 0.6f;
-			splash->vy = -SPLASH_SPEED * (0.4f + RANDOMF(0.6));
+			splash->vx = mix(-1, 1, RAND()) * SPLASH_SPEED * 0.6f;
+			splash->vy = -SPLASH_SPEED * mix(0.4, 1.0, RAND());
 			splash->floor = landing;
 			splash->alive = true;
 		}

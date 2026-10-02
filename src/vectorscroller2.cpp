@@ -57,48 +57,16 @@
 #define GLENZ_FACE 30 // added to a face before the Lambert term, as in glenzshadedcube.cpp
 #define GLENZ_SHADES 64 // Lambert range of one face; the add fills at 3 · shades
 
-#define MAX_SCROLL_LETTERS 256
 #define MAX_GLYPH_SIZE 32 // atlas cell; a 16×16 font still fits the ink mask
 #define MAX_DISTINCT_GLYPHS 32 // more than the alphabet any one ScrollText is likely to use
 
 static const char ScrollText[] = "RETRO DEMOEFFECTS...           ";
+#define LETTERS (int)(sizeof(ScrollText) - 1)
 
 static RETRO_Font Font;
-static int TextLength;
-static float LetterS[MAX_SCROLL_LETTERS];
-static float TextWidth;
+static float LetterS[LETTERS]; // where each letter's cube starts along the strip
+static float TextWidth; // one lap's length, the point at which the strip repeats
 static float Pixel;
-
-static Model3D *GlyphCache[MAX_DISTINCT_GLYPHS];
-static unsigned char GlyphCacheChar[MAX_DISTINCT_GLYPHS];
-static int GlyphCacheCount;
-
-// Lay text out along the helix: letterstart[i] is where letter i's cube
-// starts, spaced by the font's fixed width plus gap, or spacewidth for a
-// literal space. textwidth is one lap's length, the point at which the
-// strip repeats. RageQuits if text holds more letters than letterstart can
-// take.
-static int BuildLetterStrip(const char *text, const RETRO_Font &font, float pixel, float gap,
-							 float spacewidth, float *letterstart, int maxletters, float *textwidth)
-{
-	int length = (int)strlen(text);
-	if (length > maxletters) {
-		RETRO_RageQuit("Scroll text is longer than the letter list\n");
-	}
-
-	float s = 0;
-	for (int i = 0; i < length; i++) {
-		letterstart[i] = s;
-		if (text[i] == ' ') {
-			s += spacewidth;
-		} else {
-			s += font.width * pixel + gap;
-		}
-	}
-	*textwidth = s;
-
-	return length;
-}
 
 struct ScrollPose {
 	float s, y, z, ax, ay;
@@ -106,50 +74,42 @@ struct ScrollPose {
 
 // Position and orient one letter on the wrapped strip, from its base place
 // letterstart to the pose a caller rotates and translates its model with.
-// Returns false, pose untouched, once the letter is past cull on either
+// Returns false, pose untouched, once the letter is past CULL on either
 // side.
 //
 // raw = letterstart - phase is the letter's place on an unwrapped line; it is
 // brought to the representative closest to 0 every frame rather than
 // carrying a wrap decision forward from the last one. phase itself resets
-// by -textwidth once a lap (it is a mod), which jumps raw by +textwidth for
-// every letter at once, not just the one due to cross -cull; recomputing
+// by -TextWidth once a lap (it is a mod), which jumps raw by +TextWidth for
+// every letter at once, not just the one due to cross -CULL; recomputing
 // fresh from letterstart and the current phase keeps a letter already inside
 // the visible window from being caught by that reset and culled a lap early.
-static bool ScrollPoseCompute(float letterstart, double phase, float textwidth, float cull, float wavek,
-							   float spin, float distance, float ampy, float ampz, ScrollPose *pose)
+static bool ScrollPoseCompute(float letterstart, double phase, float spin, ScrollPose *pose)
 {
 	float raw = letterstart - (float)phase;
-	if (raw > textwidth * 0.5f) {
-		raw -= textwidth;
-	} else if (raw < -textwidth * 0.5f) {
-		raw += textwidth;
+	if (raw > TextWidth * 0.5f) {
+		raw -= TextWidth;
+	} else if (raw < -TextWidth * 0.5f) {
+		raw += TextWidth;
 	}
-	float s = raw + cull;
-	if (s < -cull || s > cull) {
+	float s = raw + CULL;
+	if (s < -CULL || s > CULL) {
 		return false;
 	}
-
-	float wave = s * wavek + spin;
-	float dyds = ampy * wavek * cos(wave);
-	float dzds = -ampz * wavek * sin(wave);
-
+	float wave = s * HELIX_WAVE + spin;
+	float dyds = HELIX_AMP_Y * HELIX_WAVE * cos(wave);
+	float dzds = -HELIX_AMP_Z * HELIX_WAVE * sin(wave);
 	pose->s = s;
-	pose->y = ampy * sin(wave);
-	pose->z = distance + ampz * cos(wave);
+	pose->y = HELIX_AMP_Y * sin(wave);
+	pose->z = HELIX_DISTANCE + HELIX_AMP_Z * cos(wave);
 	pose->ax = atan2(dyds, 1.0f);
 	pose->ay = atan2(-dzds, 1.0f);
 	return true;
 }
 
-static int AddVertex(Model3D *model, float x, float y, float z)
-{
-	return RETRO_AddModelVertex(model, x, y, z);
-}
-
 // Every face of a glyph carries the same offset, added before the Lambert
 // term (see the file header): this is not RETRO_AddModelQuad's neutral
-// default, so the local wrapper is what every Add* helper below calls.
+// default, so this wrapper is what every Add* helper below calls.
 static void AddQuad(Model3D *model, int a, int b, int c, int d)
 {
 	RETRO_AddModelQuad(model, a, b, c, d, GLENZ_FACE);
@@ -172,51 +132,51 @@ static void PixelBounds(int px0, int py0, int px1, int py1, float halfw, float h
 
 static void AddFrontBack(Model3D *model, float x0, float y0, float x1, float y1, float z0, float z1)
 {
-	int v0 = AddVertex(model, x0, y1, z0); // front, down, left
-	int v1 = AddVertex(model, x1, y1, z0); // front, down, right
-	int v2 = AddVertex(model, x1, y0, z0); // front, up, right
-	int v3 = AddVertex(model, x0, y0, z0); // front, up, left
-	int v4 = AddVertex(model, x0, y0, z1); // back, up, left
-	int v5 = AddVertex(model, x1, y0, z1); // back, up, right
-	int v6 = AddVertex(model, x1, y1, z1); // back, down, right
-	int v7 = AddVertex(model, x0, y1, z1); // back, down, left
+	int v0 = RETRO_AddModelVertex(model, x0, y1, z0); // front, down, left
+	int v1 = RETRO_AddModelVertex(model, x1, y1, z0); // front, down, right
+	int v2 = RETRO_AddModelVertex(model, x1, y0, z0); // front, up, right
+	int v3 = RETRO_AddModelVertex(model, x0, y0, z0); // front, up, left
+	int v4 = RETRO_AddModelVertex(model, x0, y0, z1); // back, up, left
+	int v5 = RETRO_AddModelVertex(model, x1, y0, z1); // back, up, right
+	int v6 = RETRO_AddModelVertex(model, x1, y1, z1); // back, down, right
+	int v7 = RETRO_AddModelVertex(model, x0, y1, z1); // back, down, left
 	AddQuad(model, v0, v1, v2, v3); // front, −z
 	AddQuad(model, v4, v5, v6, v7); // back, +z
 }
 
 static void AddTop(Model3D *model, float x0, float y, float x1, float z0, float z1)
 {
-	int a = AddVertex(model, x0, y, z0);
-	int b = AddVertex(model, x1, y, z0);
-	int c = AddVertex(model, x1, y, z1);
-	int d = AddVertex(model, x0, y, z1);
+	int a = RETRO_AddModelVertex(model, x0, y, z0);
+	int b = RETRO_AddModelVertex(model, x1, y, z0);
+	int c = RETRO_AddModelVertex(model, x1, y, z1);
+	int d = RETRO_AddModelVertex(model, x0, y, z1);
 	AddQuad(model, a, b, c, d); // up, −y
 }
 
 static void AddBottom(Model3D *model, float x0, float y, float x1, float z0, float z1)
 {
-	int a = AddVertex(model, x0, y, z1);
-	int b = AddVertex(model, x1, y, z1);
-	int c = AddVertex(model, x1, y, z0);
-	int d = AddVertex(model, x0, y, z0);
+	int a = RETRO_AddModelVertex(model, x0, y, z1);
+	int b = RETRO_AddModelVertex(model, x1, y, z1);
+	int c = RETRO_AddModelVertex(model, x1, y, z0);
+	int d = RETRO_AddModelVertex(model, x0, y, z0);
 	AddQuad(model, a, b, c, d); // down, +y
 }
 
 static void AddLeft(Model3D *model, float x, float y0, float y1, float z0, float z1)
 {
-	int a = AddVertex(model, x, y1, z0);
-	int b = AddVertex(model, x, y0, z0);
-	int c = AddVertex(model, x, y0, z1);
-	int d = AddVertex(model, x, y1, z1);
+	int a = RETRO_AddModelVertex(model, x, y1, z0);
+	int b = RETRO_AddModelVertex(model, x, y0, z0);
+	int c = RETRO_AddModelVertex(model, x, y0, z1);
+	int d = RETRO_AddModelVertex(model, x, y1, z1);
 	AddQuad(model, a, b, c, d); // left, −x
 }
 
 static void AddRight(Model3D *model, float x, float y0, float y1, float z0, float z1)
 {
-	int a = AddVertex(model, x, y1, z0);
-	int b = AddVertex(model, x, y1, z1);
-	int c = AddVertex(model, x, y0, z1);
-	int d = AddVertex(model, x, y0, z0);
+	int a = RETRO_AddModelVertex(model, x, y1, z0);
+	int b = RETRO_AddModelVertex(model, x, y1, z1);
+	int c = RETRO_AddModelVertex(model, x, y0, z1);
+	int d = RETRO_AddModelVertex(model, x, y0, z0);
 	AddQuad(model, a, b, c, d); // right, +x
 }
 
@@ -372,12 +332,16 @@ static void BuildGlyph(Model3D *model, unsigned char character)
 // ever cost a BuildGlyph call.
 static Model3D *GetGlyph(unsigned char character)
 {
-	for (int i = 0; i < GlyphCacheCount; i++) {
-		if (GlyphCacheChar[i] == character) {
-			return GlyphCache[i];
+	static Model3D *glyphcache[MAX_DISTINCT_GLYPHS];
+	static unsigned char glyphcachechar[MAX_DISTINCT_GLYPHS];
+	static int glyphcachecount;
+
+	for (int i = 0; i < glyphcachecount; i++) {
+		if (glyphcachechar[i] == character) {
+			return glyphcache[i];
 		}
 	}
-	if (GlyphCacheCount >= MAX_DISTINCT_GLYPHS) {
+	if (glyphcachecount >= MAX_DISTINCT_GLYPHS) {
 		RETRO_RageQuit("Too many distinct glyphs in the scroll text\n");
 	}
 
@@ -387,9 +351,9 @@ static Model3D *GetGlyph(unsigned char character)
 	model->glenzlighting.colormax = 3 * GLENZ_SHADES; // hold the add at the gradient's last entry, or a third overlap would walk into white
 	BuildGlyph(model, character);
 
-	GlyphCache[GlyphCacheCount] = model;
-	GlyphCacheChar[GlyphCacheCount] = character;
-	GlyphCacheCount++;
+	glyphcache[glyphcachecount] = model;
+	glyphcachechar[glyphcachecount] = character;
+	glyphcachecount++;
 	return model;
 }
 
@@ -398,7 +362,7 @@ void DEMO_Render(double time, double deltatime)
 	double phase = mod(time * SCROLL_SPEED, (double)TextWidth);
 	float spin = (float)(time * HELIX_SPIN);
 
-	for (int i = 0; i < TextLength; i++) {
+	for (int i = 0; i < LETTERS; i++) {
 		unsigned char character = (unsigned char)ScrollText[i];
 		if (character == ' ') {
 			continue;
@@ -408,8 +372,7 @@ void DEMO_Render(double time, double deltatime)
 		// the right side away when the path recedes; the spin and rock are
 		// the cube's turn, so N · L actually moves.
 		ScrollPose pose;
-		if (!ScrollPoseCompute(LetterS[i], phase, TextWidth, CULL, HELIX_WAVE, spin,
-								HELIX_DISTANCE, HELIX_AMP_Y, HELIX_AMP_Z, &pose)) {
+		if (!ScrollPoseCompute(LetterS[i], phase, spin, &pose)) {
 			continue;
 		}
 
@@ -444,8 +407,16 @@ void DEMO_Initialize(void)
 	Font = RETRO_LoadFont(FONT);
 	Pixel = LETTER_HEIGHT / Font.height;
 
-	TextLength = BuildLetterStrip(ScrollText, Font, Pixel, LETTER_GAP, SPACE_WIDTH,
-								   LetterS, MAX_SCROLL_LETTERS, &TextWidth);
+	// Lay the text out along the strip, each letter the font's fixed width
+	// plus the gap after the one before it, and a space its own width
+	for (int i = 0; i < LETTERS; i++) {
+		LetterS[i] = TextWidth;
+		if (ScrollText[i] == ' ') {
+			TextWidth += SPACE_WIDTH;
+		} else {
+			TextWidth += Font.width * Pixel + LETTER_GAP;
+		}
+	}
 
 	RETRO_InitializeLightSource(0, 0, -1);
 }

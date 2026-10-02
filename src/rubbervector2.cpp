@@ -34,7 +34,6 @@
 #define RUBBER_WAVE1 1.5f     // radians a wave's phase turns per model unit along
 #define RUBBER_WAVE2 1.0f     // the next axis, and along the one after that
 
-static Model3D *Rubber;
 static Vertex RestVertex[RETRO_MAX_VERTICES];
 
 void DEMO_Render(double time, double deltatime)
@@ -49,9 +48,10 @@ void DEMO_Render(double time, double deltatime)
 
 	// Each axis keeps its own wrapped phase so sin(k * phase) does not jump
 	// when k is not an integer.
-	for (int i = 0; i < Rubber->vertices; i++) {
+	Model3D *model = RETRO_Get3DModel();
+	for (int i = 0; i < model->vertices; i++) {
 		const vec3 &v = RestVertex[i].pos;
-		Rubber->vertex[i].pos = {
+		model->vertex[i].pos = {
 			v.x + RUBBER_AMOUNT * (float)sin(phasex + RUBBER_WAVE1 * v.y + RUBBER_WAVE2 * v.z),
 			v.y + RUBBER_AMOUNT * (float)sin(phasey + RUBBER_WAVE1 * v.z + RUBBER_WAVE2 * v.x),
 			v.z + RUBBER_AMOUNT * (float)sin(phasez + RUBBER_WAVE1 * v.x + RUBBER_WAVE2 * v.y)
@@ -60,21 +60,24 @@ void DEMO_Render(double time, double deltatime)
 
 	// The face normals the loader took describe the cube at rest, so they are
 	// taken again now that the wave has been written into it
-	RETRO_InitializeFaceNormals(Rubber);
+	RETRO_InitializeFaceNormals(model);
 
-	RETRO_RotateModel(ax, ay, az, Rubber);
-	RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Rubber);
-	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT, Rubber);
+	// Draw cube
+	RETRO_RotateModel(ax, ay, az);
+	RETRO_ProjectModel();
+	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT);
 }
 
 void DEMO_Initialize(void)
 {
 	RETRO_CreateMattePalette();
 
-	Rubber = RETRO_Load3DModel("assets/subcubequads.obj");
-	Rubber->c = RETRO_PHONG_OFFSET;
-	Rubber->shades = RETRO_PHONG_SHADES;
-	for (int i = 0; i < Rubber->vertices; i++) RestVertex[i] = Rubber->vertex[i];
+	Model3D *model = RETRO_Load3DModel("assets/subcubequads.obj");
+	model->c = RETRO_PHONG_OFFSET;
+	model->shades = RETRO_PHONG_SHADES;
+	for (int i = 0; i < model->vertices; i++) {
+		RestVertex[i] = model->vertex[i];
+	}
 
 	RETRO_InitializeLightSource(0, 0, -1);
 }

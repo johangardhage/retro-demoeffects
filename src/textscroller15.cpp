@@ -38,7 +38,7 @@ static RETRO_Font Font;
 static RETRO_Image *TextStrip;
 static unsigned char Background[RETRO_WIDTH * RETRO_HEIGHT];
 static unsigned char InkShades[2 * SHADES];
-static RETRO_ShadeTable TextShades = { InkShades, 2, SHADES };
+static const RETRO_ShadeTable TextShades = { InkShades, 2, SHADES };
 
 static PolygonPoint Project(float x, float y, vec2 uv, double time)
 {
@@ -67,7 +67,7 @@ static PolygonPoint Project(float x, float y, vec2 uv, double time)
 
 void DEMO_Render(double time, double deltatime)
 {
-	memcpy(RETRO_FrameBuffer(), Background, sizeof(Background));
+	RETRO_Blit(Background);
 	RETRO_ClearDepthBuffer();
 	double phase = fmod(time, PASS_CYCLE) * SCROLL_SPEED;
 	for (int i = 0; i < LETTERS; i++) {
@@ -93,7 +93,7 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_SetColor(0, RETRO_Palette{ 0, 0, 0 });
+	RETRO_SetColor(0, RETRO_BLACK);
 	RETRO_SetColor(1, RETRO_Palette{ 68, 82, 118 });
 	RETRO_SetColor(2, RETRO_Palette{ 33, 49, 84 });
 	const RETRO_Palette chrome[] = { { 63, 27, 54 }, { 93, 91, 124 },
@@ -115,8 +115,9 @@ void DEMO_Initialize(void)
 	}
 	Font = RETRO_LoadFont(FONT);
 	TextStrip = RETRO_GenerateTextImage(Font, lines, LETTERS);
-	for (int i = 0; i < TextStrip->width * TextStrip->height; i++)
+	for (int i = 0; i < TextStrip->width * TextStrip->height; i++) {
 		TextStrip->data[i] = TextStrip->data[i] != 0;
+	}
 
 	const vec2 edge[] = { { 160, 24 }, { 188, 51 }, { 174, 66 },
 		{ 202, 91 }, { 160, 133 }, { 188, 161 }, { 174, 176 },
@@ -125,8 +126,9 @@ void DEMO_Initialize(void)
 		vec2 a = edge[segment], b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
 			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
-			for (int x = 0; x < right; x++)
+			for (int x = 0; x < right; x++) {
 				Background[y * RETRO_WIDTH + x] = y < 133 ? 1 : 2;
+			}
 		}
 	}
 }

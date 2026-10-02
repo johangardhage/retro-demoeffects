@@ -69,9 +69,9 @@ struct Flake {
 	float swayspeed;
 };
 
-Flake Flakes[FLAKES];
-unsigned char World[RETRO_WIDTH * RETRO_HEIGHT]; // EMPTY, SOLID or SETTLED
-unsigned char Scenery[RETRO_WIDTH * RETRO_HEIGHT]; // palette entries of the ground and logo, 0 elsewhere
+static Flake Flakes[FLAKES];
+static unsigned char World[RETRO_WIDTH * RETRO_HEIGHT]; // EMPTY, SOLID or SETTLED
+static unsigned char Scenery[RETRO_WIDTH * RETRO_HEIGHT]; // palette entries of the ground and logo, 0 elsewhere
 
 //
 // Whether a cell is filled, wrapping round the sides as the flakes do, with
@@ -94,7 +94,7 @@ static void Respawn(Flake *flake, bool fresh)
 	flake->y = fresh ? -RANDOMF(20) - 2 : RANDOMF(RETRO_HEIGHT);
 	flake->z = RANDOMF(1);
 	flake->swayphase = RANDOMF(2 * M_PI);
-	flake->swayspeed = 0.6f + RANDOMF(1.2);
+	flake->swayspeed = mix(0.6, 1.8, RAND());
 }
 
 //
@@ -103,11 +103,11 @@ static void Respawn(Flake *flake, bool fresh)
 static void Settle(int x, int y, int downwind)
 {
 	// Straight down, then one across and down, then two, downwind first
-	const int Slides[5] = { 0, downwind, -downwind, 2 * downwind, -2 * downwind };
+	const int slides[5] = { 0, downwind, -downwind, 2 * downwind, -2 * downwind };
 
 	while (y < RETRO_HEIGHT - 1) {
 		bool moved = false;
-		for (int slide : Slides) {
+		for (int slide : slides) {
 			bool clear = slide * slide < 4 || !Filled(x + slide / 2, y);
 			if (clear && !Filled(x + slide, y + 1)) {
 				x += slide;
@@ -188,12 +188,12 @@ static void DrawFlake(unsigned char *buffer, const Flake &flake)
 	int y = (int)floorf(flake.y);
 	unsigned char color = FLAKE + MIN((int)(flake.z * FLAKE_COLORS), FLAKE_COLORS - 1);
 	int size = flake.z < 0.4f ? 0 : flake.z < 0.8f ? 1 : 2;
-	static const int Plus[5][2] = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
+	static const int plus[5][2] = { { 0, 0 }, { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
 	int points = size == 0 ? 1 : size == 1 ? 3 : 5;
 
 	for (int i = 0; i < points; i++) {
-		int px = x + Plus[i][0];
-		int py = y + Plus[i][1];
+		int px = x + plus[i][0];
+		int py = y + plus[i][1];
 		if (px >= 0 && px < RETRO_WIDTH && py >= 0 && py < RETRO_HEIGHT) {
 			buffer[py * RETRO_WIDTH + px] = color;
 		}

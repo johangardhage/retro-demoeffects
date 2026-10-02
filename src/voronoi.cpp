@@ -53,7 +53,7 @@ struct Seed {
 	int hue;
 };
 
-Seed Seeds[SEEDS];
+static Seed Seeds[SEEDS];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -125,7 +125,7 @@ void DEMO_Initialize(void)
 	for (int k = 0; k < GLASS_HUES; k++) {
 		int ramp = GLASS + k * GLASS_SHADES;
 		int middle = ramp + GLASS_SHADES * 3 / 4;
-		RETRO_Palette dark = { (unsigned char)(GlassHues[k].r / 8), (unsigned char)(GlassHues[k].g / 8), (unsigned char)(GlassHues[k].b / 8) };
+		RETRO_Palette dark = GlassHues[k] * 0.125f;
 		RETRO_CreateGradientPalette(ramp, middle, dark, GlassHues[k]);
 		RETRO_CreateGradientPalette(middle, ramp + GLASS_SHADES, GlassHues[k], RETRO_WHITE);
 	}
@@ -138,12 +138,12 @@ void DEMO_Initialize(void)
 		Seed &seed = Seeds[i];
 		int column = i % SEEDS_X;
 		int row = i / SEEDS_X;
-		seed.x = (column + 0.5f + RANDOMF(2 * SEED_JITTER) - SEED_JITTER) * cellwidth;
-		seed.y = (row + 0.5f + RANDOMF(2 * SEED_JITTER) - SEED_JITTER) * cellheight;
-		seed.ampx = SEED_ORBIT * (0.4f + RANDOMF(0.6));
-		seed.ampy = SEED_ORBIT * (0.4f + RANDOMF(0.6));
-		seed.speedx = SEED_MINSPEED + RANDOMF(SEED_MAXSPEED - SEED_MINSPEED);
-		seed.speedy = SEED_MINSPEED + RANDOMF(SEED_MAXSPEED - SEED_MINSPEED);
+		seed.x = (column + 0.5f + mix(-SEED_JITTER, SEED_JITTER, RAND())) * cellwidth;
+		seed.y = (row + 0.5f + mix(-SEED_JITTER, SEED_JITTER, RAND())) * cellheight;
+		seed.ampx = SEED_ORBIT * mix(0.4, 1.0, RAND());
+		seed.ampy = SEED_ORBIT * mix(0.4, 1.0, RAND());
+		seed.speedx = mix(SEED_MINSPEED, SEED_MAXSPEED, RAND());
+		seed.speedy = mix(SEED_MINSPEED, SEED_MAXSPEED, RAND());
 		seed.phasex = RANDOMF(2 * M_PI);
 		seed.phasey = RANDOMF(2 * M_PI);
 		seed.hue = (column + row * 3) % GLASS_HUES;

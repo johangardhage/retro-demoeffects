@@ -16,6 +16,14 @@
 #define CHECKER_LAYERS 24
 #define CHECKER_SPACING 0.72
 #define CHECKER_FOCAL 180.0
+#define CHECKER_COLORS 8
+
+// The boards fade from each of these colors to the next
+static const RETRO_Palette Colors[CHECKER_COLORS] = {
+	RETRO_DARKSALMON, RETRO_ANTIQUEWHITE, RETRO_SEABLUE,
+	RETRO_CHOCOLATE, RETRO_OLIVEGRAY, RETRO_DEEPSEABLUE,
+	RETRO_TEALGRAY, RETRO_PERU
+};
 
 // Each board gets its own opening position, so the flight has to weave to
 // pass through every one of them rather than follow a single straight bore.
@@ -31,11 +39,10 @@
 static vec2 BoardOffset(double board)
 {
 	double envelope = smoothstep(0.0, 10.0, board);
-	vec2 offset = {
+	return {
 		(float)(envelope * (22.0 * sin(board * 0.252) + 9.0 * sin(board * 0.583 + 1.0))),
 		(float)(envelope * (16.0 * sin(board * 0.209 + 0.5) + 7.0 * sin(board * 0.482)))
 	};
-	return offset;
 }
 
 // The curve between p1 and p2, at t going from 0 to 1; p0 and p3 are only
@@ -55,10 +62,9 @@ static vec2 BoardOffset(double board)
 static vec2 CatmullRom(vec2 p0, vec2 p1, vec2 p2, vec2 p3, float t)
 {
 	float t2 = t * t, t3 = t2 * t;
-	vec2 point = (p1 * 2.0f + (p2 - p0) * t
+	return (p1 * 2.0f + (p2 - p0) * t
 		+ (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * t2
 		+ (p1 * 3.0f - p0 - p2 * 3.0f + p3) * t3) * 0.5f;
-	return point;
 }
 
 // Threads a smooth path through the per-board offsets, indexed by absolute
@@ -72,10 +78,10 @@ static vec2 Path(double worldz)
 	double board = worldz / CHECKER_SPACING - 1.0;
 	double board0 = floor(board);
 	float frac = board - board0;
-	vec2 p0 = BoardOffset(fmax(board0 - 1.0, 0.0));
-	vec2 p1 = BoardOffset(fmax(board0, 0.0));
-	vec2 p2 = BoardOffset(fmax(board0 + 1.0, 0.0));
-	vec2 p3 = BoardOffset(fmax(board0 + 2.0, 0.0));
+	vec2 p0 = BoardOffset(MAX(board0 - 1.0, 0.0));
+	vec2 p1 = BoardOffset(MAX(board0, 0.0));
+	vec2 p2 = BoardOffset(MAX(board0 + 1.0, 0.0));
+	vec2 p3 = BoardOffset(MAX(board0 + 2.0, 0.0));
 	return CatmullRom(p0, p1, p2, p3, frac);
 }
 
@@ -90,40 +96,34 @@ void DEMO_Render(double time, double deltatime)
 	vec2 camerapos = Path(cameraz);
 	unsigned char *dest = RETRO_FrameBuffer();
 
-	const RETRO_Palette colors[] = {
-		RETRO_DARKSALMON, RETRO_ANTIQUEWHITE, RETRO_SEABLUE,
-		RETRO_CHOCOLATE, RETRO_OLIVEGRAY, RETRO_DEEPSEABLUE,
-		RETRO_TEALGRAY, RETRO_PERU
-	};
-	double colorphase = fmod(time / 3.0, 8.0);
+	double colorphase = fmod(time / 3.0, CHECKER_COLORS);
 	int first = (int)colorphase;
-	int next = (first + 1) % 8;
-	double blend = colorphase - first;
-	blend = smoothstep(0.0, 1.0, blend);
-	for (int layer = 0; layer < CHECKER_LAYERS; ++layer) {
-		double depth = layer * CHECKER_SPACING + fmin(nearest, CHECKER_SPACING);
+	int next = (first + 1) % CHECKER_COLORS;
+	double blend = smoothstep(0.0, 1.0, colorphase - first);
+	for (int layer = 0; layer < CHECKER_LAYERS; layer++) {
+		double depth = layer * CHECKER_SPACING + MIN(nearest, CHECKER_SPACING);
 		double shade = exp(-depth * 0.16);
 		RETRO_Palette color;
-		color.r = (unsigned char)(mix(colors[first].r, colors[next].r, blend) * shade);
-		color.g = (unsigned char)(mix(colors[first].g, colors[next].g, blend) * shade);
-		color.b = (unsigned char)(mix(colors[first].b, colors[next].b, blend) * shade);
+		color.r = (unsigned char)(mix(Colors[first].r, Colors[next].r, blend) * shade);
+		color.g = (unsigned char)(mix(Colors[first].g, Colors[next].g, blend) * shade);
+		color.b = (unsigned char)(mix(Colors[first].b, Colors[next].b, blend) * shade);
 		RETRO_SetColor(layer + 1, color);
 	}
 
 	// Paint far to near. Each board is offset by its own point on the weave
 	// path, producing the characteristic nested square openings off-center
 	// from one another instead of a single straight-through bore.
-	for (int layer = CHECKER_LAYERS - 1; layer >= 0; --layer) {
+	for (int layer = CHECKER_LAYERS - 1; layer >= 0; layer--) {
 		double z = 0.001 + nearest + layer * CHECKER_SPACING;
 		double inversecell = z / CHECKER_FOCAL;
 		vec2 offset = Path(cameraz + z) - camerapos;
 		bool columns[RETRO_WIDTH];
-		for (int x = 0; x < RETRO_WIDTH; ++x) {
+		for (int x = 0; x < RETRO_WIDTH; x++) {
 			columns[x] = ((int)floor((x + 0.5 - RETRO_WIDTH * 0.5 - offset.x) * inversecell + 0.5) & 1) != 0;
 		}
-		for (int y = 0; y < RETRO_HEIGHT; ++y) {
+		for (int y = 0; y < RETRO_HEIGHT; y++) {
 			bool row = ((int)floor((y + 0.5 - RETRO_HEIGHT * 0.5 - offset.y) * inversecell + 0.5) & 1) != 0;
-			for (int x = 0; x < RETRO_WIDTH; ++x) {
+			for (int x = 0; x < RETRO_WIDTH; x++) {
 				if (columns[x] != row) dest[y * RETRO_WIDTH + x] = layer + 1;
 			}
 		}
@@ -132,5 +132,5 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_SetColor(0, 0, 0, 0);
+	RETRO_SetColor(0, RETRO_BLACK);
 }

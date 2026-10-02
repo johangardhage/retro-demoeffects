@@ -52,7 +52,7 @@ static const float Bayer[4][4] = {
 	{ 15.5f / 16, 7.5f / 16, 13.5f / 16, 5.5f / 16 },
 };
 
-unsigned char WaterTable[RETRO_COLORS * WATER_LEVELS];
+static unsigned char WaterTable[RETRO_COLORS * WATER_LEVELS];
 
 //
 // A picture color as the water reflects it, level going from far to near

@@ -1,5 +1,5 @@
 //
-// Raycast
+// Raycast, with light maps and doors
 //
 // A small maze of textured rooms, drawn one column at a time by casting a ray
 // per column across a grid of walls, with textured floors and ceilings, the
@@ -207,18 +207,14 @@ struct Door {
 	float open; // of its width slid away into the wall at x + 1
 };
 
-Door Doors[] = {
+static Door Doors[] = {
 	{ 7, 12, 0 },
 };
 
-unsigned char *Textures; // the texture sheet
-unsigned char *LightMaps; // the light sheet, a level at every texel
-unsigned char LightTable[RETRO_COLORS * LIGHTS];
-float RowDistance[RETRO_HEIGHT];
-vec2 Position = { 6.5f, 5.5f }; // the camera, in cells
-float Angle = (float)M_PI; // the way it looks, from x toward y
-double Walked; // cells walked, for the bob
-unsigned char TextColor, ShadowColor; // the palette's nearest to white and to black
+static unsigned char *Textures; // the texture sheet
+static unsigned char *LightMaps; // the light sheet, a level at every texel
+static unsigned char LightTable[RETRO_COLORS * LIGHTS];
+static unsigned char TextColor, ShadowColor; // the palette's nearest to white and to black
 
 //
 // A texel of a tile of a sheet
@@ -290,8 +286,8 @@ static int WallLight(int x, int y, int frontx, int fronty)
 	if (FloorLights[frontx][fronty] != 0) {
 		return FloorLights[x][y];
 	}
-	static const int Sides[4][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
-	for (const int *side : Sides) {
+	static const int sides[4][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+	for (const int *side : sides) {
 		int nx = x + side[0], ny = y + side[1];
 		if (nx >= 0 && nx < MAP_SIZE && ny >= 0 && ny < MAP_SIZE && Walls[nx][ny] == 0 && FloorLights[nx][ny] != 0) {
 			return 0;
@@ -302,52 +298,57 @@ static int WallLight(int x, int y, int frontx, int fronty)
 
 void DEMO_Render(double time, double deltatime)
 {
+	static vec2 position = { 6.5f, 5.5f }; // the camera, in cells
+	static float angle = (float)M_PI; // the way it looks, from x toward y
+	static double walked; // cells walked, for the bob
+
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Move the camera under the arrow keys
 	bool left = RETRO_KeyState(SDL_SCANCODE_LEFT), right = RETRO_KeyState(SDL_SCANCODE_RIGHT);
 	bool up = RETRO_KeyState(SDL_SCANCODE_UP), down = RETRO_KeyState(SDL_SCANCODE_DOWN);
-	Angle = (float)fmod(Angle + ((right ? 1 : 0) - (left ? 1 : 0)) * TURN_SPEED * deltatime, 2 * M_PI);
+	angle = (float)fmod(angle + ((right ? 1 : 0) - (left ? 1 : 0)) * TURN_SPEED * deltatime, 2 * M_PI);
 	float step = (float)(((up ? 1 : 0) - (down ? 1 : 0)) * WALK_SPEED * deltatime);
-	float nextx = Position.x + step * cosf(Angle), nexty = Position.y + step * sinf(Angle);
-	if (!Blocked(nextx, Position.y)) {
-		Position.x = nextx;
+	float nextx = position.x + step * cosf(angle), nexty = position.y + step * sinf(angle);
+	if (!Blocked(nextx, position.y)) {
+		position.x = nextx;
 	}
-	if (!Blocked(Position.x, nexty)) {
-		Position.y = nexty;
+	if (!Blocked(position.x, nexty)) {
+		position.y = nexty;
 	}
-	Walked += fabsf(step);
-	double phase = fmod(Walked / BOB_STRIDE * 2 * M_PI, 2 * M_PI);
+	walked += fabsf(step);
+	double phase = fmod(walked / BOB_STRIDE * 2 * M_PI, 2 * M_PI);
 
 	// Open the doors the camera is near, close the others
 	for (Door &door : Doors) {
-		float dx = Position.x - (door.x + 0.5f), dy = Position.y - (door.y + 0.5f);
+		float dx = position.x - (door.x + 0.5f), dy = position.y - (door.y + 0.5f);
 		bool near = dx * dx + dy * dy < DOOR_RANGE * DOOR_RANGE;
 		door.open = CLAMP01(door.open + (float)((near ? 1 : -1) * DOOR_SPEED * deltatime));
 	}
 	float halfwidth = (float)tan(radians(RAYCAST_FOV / 2.0));
-	float dirx = cosf(Angle), diry = sinf(Angle);
+	float dirx = cosf(angle), diry = sinf(angle);
 	float planex = -diry * halfwidth, planey = dirx * halfwidth;
 	float focal = RETRO_WIDTH / (2 * halfwidth);
 	float eye = 0.5f + BOB_HEIGHT * sinf((float)phase);
 	float horizon = RETRO_HEIGHT / 2.0f;
 
 	// Find the distance to the floor or the ceiling on every row
+	float rowdistance[RETRO_HEIGHT];
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		float rows = y + 0.5f - horizon;
-		RowDistance[y] = rows > 0 ? eye * focal / rows : (1 - eye) * focal / -rows;
+		rowdistance[y] = rows > 0 ? eye * focal / rows : (1 - eye) * focal / -rows;
 	}
 
 	for (int x = 0; x < RETRO_WIDTH; x++) {
 		// Walk the column's ray across the grid to the first wall or closed part of a door
 		float camera = 2.0f * (x + 0.5f) / RETRO_WIDTH - 1;
 		float rayx = dirx + planex * camera, rayy = diry + planey * camera;
-		int cellx = (int)floorf(Position.x), celly = (int)floorf(Position.y);
+		int cellx = (int)floorf(position.x), celly = (int)floorf(position.y);
 		float deltax = rayx != 0 ? fabsf(1 / rayx) : 1e30f;
 		float deltay = rayy != 0 ? fabsf(1 / rayy) : 1e30f;
 		int stepx = rayx < 0 ? -1 : 1, stepy = rayy < 0 ? -1 : 1;
-		float sidex = (rayx < 0 ? Position.x - cellx : cellx + 1 - Position.x) * deltax;
-		float sidey = (rayy < 0 ? Position.y - celly : celly + 1 - Position.y) * deltay;
+		float sidex = (rayx < 0 ? position.x - cellx : cellx + 1 - position.x) * deltax;
+		float sidey = (rayy < 0 ? position.y - celly : celly + 1 - position.y) * deltay;
 		bool alongx = true;
 		float z = 0; // the ray parameter where it entered the cell it is in
 		Door *door = NULL;
@@ -355,8 +356,8 @@ void DEMO_Render(double time, double deltatime)
 			// The door's line, if the ray crosses it inside this cell where the door still stands
 			Door *here = DoorAt(cellx, celly);
 			if (here && rayy != 0) {
-				float t = (celly + 0.5f - Position.y) / rayy;
-				float along = Position.x + t * rayx - cellx;
+				float t = (celly + 0.5f - position.y) / rayy;
+				float along = position.x + t * rayx - cellx;
 				if (t >= z && t < MIN(sidex, sidey) && along >= here->open) {
 					door = here;
 					z = t;
@@ -383,7 +384,7 @@ void DEMO_Render(double time, double deltatime)
 		// Find the columns where the ray met the wall: the light tile's along the grid, so
 		// light tiles join from cell to cell, and the texture's turned so no wall reads mirrored
 		// A door carries its texture as it slides
-		float hit = alongx ? Position.y + z * rayy : Position.x + z * rayx;
+		float hit = alongx ? position.y + z * rayy : position.x + z * rayx;
 		float across = fract(hit) - (door ? door->open : 0);
 		int lightu = CLAMP(across * TILE_SIZE, 0, TILE_SIZE);
 		int u = (alongx && rayx < 0) || (!alongx && rayy > 0) ? TILE_SIZE - 1 - lightu : lightu;
@@ -403,22 +404,22 @@ void DEMO_Render(double time, double deltatime)
 			}
 
 			// Floor below the wall, ceiling above, the texel's row along y and its column along x
-			float rowdistance = RowDistance[y];
-			float floorx = Position.x + rowdistance * rayx, floory = Position.y + rowdistance * rayy;
+			float distance = rowdistance[y];
+			float floorx = position.x + distance * rayx, floory = position.y + distance * rayy;
 			int mapx = (int)floorf(floorx), mapy = (int)floorf(floory);
 			int tx = CLAMP((floorx - mapx) * TILE_SIZE, 0, TILE_SIZE);
 			int ty = CLAMP((floory - mapy) * TILE_SIZE, 0, TILE_SIZE);
 			bool below = y + 0.5f >= bottom;
 			int tile = below ? Floors[mapx][mapy] : Ceilings[mapx][mapy];
 			int light = below ? FloorLight(mapx, mapy, floory - mapy) : CeilingLights[mapx][mapy];
-			float fade = LIGHT_NEAR * MIN(LIGHT_REACH / rowdistance, 1.0f);
+			float fade = LIGHT_NEAR * MIN(LIGHT_REACH / distance, 1.0f);
 			*pixel = Lit(SheetTexel(Textures, tile, tx, ty), fade, SheetTexel(LightMaps, light, tx, ty));
 		}
 	}
 
 	// Print the camera's position
 	char text[32];
-	snprintf(text, sizeof(text), "x %5.2f  y %5.2f", Position.x, Position.y);
+	snprintf(text, sizeof(text), "x %5.2f  y %5.2f", position.x, position.y);
 	RETRO_PutString(text, TEXT_X + 1, TEXT_Y + 1, ShadowColor);
 	RETRO_PutString(text, TEXT_X, TEXT_Y, TextColor);
 }

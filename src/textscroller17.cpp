@@ -13,7 +13,6 @@
 #include "lib/retropalette.h"
 #include "lib/retromath.h"
 #include "lib/retromain.h"
-#include <cmath>
 
 static constexpr int WallWidth = 198, WallHeight = 126;
 static constexpr int WallX = (RETRO_WIDTH - WallWidth) / 2, WallY = (RETRO_HEIGHT - WallHeight) / 2;
@@ -27,7 +26,7 @@ static constexpr float EyeDistance = 170.0f;
 
 static unsigned char Stone[WallHeight][WallWidth];
 static vec3 StoneNormals[WallHeight][WallWidth];
-static RETRO_Image *ScrollImage = nullptr;
+static RETRO_Image *ScrollImage;
 static const char *const ScrollText[] = {
 	"RETRO DEMOEFFECTS...           "
 };
@@ -65,14 +64,12 @@ static float ShadowCoverage(float x, float y, int phase)
 
 void DEMO_Render(double time, double deltatime)
 {
-	(void)deltatime;
 	unsigned char *dest = RETRO_FrameBuffer();
-	memset(dest, 0, RETRO_WIDTH * RETRO_HEIGHT);
 
 	// The text enters at the right margin. Until it has scrolled in, phase is
 	// negative and the columns left of the text's start stay empty.
 	double scroll = time * 76.0 - (RETRO_WIDTH - TextMargin);
-	int phase = scroll < 0 ? (int)floor(scroll) : (int)fmod(scroll, double(ScrollImage->width));
+	int phase = scroll < 0 ? (int)floor(scroll) : (int)fmod(scroll, (double)ScrollImage->width);
 	// A distant light, so every ray is parallel. slopex and slopey are how far
 	// it leans per unit of depth. A wall point is shaded when the ray from it
 	// toward the light meets ink at the text: its point in space, back from
@@ -88,8 +85,8 @@ void DEMO_Render(double time, double deltatime)
 	// The plaque is bright stone that the shadow darkens to roughly half.
 	// The rim is a bevel in the wall plane: the same light and the same shadow.
 	constexpr float stoneambient = 0.5f, stonediffuse = 0.62f;
-	for (int y = -2; y < WallHeight + 2; ++y) {
-		for (int x = -2; x < WallWidth + 2; ++x) {
+	for (int y = -2; y < WallHeight + 2; y++) {
+		for (int x = -2; x < WallWidth + 2; x++) {
 			float shadow = ShadowCoverage(centerx + (WallX + x - centerx) * wallscale + WallDepth * slopex,
 				centery + (WallY + y - centery) * wallscale + WallDepth * slopey - TextY, phase);
 			float albedo, ambient, diffuse;
@@ -118,12 +115,12 @@ void DEMO_Render(double time, double deltatime)
 	// finite distance; with parallel view rays a flat face would shade evenly.
 	// A one-pixel bevel tilts outward at the glyph boundary to catch it.
 	constexpr float textdiffuse = 0.1f, textspecular = 1.25f, shininess = 8.0f;
-	for (int y = 0; y < ScrollImage->height; ++y) {
-		for (int x = TextMargin; x < RETRO_WIDTH - TextMargin; ++x) {
+	for (int y = 0; y < ScrollImage->height; y++) {
+		for (int x = TextMargin; x < RETRO_WIDTH - TextMargin; x++) {
 			int sourcex = x + phase;
 			if (!TextPixel(sourcex, y)) continue;
-			float nx = 0.5f * (int(TextPixel(sourcex - 1, y)) - int(TextPixel(sourcex + 1, y)));
-			float ny = 0.5f * (int(TextPixel(sourcex, y - 1)) - int(TextPixel(sourcex, y + 1)));
+			float nx = 0.5f * ((int)TextPixel(sourcex - 1, y) - (int)TextPixel(sourcex + 1, y));
+			float ny = 0.5f * ((int)TextPixel(sourcex, y - 1) - (int)TextPixel(sourcex, y + 1));
 			vec3 normal = normalize(vec3{ nx, ny, 1 });
 			vec3 view = normalize(vec3{ centerx - x, centery - (TextY + y), EyeDistance });
 			vec3 halfway = normalize(light + view);
@@ -138,19 +135,19 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_SetColor(0, RETRO_RGB(0x203363));
-	for (int i = 0; i < StoneShades; ++i) {
+	for (int i = 0; i < StoneShades; i++) {
 		int c = i * 255 / (StoneShades - 1);
 		RETRO_SetColor(StoneStart + i, c, c * 0.88f, c * 0.87f);
 	}
 	// Metal ramps from black up to a cool, blue-white highlight.
-	for (int i = 0; i < TextShades; ++i) {
-		float t = i / float(TextShades - 1);
+	for (int i = 0; i < TextShades; i++) {
+		float t = i / (float)(TextShades - 1);
 		RETRO_SetColor(TextStart + i, 236 * t, 244 * t, 255 * t);
 	}
 	// Speckled granite: soft mottled patches under fine grain, with sparse
 	// dark crystals and pale flecks.
-	for (int y = 0; y < WallHeight; ++y) {
-		for (int x = 0; x < WallWidth; ++x) {
+	for (int y = 0; y < WallHeight; y++) {
+		for (int x = 0; x < WallWidth; x++) {
 			float mottle = Noise(x * 0.045f, y * 0.045f) + 0.5f * Noise(x * 0.11f + 40, y * 0.11f);
 			float grain = Noise(x * 1.1f, y * 1.1f) + 0.7f * Noise(x * 2.3f + 17, y * 2.3f);
 			float crystals = Noise(x * 0.55f + 90, y * 0.55f);
@@ -164,19 +161,19 @@ void DEMO_Initialize(void)
 	// Smooth the texture-derived height before taking slopes, so the fine
 	// albedo grain does not become harsh, sparkling bumps. Geometry stays flat.
 	static float height[WallHeight][WallWidth];
-	for (int y = 0; y < WallHeight; ++y) {
-		for (int x = 0; x < WallWidth; ++x) {
+	for (int y = 0; y < WallHeight; y++) {
+		for (int x = 0; x < WallWidth; x++) {
 			float sum = 0;
-			for (int dy = -1; dy <= 1; ++dy) {
-				for (int dx = -1; dx <= 1; ++dx) {
+			for (int dy = -1; dy <= 1; dy++) {
+				for (int dx = -1; dx <= 1; dx++) {
 					sum += Stone[CLAMP(y + dy, 0, WallHeight)][CLAMP(x + dx, 0, WallWidth)];
 				}
 			}
 			height[y][x] = sum / (9.0f * 63.0f);
 		}
 	}
-	for (int y = 0; y < WallHeight; ++y) {
-		for (int x = 0; x < WallWidth; ++x) {
+	for (int y = 0; y < WallHeight; y++) {
+		for (int x = 0; x < WallWidth; x++) {
 			int left = CLAMP(x - 1, 0, WallWidth), right = CLAMP(x + 1, 0, WallWidth);
 			int up = CLAMP(y - 1, 0, WallHeight), down = CLAMP(y + 1, 0, WallHeight);
 			float nx = (height[y][left] - height[y][right]) * 1.5f;

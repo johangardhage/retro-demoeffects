@@ -44,7 +44,7 @@
 
 enum { DEAD, ROCKET, SPARK };
 
-struct FireParticle {
+static struct FireParticle {
 	vec2 pos;
 	vec2 vel;
 	int life;
@@ -69,9 +69,9 @@ static void LaunchRocket(void)
 	}
 
 	Particles[i].kind = ROCKET;
-	Particles[i].pos = { 40 + RANDOMF(RETRO_WIDTH - 80), RETRO_HEIGHT - 1.0f };
-	Particles[i].vel.x = RANDOMF(1.2f) - 0.6f;
-	float climb = RETRO_HEIGHT - 1 - (BURST_HIGH + RANDOMF(BURST_LOW - BURST_HIGH));
+	Particles[i].pos = { (float)mix(40, RETRO_WIDTH - 40, RAND()), RETRO_HEIGHT - 1.0f };
+	Particles[i].vel.x = mix(-0.6, 0.6, RAND());
+	float climb = RETRO_HEIGHT - 1 - mix(BURST_HIGH, BURST_LOW, RANDOMF(1));
 	Particles[i].vel.y = -sqrtf(2 * GRAVITY * climb);
 	Particles[i].life = 0;
 }

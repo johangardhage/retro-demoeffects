@@ -41,8 +41,9 @@
 #define RING_STEPS ((int)(2 * M_PI * RING_RADIUS / DOT_SPACING + 0.5))
 #define TUBE_STEPS ((int)(2 * M_PI * TUBE_RADIUS / DOT_SPACING + 0.5))
 
-int NumPoints = 0;
-Vertex Torus[RING_STEPS * TUBE_STEPS];
+#define NUM_POINTS (RING_STEPS * TUBE_STEPS)
+
+static Vertex Torus[NUM_POINTS];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -55,7 +56,7 @@ void DEMO_Render(double time, double deltatime)
 	int furthest = RING_RADIUS + TUBE_RADIUS;
 
 	// Draw points
-	for (int i = 0; i < NumPoints; i++) {
+	for (int i = 0; i < NUM_POINTS; i++) {
 		RETRO_RotateVertex(&Torus[i], matrix);
 		RETRO_ProjectVertex(&Torus[i], PROJECTION_SCALE);
 
@@ -88,12 +89,11 @@ void DEMO_Initialize(void)
 			float beta = b * betastep;
 			float ring = RING_RADIUS + TUBE_RADIUS * cos(beta);
 
-			Torus[NumPoints].pos = {
+			Torus[a * TUBE_STEPS + b].pos = {
 				ring * (float)cos(alpha),
 				TUBE_RADIUS * (float)sin(beta),
 				ring * (float)sin(alpha)
 			};
-			NumPoints++;
 		}
 	}
 }

@@ -1,5 +1,5 @@
 //
-// Cube shadow
+// Cube shadow, through glass
 //
 // A red glass cube turning in place over a checkerboard wall that turns
 // slowly in its own plane, independently of the cube.

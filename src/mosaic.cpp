@@ -31,28 +31,13 @@
 #define TIME_HOLD 0.75 // seconds held on the picture or on the one block
 #define TIME_CYCLE (2 * (TIME_HOLD + TIME_MOSAIC))
 
-//
-// How far the picture has coarsened at this point of the cycle
-//
-static double Coarseness(double phase)
-{
-	if (phase < TIME_HOLD) {
-		return 0;
-	}
-	if (phase < TIME_HOLD + TIME_MOSAIC) {
-		return (phase - TIME_HOLD) / TIME_MOSAIC;
-	}
-	if (phase < 2 * TIME_HOLD + TIME_MOSAIC) {
-		return 1;
-	}
-	return 1 - (phase - 2 * TIME_HOLD - TIME_MOSAIC) / TIME_MOSAIC;
-}
-
 void DEMO_Render(double time, double deltatime)
 {
-	// Calculate phase
-	double phase = fmod(time, TIME_CYCLE);
-	int block = lround(pow(BLOCK_MAX, Coarseness(phase)));
+	// Calculate phase: it rises to 1 as the picture coarsens, stays there over
+	// the one block, and falls back to 0 over the last TIME_MOSAIC of the cycle
+	double cycle = fmod(time, TIME_CYCLE);
+	double phase = CLAMP01(MIN(cycle - TIME_HOLD, TIME_CYCLE - cycle) / TIME_MOSAIC);
+	int block = lround(pow(BLOCK_MAX, phase));
 
 	unsigned char *image = RETRO_ImageData();
 	unsigned char *buffer = RETRO_FrameBuffer();

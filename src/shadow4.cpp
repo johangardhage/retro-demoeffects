@@ -112,7 +112,6 @@ static unsigned char GrayTable[LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS]; // and o
 static unsigned char GrayTexel; // the one texel of the gray, the table's only row
 static unsigned char LightmapTable[RETRO_COLORS][RETRO_COLORS]; // a texel at each lightmap level
 static unsigned char Sandstone[TEXTURE_SIZE * TEXTURE_SIZE]; // the ground's texture under no lightmap
-static int AppliedLightmap = NO_LIGHTMAP; // none yet
 static unsigned char ColorBlack, ColorTextGreen, ColorWhite, ColorCubeGreen, ColorCubeRed, ColorSky, ColorGround;
 static Model3D *Models[MODELS];
 static unsigned char FlatGround[16 * 16]; // the height map
@@ -397,10 +396,11 @@ void DEMO_Render(double time, double deltatime)
 	vec3 object = { center.x, OBJECT_ALTITUDE, center.z };
 
 	// The fan's shadow at the fan's turn
+	static int appliedlightmap = NO_LIGHTMAP; // none yet
 	int lightmap = (int)(ay / LIGHTMAP_TURN + 0.5f) % LIGHTMAPS;
-	if (lightmap != AppliedLightmap) {
+	if (lightmap != appliedlightmap) {
 		ApplyLightmap(lightmap);
-		AppliedLightmap = lightmap;
+		appliedlightmap = lightmap;
 	}
 
 	// The sky, and a band of ground color below it for wherever the

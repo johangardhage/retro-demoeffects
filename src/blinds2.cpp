@@ -32,7 +32,7 @@
 #define SHADES 16
 #define AMBIENT 0.25f // light left on a slat that is nearly edge-on
 
-unsigned char ShadeTable[RETRO_COLORS][SHADES];
+static unsigned char ShadeTable[RETRO_COLORS][SHADES];
 
 void DEMO_Render(double time, double deltatime)
 {

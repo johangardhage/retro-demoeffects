@@ -29,7 +29,7 @@
 #define TWIST 90 // extra radians of θ at z = 1; at z it is this over z
 #define SHADES 64 // palette entries the depth shading ramps over
 
-struct VortexStar {
+static struct VortexStar {
 	float angle;
 	float radius;
 	float z;
@@ -87,6 +87,6 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(0, SHADES, RETRO_BLACK, RETRO_WHITE);
 
 	for (int i = 0; i < NUM_STARS; i++) {
-		PlaceStar(&Stars[i], RANDOM(STAR_FAR - STAR_NEAR) + STAR_NEAR);
+		PlaceStar(&Stars[i], mix(STAR_NEAR, STAR_FAR, RAND()));
 	}
 }

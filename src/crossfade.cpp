@@ -17,9 +17,9 @@
 #define TIME_FADEIN 1.5 // seconds to fade in the monkey from black at startup
 #define CROSSFADE_SPEED 1.2 // radians of φ per second; a round trip is 2π / this
 
-RETRO_Image *PictureA;
-RETRO_Image *PictureB;
-unsigned char ColorLUT[32][32][32];
+static RETRO_Image *PictureA;
+static RETRO_Image *PictureB;
+static unsigned char ColorLUT[32][32][32];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -31,10 +31,10 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Ensure full palette brightness once fade-in completes
-	static bool palette_restored = false;
-	if (!palette_restored) {
+	static bool paletterestored = false;
+	if (!paletterestored) {
 		RETRO_SetPalette(PictureA->palette);
-		palette_restored = true;
+		paletterestored = true;
 	}
 
 	// Crossfade transition
@@ -60,18 +60,14 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	PictureA = RETRO_LoadImage("assets/monkey_320x240_quantizized.pcx", true);
+	PictureA = RETRO_LoadImage("assets/monkey_320x240_quantizized.pcx");
 	PictureB = RETRO_LoadImage("assets/flowers_320x240_quantizized.pcx");
 
 	if (PictureA->width != RETRO_WIDTH || PictureA->height != RETRO_HEIGHT ||
 		PictureB->width != RETRO_WIDTH || PictureB->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("Crossfade pictures must be 320x240\n");
+		RETRO_RageQuit("The images must be the size of the screen\n");
 	}
 
 	// Build 3D inverse color lookup table to map blended RGB to closest palette entry
 	RETRO_CreateColorLUT(PictureA->palette, 32, &ColorLUT[0][0][0]);
-
-	// Start with black hardware palette for initial fade-in
-	RETRO_Palette black_palette[RETRO_COLORS] = { {0, 0, 0} };
-	RETRO_SetPalette(black_palette);
 }

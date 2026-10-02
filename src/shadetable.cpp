@@ -109,7 +109,7 @@
 enum { SUBJECT_PICTURE, SUBJECT_VGA, SUBJECT_FITTED, SUBJECT_PHONG, SUBJECTS };
 enum { PAGE_TABLE, PAGE_ERROR, PAGE_PICTURE, PAGE_MATCH, PAGES };
 
-static const char *PageNames[PAGES] = { "table", "error", "picture", "match" };
+static const char *const PageNames[PAGES] = { "table", "error", "picture", "match" };
 
 struct Subject {
 	const char *name;
@@ -130,10 +130,10 @@ struct Subject {
 	float match, lutmatch, matchfloor;
 };
 
-Subject Subjects[SUBJECTS];
-RETRO_Palette HeatPalette[RETRO_COLORS];
-RETRO_ColorHistogram Histogram;
-unsigned char Remapped[RETRO_WIDTH * RETRO_HEIGHT]; // the picture in the vga palette
+static Subject Subjects[SUBJECTS];
+static RETRO_Palette HeatPalette[RETRO_COLORS];
+static RETRO_ColorHistogram Histogram;
+static unsigned char Remapped[RETRO_WIDTH * RETRO_HEIGHT]; // the picture in the vga palette
 
 static vec3 ColorVector(RETRO_Palette color)
 {

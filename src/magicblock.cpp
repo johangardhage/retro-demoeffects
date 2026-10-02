@@ -194,9 +194,9 @@ void DEMO_Initialize(void)
 	RETRO_SetPalette(Palette, 16);
 
 	for (vec3 &star : Stars) {
-		star.x = RANDOMF(2 * STAR_FIELD) - STAR_FIELD;
-		star.y = RANDOMF(2 * STAR_FIELD) - STAR_FIELD;
-		star.z = RANDOMF(2 * STAR_FIELD) - STAR_FIELD;
+		star.x = mix(-STAR_FIELD, STAR_FIELD, RANDOMF(1));
+		star.y = mix(-STAR_FIELD, STAR_FIELD, RANDOMF(1));
+		star.z = mix(-STAR_FIELD, STAR_FIELD, RANDOMF(1));
 	}
 
 	BlockModel = RETRO_Load3DModel("assets/magicblock.obj");

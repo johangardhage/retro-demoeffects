@@ -32,11 +32,11 @@
 #define LIGHT_ORBIT 128 // radius of the light's path across the screen, in pixels
 #define LIGHT_SPEED 100 // degrees of that path per second
 
-unsigned char LightMap[LIGHTMAP_HEIGHT * LIGHTMAP_WIDTH];
+static unsigned char LightMap[LIGHTMAP_HEIGHT * LIGHTMAP_WIDTH];
 
 // The height map never changes, so neither do its slopes
-int SlopeX[RETRO_HEIGHT * RETRO_WIDTH];
-int SlopeY[RETRO_HEIGHT * RETRO_WIDTH];
+static int SlopeX[RETRO_HEIGHT * RETRO_WIDTH];
+static int SlopeY[RETRO_HEIGHT * RETRO_WIDTH];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -52,8 +52,8 @@ void DEMO_Render(double time, double deltatime)
 	int maporiginy = ly + LIGHT_SIZE;
 
 	// Draw bump
-	for (int y = 1; y < RETRO_HEIGHT-1; y++) {
-		for (int x = 1; x < RETRO_WIDTH-1; x++) {
+	for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
+		for (int x = 1; x < RETRO_WIDTH - 1; x++) {
 			int offset = y * RETRO_WIDTH + x;
 
 			int mapx = maporiginx - x + SlopeX[offset];
@@ -69,10 +69,9 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_LoadImage("assets/bump_320x240.pcx");
+	unsigned char *image = RETRO_LoadImage("assets/bump_320x240.pcx")->data;
 
 	// Init slopes. The picture never changes, so neither do they.
-	unsigned char *image = RETRO_ImageData();
 	for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
 		for (int x = 1; x < RETRO_WIDTH - 1; x++) {
 			int offset = y * RETRO_WIDTH + x;

@@ -90,7 +90,7 @@ void DEMO_Render(double time, double deltatime)
 				smooth += 1.0 - log2(0.5 * log(lengthsquared));
 			}
 
-			int color = CLAMP(smooth, 0, 256);
+			int color = CLAMP256(smooth);
 			RETRO_PutPixel(x, y, color);
 		}
 	}

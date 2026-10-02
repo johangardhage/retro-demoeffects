@@ -102,10 +102,13 @@ static void DrawGlyph(int letter, double angle, bool shadow, float &paintdepth)
 		return;
 	}
 	mat3 matrix = rotateX((float)RING_TILT) * rotateY((float)-angle);
-	for (int y = 0; y < Font.height; y++)
-		for (int x = 0; x < copywidth; x++)
-			if (Font.atlas->data[y * Font.atlas->width + sourcex + x])
+	for (int y = 0; y < Font.height; y++) {
+		for (int x = 0; x < copywidth; x++) {
+			if (Font.atlas->data[y * Font.atlas->width + sourcex + x]) {
 				DrawCell(matrix, x - width / 2.0, y - Font.height / 2.0 + yoff, color, paintdepth);
+			}
+		}
+	}
 }
 
 static int BarEdge(int y, double phase)
@@ -123,8 +126,8 @@ void DEMO_Render(double time, double deltatime)
 	// Draw background
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		int edge = BarEdge(y, barphase);
-		RETRO_DrawLine(0, y, edge - 1, y, 1);
-		RETRO_DrawLine(edge, y, RETRO_WIDTH - 1, y, 2);
+		RETRO_DrawHline(0, edge - 1, y, 1);
+		RETRO_DrawHline(edge, RETRO_WIDTH - 1, y, 2);
 	}
 
 	// Draw scroller
@@ -160,8 +163,9 @@ void DEMO_Render(double time, double deltatime)
 	static const int colors[] = { 7, 8, 9, 10, 11 };
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		int edge = BarEdge(y, barphase);
-		for (int i = 0; i < 5; i++)
-			RETRO_DrawLine(edge + offsets[i], y, edge + offsets[i] + 1, y, colors[i]);
+		for (int i = 0; i < 5; i++) {
+			RETRO_DrawHline(edge + offsets[i], edge + offsets[i] + 1, y, colors[i]);
+		}
 	}
 }
 

@@ -23,7 +23,7 @@
 #define LAYER_FAR 1
 #define SHADES 64 // palette entries the layers are shaded over
 
-vec3 Stars[NUM_STARS];
+static vec3 Stars[NUM_STARS];
 
 void DEMO_Render(double time, double deltatime)
 {

@@ -34,7 +34,6 @@
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
-#include <ctype.h>
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
 
@@ -149,7 +148,7 @@ static float LetterX(const Word &word, int i, float time)
 // Draw a 16x16 character centered on column cx, its FLOAT_DRAFT row at height waterline
 static void DrawFloatingChar(char character, float cx, float waterline, unsigned char color)
 {
-	unsigned char code = (unsigned char)toupper((unsigned char)character);
+	unsigned char code = (unsigned char)character;
 	int left = (int)lroundf(cx) - Font.width / 2;
 	int top = (int)lroundf(waterline) - FLOAT_DRAFT;
 
@@ -159,10 +158,8 @@ static void DrawFloatingChar(char character, float cx, float waterline, unsigned
 
 		for (int x = 0; x < Font.width; x++) {
 			int px = left + x;
-			if (px >= 0 && px < RETRO_WIDTH) {
-				if (RETRO_FontInk(Font, code, x, y)) {
-					RETRO_PutPixel(px, py, color);
-				}
+			if (px >= 0 && px < RETRO_WIDTH && RETRO_FontInk(Font, code, x, y)) {
+				RETRO_PutPixel(px, py, color);
 			}
 		}
 	}
@@ -206,44 +203,44 @@ void DEMO_FixedUpdate(double timestep)
 
 void DEMO_Render(double time, double deltatime)
 {
-	// 1. Draw sky, darkening from the horizon upward. Rows below the horizon are all water
+	// Draw sky, darkening from the horizon upward. Rows below the horizon are all water
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		int shade = MIN(y * SKY_SHADES / SKY_HORIZON, SKY_SHADES - 1);
 		RETRO_DrawHline(0, RETRO_WIDTH - 1, y, COLOR_SKY + shade);
 	}
 
 	// Pre-calculate wave heights
-	int wave1_y[RETRO_WIDTH];
-	int wave2_y[RETRO_WIDTH];
-	int wave3_y[RETRO_WIDTH];
+	int wave1y[RETRO_WIDTH];
+	int wave2y[RETRO_WIDTH];
+	int wave3y[RETRO_WIDTH];
 
 	// Layer 1 (Back wave): slow, distant undulating curve
 	// Layer 2 (Middle wave): medium speed wave
 	// Layer 3 (Foreground wave): faster, rolling front water wave
 	// RETRO_DrawVline clips, so the heights need no clamping
 	for (int x = 0; x < RETRO_WIDTH; x++) {
-		wave1_y[x] = (int)lroundf(WaveHeight(WaveBack, (float)x, (float)time));
-		wave2_y[x] = (int)lroundf(WaveHeight(WaveMid, (float)x, (float)time));
-		wave3_y[x] = (int)lroundf(WaveHeight(WaveFront, (float)x, (float)time));
+		wave1y[x] = (int)lroundf(WaveHeight(WaveBack, (float)x, (float)time));
+		wave2y[x] = (int)lroundf(WaveHeight(WaveMid, (float)x, (float)time));
+		wave3y[x] = (int)lroundf(WaveHeight(WaveFront, (float)x, (float)time));
 	}
 
-	// 2. Draw top text ("RETRO"), then Layer 1 (Back wave) over it, which sinks it to its waterline
+	// Draw top text ("RETRO"), then Layer 1 (Back wave) over it, which sinks it to its waterline
 	DrawWord(WordTop, (float)time);
 
-	DrawLayer(wave1_y, COLOR_WAVE_BACK, COLOR_FOAM_BACK);
+	DrawLayer(wave1y, COLOR_WAVE_BACK, COLOR_FOAM_BACK);
 
-	// 3. Draw main text ("DEMOEFFECTS"), then Layer 2 (Middle wave) over it
+	// Draw main text ("DEMOEFFECTS"), then Layer 2 (Middle wave) over it
 	DrawWord(WordMain, (float)time);
 
-	DrawLayer(wave2_y, COLOR_WAVE_MID, COLOR_FOAM_MID);
+	DrawLayer(wave2y, COLOR_WAVE_MID, COLOR_FOAM_MID);
 
-	// 4. Draw Layer 3 (Foreground wave), which never rises over Layer 2
-	DrawLayer(wave3_y, COLOR_WAVE_FRONT, COLOR_FOAM_FRONT);
+	// Draw Layer 3 (Foreground wave), which never rises over Layer 2
+	DrawLayer(wave3y, COLOR_WAVE_FRONT, COLOR_FOAM_FRONT);
 }
 
 void DEMO_Initialize(void)
 {
-	// Set palette. The farther a layer, the more of the horizon it takes on
+	// Init palette. The farther a layer, the more of the horizon it takes on
 	RETRO_Palette back = Mix(WATER, HORIZON, HAZE_BACK);
 	RETRO_Palette mid = Mix(WATER, HORIZON, HAZE_MID);
 	RETRO_Palette front = Mix(WATER, HORIZON, HAZE_FRONT);
@@ -254,11 +251,10 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(COLOR_FOAM_BACK, Mix(back, FOAM, FOAM_MIX));
 	RETRO_SetColor(COLOR_FOAM_MID, Mix(mid, FOAM, FOAM_MIX));
 	RETRO_SetColor(COLOR_FOAM_FRONT, Mix(front, FOAM, FOAM_MIX));
-	RETRO_SetColor(COLOR_TEXT_BODY,    231, 228, 190); // Soft Pastel Yellow/Cream
-	RETRO_SetColor(COLOR_TEXT_TOP,     244, 240, 208); // Cream White for RETRO
+	RETRO_SetColor(COLOR_TEXT_BODY, 231, 228, 190); // soft pastel cream
+	RETRO_SetColor(COLOR_TEXT_TOP, 244, 240, 208); // cream white
 	RETRO_CreateGradientPalette(COLOR_SKY, COLOR_SKY + SKY_SHADES, SKY_TOP, HORIZON);
 
-	// Load 16x16 font asset
 	Font = RETRO_LoadFont(FONT);
 
 	// Start the letters at rest on the surface

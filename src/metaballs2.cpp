@@ -33,10 +33,10 @@
 struct MetaBall {
 	vec2 pos;
 	float r;
-} Balls[NUM_BALLS];
+};
 
-float SinTable[SINE_VALUES];
-float CosTable[SINE_VALUES];
+static float SinTable[SINE_VALUES];
+static float CosTable[SINE_VALUES];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -50,11 +50,12 @@ void DEMO_Render(double time, double deltatime)
 	static const float charge[NUM_BALLS] = { 1000, 4000, 7000, 10000 };
 	static const float amplitudex[NUM_BALLS] = { -100, 10, -130, -80 };
 	static const float amplitudey[NUM_BALLS] = { -10, 60, -80, 70 };
+	MetaBall balls[NUM_BALLS];
 
 	for (int i = 0; i < NUM_BALLS; i++) {
 		int p = WRAP(iphase * rate[i] + offset[i], SINE_VALUES);
-		Balls[i].r = charge[i];
-		Balls[i].pos = { (float)(CosTable[p] * amplitudex[i] + (RETRO_WIDTH / 2.0)), (float)(SinTable[p] * amplitudey[i] + (RETRO_HEIGHT / 2.0)) };
+		balls[i].r = charge[i];
+		balls[i].pos = { (float)(CosTable[p] * amplitudex[i] + (RETRO_WIDTH / 2.0)), (float)(SinTable[p] * amplitudey[i] + (RETRO_HEIGHT / 2.0)) };
 	}
 
 	// Draw balls
@@ -63,9 +64,9 @@ void DEMO_Render(double time, double deltatime)
 			float sum = 0;
 			// Sum field
 			for (int i = 0; i < NUM_BALLS; i++) {
-				vec2 delta = vec2{ (float)x, (float)y } - Balls[i].pos;
+				vec2 delta = vec2{ (float)x, (float)y } - balls[i].pos;
 				float d = MAX(dot(delta, delta), 0.0001f); // squared pixel distance from metaball position
-				sum += Balls[i].r / d;
+				sum += balls[i].r / d;
 			}
 			RETRO_PutPixel(x, y, CLAMP256(20 * sum));
 		}
@@ -81,14 +82,12 @@ void DEMO_Initialize(void)
 	}
 
 	// Init palette. Density index → Lambert-like I, then plastic Phong
-	int light = 350;
-	int reflect = 130;
-	int ambient = 0;
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		double intensity = cos((255 - i) / 512.0 * M_PI);
-		int r = CLAMP256(63 * ambient / 255.0 + 63 * intensity + pow(intensity, reflect) * light);
-		int g = CLAMP256(72 * ambient / 255.0 + 72 * intensity + pow(intensity, reflect) * light);
-		int b = CLAMP256(128 * ambient / 255.0 + 128 * intensity + pow(intensity, reflect) * light);
+		double highlight = 350 * pow(intensity, 130);
+		int r = CLAMP256(63 * intensity + highlight);
+		int g = CLAMP256(72 * intensity + highlight);
+		int b = CLAMP256(128 * intensity + highlight);
 		RETRO_SetColor(i, r, g, b);
 	}
 }

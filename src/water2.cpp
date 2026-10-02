@@ -41,15 +41,13 @@
 
 static const vec3 LightDir = { 0.28f, -0.18f, 0.94f }; // from above-left, toward the viewer
 
-float WaterA[RETRO_WIDTH * RETRO_HEIGHT];
-float WaterB[RETRO_WIDTH * RETRO_HEIGHT];
-float WaterC[RETRO_WIDTH * RETRO_HEIGHT];
+static float WaterA[RETRO_WIDTH * RETRO_HEIGHT];
+static float WaterB[RETRO_WIDTH * RETRO_HEIGHT];
+static float WaterC[RETRO_WIDTH * RETRO_HEIGHT];
 
-float *Water = WaterA;
-float *WaterPrevious = WaterB;
-float *WaterScratch = WaterC;
+static float *Water = WaterA;
 
-unsigned char ShadeTable[RETRO_COLORS * WATER_SHADES];
+static unsigned char ShadeTable[RETRO_COLORS * WATER_SHADES];
 
 static void Drop(int cx, int cy, float depth, int radius)
 {
@@ -76,6 +74,8 @@ static void Drop(int cx, int cy, float depth, int radius)
 
 void DEMO_FixedUpdate(double timestep)
 {
+	static float *waterprevious = WaterB;
+	static float *waterscratch = WaterC;
 	static int tick = 0;
 	if (tick % WATER_DROP_STEPS == 0) {
 		Drop(RANDOM(RETRO_WIDTH), RANDOM(RETRO_HEIGHT), WATER_DEPTH, WATER_DROP_RADIUS);
@@ -85,21 +85,21 @@ void DEMO_FixedUpdate(double timestep)
 	for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
 		for (int x = 1; x < RETRO_WIDTH - 1; x++) {
 			int i = y * RETRO_WIDTH + x;
-			WaterPrevious[i] = ((Water[i - 1] + Water[i + 1] + Water[i - RETRO_WIDTH] + Water[i + RETRO_WIDTH]) * 0.5f - WaterPrevious[i]) * WATER_DAMP;
+			waterprevious[i] = ((Water[i - 1] + Water[i + 1] + Water[i - RETRO_WIDTH] + Water[i + RETRO_WIDTH]) * 0.5f - waterprevious[i]) * WATER_DAMP;
 		}
 	}
 
 	for (int y = 1; y < RETRO_HEIGHT - 1; y++) {
 		for (int x = 1; x < RETRO_WIDTH - 1; x++) {
 			int i = y * RETRO_WIDTH + x;
-			WaterScratch[i] = (4 * WaterPrevious[i] + WaterPrevious[i - 1] + WaterPrevious[i + 1] + WaterPrevious[i - RETRO_WIDTH] + WaterPrevious[i + RETRO_WIDTH]) * 0.125f;
+			waterscratch[i] = (4 * waterprevious[i] + waterprevious[i - 1] + waterprevious[i + 1] + waterprevious[i - RETRO_WIDTH] + waterprevious[i + RETRO_WIDTH]) * 0.125f;
 		}
 	}
 
-	float *unsmoothed = WaterPrevious;
-	WaterPrevious = Water;
-	Water = WaterScratch;
-	WaterScratch = unsmoothed;
+	float *unsmoothed = waterprevious;
+	waterprevious = Water;
+	Water = waterscratch;
+	waterscratch = unsmoothed;
 }
 
 void DEMO_Render(double time, double deltatime)

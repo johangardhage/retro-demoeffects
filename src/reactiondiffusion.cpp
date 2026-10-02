@@ -113,7 +113,7 @@ void DEMO_Render(double time, double deltatime)
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			float slope = b[up][WRAPWIDTH(x - 1)] - b[down][WRAPWIDTH(x + 1)];
 			float shade = b[y][x] / B_MAX + EMBOSS * slope;
-			*buffer++ = CLAMP(shade * (RETRO_COLORS - 1), 0, RETRO_COLORS);
+			*buffer++ = CLAMP256(shade * (RETRO_COLORS - 1));
 		}
 	}
 }

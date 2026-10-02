@@ -35,11 +35,11 @@
 
 static const char *const ScrollText[] = { "     RETRO DEMOEFFECTS..." };
 
-RETRO_Image *ScrollImage;
-unsigned char Image[IMAGE_WIDTH * IMAGE_HEIGHT];
-int ScrollY;
-int FontDim = 255;
-int FontLit = 0;
+static RETRO_Image *ScrollImage;
+static unsigned char Image[IMAGE_WIDTH * IMAGE_HEIGHT];
+static int ScrollY;
+static int FontDim = 255;
+static int FontLit = 0;
 
 void DEMO_Render(double time, double deltatime)
 {

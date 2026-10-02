@@ -30,8 +30,6 @@
 #define DRIFT_X 22.0f
 #define DRIFT_Y 13.0f
 
-Vertex Balls[BALLS];
-
 void DEMO_Render(double time, double deltatime)
 {
 	// Calculate rotation and phase. The flight wraps on the cycle and the tumble
@@ -53,12 +51,13 @@ void DEMO_Render(double time, double deltatime)
 	float cx = RETRO_WIDTH / 2.0f + DRIFT_X * sin(phase);
 	float cy = RETRO_HEIGHT / 2.0f + DRIFT_Y * sin(phase * 2.0f + 0.7f);
 
+	Vertex balls[BALLS];
 	for (int i = 0; i < BALLS; i++) {
 		float a = i * 2.0f * M_PI / BALLS;
-		Balls[i].pos = { RING_RADIUS * (float)cos(a), RING_RADIUS * (float)sin(a), 0.0f };
-		RETRO_RotateVertex(&Balls[i], matrix);
-		Balls[i].rpos.z += zoffset;
-		RETRO_ProjectVertex(&Balls[i], 1.0f, cx, cy);
+		balls[i].pos = { RING_RADIUS * (float)cos(a), RING_RADIUS * (float)sin(a), 0.0f };
+		RETRO_RotateVertex(&balls[i], matrix);
+		balls[i].rpos.z += zoffset;
+		RETRO_ProjectVertex(&balls[i], 1.0f, cx, cy);
 	}
 
 	// Painter's order: larger rz is farther from the eye.
@@ -66,7 +65,7 @@ void DEMO_Render(double time, double deltatime)
 	for (int i = 1; i < BALLS; i++) {
 		int ball = order[i];
 		int j = i;
-		while (j > 0 && Balls[order[j - 1]].rpos.z < Balls[ball].rpos.z) {
+		while (j > 0 && balls[order[j - 1]].rpos.z < balls[ball].rpos.z) {
 			order[j] = order[j - 1];
 			j--;
 		}
@@ -74,7 +73,7 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	for (int i = 0; i < BALLS; i++) {
-		Vertex *ball = &Balls[order[i]];
+		Vertex *ball = &balls[order[i]];
 		if (ball->q == 0.0f) {
 			continue;
 		}

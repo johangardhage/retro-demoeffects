@@ -56,11 +56,9 @@ struct Particle {
 	float landing; // of LAND_SPREAD, how early it lands
 };
 
-RETRO_Image *PictureA;
-RETRO_Image *PictureB;
-Particle Particles[PARTICLES];
-unsigned char ColorLUT[LUT_SIZE][LUT_SIZE][LUT_SIZE];
-unsigned char Background; // the palette's nearest to black
+static Particle Particles[PARTICLES];
+static unsigned char ColorLUT[LUT_SIZE][LUT_SIZE][LUT_SIZE];
+static unsigned char Background; // the palette's nearest to black
 
 //
 // The addresses of a block of the picture's pixels, shuffled, then sorted by
@@ -75,9 +73,7 @@ static void SortPixels(const RETRO_Image *picture, const int *rank, int blockx, 
 	}
 	for (int i = PAIR_BLOCK * PAIR_BLOCK - 1; i > 0; i--) {
 		int j = RANDOM(i + 1);
-		int swap = shuffled[i];
-		shuffled[i] = shuffled[j];
-		shuffled[j] = swap;
+		SWAP(shuffled[i], shuffled[j]);
 	}
 
 	// Counting sort them by rank, which keeps the shuffle within a rank
@@ -96,7 +92,7 @@ static void SortPixels(const RETRO_Image *picture, const int *rank, int blockx, 
 void DEMO_Render(double time, double deltatime)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
-	memset(buffer, Background, RETRO_WIDTH * RETRO_HEIGHT);
+	RETRO_Clear(Background);
 
 	// Find the flight, its direction and its origin
 	int flight = (int)floor(time / (HOLD_TIME + FLIGHT_TIME));
@@ -105,7 +101,7 @@ void DEMO_Render(double time, double deltatime)
 	float originx = RETRO_Hash(flight, 0) % RETRO_WIDTH;
 	float originy = RETRO_Hash(flight, 1) % RETRO_HEIGHT;
 	float farthest = hypotf(RETRO_WIDTH, RETRO_HEIGHT);
-	RETRO_Palette *palette = PictureA->palette;
+	RETRO_Palette *palette = RETRO_ImagePalette();
 
 	for (Particle &particle : Particles) {
 		float fromx = back ? particle.bx : particle.ax, fromy = back ? particle.by : particle.ay;
@@ -151,19 +147,19 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	PictureA = RETRO_LoadImage("assets/monkey_320x240_quantizized.pcx", true);
-	PictureB = RETRO_LoadImage("assets/flowers_320x240_quantizized.pcx");
-	if (PictureA->width != RETRO_WIDTH || PictureA->height != RETRO_HEIGHT || PictureB->width != RETRO_WIDTH || PictureB->height != RETRO_HEIGHT) {
+	RETRO_Image *picturea = RETRO_LoadImage("assets/monkey_320x240_quantizized.pcx", true);
+	RETRO_Image *pictureb = RETRO_LoadImage("assets/flowers_320x240_quantizized.pcx");
+	if (picturea->width != RETRO_WIDTH || picturea->height != RETRO_HEIGHT || pictureb->width != RETRO_WIDTH || pictureb->height != RETRO_HEIGHT) {
 		RETRO_RageQuit("Explode pictures must be %dx%d\n", RETRO_WIDTH, RETRO_HEIGHT);
 	}
-	RETRO_CreateColorLUT(PictureA->palette, LUT_SIZE, &ColorLUT[0][0][0]);
-	Background = RETRO_NearestPaletteIndex(RETRO_BLACK, PictureA->palette);
+	RETRO_CreateColorLUT(picturea->palette, LUT_SIZE, &ColorLUT[0][0][0]);
+	Background = RETRO_NearestPaletteIndex(RETRO_BLACK, picturea->palette);
 
 	// Rank the shared palette by luminance
 	int order[RETRO_COLORS], rank[RETRO_COLORS];
 	float luminance[RETRO_COLORS];
 	for (int i = 0; i < RETRO_COLORS; i++) {
-		RETRO_Palette color = PictureA->palette[i];
+		RETRO_Palette color = picturea->palette[i];
 		luminance[i] = 0.299f * color.r + 0.587f * color.g + 0.114f * color.b;
 		int j = i;
 		for (; j > 0 && luminance[order[j - 1]] > luminance[i]; j--) {
@@ -180,8 +176,8 @@ void DEMO_Initialize(void)
 	for (int blocky = 0; blocky < RETRO_HEIGHT / PAIR_BLOCK; blocky++) {
 		for (int blockx = 0; blockx < RETRO_WIDTH / PAIR_BLOCK; blockx++) {
 			int first = (blocky * RETRO_WIDTH / PAIR_BLOCK + blockx) * PAIR_BLOCK * PAIR_BLOCK;
-			SortPixels(PictureA, rank, blockx, blocky, pixelsa + first);
-			SortPixels(PictureB, rank, blockx, blocky, pixelsb + first);
+			SortPixels(picturea, rank, blockx, blocky, pixelsa + first);
+			SortPixels(pictureb, rank, blockx, blocky, pixelsb + first);
 		}
 	}
 	for (int i = 0; i < PARTICLES; i++) {
@@ -190,10 +186,10 @@ void DEMO_Initialize(void)
 		particle.ay = pixelsa[i] / RETRO_WIDTH;
 		particle.bx = pixelsb[i] % RETRO_WIDTH;
 		particle.by = pixelsb[i] / RETRO_WIDTH;
-		particle.colora = PictureA->data[pixelsa[i]];
-		particle.colorb = PictureB->data[pixelsb[i]];
-		particle.strength = 0.3f + RANDOMF(0.7);
-		particle.turn = RANDOMF(2) - 1;
+		particle.colora = picturea->data[pixelsa[i]];
+		particle.colorb = pictureb->data[pixelsb[i]];
+		particle.strength = mix(0.3, 1.0, RAND());
+		particle.turn = mix(-1, 1, RAND());
 		particle.landing = RANDOMF(1);
 	}
 }

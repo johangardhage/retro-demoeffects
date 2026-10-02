@@ -27,45 +27,45 @@
 
 enum MeltMode { MELT_MAXIMUM_SCAN_LINE, MELT_FREEZE_LINE_OFFSET };
 
-MeltMode Mode = MELT_FREEZE_LINE_OFFSET;
-double MeltPosition = 0;
-int MeltDirection = 1;
-
 void DEMO_Render(double time, double deltatime)
 {
+	static MeltMode mode = MELT_FREEZE_LINE_OFFSET;
+	static double meltposition = 0;
+	static int meltdirection = 1;
+
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
-		Mode = Mode == MELT_MAXIMUM_SCAN_LINE ? MELT_FREEZE_LINE_OFFSET : MELT_MAXIMUM_SCAN_LINE;
-		MeltPosition = 0;
-		MeltDirection = 1;
+		mode = mode == MELT_MAXIMUM_SCAN_LINE ? MELT_FREEZE_LINE_OFFSET : MELT_MAXIMUM_SCAN_LINE;
+		meltposition = 0;
+		meltdirection = 1;
 	}
 
-	double maximum = Mode == MELT_MAXIMUM_SCAN_LINE ? MSL_MAX : SCANLINES;
-	double speed = Mode == MELT_MAXIMUM_SCAN_LINE ? MSL_STEPS_PER_SECOND : FREEZE_STEPS_PER_SECOND;
-	MeltPosition += MeltDirection * speed * deltatime;
+	double maximum = mode == MELT_MAXIMUM_SCAN_LINE ? MSL_MAX : SCANLINES;
+	double speed = mode == MELT_MAXIMUM_SCAN_LINE ? MSL_STEPS_PER_SECOND : FREEZE_STEPS_PER_SECOND;
+	meltposition += meltdirection * speed * deltatime;
 
 	// Reflect overshoot at an endpoint so a long frame still bounces cleanly.
-	while (MeltPosition < 0 || MeltPosition > maximum) {
-		if (MeltPosition > maximum) {
-			MeltPosition = 2 * maximum - MeltPosition;
-			MeltDirection = -1;
+	while (meltposition < 0 || meltposition > maximum) {
+		if (meltposition > maximum) {
+			meltposition = 2 * maximum - meltposition;
+			meltdirection = -1;
 		} else {
-			MeltPosition = -MeltPosition;
-			MeltDirection = 1;
+			meltposition = -meltposition;
+			meltdirection = 1;
 		}
 	}
 
 	unsigned char *image = RETRO_ImageData();
 	unsigned char *buffer = RETRO_FrameBuffer();
 
-	if (Mode == MELT_MAXIMUM_SCAN_LINE) {
-		int repeat = (int)MeltPosition + 1;
+	if (mode == MELT_MAXIMUM_SCAN_LINE) {
+		int repeat = (int)meltposition + 1;
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
 			memcpy(buffer + y * RETRO_WIDTH, image + (y / repeat) * RETRO_WIDTH, RETRO_WIDTH);
 		}
 	} else {
 		// The animation has two scanline steps for each image row. Once the
 		// moving boundary reaches a row, that row repeats below it.
-		int freezerow = MIN((int)MeltPosition / 2, RETRO_HEIGHT - 1);
+		int freezerow = MIN((int)meltposition / 2, RETRO_HEIGHT - 1);
 		for (int y = 0; y < RETRO_HEIGHT; y++) {
 			int sourcerow = MIN(y, freezerow);
 			memcpy(buffer + y * RETRO_WIDTH, image + sourcerow * RETRO_WIDTH, RETRO_WIDTH);

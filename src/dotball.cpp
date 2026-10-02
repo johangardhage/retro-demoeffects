@@ -42,8 +42,9 @@
 #define ALPHA_STEPS ((int)(2 * M_PI / POINTSTEP + 0.5))
 #define BETA_STEPS ((int)(M_PI / POINTSTEP + 0.5))
 
-int NumPoints = 0;
-Vertex Ball[ALPHA_STEPS * (BETA_STEPS + 1)];
+#define NUM_POINTS (ALPHA_STEPS * (BETA_STEPS + 1)) // both poles included
+
+static Vertex Ball[NUM_POINTS];
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -54,7 +55,7 @@ void DEMO_Render(double time, double deltatime)
 	mat3 matrix = rotate(ax, ay, az);
 
 	// Draw points
-	for (int i = 0; i < NumPoints; i++) {
+	for (int i = 0; i < NUM_POINTS; i++) {
 		RETRO_RotateVertex(&Ball[i], matrix);
 		RETRO_ProjectVertex(&Ball[i], PROJECTION_SCALE);
 
@@ -90,12 +91,11 @@ void DEMO_Initialize(void)
 			float alpha = a * alphastep;
 			float beta = b * betastep;
 
-			Ball[NumPoints].pos = {
+			Ball[a * (BETA_STEPS + 1) + b].pos = {
 				RADIUS * (float)(cos(alpha) * sin(beta)),
 				RADIUS * (float)cos(beta),
 				RADIUS * (float)(sin(alpha) * sin(beta))
 			};
-			NumPoints++;
 		}
 	}
 }

@@ -19,8 +19,8 @@
 #define DISTORT_AMPLITUDE 5 // pixels a row shifts sideways at the peak
 #define DISTORT_SPEED 100 // table entries traveled per second
 
-int ShiftX[SINE_VALUES];
-int ShiftY[SINE_VALUES];
+static int ShiftX[SINE_VALUES];
+static int ShiftY[SINE_VALUES];
 
 void DEMO_Render(double time, double deltatime)
 {

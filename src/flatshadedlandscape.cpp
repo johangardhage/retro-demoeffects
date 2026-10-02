@@ -47,7 +47,7 @@
 // Near enough that a camera flown down onto the ground still sees it
 #define LANDSCAPE_NEARPLANE 0.25f
 
-unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
+static unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
 
 //
 // The sun, carried round the sky once every this many seconds

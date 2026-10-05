@@ -27,10 +27,10 @@ static const char *const ScrollText[] = { "                    RETRO DEMOEFFECTS
 
 static RETRO_Image *ScrollImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, ScrollImage->width);
+	double phase = fmod(time.total * SCROLL_SPEED, ScrollImage->width);
 	int iphase = (int)phase;
 	int y = (RETRO_HEIGHT - ScrollImage->height) / 2;
 

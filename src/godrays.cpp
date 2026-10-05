@@ -315,19 +315,19 @@ static void BuildWall(void)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	RETRO_Blit(Wall);
 
-	float ax = fmod(time * SPIN_SPEED_X, 2 * M_PI);
-	float ay = fmod(time * SPIN_SPEED_Y, 2 * M_PI);
-	float az = fmod(time * SPIN_SPEED_Z, 2 * M_PI);
+	float ax = fmod(time.total * SPIN_SPEED_X, 2 * M_PI);
+	float ay = fmod(time.total * SPIN_SPEED_Y, 2 * M_PI);
+	float az = fmod(time.total * SPIN_SPEED_Z, 2 * M_PI);
 	mat3 matrix = rotate(ax, ay, az);
 
 	// The ball's path is a Lissajous figure; whole multiples of one phase
 	// keep it closed, so the wrap is seamless. Where it comes nearest the
 	// eye, at phase 3/2 pi, it passes the middle of the screen
-	float phase = fmod(time * PATH_SPEED, 2 * M_PI);
+	float phase = fmod(time.total * PATH_SPEED, 2 * M_PI);
 	vec3 center = { PATH_WIDTH * sinf(2 * phase), PATH_HEIGHT * cosf(3 * phase), PATH_Z + PATH_DEPTH * sinf(phase) };
 
 	// Draw ball, and its holes over it

@@ -87,16 +87,16 @@ static vec3 SplinePoint(const vec3 *control, int piece, float t, vec3 *derivativ
 	return RETRO_CatmullRom(p0, p1, p2, p3, t);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	float ax = fmod(time * ROTATION_SPEED_X, 2 * M_PI);
-	float ay = fmod(time * ROTATION_SPEED_Y, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED_Z, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED_X, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED_Y, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED_Z, 2 * M_PI);
 
 	// Calculate phase, of the two waves the control points ride
-	float radialphase = fmod(time * RADIAL_SPEED, 2 * M_PI);
-	float axialphase = fmod(time * AXIAL_SPEED, 2 * M_PI);
+	float radialphase = fmod(time.total * RADIAL_SPEED, 2 * M_PI);
+	float axialphase = fmod(time.total * AXIAL_SPEED, 2 * M_PI);
 
 	// Move the control points
 	vec3 control[CONTROL_POINTS];

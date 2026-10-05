@@ -377,12 +377,12 @@ static void DrawText(void)
 	RETRO_PutString(text, 0, RETRO_HEIGHT - 28, ColorTextGreen);
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
-	RETRO_UpdateTerrainVehicle(timestep);
+	RETRO_UpdateTerrainVehicle(time.delta);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static double animationstart; // when the animation playing began
 
@@ -405,7 +405,7 @@ void DEMO_Render(double time, double deltatime)
 	if (next) CurrentAnimation = (CurrentAnimation + 1) % ANIMATIONS;
 	if (previous || next || once || looped) {
 		Looped = looped;
-		animationstart = time;
+		animationstart = time.total;
 	}
 
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
@@ -413,15 +413,15 @@ void DEMO_Render(double time, double deltatime)
 
 	// The point lights on their paths about the world's center
 	vec3 center = RETRO_TerrainCenter();
-	float angle = fmod(time * POINT_LIGHT_RATE, 2 * M_PI);
+	float angle = fmod(time.total * POINT_LIGHT_RATE, 2 * M_PI);
 	PointLightPosition[LIGHT_ORANGE] = { center.x - POINT_LIGHT_ORANGE_ORBIT * cosf(angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_ORANGE_ORBIT * sinf(angle) };
 	PointLightPosition[LIGHT_YELLOW] = { center.x - POINT_LIGHT_YELLOW_ORBIT * cosf(-2 * angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_YELLOW_ORBIT * sinf(-2 * angle) };
 
 	// The mechs, side by side at the world's center
-	PoseRobot(time - animationstart);
+	PoseRobot(time.total - animationstart);
 	vec3 robots[] = { { center.x, ROBOT_ALTITUDE, center.z }, { center.x, ROBOT_ALTITUDE, center.z + ROBOT_SPACING } };
 
-	DrawSky(time);
+	DrawSky(time.total);
 	RETRO_ClearDepthBuffer();
 	DrawTerrain(mesh);
 	for (vec3 robot : robots) {

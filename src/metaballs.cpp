@@ -32,7 +32,7 @@ static struct MetaBall {
 	float radius;
 } Balls[NUM_BALLS];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Charge of each ball
 	float charge[NUM_BALLS];
@@ -70,7 +70,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Move balls
 	for (int i = 0; i < NUM_BALLS; i++) {
-		Balls[i].pos += Balls[i].vel * (float)deltatime;
+		Balls[i].pos += Balls[i].vel * (float)time.delta;
 		while (Balls[i].pos.x < 0 || Balls[i].pos.x > RETRO_WIDTH - 1) {
 			if (Balls[i].pos.x < 0) Balls[i].pos.x = -Balls[i].pos.x;
 			else Balls[i].pos.x = 2 * (RETRO_WIDTH - 1) - Balls[i].pos.x;

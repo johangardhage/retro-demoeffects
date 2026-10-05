@@ -142,14 +142,14 @@ static void DrawTriangle(const RETRO_TerrainVertex &a, const RETRO_TerrainVertex
 								   RETRO_ShadeTable{ &LandscapeShadeTable[0][0], RETRO_COLORS, LANDSCAPE_SHADES }, RETRO_Terrain.wrap);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainCamera(deltatime);
+	RETRO_UpdateTerrainCamera(time.delta);
 
 	// Carry the sun round. Shade divides the length out, so this is a direction
 	// and not a brightness: the reach and the height set where it stands, and
 	// turning it changes which slopes face it and nothing else.
-	float sunangle = fmod(time, LANDSCAPE_SUNPERIOD) * (2 * M_PI / LANDSCAPE_SUNPERIOD);
+	float sunangle = fmod(time.total, LANDSCAPE_SUNPERIOD) * (2 * M_PI / LANDSCAPE_SUNPERIOD);
 	RETRO_TerrainLight.x = cosf(sunangle) * LANDSCAPE_SUNREACH;
 	RETRO_TerrainLight.y = LANDSCAPE_SUNHEIGHT;
 	RETRO_TerrainLight.z = sinf(sunangle) * LANDSCAPE_SUNREACH;

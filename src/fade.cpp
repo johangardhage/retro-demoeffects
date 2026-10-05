@@ -23,7 +23,7 @@
 
 enum { FADEIN, FADEOUT, HOLD };
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static int state = HOLD;
 	static int next = FADEIN;
@@ -36,7 +36,7 @@ void DEMO_Render(double time, double deltatime)
 	// Fade palette
 	switch (state) {
 	case HOLD:
-		hold -= deltatime;
+		hold -= time.delta;
 		if (hold <= 0) {
 			state = next;
 			step = 0;
@@ -49,7 +49,7 @@ void DEMO_Render(double time, double deltatime)
 			next = FADEOUT;
 			hold = TIME_HOLD;
 		} else {
-			step += deltatime / TIME_FADEIN;
+			step += time.delta / TIME_FADEIN;
 		}
 		break;
 	case FADEOUT:
@@ -59,7 +59,7 @@ void DEMO_Render(double time, double deltatime)
 			next = FADEIN;
 			hold = TIME_HOLD;
 		} else {
-			step += deltatime / TIME_FADEOUT;
+			step += time.delta / TIME_FADEOUT;
 		}
 		break;
 	}

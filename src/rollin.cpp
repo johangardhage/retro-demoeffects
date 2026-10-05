@@ -68,10 +68,10 @@ static RETRO_Palette Light(RETRO_Palette color, float shade, const float *tint)
 	return RETRO_ShadeColor(color, mix(AMBIENT, 1, shade));
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase: rolled up, unrolling, flat, and being rolled up
-	double phase = fmod(time, TIME_CYCLE);
+	double phase = fmod(time.total, TIME_CYCLE);
 	float unrolled = smoothstep(TIME_ROLLED, TIME_ROLLED + TIME_ROLL, phase) - smoothstep(TIME_CYCLE - TIME_ROLL, TIME_CYCLE, phase);
 
 	// The line the roll rests on, the rows of paper left on it, and its radius

@@ -51,25 +51,24 @@ static unsigned char Screens[BOB_SCREENS][RETRO_WIDTH * RETRO_HEIGHT];
 static unsigned char BobMap[BOB_COLORS][BOB_SIZE * BOB_SIZE];
 static int Step;
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
-	static double xphase = 0, yphase = M_PI / 2, driftphase = 0, time = 0;
+	static double xphase = 0, yphase = M_PI / 2, driftphase = 0;
 
-	xphase = fmod(xphase + BOB_SPEEDX * timestep, 2 * M_PI);
-	yphase = fmod(yphase + BOB_SPEEDY * (1 + BOB_WOBBLE * sin(driftphase)) * timestep, 2 * M_PI);
-	driftphase = fmod(driftphase + BOB_DRIFT * timestep, 2 * M_PI);
-	time += timestep;
+	xphase = fmod(xphase + BOB_SPEEDX * time.delta, 2 * M_PI);
+	yphase = fmod(yphase + BOB_SPEEDY * (1 + BOB_WOBBLE * sin(driftphase)) * time.delta, 2 * M_PI);
+	driftphase = fmod(driftphase + BOB_DRIFT * time.delta, 2 * M_PI);
 
 	// Draw one bob into the next screen
 	Step = (Step + 1) % BOB_SCREENS;
 	int x = RETRO_WIDTH / 2 + BOB_AMPX * sin(xphase);
 	int y = RETRO_HEIGHT / 2 + BOB_AMPY * sin(yphase);
-	int color = (int)(time / BOB_COLORTIME) % BOB_COLORS;
+	int color = (int)(time.total / BOB_COLORTIME) % BOB_COLORS;
 	RETRO_DrawSprite(x, y, BOB_SIZE, BOB_SIZE, BOB_SIZE, BOB_SIZE, BobMap[color], 0, -1, {}, Screens[Step]);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Show the screen the last bob went into
 	RETRO_Blit(Screens[Step]);

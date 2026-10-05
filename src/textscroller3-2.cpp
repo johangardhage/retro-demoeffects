@@ -47,17 +47,17 @@ static const char ScrollText[] = "                    RETRO DEMOEFFECTS...";
 
 static RETRO_Font Font;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	int textwidth = (int)(sizeof(ScrollText) - 1) * Font.width;
 
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, textwidth);
+	double phase = fmod(time.total * SCROLL_SPEED, textwidth);
 	int iphase = (int)phase;
 	int scrolly = (RETRO_HEIGHT - Font.height) / 2;
 
 	// Calculate the phase of the wave the columns ride
-	double wave = fmod(time * WAVE_SPEED, RETRO_ANGLES_PER_TURN);
+	double wave = fmod(time.total * WAVE_SPEED, RETRO_ANGLES_PER_TURN);
 
 	// Draw scroller, a column at a time, each dropped by the sine at that column
 	// and its glyph rows clipped to the screen

@@ -67,15 +67,15 @@
 
 static unsigned char FogTable[RETRO_COLORS * TUNNEL_FOG_SHADES];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	float ay = fmod(time * ROTATION_SPEED_Y, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED_Z, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED_Y, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED_Z, 2 * M_PI);
 
 	// Calculate phase
-	float phase = fmod(time * TUNNEL_SPEED, TEXTURE_LENGTH);
-	float sway = fmod(time * TUNNEL_SWAY_SPEED, 2 * M_PI);
+	float phase = fmod(time.total * TUNNEL_SPEED, TEXTURE_LENGTH);
+	float sway = fmod(time.total * TUNNEL_SWAY_SPEED, 2 * M_PI);
 
 	unsigned char *image = RETRO_ImageData();
 

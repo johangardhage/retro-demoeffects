@@ -85,7 +85,7 @@ static double Shift(const CycleRange &range, double time)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
 		ModeStep = (ModeStep + 1) % CYCLE_MODES;
@@ -95,7 +95,7 @@ void DEMO_Render(double time, double deltatime)
 
 	for (const CycleRange &range : Cycles) {
 		int n = range.high - range.low + 1;
-		double shift = Shift(range, time);
+		double shift = Shift(range, time.total);
 		int whole = floor(shift);
 		float blend = shift - whole;
 

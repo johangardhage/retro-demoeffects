@@ -78,12 +78,12 @@ static void DrawWall(double time)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float ay = fmod(time * ROTATION_SPEED * 0.7, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED * 0.4, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED * 0.7, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED * 0.4, 2 * M_PI);
 
 	Model3D *model = RETRO_Get3DModel();
 
@@ -105,7 +105,7 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_ProjectModel(SCALE, CX, CY);
 	RETRO_RenderModel(RETRO_POLY_FLAT, RETRO_SHADE_FLAT);
 
-	DrawWall(time);
+	DrawWall(time.total);
 }
 
 void DEMO_Initialize(void)

@@ -189,19 +189,19 @@ static void DrawSprite(unsigned char *dest, Sprite *sprite, float x, float y, fl
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 
 	// Drive. The track loops, so the distance traveled wraps at its length
 	double tracklength = RoadSegments * (double)ROAD_SEGMENT_LENGTH;
-	double position = fmod(time * ROAD_SPEED, tracklength);
+	double position = fmod(time.total * ROAD_SPEED, tracklength);
 
 	// A bend pushes the camera toward the outside of it, and the straight
 	// pulls it back to the middle
 	int base = (int)(position / ROAD_SEGMENT_LENGTH) % RoadSegments;
 	static float playerx = 0;
-	playerx += deltatime * (-Road[base].curve * ROAD_CENTRIFUGAL - playerx * ROAD_RECENTER);
+	playerx += time.delta * (-Road[base].curve * ROAD_CENTRIFUGAL - playerx * ROAD_RECENTER);
 
 	// Sky. t = 0 at the zenith and 1 at the horizon, and t² packs the haze
 	// into the rows above it. Below the horizon the haze is left standing,

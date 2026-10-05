@@ -164,16 +164,16 @@ static void BuildStar(Vertex *out, int axis, bool antipode, float spin)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time, BALL_PERIOD);
+	double phase = fmod(time.total, BALL_PERIOD);
 
-	float ax = fmod(time * BALL_SPEEDX, 2 * M_PI);
-	float ay = fmod(time * BALL_SPEEDY, 2 * M_PI);
-	float az = fmod(time * BALL_SPEEDZ, 2 * M_PI);
+	float ax = fmod(time.total * BALL_SPEEDX, 2 * M_PI);
+	float ay = fmod(time.total * BALL_SPEEDY, 2 * M_PI);
+	float az = fmod(time.total * BALL_SPEEDZ, 2 * M_PI);
 	mat3 matrix = rotate(ax, ay, az);
-	float spin = fmod(time * STAR_SPIN, 2 * M_PI);
+	float spin = fmod(time.total * STAR_SPIN, 2 * M_PI);
 
 	// First fall has no previous takeoff to continue, so the oscillator
 	// only runs after the ball has hit the floor once.

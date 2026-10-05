@@ -188,7 +188,7 @@ static void PaintBrush(int cx, int cy, BrushKind kind, int size, unsigned char c
 	}
 }
 
-void DEMO_Render2(double time, double deltatime)
+void DEMO_Render2(RETRO_Time time)
 {
 	static float x = RETRO_WIDTH / 2.0, y = RETRO_HEIGHT / 2.0;
 	static bool wb2pointer = false; // false = Workbench 1.3, true = Workbench 2.0

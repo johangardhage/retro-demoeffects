@@ -101,13 +101,13 @@ struct Edge {
 static Segment Road[ROAD_MAX_SEGMENTS];
 static int RoadSegments = 0;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 
 	// Drive. The track loops, so the distance traveled wraps at its length
 	double tracklength = RoadSegments * (double)ROAD_SEGMENT_LENGTH;
-	double position = fmod(time * ROAD_SPEED, tracklength);
+	double position = fmod(time.total * ROAD_SPEED, tracklength);
 
 	// The segment the camera stands on, and how much of it is behind it
 	int base = (int)(position / ROAD_SEGMENT_LENGTH);
@@ -116,7 +116,7 @@ void DEMO_Render(double time, double deltatime)
 	// A bend pushes the camera toward the outside of it, and the straight
 	// pulls it back to the middle
 	static float playerx = 0;
-	playerx += deltatime * (-Road[base].curve * ROAD_CENTRIFUGAL - playerx * ROAD_RECENTER);
+	playerx += time.delta * (-Road[base].curve * ROAD_CENTRIFUGAL - playerx * ROAD_RECENTER);
 
 	// The camera rides above the road it stands on, which is what lifts the
 	// horizon over a crest

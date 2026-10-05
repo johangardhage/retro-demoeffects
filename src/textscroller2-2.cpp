@@ -83,7 +83,7 @@ static void DrawChar(unsigned char code, int x, int y)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	int pages = sizeof(ScrollText) / sizeof(ScrollText[0]);
 	int lines = sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]);
@@ -91,7 +91,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Calculate phase
 	double travel = RETRO_HEIGHT + rows * Font.height;
-	double phase = fmod(time * SCROLL_SPEED, travel);
+	double phase = fmod(time.total * SCROLL_SPEED, travel);
 	int top = RETRO_HEIGHT - (int)phase;
 
 	for (int row = 0; row < rows; row++) {

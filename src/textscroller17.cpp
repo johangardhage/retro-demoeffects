@@ -68,20 +68,20 @@ static float ShadowCoverage(float x, float y, int phase)
 	return mix(top, bottom, fy);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 
 	// The text enters at the right margin. Until it has scrolled in, phase is
 	// negative and the columns left of the text's start stay empty.
-	double scroll = time * 76.0 - (RETRO_WIDTH - TEXT_MARGIN);
+	double scroll = time.total * 76.0 - (RETRO_WIDTH - TEXT_MARGIN);
 	int phase = scroll < 0 ? (int)floor(scroll) : (int)fmod(scroll, (double)ScrollImage->width);
 	// A distant light, so every ray is parallel. slopex and slopey are how far
 	// it leans per unit of depth. A wall point is shaded when the ray from it
 	// toward the light meets ink at the text: its point in space, back from
 	// the screen through the eye, moved by the lean over the gap to the text.
-	float ax = fmod(time * 1.15, 2 * M_PI);
-	float ay = fmod(time * 1.63, 2 * M_PI);
+	float ax = fmod(time.total * 1.15, 2 * M_PI);
+	float ay = fmod(time.total * 1.63, 2 * M_PI);
 	float slopex = 0.88f * sinf(ax);
 	float slopey = 1.03f * sinf(ay + 0.5f);
 	vec3 light = normalize(vec3{ slopex, slopey, 1 });

@@ -18,13 +18,13 @@
 #define TRAIL_COUNT 6 // ghost cubes drawn each frame, leading one included
 #define TRAIL_STEP 0.015 // seconds each ghost trails the one ahead of it
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Oldest ghost first, leading cube last, so each draw's plain overwrite
 	// leaves the brightest copy on top instead of buried under the fainter ones.
 	Model3D *model = RETRO_Get3DModel();
 	for (int i = TRAIL_COUNT - 1; i >= 0; i--) {
-		double t = time - i * TRAIL_STEP;
+		double t = time.total - i * TRAIL_STEP;
 		float ax = fmod(t * ROTATION_SPEED, 2 * M_PI);
 		float ay = fmod(t * ROTATION_SPEED, 2 * M_PI);
 		float az = fmod(t * ROTATION_SPEED, 2 * M_PI);

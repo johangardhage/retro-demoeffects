@@ -36,18 +36,18 @@ static double Sample(unsigned char character, double u, double v)
 	return 255.0 * mix(top, bottom, fy);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	int textlength = sizeof(ScrollText) - 1;
-	double distance = time * SCROLL_SPEED;
+	double distance = time.total * SCROLL_SPEED;
 	double phase = fmod(distance, textlength * LETTER_WIDTH);
 	// After five seconds, smoothly repeat a deeper 1.8-second sinusoidal zoom.
 	// Sine scrolling joins after one bounce.
-	double bounce = MAX(0.0, time - BOUNCE_START);
+	double bounce = MAX(0.0, time.total - BOUNCE_START);
 	// Start at the crest so both scale and velocity join the plain intro
 	// continuously. Cosine is a sine wave shifted by a quarter turn.
 	double zoom = 0.60 + 0.40 * cos(bounce * (2.0 * M_PI / BOUNCE_PERIOD));
-	double sinetime = MAX(0.0, time - SINE_START);
+	double sinetime = MAX(0.0, time.total - SINE_START);
 	double sineamplitude = 26.0 * smoothstep(0.0, 1.0, sinetime);
 	double height = 100.0;
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

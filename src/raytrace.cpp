@@ -146,17 +146,17 @@ static unsigned char TraceScene(vec3 origin, vec3 dir, vec3 light)
 	return SKY_START + (unsigned char)(env.brightness * (SKY_SHADES - 1));
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// The sphere bounces on boingball's own parabola, w = 2 frac(phase) - 1,
 	// height = PEAK (1 - w^2), and drifts back and forth across the floor
-	float bouncephase = fract(time * SPHERE_BOUNCE_SPEED);
+	float bouncephase = fract(time.total * SPHERE_BOUNCE_SPEED);
 	float w = 2.0f * bouncephase - 1.0f;
 	float bounce = SPHERE_BOUNCE_HEIGHT * (1.0f - w * w);
 
-	SphereCenter = { SPHERE_DRIFT_X * sinf(time * SPHERE_DRIFT_SPEED), FLOOR_Y + SPHERE_RADIUS + bounce, SPHERE_Z };
+	SphereCenter = { SPHERE_DRIFT_X * sinf(time.total * SPHERE_DRIFT_SPEED), FLOOR_Y + SPHERE_RADIUS + bounce, SPHERE_Z };
 
-	float lightangle = time * LIGHT_SPEED;
+	float lightangle = time.total * LIGHT_SPEED;
 	vec3 light = { LIGHT_ORBIT_RADIUS * cosf(lightangle), LIGHT_Y, SPHERE_Z + LIGHT_ORBIT_RADIUS * sinf(lightangle) };
 
 	for (int sy = 0; sy < RETRO_HEIGHT; sy++) {

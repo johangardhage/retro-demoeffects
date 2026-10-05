@@ -39,13 +39,13 @@
 #define FLAG_BLUE 1 // the two colors of the flag, past the background
 #define FLAG_GOLD 2
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase, of the wave running out along the flag and of the yaw it
 	// swings through
-	double travel = fmod(time * FLAG_SPEED, RETRO_ANGLES_PER_TURN);
+	double travel = fmod(time.total * FLAG_SPEED, RETRO_ANGLES_PER_TURN);
 
-	double sway = fmod(time * FLAG_SWAYSPEED, RETRO_ANGLES_PER_TURN);
+	double sway = fmod(time.total * FLAG_SWAYSPEED, RETRO_ANGLES_PER_TURN);
 
 	// Shake out the cloth. No normals are taken: an unlit face carries its color
 	// and nothing else

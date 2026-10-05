@@ -87,13 +87,13 @@ static void DrawGlyph(const Glyph &glyph, float time, int xoffset, int yoffset, 
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	RETRO_DrawRectangle(PANEL_LEFT, PANEL_TOP, PANEL_RIGHT, PANEL_BOTTOM, 1);
 
 	// Draw text
-	for (int i = 0; i < LETTERS; i++) DrawGlyph(Wordmark[i], time - 0.18f, 6, 6, 2);
-	for (int i = 0; i < LETTERS; i++) DrawGlyph(Wordmark[i], time, 0, 0, 3);
+	for (int i = 0; i < LETTERS; i++) DrawGlyph(Wordmark[i], time.total - 0.18f, 6, 6, 2);
+	for (int i = 0; i < LETTERS; i++) DrawGlyph(Wordmark[i], time.total, 0, 0, 3);
 }
 
 void DEMO_Initialize(void)

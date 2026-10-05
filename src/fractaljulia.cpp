@@ -44,10 +44,10 @@
 #define ZOOM_RATE 3.281 // zoom per second
 #define ZOOM_LIMIT 1.0e12 // as deep as double carries a distinct pixel spacing
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase. One dive, then back to the top.
-	double phase = fmod(time, log(ZOOM_LIMIT) / log(ZOOM_RATE));
+	double phase = fmod(time.total, log(ZOOM_LIMIT) / log(ZOOM_RATE));
 
 	double zoom = pow(ZOOM_RATE, phase);
 	double scale = 3.0 / (zoom * RETRO_WIDTH);

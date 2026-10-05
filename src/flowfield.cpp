@@ -121,11 +121,11 @@ static void SowParticle(Particle *particle)
 	particle->life = 1 + RANDOM(PARTICLE_LIFE);
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase. The noise repeats on its period, so the wrap is seamless
 	static double phase = 0;
-	phase = fmod(phase + timestep * FIELD_DRIFT, NOISE_PERIOD);
+	phase = fmod(phase + time.delta * FIELD_DRIFT, NOISE_PERIOD);
 
 	// Fade the trails
 	for (int i = 0; i < RETRO_WIDTH * RETRO_HEIGHT; i++) {
@@ -162,7 +162,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Draw trails
 	unsigned char *buffer = RETRO_FrameBuffer();

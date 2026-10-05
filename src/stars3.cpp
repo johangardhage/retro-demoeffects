@@ -44,14 +44,14 @@ static void PlaceStar(VortexStar *star, float depth)
 	star->z = depth;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	float cx = RETRO_WIDTH / 2.0f;
 	float cy = RETRO_HEIGHT / 2.0f;
 
 	for (int i = 0; i < NUM_STARS; i++) {
-		Stars[i].z -= SPEED * deltatime;
-		Stars[i].angle += SPIN * deltatime;
+		Stars[i].z -= SPEED * time.delta;
+		Stars[i].angle += SPIN * time.delta;
 
 		if (Stars[i].z <= STAR_NEAR) {
 			PlaceStar(&Stars[i], STAR_FAR);

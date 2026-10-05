@@ -98,7 +98,7 @@ static void DrawText(const char *text, int y, int xscale, int yscale, int tracki
 // that is never cleared, and the logo is reseeded once per step, so the step rate sets
 // both speeds.
 //
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Seed logo. Half of what a texel puts in is the same every step and half is drawn
 	// fresh, so a letter holds its shape while its heat still boils.
@@ -124,7 +124,7 @@ void DEMO_FixedUpdate(double timestep)
 //
 // Draw the field, dropping the fuel bed the way fire.cpp does
 //
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	RETRO_Blit(FireBuffer, (RETRO_HEIGHT - FIRE_HEIGHT) * RETRO_WIDTH, RETRO_FrameBuffer() + (FIRE_HEIGHT * RETRO_WIDTH));
 }

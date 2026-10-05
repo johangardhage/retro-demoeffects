@@ -78,7 +78,7 @@ static void DrawSpan(int top, int bottom, int x, int u, float topshade, float bo
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// u = x + 2 phase must return to the same strip column after one
 	// period, so the period must be a multiple of width / gcd(width, 2);
@@ -89,7 +89,7 @@ void DEMO_Render(double time, double deltatime)
 	double columnperiod = (double)(5 * 256) * scrollperiod / GCD(5 * 256, scrollperiod);
 
 	// Calculate phase
-	double phase = fmod(time * COLUMN_SPEED, columnperiod);
+	double phase = fmod(time.total * COLUMN_SPEED, columnperiod);
 
 	// Constant over the column, so worked out once rather than per slice
 	double twist = mix(COLUMN_TWIST_MIN, COLUMN_TWIST_MAX, (1 + COS(phase / 5.0)) / 2);

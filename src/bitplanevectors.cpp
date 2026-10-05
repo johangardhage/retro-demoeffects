@@ -40,13 +40,13 @@ static const Plate Plates[PLATE_COUNT] = {
 
 static Model3D *PlateModels[PLATE_COUNT];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	for (int k = 0; k < PLATE_COUNT; k++) {
 		const Plate &plate = Plates[k];
-		float ax = fmod(time * plate.speed.x, 2 * M_PI);
-		float ay = fmod(time * plate.speed.y, 2 * M_PI);
-		float az = fmod(time * plate.speed.z, 2 * M_PI);
+		float ax = fmod(time.total * plate.speed.x, 2 * M_PI);
+		float ay = fmod(time.total * plate.speed.y, 2 * M_PI);
+		float az = fmod(time.total * plate.speed.z, 2 * M_PI);
 
 		RETRO_RotateModel(ax, ay, az, PlateModels[k]);
 		RETRO_ProjectModel(RETRO_PROJECTION_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, PlateModels[k]);

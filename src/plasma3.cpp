@@ -26,10 +26,10 @@
 
 static unsigned char SinTable[SINE_VALUES];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * PLASMA_SPEED, SINE_VALUES);
+	double phase = fmod(time.total * PLASMA_SPEED, SINE_VALUES);
 	int iphase = phase;
 
 	unsigned char *buffer = RETRO_FrameBuffer();

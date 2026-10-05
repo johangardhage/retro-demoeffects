@@ -25,18 +25,18 @@
 #define MOUTH_RADIUS 6.2f // texels, before the angular ripple below
 #define MOUTH_RIPPLE 0.8f
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase. Both are masked onto the texture, so each wraps on the
 	// size of the axis it scrolls.
-	float flight = fmod(time * FLIGHT_SPEED, TEXTURE_HEIGHT);
-	float roll = fmod(time * ROLL_SPEED, TEXTURE_WIDTH);
+	float flight = fmod(time.total * FLIGHT_SPEED, TEXTURE_HEIGHT);
+	float roll = fmod(time.total * ROLL_SPEED, TEXTURE_WIDTH);
 
 	unsigned char *image = RETRO_ImageData();
 
 	// Two incommensurate motions keep the mouth from tracing a simple circle.
-	float cx = RETRO_WIDTH * 0.5f + 23.0f * sin(time * 0.73f) + 9.0f * sin(time * 1.91f);
-	float cy = RETRO_HEIGHT * 0.5f + 17.0f * cos(time * 0.61f) + 7.0f * sin(time * 1.37f);
+	float cx = RETRO_WIDTH * 0.5f + 23.0f * sin(time.total * 0.73f) + 9.0f * sin(time.total * 1.91f);
+	float cy = RETRO_HEIGHT * 0.5f + 17.0f * cos(time.total * 0.61f) + 7.0f * sin(time.total * 1.37f);
 
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
@@ -47,7 +47,7 @@ void DEMO_Render(double time, double deltatime)
 
 			// The far end is deliberately an irregular black opening: the
 			// cleared framebuffer, left as it is.
-			float mouth = MOUTH_RADIUS + MOUTH_RIPPLE * sin(angle * 5.0f + time * 1.7f);
+			float mouth = MOUTH_RADIUS + MOUTH_RIPPLE * sin(angle * 5.0f + time.total * 1.7f);
 			if (radius2 < mouth * mouth) {
 				continue;
 			}

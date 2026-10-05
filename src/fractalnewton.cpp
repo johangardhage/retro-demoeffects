@@ -43,10 +43,10 @@
 #define TURN_SPEED (1.0 / 40) // turns of the triangle a second
 #define PULSE 0.5 // how far a root leaves the unit circle
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase. One turn of the triangle.
-	double phase = fract(time * TURN_SPEED);
+	double phase = fract(time.total * TURN_SPEED);
 
 	// Place the roots
 	double rootre[ROOTS];

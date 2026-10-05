@@ -47,13 +47,13 @@ static double Wrap(double value)
 	return 2 * STAR_FAR * fract((value + STAR_FAR) / (2 * STAR_FAR)) - STAR_FAR;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static int flightcycle = -1;
 	static int turndirection = 0;
 
-	int cycle = (int)floor(time / FLIGHT_PERIOD);
-	double phase = time - cycle * FLIGHT_PERIOD;
+	int cycle = (int)floor(time.total / FLIGHT_PERIOD);
+	double phase = time.total - cycle * FLIGHT_PERIOD;
 	while (flightcycle < cycle) {
 		if (flightcycle >= 0) {
 			CameraStart = Turn(turndirection, 1.15);
@@ -65,7 +65,7 @@ void DEMO_Render(double time, double deltatime)
 	// Choose turns from CameraStart so up/down remain correct after any turn.
 	RETRO_Camera camera = Turn(turndirection, 1.15 * smootherstep(2.0, 7.0, phase));
 	RETRO_RollCamera(&camera, 2 * M_PI * smootherstep(5.0, 10.0, phase));
-	double travel = SPEED * deltatime;
+	double travel = SPEED * time.delta;
 
 	for (int i = 0; i < NUM_STARS; i++) {
 		Vertex &star = Stars[i];

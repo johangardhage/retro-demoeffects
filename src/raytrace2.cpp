@@ -136,10 +136,10 @@ static unsigned char TraceScene(vec3 origin, vec3 dir, vec3 light)
 	return MIRROR_START;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time, SCENE_PERIOD) * (2 * M_PI / SCENE_PERIOD);
+	double phase = fmod(time.total, SCENE_PERIOD) * (2 * M_PI / SCENE_PERIOD);
 
 	Balls[0] = { { -83.0f + 12.0f * (float)sin(phase), FLOOR_Y + 62.0f, 325.0f + 20.0f * (float)cos(phase) }, 62.0f };
 	Balls[1] = { { 83.0f + 12.0f * (float)sin(phase + M_PI), FLOOR_Y + 62.0f, 350.0f - 20.0f * (float)cos(phase) }, 62.0f };

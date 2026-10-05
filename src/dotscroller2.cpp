@@ -39,13 +39,13 @@ static const char *const ScrollText[] = { "       RETRO DEMOEFFECTS..." };
 
 static RETRO_Image *ScrollImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	int displaywidth = ScrollImage->width * DOT_SPACING;
 
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, displaywidth);
-	double depthphase = fmod(time * DEPTH_SPEED, 2 * M_PI);
+	double phase = fmod(time.total * SCROLL_SPEED, displaywidth);
+	double depthphase = fmod(time.total * DEPTH_SPEED, 2 * M_PI);
 
 	for (int sy = 0; sy < ScrollImage->height; sy++) {
 		for (int sx = 0; sx < ScrollImage->width; sx++) {

@@ -282,10 +282,10 @@ static float RingFall(double time, int ring)
 	return DROP_DISTANCE * (1.0f - k);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	float angle1 = (float)fmod(time * LIGHT_SPEED_1 + LIGHT_PHASE_1, 2.0 * M_PI);
-	float angle2 = (float)fmod(time * LIGHT_SPEED_2 + LIGHT_PHASE_2, 2.0 * M_PI);
+	float angle1 = (float)fmod(time.total * LIGHT_SPEED_1 + LIGHT_PHASE_1, 2.0 * M_PI);
+	float angle2 = (float)fmod(time.total * LIGHT_SPEED_2 + LIGHT_PHASE_2, 2.0 * M_PI);
 	RETRO_Render.lightsource = RETRO_LightSource(
 		LIGHT_REACH * 0.5f * (cosf(angle1) + cosf(angle2)),
 		-LIGHT_REACH * 0.5f * (sinf(angle1) + sinf(angle2)),
@@ -300,14 +300,14 @@ void DEMO_Render(double time, double deltatime)
 
 	for (int ring = 0; ring < RING_COUNT; ring++) {
 		double riseat = ring * (double)RING_STAGGER + DROP_TIME - RISE_OVERLAP;
-		float rise = (float)smoothstep(riseat, riseat + RISE_TIME, time);
+		float rise = (float)smoothstep(riseat, riseat + RISE_TIME, time.total);
 		float nod = ENTER_NOD * (1.0f - rise);
 		float turn = RISE_TURN * sinf(rise * (float)M_PI);
 		mat3 matrix = rotateY(turn) * rotateX(nod);
 
 		// Delay the entire pose, so the turnover travels outward without
 		// separating the rings during the quiet part of the motion.
-		double follow = time - ring * FOLLOW_DELAY;
+		double follow = time.total - ring * FOLLOW_DELAY;
 		double elapsed = MAX(follow - FLIP_START, 0.0);
 		double cycle = floor(elapsed / FLIP_PERIOD);
 		double duration = fmod(cycle, 2.0) < 1.0 ? FLIP_TIME : FLIP_TIME_SLOW;
@@ -322,7 +322,7 @@ void DEMO_Render(double time, double deltatime)
 			rotateX(wobble * cosf((float)fmod(follow * 0.7, 2.0 * M_PI)));
 		matrix = idle * rotateZ(axis) * rotateX(flip) * rotateZ(-axis) * matrix;
 
-		float fall = RingFall(time, ring);
+		float fall = RingFall(time.total, ring);
 		int base = ring * perring;
 		for (int i = 0; i < perring; i++) {
 			RETRO_RotateVertex(&model->vertex[base + i], matrix);

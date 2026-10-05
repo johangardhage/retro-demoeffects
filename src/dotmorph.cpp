@@ -48,13 +48,13 @@ static void MorphShapes(Vertex *from, Vertex *to, float t)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * MORPH_SPEED, CYCLE_STEPS);
+	double phase = fmod(time.total * MORPH_SPEED, CYCLE_STEPS);
 	int iphase = phase;
 
-	double angle = fmod(radians(time * ROTATION_SPEED), 2 * M_PI);
+	double angle = fmod(radians(time.total * ROTATION_SPEED), 2 * M_PI);
 	mat3 matrix = rotate(0, angle, angle);
 
 	// Morph shapes

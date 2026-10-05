@@ -228,7 +228,7 @@ static void StartSlide(void)
 	Updates = 0;
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	if (Updates == DRAW_UPDATES + HOLD_UPDATES) {
 		Current = (Current + 1) % SLIDES;
@@ -242,7 +242,7 @@ void DEMO_FixedUpdate(double timestep)
 	Updates++;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
 		Current = (Current + 1) % SLIDES;

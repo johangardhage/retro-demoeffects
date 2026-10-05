@@ -56,10 +56,10 @@ static void DrawTerrainDots(float cameraz)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static float cameraz = 236;
-	cameraz = fmodf(cameraz + FORWARD_SPEED * deltatime + RETRO_Terrain.height, RETRO_Terrain.height);
+	cameraz = fmodf(cameraz + FORWARD_SPEED * time.delta + RETRO_Terrain.height, RETRO_Terrain.height);
 
 	RETRO_ClearDepthBuffer();
 	DrawTerrainDots(cameraz);

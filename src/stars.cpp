@@ -25,11 +25,11 @@
 
 static vec3 Stars[NUM_STARS];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Draw stars
 	for (int i = 0; i < NUM_STARS; i++) {
-		Stars[i].x = fmod(Stars[i].x + Stars[i].z * SPEED * deltatime, RETRO_WIDTH);
+		Stars[i].x = fmod(Stars[i].x + Stars[i].z * SPEED * time.delta, RETRO_WIDTH);
 
 		int color = Stars[i].z * (SHADES - 1) / LAYER_NEAR;
 

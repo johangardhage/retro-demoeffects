@@ -13,7 +13,7 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	RETRO_SetFont(RETRO_FONT_VGA_8X8);
 	RETRO_PutString("IBM VGA 8X8", 10, 10, 255);

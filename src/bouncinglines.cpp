@@ -77,10 +77,10 @@ static RETRO_Palette Hue(double turns)
 	};
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time, LINE_PERIOD);
+	double phase = fmod(time.total, LINE_PERIOD);
 
 	// Draw lines, each as it was every step back in time, the oldest first and
 	// the darkest, in the hue the line had then

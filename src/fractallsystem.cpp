@@ -142,7 +142,7 @@ static void StartGeneration(void)
 	ScreenY = RETRO_HEIGHT / 2.0 + ScreenScale * (bottom + top) / 2;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static double phase = 0;
 
@@ -155,7 +155,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Calculate phase. One generation traced and held, then the next, and the
 	// next curve after the last
-	phase += deltatime;
+	phase += time.delta;
 	if (phase > TIME_DRAW + TIME_HOLD) {
 		phase = 0;
 		Generation++;

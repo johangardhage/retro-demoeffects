@@ -84,7 +84,7 @@ static void PlotDisc(unsigned char *dest, double hx, double hy, unsigned char co
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	int pages = sizeof(ScrollText) / sizeof(ScrollText[0]);
 	int lines = sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]);
@@ -92,7 +92,7 @@ void DEMO_Render(double time, double deltatime)
 	int top = MAX(RETRO_HEIGHT - block, 0) / 2;
 	int bottom = top + block - 1;
 	double pagetime = 2 * CROSS_TIME + TIME_HOLD + TIME_BLANK;
-	double slot = fmod(time / pagetime, pages);
+	double slot = fmod(time.total / pagetime, pages);
 	int page = (int)slot;
 	double t = (slot - page) * pagetime;
 

@@ -538,7 +538,7 @@ static void DrawMatch(const Subject &subject, double time)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static bool turning = true;
 	static int current = 0;
@@ -554,7 +554,7 @@ void DEMO_Render(double time, double deltatime)
 	}
 	if (turning) {
 		// Calculate phase
-		double phase = fmod(time / PAGE_SECONDS, SUBJECTS * PAGES);
+		double phase = fmod(time.total / PAGE_SECONDS, SUBJECTS * PAGES);
 		int iphase = phase;
 		current = iphase / PAGES;
 		page = iphase % PAGES;
@@ -573,10 +573,10 @@ void DEMO_Render(double time, double deltatime)
 		DrawTable(subject, subject.heat);
 		break;
 	case PAGE_PICTURE:
-		DrawPicture(subject, time);
+		DrawPicture(subject, time.total);
 		break;
 	case PAGE_MATCH:
-		DrawMatch(subject, time);
+		DrawMatch(subject, time.total);
 		break;
 	}
 

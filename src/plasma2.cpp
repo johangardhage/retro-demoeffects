@@ -20,10 +20,10 @@
 
 static int Plasma[RETRO_HEIGHT][RETRO_WIDTH];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * 200, RETRO_COLORS);
+	double phase = fmod(time.total * 200, RETRO_COLORS);
 
 	// Draw every pixel again with the shifted palette color
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

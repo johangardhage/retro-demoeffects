@@ -54,11 +54,11 @@ static void DrawLines(int x, int y, float k)
 // is never cleared and blurred once per step, so how long they linger follows
 // the step rate.
 //
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
 	static double phase = 0;
-	phase = fmod(phase + timestep * LINE_SPEED, LINE_PERIOD);
+	phase = fmod(phase + time.delta * LINE_SPEED, LINE_PERIOD);
 
 	// Calculate movement
 	double aa = phase / 1.37;

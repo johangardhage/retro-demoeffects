@@ -121,12 +121,12 @@ static vec3 ShadeBall(float sx, float sy)
 	return min(mix(surroundings, lettering, ink) + white * glint, white);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Fit to the largest dark component in reference frames sampled at 5 Hz.
 	// Fit RMS error: x 2.3 pixels, y 5.4 pixels (occlusion affects y).
 	// Start at reference second 10.2, after its introductory title.
-	double phase = time + 10.2;
+	double phase = time.total + 10.2;
 	BallX = 156.9f + 162.2f * sin(phase * 1.045 + 0.6672);
 	BallY = 120.5f + 84.9f * sin(phase * 1.566 - 0.7947);
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

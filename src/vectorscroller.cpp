@@ -193,10 +193,10 @@ static Model3D *GetGlyph(unsigned char character)
 	return model;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	double phase = mod(time * SCROLL_SPEED, (double)TextWidth);
-	float spin = (float)(time * HELIX_SPIN);
+	double phase = mod(time.total * SCROLL_SPEED, (double)TextWidth);
+	float spin = (float)(time.total * HELIX_SPIN);
 
 	// All letters share one depth buffer. Clearing before each glyph would
 	// make a later letter overwrite an earlier one regardless of its depth.

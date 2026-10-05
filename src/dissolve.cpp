@@ -37,7 +37,7 @@
 
 enum { DISSOLVE_IN, DISSOLVE_OUT, HOLD };
 
-void DEMO_Render2(double time, double deltatime)
+void DEMO_Render2(RETRO_Time time)
 {
 	static int state = HOLD;
 	static int next = DISSOLVE_IN;
@@ -50,7 +50,7 @@ void DEMO_Render2(double time, double deltatime)
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	if (state == HOLD) {
-		hold -= deltatime;
+		hold -= time.delta;
 		if (hold <= 0) {
 			state = next;
 			lfsr = LFSR_SEED;
@@ -61,7 +61,7 @@ void DEMO_Render2(double time, double deltatime)
 			buffer[0] = state == DISSOLVE_IN ? image[0] : CURTAIN;
 		}
 	} else {
-		phase += deltatime * (LFSR_STATES / TIME_DISSOLVE);
+		phase += time.delta * (LFSR_STATES / TIME_DISSOLVE);
 		int steps = MIN((int)phase, LFSR_STATES);
 
 		while (walked < steps) {

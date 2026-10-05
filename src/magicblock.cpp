@@ -146,21 +146,21 @@ static void DrawStars(double time)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	DrawStars(time);
+	DrawStars(time.total);
 
 	// Composed Rz * Rx * Ry rather than the Rz * Ry * Rx of rotate(), for this
 	// tumble; rotate()'s order would take both objects along another path.
 	// The block starts a quarter turn about X, edge-on.
-	float bax = fmod(time * BLOCK_SPEED_X - M_PI / 2, 2 * M_PI);
-	float bay = fmod(time * BLOCK_SPEED_Y, 2 * M_PI);
-	float baz = fmod(time * BLOCK_SPEED_Z, 2 * M_PI);
+	float bax = fmod(time.total * BLOCK_SPEED_X - M_PI / 2, 2 * M_PI);
+	float bay = fmod(time.total * BLOCK_SPEED_Y, 2 * M_PI);
+	float baz = fmod(time.total * BLOCK_SPEED_Z, 2 * M_PI);
 	mat3 blockrotation = rotateZ(baz) * rotateX(bax) * rotateY(bay);
 
-	float cax = fmod(time * CUBE_SPEED_X, 2 * M_PI);
-	float cay = fmod(time * CUBE_SPEED_Y, 2 * M_PI);
-	float caz = fmod(time * CUBE_SPEED_Z, 2 * M_PI);
+	float cax = fmod(time.total * CUBE_SPEED_X, 2 * M_PI);
+	float cay = fmod(time.total * CUBE_SPEED_Y, 2 * M_PI);
+	float caz = fmod(time.total * CUBE_SPEED_Z, 2 * M_PI);
 	mat3 cuberotation = rotateZ(caz) * rotateX(cax) * rotateY(cay);
 
 	// RETRO_SortFaces sets frontfacing on every face. The draw order below is

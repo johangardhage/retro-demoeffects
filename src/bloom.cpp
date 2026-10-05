@@ -47,11 +47,11 @@ static void DrawBlob(int xc, int yc, unsigned char color)
 // Advance the bloom in fixed steps. It is one ring blur per step into a framebuffer that
 // is never cleared, so how far the trails spread follows the step rate, not the orbits.
 //
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
 	static double phase = 0;
-	phase = fmod(phase + timestep, BLOOM_PERIOD);
+	phase = fmod(phase + time.delta, BLOOM_PERIOD);
 
 	// Draw orbiting blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {

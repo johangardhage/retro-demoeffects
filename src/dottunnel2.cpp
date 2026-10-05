@@ -36,10 +36,10 @@
 
 static vec2 Circle[RING_DOTS];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = mod(-time * SWAY_SPEED, RETRO_ANGLES_PER_TURN);
+	double phase = mod(-time.total * SWAY_SPEED, RETRO_ANGLES_PER_TURN);
 
 	// Draw rings
 	for (int i = 0; i < RING_COUNT; i++) {

@@ -124,10 +124,10 @@ static void ShadeHit(int x, int y, vec3 p)
 	RETRO_PutPixel(x, y, CLAMP(color, RETRO_PHONG_OFFSET, RETRO_COLORS));
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * ORBIT_SPEED, 2 * M_PI);
+	double phase = fmod(time.total * ORBIT_SPEED, 2 * M_PI);
 
 	// Each ball a 3-axis Lissajous. Whole-number rates close on 2π of phase.
 	static const float amplitudex[NUM_BALLS] = { 88, 28, -82, 60 };

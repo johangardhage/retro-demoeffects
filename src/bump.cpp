@@ -38,12 +38,12 @@ static unsigned char LightMap[LIGHTMAP_HEIGHT * LIGHTMAP_WIDTH];
 static int SlopeX[RETRO_HEIGHT * RETRO_WIDTH];
 static int SlopeY[RETRO_HEIGHT * RETRO_WIDTH];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Calculate light. Lissajous: twice around vertically for every turn horizontally.
-	double angle = fmod(time * LIGHT_SPEED, RETRO_DEGREES_PER_TURN);
+	double angle = fmod(time.total * LIGHT_SPEED, RETRO_DEGREES_PER_TURN);
 
 	int lx = RETRO_WIDTH / 2.0 + LIGHT_ORBIT * cos(radians(angle));
 	int ly = RETRO_HEIGHT / 2.0 + LIGHT_ORBIT * sin(radians(2 * angle));

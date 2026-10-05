@@ -28,10 +28,10 @@
 static float SinTable[RETRO_DEGREES_PER_TURN];
 static unsigned char Texture[TEXTURE_WIDTH * TEXTURE_HEIGHT];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * 80, PLASMA_FRAMES);
+	double phase = fmod(time.total * 80, PLASMA_FRAMES);
 	int iphase = (int)phase;
 
 	// Generate plasma
@@ -48,9 +48,9 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Calculate rotation
-	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
 
 	// Draw cube
 	RETRO_RotateModel(ax, ay, az);

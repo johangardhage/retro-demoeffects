@@ -55,10 +55,10 @@ static RETRO_Palette Water(RETRO_Palette color, float level, const float *tint)
 	return mix(color, WaterColor, blend);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * WATER_SPEED, 2 * M_PI);
+	double phase = fmod(time.total * WATER_SPEED, 2 * M_PI);
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 	unsigned char *image = RETRO_ImageData();

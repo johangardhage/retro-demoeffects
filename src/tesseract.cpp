@@ -107,12 +107,12 @@ static void RotatePlane(float &p, float &q, float angle)
 	p = np;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	float axw = fmod(time * W_SPEED, 2 * M_PI);
-	float ayz = fmod(time * YZ_SPEED, 2 * M_PI);
-	float axz = fmod(time * XZ_SPEED, 2 * M_PI);
+	float axw = fmod(time.total * W_SPEED, 2 * M_PI);
+	float ayz = fmod(time.total * YZ_SPEED, 2 * M_PI);
+	float axz = fmod(time.total * XZ_SPEED, 2 * M_PI);
 
 	vec3 position[CORNERS];
 	float radius[CORNERS];

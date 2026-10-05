@@ -63,11 +63,11 @@ static unsigned char NoiseMap[TEXMAP * TEXMAP];
 static unsigned char CheckMap[TEXMAP * TEXMAP];
 static unsigned char ShadeTable[RETRO_SHADE_TABLE_COLORS * RETRO_SHADE_TABLE_SHADES];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	float ax = fmod(time * ROT_X, 2 * M_PI);
-	float ay = fmod(time * ROT_Y, 2 * M_PI);
-	float az = fmod(time * ROT_Z, 2 * M_PI);
+	float ax = fmod(time.total * ROT_X, 2 * M_PI);
+	float ay = fmod(time.total * ROT_Y, 2 * M_PI);
+	float az = fmod(time.total * ROT_Z, 2 * M_PI);
 
 	for (int i = 0; i < TEXMAP * TEXMAP; i++) {
 		NoiseMap[i] = (RANDOM(2) == 0) ? COL_BLACK : COL_WHITE;
@@ -115,7 +115,7 @@ void DEMO_Render(double time, double deltatime)
 	// assumes it is still at the current time.
 	static const int trail[] = { COL_WHITE, COL_TRAIL0, COL_TRAIL1, COL_TRAIL2 };
 	for (int i = WIRE_TRAIL_COUNT - 1; i >= 0; i--) {
-		double t = time - i * WIRE_TRAIL_STEP;
+		double t = time.total - i * WIRE_TRAIL_STEP;
 		Cube->c = trail[i];
 		RETRO_RotateModel(fmod(t * ROT_X, 2 * M_PI), fmod(t * ROT_Y, 2 * M_PI), fmod(t * ROT_Z, 2 * M_PI), Cube);
 		RETRO_ProjectModel(SCENE_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Cube);

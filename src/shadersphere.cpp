@@ -228,16 +228,16 @@ static unsigned char ShadeMirror(const Fragment &fragment)
 	return ShadeRoom(fragment.position, reflect(fragment.view, fragment.normal), spread);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// A mirror sphere spinning about its own center is a no-op: every rotation
 	// maps the ball onto itself, so the set of normals behind any fixed screen
 	// pixel never changes and the reflection sits dead still. Orbiting the
 	// ball over the floor instead moves what does change the picture: where
 	// it stands in the room, what it reflects from there, and its shadow.
-	float phase = fmod(time * ORBIT_SPEED, 2 * M_PI);
+	float phase = fmod(time.total * ORBIT_SPEED, 2 * M_PI);
 	Ball = vec3{ ORBIT_RADIUS * cosf(phase), 0.0f, ORBIT_RADIUS * sinf(phase) };
-	CloudDrift = (float)(time * CLOUD_SPEED);
+	CloudDrift = (float)(time.total * CLOUD_SPEED);
 
 	DrawRoom();
 

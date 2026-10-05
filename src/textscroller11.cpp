@@ -68,18 +68,18 @@ static const RETRO_Palette BarColors[BARS] = { RETRO_RED, RETRO_ORANGE, RETRO_YE
 
 static RETRO_Image *ScrollImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, ScrollImage->width);
+	double phase = fmod(time.total * SCROLL_SPEED, ScrollImage->width);
 	int iphase = (int)phase;
 	int scrolly = (RETRO_HEIGHT - ScrollImage->height) / 2;
 
 	// Calculate the phases of the wave the columns ride, of the ground and of
 	// the cosine the bars ride
-	double wave = fmod(time * WAVE_SPEED, RETRO_ANGLES_PER_TURN);
-	double ground = fmod(time * GROUND_SPEED, GROUND_STEPS);
-	double bar = fmod(time * BAR_SPEED, RETRO_ANGLES_PER_TURN);
+	double wave = fmod(time.total * WAVE_SPEED, RETRO_ANGLES_PER_TURN);
+	double ground = fmod(time.total * GROUND_SPEED, GROUND_STEPS);
+	double bar = fmod(time.total * BAR_SPEED, RETRO_ANGLES_PER_TURN);
 
 	// Set the color of every scanline, the ground first
 	unsigned char raster[RETRO_HEIGHT];

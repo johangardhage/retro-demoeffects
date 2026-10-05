@@ -56,10 +56,10 @@ static void RetainCubeImage(float angle, unsigned char *image)
 	memcpy(image, RETRO_FrameBuffer(), RETRO_WIDTH * RETRO_HEIGHT);
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	static float angle;
-	angle = fmod(angle + timestep * ROTATION_SPEED, 2 * M_PI);
+	angle = fmod(angle + time.delta * ROTATION_SPEED, 2 * M_PI);
 
 	// The head is the newest image, as in rubbervector4
 	HistoryHead = (HistoryHead + 1) % SLIME_COPIES;
@@ -67,13 +67,13 @@ void DEMO_FixedUpdate(double timestep)
 	RetainCubeImage(angle, History[HistoryHead][0]);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// The selection waves run on displayed time, so they stay smooth on a fast
 	// display even though the images they select between arrive at the step rate
-	float phasea = fmod(ROW_PHASE_A + time * ROW_SPEED_A, 2 * M_PI);
-	float phaseb = fmod(ROW_PHASE_B + time * ROW_SPEED_B, 2 * M_PI);
-	float phasestrip = fmod(STRIP_PHASE + time * STRIP_SPEED, 2 * M_PI);
+	float phasea = fmod(ROW_PHASE_A + time.total * ROW_SPEED_A, 2 * M_PI);
+	float phaseb = fmod(ROW_PHASE_B + time.total * ROW_SPEED_B, 2 * M_PI);
+	float phasestrip = fmod(STRIP_PHASE + time.total * STRIP_SPEED, 2 * M_PI);
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 

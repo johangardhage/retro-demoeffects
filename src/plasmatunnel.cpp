@@ -52,7 +52,7 @@ static unsigned char DepthMap[MAP_SIZE];
 static unsigned char Texture[TEXTURE_SIZE * TEXTURE_SIZE];
 static unsigned char TunnelBuffer[MAP_SIZE];
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	static unsigned char scroll;
 
@@ -72,7 +72,7 @@ void DEMO_FixedUpdate(double timestep)
 	scroll++;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int y = 0; y < MAP_HEIGHT; y++) {

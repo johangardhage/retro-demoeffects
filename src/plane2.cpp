@@ -47,18 +47,18 @@
 
 static unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 
 	// Yaw the sampled (u, v) in the plane, and walk (xd, yd) in texture
 	// space. WRAP at the sample is one texture period.
-	float ang = fmod(time * PLANE_YAW_SPEED, 360.0);
+	float ang = fmod(time.total * PLANE_YAW_SPEED, 360.0);
 	float cosa = cos(radians(ang));
 	float sina = sin(radians(ang));
 
-	float xd = time * PLANE_WALK_SPEED;
-	float yd = time * PLANE_WALK_SPEED;
+	float xd = time.total * PLANE_WALK_SPEED;
+	float yd = time.total * PLANE_WALK_SPEED;
 
 	// Perspective scales. v is the forward texel at this depth and does
 	// not depend on x. u stretches about the screen center with a factor

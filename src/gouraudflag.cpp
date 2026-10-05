@@ -51,13 +51,13 @@
 #define FLAG_BLUE 1 // where the blue ramp starts, past the background
 #define FLAG_GOLD (FLAG_BLUE + FLAG_SHADES)
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase, of the wave running out along the flag and of the yaw it
 	// swings through
-	double travel = fmod(time * FLAG_SPEED, RETRO_ANGLES_PER_TURN);
+	double travel = fmod(time.total * FLAG_SPEED, RETRO_ANGLES_PER_TURN);
 
-	double sway = fmod(time * FLAG_SWAYSPEED, RETRO_ANGLES_PER_TURN);
+	double sway = fmod(time.total * FLAG_SWAYSPEED, RETRO_ANGLES_PER_TURN);
 
 	// Shake out the cloth, and slope with it: the height and the two slopes come
 	// from the same wave, so the shading is the surface's own and not an average

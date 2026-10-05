@@ -91,12 +91,12 @@ static void BuildField(void)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double scrollx = fmod(time * SCROLL_X, MAP_SIZE);
-	double scrolly = fmod(time * SCROLL_Y, MAP_SIZE);
-	double cycle = fmod(time * CYCLE_SPEED, RETRO_COLORS);
+	double scrollx = fmod(time.total * SCROLL_X, MAP_SIZE);
+	double scrolly = fmod(time.total * SCROLL_Y, MAP_SIZE);
+	double cycle = fmod(time.total * CYCLE_SPEED, RETRO_COLORS);
 
 	int ix = (int)scrollx;
 	int iy = (int)scrolly;

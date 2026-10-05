@@ -77,14 +77,14 @@ struct Layer {
 	float pitch;
 };
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase: the sequence, and how long it has run
 	double cycle = 0;
 	for (const Sequence &sequence : Sequences) {
 		cycle += sequence.duration;
 	}
-	double phase = fmod(time, cycle);
+	double phase = fmod(time.total, cycle);
 	int iphase = 0;
 	while (phase >= Sequences[iphase].duration) {
 		phase -= Sequences[iphase].duration;
@@ -93,7 +93,7 @@ void DEMO_Render(double time, double deltatime)
 	const Sequence &sequence = Sequences[iphase];
 
 	// Flash the palette. Color number bits is the layers with a bar on the pixel
-	float flash = MAX(1 - fmod(time, BEAT_TIME) / FLASH_TIME, 0);
+	float flash = MAX(1 - fmod(time.total, BEAT_TIME) / FLASH_TIME, 0);
 	for (int bits = 0; bits < 1 << LAYERS; bits++) {
 		int count = 0;
 		for (int i = 0; i < LAYERS; i++) {

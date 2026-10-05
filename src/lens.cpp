@@ -32,11 +32,11 @@
 
 static int LensOffset[LENS_SIZE * LENS_SIZE];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase. The disc rides a 2:3 Lissajous figure; the eighth of
 	// a quarter turn on x keeps it from opening on a crossing
-	double phase = fmod(time * RETRO_ANGLES_PER_TURN / LENS_PERIOD, RETRO_ANGLES_PER_TURN);
+	double phase = fmod(time.total * RETRO_ANGLES_PER_TURN / LENS_PERIOD, RETRO_ANGLES_PER_TURN);
 	int swingx = RETRO_WIDTH / 2 - LENS_RADIUS - LENS_MARGIN;
 	int swingy = RETRO_HEIGHT / 2 - LENS_RADIUS - LENS_MARGIN;
 	int cx = RETRO_WIDTH / 2 + swingx * COS(2 * phase + RETRO_ANGLES_PER_TURN / 16);

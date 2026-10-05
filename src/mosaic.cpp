@@ -31,11 +31,11 @@
 #define TIME_HOLD 0.75 // seconds held on the picture or on the one block
 #define TIME_CYCLE (2 * (TIME_HOLD + TIME_MOSAIC))
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase: it rises to 1 as the picture coarsens, stays there over
 	// the one block, and falls back to 0 over the last TIME_MOSAIC of the cycle
-	double cycle = fmod(time, TIME_CYCLE);
+	double cycle = fmod(time.total, TIME_CYCLE);
 	double phase = CLAMP01(MIN(cycle - TIME_HOLD, TIME_CYCLE - cycle) / TIME_MOSAIC);
 	int block = lround(pow(BLOCK_MAX, phase));
 

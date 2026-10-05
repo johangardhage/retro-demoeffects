@@ -90,7 +90,7 @@ static void DrawCell(unsigned char *buffer, int column, int row, unsigned char c
 	}
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Fade every cell
 	for (float &brightness : Brightness) {
@@ -100,7 +100,7 @@ void DEMO_FixedUpdate(double timestep)
 	// Move the heads, lighting every cell they enter
 	for (Drop &drop : Drops) {
 		int oldrow = (int)floor(drop.row);
-		drop.row += drop.speed * timestep;
+		drop.row += drop.speed * time.delta;
 		for (int row = MAX(oldrow + 1, 0); row <= MIN((int)floor(drop.row), ROWS - 1); row++) {
 			int i = row * COLUMNS + drop.column;
 			Brightness[i] = 1.0f;
@@ -117,7 +117,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 

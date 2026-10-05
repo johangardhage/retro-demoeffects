@@ -186,13 +186,13 @@ static void LaunchWord(const Word &word, float time)
 
 // The springs chase the surface as it is displayed, so a stall that the simulation
 // cannot catch up on leaves the letters behind for a moment rather than for good
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
-	FloatWord(WordTop, (float)RETRO.time, (float)timestep);
-	FloatWord(WordMain, (float)RETRO.time, (float)timestep);
+	FloatWord(WordTop, (float)RETRO.time, (float)time.delta);
+	FloatWord(WordMain, (float)RETRO.time, (float)time.delta);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Draw sky, darkening from the horizon upward. Rows below the horizon are all water
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
@@ -210,18 +210,18 @@ void DEMO_Render(double time, double deltatime)
 	// Layer 3 (Foreground wave): faster, rolling front water wave
 	// RETRO_DrawVline clips, so the heights need no clamping
 	for (int x = 0; x < RETRO_WIDTH; x++) {
-		wave1y[x] = (int)lroundf(WaveHeight(WaveBack, (float)x, (float)time));
-		wave2y[x] = (int)lroundf(WaveHeight(WaveMid, (float)x, (float)time));
-		wave3y[x] = (int)lroundf(WaveHeight(WaveFront, (float)x, (float)time));
+		wave1y[x] = (int)lroundf(WaveHeight(WaveBack, (float)x, (float)time.total));
+		wave2y[x] = (int)lroundf(WaveHeight(WaveMid, (float)x, (float)time.total));
+		wave3y[x] = (int)lroundf(WaveHeight(WaveFront, (float)x, (float)time.total));
 	}
 
 	// Draw top text ("RETRO"), then Layer 1 (Back wave) over it, which sinks it to its waterline
-	DrawWord(WordTop, (float)time);
+	DrawWord(WordTop, (float)time.total);
 
 	DrawLayer(wave1y, COLOR_WAVE_BACK, COLOR_FOAM_BACK);
 
 	// Draw main text ("DEMOEFFECTS"), then Layer 2 (Middle wave) over it
-	DrawWord(WordMain, (float)time);
+	DrawWord(WordMain, (float)time.total);
 
 	DrawLayer(wave2y, COLOR_WAVE_MID, COLOR_FOAM_MID);
 

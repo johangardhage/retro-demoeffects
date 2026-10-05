@@ -79,10 +79,10 @@ static const char *const ScrollText[] = { "                                    R
 
 static RETRO_Image *ScrollImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate the phase of the text along the strip
-	double phase = fmod(time * SCROLL_SPEED, ScrollImage->width);
+	double phase = fmod(time.total * SCROLL_SPEED, ScrollImage->width);
 	int samplepad = ScrollImage->height * SAMPLE_HEIGHT / RETRO_HEIGHT; // stamps that start off-screen still draw on screen
 
 	// Draw the ribbon back to front. Pass 0 is the back (depth > 0), pass 1

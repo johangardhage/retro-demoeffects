@@ -139,11 +139,11 @@ static void DrawLetters(float ax, float phase, bool facing, bool solidity)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *screen = RETRO_FrameBuffer();
-	float phase = (float)fmod(time * SCROLL_SPEED + RING_LETTERS / 2.0, RING_LETTERS + MessageLength);
-	float ax = TILT + WOBBLE * (float)sin(fmod(time * WOBBLE_SPEED, 2 * M_PI));
+	float phase = (float)fmod(time.total * SCROLL_SPEED + RING_LETTERS / 2.0, RING_LETTERS + MessageLength);
+	float ax = TILT + WOBBLE * (float)sin(fmod(time.total * WOBBLE_SPEED, 2 * M_PI));
 
 	DrawLetters(ax, phase, false, false);
 	memcpy(Scene, screen, RETRO_WIDTH * RETRO_HEIGHT);

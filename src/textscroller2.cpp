@@ -64,11 +64,11 @@ static const char *const ScrollText[][12] = {
 
 static RETRO_Image *PageImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
 	double travel = RETRO_HEIGHT + PageImage->height;
-	double phase = fmod(time * SCROLL_SPEED, travel);
+	double phase = fmod(time.total * SCROLL_SPEED, travel);
 	int top = RETRO_HEIGHT - (int)phase;
 	int left = (RETRO_WIDTH - PageImage->width) / 2;
 

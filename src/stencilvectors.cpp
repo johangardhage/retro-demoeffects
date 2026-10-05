@@ -29,15 +29,15 @@
 
 static unsigned char Metal[METAL_SIZE * METAL_SIZE];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float ay = fmod(time * ROTATION_SPEED * 0.83f, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED * 0.61f, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED * 0.83f, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED * 0.61f, 2 * M_PI);
 
 	// Calculate phase
-	double scroll = fmod(time * METAL_SCROLL, METAL_SIZE);
+	double scroll = fmod(time.total * METAL_SCROLL, METAL_SIZE);
 	int iscroll = (int)scroll;
 
 	// Draw cube

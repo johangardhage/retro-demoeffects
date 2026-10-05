@@ -74,10 +74,10 @@ static const char *const ScrollText[] = {
 
 static RETRO_Image *PageImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * CRAWL_SPEED, PageImage->height + CRAWL_GAP) + PHASE_BOTTOM;
+	double phase = fmod(time.total * CRAWL_SPEED, PageImage->height + CRAWL_GAP) + PHASE_BOTTOM;
 
 	for (int y = HORIZON_Y + 1; y < BOTTOM_Y; y++) {
 		double distance = y - HORIZON_Y;

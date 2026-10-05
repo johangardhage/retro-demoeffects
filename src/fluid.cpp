@@ -224,13 +224,13 @@ static void Stir(double phase, int a, double alpha, int b, double beta, float *d
 	Emit(cx, cy, vx, vy, density);
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
-	float dt = (float)timestep;
+	float dt = (float)time.delta;
 
 	// Calculate phase
 	static double phase = 0;
-	phase = fmod(phase + timestep * 2 * M_PI / STIR_PERIOD, 2 * M_PI);
+	phase = fmod(phase + time.delta * 2 * M_PI / STIR_PERIOD, 2 * M_PI);
 
 	// Stir ink in
 	Stir(phase, 3, 0, 2, M_PI / 2, Density1);
@@ -269,7 +269,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 

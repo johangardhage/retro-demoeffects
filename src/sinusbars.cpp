@@ -28,12 +28,12 @@
 #define LINE_SPEED2 100 // pixels of phase2 per second, falling
 #define LINE_SPEED3 200 // pixels of phase3 per second, falling
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase1 = fmod(10.0 + time * LINE_SPEED1, LINE_PERIOD);
-	double phase2 = mod(-20.0 - time * LINE_SPEED2, LINE_PERIOD);
-	double phase3 = mod(-30.0 - time * LINE_SPEED3, LINE_PERIOD);
+	double phase1 = fmod(10.0 + time.total * LINE_SPEED1, LINE_PERIOD);
+	double phase2 = mod(-20.0 - time.total * LINE_SPEED2, LINE_PERIOD);
+	double phase3 = mod(-30.0 - time.total * LINE_SPEED3, LINE_PERIOD);
 
 	// Draw bars
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

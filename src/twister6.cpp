@@ -142,7 +142,7 @@ static void DrawSpan(int y, int x1, float u1, float l1, float z1, int x2, float 
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	float screenx[SPANS];
 	float viewz[SPANS];
@@ -152,14 +152,14 @@ void DEMO_Render(double time, double deltatime)
 		ZBuffer[i] = FLUBBER_Z_FAR;
 	}
 
-	TextureScroll = (long)(time * FLUBBER_SCROLL_SPEED);
+	TextureScroll = (long)(time.total * FLUBBER_SCROLL_SPEED);
 
 	// Calculate phase. The three oscillators have incommensurate periods
 	// (20s, 17s, 18s) so the pose does not obviously loop.
-	float spin = (float)(time * FLUBBER_SPIN_SPEED);
-	float twistcos = cos(time * FLUBBER_TWIST_OMEGA);
-	float twistmod = sin(time * FLUBBER_TWIST_MOD_OMEGA);
-	float swaycos = cos(time * FLUBBER_SWAY_OMEGA);
+	float spin = (float)(time.total * FLUBBER_SPIN_SPEED);
+	float twistcos = cos(time.total * FLUBBER_TWIST_OMEGA);
+	float twistmod = sin(time.total * FLUBBER_TWIST_MOD_OMEGA);
+	float swaycos = cos(time.total * FLUBBER_SWAY_OMEGA);
 
 	for (int i = 0; i < RETRO_HEIGHT; i++) {
 		// Half-sine bow down the column, scaled by the slow sway oscillator

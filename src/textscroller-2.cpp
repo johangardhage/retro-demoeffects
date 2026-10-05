@@ -31,12 +31,12 @@ static const char ScrollText[] = "                    RETRO DEMOEFFECTS...";
 
 static RETRO_Font Font;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	int textwidth = (int)(sizeof(ScrollText) - 1) * Font.width;
 
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, textwidth);
+	double phase = fmod(time.total * SCROLL_SPEED, textwidth);
 	int iphase = (int)phase;
 	int y = (RETRO_HEIGHT - Font.height) / 2;
 

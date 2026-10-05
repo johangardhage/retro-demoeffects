@@ -37,10 +37,10 @@ static const char *const ScrollText[] = { "                          RETRO DEMOE
 
 static RETRO_Image *ScrollImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, ScrollImage->width);
+	double phase = fmod(time.total * SCROLL_SPEED, ScrollImage->width);
 
 	// Walk once around the circle. Arc is measured in screen pixels, so a
 	// font column retains approximately the same width as in the atlas.

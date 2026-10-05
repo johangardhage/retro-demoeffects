@@ -115,12 +115,12 @@ static const int PrismFaces[PRISM_FACES][4] = {
 // The axes of a wedge in the frame of the one before it, with the joint at rest
 static const mat3 JointRest = { { 0, -1, 0 }, { -1, 0, 0 }, { 0, 0, -1 } };
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	float ax = fmod(time * ROTATION_SPEED_X, 2 * M_PI);
-	float ay = fmod(time * ROTATION_SPEED_Y, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED_Z, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED_X, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED_Y, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED_Z, 2 * M_PI);
 
 	static bool nextcareful = true; // the way the next shape is to be made
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
@@ -131,7 +131,7 @@ void DEMO_Render(double time, double deltatime)
 	static double phase = 0;
 	static int iphase = 0;
 	static bool careful = true;
-	phase += deltatime;
+	phase += time.delta;
 	double twisttime = careful ? TwistTime[iphase] : WAVE_TIME + (JOINTS - 1) * WAVE_STAGGER;
 	if (phase >= SHAPE_HOLD + twisttime) {
 		phase -= SHAPE_HOLD + twisttime;

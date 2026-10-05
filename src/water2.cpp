@@ -71,7 +71,7 @@ static void Drop(int cx, int cy, float depth, int radius)
 	}
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	static float *waterprevious = WaterB;
 	static float *waterscratch = WaterC;
@@ -101,7 +101,7 @@ void DEMO_FixedUpdate(double timestep)
 	waterscratch = unsmoothed;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *image = RETRO_ImageData();
 	unsigned char *buffer = RETRO_FrameBuffer();

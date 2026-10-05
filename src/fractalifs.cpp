@@ -141,12 +141,12 @@ static void StartSystem(void)
 	}
 }
 
-void DEMO_Render2(double time, double deltatime)
+void DEMO_Render2(RETRO_Time time)
 {
 	static double phase = 0;
 
 	// Calculate phase. A system is dealt and held, then the next one starts
-	phase += deltatime;
+	phase += time.delta;
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB) || phase > TIME_DRAW + TIME_HOLD) {
 		phase = 0;
 		Current = (Current + 1) % SYSTEMS;
@@ -156,7 +156,7 @@ void DEMO_Render2(double time, double deltatime)
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Deal points, until the system has had its share of the pass
-	int points = phase < TIME_DRAW ? deltatime * POINTS_PER_SECOND : 0;
+	int points = phase < TIME_DRAW ? time.delta * POINTS_PER_SECOND : 0;
 
 	for (int i = 0; i < points; i++) {
 		StepPoint(system);

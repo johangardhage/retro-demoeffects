@@ -88,7 +88,7 @@ static void DrawRidge(unsigned char *buffer, double offset, float base, float am
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 
@@ -98,7 +98,7 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Draw sun, brightest in the middle
-	int suny = SUN_Y + SUN_SWING * sin(fmod(time * SUN_SPEED, 2 * M_PI));
+	int suny = SUN_Y + SUN_SWING * sin(fmod(time.total * SUN_SPEED, 2 * M_PI));
 	for (int y = MAX(suny - SUN_RADIUS, 0); y < MIN(suny + SUN_RADIUS, HORIZON); y++) {
 		for (int x = SUN_X - SUN_RADIUS; x < SUN_X + SUN_RADIUS; x++) {
 			float r = hypotf(x - SUN_X, y - suny) / SUN_RADIUS;
@@ -109,11 +109,11 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Draw ridges, far then near
-	DrawRidge(buffer, fmod(time * FAR_SPEED, RIDGE_PERIOD), 26, 18, 2, 5, 11, FAR_RIDGE);
-	DrawRidge(buffer, fmod(time * NEAR_SPEED, RIDGE_PERIOD), 12, 12, 3, 7, 17, NEAR_RIDGE);
+	DrawRidge(buffer, fmod(time.total * FAR_SPEED, RIDGE_PERIOD), 26, 18, 2, 5, 11, FAR_RIDGE);
+	DrawRidge(buffer, fmod(time.total * NEAR_SPEED, RIDGE_PERIOD), 12, 12, 3, 7, 17, NEAR_RIDGE);
 
 	// Draw water, each pixel reading the scene at its rippled mirror position
-	float t = (float)fmod(time, 1000 * 2 * M_PI);
+	float t = (float)fmod(time.total, 1000 * 2 * M_PI);
 	for (int y = HORIZON; y < RETRO_HEIGHT; y++) {
 		int d = y - HORIZON + 1;
 		float z = WATER_EYE / d;

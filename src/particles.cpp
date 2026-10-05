@@ -73,7 +73,7 @@ static void CreateExplosion(void)
 	}
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	static int step = 0;
 

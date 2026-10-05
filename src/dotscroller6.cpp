@@ -124,14 +124,14 @@ static void PlotLetterColumn(float x, float z, float time, bool wall, const mat3
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	float ay = YAW_AMP * sin(time * YAW_SPEED);
+	float ay = YAW_AMP * sin(time.total * YAW_SPEED);
 	mat3 matrix = rotate(PITCH, ay, 0);
 
 	RETRO_ClearDepthBuffer();
 
-	float phase = fmod(time * SCROLL_SPEED, (double)ScrollImage->width);
+	float phase = fmod(time.total * SCROLL_SPEED, (double)ScrollImage->width);
 	int textrow0 = (MAP_DEPTH - ScrollImage->height) / 2;
 
 	bool occupied[MAP_DEPTH][MAP_WIDTH] = {};
@@ -156,7 +156,7 @@ void DEMO_Render(double time, double deltatime)
 
 				float x = (col - ORIGIN_X) * DOT_SPACING;
 				float z = (ORIGIN_Z - (textrow0 + sy)) * DOT_SPACING;
-				PlotLetterColumn(x, z, (float)time, wall, matrix);
+				PlotLetterColumn(x, z, (float)time.total, wall, matrix);
 			}
 		}
 	}
@@ -168,7 +168,7 @@ void DEMO_Render(double time, double deltatime)
 			}
 			float x = (col - ORIGIN_X) * DOT_SPACING;
 			float z = (ORIGIN_Z - row) * DOT_SPACING;
-			PlotDot(x, -LandscapeY(x, z, (float)time), z, 1, GROUND_SHADES, GROUND_CONTRAST, matrix);
+			PlotDot(x, -LandscapeY(x, z, (float)time.total), z, 1, GROUND_SHADES, GROUND_CONTRAST, matrix);
 		}
 	}
 }

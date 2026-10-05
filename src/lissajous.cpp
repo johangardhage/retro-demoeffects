@@ -21,10 +21,10 @@
 
 #define LINE_SPEED 60 // degrees of a per second
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * LINE_SPEED, RETRO_DEGREES_PER_TURN);
+	double phase = fmod(time.total * LINE_SPEED, RETRO_DEGREES_PER_TURN);
 	double a = radians(phase);
 
 	// Every term is 2π periodic in b, so one extra degree closes the loop

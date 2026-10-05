@@ -125,12 +125,10 @@ static void Settle(int x, int y, int downwind)
 	}
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate wind
-	static double time = 0;
-	time += timestep;
-	float wind = SNOW_WIND * (0.7f * sin(fmod(0.13 * time, 2 * M_PI)) + 0.5f * sin(fmod(0.37 * time, 2 * M_PI)) + 0.2f);
+	float wind = SNOW_WIND * (0.7f * sin(fmod(0.13 * time.total, 2 * M_PI)) + 0.5f * sin(fmod(0.37 * time.total, 2 * M_PI)) + 0.2f);
 	int downwind = wind >= 0 ? 1 : -1;
 
 	// Move the flakes
@@ -138,9 +136,9 @@ void DEMO_FixedUpdate(double timestep)
 		int oldx = (int)floorf(flake.x);
 		int oldy = (int)floorf(flake.y);
 
-		flake.swayphase = fmodf(flake.swayphase + flake.swayspeed * timestep, 2 * M_PI);
-		flake.x += (wind * (0.3f + flake.z) + SNOW_SWAY * sinf(flake.swayphase)) * timestep;
-		flake.y += mix(SNOW_MINSPEED, SNOW_MAXSPEED, flake.z) * timestep;
+		flake.swayphase = fmodf(flake.swayphase + flake.swayspeed * time.delta, 2 * M_PI);
+		flake.x += (wind * (0.3f + flake.z) + SNOW_SWAY * sinf(flake.swayphase)) * time.delta;
+		flake.y += mix(SNOW_MINSPEED, SNOW_MAXSPEED, flake.z) * time.delta;
 
 		if (flake.z >= SNOW_SETTLE) {
 			int x = (int)floorf(flake.x);
@@ -160,7 +158,7 @@ void DEMO_FixedUpdate(double timestep)
 
 	// Melt every exposed layer of snow in a few random columns, the deeper the more
 	static double melt = 0;
-	for (melt += SNOW_MELT * timestep; melt >= 1; melt--) {
+	for (melt += SNOW_MELT * time.delta; melt >= 1; melt--) {
 		int x = RANDOM(RETRO_WIDTH);
 		for (int top = 0; top < RETRO_HEIGHT; top++) {
 			if (World[top * RETRO_WIDTH + x] != SETTLED || (top > 0 && World[(top - 1) * RETRO_WIDTH + x] != EMPTY)) {
@@ -200,7 +198,7 @@ static void DrawFlake(unsigned char *buffer, const Flake &flake)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 

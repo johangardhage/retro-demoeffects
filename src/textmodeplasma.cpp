@@ -49,13 +49,13 @@ static const int RampColors[RAMP_COLORS] = { RETRO_TEXT_BLUE, RETRO_TEXT_LIGHTBL
 static RETRO_TextCell TextBuffer[ROWS * COLUMNS];
 static RETRO_TextCell Ramp[SHADES];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate center of the radial term
-	float t = (float)fmod(time, 1000 * 2 * M_PI);
+	float t = (float)fmod(time.total, 1000 * 2 * M_PI);
 	float cx = 40 + 30 * sinf(0.37f * t);
 	float cy = 25 + 18 * cosf(0.29f * t);
-	double shift = fmod(time * PLASMA_CYCLE, SHADES);
+	double shift = fmod(time.total * PLASMA_CYCLE, SHADES);
 
 	// Generate plasma into the text buffer
 	for (int row = 0; row < ROWS; row++) {

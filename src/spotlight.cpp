@@ -72,10 +72,10 @@ static RETRO_Palette Light(RETRO_Palette color, float shade, const float *tint)
 	return RETRO_ShadeColor(color, mix(AMBIENT, 1, shade));
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	float phase = fmod(time * 2 * M_PI / AIM_PERIOD, 2 * M_PI);
+	float phase = fmod(time.total * 2 * M_PI / AIM_PERIOD, 2 * M_PI);
 
 	// Aim the lamps
 	vec3 axis[LAMPS];

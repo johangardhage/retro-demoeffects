@@ -92,11 +92,11 @@ static unsigned char LightMap[RETRO_WIDTH * RETRO_HEIGHT]; // the strip is its t
 // The step is the unit of both the travel and the cooling, which is why the flare is
 // advanced at a fixed rate instead of once per frame.
 //
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
 	static double phase = 0;
-	phase = fmod(phase + timestep * SUN_SPEED, RETRO_ANGLES_PER_TURN);
+	phase = fmod(phase + time.delta * SUN_SPEED, RETRO_ANGLES_PER_TURN);
 
 	// Seed the ring of noise, swinging back and forth by a width the swell narrows but never closes
 	double swirl = (FLARE_SWIRL + FLARE_EBB) / 2.0 + (FLARE_SWIRL - FLARE_EBB) / 2.0 * SIN(phase);
@@ -109,7 +109,7 @@ void DEMO_FixedUpdate(double timestep)
 	RETRO_Blur(RETRO_BLUR_FLAME, FLARE_DECAY, RETRO_BLUR_WRAP, LightMap);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Draw sun, each pixel reading the bin its angle and radius fall in
 	for (int iy = 0; iy < RETRO_HEIGHT; iy++) {

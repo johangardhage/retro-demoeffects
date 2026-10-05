@@ -387,12 +387,12 @@ static void FitScreenPalette(void)
 	RETRO_SetPalette(ScreenPalette);
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
-	RETRO_UpdateTerrainVehicle(timestep);
+	RETRO_UpdateTerrainVehicle(time.delta);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static int currentobject;
 
@@ -408,7 +408,7 @@ void DEMO_Render(double time, double deltatime)
 	if (RETRO_KeyPressed(SDL_SCANCODE_R)) PointLight[LIGHT_RED] = !PointLight[LIGHT_RED];
 	if (RETRO_KeyPressed(SDL_SCANCODE_H)) Help = !Help;
 	if (RETRO_KeyPressed(SDL_SCANCODE_O)) currentobject = (currentobject + 1) % OBJECTS;
-	float raise = POINT_LIGHT_RAISE * deltatime;
+	float raise = POINT_LIGHT_RAISE * time.delta;
 	if (RETRO_KeyState(SDL_SCANCODE_1)) PointLightAltitude[LIGHT_GREEN] -= raise;
 	if (RETRO_KeyState(SDL_SCANCODE_2)) PointLightAltitude[LIGHT_GREEN] += raise;
 	if (RETRO_KeyState(SDL_SCANCODE_3)) PointLightAltitude[LIGHT_RED] -= raise;
@@ -421,12 +421,12 @@ void DEMO_Render(double time, double deltatime)
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
 	View = mesh.basis;
 
-	PlacePointLights(time);
+	PlacePointLights(time.total);
 	vec3 center = RETRO_TerrainCenter();
 
 	// The object over the center, spinning. The world is the mirror of the
 	// book's, so it turns the other way round y to look the same
-	float ay = fmod(time * OBJECT_RATE, 2 * M_PI);
+	float ay = fmod(time.total * OBJECT_RATE, 2 * M_PI);
 	mat3 spin = rotateY(-ay);
 	vec3 object = { center.x, OBJECT_ALTITUDE, center.z };
 	const Object &selected = Objects[currentobject];

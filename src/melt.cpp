@@ -27,7 +27,7 @@
 
 enum MeltMode { MELT_MAXIMUM_SCAN_LINE, MELT_FREEZE_LINE_OFFSET };
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static MeltMode mode = MELT_FREEZE_LINE_OFFSET;
 	static double meltposition = 0;
@@ -41,7 +41,7 @@ void DEMO_Render(double time, double deltatime)
 
 	double maximum = mode == MELT_MAXIMUM_SCAN_LINE ? MSL_MAX : SCANLINES;
 	double speed = mode == MELT_MAXIMUM_SCAN_LINE ? MSL_STEPS_PER_SECOND : FREEZE_STEPS_PER_SECOND;
-	meltposition += meltdirection * speed * deltatime;
+	meltposition += meltdirection * speed * time.delta;
 
 	// Reflect overshoot at an endpoint so a long frame still bounces cleanly.
 	while (meltposition < 0 || meltposition > maximum) {

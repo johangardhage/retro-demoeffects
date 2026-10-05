@@ -22,14 +22,14 @@
 
 static unsigned char WallShadeTable[RETRO_SHADE_TABLE_SIZE];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	float phase = fmod(time, MORPH_PERIOD) / MORPH_PERIOD;
+	float phase = fmod(time.total, MORPH_PERIOD) / MORPH_PERIOD;
 
-	float yaw = 0.7f * sinf(time * 0.42f);
-	float pitch = -0.20f + 0.48f * sinf(time * 0.31f);
-	float roll = 0.06f * sinf(time * 0.19f);
+	float yaw = 0.7f * sinf(time.total * 0.42f);
+	float pitch = -0.20f + 0.48f * sinf(time.total * 0.31f);
+	float roll = 0.06f * sinf(time.total * 0.19f);
 
 	// Ping-pong the captured frames: flat, the head leans in, then it lets go.
 	float u = phase < 0.5f ? phase * 2.0f : 2.0f - phase * 2.0f;

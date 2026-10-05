@@ -223,11 +223,11 @@ static void RenderMirror(void)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	float ax = fmod(time * TUMBLE_X, 2 * M_PI);
-	float ay = fmod(time * TUMBLE_Y, 2 * M_PI);
-	float az = fmod(time * TUMBLE_Z, 2 * M_PI);
+	float ax = fmod(time.total * TUMBLE_X, 2 * M_PI);
+	float ay = fmod(time.total * TUMBLE_Y, 2 * M_PI);
+	float az = fmod(time.total * TUMBLE_Z, 2 * M_PI);
 
 	mat3 tumble = rotate(ax, ay, az);
 	for (int i = 0; i < Mirror->vertices; i++) {

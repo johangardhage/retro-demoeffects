@@ -273,18 +273,18 @@ static void AimSunRays(void)
 	SunCenter = RoomToCube * Sun;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
 
 	RETRO_RotateModel(ax, ay, az);
 	Model3D *model = RETRO_Get3DModel();
 	RoomToCube = transpose(model->matrix) * transpose(RoomFrame);
 	AimSunRays();
-	CloudDrift = (float)(time * CLOUD_SPEED);
+	CloudDrift = (float)(time.total * CLOUD_SPEED);
 
 	DrawRoom();
 

@@ -45,12 +45,12 @@
 
 static Vertex Torus[NUM_POINTS];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
 	mat3 matrix = rotate(ax, ay, az);
 
 	int furthest = RING_RADIUS + TUBE_RADIUS;

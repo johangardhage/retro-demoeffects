@@ -26,23 +26,29 @@
 // opens one. DEMO_Initialize and DEMO_Deinitialize bracket the mainloop, with the
 // framebuffer and the palette in place.
 //
-// DEMO_FixedUpdate advances the effect by timestep seconds, always exactly
-// RETRO_SIMULATION_STEP. The mainloop calls it once for every whole step the frame has
-// earned, which can be no times at all on a fast display and several while catching up
-// after a stall, so work that belongs to a single frame does not belong here. See
-// RETRO_AdvanceSimulation.
+// DEMO_FixedUpdate advances the effect by time.delta seconds, always exactly
+// RETRO_SIMULATION_STEP, to the simulation time time.total. The mainloop calls it once
+// for every whole step the frame has earned, which can be no times at all on a fast
+// display and several while catching up after a stall, so work that belongs to a single
+// frame does not belong here. See RETRO_AdvanceSimulation.
 //
 // DEMO_Render draws a frame into a cleared framebuffer, which is shown once it returns.
 // DEMO_Render2 is handed the framebuffer as the previous frame left it and shows it itself
 // with RETRO_Flip. A demo that draws in DEMO_FixedUpdate needs neither, and gets its framebuffer
-// shown as it stands.
+// shown as it stands. Both are handed the displayed time in time.total and the frame's
+// duration in time.delta.
 //
+struct RETRO_Time {
+	double total;	// seconds since start
+	double delta;	// seconds this call covers
+};
+
 void __attribute__((weak)) DEMO_Startup(void);
 void __attribute__((weak)) DEMO_Initialize(void);
 void __attribute__((weak)) DEMO_Deinitialize(void);
-void __attribute__((weak)) DEMO_FixedUpdate(double timestep);
-void __attribute__((weak)) DEMO_Render(double time, double deltatime);
-void __attribute__((weak)) DEMO_Render2(double time, double deltatime);
+void __attribute__((weak)) DEMO_FixedUpdate(RETRO_Time time);
+void __attribute__((weak)) DEMO_Render(RETRO_Time time);
+void __attribute__((weak)) DEMO_Render2(RETRO_Time time);
 
 // *******************************************************************
 // Private dynamic functions
@@ -182,7 +188,6 @@ inline struct {
 	const bool *keystate;
 	bool keylatched[256];
 	int yoffset[RETRO_HEIGHT];
-	double accumulator = 0;
 	double time = 0;
 } RETRO = { .mode = RETRO_MODE_FULLSCREEN, .stretch = false, .vsync = true, .scaling = RETRO_SCALING_PIXELART, .showfps = true };
 
@@ -724,12 +729,16 @@ inline bool RETRO_QuitRequested(void)
 //
 inline void RETRO_AdvanceSimulation(double deltatime)
 {
-	RETRO.accumulator = MIN(RETRO.accumulator + deltatime, RETRO_SIMULATION_STEP * RETRO_MAX_SIMULATION_STEPS);
+	static double accumulator = 0;
+	static double simulationtime = 0;
 
-	while (RETRO.accumulator >= RETRO_SIMULATION_STEP) {
-		RETRO.accumulator -= RETRO_SIMULATION_STEP;
+	accumulator = MIN(accumulator + deltatime, RETRO_SIMULATION_STEP * RETRO_MAX_SIMULATION_STEPS);
 
-		DEMO_FixedUpdate(RETRO_SIMULATION_STEP);
+	while (accumulator >= RETRO_SIMULATION_STEP) {
+		accumulator -= RETRO_SIMULATION_STEP;
+		simulationtime += RETRO_SIMULATION_STEP;
+
+		DEMO_FixedUpdate({ simulationtime, RETRO_SIMULATION_STEP });
 	}
 }
 
@@ -759,10 +768,10 @@ inline void RETRO_Mainloop(void)
 		// Render scene
 		if (DEMO_Render) {
 			RETRO_Clear();
-			DEMO_Render(RETRO.time, deltatime);
+			DEMO_Render({ RETRO.time, deltatime });
 			RETRO_Flip();
 		} else if (DEMO_Render2) {
-			DEMO_Render2(RETRO.time, deltatime);
+			DEMO_Render2({ RETRO.time, deltatime });
 		} else {
 			// A demo that only runs DEMO_FixedUpdate has drawn straight into the framebuffer, which is
 			// left standing between frames, so all that remains is to show it

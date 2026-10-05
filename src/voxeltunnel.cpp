@@ -163,12 +163,12 @@ static double IntersectWall(double slope, double theta)
 	return -1.0;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 	const unsigned char *texture = Terrain->data;
 
-	ScrollV = time * TUNNEL_FLIGHT;
+	ScrollV = time.total * TUNNEL_FLIGHT;
 
 	double cx = RETRO_WIDTH * 0.5;
 	double cy = RETRO_HEIGHT * 0.5;

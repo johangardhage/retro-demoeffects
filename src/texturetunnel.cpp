@@ -36,14 +36,14 @@
 static int DepthTable[RETRO_HEIGHT][RETRO_WIDTH];
 static int AngleTable[RETRO_HEIGHT][RETRO_WIDTH];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *image = RETRO_ImageData();
 
 	// Calculate tunnel movement. WRAP folds any int, so phase need not be
 	// bounded itself; sx and sy wrap into the texture however large time
 	// grows.
-	double phase = time * TUNNEL_SPEED;
+	double phase = time.total * TUNNEL_SPEED;
 	int sx = TEXTURE_WIDTH * phase;
 	int sy = TEXTURE_HEIGHT * TUNNEL_SPIN * phase;
 

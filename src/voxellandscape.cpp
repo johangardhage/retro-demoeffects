@@ -95,9 +95,9 @@
 static unsigned char HeightMap[MAP_WIDTH * MAP_HEIGHT];
 static unsigned char ColorMap[MAP_WIDTH * MAP_HEIGHT];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainCamera(deltatime);
+	RETRO_UpdateTerrainCamera(time.delta);
 
 	unsigned char *colormap = RETRO_Terrain.colormap;
 	unsigned char *heightmap = RETRO_Terrain.heightmap;

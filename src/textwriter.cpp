@@ -67,11 +67,11 @@ static const char *const ScrollText[][12] = {
 
 static RETRO_Image *PageImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	int pages = sizeof(ScrollText) / sizeof(ScrollText[0]);
 	int lines = sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]);
-	double slot = fmod(time / PAGE_TIME, pages);
+	double slot = fmod(time.total / PAGE_TIME, pages);
 	int page = (int)slot;
 	int remaining = (int)((slot - page) * PAGE_TIME * CHARACTERS_PER_SECOND);
 	int texty = (RETRO_HEIGHT - lines * FONT.height) / 2;

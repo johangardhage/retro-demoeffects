@@ -65,7 +65,7 @@ static unsigned char ForegroundMask[RETRO_WIDTH * RETRO_HEIGHT];
 // bends like it is tracing a small ridgeline instead of a straight edge.
 static double HeightMap[HEIGHTMAP_POINTS];
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	static int tick = 0;
 	static bool firstlap = true;

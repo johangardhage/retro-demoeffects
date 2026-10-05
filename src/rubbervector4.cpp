@@ -103,12 +103,12 @@ static void RetainCubeImage(float ax, float ay, float az, RubberLine *image)
 // Retain one rigid cube image per fixed step, so the ring holds the same
 // stretch of the cube's rotation whatever the display is doing
 //
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	static float ax, ay, az;
-	ax = fmod(ax + timestep * ROTATION_SPEED, 2 * M_PI);
-	ay = fmod(ay + timestep * ROTATION_SPEED * 1.17f, 2 * M_PI);
-	az = fmod(az + timestep * ROTATION_SPEED * 0.61f, 2 * M_PI);
+	ax = fmod(ax + time.delta * ROTATION_SPEED, 2 * M_PI);
+	ay = fmod(ay + time.delta * ROTATION_SPEED * 1.17f, 2 * M_PI);
+	az = fmod(az + time.delta * ROTATION_SPEED * 0.61f, 2 * M_PI);
 
 	// The head is the newest image rather than the next slot to fill, so it
 	// stands still between steps and DEMO_Render can read the ring on a frame
@@ -118,11 +118,11 @@ void DEMO_FixedUpdate(double timestep)
 	RetainCubeImage(ax, ay, az, LineHistory[HistoryHead]);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// The selection wave runs on displayed time, so it stays smooth on a fast
 	// display even though the images it selects between arrive at the step rate
-	float phase = fmod(time * RUBBER_SPEED, 2 * M_PI);
+	float phase = fmod(time.total * RUBBER_SPEED, 2 * M_PI);
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 

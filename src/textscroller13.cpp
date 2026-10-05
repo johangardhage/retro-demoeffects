@@ -84,13 +84,13 @@ static PolygonPoint Project(float x, float y, vec2 uv)
 	return { vertex.spos, 0, uv, vertex.q };
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *screen = RETRO_FrameBuffer();
-	double flash = exp(-fmod(time, FLASH_PERIOD) / FLASH_DECAY);
+	double flash = exp(-fmod(time.total, FLASH_PERIOD) / FLASH_DECAY);
 	RETRO_SetColor(3, mix(INK, RETRO_WHITE, flash));
 
-	double firstrow = ENTRY_Y - fmod(time, PASS_CYCLE) * SCROLL_SPEED;
+	double firstrow = ENTRY_Y - fmod(time.total, PASS_CYCLE) * SCROLL_SPEED;
 	RETRO_ClearDepthBuffer();
 	for (int i = 0; i < LINES; i++) {
 		float top = (float)(firstrow + i * LINE_SPACING);

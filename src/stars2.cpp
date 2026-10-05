@@ -39,11 +39,11 @@ static void PlaceStar(vec3 *star, float depth)
 	star->z = depth;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Draw stars
 	for (int i = 0; i < NUM_STARS; i++) {
-		Stars[i].z -= SPEED * deltatime;
+		Stars[i].z -= SPEED * time.delta;
 
 		if (Stars[i].z <= STAR_NEAR) {
 			PlaceStar(&Stars[i], STAR_FAR);

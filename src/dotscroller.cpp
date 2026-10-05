@@ -30,14 +30,14 @@ static const char *const ScrollText[] = { "        RETRO DEMOEFFECTS..." };
 
 static RETRO_Image *ScrollImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	int displaywidth = ScrollImage->width * DOT_SPACING;
 	int displayheight = (ScrollImage->height - 1) * DOT_SPACING + DOT_SIZE;
 	int scrolly = (RETRO_HEIGHT - displayheight) / 2;
 
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, displaywidth);
+	double phase = fmod(time.total * SCROLL_SPEED, displaywidth);
 	int iphase = (int)phase;
 
 	// Plot each lit font texel as a dot. Adding displaywidth wraps the

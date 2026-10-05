@@ -29,13 +29,13 @@
 #define RADIAL_Y_ORBIT 40
 #define RADIAL_SPEED 3.0 // radians per second
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 	unsigned char *image = RETRO_ImageData();
 
 	// Calculate phase
-	double phase = fmod(time * RADIAL_SPEED, 2 * M_PI);
+	double phase = fmod(time.total * RADIAL_SPEED, 2 * M_PI);
 
 	float xorbit = RADIAL_X_ORBIT * cos(phase);
 	float yorbit = RADIAL_Y_ORBIT * sin(phase);

@@ -36,9 +36,9 @@ static float ContourDistance(float x, float y, float s)
 	return dx * dx + dy * dy - radius * radius;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	int scroll = (int)fmod(time * SCROLL_SPEED, TEXTURE_SIZE);
+	int scroll = (int)fmod(time.total * SCROLL_SPEED, TEXTURE_SIZE);
 	static const int threshold[2][2] = { { 0, 2 }, { 3, 1 } };
 	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

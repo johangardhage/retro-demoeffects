@@ -229,9 +229,9 @@ static void BoxBlur(const float *source, float *dest, int radius)
 	}
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
-	float dt = (float)timestep;
+	float dt = (float)time.delta;
 	float kick = sqrtf(1.0f - ARC_KEEP * ARC_KEEP);
 
 	for (Arc &arc : Arcs) {
@@ -268,7 +268,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Draw filaments, branches and the spots where they touch the glass
 	memset(Core, 0, sizeof(Core));

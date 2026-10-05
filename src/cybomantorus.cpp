@@ -144,9 +144,9 @@ static void InitializeModels(void)
 	Fish->shades = RETRO_COLORS - FISH_PALETTE_START;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	float phase = time * ROTATION_SPEED + START_ROTATION;
+	float phase = time.total * ROTATION_SPEED + START_ROTATION;
 	float focal = RETRO_HEIGHT * 0.5f / CAMERA_FOV;
 
 	// Spin the texture around the ring, then roll its axis in the screen.
@@ -160,8 +160,8 @@ void DEMO_Render(double time, double deltatime)
 	// Reuse one model instance; the shared depth buffer resolves every fish
 	// against the torus and previously drawn fish.
 	for (int i = 0; i < FISH_COUNT; i++) {
-		float swim = time * FISH_SWIM_SPEED + FISH_START_PHASE + i * (2.0f * M_PI / FISH_COUNT);
-		float cycle = time * FISH_ANIMATION_SPEED + i * FISH_ANIMATION_OFFSET;
+		float swim = time.total * FISH_SWIM_SPEED + FISH_START_PHASE + i * (2.0f * M_PI / FISH_COUNT);
+		float cycle = time.total * FISH_ANIMATION_SPEED + i * FISH_ANIMATION_OFFSET;
 		RETRO_MorphModel(fract(cycle), Fish);
 		RETRO_InitializeFaceNormals(Fish);
 		RETRO_InitializeVertexNormals(Fish);

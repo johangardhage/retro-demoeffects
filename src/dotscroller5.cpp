@@ -115,15 +115,15 @@ static void PlotDot(float x, float y, float z, unsigned char color, const mat3 &
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	int offsetx = (int)(ORBIT_CENTER_X + ORBIT_RADIUS * cos(time * ORBIT_SPEED));
-	int offsety = (int)(ORBIT_CENTER_Y + ORBIT_RADIUS * sin(time * ORBIT_SPEED));
+	int offsetx = (int)(ORBIT_CENTER_X + ORBIT_RADIUS * cos(time.total * ORBIT_SPEED));
+	int offsety = (int)(ORBIT_CENTER_Y + ORBIT_RADIUS * sin(time.total * ORBIT_SPEED));
 	SampleLandscape(offsetx, offsety);
 
-	float ax = INITIAL_PITCH + PITCH_AMP * sin(time * PITCH_SPEED);
-	float ay = YAW_AMP * sin(time * YAW_SPEED);
-	float az = ROLL_AMP * sin(time * ROLL_SPEED);
+	float ax = INITIAL_PITCH + PITCH_AMP * sin(time.total * PITCH_SPEED);
+	float ay = YAW_AMP * sin(time.total * YAW_SPEED);
+	float az = ROLL_AMP * sin(time.total * ROLL_SPEED);
 	mat3 matrix = rotate(ax, ay, az);
 	RETRO_ClearDepthBuffer();
 

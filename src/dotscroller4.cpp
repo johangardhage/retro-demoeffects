@@ -60,12 +60,12 @@ static void PlotDot(float x, float y, float z, const RETRO_TerrainIslandFrame &f
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	int mapwidth = RETRO_Terrain.width;
 	int mapheight = RETRO_Terrain.height;
 
-	RETRO_UpdateTerrainIsland(deltatime);
+	RETRO_UpdateTerrainIsland(time.delta);
 	RETRO_ClearDepthBuffer();
 	RETRO_TerrainIslandFrame frame = RETRO_BuildTerrainIslandFrame();
 
@@ -78,7 +78,7 @@ void DEMO_Render(double time, double deltatime)
 	// The camera looks toward decreasing Z, so the font's top row uses the
 	// smaller (farther) coordinate and the text reads upright on the ground.
 	float scrollcycle = mapwidth + ScrollImage->width * LETTER_DOT_SPACING;
-	float phase = fmod(time * SCROLL_SPEED, scrollcycle);
+	float phase = fmod(time.total * SCROLL_SPEED, scrollcycle);
 	for (int sy = 0; sy < ScrollImage->height; sy++) {
 		float mapz = LETTER_BASE_Z + sy * LETTER_ROW_SPACING;
 		for (int sx = 0; sx < ScrollImage->width; sx++) {

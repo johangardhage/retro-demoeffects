@@ -129,18 +129,18 @@ static PolygonPoint Project(vec3 point, vec3 normal, float top, double time)
 	return { vertex.spos, INK_BASE + light * (SHADES - 1), {}, vertex.q };
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	RETRO_Blit(Background);
 	RETRO_ClearDepthBuffer();
-	double phase = fmod(time, PASS_CYCLE) * SCROLL_SPEED;
+	double phase = fmod(time.total, PASS_CYCLE) * SCROLL_SPEED;
 	for (int i = 0; i < LETTERS; i++) {
 		float top = (float)(ENTRY_Y + i * LINE_SPACING - phase);
 		if (top > ENTRY_Y || top + LETTER_HEIGHT < -CULL_MARGIN) continue;
 		for (int f = GlyphStart[i]; f < GlyphStart[i + 1]; f++) {
 			PolygonPoint quad[4];
 			for (int j = 0; j < 4; j++) {
-				quad[j] = Project(Faces[f].corner[j], Faces[f].normal, top, time);
+				quad[j] = Project(Faces[f].corner[j], Faces[f].normal, top, time.total);
 			}
 			RETRO_DrawGouraudPolygon(quad, 4);
 		}

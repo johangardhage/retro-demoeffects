@@ -112,9 +112,9 @@ static int FarFirst(int i, int min, int max, int camera, int step)
 	return i < before ? min + i * step : max - step - (i - before) * step;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainCamera(deltatime);
+	RETRO_UpdateTerrainCamera(time.delta);
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
 	int step = mesh.step;
 

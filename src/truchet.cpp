@@ -52,18 +52,18 @@
 #define FLOOR 1 // palette ranges, two floor colors then two stripe colors; entry 0 is the outline
 #define TUBE (FLOOR + 2 * SHADES)
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Calculate camera
-	double zoomphase = fmod(time * ZOOM_SPEED, 2 * M_PI);
-	double turnphase = fmod(time * TURN_SPEED, 2 * M_PI);
-	double swayphase = fmod(time * SWAY_SPEED, 2 * M_PI);
-	double phase = fract(time * FLOW_SPEED);
+	double zoomphase = fmod(time.total * ZOOM_SPEED, 2 * M_PI);
+	double turnphase = fmod(time.total * TURN_SPEED, 2 * M_PI);
+	double swayphase = fmod(time.total * SWAY_SPEED, 2 * M_PI);
+	double phase = fract(time.total * FLOW_SPEED);
 	double size = TILE_SIZE + TILE_ZOOM * sin(zoomphase);
 	double angle = TURN_ANGLE * sin(turnphase);
-	double camerax = time * SCROLL_SPEED;
+	double camerax = time.total * SCROLL_SPEED;
 	double cameray = SCROLL_SWAY * sin(swayphase);
 	double stepx = cos(angle) / size, stepy = sin(angle) / size;
 	double outline = TUBE_OUTLINE / size;

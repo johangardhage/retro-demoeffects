@@ -38,10 +38,10 @@ static int AngleTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
 static unsigned char ShadeTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
 static unsigned char FogTable[RETRO_COLORS * TUNNEL_FOG_SHADES];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * TUNNEL_SPEED, TUNNEL_PERIOD);
+	double phase = fmod(time.total * TUNNEL_SPEED, TUNNEL_PERIOD);
 
 	unsigned char *image = RETRO_ImageData();
 

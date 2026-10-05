@@ -65,11 +65,11 @@ static PolygonPoint Project(float x, float y, vec2 uv, double time)
 	return { vertex.spos, light * (SHADES - 1), uv, vertex.q };
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	RETRO_Blit(Background);
 	RETRO_ClearDepthBuffer();
-	double phase = fmod(time, PASS_CYCLE) * SCROLL_SPEED;
+	double phase = fmod(time.total, PASS_CYCLE) * SCROLL_SPEED;
 	for (int i = 0; i < LETTERS; i++) {
 		float top = (float)(ENTRY_Y + i * LINE_SPACING - phase);
 		if (top > ENTRY_Y || top + LETTER_HEIGHT < -CULL_MARGIN || ScrollText[i] == ' ') continue;
@@ -80,10 +80,10 @@ void DEMO_Render(double time, double deltatime)
 			float v0 = i * Font.height + row * Font.height / LETTER_HEIGHT;
 			float v1 = v0 + Font.height / LETTER_HEIGHT;
 			PolygonPoint quad[4] = {
-				Project(-LETTER_WIDTH / 2, y, { 0, v0 }, time),
-				Project(LETTER_WIDTH / 2, y, { (float)TextStrip->width, v0 }, time),
-				Project(LETTER_WIDTH / 2, y + 1, { (float)TextStrip->width, v1 }, time),
-				Project(-LETTER_WIDTH / 2, y + 1, { 0, v1 }, time)
+				Project(-LETTER_WIDTH / 2, y, { 0, v0 }, time.total),
+				Project(LETTER_WIDTH / 2, y, { (float)TextStrip->width, v0 }, time.total),
+				Project(LETTER_WIDTH / 2, y + 1, { (float)TextStrip->width, v1 }, time.total),
+				Project(-LETTER_WIDTH / 2, y + 1, { 0, v1 }, time.total)
 			};
 			RETRO_DrawTexMapGouraudPolygon(quad, 4, TextStrip->data,
 				TextStrip->width, TextStrip->height, TextShades);

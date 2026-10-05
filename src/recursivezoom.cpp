@@ -82,9 +82,9 @@ static Sample DownsampleTexel(const Level &parent, int x, int y)
 		(a.b + b.b + c.b + d.b) / 4, (a.a + b.a + c.a + d.a) / 4 };
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	double phase = fmod(time, ZOOM_PERIOD) / ZOOM_PERIOD;
+	double phase = fmod(time.total, ZOOM_PERIOD) / ZOOM_PERIOD;
 	double zoom = pow(1.0 / CHILD_SCALE, phase);
 	double ancestor = pow(CHILD_SCALE, ANCESTOR_LEVELS);
 	double scale = ancestor / zoom; // constant for the whole frame; only depth steps it further

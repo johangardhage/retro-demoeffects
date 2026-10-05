@@ -26,11 +26,11 @@
 #define FIRST_SHADE 1
 #define SHADES 32
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase: it rises to 1 as the slats fold away, stays there over
 	// the curtain, and falls back to 0 over the last TIME_TRANSITION of the cycle
-	double cycle = fmod(time, TIME_CYCLE);
+	double cycle = fmod(time.total, TIME_CYCLE);
 	double phase = CLAMP01(MIN(cycle - TIME_HOLD, TIME_CYCLE - cycle) / TIME_TRANSITION);
 
 	unsigned char *buffer = RETRO_FrameBuffer();

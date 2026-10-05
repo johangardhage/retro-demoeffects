@@ -76,13 +76,13 @@ static const char *const ScrollText[][12] = {
 
 static RETRO_Image *PageImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	int pages = sizeof(ScrollText) / sizeof(ScrollText[0]);
 	int lines = sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]);
 	double cycle = ENTRANCE_TIME + HOLD_TIME + EXIT_TIME;
 	double pagetime = (lines - 1) * STAGGER + cycle;
-	double slot = fmod(time / pagetime, pages);
+	double slot = fmod(time.total / pagetime, pages);
 	int page = (int)slot;
 	double paget = (slot - page) * pagetime;
 

@@ -450,9 +450,9 @@ static unsigned char QuantizeToPalette(vec3 color)
 	return ColorLookup[(r * QUANTIZE_LEVELS + g) * QUANTIZE_LEVELS + b];
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	UpdateScene(time * JUGGLE_RATE);
+	UpdateScene(time.total * JUGGLE_RATE);
 
 	float ratio = SCREEN_WIDTH / RETRO_WIDTH;
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

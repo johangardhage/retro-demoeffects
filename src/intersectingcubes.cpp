@@ -26,12 +26,12 @@
 static Model3D *Cube1 = NULL;
 static Model3D *Cube2 = NULL;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase, one per cube: different rates and different combinations
 	// of axes, while keeping both centers fixed at the origin.
-	float phase1 = fmod(time * CUBE1_ROTATION_SPEED, CUBE1_ROTATION_PERIOD);
-	float phase2 = mod(time * CUBE2_ROTATION_SPEED, CUBE2_ROTATION_PERIOD);
+	float phase1 = fmod(time.total * CUBE1_ROTATION_SPEED, CUBE1_ROTATION_PERIOD);
+	float phase2 = mod(time.total * CUBE2_ROTATION_SPEED, CUBE2_ROTATION_PERIOD);
 
 	// Both models must use the same depth buffer. Clearing before either draw
 	// would make the second cube overwrite the first regardless of its depth.

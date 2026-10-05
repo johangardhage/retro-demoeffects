@@ -46,7 +46,7 @@ enum WipeMode { WIPE_SHUFFLE, WIPE_CHECKERBOARD, WIPE_MODES };
 
 static int Rank[WIPE_MODES][TILES];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static WipeMode mode = WIPE_SHUFFLE;
 
@@ -57,7 +57,7 @@ void DEMO_Render(double time, double deltatime)
 	// Calculate phase, how much of the picture has been dealt: it falls to 0 as
 	// the tiles close, stays there over the curtain, and rises back to 1 over
 	// the last TIME_WIPE of the cycle
-	double cycle = fmod(time, TIME_CYCLE);
+	double cycle = fmod(time.total, TIME_CYCLE);
 	double phase = 1 - CLAMP01(MIN(cycle - TIME_HOLD, TIME_CYCLE - cycle) / TIME_WIPE);
 
 	unsigned char *image = RETRO_ImageData();

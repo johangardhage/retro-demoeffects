@@ -299,9 +299,9 @@ static void UpdateScene(double T)
 	Body[85].center = o + v * 71.0f; Body[85].center.x = 152;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	UpdateScene(time * JUGGLE_RATE);
+	UpdateScene(time.total * JUGGLE_RATE);
 	float ratio = SCREEN_WIDTH / RETRO_WIDTH;
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {

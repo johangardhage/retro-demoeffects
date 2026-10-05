@@ -83,10 +83,10 @@ static vec3 Sample(float x, float y)
 	return mix(top, bottom, v);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase. The dome rides a 2:3 Lissajous figure
-	double phase = fract(time / DOME_PERIOD) * 2 * M_PI;
+	double phase = fract(time.total / DOME_PERIOD) * 2 * M_PI;
 	float swingx = RETRO_WIDTH / 2.0f - DOME_RADIUS - DOME_MARGIN;
 	float swingy = RETRO_HEIGHT / 2.0f - DOME_RADIUS - DOME_MARGIN;
 	float cx = RETRO_WIDTH / 2.0f + swingx * sin(2 * phase + M_PI / 4);

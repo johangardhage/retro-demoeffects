@@ -55,7 +55,7 @@ struct Seed {
 
 static Seed Seeds[SEEDS];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 
@@ -64,8 +64,8 @@ void DEMO_Render(double time, double deltatime)
 	float invgap[SEEDS][SEEDS];
 	for (int i = 0; i < SEEDS; i++) {
 		Seed &seed = Seeds[i];
-		seedx[i] = seed.x + seed.ampx * sinf((float)fmod(time * seed.speedx, 2 * M_PI) + seed.phasex);
-		seedy[i] = seed.y + seed.ampy * sinf((float)fmod(time * seed.speedy, 2 * M_PI) + seed.phasey);
+		seedx[i] = seed.x + seed.ampx * sinf((float)fmod(time.total * seed.speedx, 2 * M_PI) + seed.phasex);
+		seedy[i] = seed.y + seed.ampy * sinf((float)fmod(time.total * seed.speedy, 2 * M_PI) + seed.phasey);
 	}
 	for (int i = 0; i < SEEDS; i++) {
 		for (int j = 0; j < SEEDS; j++) {

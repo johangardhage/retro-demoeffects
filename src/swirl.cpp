@@ -44,10 +44,10 @@ static unsigned char SamplePicture(double x, double y)
 	return ColorLUT[r][g][blue];
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time, TWIST_PERIOD) / TWIST_PERIOD;
+	double phase = fmod(time.total, TWIST_PERIOD) / TWIST_PERIOD;
 	double twist = TWIST_AMOUNT * sin(2 * M_PI * phase);
 	double cx = (RETRO_WIDTH - 1) / 2.0, cy = (RETRO_HEIGHT - 1) / 2.0;
 	unsigned char *buffer = RETRO_FrameBuffer();

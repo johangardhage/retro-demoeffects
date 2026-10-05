@@ -208,13 +208,13 @@ static void Emit(float cx, float cy, float angle)
 	}
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
-	float dt = (float)timestep;
+	float dt = (float)time.delta;
 
 	// Calculate phase
 	static double phase = 0;
-	phase = fmod(phase + timestep * 2 * M_PI / EMIT_PERIOD, 2 * M_PI);
+	phase = fmod(phase + time.delta * 2 * M_PI / EMIT_PERIOD, 2 * M_PI);
 
 	// Emit smoke
 	Emit(GRID_WIDTH / 3.0f, GRID_HEIGHT - 8.0f, EMIT_SWING * (float)sin(phase));
@@ -258,7 +258,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 

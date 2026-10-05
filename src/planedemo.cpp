@@ -44,7 +44,7 @@
 #define ATLAS_SPRITE (2 * PLANE_MAP) // row offset of the sprite tile
 #define SPRITE_ALPHA 0
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 	unsigned char *atlas = RETRO_ImageData();
@@ -53,7 +53,7 @@ void DEMO_Render(double time, double deltatime)
 	unsigned char *sprite = atlas + ATLAS_SPRITE * PLANE_MAP;
 
 	// Calculate phase
-	float phase = time * PLANE_SCROLL_SPEED;
+	float phase = time.total * PLANE_SCROLL_SPEED;
 
 	int midx = RETRO_WIDTH / 2;
 

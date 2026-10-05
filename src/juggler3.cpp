@@ -488,9 +488,9 @@ static unsigned char MajorityColor(const unsigned char *samples)
 	return best;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	UpdateScene(time * JUGGLE_RATE);
+	UpdateScene(time.total * JUGGLE_RATE);
 
 	float ratio = SCREEN_WIDTH / RETRO_WIDTH;
 	float substep = 1.0f / SUPERSAMPLE;

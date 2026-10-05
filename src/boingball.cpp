@@ -61,10 +61,10 @@
 #define BOING_SHADOW 2 // and 3, the two checks of the shadow, both one color
 #define BOING_BALL 4 // and 5, the white check and the red one
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fract(time / BOING_PERIOD);
+	double phase = fract(time.total / BOING_PERIOD);
 
 	// Cross the room and come back, bouncing on the way
 	double sweep = fract(phase * BOING_SWEEPS);
@@ -76,7 +76,7 @@ void DEMO_Render(double time, double deltatime)
 	// turning the other way
 	static float ay;
 	float direction = sweep < 0.5 ? -1.0f : 1.0f;
-	ay = fmod(ay + direction * deltatime * BOING_SPIN, 2 * M_PI);
+	ay = fmod(ay + direction * time.delta * BOING_SPIN, 2 * M_PI);
 
 	// The room: a flat grid on the back wall, redrawn every frame under the ball
 	for (int gx = 0; gx < RETRO_WIDTH; gx += BOING_GRIDX) {

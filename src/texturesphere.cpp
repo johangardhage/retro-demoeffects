@@ -19,12 +19,12 @@
 #define ROTATION_SPEED_Y 1.1 // radians a second
 #define ROTATION_SPEED_Z 0.4 // radians a second
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	float ax = fmod(time * ROTATION_SPEED_X, 2 * M_PI);
-	float ay = fmod(time * ROTATION_SPEED_Y, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED_Z, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED_X, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED_Y, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED_Z, 2 * M_PI);
 
 	// Draw globe
 	RETRO_RotateModel(ax, ay, az);

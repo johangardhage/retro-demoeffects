@@ -75,10 +75,10 @@ static PolygonPoint Project(float x, float z, vec2 uv, float shade)
 	return { vertex.spos, shade, uv, vertex.q };
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time, PASS_CYCLE) * SCROLL_SPEED;
+	double phase = fmod(time.total, PASS_CYCLE) * SCROLL_SPEED;
 	RETRO_ClearDepthBuffer();
 	for (int i = 0; i < LINES; i++) {
 		double depth = ZNEAR + phase - i * LINE_SPACING;

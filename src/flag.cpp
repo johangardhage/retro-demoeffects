@@ -121,15 +121,15 @@ static float ClothEnvelopeCurve[FLAG_WIDTH];
 
 static vec3 Halfway;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Calculate phase. Each wraps on its own exact period, so neither grows
 	// without bound: the swing closes on CLOTH_SWAYPERIOD, the wave phases on
 	// CLOTH_PERIOD pixels of travel.
-	double sway = fmod(time, CLOTH_SWAYPERIOD);
-	double travel = fmod(time * CLOTH_SPEED, CLOTH_PERIOD);
+	double sway = fmod(time.total, CLOTH_SWAYPERIOD);
+	double travel = fmod(time.total * CLOTH_SPEED, CLOTH_PERIOD);
 
 	// Rigid swing about the mast: up = y - swing * A(x)/AMPLITUDE. Lighting is unchanged.
 	float swing = CLOTH_SWAY * sin(2 * M_PI * sway / CLOTH_SWAYPERIOD);

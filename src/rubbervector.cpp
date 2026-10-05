@@ -40,14 +40,14 @@
 
 static Vertex RestVertex[RETRO_MAX_VERTICES];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	float ax = fmod(time * ROTATION_SPEED * (1 - ROTATION_SPREAD), 2 * M_PI);
-	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED * (1 + ROTATION_SPREAD), 2 * M_PI);
-	float pulse = fmod(time * PULSE_SPEED, 2 * M_PI);
-	float bulge = fmod(time * PULSE_SPEED * 2, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED * (1 - ROTATION_SPREAD), 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED * (1 + ROTATION_SPREAD), 2 * M_PI);
+	float pulse = fmod(time.total * PULSE_SPEED, 2 * M_PI);
+	float bulge = fmod(time.total * PULSE_SPEED * 2, 2 * M_PI);
 
 	float sx = 1 + PULSE_AMOUNT * sin(pulse);
 	float sy = 1 + PULSE_AMOUNT * sin(pulse + 2 * M_PI / 3);

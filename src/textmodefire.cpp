@@ -74,7 +74,7 @@ static int HeatAt(int column, int row)
 	return Heat[row * COLUMNS + column];
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Relight coals
 	for (int column = 0; column < COLUMNS; column++) {
@@ -95,7 +95,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Shade the heat into the text buffer
 	for (int i = 0; i < ROWS * COLUMNS; i++) {

@@ -141,7 +141,7 @@ static void SelectMode(void)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static int meshindex = 0;
 	static bool paused = false;
@@ -179,7 +179,7 @@ void DEMO_Render(double time, double deltatime)
 
 	// Calculate rotation
 	if (!paused) {
-		rotationtime += deltatime;
+		rotationtime += time.delta;
 	}
 	float ax = fmod(mesh->ax + rotationtime * ROTATION_SPEED, 2 * M_PI);
 	float ay = fmod(rotationtime * ROTATION_SPEED, 2 * M_PI);

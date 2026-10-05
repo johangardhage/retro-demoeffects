@@ -132,9 +132,9 @@ static void DrawQuad(const RingVertex &a, const RingVertex &b, const RingVertex 
 	RETRO_DrawTexMapGouraudPolygon(point, 4, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	float t = (float)(time * FLIGHT_SPEED) + FLIGHT_START;
+	float t = (float)(time.total * FLIGHT_SPEED) + FLIGHT_START;
 
 	// Stay on the path, but aim ahead so the viewer looks into each bend.
 	Vertex origin = Path(t);

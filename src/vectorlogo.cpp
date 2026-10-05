@@ -42,12 +42,12 @@
 #define ROCK 0.25 // radians the rock reaches about x and about z
 #define LOGO_DISTANCE 2.0 // model units the word stands behind the origin
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	double phase = fmod(time * ROCK_SPEED, 2 * M_PI);
+	double phase = fmod(time.total * ROCK_SPEED, 2 * M_PI);
 	float ax = ROCK * sin(phase);
-	float ay = fmod(time * SPIN_SPEED, 2 * M_PI);
+	float ay = fmod(time.total * SPIN_SPEED, 2 * M_PI);
 	float az = ROCK * cos(phase);
 
 	// Draw logo

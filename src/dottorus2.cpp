@@ -54,11 +54,11 @@ static const unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 static float SinTable[SINE_VALUES];
 static float CosTable[SINE_VALUES];
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
 	static double phase = 0;
-	double moved = timestep * ROTATION_SPEED;
+	double moved = time.delta * ROTATION_SPEED;
 	phase = fmod(phase + moved, SINE_VALUES);
 	int iphase = phase;
 

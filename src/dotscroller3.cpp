@@ -96,17 +96,17 @@ static void DrawScrollerDots(double time, float camerax, float cameraz, float cs
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static float camerax = 64, cameraz = 118, heading = 0;
-	heading = fmodf(heading + TURN_SPEED * deltatime, 2.0f * M_PI);
+	heading = fmodf(heading + TURN_SPEED * time.delta, 2.0f * M_PI);
 	float cs = cosf(heading), sn = sinf(heading);
-	camerax = fmodf(camerax + sn * FORWARD_SPEED * deltatime + RETRO_Terrain.width, RETRO_Terrain.width);
-	cameraz = fmodf(cameraz + cs * FORWARD_SPEED * deltatime + RETRO_Terrain.height, RETRO_Terrain.height);
+	camerax = fmodf(camerax + sn * FORWARD_SPEED * time.delta + RETRO_Terrain.width, RETRO_Terrain.width);
+	cameraz = fmodf(cameraz + cs * FORWARD_SPEED * time.delta + RETRO_Terrain.height, RETRO_Terrain.height);
 
 	RETRO_ClearDepthBuffer();
 	DrawTerrainDots(camerax, cameraz, cs, sn);
-	DrawScrollerDots(time, camerax, cameraz, cs, sn);
+	DrawScrollerDots(time.total, camerax, cameraz, cs, sn);
 }
 
 void DEMO_Initialize(void)

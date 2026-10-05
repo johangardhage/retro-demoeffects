@@ -61,7 +61,7 @@ struct Mode {
 	int bumpgrazing = RETRO_BUMP_GRAZING;
 };
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static Mode mode = { .rendertype = RETRO_POLY_TEXTURE, .color = 64 };
 	static unsigned char *bumpmap = NULL;
@@ -133,43 +133,43 @@ void DEMO_Render(double time, double deltatime)
 	// Start with the mask's authored face upright before rotating all three axes.
 	static float ax = -M_PI / 2, ay = 0, az = M_PI, distance = 0.5;
 	if (rotate) {
-		ax += deltatime * ROTATION_SPEED;
-		ay += deltatime * ROTATION_SPEED;
-		az += deltatime * ROTATION_SPEED;
+		ax += time.delta * ROTATION_SPEED;
+		ay += time.delta * ROTATION_SPEED;
+		az += time.delta * ROTATION_SPEED;
 	}
 
 	if (RETRO_KeyState(SDL_SCANCODE_I)) {
 		rotate = false;
-		ax += ROTATION_SPEED * deltatime;
+		ax += ROTATION_SPEED * time.delta;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_K)) {
 		rotate = false;
-		ax -= ROTATION_SPEED * deltatime;
+		ax -= ROTATION_SPEED * time.delta;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_X)) {
 		rotate = false;
-		ay += ROTATION_SPEED * deltatime;
+		ay += ROTATION_SPEED * time.delta;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_Z)) {
 		rotate = false;
-		ay -= ROTATION_SPEED * deltatime;
+		ay -= ROTATION_SPEED * time.delta;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_J)) {
 		rotate = false;
-		az += ROTATION_SPEED * deltatime;
+		az += ROTATION_SPEED * time.delta;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_L)) {
 		rotate = false;
-		az -= ROTATION_SPEED * deltatime;
+		az -= ROTATION_SPEED * time.delta;
 	}
 	ax = mod(ax, (float)(2 * M_PI));
 	ay = mod(ay, (float)(2 * M_PI));
 	az = mod(az, (float)(2 * M_PI));
 	if (RETRO_KeyState(SDL_SCANCODE_COMMA)) {
-		distance += 1 * deltatime;
+		distance += 1 * time.delta;
 	}
 	if (RETRO_KeyState(SDL_SCANCODE_PERIOD)) {
-		distance -= 1 * deltatime;
+		distance -= 1 * time.delta;
 	}
 
 	// Draw model

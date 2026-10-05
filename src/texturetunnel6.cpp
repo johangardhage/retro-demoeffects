@@ -133,9 +133,9 @@ static void BuildTunnel(void)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	float scroll = fract(time * FLIGHT_SPEED / RING_SPACING) * TEXTURE_SIZE;
+	float scroll = fract(time.total * FLIGHT_SPEED / RING_SPACING) * TEXTURE_SIZE;
 	RETRO_ClearDepthBuffer();
 
 	for (int i = RING_COUNT - 2; i >= 0; i--) {

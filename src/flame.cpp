@@ -78,7 +78,7 @@ static bool StrikeMatch = false;
 // row up. The step is the unit of both the rise and the cooling, which is
 // why the field is advanced at a fixed rate instead of once per frame.
 //
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	static int startmatches = MATCH_START_STEPS;
 
@@ -149,7 +149,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static const SDL_Scancode ignitionkeys[] = {
 		SDL_SCANCODE_1, SDL_SCANCODE_2, SDL_SCANCODE_3,

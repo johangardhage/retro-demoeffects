@@ -81,7 +81,7 @@ static void CopyTile(int sourcex, int sourcey, int destx, int desty)
 	}
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Pick this step's sub-tile shift
 	int shift = DoShift ? RANDOM(PIECE_SIZE) : 0;
@@ -116,7 +116,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	if (RETRO_KeyPressed(SDL_SCANCODE_R)) {
 		Rotation = Rotation < 1 ? Rotation + 1 : -1;

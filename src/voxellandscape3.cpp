@@ -49,9 +49,9 @@
 
 #define VOXEL_LOD 0.005f // added to dz each slice, so far samples thin out
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainCamera(deltatime);
+	RETRO_UpdateTerrainCamera(time.delta);
 
 	unsigned char *colormap = RETRO_Terrain.colormap;
 	unsigned char *heightmap = RETRO_Terrain.heightmap;

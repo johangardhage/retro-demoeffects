@@ -39,14 +39,14 @@
 static double RingX[RING_DOTS];
 static double RingY[RING_DOTS];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	double spacing = (double)TUNNEL_DEPTH / RING_COUNT;
 
 	// Calculate phase
-	double phase = fmod(time * TUNNEL_SPEED, spacing);
+	double phase = fmod(time.total * TUNNEL_SPEED, spacing);
 
-	double twist = mod(-time * TWIST_SPEED, RETRO_ANGLES_PER_TURN);
+	double twist = mod(-time.total * TWIST_SPEED, RETRO_ANGLES_PER_TURN);
 
 	// Draw rings
 	for (int i = 0; i < RING_COUNT; i++) {

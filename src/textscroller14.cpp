@@ -57,14 +57,14 @@ static PolygonPoint Project(const mat3 &matrix, float offset, float x, float y, 
 	return { vertex.spos, 0, uv, vertex.q };
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	memcpy(Scene, Background, sizeof(Scene));
 	memset(SceneDepth, 0, sizeof(SceneDepth));
 	unsigned char *screen = RETRO_FrameBuffer();
 
 	for (int i = 0; i < LetterCount; i++) {
-		double age = time - i * LETTER_DELAY;
+		double age = time.total - i * LETTER_DELAY;
 		if (age < 0) continue;
 		double angle = ENTRY_ANGLE - fmod(age, PERIOD) * TURN_SPEED;
 		// Straight tangents join the back and front of the right-hand turn.

@@ -44,9 +44,9 @@ static void DrawTerrainDots(const RETRO_TerrainIslandFrame &frame)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainIsland(deltatime);
+	RETRO_UpdateTerrainIsland(time.delta);
 	RETRO_ClearDepthBuffer();
 	DrawTerrainDots(RETRO_BuildTerrainIslandFrame());
 }

@@ -107,12 +107,12 @@ static void Stroke(double origin, double x0, double y0, double x1, double y1, do
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	memset(Ink, 0, sizeof(Ink));
 
 	double period = TextWidth;
-	double distance = time * SCROLL_SPEED;
+	double distance = time.total * SCROLL_SPEED;
 	double phase = fmod(distance, period);
 	for (int repeat = -1; repeat <= 0; repeat++) {
 		// There is no preceding copy on the first pass: start with an empty
@@ -130,7 +130,7 @@ void DEMO_Render(double time, double deltatime)
 					continue;
 				}
 				double gx = *p++ - '0', gy = *p++ - '0';
-				if (connected) Stroke(x, lastx, lasty, gx, gy, time);
+				if (connected) Stroke(x, lastx, lasty, gx, gy, time.total);
 				lastx = gx;
 				lasty = gy;
 				connected = true;

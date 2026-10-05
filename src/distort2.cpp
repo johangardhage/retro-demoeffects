@@ -29,12 +29,12 @@
 static signed char ShiftX[DISTORT_WIDTH * DISTORT_HEIGHT];
 static signed char ShiftY[DISTORT_WIDTH * DISTORT_HEIGHT];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *image = RETRO_ImageData();
 
 	// Calculate phase
-	double phase = fmod(time * DISTORT_SPEED, DISTORT_PERIOD);
+	double phase = fmod(time.total * DISTORT_SPEED, DISTORT_PERIOD);
 
 	// Calculate windows. Each spans [0, W] by [0, H], so the last row and column
 	// read is exactly the last one the table holds.

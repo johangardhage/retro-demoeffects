@@ -38,10 +38,10 @@ struct MetaBall {
 static float SinTable[SINE_VALUES];
 static float CosTable[SINE_VALUES];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * ORBIT_SPEED, SINE_VALUES);
+	double phase = fmod(time.total * ORBIT_SPEED, SINE_VALUES);
 	int iphase = WRAP(phase, SINE_VALUES);
 
 	// Move balls

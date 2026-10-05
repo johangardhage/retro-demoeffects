@@ -209,7 +209,7 @@ static double IntersectWall(double slope, double theta)
 	return -1.0;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 	const unsigned char *texture = Terrain->data;
@@ -217,10 +217,10 @@ void DEMO_Render(double time, double deltatime)
 	// A sine swings hardest as it crosses zero, so a swing at full
 	// amplitude is at its fastest on the first frame. The ease holds both
 	// terms near nothing while it is small, and the tube starts from rest.
-	double ease = smoothstep(0.0, TUNNEL_TWIST_EASE, time);
-	TwistBase = sin(time * TUNNEL_ROLL_SPEED) * TUNNEL_ROLL * ease;
-	TwistPerZ = sin(time * TUNNEL_TWIST_SPEED) * TUNNEL_TWIST_PER_Z * ease;
-	ScrollV = time * TUNNEL_FLIGHT;
+	double ease = smoothstep(0.0, TUNNEL_TWIST_EASE, time.total);
+	TwistBase = sin(time.total * TUNNEL_ROLL_SPEED) * TUNNEL_ROLL * ease;
+	TwistPerZ = sin(time.total * TUNNEL_TWIST_SPEED) * TUNNEL_TWIST_PER_Z * ease;
+	ScrollV = time.total * TUNNEL_FLIGHT;
 
 	double cx = RETRO_WIDTH * 0.5;
 	double cy = RETRO_HEIGHT * 0.5;

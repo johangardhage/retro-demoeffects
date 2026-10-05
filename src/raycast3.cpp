@@ -296,7 +296,7 @@ static int WallLight(int x, int y, int frontx, int fronty)
 	return FloorLights[x][y];
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static vec2 position = { 6.5f, 5.5f }; // the camera, in cells
 	static float angle = (float)M_PI; // the way it looks, from x toward y
@@ -307,8 +307,8 @@ void DEMO_Render(double time, double deltatime)
 	// Move the camera under the arrow keys
 	bool left = RETRO_KeyState(SDL_SCANCODE_LEFT), right = RETRO_KeyState(SDL_SCANCODE_RIGHT);
 	bool up = RETRO_KeyState(SDL_SCANCODE_UP), down = RETRO_KeyState(SDL_SCANCODE_DOWN);
-	angle = (float)fmod(angle + ((right ? 1 : 0) - (left ? 1 : 0)) * TURN_SPEED * deltatime, 2 * M_PI);
-	float step = (float)(((up ? 1 : 0) - (down ? 1 : 0)) * WALK_SPEED * deltatime);
+	angle = (float)fmod(angle + ((right ? 1 : 0) - (left ? 1 : 0)) * TURN_SPEED * time.delta, 2 * M_PI);
+	float step = (float)(((up ? 1 : 0) - (down ? 1 : 0)) * WALK_SPEED * time.delta);
 	float nextx = position.x + step * cosf(angle), nexty = position.y + step * sinf(angle);
 	if (!Blocked(nextx, position.y)) {
 		position.x = nextx;
@@ -323,7 +323,7 @@ void DEMO_Render(double time, double deltatime)
 	for (Door &door : Doors) {
 		float dx = position.x - (door.x + 0.5f), dy = position.y - (door.y + 0.5f);
 		bool near = dx * dx + dy * dy < DOOR_RANGE * DOOR_RANGE;
-		door.open = CLAMP01(door.open + (float)((near ? 1 : -1) * DOOR_SPEED * deltatime));
+		door.open = CLAMP01(door.open + (float)((near ? 1 : -1) * DOOR_SPEED * time.delta));
 	}
 	float halfwidth = (float)tan(radians(RAYCAST_FOV / 2.0));
 	float dirx = cosf(angle), diry = sinf(angle);

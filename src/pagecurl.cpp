@@ -55,10 +55,10 @@
 static RETRO_Image *Picture[2];
 static unsigned char ColorLUT[32][32][32];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase. Each turn one picture peels off the other
-	double phase = fmod(time, 2 * TIME_TURN);
+	double phase = fmod(time.total, 2 * TIME_TURN);
 	int top = step(TIME_TURN, phase);
 	double turntime = phase - top * TIME_TURN;
 	float progress = smoothstep(0.0, 1.0, (turntime - TIME_HOLD) / TIME_CURL);

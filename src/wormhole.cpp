@@ -46,12 +46,12 @@
 
 static unsigned char WormHole[RETRO_WIDTH * RETRO_HEIGHT];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *image = RETRO_ImageData();
 
 	// Calculate phase
-	double phase = fmod(time * WORM_SPEED, TEXTURE_WIDTH);
+	double phase = fmod(time.total * WORM_SPEED, TEXTURE_WIDTH);
 	int xphase = (int)phase * WORM_XDIR;
 	int yphase = (int)phase * WORM_YDIR;
 

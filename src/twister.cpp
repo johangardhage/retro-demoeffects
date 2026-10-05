@@ -33,10 +33,10 @@
 #define TWISTER_FACE_COLOR 33 // base color of the first face
 #define TWISTER_FACE_STEP 16 // step from one face color to the next
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase and torsion
-	double phase = fmod(time * TWISTER_SPEED, TWISTER_PERIOD);
+	double phase = fmod(time.total * TWISTER_SPEED, TWISTER_PERIOD);
 	double torsion = TWISTER_TWIST * sin(TWISTER_TORSION_WAVE * phase) * cos(phase);
 
 	// Draw column

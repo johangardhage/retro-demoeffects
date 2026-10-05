@@ -41,10 +41,10 @@ static int ScrollY;
 static int FontDim = 255;
 static int FontLit = 0;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, ScrollImage->width);
+	double phase = fmod(time.total * SCROLL_SPEED, ScrollImage->width);
 	int iphase = (int)phase;
 
 	memset(Image, 0, sizeof(Image));
@@ -64,9 +64,9 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Calculate rotation
-	float ax = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float ay = fmod(time * ROTATION_SPEED, 2 * M_PI);
-	float az = fmod(time * ROTATION_SPEED, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();

@@ -48,10 +48,10 @@ static const unsigned char SwedishFlag[10][16] = {
 
 static int SineTable[SINE_VALUES];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * WAVE_SPEED, SINE_VALUES);
+	double phase = fmod(time.total * WAVE_SPEED, SINE_VALUES);
 	int iphase = phase;
 
 	int flagwidth = sizeof(SwedishFlag[0]);

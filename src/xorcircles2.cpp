@@ -19,11 +19,11 @@
 static unsigned char ShadedRings[IMAGE_WIDTH * IMAGE_HEIGHT];
 static unsigned char SolidRings[IMAGE_WIDTH * IMAGE_HEIGHT];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Keep the centers inside the screen, so both windows always fit in
 	// the precomputed images. Absolute time makes motion frame-rate independent.
-	double phase = fmod(time, 20.0 * M_PI);
+	double phase = fmod(time.total, 20.0 * M_PI);
 	int x1 = RETRO_WIDTH * (0.5 + 0.235 * sin(1.2 * phase + 0.2));
 	int y1 = RETRO_HEIGHT * (0.5 - 0.325 * cos(1.8 * phase));
 	int x2 = RETRO_WIDTH * (0.5 + 0.235 * sin(1.5 * phase + 0.2));
@@ -33,8 +33,8 @@ void DEMO_Render(double time, double deltatime)
 
 	// Original: 15 strength steps, one every 16 frames at 70 Hz, after
 	// five seconds. Smooth the ramp but retain its duration and 32px peak.
-	double strength = CLAMP01((time - 5.0) * 70.0 / (16.0 * 15.0));
-	double wavephase = fmod(time * 70.0 * 7.0, 1024.0) * (2.0 * M_PI / 1024.0);
+	double strength = CLAMP01((time.total - 5.0) * 70.0 / (16.0 * 15.0));
+	double wavephase = fmod(time.total * 70.0 * 7.0, 1024.0) * (2.0 * M_PI / 1024.0);
 
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		// Nine sine-table entries per original 200-line screen row.

@@ -72,10 +72,10 @@ static void DrawSpan(int left, int right, int y, unsigned char color)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * TWISTER_SPEED, TWISTER_PERIOD);
+	double phase = fmod(time.total * TWISTER_SPEED, TWISTER_PERIOD);
 
 	// Draw column
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

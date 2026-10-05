@@ -131,13 +131,13 @@ static void Land(const Drop &drop, float landing)
 	}
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Move the drops, landing them on the street at their depth
 	for (Drop &drop : Drops) {
 		float speed = mix(RAIN_MINSPEED, RAIN_MAXSPEED, drop.z);
-		drop.x += speed * RAIN_SLANT * timestep;
-		drop.y += speed * timestep;
+		drop.x += speed * RAIN_SLANT * time.delta;
+		drop.y += speed * time.delta;
 
 		float landing = mix(STREET_TOP, RETRO_HEIGHT, drop.z);
 		if (drop.y >= landing) {
@@ -148,29 +148,29 @@ void DEMO_FixedUpdate(double timestep)
 
 	// Age the ripples
 	for (Ripple &ripple : Ripples) {
-		ripple.age += timestep;
+		ripple.age += time.delta;
 	}
 
 	// Fly the droplets until they fall back
 	for (Splash &splash : Splashes) {
 		if (splash.alive) {
-			splash.vy += SPLASH_GRAVITY * timestep;
-			splash.x += splash.vx * timestep;
-			splash.y += splash.vy * timestep;
+			splash.vy += SPLASH_GRAVITY * time.delta;
+			splash.x += splash.vx * time.delta;
+			splash.y += splash.vy * time.delta;
 			splash.alive = splash.y < splash.floor;
 		}
 	}
 
 	// Strike lightning now and then, as a double flash
 	static double sincestrike = 1e9;
-	sincestrike += timestep;
-	if (RAND() < timestep / LIGHTNING_INTERVAL) {
+	sincestrike += time.delta;
+	if (RAND() < time.delta / LIGHTNING_INTERVAL) {
 		sincestrike = 0;
 	}
-	Flash *= exp(-LIGHTNING_DECAY * timestep);
-	if (sincestrike < timestep) {
+	Flash *= exp(-LIGHTNING_DECAY * time.delta);
+	if (sincestrike < time.delta) {
 		Flash = 1.0;
-	} else if (sincestrike >= LIGHTNING_GAP && sincestrike < LIGHTNING_GAP + timestep) {
+	} else if (sincestrike >= LIGHTNING_GAP && sincestrike < LIGHTNING_GAP + time.delta) {
 		Flash = 0.8;
 	}
 }
@@ -185,7 +185,7 @@ static void Plot(unsigned char *buffer, int x, int y, unsigned char color)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 

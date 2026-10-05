@@ -54,9 +54,9 @@ static void DrawTerrainDots(float maxdistance)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainCamera(deltatime);
+	RETRO_UpdateTerrainCamera(time.delta);
 	RETRO_ClearDepthBuffer();
 	DrawTerrainDots(RETRO_TerrainView.distance);
 }

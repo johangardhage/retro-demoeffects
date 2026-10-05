@@ -105,7 +105,7 @@ static double PointX, PointY;
 // it however the frame rate wanders, and a frame that arrives late cannot ask
 // for more points than the mainloop's catch up allows
 //
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase. It is an angle and wraps on a whole turn of it, which is
 	// a whole number of turns of every rate driven by it and so leaves all four
@@ -113,7 +113,7 @@ void DEMO_FixedUpdate(double timestep)
 	// speed, there being no attractor in one to hold the picture still for
 	static double phase = 0;
 	static bool stalled = false;
-	phase = fmod(phase + timestep * DRIFT_SPEED * (stalled ? DRIFT_HURRY : 1), 2 * M_PI);
+	phase = fmod(phase + time.delta * DRIFT_SPEED * (stalled ? DRIFT_HURRY : 1), 2 * M_PI);
 
 	// Drift the parameters. The rates are whole multiples of the slowest, so the
 	// curve the tuple travels is closed and stays in the part of the box that
@@ -125,7 +125,7 @@ void DEMO_FixedUpdate(double timestep)
 
 	// Follow the orbit, keeping alongside it what each pixel has taken this step
 	double scale = MARGIN * MIN(RETRO_WIDTH, RETRO_HEIGHT) / (2 * ATTRACTOR_REACH);
-	int points = timestep * POINTS_PER_SECOND;
+	int points = time.delta * POINTS_PER_SECOND;
 	int reached = 0;
 
 	memset(Landed, 0, sizeof(Landed));
@@ -174,7 +174,7 @@ void DEMO_FixedUpdate(double timestep)
 	stalled = reached < ORBIT_STALL;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Draw attractor
 	unsigned char *buffer = RETRO_FrameBuffer();

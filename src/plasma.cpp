@@ -25,10 +25,10 @@
 
 static float CosTable[RETRO_DEGREES_PER_TURN];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	int iphase = (int)fmod(time * 100, PLASMA_FRAMES);
+	int iphase = (int)fmod(time.total * 100, PLASMA_FRAMES);
 
 	// Generate plasma
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

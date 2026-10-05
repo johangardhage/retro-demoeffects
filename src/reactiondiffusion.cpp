@@ -86,11 +86,11 @@ static void Step(float feed, float kill)
 // Run the model in fixed steps, so how fast the pattern grows follows the
 // step rate rather than the frame rate
 //
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase. Feed and kill ease from coral to mitosis and back
 	static double phase = 0;
-	phase = fract(phase + timestep / DRIFT_PERIOD);
+	phase = fract(phase + time.delta / DRIFT_PERIOD);
 
 	float t = 0.5f - 0.5f * cos(2 * M_PI * phase);
 	float feed = mix(CORAL_FEED, MITOSIS_FEED, t);
@@ -101,7 +101,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	float (*b)[RETRO_WIDTH] = B[Current];
 	unsigned char *buffer = RETRO_FrameBuffer();

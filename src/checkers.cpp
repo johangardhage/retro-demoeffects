@@ -67,18 +67,18 @@ static vec2 Path(double worldz)
 	return RETRO_CatmullRom(p0, p1, p2, p3, frac);
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Start with a fine grid, then settle into a continuous flight. Wrapping
 	// the travel distance replaces a board only once it is behind the eye.
-	double travel = 2.4 * time;
-	double cameraz = travel - 9.0 * exp(-time * 0.55);
+	double travel = 2.4 * time.total;
+	double cameraz = travel - 9.0 * exp(-time.total * 0.55);
 	double nearest = CHECKER_SPACING - cameraz;
 	if (nearest < 0.0) nearest += CHECKER_SPACING * ceil(-nearest / CHECKER_SPACING);
 	vec2 camerapos = Path(cameraz);
 	unsigned char *dest = RETRO_FrameBuffer();
 
-	double colorphase = fmod(time / 3.0, CHECKER_COLORS);
+	double colorphase = fmod(time.total / 3.0, CHECKER_COLORS);
 	int first = (int)colorphase;
 	int next = (first + 1) % CHECKER_COLORS;
 	double blend = smoothstep(0.0, 1.0, colorphase - first);

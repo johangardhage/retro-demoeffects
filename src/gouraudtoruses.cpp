@@ -62,11 +62,11 @@ static void PlaceTorusInLink(Model3D *model, float angle, float tx)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation. The baked pair turns by exactly the same matrix,
 	// keeping the link rigid.
-	float phase = fmod(time * LINK_ROTATION_SPEED, LINK_ROTATION_PERIOD);
+	float phase = fmod(time.total * LINK_ROTATION_SPEED, LINK_ROTATION_PERIOD);
 	float ax = phase;
 	float ay = phase * 0.7f;
 	float az = phase * 0.4f;

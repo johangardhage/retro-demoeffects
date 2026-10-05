@@ -91,7 +91,7 @@ static void LoadScatterMap(const char *filename, unsigned short *addr, int *offs
 	fclose(fp);
 }
 
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	static int tick = 0;
 

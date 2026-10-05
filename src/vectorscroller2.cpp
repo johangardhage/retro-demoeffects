@@ -357,10 +357,10 @@ static Model3D *GetGlyph(unsigned char character)
 	return model;
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
-	double phase = mod(time * SCROLL_SPEED, (double)TextWidth);
-	float spin = (float)(time * HELIX_SPIN);
+	double phase = mod(time.total * SCROLL_SPEED, (double)TextWidth);
+	float spin = (float)(time.total * HELIX_SPIN);
 
 	for (int i = 0; i < LETTERS; i++) {
 		unsigned char character = (unsigned char)ScrollText[i];
@@ -381,9 +381,9 @@ void DEMO_Render(double time, double deltatime)
 			continue;
 		}
 
-		float rock = fmod(time * LETTER_ROCK_SPEED, 2 * M_PI);
+		float rock = fmod(time.total * LETTER_ROCK_SPEED, 2 * M_PI);
 		float ax = pose.ax + LETTER_ROCK * sin(rock);
-		float ay = pose.ay + fmod(time * LETTER_SPIN, 2 * M_PI);
+		float ay = pose.ay + fmod(time.total * LETTER_SPIN, 2 * M_PI);
 		float az = LETTER_ROCK * cos(rock);
 
 		RETRO_RotateModel(ax, ay, az, glyph);

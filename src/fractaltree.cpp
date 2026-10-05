@@ -91,15 +91,15 @@ static void DrawBranch(float x, float y, float angle, float length, int depth, i
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase. The tree grows, stands, then shrinks back into the ground
-	double phase = fmod(time, TIME_CYCLE);
+	double phase = fmod(time.total, TIME_CYCLE);
 	double grow = MIN(phase, TIME_CYCLE - phase) / TIME_GROW;
 	Growth = MIN(grow, 1.0) * DEPTH;
 
 	// A gust that starts at the trunk and travels up
-	double wind = fract(time * WIND_SPEED) * 2 * M_PI;
+	double wind = fract(time.total * WIND_SPEED) * 2 * M_PI;
 	for (int depth = 0; depth < DEPTH; depth++) {
 		Sway[depth] = SWAY * (depth + 1) / DEPTH * sin(wind - WIND_LAG * depth);
 	}

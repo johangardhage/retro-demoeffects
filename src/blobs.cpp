@@ -52,7 +52,7 @@ static ivec2 BlobPositions[NUM_BLOBS];
 // does not survive accumulation: many independent equal-variance steps are an
 // isotropic Gaussian by the central limit theorem.
 //
-void DEMO_FixedUpdate(double timestep)
+void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Move blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {
@@ -68,7 +68,7 @@ void DEMO_FixedUpdate(double timestep)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Draw blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {

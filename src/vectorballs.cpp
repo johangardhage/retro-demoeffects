@@ -54,16 +54,16 @@
 static unsigned char BallMap[BALL_LEVELS][BALL_MAP * BALL_MAP];
 static float BallDepth[BALL_MAP * BALL_MAP]; // the front hemisphere, the same for every ramp
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
-	float ax = fmod(time * BALL_SPEEDX, 2 * M_PI);
-	float ay = fmod(time * BALL_SPEEDY, 2 * M_PI);
-	float az = fmod(time * BALL_SPEEDZ, 2 * M_PI);
+	float ax = fmod(time.total * BALL_SPEEDX, 2 * M_PI);
+	float ay = fmod(time.total * BALL_SPEEDY, 2 * M_PI);
+	float az = fmod(time.total * BALL_SPEEDZ, 2 * M_PI);
 	mat3 matrix = rotate(ax, ay, az);
 
 	// Calculate phase
-	double phase = fmod(time * BALL_WAVESPEED, RETRO_ANGLES_PER_TURN);
+	double phase = fmod(time.total * BALL_WAVESPEED, RETRO_ANGLES_PER_TURN);
 
 	// Lay the ring out, ripple it, and carry it to the screen
 	Vertex balls[BALLS];

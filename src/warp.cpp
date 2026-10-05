@@ -28,15 +28,15 @@
 
 static ivec2 DistortTable[WARP_HEIGHT * WARP_WIDTH];
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	static float dz = 0, dw = 0;
 
 	// Calculate phase
-	float alpha = fmod(time * WARP_ALPHA_SPEED, 2 * M_PI);
-	float beta = fmod(time * WARP_BETA_SPEED, 2 * M_PI);
-	dz += (sin(alpha + beta) * 2 + cos(beta) + 0.4) * deltatime * 60;
-	dw += (cos(beta - alpha) * 3 + sin(alpha) + 0.2) * deltatime * 60;
+	float alpha = fmod(time.total * WARP_ALPHA_SPEED, 2 * M_PI);
+	float beta = fmod(time.total * WARP_BETA_SPEED, 2 * M_PI);
+	dz += (sin(alpha + beta) * 2 + cos(beta) + 0.4) * time.delta * 60;
+	dw += (cos(beta - alpha) * 3 + sin(alpha) + 0.2) * time.delta * 60;
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 	unsigned char *image = RETRO_ImageData();

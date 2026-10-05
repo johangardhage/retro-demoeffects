@@ -225,14 +225,14 @@ static void DrawScene(void)
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Calculate phase: how far each reading of the field has risen
-	int rise = (int)fmod(time * HAZE_RISE, HAZE_SIZE);
-	int fastrise = (int)fmod(time * HAZE_FASTRISE, HAZE_SIZE);
-	int drift = (int)fmod(time * HAZE_DRIFT, HAZE_SIZE);
+	int rise = (int)fmod(time.total * HAZE_RISE, HAZE_SIZE);
+	int fastrise = (int)fmod(time.total * HAZE_FASTRISE, HAZE_SIZE);
+	int drift = (int)fmod(time.total * HAZE_DRIFT, HAZE_SIZE);
 
 	// Draw scene, each pixel copied from where the air has moved it to
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

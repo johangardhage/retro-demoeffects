@@ -89,14 +89,14 @@ static void SortPixels(const RETRO_Image *picture, const int *rank, int blockx, 
 	}
 }
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
 	RETRO_Clear(Background);
 
 	// Find the flight, its direction and its origin
-	int flight = (int)floor(time / (HOLD_TIME + FLIGHT_TIME));
-	double progress = (fmod(time, HOLD_TIME + FLIGHT_TIME) - HOLD_TIME) / FLIGHT_TIME;
+	int flight = (int)floor(time.total / (HOLD_TIME + FLIGHT_TIME));
+	double progress = (fmod(time.total, HOLD_TIME + FLIGHT_TIME) - HOLD_TIME) / FLIGHT_TIME;
 	bool back = flight & 1;
 	float originx = RETRO_Hash(flight, 0) % RETRO_WIDTH;
 	float originy = RETRO_Hash(flight, 1) % RETRO_HEIGHT;

@@ -50,16 +50,16 @@ static const RETRO_Palette ColorStops[] = {
 
 static RETRO_Image *ScrollImage;
 
-void DEMO_Render(double time, double deltatime)
+void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time * SCROLL_SPEED, ScrollImage->width);
+	double phase = fmod(time.total * SCROLL_SPEED, ScrollImage->width);
 	int iphase = (int)phase;
 	int scrolly = (RETRO_HEIGHT - ScrollImage->height) / 2;
 
 	// Calculate the phases of the wave the columns ride and of the color ramp
-	double wave = fmod(time * WAVE_SPEED, RETRO_ANGLES_PER_TURN);
-	double colorphase = fmod(time * COLOR_SPEED, COLOR_STEPS);
+	double wave = fmod(time.total * WAVE_SPEED, RETRO_ANGLES_PER_TURN);
+	double colorphase = fmod(time.total * COLOR_SPEED, COLOR_STEPS);
 
 	// Draw scroller, a column at a time, each dropped by the sine at that column,
 	// painted in that column's color and its glyph rows clipped to the screen

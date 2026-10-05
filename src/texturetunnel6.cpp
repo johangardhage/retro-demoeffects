@@ -115,19 +115,16 @@ static void BuildTunnel(void)
 			float ct = cosf(theta);
 			float st = sinf(theta);
 
-			Vertex alongright = RETRO_ScaleUnitVector(ringright, ct);
-			Vertex alongdown = RETRO_ScaleUnitVector(ringdown, st);
-			Vertex radial = RETRO_AddVertex(alongright, alongdown);
-			Vertex wall = RETRO_ScaleVertex(radial, TUNNEL_RADIUS);
+			vec3 radial = ringright.dir * ct + ringdown.dir * st;
+			vec3 wall = radial * TUNNEL_RADIUS;
 
 			RingVertex *p = &Ring[i][s];
-			p->vertex = RETRO_AddVertex(center, wall);
+			p->vertex = { center.pos + wall };
 
 			RETRO_ViewVertex(&p->vertex, &camera);
 			RETRO_ProjectViewVertex(&p->vertex, 180, RETRO_WIDTH * 0.70f, RETRO_HEIGHT * 0.5f);
 
-			Vertex negradial = RETRO_ScaleVertex(radial, -1.0f);
-			UnitVector inward = RETRO_NormalizeUnitVector({ negradial.pos });
+			UnitVector inward = RETRO_NormalizeUnitVector({ -radial });
 			RETRO_ViewUnitVector(&inward, &camera);
 			float lambert = RETRO_RotatedDot(inward, Light);
 			float lit = mix(AMBIENT, 1.0f, RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f)));
@@ -150,13 +147,14 @@ void DEMO_Render(double time, double deltatime)
 
 	// Ordered two-by-two dithering into sixteen orange intensity levels.
 	static const int threshold[2][2] = { { 0, 2 }, { 3, 1 } };
+	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int offset = y * RETRO_WIDTH + x;
-			int value = RETRO.framebuffer[offset];
+			int value = buffer[offset];
 			int level = value / 17;
 			if ((value % 17) * 4 > threshold[y & 1][x & 1] * 17 + 8) level++;
-			RETRO.framebuffer[offset] = MIN(level, 15) * 17;
+			buffer[offset] = MIN(level, 15) * 17;
 		}
 	}
 }

@@ -44,14 +44,8 @@ void DEMO_Render(double time, double deltatime)
 	for (int x = 0; x < RETRO_WIDTH; x++) {
 		int sample = WRAP(x + iphase, textwidth);
 		unsigned char code = (unsigned char)ScrollText[sample / Font.width];
-		int glyph = code - Font.firstcharacter;
-		int sourcex = glyph * Font.width + sample % Font.width;
-
-		if (glyph < 0 || sourcex >= Font.atlas->width) {
-			continue;
-		}
 		for (int yy = 0; yy < Font.height; yy++) {
-			unsigned char color = Font.atlas->data[yy * Font.atlas->width + sourcex];
+			unsigned char color = RETRO_FontTexel(Font, code, sample % Font.width, yy);
 			if (color != 0) {
 				RETRO_PutPixel(x, y + yy, color);
 			}

@@ -170,15 +170,6 @@
 #define RETRO_K_SPECULAR 0.7
 #define RETRO_K_FALLOFF 150
 
-// *******************************************************************
-// Private variables
-// *******************************************************************
-
-// The rest of the phong reflection model's coefficients
-#define RETRO_K_AMBIENT 0.2
-#define RETRO_K_DIFFUSE 0.9
-#define RETRO_K_ATTENUATION 1.0
-
 // The light a material is lit by, as intensities between 0.0 and 1.0
 #define RETRO_AMBIENT_R 0.0
 #define RETRO_AMBIENT_G 0.0
@@ -188,9 +179,212 @@
 #define RETRO_LIGHT_G 0.83
 #define RETRO_LIGHT_B 0.83
 
+//
+// The palette the VGA BIOS leaves in the DAC in mode 13h: the 16 EGA colors,
+// 16 grays, then 216 entries walking hue, saturation and value, and 8 unused
+// entries left black. A demo that draws with the colors it finds there, rather
+// than setting a palette of its own, is drawing against this
+//
+// The BIOS holds 6-bit values, widened here to 8 bits
+//
+static const RETRO_Palette RETRO_PALETTE_VGA[RETRO_COLORS] = {
+	// The EGA colors. Color 6 is brown rather than dark yellow
+	{ 0, 0, 0 }, { 0, 0, 170 }, { 0, 170, 0 }, { 0, 170, 170 }, { 170, 0, 0 }, { 170, 0, 170 }, { 170, 85, 0 }, { 170, 170, 170 },
+	{ 85, 85, 85 }, { 85, 85, 255 }, { 85, 255, 85 }, { 85, 255, 255 }, { 255, 85, 85 }, { 255, 85, 255 }, { 255, 255, 85 }, { 255, 255, 255 },
+
+	// Grays
+	{ 0, 0, 0 }, { 20, 20, 20 }, { 32, 32, 32 }, { 44, 44, 44 }, { 56, 56, 56 }, { 69, 69, 69 }, { 81, 81, 81 }, { 97, 97, 97 },
+	{ 113, 113, 113 }, { 130, 130, 130 }, { 146, 146, 146 }, { 162, 162, 162 }, { 182, 182, 182 }, { 203, 203, 203 }, { 227, 227, 227 }, { 255, 255, 255 },
+
+	// Nine blocks of 24 hues, each from blue through red, yellow, green and
+	// cyan back to blue. Green runs 8 hues behind red and blue 8 ahead
+
+	// Value 63, full saturation
+	{ 0, 0, 255 }, { 65, 0, 255 }, { 125, 0, 255 }, { 190, 0, 255 }, { 255, 0, 255 }, { 255, 0, 190 }, { 255, 0, 125 }, { 255, 0, 65 },
+	{ 255, 0, 0 }, { 255, 65, 0 }, { 255, 125, 0 }, { 255, 190, 0 }, { 255, 255, 0 }, { 190, 255, 0 }, { 125, 255, 0 }, { 65, 255, 0 },
+	{ 0, 255, 0 }, { 0, 255, 65 }, { 0, 255, 125 }, { 0, 255, 190 }, { 0, 255, 255 }, { 0, 190, 255 }, { 0, 125, 255 }, { 0, 65, 255 },
+
+	// Value 63, middle saturation
+	{ 125, 125, 255 }, { 158, 125, 255 }, { 190, 125, 255 }, { 223, 125, 255 }, { 255, 125, 255 }, { 255, 125, 223 }, { 255, 125, 190 }, { 255, 125, 158 },
+	{ 255, 125, 125 }, { 255, 158, 125 }, { 255, 190, 125 }, { 255, 223, 125 }, { 255, 255, 125 }, { 223, 255, 125 }, { 190, 255, 125 }, { 158, 255, 125 },
+	{ 125, 255, 125 }, { 125, 255, 158 }, { 125, 255, 190 }, { 125, 255, 223 }, { 125, 255, 255 }, { 125, 223, 255 }, { 125, 190, 255 }, { 125, 158, 255 },
+
+	// Value 63, low saturation
+	{ 182, 182, 255 }, { 199, 182, 255 }, { 219, 182, 255 }, { 235, 182, 255 }, { 255, 182, 255 }, { 255, 182, 235 }, { 255, 182, 219 }, { 255, 182, 199 },
+	{ 255, 182, 182 }, { 255, 199, 182 }, { 255, 219, 182 }, { 255, 235, 182 }, { 255, 255, 182 }, { 235, 255, 182 }, { 219, 255, 182 }, { 199, 255, 182 },
+	{ 182, 255, 182 }, { 182, 255, 199 }, { 182, 255, 219 }, { 182, 255, 235 }, { 182, 255, 255 }, { 182, 235, 255 }, { 182, 219, 255 }, { 182, 199, 255 },
+
+	// Value 28, full saturation
+	{ 0, 0, 113 }, { 28, 0, 113 }, { 56, 0, 113 }, { 85, 0, 113 }, { 113, 0, 113 }, { 113, 0, 85 }, { 113, 0, 56 }, { 113, 0, 28 },
+	{ 113, 0, 0 }, { 113, 28, 0 }, { 113, 56, 0 }, { 113, 85, 0 }, { 113, 113, 0 }, { 85, 113, 0 }, { 56, 113, 0 }, { 28, 113, 0 },
+	{ 0, 113, 0 }, { 0, 113, 28 }, { 0, 113, 56 }, { 0, 113, 85 }, { 0, 113, 113 }, { 0, 85, 113 }, { 0, 56, 113 }, { 0, 28, 113 },
+
+	// Value 28, middle saturation
+	{ 56, 56, 113 }, { 69, 56, 113 }, { 85, 56, 113 }, { 97, 56, 113 }, { 113, 56, 113 }, { 113, 56, 97 }, { 113, 56, 85 }, { 113, 56, 69 },
+	{ 113, 56, 56 }, { 113, 69, 56 }, { 113, 85, 56 }, { 113, 97, 56 }, { 113, 113, 56 }, { 97, 113, 56 }, { 85, 113, 56 }, { 69, 113, 56 },
+	{ 56, 113, 56 }, { 56, 113, 69 }, { 56, 113, 85 }, { 56, 113, 97 }, { 56, 113, 113 }, { 56, 97, 113 }, { 56, 85, 113 }, { 56, 69, 113 },
+
+	// Value 28, low saturation
+	{ 81, 81, 113 }, { 89, 81, 113 }, { 97, 81, 113 }, { 105, 81, 113 }, { 113, 81, 113 }, { 113, 81, 105 }, { 113, 81, 97 }, { 113, 81, 89 },
+	{ 113, 81, 81 }, { 113, 89, 81 }, { 113, 97, 81 }, { 113, 105, 81 }, { 113, 113, 81 }, { 105, 113, 81 }, { 97, 113, 81 }, { 89, 113, 81 },
+	{ 81, 113, 81 }, { 81, 113, 89 }, { 81, 113, 97 }, { 81, 113, 105 }, { 81, 113, 113 }, { 81, 105, 113 }, { 81, 97, 113 }, { 81, 89, 113 },
+
+	// Value 16, full saturation
+	{ 0, 0, 65 }, { 16, 0, 65 }, { 32, 0, 65 }, { 48, 0, 65 }, { 65, 0, 65 }, { 65, 0, 48 }, { 65, 0, 32 }, { 65, 0, 16 },
+	{ 65, 0, 0 }, { 65, 16, 0 }, { 65, 32, 0 }, { 65, 48, 0 }, { 65, 65, 0 }, { 48, 65, 0 }, { 32, 65, 0 }, { 16, 65, 0 },
+	{ 0, 65, 0 }, { 0, 65, 16 }, { 0, 65, 32 }, { 0, 65, 48 }, { 0, 65, 65 }, { 0, 48, 65 }, { 0, 32, 65 }, { 0, 16, 65 },
+
+	// Value 16, middle saturation
+	{ 32, 32, 65 }, { 40, 32, 65 }, { 48, 32, 65 }, { 56, 32, 65 }, { 65, 32, 65 }, { 65, 32, 56 }, { 65, 32, 48 }, { 65, 32, 40 },
+	{ 65, 32, 32 }, { 65, 40, 32 }, { 65, 48, 32 }, { 65, 56, 32 }, { 65, 65, 32 }, { 56, 65, 32 }, { 48, 65, 32 }, { 40, 65, 32 },
+	{ 32, 65, 32 }, { 32, 65, 40 }, { 32, 65, 48 }, { 32, 65, 56 }, { 32, 65, 65 }, { 32, 56, 65 }, { 32, 48, 65 }, { 32, 40, 65 },
+
+	// Value 16, low saturation
+	{ 44, 44, 65 }, { 48, 44, 65 }, { 52, 44, 65 }, { 60, 44, 65 }, { 65, 44, 65 }, { 65, 44, 60 }, { 65, 44, 52 }, { 65, 44, 48 },
+	{ 65, 44, 44 }, { 65, 48, 44 }, { 65, 52, 44 }, { 65, 60, 44 }, { 65, 65, 44 }, { 60, 65, 44 }, { 52, 65, 44 }, { 48, 65, 44 },
+	{ 44, 65, 44 }, { 44, 65, 48 }, { 44, 65, 52 }, { 44, 65, 60 }, { 44, 65, 65 }, { 44, 60, 65 }, { 44, 52, 65 }, { 44, 48, 65 },
+
+	// Unused
+	{ 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 },
+};
+
 // *******************************************************************
-// Private functions
+// Private variables
 // *******************************************************************
+
+// The phong reflection model's coefficients besides RETRO_K_SPECULAR and
+// RETRO_K_FALLOFF
+#define RETRO_K_AMBIENT 0.2
+#define RETRO_K_DIFFUSE 0.9
+#define RETRO_K_ATTENUATION 1.0
+
+// *******************************************************************
+// Public functions
+// *******************************************************************
+
+// GLSL's mix for colors: each component of a taken t of the way toward b, the
+// fraction dropped.
+inline RETRO_Palette mix(RETRO_Palette a, RETRO_Palette b, float t)
+{
+	return { (unsigned char)mix(a.r, b.r, t), (unsigned char)mix(a.g, b.g, t), (unsigned char)mix(a.b, b.b, t) };
+}
+
+// GLSL's vector times scalar for colors: each component scaled by s, the
+// fraction dropped.
+inline RETRO_Palette operator*(RETRO_Palette color, float s)
+{
+	return { (unsigned char)(color.r * s), (unsigned char)(color.g * s), (unsigned char)(color.b * s) };
+}
+
+// Every color of palette at level, from black at 0 to the palette itself at
+// 1, the fraction dropped as operator* drops it: C = level * C_loaded. A fade
+// in runs level up from 0, a fade out down from 1.
+inline void RETRO_Fade(float level, const RETRO_Palette *palette)
+{
+	level = CLAMP01(level);
+
+	for (int i = 0; i < RETRO_COLORS; i++) {
+		RETRO_SetColor(i, palette[i] * level);
+	}
+}
+
+// A color at a brightness from 0 to 1, each component rounded to the nearest
+// rather than dropping the fraction as operator* does
+inline RETRO_Palette RETRO_ShadeColor(RETRO_Palette color, float brightness)
+{
+	return {
+		(unsigned char)(color.r * brightness + 0.5f),
+		(unsigned char)(color.g * brightness + 0.5f),
+		(unsigned char)(color.b * brightness + 0.5f),
+	};
+}
+
+// A color under white light at neutral, with a red and a green light adding
+// to their own channels on top of it, tint[0] being how much further red
+// reaches and tint[1] green. Each channel is capped at full and the fraction
+// dropped, as operator* does. Shaped as a shade table's light.
+inline RETRO_Palette RETRO_TintColor(RETRO_Palette color, float neutral, const float *tint)
+{
+	float red = MIN(neutral + tint[0], 1.0f);
+	float green = MIN(neutral + tint[1], 1.0f);
+	return { (unsigned char)(color.r * red), (unsigned char)(color.g * green), (unsigned char)(color.b * neutral) };
+}
+
+//
+// Encode an amount of light for display, by the sRGB transfer function of
+// IEC 61966-2-1. Lighting adds and multiplies amounts of light, so it has to
+// be worked out in linear values, where 0.5 is half the light of 1.0. A
+// palette entry is not linear: the display spends more of its steps on the
+// darks, and entry 128 of 255 gives only about a fifth of the light of 255.
+// Both sides are on [0, 1], and the input is clamped to it:
+//
+//   l ≤ 0.0031308:  s = 12.92 l
+//   otherwise:      s = 1.055 l^(1 / 2.4) − 0.055
+//
+// The straight segment near black keeps the slope finite at zero, and the
+// two pieces meet at the threshold. Overall the curve is close to l^(1 / 2.2)
+//
+inline float RETRO_LinearToSRGB(float linear)
+{
+	float l = CLAMP01(linear);
+	return l <= 0.0031308f ? 12.92f * l : 1.055f * pow(l, 1.0f / 2.4f) - 0.055f;
+}
+
+//
+// The inverse: the amount of light an encoded value stands for, such as a
+// component of a color picked on screen divided by its maximum. Both sides
+// are on [0, 1], and the input is clamped to it:
+//
+//   s ≤ 0.04045:  l = s / 12.92
+//   otherwise:    l = ((s + 0.055) / 1.055)^2.4
+//
+// 0.04045 is 12.92 · 0.0031308, the same threshold on the encoded side
+//
+inline float RETRO_SRGBToLinear(float srgb)
+{
+	float s = CLAMP01(srgb);
+	return s <= 0.04045f ? s / 12.92f : pow((s + 0.055f) / 1.055f, 2.4f);
+}
+
+//
+// A palette color from linear light, each component encoded by
+// RETRO_LinearToSRGB and rounded to colormax
+//
+inline RETRO_Palette RETRO_LinearToColor(vec3 color, int colormax = 255)
+{
+	return {
+		(unsigned char)(colormax * RETRO_LinearToSRGB(color.x) + 0.5f),
+		(unsigned char)(colormax * RETRO_LinearToSRGB(color.y) + 0.5f),
+		(unsigned char)(colormax * RETRO_LinearToSRGB(color.z) + 0.5f)
+	};
+}
+
+// The palette constructors below share two conventions. Given no palette they
+// set the colors on screen, and given one they write it instead. And a
+// constructor that takes colormax scales what it writes to that maximum, 255
+// for an 8-bit palette or 63 for a 6-bit one
+
+//
+// Fill [start, end) with a linear interpolation from one color toward another.
+// to is the color at end, which is not written, so the next ramp can start
+// there and write the knot as its from without both touching it. A last ramp
+// with end = RETRO_COLORS therefore leaves 255 one step short of to: that
+// index is off the palette. That is the range, not a missing write. The
+// components are interpolated on whatever scale they are given in, so there is
+// no colormax
+//
+//   C(i) = from + ((i - start) / (end - start)) * (to - from),  i ∈ [start, end)
+//
+inline void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, RETRO_Palette to, RETRO_Palette *palette = NULL)
+{
+	int steps = end - start;
+
+	for (int i = 0; i < steps; i++) {
+		float k = (float)i / steps;
+
+		RETRO_SetColor(start + i, mix(from, to, k), palette);
+	}
+}
 
 //
 // The angle of incidence a shade stands for. A renderer picks a shade as
@@ -218,6 +412,18 @@
 inline float RETRO_IncidenceAngle(int shade, int shades)
 {
 	return ((shades - (shade + 0.5f)) / shades) * (M_PI / 2);
+}
+
+//
+// The shade a surface takes, from the dot product of its normal with the light.
+// Undoes the angle spacing that RETRO_IncidenceAngle lays down, so that a
+// surface lands on the shade actually built for its lighting
+//
+//   N·L = cos(theta)  ->  1 - acos(N·L) / (pi / 2)  =  1 - theta / (pi / 2)
+//
+inline float RETRO_ShadeFractionFromLambert(float lambert)
+{
+	return 1.0f - acos(CLAMP01(lambert)) / (M_PI / 2);
 }
 
 //
@@ -272,53 +478,6 @@ inline RETRO_Palette RETRO_PhongColor(vec3 face, float theta, float specularity,
 }
 
 //
-// A color from 6-bit DAC values, each widened to 8 bits by repeating its top
-// bits, so 0 stays 0 and 63 becomes 255
-//
-inline RETRO_Palette RETRO_DACColor(int r, int g, int b)
-{
-	return RETRO_Palette{
-		(unsigned char)(r << 2 | r >> 4),
-		(unsigned char)(g << 2 | g >> 4),
-		(unsigned char)(b << 2 | b >> 4),
-	};
-}
-
-//
-// Which of five levels a channel is at, hue steps round a ring of 24: it
-// rises for 4, holds at the top for 8, falls for 4 and rests for 8
-//
-inline int RETRO_HueStep(int hue)
-{
-	hue = (hue + 24) % 24;
-	if (hue < 4) return hue;
-	if (hue < 12) return 4;
-	if (hue < 16) return 16 - hue;
-	return 0;
-}
-
-// *******************************************************************
-// Public functions
-// *******************************************************************
-
-// The palette constructors below share two conventions. Given no palette they
-// set the colors on screen, and given one they write it instead. And a
-// constructor that takes colormax scales what it writes to that maximum, 255
-// for an 8-bit palette or 63 for a 6-bit one
-
-//
-// The shade a surface takes, from the dot product of its normal with the light.
-// Undoes the angle spacing that RETRO_IncidenceAngle lays down, so that a
-// surface lands on the shade actually built for its lighting
-//
-//   N·L = cos(theta)  ->  1 - acos(N·L) / (pi / 2)  =  1 - theta / (pi / 2)
-//
-inline float RETRO_ShadeFractionFromLambert(float lambert)
-{
-	return 1.0f - acos(CLAMP01(lambert)) / (M_PI / 2);
-}
-
-//
 // Shade one face color across the whole range of incidence, from black at a
 // grazing angle up to the specular highlight face on. Components of the face
 // color and of the ramp share the same scale, given by colormax, so the same
@@ -363,91 +522,6 @@ inline void RETRO_CreateMaterialPalette(RETRO_Palette face, float specularity, f
 {
 	RETRO_SetColor(0, RETRO_BLACK, palette);
 	RETRO_CreatePhongPalette(RETRO_PHONG_OFFSET, RETRO_PHONG_OFFSET + RETRO_PHONG_SHADES, face, specularity, falloff, palette, colormax);
-}
-
-//
-// Encode an amount of light for display, by the sRGB transfer function of
-// IEC 61966-2-1. Lighting adds and multiplies amounts of light, so it has to
-// be worked out in linear values, where 0.5 is half the light of 1.0. A
-// palette entry is not linear: the display spends more of its steps on the
-// darks, and entry 128 of 255 gives only about a fifth of the light of 255.
-// Both sides are on [0, 1], and the input is clamped to it:
-//
-//   l ≤ 0.0031308:  s = 12.92 l
-//   otherwise:      s = 1.055 l^(1 / 2.4) − 0.055
-//
-// The straight segment near black keeps the slope finite at zero, and the
-// two pieces meet at the threshold. Overall the curve is close to l^(1 / 2.2)
-//
-inline float RETRO_LinearToSRGB(float linear)
-{
-	float l = CLAMP01(linear);
-	return l <= 0.0031308f ? 12.92f * l : 1.055f * pow(l, 1.0f / 2.4f) - 0.055f;
-}
-
-//
-// The inverse: the amount of light an encoded value stands for, such as a
-// component of a color picked on screen divided by its maximum. Both sides
-// are on [0, 1], and the input is clamped to it:
-//
-//   s ≤ 0.04045:  l = s / 12.92
-//   otherwise:    l = ((s + 0.055) / 1.055)^2.4
-//
-// 0.04045 is 12.92 · 0.0031308, the same threshold on the encoded side
-//
-inline float RETRO_SRGBToLinear(float srgb)
-{
-	float s = CLAMP01(srgb);
-	return s <= 0.04045f ? s / 12.92f : pow((s + 0.055f) / 1.055f, 2.4f);
-}
-
-//
-// A palette color from linear light, each component encoded by
-// RETRO_LinearToSRGB and rounded to colormax
-//
-inline RETRO_Palette RETRO_LinearToColor(vec3 color, int colormax = 255)
-{
-	return {
-		(unsigned char)(colormax * RETRO_LinearToSRGB(color.x) + 0.5f),
-		(unsigned char)(colormax * RETRO_LinearToSRGB(color.y) + 0.5f),
-		(unsigned char)(colormax * RETRO_LinearToSRGB(color.z) + 0.5f)
-	};
-}
-
-// GLSL's mix for colors: each component of a taken t of the way toward b, the
-// fraction dropped.
-inline RETRO_Palette mix(RETRO_Palette a, RETRO_Palette b, float t)
-{
-	return { (unsigned char)mix(a.r, b.r, t), (unsigned char)mix(a.g, b.g, t), (unsigned char)mix(a.b, b.b, t) };
-}
-
-// GLSL's vector times scalar for colors: each component scaled by s, the
-// fraction dropped.
-inline RETRO_Palette operator*(RETRO_Palette color, float s)
-{
-	return { (unsigned char)(color.r * s), (unsigned char)(color.g * s), (unsigned char)(color.b * s) };
-}
-
-//
-// Fill [start, end) with a linear interpolation from one color toward another.
-// to is the color at end, which is not written, so the next ramp can start
-// there and write the knot as its from without both touching it. A last ramp
-// with end = RETRO_COLORS therefore leaves 255 one step short of to: that
-// index is off the palette. That is the range, not a missing write. The
-// components are interpolated on whatever scale they are given in, so there is
-// no colormax
-//
-//   C(i) = from + ((i - start) / (end - start)) * (to - from),  i ∈ [start, end)
-//
-inline void RETRO_CreateGradientPalette(int start, int end, RETRO_Palette from, RETRO_Palette to, RETRO_Palette *palette = NULL)
-{
-	int steps = end - start;
-
-	for (int i = 0; i < steps; i++) {
-		float k = (float)i / steps;
-
-		RETRO_SetColor(start + i, mix(from, to, k), palette);
-	}
 }
 
 //
@@ -716,7 +790,7 @@ inline unsigned char RETRO_NearestPaletteIndex(RETRO_Palette target, const RETRO
 //
 inline void RETRO_CreateColorLUT(const RETRO_Palette *palette, int cuberes, unsigned char *lut, int colors = RETRO_COLORS)
 {
-	int cell = RETRO_COLORS / cuberes;
+	int cell = 256 / cuberes; // levels of an 8-bit component in each cell
 
 	for (int r = 0; r < cuberes; r++) {
 		for (int g = 0; g < cuberes; g++) {
@@ -888,63 +962,6 @@ inline void RETRO_CreateHistogramPalette(const RETRO_ColorHistogram *histogram, 
 
 	free(weight);
 	free(color);
-}
-
-//
-// The palette the VGA BIOS leaves in the DAC in mode 13h: the 16 EGA colors,
-// 16 grays, then 216 entries walking hue, saturation and value, and 8 unused
-// entries left black. A demo that draws with the colors it finds there, rather
-// than setting a palette of its own, is drawing against this
-//
-// The BIOS holds 6-bit values, widened here to 8 bits. The grays and each
-// block's five levels are the BIOS's own, and follow no formula
-//
-inline void RETRO_CreateDefault8bitPalette(RETRO_Palette *palette = NULL)
-{
-	static const int Grays[16] = { 0, 5, 8, 11, 14, 17, 20, 24, 28, 32, 36, 40, 45, 50, 56, 63 };
-
-	// Each block's levels, from low to high: value 63, 28 and 16, each at
-	// full, middle and low saturation
-	static const int Levels[9][5] = {
-		{ 0, 16, 31, 47, 63 }, { 31, 39, 47, 55, 63 }, { 45, 49, 54, 58, 63 },
-		{ 0, 7, 14, 21, 28 }, { 14, 17, 21, 24, 28 }, { 20, 22, 24, 26, 28 },
-		{ 0, 4, 8, 12, 16 }, { 8, 10, 12, 14, 16 }, { 11, 12, 13, 15, 16 },
-	};
-
-	int color = 0;
-
-	// The EGA colors, bit 2 red, bit 1 green, bit 0 blue and bit 3 brighter.
-	// Color 6 is brown rather than dark yellow
-	for (int i = 0; i < 16; i++) {
-		int intensity = i & 8 ? 21 : 0;
-		int red = (i & 4 ? 42 : 0) + intensity;
-		int green = (i & 2 ? 42 : 0) + intensity;
-		int blue = (i & 1 ? 42 : 0) + intensity;
-		if (i == 6) {
-			green = 21;
-		}
-		RETRO_SetColor(color++, RETRO_DACColor(red, green, blue), palette);
-	}
-
-	for (int i = 0; i < 16; i++) {
-		RETRO_SetColor(color++, RETRO_DACColor(Grays[i], Grays[i], Grays[i]), palette);
-	}
-
-	// Round the hues from blue through red, yellow, green and cyan back to
-	// blue. Green steps 8 hues behind red and blue 8 ahead
-	for (int block = 0; block < 9; block++) {
-		const int *level = Levels[block];
-		for (int hue = 0; hue < 24; hue++) {
-			int red = level[RETRO_HueStep(hue)];
-			int green = level[RETRO_HueStep(hue - 8)];
-			int blue = level[RETRO_HueStep(hue + 8)];
-			RETRO_SetColor(color++, RETRO_DACColor(red, green, blue), palette);
-		}
-	}
-
-	while (color < RETRO_COLORS) {
-		RETRO_SetColor(color++, RETRO_BLACK, palette);
-	}
 }
 
 #endif

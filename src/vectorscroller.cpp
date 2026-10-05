@@ -123,7 +123,7 @@ static void BuildGlyph(Model3D *model, unsigned char character)
 
 	for (int py = 0; py < Font.height; py++) {
 		for (int px = 0; px < Font.width; px++) {
-			if (!RETRO_FontInk(Font, character, px, py)) {
+			if (!RETRO_FontTexel(Font, character, px, py)) {
 				continue;
 			}
 
@@ -143,16 +143,16 @@ static void BuildGlyph(Model3D *model, unsigned char character)
 
 			RETRO_AddModelQuad(model, v0, v1, v2, v3); // front, −z
 			RETRO_AddModelQuad(model, v4, v5, v6, v7); // back, +z
-			if (!RETRO_FontInk(Font, character, px, py + 1)) {
+			if (!RETRO_FontTexel(Font, character, px, py + 1)) {
 				RETRO_AddModelQuad(model, v7, v6, v1, v0); // down, +y
 			}
-			if (!RETRO_FontInk(Font, character, px, py - 1)) {
+			if (!RETRO_FontTexel(Font, character, px, py - 1)) {
 				RETRO_AddModelQuad(model, v3, v2, v5, v4); // up, −y
 			}
-			if (!RETRO_FontInk(Font, character, px - 1, py)) {
+			if (!RETRO_FontTexel(Font, character, px - 1, py)) {
 				RETRO_AddModelQuad(model, v0, v3, v4, v7); // left, −x
 			}
-			if (!RETRO_FontInk(Font, character, px + 1, py)) {
+			if (!RETRO_FontTexel(Font, character, px + 1, py)) {
 				RETRO_AddModelQuad(model, v1, v6, v5, v2); // right, +x
 			}
 		}

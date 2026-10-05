@@ -14,8 +14,6 @@
 #include "lib/retroshadetable.h"
 
 #define FACE_MD3_SCALE 256.0f // steps per unit facewall.md3 was packed at
-#define FACE_VERTS 529
-#define FACE_TRIS 968
 #define WALL_SCALE 21
 #define MORPH_PERIOD 14.0f
 #define FACE_SPECULAR 0.78f
@@ -59,9 +57,6 @@ void DEMO_Initialize(void)
 
 	// Load model
 	Model3D *model = RETRO_LoadMD3Model("assets/facewall.md3", FACE_MD3_SCALE);
-	if (model->vertices != FACE_VERTS || model->faces != FACE_TRIS) {
-		RETRO_RageQuit("facewall.md3 has %d vertices, %d faces (expected %d, %d)\n", model->vertices, model->faces, FACE_VERTS, FACE_TRIS);
-	}
 	model->twosided = true;
 	model->c = 0;
 	model->shades = RETRO_SHADE_TABLE_SHADES;

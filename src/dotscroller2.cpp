@@ -75,7 +75,7 @@ void DEMO_Render(double time, double deltatime)
 
 			int px = lround(x);
 			int py = lround(y);
-			if (px >= 0 && px < RETRO_WIDTH && py >= 0 && py < RETRO_HEIGHT) {
+			if (RETRO_OnScreen(px, py)) {
 				RETRO_PutPixel(px, py, color);
 			}
 		}

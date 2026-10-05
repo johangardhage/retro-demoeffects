@@ -139,7 +139,7 @@ void DEMO_FixedUpdate(double timestep)
 		int sy = RETRO_HEIGHT / 2.0 - scale * PointY;
 
 		// The reach is a bound on the orbit, not on the pixel it rounds to
-		if (sx >= 0 && sx < RETRO_WIDTH && sy >= 0 && sy < RETRO_HEIGHT) {
+		if (RETRO_OnScreen(sx, sy)) {
 			int offset = sy * RETRO_WIDTH + sx;
 			if (Landed[offset] == 0) {
 				reached++;

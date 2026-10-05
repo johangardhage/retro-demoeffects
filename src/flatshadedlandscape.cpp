@@ -103,10 +103,10 @@ static WorldVertex TerrainVertex(float x, float z, const RETRO_TerrainBasis &bas
 //
 static void DrawSun(const RETRO_TerrainBasis &basis)
 {
-	RETRO_TerrainOffset offset = RETRO_TerrainCameraOffset(RETRO_TerrainLight.x, RETRO_TerrainLight.z, basis);
-	if (offset.depth <= 0.0f) return;
+	RETRO_TerrainEye eye = RETRO_TerrainCameraEye(RETRO_TerrainLight, basis);
+	if (eye.depth <= 0.0f) return;
 
-	RETRO_TerrainPoint point = RETRO_ProjectTerrainOffset(offset, RETRO_Camera.height + RETRO_TerrainLight.y);
+	RETRO_TerrainPoint point = RETRO_ProjectTerrainView(eye);
 	for (int ring = 0; ring < LANDSCAPE_SUNRINGS; ring++) {
 		RETRO_DrawEllipse(point.spos.x, point.spos.y, SunRadius[ring], SunRadius[ring], SunColor[ring]);
 	}

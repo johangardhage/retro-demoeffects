@@ -69,11 +69,11 @@
 #define AMBIENT_LIGHT (100 / 256.0f)
 #define INFINITE_LIGHT (100 / 256.0f)
 #define POINT_LIGHT (255 / 256.0f)
-#define POINT_LIGHT_KL 0.001f // orange, attenuation per world unit
-#define POINT_LIGHT2_KL 0.002f // yellow
+#define POINT_LIGHT_ORANGE_KL 0.001f // attenuation per world unit
+#define POINT_LIGHT_YELLOW_KL 0.002f
 #define POINT_LIGHT_RATE radians(30) // radians a second round the world
-#define POINT_LIGHT_ORBIT WORLD(500) // orange, radius about the world's center
-#define POINT_LIGHT2_ORBIT WORLD(200) // yellow, twice as fast the other way
+#define POINT_LIGHT_ORANGE_ORBIT WORLD(500) // radius about the world's center
+#define POINT_LIGHT_YELLOW_ORBIT WORLD(200) // twice as fast the other way
 #define POINT_LIGHT_ALTITUDE WORLD(500)
 #define LIGHT_LEVELS 32 // neutral light, in the tables
 #define TINT_LEVELS 8 // and red and green beyond it
@@ -146,7 +146,7 @@ static unsigned char ColorBlack, ColorTextGreen, ColorWhite, ColorCubeRed, Color
 static Model3D *Models[MODELS];
 static const vec3 Sun = normalize(vec3{ 1, 1, -1 }); // the infinite light, toward it
 
-static const float PointLightKL[POINT_LIGHTS] = { POINT_LIGHT_KL, POINT_LIGHT2_KL };
+static const float PointLightKL[POINT_LIGHTS] = { POINT_LIGHT_ORANGE_KL, POINT_LIGHT_YELLOW_KL };
 static const float PointLightTint[POINT_LIGHTS][TINTS] = { { 1, 128 / 255.0f }, { 1, 1 } }; // orange, and yellow
 static vec3 PointLightPosition[POINT_LIGHTS];
 
@@ -171,15 +171,6 @@ static float PointLightTerm(vec3 p, vec3 n, vec3 light, float kl)
 	float distance = length(l);
 	if (distance <= 0) return 0;
 	return POINT_LIGHT * MAX(dot(n, l) / distance, 0.0f) / (kl * TO_WORLD(distance));
-}
-
-// A color under the light: the neutral level as the shade, and red and green
-// beyond it as the tints
-static RETRO_Palette Modulate(RETRO_Palette color, float neutral, const float *tint)
-{
-	float red = MIN(neutral + tint[TINT_RED], 1.0f);
-	float green = MIN(neutral + tint[TINT_GREEN], 1.0f);
-	return { (unsigned char)(color.r * red), (unsigned char)(color.g * green), (unsigned char)(color.b * neutral) };
 }
 
 // A point at p facing n, lit
@@ -353,7 +344,7 @@ static void DrawSky(double time)
 	const unsigned char *sky = RETRO_ImageData(ASSET_SKY);
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		const unsigned char *row = &sky[y * RETRO_WIDTH];
-		unsigned char *screen = &RETRO.framebuffer[y * RETRO_WIDTH];
+		unsigned char *screen = RETRO_FrameBuffer() + y * RETRO_WIDTH;
 		memcpy(screen, row + scroll, RETRO_WIDTH - scroll);
 		memcpy(screen + RETRO_WIDTH - scroll, row, scroll);
 	}
@@ -423,8 +414,8 @@ void DEMO_Render(double time, double deltatime)
 	// The point lights on their paths about the world's center
 	vec3 center = RETRO_TerrainCenter();
 	float angle = fmod(time * POINT_LIGHT_RATE, 2 * M_PI);
-	PointLightPosition[LIGHT_ORANGE] = { center.x - POINT_LIGHT_ORBIT * cosf(angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_ORBIT * sinf(angle) };
-	PointLightPosition[LIGHT_YELLOW] = { center.x - POINT_LIGHT2_ORBIT * cosf(-2 * angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT2_ORBIT * sinf(-2 * angle) };
+	PointLightPosition[LIGHT_ORANGE] = { center.x - POINT_LIGHT_ORANGE_ORBIT * cosf(angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_ORANGE_ORBIT * sinf(angle) };
+	PointLightPosition[LIGHT_YELLOW] = { center.x - POINT_LIGHT_YELLOW_ORBIT * cosf(-2 * angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_YELLOW_ORBIT * sinf(-2 * angle) };
 
 	// The mechs, side by side at the world's center
 	PoseRobot(time - animationstart);
@@ -486,7 +477,7 @@ void DEMO_Initialize(void)
 
 	// A light table per texture, from its own colors to the screen's
 	for (int texture = ASSET_TERRAIN; texture < ASSET_TERRAIN + TEXTURES; texture++) {
-		RETRO_CreateShadeTable(RETRO_ImagePalette(texture), palette, LightTable(texture), Modulate);
+		RETRO_CreateShadeTable(RETRO_ImagePalette(texture), palette, LightTable(texture), RETRO_TintColor);
 	}
 
 	// Every entry, since the shadow plane reaches past the ground's edge,

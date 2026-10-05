@@ -8,9 +8,6 @@
 #define _RETRO_H_
 
 #include <SDL3/SDL.h>
-#include <getopt.h> // getopt_long
-#include <libgen.h> // basename
-#include <limits.h> // INT_MAX
 #include <math.h> // cos, sin, pow
 #include <stdarg.h> // va_list, vprintf
 #include <stdio.h> // FILE
@@ -51,7 +48,6 @@ void __attribute__((weak)) DEMO_Render2(double time, double deltatime);
 // Private dynamic functions
 // *******************************************************************
 
-void __attribute__((weak)) RETRO_Initialize_3D(void);
 void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 
 // *******************************************************************
@@ -217,15 +213,6 @@ inline RETRO_Palette RETRO_GetColor(int color)
 	return palette;
 }
 
-inline RETRO_Palette RETRO_Get6bitColor(int color)
-{
-	RETRO_Palette palette;
-	palette.r = ((RETRO.palette[color] >> 16) & 0xff) >> 2;
-	palette.g = ((RETRO.palette[color] >> 8) & 0xff) >> 2;
-	palette.b = ((RETRO.palette[color]) & 0xff) >> 2;
-	return palette;
-}
-
 //
 // An 8-bit color on the 6-bit scale the VGA DAC works in. RETRO_Palette carries
 // its components raw, so which scale one is on is the caller's to keep track
@@ -237,11 +224,12 @@ inline RETRO_Palette RETRO_Get6bitColor(int color)
 //
 inline RETRO_Palette RETRO_To6bitColor(RETRO_Palette color)
 {
-	RETRO_Palette palette;
-	palette.r = color.r >> 2;
-	palette.g = color.g >> 2;
-	palette.b = color.b >> 2;
-	return palette;
+	return { (unsigned char)(color.r >> 2), (unsigned char)(color.g >> 2), (unsigned char)(color.b >> 2) };
+}
+
+inline RETRO_Palette RETRO_Get6bitColor(int color)
+{
+	return RETRO_To6bitColor(RETRO_GetColor(color));
 }
 
 inline void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b)
@@ -265,10 +253,7 @@ inline void RETRO_SetColor(int index, RETRO_Palette color, RETRO_Palette *buffer
 
 inline void RETRO_Set6bitColor(int color, unsigned char r, unsigned char g, unsigned char b)
 {
-	r = (r & 63) << 2;
-	g = (g & 63) << 2;
-	b = (b & 63) << 2;
-	RETRO.palette[color] = 0xff000000 | (r << 16) | (g << 8) | (b);
+	RETRO_SetColor(color, (r & 63) << 2, (g & 63) << 2, (b & 63) << 2);
 }
 
 inline void RETRO_SetPalette(const RETRO_Palette *palette, int colors = RETRO_COLORS)
@@ -285,14 +270,26 @@ inline void RETRO_Set6bitPalette(const RETRO_Palette *palette, int colors = RETR
 	}
 }
 
+// Whether a pixel lies on a width × height screen. The float form compares before
+// any truncation, so a position just left of or above the screen stays off it.
+inline bool RETRO_OnScreen(int x, int y, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+{
+	return x >= 0 && x < width && y >= 0 && y < height;
+}
+
+inline bool RETRO_OnScreen(float x, float y, int width = RETRO_WIDTH, int height = RETRO_HEIGHT)
+{
+	return x >= 0 && x < width && y >= 0 && y < height;
+}
+
 //
 // Plot and read a pixel, unclipped. A caller that can leave the screen has to
-// say so itself. Building with -DRETRO_DEBUG_BOUNDS aborts at the offending
-// call instead; off by default, so the release path keeps no test.
+// say so itself, with RETRO_OnScreen. Building with -DRETRO_DEBUG_BOUNDS aborts
+// at the offending call instead; off by default, so the release path keeps no test.
 //
 #ifdef RETRO_DEBUG_BOUNDS
 #include <assert.h>
-#define RETRO_ASSERT_PIXEL(x, y) assert((x) >= 0 && (x) < RETRO_WIDTH && (y) >= 0 && (y) < RETRO_HEIGHT)
+#define RETRO_ASSERT_PIXEL(x, y) assert(RETRO_OnScreen((x), (y)))
 #else
 #define RETRO_ASSERT_PIXEL(x, y) ((void)0)
 #endif
@@ -389,11 +386,13 @@ inline RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = fals
 	int ymin = (header[6] + (header[7] << 8));
 	int xmax = (header[8] + (header[9] << 8));
 	int ymax = (header[10] + (header[11] << 8));
+	int bytesperline = (header[66] + (header[67] << 8));
 
-	// Calculate the size of image
+	// Calculate the size of image. A row is stored bytesperline long, which
+	// the format keeps even, so an odd width carries a byte of padding
 	image->width = xmax - xmin + 1;
 	image->height = ymax - ymin + 1;
-	if (image->width <= 0 || image->height <= 0) {
+	if (image->width <= 0 || image->height <= 0 || bytesperline < image->width) {
 		RETRO_RageQuit("Invalid image dimensions in file: %s\n", filename);
 	}
 
@@ -405,24 +404,29 @@ inline RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = fals
 		RETRO_RageQuit("Cannot allocate image data memory\n");
 	}
 
-	// Unpack image
+	// Unpack image, every stored row and its padding, keeping the first width
+	// bytes of each
+	size_t stored = (size_t)bytesperline * (size_t)image->height;
 	size_t index = 0;
-	while (index < size) {
+	while (index < stored) {
 		int data = getc(fp);
 		if (data == EOF) {
 			RETRO_RageQuit("Cannot read file: %s\n", filename);
 		}
-		if (data < 192) {
-			image->data[index++] = data;
-		} else {
-			int num = data - 192;
+		int num = 1;
+		if (data >= 192) {
+			num = data - 192;
 			data = getc(fp);
 			if (data == EOF) {
 				RETRO_RageQuit("Cannot read file: %s\n", filename);
 			}
-			while (num-- > 0 && index < size) {
-				image->data[index++] = data;
+		}
+		while (num-- > 0 && index < stored) {
+			size_t x = index % bytesperline;
+			if (x < (size_t)image->width) {
+				image->data[index / bytesperline * image->width + x] = data;
 			}
+			index++;
 		}
 	}
 
@@ -489,6 +493,24 @@ inline void RETRO_DumpFrame(const char *filename)
 	fclose(fp);
 }
 
+// The window's title: the demo's name, and its frame rate once one is counted
+inline const char *RETRO_WindowTitle(int fps = 0)
+{
+	static char title[128];
+	if (fps > 0) {
+		snprintf(title, sizeof(title), "RETRO - %s - FPS: %d", RETRO.basename, fps);
+	} else {
+		snprintf(title, sizeof(title), "RETRO - %s", RETRO.basename);
+	}
+	return title;
+}
+
+inline void RETRO_SetVSync(bool state = true)
+{
+	SDL_SetRenderVSync(RETRO.renderer, state ? 1 : SDL_RENDERER_VSYNC_DISABLED);
+	RETRO.vsync = state;
+}
+
 inline void RETRO_Initialize(void)
 {
 	// --dumpfile never shows a window; render on the dummy driver instead of the real display.
@@ -528,12 +550,8 @@ inline void RETRO_Initialize(void)
 		window_flags |= SDL_WINDOW_BORDERLESS;
 	}
 
-	// Create window title
-	char title[128];
-	snprintf(title, 128, "RETRO - %s", RETRO.basename);
-
 	// Create window
-	RETRO.window = SDL_CreateWindow(title, window_width, window_height, window_flags);
+	RETRO.window = SDL_CreateWindow(RETRO_WindowTitle(), window_width, window_height, window_flags);
 	if (RETRO.window == NULL) {
 		RETRO_RageQuit("SDL_CreateWindow failed: %s\n", SDL_GetError());
 	}
@@ -543,7 +561,7 @@ inline void RETRO_Initialize(void)
 	if (RETRO.renderer == NULL) {
 		RETRO_RageQuit("SDL_CreateRenderer failed: %s\n", SDL_GetError());
 	}
-	SDL_SetRenderVSync(RETRO.renderer, RETRO.vsync ? 1 : SDL_RENDERER_VSYNC_DISABLED);
+	RETRO_SetVSync(RETRO.vsync);
 
 	// Stretch screen
 	if (RETRO.stretch == false) {
@@ -600,8 +618,6 @@ inline void RETRO_Initialize(void)
 	// Initialize random number generator. --dumpfile uses a fixed seed, so the same
 	// dumptime always writes the same picture.
 	srand(RETRO.dumpfile ? 1 : time(NULL));
-
-	if (RETRO_Initialize_3D) RETRO_Initialize_3D();
 }
 
 inline void RETRO_Deinitialize(void)
@@ -622,25 +638,34 @@ inline void RETRO_Deinitialize(void)
 	SDL_Quit();
 }
 
-inline void RETRO_SetVSync(bool state = true)
-{
-	SDL_SetRenderVSync(RETRO.renderer, state ? 1 : SDL_RENDERER_VSYNC_DISABLED);
-	RETRO.vsync = state;
-}
-
 // --dumpfile steps the clock by a fixed RETRO_SIMULATION_STEP a frame instead of reading it,
 // so the frame it writes does not depend on how fast the machine renders.
+//
+// Otherwise a frame's time is the mean of the last few frames' durations. A
+// frame that misses the display, and the one handed over early behind it,
+// measure unevenly - 33 ms then 1 ms for two frames shown a refresh apart -
+// and a demo moving by them would jerk. The mean spreads that over a few
+// frames and loses none of it: over a run the means add up to the same time.
 inline double RETRO_DeltaTime(void)
 {
 	if (RETRO.dumpfile) return RETRO_SIMULATION_STEP;
 
+	const int frames = 8;
+	static double duration[frames] = {};
+	static int frame = 0;
 	static unsigned long int now = SDL_GetPerformanceCounter();
 	static unsigned long int old = 0;
 
 	old = now;
 	now = SDL_GetPerformanceCounter();
+	duration[frame] = (double)(now - old) / SDL_GetPerformanceFrequency();
+	frame = (frame + 1) % frames;
 
-	return (double)(now - old) / SDL_GetPerformanceFrequency();
+	double sum = 0;
+	for (double d : duration) {
+		sum += d;
+	}
+	return sum / frames;
 }
 
 inline bool RETRO_KeyState(SDL_Scancode key)
@@ -713,8 +738,10 @@ inline void RETRO_Mainloop(void)
 	while (!RETRO_QuitRequested()) {
 		double deltatime = RETRO_DeltaTime();
 
-		// Check events
+		// Check events. Paused, nothing is drawn or flipped, so nothing waits
+		// on the display either; the delay keeps the loop from spinning
 		if (RETRO_KeyState(SDL_SCANCODE_SPACE)) {
+			SDL_Delay(10);
 			continue;
 		}
 
@@ -765,9 +792,7 @@ inline void RETRO_Mainloop(void)
 			static unsigned long int fpsticks = SDL_GetTicks();
 			static int fpscount = 0;
 			if (fpsticks < SDL_GetTicks() - 1000UL) {
-				char title[128];
-				snprintf(title, 128, "RETRO - %s - FPS: %d", RETRO.basename, fpscount);
-				SDL_SetWindowTitle(RETRO.window, title);
+				SDL_SetWindowTitle(RETRO.window, RETRO_WindowTitle(fpscount));
 				fpsticks = SDL_GetTicks();
 				fpscount = 0;
 			}

@@ -76,7 +76,7 @@ void DEMO_Render(double time, double deltatime)
 		int x = Morph[i].spos.x;
 		int y = Morph[i].spos.y;
 
-		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+		if (RETRO_OnScreen(x, y)) {
 			unsigned char color = CLAMP256((RETRO_COLORS - 1) * (furthest - Morph[i].rpos.z) / (2 * furthest));
 
 			if (color > RETRO_GetPixel(x, y)) {

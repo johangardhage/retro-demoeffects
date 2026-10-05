@@ -53,7 +53,7 @@ void DEMO_Render(double time, double deltatime)
 		int x = Stars[i].spos.x;
 		int y = Stars[i].spos.y;
 
-		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+		if (RETRO_OnScreen(x, y)) {
 			int color = (furthest - Stars[i].rpos.z) * (SHADES - 1) / (furthest - STAR_NEAREST);
 
 			RETRO_PutPixel(x, y, color);

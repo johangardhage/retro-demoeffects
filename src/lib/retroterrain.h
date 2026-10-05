@@ -1,33 +1,17 @@
 //
 // Retro terrain library
 //
-// A height field, the lens it is looked through, and the two looks the
-// effects here take of it. The map and the lens are the same either way;
-// what differs is how the camera stands and how a point on the ground
-// reaches the screen.
+// A height field, the lens it is looked through, and two ways of standing
+// over it. World x runs across the map, z along it, and height is up.
 //
-// World x runs across the map, z along it, and height is up. A stored
-// height is a byte; scale is the world units that byte is worth.
-//
-// RETRO_Terrain is the map: two planes of bytes, their size, whether the
-// edges wrap, and that scale. RETRO_TerrainView is the lens, and also how
-// finely and how far the ground is paid for. A point in the camera's own
-// frame is RETRO_TerrainEye - right, up, forward - and
-// RETRO_ProjectTerrainView is the pinhole. Both looks produce an Eye;
-// neither writes the pinhole again.
-//
-// The wrapping look is a yaw and a horizon. RETRO_Camera walks the torus.
-// RETRO_TerrainHeadingBasis turns a heading into forward and right;
-// RETRO_TerrainCameraOffset is that turn read back, still on the ground,
-// so a wedge can throw a cell out before its height is read. Voxel columns
-// take a frustum slice at each depth instead of a pinhole. PageUp slides
-// the horizon, which tilts the picture without pitching the camera, so
-// those columns still work.
-//
-// The island look is a finite patch on a turntable, seen from outside and
-// pitched down. RETRO_Island is the pose; RETRO_TerrainIslandFrame is that
-// pose taken once per draw. RETRO_TerrainIslandEye is the turntable and
-// the pitch. Left and Right turn the patch, not the camera.
+//   The map      RETRO_Terrain: two planes of bytes, read nearest, filtered
+//                or on the drawn triangles, lit by RETRO_TerrainLight
+//   The lens     RETRO_TerrainView and the pinhole every look ends in: a point
+//                in the camera's frame (RETRO_TerrainEye) onto the screen
+//   Wrapping     RETRO_Camera: a yaw over a torus, flown at a fixed speed or
+//                as RETRO_Vehicle, drawn as a mesh, as dots or as columns
+//   Island       RETRO_Island: a finite patch on a turntable, seen from
+//                outside and pitched down
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -44,34 +28,26 @@
 // have. Clipping adds at most one more.
 #define RETRO_TERRAIN_MAX_POLYGON 32
 
-// How far the wrapping look draws, in map cells. A wide view has to reach
-// this far to fill itself: it flattens the hills that used to hide where
-// the ground stops, so the draw distance goes from a cost nobody sees to
-// an edge against the sky.
+// How far the wrapping look draws, in map cells. The wide lens flattens the
+// hills, so nothing hides where the ground stops: this has to reach far
+// enough to meet the sky.
 #define RETRO_TERRAIN_DISTANCE 800
 
-//
+// *******************************************************************
 // The map
+// *******************************************************************
+
 //
-// Two planes of bytes and the size they are read at. It points at them
-// rather than copying them, so a map loaded from a file and one the effect
-// built for itself are described the same way and neither is moved to get
-// here. The planes and not the images they came from: what the sampling
-// wants is the bytes, and reaching them through an image every time is a
-// lookup in a list to arrive somewhere fixed. Naming them also leaves
-// nothing positional to get wrong - which map is which is said outright,
-// instead of following from the order two loads happened to run in.
+// The current terrain
 //
-// wrap is what the edges do. A wrapping map is a torus, which is what lets
-// a camera travel in one direction forever. A finite patch has a last cell,
-// and a sample past it is that cell, not the other side of the island.
+// It points at the planes rather than copying them, so a loaded map and one
+// an effect built for itself are described the same way. width and height
+// are the map in cells across x and along z; a stored height is a byte, and
+// scale is the world units that byte is worth.
 //
-// width and height are the map in cells, across x and along z. Camera
-// height is something else: altitude above the map's zero.
-//
-// Only one terrain is described at a time. An effect that wants a second
-// map reads it itself; what is here is the sampling every effect over a
-// height field repeats.
+// A wrapping map is a torus, which lets a camera travel one way forever. A
+// finite patch has a last cell, and a sample past it is that cell, not the
+// other side of the map.
 //
 inline struct {
 	unsigned char *heightmap = NULL;	// One byte of altitude per cell
@@ -83,271 +59,16 @@ inline struct {
 } RETRO_Terrain;
 
 //
-// The lens, and how the ground is paid for
-//
-// One screen, so one of these. The lens is the focals and the horizon: they
-// are what RETRO_ProjectTerrainView reads. step and distance are draw policy,
-// not a lens: they say how finely and how far a mesh or a column walk spends
-// itself. How wide a cell may sit, in side per depth, and still be kept is
-// derived from the lens, not stored beside it. horizonspeed is input, and
-// lives here because it moves the lens.
-//
-// The defaults are the wrapping look: wide, near enough a right angle across,
-// and taller than it is wide. The pixels are square - the window letterboxes
-// a 320x240 framebuffer - so a shorter vertical focal is not an aspect
-// correction. It is a taller view: about a hundred degrees down against
-// ninety across, which flattens the hills and puts more ground below the
-// horizon. The focal lengths are what decide how fast walking feels, more
-// than the speed does: a narrow view shows little of the ground streaming
-// past, so the same cells per second read as a trudge through one and a run
-// through the other. The island look writes its own, longer: the patch is
-// small and the camera is close, and a wide angle would show mostly the
-// ground between here and there.
-//
-// Sliding the horizon tilts the picture without pitching the camera. That is
-// what PageUp does for the wrapping look, and why voxel columns can still
-// treat each screen row as a constant-depth slice of the ground. A real
-// pitch is the island's, and is on RETRO_Island, not here.
-//
-inline struct {
-	int step = 6;										// Mesh spacing, in map cells. Draw policy
-	int distance = RETRO_TERRAIN_DISTANCE;				// How far the wrapping look draws, in map cells
-	float nearplane = 3.0f;								// Nearest depth worth drawing
-	float focalx = RETRO_WIDTH * 0.5f;					// Focal length across, half the width for a 90 degree view
-	float focaly = RETRO_HEIGHT * 0.42f;				// and down: shorter, so the view is taller than it is wide
-	float horizon = RETRO_HEIGHT * 0.43f;				// Where eye level lands on the screen
-	float horizonspeed = 90.0f;							// PageUp/PageDown, screen rows per second
-} RETRO_TerrainView;
-
-//
-// A projected point on the screen
-//
-// q is 1/depth, which is what a mesh interpolates across a face so
-// perspective stays correct. Larger q is nearer. A point at or behind the
-// eye comes back with q at or below zero for the caller to drop.
-//
-struct RETRO_TerrainPoint {
-	vec2 spos;
-	float q;
-};
-
-//
 // The sun the ground is lit by
 //
-// A direction toward the light, not necessarily unit: Shade divides the length
-// out, the way it does the normal's. The elevation is what decides how much of
-// a ramp the ground can reach: a sun overhead lights every gentle slope alike,
-// and a height field is mostly gentle slopes, so the shading collapses onto the
-// bright end. This one stands about forty degrees up, far enough off vertical
-// to tell a slope facing it from one turned away. A future edit of the
-// direction therefore cannot silently rescale the whole ramp.
+// A direction toward the light, not necessarily unit: RETRO_TerrainShade
+// divides the length out. About forty degrees up, far enough off vertical
+// to tell a slope facing it from one turned away; a sun overhead lights
+// every gentle slope alike.
 //
 inline vec3 RETRO_TerrainLight = { -0.50f, 0.62f, -0.60f };
 
-//
-// Which way a heading faces, and which way is its right
-//
-// The pair is the view frame every renderer starts from - right +x, forward -z -
-// turned by the heading about the upright axis:
-//
-//   R(h) . (-z) = (-sin h, -cos h)   forward
-//   R(h) . (+x) = ( cos h, -sin h)   right
-//
-// so a heading is an ordinary right-handed yaw and zero looks along decreasing
-// map z. Everything below that works in camera terms is this turn or its
-// inverse. It is written here once because it is the kind of thing that fails
-// quietly: a sign the wrong way round mirrors the world, and a mirrored world
-// renders perfectly and steers backward.
-//
-struct RETRO_TerrainBasis {
-	vec2 forward;	// Where the heading looks, on the ground (x, z)
-	vec2 right;		// and its right, so a heading is a view frame
-};
-
-//
-// The wrapping frustum on the ground at unit depth
-//
-// Voxel columns are not a pinhole. At depth z the lens meets the ground in
-// a segment whose ends are z times these two points. Scale by z for the
-// slice at that depth; the column walks do that and nothing else with them.
-//
-struct RETRO_TerrainSlice {
-	vec2 left;
-	vec2 right;
-};
-
-//
-// A ground offset in the wrapping camera's own terms
-//
-// The yaw read the other way: how far to the right of the camera the offset
-// lies, and how far in front. Altitude is not mixed in - a yaw leaves height
-// alone - so a wedge test can throw a cell out before its height is read.
-// Behind the eye comes back as a negative depth rather than being folded
-// round to a positive one. The island look has no equivalent: its pitch
-// mixes altitude into depth, so the camera-space point is an Eye from the
-// start.
-//
-struct RETRO_TerrainOffset {
-	float side, depth;
-};
-
-//
-// A point in the camera's own frame
-//
-// side is right of the eye, height is up, depth is forward. Both looks
-// produce one of these and the pinhole reads nothing else.
-//
-// Wrapping arrives from a yaw: side and depth are the ground Offset turned
-// by the heading, height is the world altitude minus the eye. The island
-// arrives from a turntable and a pitch, which mix altitude into depth, so
-// a peak in front of the camera is nearer than the ground under it.
-//
-struct RETRO_TerrainEye {
-	float side, height, depth;
-};
-
-//
-// The wrapping look: a yaw, a horizon, and a ride that follows the ground
-//
-// The pose is what an effect reads; the rest is how it is flown, and is
-// here so that driving it is one call. This camera turns. The island look
-// is RETRO_Island, which does not: the patch turns under it.
-//
-// The defaults are for the 1024-cell maps the effects here fly over: fast
-// enough to cross one in about a quarter of a minute, and riding high
-// enough to see over a ridge without losing the ground. An effect over a
-// map of a different size sets its own, since what matters is how long the
-// map takes to cross and that follows from how many cells it has.
-//
-struct RETRO_TerrainCamera {
-	float x = 0;				// Position in map cells, wrapping with the map
-	float z = 0;
-	float height = 0;			// Above the map's zero, in world units
-	float heading = 0;			// Radians, kept in [0, 2pi)
-	bool flycam = false;		// Free flight rather than following the ground
-
-	float movespeed = 66.0f;	// Cells per second
-	float turnspeed = 1.2f;		// Radians per second
-	float flyspeed = 30.0f;		// World units per second, and only in flycam
-	float eye = 49.0f;			// Ride height above the ground
-	float clearance = 10.0f;	// Closest to the ground the eye may come
-	float follow = 0.10f;		// Seconds the ride height takes to close most of a step
-};
-
-//
-// The wrapping camera
-//
-// An effect flying one wrapping camera never has to name it, the way the
-// terrain and the lens are not named either.
-//
-inline RETRO_TerrainCamera RETRO_Camera;
-
-//
-// A hovering vehicle to drive the wrapping camera with
-//
-// The other way to fly RETRO_Camera: with momentum rather than at a fixed
-// speed. Up/Down accelerate, friction brings it to rest, and gravity pulls
-// the eye down until the ground beneath, taken over the whole cell it is
-// over, pushes it back up and lifts the nose. The nose settles back to its
-// resting pitch, and the pitch is shown by moving the horizon.
-//
-// Speeds are in map cells and radians a second. A negative turn speed turns
-// the other way, for a world drawn mirrored.
-//
-struct RETRO_TerrainVehicle {
-	float acceleration = 100.0f;	// Speed gained each second a key is held
-	float friction = 25.0f;			// Speed lost each second
-	float maxspeed = 66.0f;
-	float turnspeed = 1.2f;
-	float gravity = 40.0f;			// Climb lost each second
-	float spring = 22.5f;			// Climb gained each second, per unit of ground above the clearance
-	float lift = 10.7f;				// Rate the eye is pushed out of the ground
-	float clearance = 49.0f;		// Height the eye rides above the ground
-	float floor = 0.0f;				// Lowest the eye can go, on or off the terrain
-	float restpitch = 0.17f;		// Radians the nose rests at, looking down
-	float pitchkick = 0.01f;		// Raised each second, per unit of ground above the clearance
-	float pitchreturn = 0.17f;		// Radians a second, back toward rest
-
-	float speed = 0;				// Forward, now
-	float climb = 0;				// Upward
-	float pitch = 0.17f;			// Looking down when positive
-};
-
-inline RETRO_TerrainVehicle RETRO_Vehicle;
-
-//
-// The wrapping mesh walk
-//
-// Drawing a height field as a mesh is the same walk whatever is painted on
-// it: the cells within the draw distance, stepped at the mesh spacing, minus
-// the ones too far, behind the eye, or off to the side. What an effect does
-// with a cell begins at its four corners, so the walk stops short of them
-// and hands back only what deciding a cell needs. The island look has no
-// mesh walk: it is a finite patch drawn as dots.
-//
-// The heading is taken once here rather than per cell, and the draw distance
-// is kept in the form the test wants it in: squared, so a cell can be measured
-// against it without taking a root.
-//
-struct RETRO_TerrainMesh {
-	int step;					// Mesh spacing, in map cells
-	int minx, maxx;				// The cells to walk, snapped to the spacing
-	int minz, maxz;
-	RETRO_TerrainBasis basis;	// The camera's heading, turned once
-	float distance2;			// Draw distance squared
-};
-
-//
-// The island look: a finite patch on a turntable, seen from outside
-//
-// The camera looks along decreasing z and does not turn; the patch turns
-// under it. Left and Right are that turn. Up and Down dolly along the
-// viewing axis, between stops that keep the patch in frame: this landscape
-// has edges, and the camera is not allowed past them.
-//
-// pitch is how far it looks down, so the island fills the frame rather
-// than sitting as a ridge on the horizon. That is a real rotation of the
-// view, not a slide of RETRO_TerrainView.horizon. The pose is this; the
-// turn taken once per draw is RETRO_TerrainIslandFrame, the way a heading's
-// basis is taken once for the wrapping look.
-//
-struct RETRO_TerrainIsland {
-	float x = 0;				// Look-from, looking toward decreasing z
-	float z = 0;
-	float height = 0;			// Above the map's zero, in world units
-	float pitch = 0.70f;		// Radians down from the horizon
-	float rotation = 0;			// The patch's turn about its center, radians
-	float movespeed = 24.0f;
-	float turnspeed = 1.35f;
-	float nearestz = 0;			// Dolly stops, from the circumcircle and the far side
-	float farthestz = 0;
-};
-
-//
-// The island look taken once
-//
-// The wrapping equivalent is RETRO_TerrainBasis: a heading turned once so
-// every sample does not turn it again. The pose is RETRO_Island; this is
-// that pose as a frame - the patch center, and the sincos of pitch and
-// rotation.
-//
-struct RETRO_TerrainIslandFrame {
-	float centerx, centerz;		// Patch center, the axis the turntable spins about
-	float sinpitch, cospitch;
-	float sinrot, cosrot;
-};
-
-//
-// The island camera
-//
-// An effect looking at one patch never has to name it. RETRO_LookDownAtTerrain
-// stands this pose and writes the lens to match; RETRO_UpdateTerrainIsland
-// drives it.
-//
-inline RETRO_TerrainIsland RETRO_Island;
-
-// Point the sampling at these planes. wrap false is a finite patch: a
-// sample past the edge is the last cell, not the other side of the map.
+// Point the sampling at these planes. wrap false is a finite patch.
 inline void RETRO_SetTerrain(int width, int height, float scale, unsigned char *heightmap, unsigned char *colormap, bool wrap = true)
 {
 	RETRO_Terrain.width = width;
@@ -361,23 +82,16 @@ inline void RETRO_SetTerrain(int width, int height, float scale, unsigned char *
 //
 // Load both maps and describe the terrain they make
 //
-// Which image holds which map is the sampling's own business, so the loads
-// belong with it: taken apart, a caller loading them the other way round would
-// read color as altitude and nothing would say so.
+// The size is taken from the images, never asked for, and the two must
+// agree: a size the file does not have would read every row at the wrong
+// stride, and nothing downstream could tell.
 //
-// How many cells the map has is the map's own business too, and is taken from
-// the image rather than asked for. A caller cannot then name a size the file
-// does not have, which is a mistake nothing downstream could catch: every
-// sample would be read at the wrong stride, off the end of a smaller map.
+// The heights are the height map's palette indices, not its colors, so its
+// palette has to rise with the index: gray, darkest first. A converter that
+// reorders the palette leaves a file that loads and draws but scrambles
+// every height, so that is refused.
 //
-// The two files have to agree on that size. It is taken from the height map,
-// and the color plane is then indexed with that stride: a smaller color map
-// would be read off the end, and nothing downstream would say so.
-//
-// The scale defaults to leaving the stored byte as the world height, which is
-// what an effect wants when it reads the map itself rather than through the
-// height calls here, and there is no scale for it to disagree with. The map
-// wraps: a file is a torus until a caller says otherwise.
+// The default scale leaves a stored byte as the world height.
 //
 inline void RETRO_LoadTerrain(const char *colorfile, const char *heightfile, float scale = 1.0f, bool wrap = true)
 {
@@ -385,6 +99,12 @@ inline void RETRO_LoadTerrain(const char *colorfile, const char *heightfile, flo
 	RETRO_Image *heightmap = RETRO_LoadImage(heightfile);
 	if (colormap->width != heightmap->width || colormap->height != heightmap->height) {
 		RETRO_RageQuit("Terrain color and height maps must be the same size\n");
+	}
+	for (int i = 0; i < RETRO_COLORS; i++) {
+		RETRO_Palette c = heightmap->palette[i];
+		if (c.r != c.g || c.g != c.b || (i > 0 && c.r < heightmap->palette[i - 1].r)) {
+			RETRO_RageQuit("%s: a height map's palette must be gray, darkest first\n", heightfile);
+		}
 	}
 	RETRO_SetTerrain(heightmap->width, heightmap->height, scale, heightmap->data, colormap->data, wrap);
 }
@@ -396,67 +116,9 @@ inline vec3 RETRO_TerrainCenter(void)
 	return { (RETRO_Terrain.width - 1) * 0.5f, 0, (RETRO_Terrain.height - 1) * 0.5f };
 }
 
-// tan of half the view: a point at this side-per-depth sits on the screen
-// edge. The voxel slice half-width at depth z is z times this, so the
-// column walk and the wrapping pinhole share one number. After LookDown
-// the island lens is narrower, and this answers for that lens instead.
-inline float RETRO_TerrainViewHalfSlope(void)
-{
-	return (RETRO_WIDTH * 0.5f) / RETRO_TerrainView.focalx;
-}
-
-// How wide a cell may sit, in side per depth, and still be kept: five
-// percent wider than the lens, so a sample on the edge is projected
-// rather than thrown out before it is. Derived from the focals, so a
-// change of lens - LookDown's, or a caller writing focalx - is this
-// number too, and not a copy that would go stale beside it.
-inline float RETRO_TerrainViewCullSlope(void)
-{
-	return RETRO_TerrainViewHalfSlope() * 1.05f;
-}
-
-//
-// Whether a sample at this distance survives thinning
-//
-// Points drawn over a wide area crowd near the eye and thin out with distance
-// on their own; keeping every one of them wastes most of the work on samples
-// that land on a pixel already covered. Hashing the cell rather than counting
-// gives each one the same answer wherever the camera stands, so the pattern is
-// anchored to the ground and does not swim, and the density falls smoothly
-// enough that no ring marks where it changed.
-//
-// A wrapping map hashes the cell on the torus, not the collector's unwrapped
-// loop coordinate. The camera itself wraps each frame, and without that fold
-// the scan range would jump by a map width at the seam and every cell would
-// be re-addressed. The same ground behind the camera and a map-width ahead -
-// both in view on a torus whose draw distance is most of its size - would
-// also carry two patterns at once.
-//
-// The distance is taken squared. It only ever appears squared here, so asking
-// for the root would be asking the caller to undo a step it had already done:
-// the falloff is squared once instead, and no sample pays for one.
-//
-inline bool RETRO_KeepTerrainDot(int x, int z, float distance2, float falloff = 110.0f)
-{
-	if (RETRO_Terrain.wrap) {
-		x = WRAP(x, RETRO_Terrain.width);
-		z = WRAP(z, RETRO_Terrain.height);
-	}
-	float random = RETRO_HashUnit(x, z);
-	float density = 1.0f / (1.0f + distance2 / (falloff * falloff));
-	return random < density;
-}
-
-//
-// Whether a per-pixel wrap can be a mask
-//
-// Wrapping a coordinate is a mask when the map wraps and both sides are
-// powers of two, and a division when they are not, and an effect wrapping
-// one per pixel cares which. Asking here rather than writing the map's size
-// out as a constant is the difference between an effect that takes its sizes
-// from the image and one that has been told what they will be: swap the
-// asset and this answers for the new one, or says no.
-//
+// Whether wrapping a coordinate can be a mask: the map wraps and both sides
+// are powers of two. Asked of the loaded map, so swapping the asset answers
+// for the new one.
 inline bool RETRO_TerrainWrapsByMask(void)
 {
 	int width = RETRO_Terrain.width;
@@ -465,50 +127,164 @@ inline bool RETRO_TerrainWrapsByMask(void)
 	return RETRO_Terrain.wrap && width > 0 && (width & (width - 1)) == 0 && height > 0 && (height & (height - 1)) == 0;
 }
 
-// The stored cell under (x, z), unscaled. A wrapping map takes any
-// coordinate as a cell; a finite one holds a sample past the edge on the
-// last cell. Nearest, not filtered: HeightLinear is the continuous read.
-inline int RETRO_TerrainIndex(float x, float z)
+// A coordinate folded onto a side of size cells the way the map does: wrapped
+// on a torus, held on the last cell of a finite patch.
+inline int RETRO_TerrainFold(int n, int size)
 {
-	int width = RETRO_Terrain.width;
-	int height = RETRO_Terrain.height;
-	if (RETRO_Terrain.wrap) {
-		return WRAP(z, height) * width + WRAP(x, width);
-	}
-	return CLAMP(z, 0, height) * width + CLAMP(x, 0, width);
+	return RETRO_Terrain.wrap ? WRAP(n, size) : CLAMP(n, 0, size);
 }
 
-// The stored height at a cell, unscaled. RETRO_TerrainHeight is this in
-// world units.
+// The cell under (x, z), folded
+inline int RETRO_TerrainIndex(float x, float z)
+{
+	return RETRO_TerrainFold((int)floorf(z), RETRO_Terrain.height) * RETRO_Terrain.width + RETRO_TerrainFold((int)floorf(x), RETRO_Terrain.width);
+}
+
+// The stored height at a cell, unscaled
 inline unsigned char RETRO_TerrainSample(float x, float z)
 {
 	return RETRO_Terrain.heightmap[RETRO_TerrainIndex(x, z)];
 }
 
-//
+// The color painted on a cell
+inline unsigned char RETRO_TerrainColor(float x, float z)
+{
+	return RETRO_Terrain.colormap[RETRO_TerrainIndex(x, z)];
+}
+
 // The ground height at a cell, in world units
-//
 inline float RETRO_TerrainHeight(float x, float z)
 {
 	return RETRO_TerrainSample(x, z) * RETRO_Terrain.scale;
 }
 
 //
-// The ground height between cells, bilinearly filtered
+// A wrapping height field built by midpoint displacement, and a slope-shaded
+// color map to go with it
 //
-// A camera riding the ground needs a height that varies continuously with it,
-// which the cell values on their own do not: crossing a cell boundary would
-// step. The scale is applied once at the end rather than to each corner, so the
-// filter runs on the stored values and costs one multiply.
+// The map has to be square with power-of-two sides: diamond-square steps by
+// halves of one length, and the column walks that read it wrap by masking.
+// It is zeroed first, since the first pass reads heightmap[0] as its seed.
 //
-// The four corners fold the way the map does. Wrapping mixes a sample past the
-// edge with the other side of the torus; clamping repeats the last cell, which
-// is what a letter sitting on the shore of a finite island wants instead of
-// the opposite coast.
+// Midpoint displacement fills the byte range far more evenly than a
+// photograph does, so 0.6 of a stored byte here is the same ground as one of
+// a photograph's, and worldscale then brings it into the caller's world.
+// Flying that world at the matching size is RETRO_ScaleTerrainWorld.
 //
-inline float RETRO_TerrainHeightLinear(float x, float z)
+inline void RETRO_BuildDisplacementTerrain(unsigned char *heightmap, unsigned char *colormap, int width, int height, float worldscale)
+{
+	if (width != height || width <= 0 || (width & (width - 1)) != 0) {
+		RETRO_RageQuit("Displacement terrain must be square with power-of-two sides\n");
+	}
+
+	memset(heightmap, 0, (size_t)width * (size_t)height);
+	RETRO_SetTerrain(width, height, 0.6f * worldscale, heightmap, colormap);
+
+	for (int p = width; p > 1; p /= 2) {
+		int p2 = p / 2;
+		int k = p * 8 + 20;
+		int k2 = k / 2;
+
+		for (int z = 0; z < height; z += p) {
+			for (int x = 0; x < width; x += p) {
+				int a = RETRO_TerrainSample(x, z);
+				int b = RETRO_TerrainSample(x, z + p);
+				int c = RETRO_TerrainSample(x + p, z);
+				int d = RETRO_TerrainSample(x + p, z + p);
+
+				heightmap[RETRO_TerrainIndex(x + p2, z)] = CLAMP256(((a + c) / 2) + (RANDOM(k) - k2));
+				heightmap[RETRO_TerrainIndex(x + p2, z + p2)] = CLAMP256(((a + b + c + d) / 4) + (RANDOM(k) - k2));
+				heightmap[RETRO_TerrainIndex(x, z + p2)] = CLAMP256(((a + b) / 2) + (RANDOM(k) - k2));
+			}
+		}
+	}
+
+	for (int k = 0; k < 5; k++) {
+		for (int z = 0; z < height; z++) {
+			for (int x = 0; x < width; x++) {
+				heightmap[RETRO_TerrainIndex(x, z)] = (RETRO_TerrainSample(x, z + 1) + RETRO_TerrainSample(x + 1, z) + RETRO_TerrainSample(x, z - 1) + RETRO_TerrainSample(x - 1, z)) / 4;
+			}
+		}
+	}
+
+	for (int z = 0; z < height; z++) {
+		for (int x = 0; x < width; x++) {
+			colormap[RETRO_TerrainIndex(x, z)] = CLAMP256(128 + (RETRO_TerrainSample(x + 1, z + 1) - RETRO_TerrainSample(x, z)) * 6);
+		}
+	}
+}
+
+//
+// The four stored heights around (x, z), and where it sits between them
+//
+// The corners fold the way the map does: wrapping mixes a sample past the
+// edge with the other side of the torus, clamping repeats the last cell.
+//
+struct RETRO_TerrainCorners {
+	float h00, h10;		// Stored heights along the nearer row, x then x + 1
+	float h01, h11;		// and the row after
+	float fx, fz;		// Position inside the cell, each in [0, 1)
+};
+
+inline RETRO_TerrainCorners RETRO_TerrainCornersAt(float x, float z)
 {
 	unsigned char *heightmap = RETRO_Terrain.heightmap;
+	int width = RETRO_Terrain.width;
+	int height = RETRO_Terrain.height;
+	int ix = floorf(x);
+	int iz = floorf(z);
+
+	int x0 = RETRO_TerrainFold(ix, width);
+	int x1 = RETRO_TerrainFold(ix + 1, width);
+	int z0 = RETRO_TerrainFold(iz, height) * width;
+	int z1 = RETRO_TerrainFold(iz + 1, height) * width;
+
+	RETRO_TerrainCorners corners;
+	corners.h00 = heightmap[z0 + x0];
+	corners.h10 = heightmap[z0 + x1];
+	corners.h01 = heightmap[z1 + x0];
+	corners.h11 = heightmap[z1 + x1];
+	corners.fx = x - ix;
+	corners.fz = z - iz;
+	return corners;
+}
+
+// The ground height between cells, bilinearly filtered, in world units: what
+// a camera riding the ground reads, since it must not step at a cell edge.
+inline float RETRO_TerrainHeightLinear(float x, float z)
+{
+	RETRO_TerrainCorners c = RETRO_TerrainCornersAt(x, z);
+	float top = mix(c.h00, c.h10, c.fx);
+	float bottom = mix(c.h01, c.h11, c.fx);
+	return mix(top, bottom, c.fz) * RETRO_Terrain.scale;
+}
+
+// The ground height on the drawn surface, in world units. A one-cell mesh
+// splits each cell along the diagonal from (x, z) to (x + 1, z + 1); the
+// bilinear patch bulges off those two flat triangles, this does not, so
+// anything laid on it sits on what is drawn.
+inline float RETRO_TerrainHeightTriangle(float x, float z)
+{
+	RETRO_TerrainCorners c = RETRO_TerrainCornersAt(x, z);
+	float height;
+	if (c.fx >= c.fz) {
+		height = c.h00 + c.fx * (c.h10 - c.h00) + c.fz * (c.h11 - c.h10);
+	} else {
+		height = c.h00 + c.fz * (c.h01 - c.h00) + c.fx * (c.h11 - c.h01);
+	}
+	return height * RETRO_Terrain.scale;
+}
+
+//
+// Either plane of a wrapping, power-of-two map, bilinearly filtered
+//
+// The voxel hot path: unscaled, folded by a mask, and with each corner read
+// once. A column walk must have checked RETRO_TerrainWrapsByMask. floor and
+// not a cast, so a walk looking back across the map's origin does not fold
+// the cells either side of it onto one sample.
+//
+inline float RETRO_TerrainSampleLinear(const unsigned char *map, float x, float z)
+{
 	int width = RETRO_Terrain.width;
 	int height = RETRO_Terrain.height;
 	int ix = floorf(x);
@@ -516,71 +292,51 @@ inline float RETRO_TerrainHeightLinear(float x, float z)
 	float fx = x - ix;
 	float fz = z - iz;
 
-	int x0, x1, z0, z1;
-	if (RETRO_Terrain.wrap) {
-		x0 = WRAP(ix, width);
-		x1 = WRAP(ix + 1, width);
-		z0 = WRAP(iz, height) * width;
-		z1 = WRAP(iz + 1, height) * width;
-	} else {
-		x0 = CLAMP(ix, 0, width);
-		x1 = CLAMP(ix + 1, 0, width);
-		z0 = CLAMP(iz, 0, height) * width;
-		z1 = CLAMP(iz + 1, 0, height) * width;
-	}
+	int x0 = ix & (width - 1);
+	int x1 = (ix + 1) & (width - 1);
+	int z0 = (iz & (height - 1)) * width;
+	int z1 = ((iz + 1) & (height - 1)) * width;
 
-	float h00 = heightmap[z0 + x0];
-	float h10 = heightmap[z0 + x1];
-	float h01 = heightmap[z1 + x0];
-	float h11 = heightmap[z1 + x1];
+	float top = mix(map[z0 + x0], map[z0 + x1], fx);
+	float bottom = mix(map[z1 + x0], map[z1 + x1], fx);
+	return mix(top, bottom, fz);
+}
 
-	float top = mix(h00, h10, fx);
-	float bottom = mix(h01, h11, fx);
-	return mix(top, bottom, fz) * RETRO_Terrain.scale;
+// The ground's upward normal at (x, z), by central differences over step.
+// Not unit length. Taken at a map vertex it is the same from every cell
+// that shares the vertex, so neighbors light a shared edge alike.
+inline vec3 RETRO_TerrainNormal(float x, float z, float step = 1)
+{
+	return { RETRO_TerrainHeight(x - step, z) - RETRO_TerrainHeight(x + step, z), 2.0f * step, RETRO_TerrainHeight(x, z - step) - RETRO_TerrainHeight(x, z + step) };
 }
 
 //
-// The ground height on the drawn surface, in world units
+// The shade a surface facing n takes under RETRO_TerrainLight, in [0, shades)
 //
-// A mesh one cell apart splits each cell into two flat triangles along the
-// diagonal from (x, z) to (x + 1, z + 1). HeightLinear's bilinear patch bulges
-// off those wherever the four corners are not coplanar; this is the height on
-// the triangle itself, so anything laid on it sits on what is drawn. The
-// corners fold the way the map does.
+// Neither vector need be unit. A height field's normals all point up, so the
+// darkest lambert it can reach is a vertical wall turned from the sun, at
+// -sqrt(1 - y^2) for a unit light. The ramp spans that band rather than
+// [-1, 1], and is not clipped at the terminator, so a face turned away
+// darkens instead of dropping to black.
 //
-inline float RETRO_TerrainHeightTriangle(float x, float z)
+inline int RETRO_TerrainShade(vec3 n, int shades)
 {
-	int ix = floorf(x);
-	int iz = floorf(z);
-	float fx = x - ix;
-	float fz = z - iz;
-
-	float h00 = RETRO_TerrainSample(ix, iz);
-	float h10 = RETRO_TerrainSample(ix + 1, iz);
-	float h01 = RETRO_TerrainSample(ix, iz + 1);
-	float h11 = RETRO_TerrainSample(ix + 1, iz + 1);
-
-	float height;
-	if (fx >= fz) {
-		height = h00 + fx * (h10 - h00) + fz * (h11 - h10);
-	} else {
-		height = h00 + fz * (h01 - h00) + fx * (h11 - h01);
-	}
-	return height * RETRO_Terrain.scale;
+	float llength = length(RETRO_TerrainLight);
+	float light = dot(n, RETRO_TerrainLight) / (length(n) * llength);
+	float uy = RETRO_TerrainLight.y / llength;
+	float darkest = -sqrtf(1.0f - uy * uy);
+	return CLAMP((int)((light - darkest) / (1.0f - darkest) * shades), 0, shades);
 }
 
 //
 // Where a ray first meets the drawn surface
 //
-// The ray runs from origin along a unit direction in steps of step world
-// units until it is at or below the ground, then halves the last step eight
-// times back onto it. A ridge thinner than a step may be passed over.
-// A ray that starts under the ground meets it at its origin. One that runs
-// level or climbs gives up once it is above the highest height a byte can
-// hold, and any gives up once it has crossed the map's width and height
-// together without meeting anything, and returns false. A shallow one would
-// otherwise march a long way to land far off the map, and a level one for
-// ever.
+// Marches from origin along a unit direction in steps of step world units
+// until it is at or below the ground, then halves the last step eight times
+// back onto it. A ridge thinner than a step may be passed over. A ray that
+// starts under the ground meets it at its origin. It gives up, returning
+// false, once it is level or climbing above the highest byte, or has run
+// the map's width and height together without a hit.
 //
 inline bool RETRO_TerrainRayHit(vec3 origin, vec3 direction, float step, vec3 &hit)
 {
@@ -614,157 +370,82 @@ inline bool RETRO_TerrainRayHit(vec3 origin, vec3 direction, float step, vec3 &h
 	return true;
 }
 
+// *******************************************************************
+// The lens
+// *******************************************************************
+
 //
-// A wrapping map read between its cells, bilinearly filtered
+// The lens, and how much ground is paid for
 //
-// This is the voxel hot path: both planes are read the same way, neither is
-// a height until the caller says so, and the fold is a mask. HeightLinear
-// is the other filter - it honors wrap versus clamp, and it applies the
-// scale - and is what a camera riding the ground uses. A column walk that
-// has already insisted the sides are powers of two can spend a mask per
-// pixel instead.
+// The focals and the horizon are what the pinhole reads. step and distance
+// are draw policy: how finely and how far a mesh or a column walk spends
+// itself. horizonspeed is input, kept here because it moves the lens.
 //
-// The four corners are read once each and the two rows folded once each:
-// written as four samples the two left-hand corners appear twice over, and
-// every sample repeats the fold on its own. floor and not a cast: a walk
-// runs negative wherever the camera looks back across the map's origin,
-// and truncating toward zero would fold the cell either side of it onto
-// the same sample.
+// The defaults are the wrapping look, and the pixels are square: ninety
+// degrees across and about a hundred down. The taller view flattens the
+// hills and puts more ground below the horizon, and a wide view is what
+// makes walking feel fast - the same cells per second read as a trudge
+// through a narrow lens. RETRO_LookDownAtTerrain writes a longer one.
 //
-inline float RETRO_TerrainSampleLinear(const unsigned char *map, float x, float z)
+// Sliding the horizon tilts the picture without pitching the camera, so
+// voxel columns can still treat each screen row as a constant-depth slice.
+//
+inline struct {
+	int step = 6;										// Mesh spacing, in map cells
+	int distance = RETRO_TERRAIN_DISTANCE;				// How far the wrapping look draws, in map cells
+	float nearplane = 3.0f;								// Nearest depth worth drawing
+	float focalx = RETRO_WIDTH * 0.5f;					// Focal length across, half the width for a 90 degree view
+	float focaly = RETRO_HEIGHT * 0.42f;				// and down: shorter, so the view is taller than it is wide
+	float horizon = RETRO_HEIGHT * 0.43f;				// Where eye level lands on the screen
+	float horizonspeed = 90.0f;							// PageUp/PageDown, screen rows per second
+} RETRO_TerrainView;
+
+// tan of half the view across: a point at this side per depth sits on the
+// screen edge.
+inline float RETRO_TerrainViewHalfSlope(void)
 {
-	int width = RETRO_Terrain.width;
-	int height = RETRO_Terrain.height;
-	int ix = floorf(x);
-	int iz = floorf(z);
-	float fx = x - ix;
-	float fz = z - iz;
-
-	int x0 = ix & (width - 1);
-	int x1 = (ix + 1) & (width - 1);
-	int z0 = (iz & (height - 1)) * width;
-	int z1 = ((iz + 1) & (height - 1)) * width;
-
-	float top = map[z0 + x0] + fx * (map[z0 + x1] - map[z0 + x0]);
-	float bottom = map[z1 + x0] + fx * (map[z1 + x1] - map[z1 + x0]);
-	return top + fz * (bottom - top);
+	return (RETRO_WIDTH * 0.5f) / RETRO_TerrainView.focalx;
 }
 
-// The color painted on a cell. Nearest, and folded the way the map wraps.
-inline unsigned char RETRO_TerrainColor(float x, float z)
+// The widest side per depth worth keeping: five percent past the lens, so a
+// sample on the edge is projected rather than thrown out.
+inline float RETRO_TerrainViewCullSlope(void)
 {
-	return RETRO_Terrain.colormap[RETRO_TerrainIndex(x, z)];
-}
-
-//
-// A smaller copy of the current terrain, sampled at the center of each region
-//
-// How big that region is comes from the loaded map rather than from a size
-// named here: naming one the file does not have would read every row at the
-// wrong stride, and nothing downstream could tell.
-//
-// The copy is written into the buffers it is handed. It does not become the
-// current terrain: an island that wants to be the map points sampling at
-// the copy afterward, and says it does not wrap.
-//
-inline void RETRO_DownsampleTerrain(unsigned char *heightmap, unsigned char *colormap, int width, int height)
-{
-	int scalex = RETRO_Terrain.width / width;
-	int scalez = RETRO_Terrain.height / height;
-
-	for (int z = 0; z < height; z++) {
-		for (int x = 0; x < width; x++) {
-			int sourcex = x * scalex + scalex / 2;
-			int sourcez = z * scalez + scalez / 2;
-			int index = z * width + x;
-			heightmap[index] = RETRO_TerrainSample(sourcex, sourcez);
-			colormap[index] = RETRO_TerrainColor(sourcex, sourcez);
-		}
-	}
+	return RETRO_TerrainViewHalfSlope() * 1.05f;
 }
 
 //
-// The ground's upward normal at x, z, by central differences over step
+// A point in the camera's own frame: right, up and forward of the eye
 //
-// Not unit length. Taken at a map vertex it is the same whichever cell the
-// vertex is visited from, so neighboring cells light a shared edge alike.
-// The differences are in world units, so the vertical component is the
-// spacing they span and carries no scale of its own.
+// Both looks produce one and the pinhole reads nothing else. Wrapping turns
+// a ground offset by the heading; the island pitches, mixing altitude into
+// depth, so a peak in front of the camera is nearer than the ground under it.
 //
-inline vec3 RETRO_TerrainNormal(float x, float z, float step = 1)
+struct RETRO_TerrainEye {
+	float side, height, depth;
+};
+
+//
+// A projected point on the screen
+//
+// q is 1/depth, which a mesh interpolates across a face to keep perspective
+// correct. A point at or behind the eye has q at or below zero, for the
+// caller to drop.
+//
+struct RETRO_TerrainPoint {
+	vec2 spos;
+	float q;
+};
+
+// Whether a point in the camera's frame is past the near plane and inside
+// the cull wedge: worth projecting on its own, as a dot. A polygon is cut at
+// the near plane instead.
+inline bool RETRO_TerrainEyeInView(const RETRO_TerrainEye &eye)
 {
-	return { RETRO_TerrainHeight(x - step, z) - RETRO_TerrainHeight(x + step, z), 2.0f * step, RETRO_TerrainHeight(x, z - step) - RETRO_TerrainHeight(x, z + step) };
+	return eye.depth > RETRO_TerrainView.nearplane && fabsf(eye.side) <= eye.depth * RETRO_TerrainViewCullSlope();
 }
 
-//
-// The shade a surface facing this way takes, as an index into `shades` levels
-//
-// Neither vector need be unit: both lengths divide out, which lets a caller
-// pass a cross product or a central difference straight in, and lets a
-// direction written on RETRO_TerrainLight stay a direction rather than a
-// scale on the ramp.
-//
-// Lambert lands in [-1, 1], but a height field cannot use the whole of it: its
-// normals all point upward, and the darkest such a normal can come is a
-// vertical wall turned from the sun, at -sqrt(1 - y^2) for a unit light. Mapping
-// that band, and not [-1, 1], spends the ramp on shades the ground can actually
-// take instead of reserving most of it for directions no face here ever faces.
-// The band is still mapped whole rather than clipped at the terminator, so a
-// face turned away darkens instead of dropping to flat black.
-//
-inline int RETRO_TerrainShade(vec3 n, int shades)
-{
-	float llength = length(RETRO_TerrainLight);
-	float light = dot(n, RETRO_TerrainLight) / (length(n) * llength);
-	float uy = RETRO_TerrainLight.y / llength;
-	float darkest = -sqrtf(1.0f - uy * uy);
-	return CLAMP((int)((light - darkest) / (1.0f - darkest) * shades), 0, shades);
-}
-
-// The wrapping view frame for this heading. Zero looks along decreasing z;
-// see RETRO_TerrainBasis.
-inline RETRO_TerrainBasis RETRO_TerrainHeadingBasis(float heading)
-{
-	float sina = sinf(heading);
-	float cosa = cosf(heading);
-
-	RETRO_TerrainBasis basis;
-	basis.forward = { -sina, -cosa };
-	basis.right = { cosa, -sina };
-	return basis;
-}
-
-// The wrapping frustum on the ground at unit depth. Scale by z for the
-// slice the column walk fills at that depth; see RETRO_TerrainSlice.
-inline RETRO_TerrainSlice RETRO_TerrainViewSlice(const RETRO_TerrainBasis &basis)
-{
-	float slope = RETRO_TerrainViewHalfSlope();
-	RETRO_TerrainSlice slice;
-	slice.left = basis.forward - basis.right * slope;
-	slice.right = basis.forward + basis.right * slope;
-	return slice;
-}
-
-// A ground displacement in the wrapping camera's terms. Altitude is not
-// mixed in, so a wedge can run before a height is read; see RETRO_TerrainOffset.
-inline RETRO_TerrainOffset RETRO_TerrainCameraOffset(float dx, float dz, const RETRO_TerrainBasis &basis)
-{
-	vec2 d = { dx, dz };
-	RETRO_TerrainOffset offset;
-	offset.side = dot(d, basis.right);
-	offset.depth = dot(d, basis.forward);
-	return offset;
-}
-
-//
-// The pinhole
-//
-// Both looks land on these three lines. Wrapping arrives with a yaw, the
-// island with a pitch, and neither writes the pinhole again. The caller
-// decides what is worth drawing - a wedge, a near plane - then hands the
-// Eye in. A point at or behind the eye comes back with q at or below zero
-// for them to drop.
-//
+// The pinhole. The caller decides what is worth drawing first.
 inline RETRO_TerrainPoint RETRO_ProjectTerrainView(const RETRO_TerrainEye &eye)
 {
 	RETRO_TerrainPoint point;
@@ -775,163 +456,28 @@ inline RETRO_TerrainPoint RETRO_ProjectTerrainView(const RETRO_TerrainEye &eye)
 }
 
 //
-// The wrapping pinhole for a ground offset already taken
+// A polygon corner before the pinhole, with what a drawer interpolates
 //
-// Wrapping dots have the Offset from the wedge test and should not take
-// the yaw twice. World height becomes Eye height here, then the pinhole.
-//
-inline RETRO_TerrainPoint RETRO_ProjectTerrainOffset(const RETRO_TerrainOffset &offset, float height)
-{
-	RETRO_TerrainEye eye;
-	eye.side = offset.side;
-	eye.height = height - RETRO_Camera.height;
-	eye.depth = offset.depth;
-	return RETRO_ProjectTerrainView(eye);
-}
-
-//
-// A wrapping cell through the wedge, the thinning, and the pinhole
-//
-// The two wrapping-dot effects share this: most of the square around the
-// camera lies behind or beside it, and four multiplies throw a cell out
-// more cheaply than a hash does. How wide the wedge stands comes from the
-// lens, so a cell is kept because the view can reach it and not because a
-// number here was once measured against a view. The thinning follows, then
-// the pinhole, then the screen. The caller still walks the square - it is
-// the one that knows what to do with a surviving sample - and is handed
-// back the Offset it already had from the wedge, so a depth buffer or a
-// ray march does not take the yaw again.
-//
-inline bool RETRO_ProjectTerrainDot(int x, int z, float dx, float dz, float radius2, const RETRO_TerrainBasis &basis, RETRO_TerrainOffset *offset, RETRO_TerrainPoint *point)
-{
-	*offset = RETRO_TerrainCameraOffset(dx, dz, basis);
-	if (offset->depth <= RETRO_TerrainView.nearplane || fabsf(offset->side) > offset->depth * RETRO_TerrainViewCullSlope()) return false;
-	if (!RETRO_KeepTerrainDot(x, z, radius2)) return false;
-
-	*point = RETRO_ProjectTerrainOffset(*offset, RETRO_TerrainHeight(x, z));
-	int sx = (int)point->spos.x;
-	int sy = (int)point->spos.y;
-	return sx >= 0 && sx < RETRO_WIDTH && sy >= 0 && sy < RETRO_HEIGHT;
-}
-
-//
-// A world point through the wrapping camera and its lens
-//
-// Translation to the eye, a yaw, then the pinhole. A point at or behind
-// the eye comes back with q at or below zero for the caller to drop,
-// rather than being folded through the eye into a plausible-looking
-// position. The island look is RETRO_TerrainIslandEye, then the same
-// pinhole.
-//
-inline RETRO_TerrainPoint RETRO_ProjectTerrainPoint(float x, float z, float height, const RETRO_TerrainBasis &basis)
-{
-	return RETRO_ProjectTerrainOffset(RETRO_TerrainCameraOffset(x - RETRO_Camera.x, z - RETRO_Camera.z, basis), height);
-}
-
-//
-// A world point in the wrapping camera's own frame, before the pinhole
-//
-// RETRO_ProjectTerrainPoint without its last step, for a polygon that is
-// to be cut at the near plane first (RETRO_ClipProjectTerrainPolygon).
-//
-inline RETRO_TerrainEye RETRO_TerrainPointEye(float x, float z, float height, const RETRO_TerrainBasis &basis)
-{
-	RETRO_TerrainOffset offset = RETRO_TerrainCameraOffset(x - RETRO_Camera.x, z - RETRO_Camera.z, basis);
-	return { offset.side, height - RETRO_Camera.height, offset.depth };
-}
-
-//
-// The wrapping pinhole for a point sitting on the ground.
-inline RETRO_TerrainPoint RETRO_ProjectTerrainVertex(float x, float z, const RETRO_TerrainBasis &basis)
-{
-	return RETRO_ProjectTerrainPoint(x, z, RETRO_TerrainHeight(x, z), basis);
-}
-
-// The wrapping mesh walk for the current camera and view. What is painted
-// on a cell is the effect's; this is only which cells are worth asking.
-inline RETRO_TerrainMesh RETRO_BuildTerrainMesh(void)
-{
-	int step = RETRO_TerrainView.step;
-	int distance = RETRO_TerrainView.distance;
-
-	RETRO_TerrainMesh mesh;
-	mesh.step = step;
-	mesh.minx = (int)floorf((RETRO_Camera.x - distance) / step) * step;
-	mesh.maxx = (int)ceilf((RETRO_Camera.x + distance) / step) * step;
-	mesh.minz = (int)floorf((RETRO_Camera.z - distance) / step) * step;
-	mesh.maxz = (int)ceilf((RETRO_Camera.z + distance) / step) * step;
-	if (!RETRO_Terrain.wrap) {
-		// A finite patch has no cells past its edges; the last cell starts one
-		// step short of the far edge. The walk has no part cells, so a spacing
-		// that does not divide the patch would leave its far strip undrawn
-		if ((RETRO_Terrain.width - 1) % step != 0 || (RETRO_Terrain.height - 1) % step != 0) {
-			RETRO_RageQuit("Terrain mesh spacing %d does not divide a %dx%d patch\n", step, RETRO_Terrain.width, RETRO_Terrain.height);
-		}
-		mesh.minx = MAX(mesh.minx, 0);
-		mesh.minz = MAX(mesh.minz, 0);
-		mesh.maxx = MIN(mesh.maxx, RETRO_Terrain.width - step);
-		mesh.maxz = MIN(mesh.maxz, RETRO_Terrain.height - step);
-	}
-	mesh.basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
-	mesh.distance2 = (float)distance * distance;
-	return mesh;
-}
-
-//
-// Whether the wrapping cell at x, z is worth projecting
-//
-// The cell is judged by its center against a wedge wider than the screen's
-// own, widened again by the mesh spacing, so that one straddling the edge
-// is drawn rather than blinking out at the border. The test is on the
-// ground Offset, not the Eye: a yaw leaves height alone, so the height of
-// the cell can wait until the cell has been kept.
-//
-// The near plane is widened the same way, by the half diagonal of a cell: a
-// cell whose center is behind the plane can still reach in front of it, and
-// under a low eye that part is the ground at the bottom of the screen. What
-// of it is behind the eye is dropped or clipped by whoever draws it.
-//
-inline bool RETRO_TerrainCellVisible(const RETRO_TerrainMesh &mesh, int x, int z)
-{
-	float centerx = x + mesh.step / 2.0f - RETRO_Camera.x;
-	float centerz = z + mesh.step / 2.0f - RETRO_Camera.z;
-	if (centerx * centerx + centerz * centerz > mesh.distance2) return false;
-
-	RETRO_TerrainOffset offset = RETRO_TerrainCameraOffset(centerx, centerz, mesh.basis);
-	float halfdiagonal = mesh.step * 0.7072f;
-	return offset.depth + halfdiagonal >= RETRO_TerrainView.nearplane && fabsf(offset.side) <= offset.depth * RETRO_TerrainViewCullSlope() + mesh.step;
-}
-
-//
-// A corner in the camera's own frame, with what a drawer interpolates
-//
-// The Eye is where it is, before the pinhole; the rest is carried through to
-// the PolygonPoint the drawers take. A polygon of these can be cut at the
-// near plane before it is projected, which a PolygonPoint, already on the
-// screen, no longer can.
+// Unlike a PolygonPoint, already on the screen, a polygon of these can still
+// be cut at the near plane.
 //
 struct RETRO_TerrainVertex {
-	RETRO_TerrainEye eye;	// Right, up and forward of the eye
-	vec2 uv;				// Texture coordinates
-	float c;				// Shade, or palette index
+	RETRO_TerrainEye eye;			// Right, up and forward of the eye
+	vec2 uv;						// Texture coordinates
+	float c;						// Shade, or palette index
 	float tint[RETRO_MAX_TINTS];	// Further light levels, for a shade table with tints
 };
 
 //
-// Clip a polygon to the near side of the near plane, then project it
+// Clip a polygon to the near plane, then project it
 //
-// A corner behind the eye would be projected through it and fold onto the
-// screen in the wrong place, and dropping the face instead leaves a hole
-// along the bottom of the screen wherever it reaches from behind the camera
-// into view. Where the cells are large
-// beside the eye's height that hole is in plain sight. Cutting the polygon
-// at the plane instead keeps the part in front: side, height, depth, the
-// texture coordinates and both light levels are linear along an edge in the
-// camera's frame, so this is Sutherland-Hodgman against the one plane.
+// A corner behind the eye would project through it onto the wrong place,
+// and dropping the face leaves a hole along the bottom of the screen. Every
+// field is linear along an edge in the camera's frame, so this is
+// Sutherland-Hodgman against the one plane.
 //
-// Returns the corners written to point, which must have room for one more
-// than count; fewer than three is nothing to draw. count may be up to
-// RETRO_TERRAIN_MAX_POLYGON.
+// count may be up to RETRO_TERRAIN_MAX_POLYGON, and point must have room for
+// one more. Returns the corners written; fewer than three is nothing to draw.
 //
 inline int RETRO_ClipProjectTerrainPolygon(const RETRO_TerrainVertex *vertex, int count, PolygonPoint *point)
 {
@@ -972,44 +518,266 @@ inline int RETRO_ClipProjectTerrainPolygon(const RETRO_TerrainVertex *vertex, in
 	return points;
 }
 
+// *******************************************************************
+// The wrapping look
+// *******************************************************************
+
 //
-// Wrap a position into [0, size], keeping its fractional part
+// The wrapping camera: a position on the torus and a heading
 //
-// WRAP answers which cell a coordinate falls in and so returns an integer. A
-// camera being carried across the torus needs the fraction kept: a step
-// shorter than one unit would otherwise be truncated away every frame and
-// the movement stall. The answer reaches size only for a position so little
-// below zero that adding size to it gives size.
+// The defaults suit a 1024-cell map: crossed in about a quarter of a minute,
+// riding high enough to see over a ridge without losing the ground. A map
+// of another size scales them with RETRO_ScaleTerrainWorld.
 //
-inline float RETRO_WrapCoordinate(float coordinate, float size)
+struct RETRO_TerrainCamera {
+	float x = 0;				// Position in map cells, wrapping with the map
+	float z = 0;
+	float height = 0;			// Above the map's zero, in world units
+	float heading = 0;			// Radians, kept in [0, 2pi)
+	bool flycam = false;		// Free flight rather than following the ground
+
+	float movespeed = 66.0f;	// Cells per second
+	float turnspeed = 1.2f;		// Radians per second
+	float flyspeed = 30.0f;		// World units per second, and only in flycam
+	float eye = 49.0f;			// Ride height above the ground
+	float clearance = 10.0f;	// Closest to the ground the eye may come
+	float follow = 0.10f;		// Seconds the ride height takes to close most of a step
+};
+
+inline RETRO_TerrainCamera RETRO_Camera;
+
+//
+// Which way a heading faces, and which way is its right
+//
+// The view frame - right +x, forward -z - turned by the heading about the
+// upright axis:
+//
+//   R(h) . (-z) = (-sin h, -cos h)   forward
+//   R(h) . (+x) = ( cos h, -sin h)   right
+//
+// so a heading is a right-handed yaw and zero looks along decreasing z. It
+// is written once because a sign the wrong way round mirrors the world, and
+// a mirrored world renders perfectly and steers backward.
+//
+struct RETRO_TerrainBasis {
+	vec2 forward;	// Where the heading looks, on the ground (x, z)
+	vec2 right;		// and its right
+};
+
+inline RETRO_TerrainBasis RETRO_TerrainHeadingBasis(float heading)
 {
-	return mod(coordinate, size);
+	float sina = sinf(heading);
+	float cosa = cosf(heading);
+
+	RETRO_TerrainBasis basis;
+	basis.forward = { -sina, -cosa };
+	basis.right = { cosa, -sina };
+	return basis;
+}
+
+//
+// The wrapping frustum on the ground at unit depth
+//
+// Voxel columns are not a pinhole. At depth z the lens meets the ground in
+// the segment from z * left to z * right.
+//
+struct RETRO_TerrainSlice {
+	vec2 left;
+	vec2 right;
+};
+
+inline RETRO_TerrainSlice RETRO_TerrainViewSlice(const RETRO_TerrainBasis &basis)
+{
+	float slope = RETRO_TerrainViewHalfSlope();
+	RETRO_TerrainSlice slice;
+	slice.left = basis.forward - basis.right * slope;
+	slice.right = basis.forward + basis.right * slope;
+	return slice;
+}
+
+//
+// An offset from the wrapping camera - across x, up, and along z - in its
+// own frame
+//
+// A yaw leaves height alone, so a cell can be judged on its side and depth
+// before its height is read. Behind the eye is a negative depth.
+//
+inline RETRO_TerrainEye RETRO_TerrainCameraEye(vec3 offset, const RETRO_TerrainBasis &basis)
+{
+	vec2 ground = { offset.x, offset.z };
+	RETRO_TerrainEye eye;
+	eye.side = dot(ground, basis.right);
+	eye.height = offset.y;
+	eye.depth = dot(ground, basis.forward);
+	return eye;
+}
+
+// A world point in the wrapping camera's frame, for a polygon that is to be
+// cut at the near plane before it is projected
+inline RETRO_TerrainEye RETRO_TerrainPointEye(float x, float z, float height, const RETRO_TerrainBasis &basis)
+{
+	return RETRO_TerrainCameraEye({ x - RETRO_Camera.x, height - RETRO_Camera.height, z - RETRO_Camera.z }, basis);
+}
+
+//
+// Whether a dot at this squared distance survives thinning
+//
+// Dots crowd near the eye; most of them would land on pixels already
+// covered. Hashing the cell gives it the same answer wherever the camera
+// stands, so the pattern is anchored to the ground and does not swim, and
+// density falls off smoothly enough that no ring shows. A wrapping map
+// hashes the cell folded onto the torus, so it keeps its pattern as the
+// camera crosses the seam.
+//
+inline bool RETRO_KeepTerrainDot(int x, int z, float distance2, float falloff = 110.0f)
+{
+	if (RETRO_Terrain.wrap) {
+		x = WRAP(x, RETRO_Terrain.width);
+		z = WRAP(z, RETRO_Terrain.height);
+	}
+	float random = RETRO_HashUnit(x, z);
+	float density = 1.0f / (1.0f + distance2 / (falloff * falloff));
+	return random < density;
+}
+
+//
+// A wrapping cell through the wedge, the thinning and the pinhole
+//
+// (dx, dz) is the cell's offset from the camera and radius2 its squared
+// distance. Most cells around the camera are behind or beside it, and the
+// wedge throws them out more cheaply than the hash. Returns whether the dot
+// lands on the screen, with its eye for a caller that needs the depth.
+//
+inline bool RETRO_ProjectTerrainDot(int x, int z, float dx, float dz, float radius2, const RETRO_TerrainBasis &basis, RETRO_TerrainEye *eye, RETRO_TerrainPoint *point)
+{
+	RETRO_TerrainEye cell = RETRO_TerrainCameraEye({ dx, 0, dz }, basis);
+	if (!RETRO_TerrainEyeInView(cell)) return false;
+	if (!RETRO_KeepTerrainDot(x, z, radius2)) return false;
+
+	cell.height = RETRO_TerrainHeight(x, z) - RETRO_Camera.height;
+	*eye = cell;
+	*point = RETRO_ProjectTerrainView(cell);
+	return RETRO_OnScreen((int)point->spos.x, (int)point->spos.y);
+}
+
+//
+// The wrapping mesh walk
+//
+// The cells within the draw distance, snapped to the mesh spacing. What is
+// painted on a cell is the effect's; this is only which cells are worth
+// asking about. The heading is turned once, and the distance kept squared.
+//
+struct RETRO_TerrainMesh {
+	int step;					// Mesh spacing, in map cells
+	int minx, maxx;				// The cells to walk, snapped to the spacing
+	int minz, maxz;
+	RETRO_TerrainBasis basis;	// The camera's heading, turned once
+	float distance2;			// Draw distance squared
+};
+
+inline RETRO_TerrainMesh RETRO_BuildTerrainMesh(void)
+{
+	int step = RETRO_TerrainView.step;
+	int distance = RETRO_TerrainView.distance;
+
+	RETRO_TerrainMesh mesh;
+	mesh.step = step;
+	mesh.minx = (int)floorf((RETRO_Camera.x - distance) / step) * step;
+	mesh.maxx = (int)ceilf((RETRO_Camera.x + distance) / step) * step;
+	mesh.minz = (int)floorf((RETRO_Camera.z - distance) / step) * step;
+	mesh.maxz = (int)ceilf((RETRO_Camera.z + distance) / step) * step;
+	if (!RETRO_Terrain.wrap) {
+		// A finite patch has no cells past its edges, and the walk has no
+		// part cells, so the spacing must divide it or the far strip is lost
+		if ((RETRO_Terrain.width - 1) % step != 0 || (RETRO_Terrain.height - 1) % step != 0) {
+			RETRO_RageQuit("Terrain mesh spacing %d does not divide a %dx%d patch\n", step, RETRO_Terrain.width, RETRO_Terrain.height);
+		}
+		mesh.minx = MAX(mesh.minx, 0);
+		mesh.minz = MAX(mesh.minz, 0);
+		mesh.maxx = MIN(mesh.maxx, RETRO_Terrain.width - step);
+		mesh.maxz = MIN(mesh.maxz, RETRO_Terrain.height - step);
+	}
+	mesh.basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
+	mesh.distance2 = (float)distance * distance;
+	return mesh;
+}
+
+//
+// Whether the mesh cell at (x, z) is worth projecting
+//
+// Judged by its center against the cull wedge widened by the mesh spacing,
+// so a cell straddling the screen edge does not blink out. The near plane is
+// widened by half a cell's diagonal: under a low eye, a cell centered behind
+// it can still reach the bottom of the screen. Whoever draws the cell clips
+// what is behind the eye.
+//
+inline bool RETRO_TerrainCellVisible(const RETRO_TerrainMesh &mesh, int x, int z)
+{
+	float centerx = x + mesh.step / 2.0f - RETRO_Camera.x;
+	float centerz = z + mesh.step / 2.0f - RETRO_Camera.z;
+	if (centerx * centerx + centerz * centerz > mesh.distance2) return false;
+
+	RETRO_TerrainEye eye = RETRO_TerrainCameraEye({ centerx, 0, centerz }, mesh.basis);
+	float halfdiagonal = mesh.step * (float)M_SQRT1_2;
+	return eye.depth + halfdiagonal >= RETRO_TerrainView.nearplane && fabsf(eye.side) <= eye.depth * RETRO_TerrainViewCullSlope() + mesh.step;
+}
+
+//
+// Stand the wrapping camera on the ground at (x, z), at its ride height
+//
+// Worth doing before the first frame: the ride height is followed
+// gradually, and a camera left at zero would rise into place from under
+// the map while the demo is already being watched.
+//
+inline void RETRO_PlaceTerrainCamera(float x, float z)
+{
+	RETRO_Camera.x = x;
+	RETRO_Camera.z = z;
+	RETRO_Camera.height = RETRO_TerrainHeightLinear(x, z) + RETRO_Camera.eye;
+}
+
+//
+// Take the wrapping camera and its draw distance down for a world that is
+// this much of the default
+//
+// Every length comes from a fresh camera and RETRO_TERRAIN_DISTANCE, not
+// from the live values, so calling this twice does not scale twice. Turn
+// speed is an angle, which a change of scale does not touch.
+//
+inline void RETRO_ScaleTerrainWorld(float worldscale)
+{
+	RETRO_TerrainCamera defaults;
+	RETRO_Camera.movespeed = defaults.movespeed * worldscale;
+	RETRO_Camera.flyspeed = defaults.flyspeed * worldscale;
+	RETRO_Camera.eye = defaults.eye * worldscale;
+	RETRO_Camera.clearance = defaults.clearance * worldscale;
+	RETRO_TerrainView.distance = (int)(RETRO_TERRAIN_DISTANCE * worldscale);
+}
+
+// Carry the wrapping camera back onto the torus, keeping the fraction: a
+// step shorter than a cell would otherwise be truncated away every frame.
+inline void RETRO_WrapTerrainCamera(void)
+{
+	if (RETRO_Terrain.wrap) {
+		RETRO_Camera.x = mod(RETRO_Camera.x, (float)RETRO_Terrain.width);
+		RETRO_Camera.z = mod(RETRO_Camera.z, (float)RETRO_Terrain.height);
+	}
 }
 
 //
 // Drive the wrapping camera from the keyboard and settle it on the ground
 //
-// Left/Right turn and Up/Down move along the viewing direction. W/S repeat
-// forward and back, A/D strafe, and Tab toggles the flycam, in which R and F
-// raise and lower. PageUp and PageDown slide eye level up and down the screen,
-// which tilts the view without moving the camera. Combined movement is
-// normalized so a diagonal is no faster than a straight line.
+// Left/Right turn and Up/Down move along the view. W/S repeat forward and
+// back, A/D strafe, and Tab toggles the flycam, in which R and F raise and
+// lower. A diagonal is no faster than a straight line. Tab and not Space:
+// the main loop holds the demo still while Space is down.
 //
-// Tab and not Space: the main loop holds the whole demo still while Space is
-// down, so a camera on that key would freeze the picture it was meant to move
-// and only turn over on the release.
+// PageUp and PageDown slide the horizon, held on the screen: past either
+// edge there would be nothing but sky or ground to steer by.
 //
-// Tilting the wrapping view is done by sliding eye level, so it is the
-// lens that moves and not the camera. That is not a pitch: voxel columns
-// still treat each screen row as a constant-depth slice of the ground.
-// It is held on the screen: past either edge the ground is either all sky
-// or all ground, and there is nothing to steer by while finding the way
-// back.
-//
-// Following the ground is exponential rather than rigid, so cresting a ridge
-// does not snap the eye. The step is taken from the timestep, which keeps the
-// approach the same at any frame rate. A floor under it stops a fast descent
-// putting the eye inside the hill.
+// The ride height follows the ground exponentially, with the rate taken from
+// the timestep, so cresting a ridge does not snap the eye at any frame rate.
+// The clearance stops a fast descent putting the eye inside the hill.
 //
 inline void RETRO_UpdateTerrainCamera(float timestep)
 {
@@ -1042,10 +810,7 @@ inline void RETRO_UpdateTerrainCamera(float timestep)
 	if (RETRO_KeyState(SDL_SCANCODE_PAGEDOWN)) RETRO_TerrainView.horizon -= timestep * RETRO_TerrainView.horizonspeed;
 	RETRO_TerrainView.horizon = clamp(RETRO_TerrainView.horizon, 0.0f, (float)RETRO_HEIGHT);
 
-	if (RETRO_Terrain.wrap) {
-		RETRO_Camera.x = RETRO_WrapCoordinate(RETRO_Camera.x, RETRO_Terrain.width);
-		RETRO_Camera.z = RETRO_WrapCoordinate(RETRO_Camera.z, RETRO_Terrain.height);
-	}
+	RETRO_WrapTerrainCamera();
 	RETRO_Camera.heading = mod(RETRO_Camera.heading, (float)(2 * M_PI));
 
 	if (!RETRO_Camera.flycam) {
@@ -1055,6 +820,42 @@ inline void RETRO_UpdateTerrainCamera(float timestep)
 		if (RETRO_Camera.height < ground + RETRO_Camera.clearance) RETRO_Camera.height = ground + RETRO_Camera.clearance;
 	}
 }
+
+// *******************************************************************
+// The hovering vehicle
+// *******************************************************************
+
+//
+// A hovering vehicle to fly the wrapping camera with momentum
+//
+// Up/Down accelerate and friction brings it to rest. Gravity pulls the eye
+// down until the ground under the cell it is over pushes it back up and
+// lifts the nose; the nose settles back to its resting pitch, and the pitch
+// is shown by moving the horizon.
+//
+// Speeds are in map cells and radians a second. A negative turn speed turns
+// the other way, for a world drawn mirrored.
+//
+struct RETRO_TerrainVehicle {
+	float acceleration = 100.0f;	// Speed gained each second a key is held
+	float friction = 25.0f;			// Speed lost each second
+	float maxspeed = 66.0f;
+	float turnspeed = 1.2f;
+	float gravity = 40.0f;			// Climb lost each second
+	float spring = 22.5f;			// Climb gained each second, per unit of ground above the clearance
+	float lift = 10.7f;				// Rate the eye is pushed out of the ground
+	float clearance = 49.0f;		// Height the eye rides above the ground
+	float floor = 0.0f;				// Lowest the eye can go, on or off the terrain
+	float restpitch = 0.17f;		// Radians the nose rests at, looking down
+	float pitchkick = 0.01f;		// Raised each second, per unit of ground above the clearance
+	float pitchreturn = 0.17f;		// Radians a second, back toward rest
+
+	float speed = 0;				// Forward, now
+	float climb = 0;				// Upward
+	float pitch = 0.17f;			// Looking down when positive
+};
+
+inline RETRO_TerrainVehicle RETRO_Vehicle;
 
 //
 // Drive the wrapping camera as RETRO_Vehicle
@@ -1100,59 +901,47 @@ inline void RETRO_UpdateTerrainVehicle(float timestep)
 		v.climb = 0;
 		RETRO_Camera.height = v.floor;
 	}
-	if (RETRO_Terrain.wrap) {
-		RETRO_Camera.x = RETRO_WrapCoordinate(RETRO_Camera.x, RETRO_Terrain.width);
-		RETRO_Camera.z = RETRO_WrapCoordinate(RETRO_Camera.z, RETRO_Terrain.height);
-	}
+	RETRO_WrapTerrainCamera();
 
 	RETRO_TerrainView.horizon = RETRO_HEIGHT / 2 - RETRO_TerrainView.focaly * tanf(v.pitch);
 }
 
-//
-// Stand the wrapping camera on the ground at x, z, at its ride height
-//
-// Worth doing once before the first frame: the follow above closes a gap
-// gradually, so a camera left at zero would otherwise rise into place from
-// under the map while the demo is already being watched. The island look
-// is RETRO_LookDownAtTerrain, which stands outside the patch.
-//
-inline void RETRO_PlaceTerrainCamera(float x, float z)
-{
-	RETRO_Camera.x = x;
-	RETRO_Camera.z = z;
-	RETRO_Camera.height = RETRO_TerrainHeightLinear(x, z) + RETRO_Camera.eye;
-}
+// *******************************************************************
+// The island look
+// *******************************************************************
 
 //
-// Take the wrapping camera and its draw distance down for a world that is
-// this much of the default
+// A finite patch on a turntable, seen from outside and pitched down
 //
-// Speeds and ride height come from a fresh camera so a copied number is not
-// one that stops agreeing the day the default moves. Distance comes from
-// RETRO_TERRAIN_DISTANCE for the same reason, not from whatever the live
-// view already holds: calling this twice would otherwise quarter the view
-// twice. The turn speed is left alone, an angle being the one thing a
-// change of scale does not touch. The island look is not scaled: it stands
-// outside a finite patch and LookDown sets its own pose.
+// The camera looks along decreasing z and does not turn; the patch turns
+// under it. pitch is a real rotation of the view, so the island fills the
+// frame rather than sitting as a ridge on the horizon. The camera dollies
+// between stops that keep it outside the patch.
 //
-inline void RETRO_ScaleTerrainWorld(float worldscale)
-{
-	RETRO_TerrainCamera defaults;
-	RETRO_Camera.movespeed = defaults.movespeed * worldscale;
-	RETRO_Camera.flyspeed = defaults.flyspeed * worldscale;
-	RETRO_Camera.eye = defaults.eye * worldscale;
-	RETRO_Camera.clearance = defaults.clearance * worldscale;
-	RETRO_TerrainView.distance = (int)(RETRO_TERRAIN_DISTANCE * worldscale);
-}
+struct RETRO_TerrainIsland {
+	float x = 0;				// Look-from, looking toward decreasing z
+	float z = 0;
+	float height = 0;			// Above the map's zero, in world units
+	float pitch = 0.70f;		// Radians down from the horizon
+	float rotation = 0;			// The patch's turn about its center, radians
+	float movespeed = 24.0f;
+	float turnspeed = 1.35f;
+	float nearestz = 0;			// Dolly stops
+	float farthestz = 0;
+};
+
+inline RETRO_TerrainIsland RETRO_Island;
 
 //
-// The island pose as a frame
+// The island pose taken once per draw: the spin axis, and the sincos of
+// pitch and rotation every sample shares
 //
-// The patch center and the sincos of pitch and rotation are what every
-// sample shares. Taken once per draw, the way a heading's basis is taken
-// once for the wrapping look. RETRO_TerrainIslandEye then uses this
-// rather than taking them per sample.
-//
+struct RETRO_TerrainIslandFrame {
+	float centerx, centerz;		// Patch center, the axis the turntable spins about
+	float sinpitch, cospitch;
+	float sinrot, cosrot;
+};
+
 inline RETRO_TerrainIslandFrame RETRO_BuildTerrainIslandFrame(void)
 {
 	RETRO_TerrainIslandFrame frame;
@@ -1169,29 +958,16 @@ inline RETRO_TerrainIslandFrame RETRO_BuildTerrainIslandFrame(void)
 //
 // Stand outside the patch, looking down so it fills the frame
 //
-// Writes the lens as well as the pose, replacing the wrapping defaults.
-// The wrapping lens is a right angle across, made for a world that goes
-// on. This one is longer: the patch is small and the camera is close, and
-// a wide angle would show mostly the ground between here and there. The
-// horizon sits a little above the middle so the look-down has sky left at
-// the top. The cull follows from the new focals, still a little wider
-// than the lens, so a sample on the edge is projected rather than thrown
-// out before it is.
+// Writes the lens as well as the pose. The lens is longer than the wrapping
+// one - the patch is small and the camera close, and a wide angle would show
+// mostly the ground in between - with the horizon a little above the middle
+// so there is sky at the top.
 //
-// Height is set so the view center lands on the patch: tan of the pitch
-// times how far the camera stands from the center, plus the ground there.
-// The camera stands on that same center in x, the mid-point of the
-// vertices: (width - 1) / 2, not width / 2. The frame derives the spin
-// axis independently of Island.x, and the eye subtracts Island.x after
-// the turn, so a mismatch is a constant translation of the whole scene -
-// the island sits permanently off the screen center it was posed to fill,
-// at every rotation.
-// The near stop is the center plus the circumradius of the patch plus the
-// near plane, not the unrotated south edge: the island turns about its
-// center, and a stop at the south edge would let a 45 degree yaw put the
-// camera inside it looking at a corner. The circumradius is the hypotenuse
-// of the half-extents, which equals the half-depth times sqrt(2) only when
-// the patch is square.
+// The camera stands over the spin axis, (width - 1) / 2, so the island sits
+// on the screen center at every rotation, and high enough that the view
+// center lands on the patch center. The near stop clears the patch's
+// circumradius, not its south edge: the patch turns, and at 45 degrees a
+// corner reaches further than the edge.
 //
 inline void RETRO_LookDownAtTerrain(void)
 {
@@ -1200,26 +976,20 @@ inline void RETRO_LookDownAtTerrain(void)
 	RETRO_TerrainView.horizon = RETRO_HEIGHT * 0.46f;
 	RETRO_TerrainView.nearplane = 4.0f;
 
+	// A patch large enough that its circumradius reaches past the far stop
+	// has the two stops meet there, and the camera starts between them
 	vec3 center = RETRO_TerrainCenter();
-	RETRO_Island.x = center.x;
-	RETRO_Island.z = RETRO_Terrain.height + 35.0f;
 	RETRO_Island.rotation = 0;
 	RETRO_Island.pitch = 0.70f;
 	RETRO_Island.nearestz = center.z + hypotf(center.x, center.z) + RETRO_TerrainView.nearplane;
-	RETRO_Island.farthestz = RETRO_Terrain.height + 70.0f;
+	RETRO_Island.farthestz = MAX(RETRO_Terrain.height + 70.0f, RETRO_Island.nearestz);
+	RETRO_Island.x = center.x;
+	RETRO_Island.z = clamp(RETRO_Terrain.height + 35.0f, RETRO_Island.nearestz, RETRO_Island.farthestz);
 	RETRO_Island.height = RETRO_TerrainHeight(center.x, center.z) + tanf(RETRO_Island.pitch) * (RETRO_Island.z - center.z);
 }
 
-//
-// A map point in the island camera's own frame
-//
-// The wrapping equivalent is RETRO_TerrainCameraOffset, then world height
-// minus the eye. Here the patch spins about its center and the view is
-// pitched, so altitude is mixed into depth and the result is already an
-// Eye. The caller decides what is worth drawing - near plane, side per
-// depth - then RETRO_ProjectTerrainView, the way wrapping dots test the
-// wedge before they project.
-//
+// A map point at world height y in the island camera's frame: the patch
+// turned about its center, then the view pitched down.
 inline RETRO_TerrainEye RETRO_TerrainIslandEye(float x, float y, float z, const RETRO_TerrainIslandFrame &frame)
 {
 	float localx = x - frame.centerx;
@@ -1236,15 +1006,8 @@ inline RETRO_TerrainEye RETRO_TerrainIslandEye(float x, float y, float z, const 
 	return eye;
 }
 
-//
-// Drive the island from the keyboard
-//
-// Left/Right turn the patch, not the camera. That is the whole difference
-// from RETRO_UpdateTerrainCamera, whose Left/Right yaw the eye. Up/Down
-// dolly along the viewing axis, and are held between the stops LookDown
-// set, so the finite patch stays in frame. There is no horizon slide: the
-// pitch is the look.
-//
+// Drive the island from the keyboard: Left/Right turn the patch, Up/Down
+// (or W/S) dolly between the stops RETRO_LookDownAtTerrain set.
 inline void RETRO_UpdateTerrainIsland(float timestep)
 {
 	float distance = timestep * RETRO_Island.movespeed;
@@ -1254,75 +1017,7 @@ inline void RETRO_UpdateTerrainIsland(float timestep)
 	if (RETRO_KeyState(SDL_SCANCODE_UP) || RETRO_KeyState(SDL_SCANCODE_W)) RETRO_Island.z -= distance;
 	if (RETRO_KeyState(SDL_SCANCODE_DOWN) || RETRO_KeyState(SDL_SCANCODE_S)) RETRO_Island.z += distance;
 	RETRO_Island.z = clamp(RETRO_Island.z, RETRO_Island.nearestz, RETRO_Island.farthestz);
-	RETRO_Island.rotation = fmodf(RETRO_Island.rotation, (float)(2.0 * M_PI));
-}
-
-//
-// A wrapping height field built by midpoint displacement, and the slope-shaded
-// color map that goes with it. The map wraps: this is a torus, not an island.
-//
-// The map has to be square with power-of-two sides: the diamond-square walk
-// steps by halves of one length, and the column walks that read it wrap by
-// masking. Said once here, where a size that is not fails at startup, rather
-// than found out as a walk reading down the wrong rows.
-//
-// Midpoint displacement fills the byte range far more evenly than a photograph
-// does, so a stored height here is not a world height. 0.6 of a stored byte is
-// the same ground as one of those, and worldscale then brings it into this
-// world. Flying that world at the matching size is RETRO_ScaleTerrainWorld,
-// not this: generating the ground should not change how fast the camera flies.
-//
-// The field starts flat. The first diamond-square pass reads one seed: on
-// a wrapping square map it runs once at p = width, x = y = 0, and all four
-// corners fold onto heightmap[0]. A dirty buffer would be a different map
-// every run; this zeros it rather than asking the caller to have done so.
-//
-inline void RETRO_BuildDisplacementTerrain(unsigned char *heightmap, unsigned char *colormap, int width, int height, float worldscale)
-{
-	if (width != height || width <= 0 || (width & (width - 1)) != 0) {
-		RETRO_RageQuit("Displacement terrain must be square with power-of-two sides\n");
-	}
-
-	memset(heightmap, 0, (size_t)width * (size_t)height);
-	RETRO_SetTerrain(width, height, 0.6f * worldscale, heightmap, colormap);
-
-	for (int p = width; p > 1; p /= 2) {
-		int p2 = p / 2;
-		int k = p * 8 + 20;
-		int k2 = k / 2;
-
-		for (int y = 0; y < height; y += p) {
-			for (int x = 0; x < width; x += p) {
-				int a = heightmap[y * width + x];
-				int b = heightmap[WRAP(y + p, height) * width + x];
-				int c = heightmap[y * width + WRAP(x + p, width)];
-				int d = heightmap[WRAP(y + p, height) * width + WRAP(x + p, width)];
-
-				heightmap[y * width + WRAP(x + p2, width)] = CLAMP256(((a + c) / 2) + (RANDOM(k) - k2));
-				heightmap[WRAP(y + p2, height) * width + WRAP(x + p2, width)] = CLAMP256(((a + b + c + d) / 4) + (RANDOM(k) - k2));
-				heightmap[WRAP(y + p2, height) * width + x] = CLAMP256(((a + b) / 2) + (RANDOM(k) - k2));
-			}
-		}
-	}
-
-	for (int k = 0; k < 5; k++) {
-		for (int y = 0; y < height; y++) {
-			for (int x = 0; x < width; x++) {
-				heightmap[y * width + x] = (
-					heightmap[WRAP(y + 1, height) * width + x] +
-					heightmap[y * width + WRAP(x + 1, width)] +
-					heightmap[WRAP(y - 1, height) * width + x] +
-					heightmap[y * width + WRAP(x - 1, width)]
-				) / 4;
-			}
-		}
-	}
-
-	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width; x++) {
-			colormap[y * width + x] = CLAMP256(128 + (heightmap[WRAP(y + 1, height) * width + WRAP(x + 1, width)] - heightmap[y * width + x]) * 6);
-		}
-	}
+	RETRO_Island.rotation = mod(RETRO_Island.rotation, (float)(2 * M_PI));
 }
 
 #endif

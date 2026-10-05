@@ -95,16 +95,11 @@ static void DrawGlyph(int letter, double angle, bool shadow, float &paintdepth)
 	double yoff = shadow ? Font.height / 8.0 : 0.0;
 	unsigned char code = (unsigned char)ScrollText[0][letter];
 	int width = RETRO_CharWidth(Font, code);
-	int glyph = code - Font.firstcharacter;
-	int sourcex = glyph * Font.width;
 	int copywidth = MIN(Font.width, width);
-	if (glyph < 0 || sourcex + Font.width > Font.atlas->width) {
-		return;
-	}
 	mat3 matrix = rotateX((float)RING_TILT) * rotateY((float)-angle);
 	for (int y = 0; y < Font.height; y++) {
 		for (int x = 0; x < copywidth; x++) {
-			if (Font.atlas->data[y * Font.atlas->width + sourcex + x]) {
+			if (RETRO_FontTexel(Font, code, x, y) != 0) {
 				DrawCell(matrix, x - width / 2.0, y - Font.height / 2.0 + yoff, color, paintdepth);
 			}
 		}

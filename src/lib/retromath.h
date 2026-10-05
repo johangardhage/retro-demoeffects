@@ -77,12 +77,7 @@ inline void RETRO_RotateModel(const mat3 &matrix, Model3D *model = NULL)
 
 inline void RETRO_RotateModel(float ax, float ay, float az, Model3D *model = NULL)
 {
-	model = model ? model : RETRO_Get3DModel();
-
-	model->matrix = rotate(ax, ay, az);
-	RETRO_RotateVertices(model);
-	RETRO_RotateVertexNormals(model);
-	RETRO_RotateFaceFrames(model);
+	RETRO_RotateModel(rotate(ax, ay, az), model);
 }
 
 // p' = R p + t, the translation half of a model's placement. It goes on the
@@ -102,16 +97,9 @@ inline void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = 
 	}
 }
 
-// Pinhole projection. Depth is scale*rz + eyedistance, and the screen point is
-//
-//   q  = 1 / depth
-//   sx = cx + scale * rx * eyedistance * q
-//   sy = cy + scale * ry * eyedistance * q
-//
-// RETRO_ProjectVertex is this, and RETRO_ProjectModel is it over every vertex
-// of a model. The principal point moves with cx, cy. A demo whose camera does
-// not fit the rest - one that wants a focal length per axis, or a depth it
-// works out for itself - writes the three lines above with what it has.
+// The pinhole projection's defaults, see RETRO_ProjectVertex. A demo whose
+// camera does not fit it - one that wants a focal length per axis, or a depth
+// it works out for itself - writes that formula out with what it has.
 #define RETRO_PROJECTION_EYEDISTANCE 250
 
 // Pixels per model unit when the model does not say. A model built in pixels
@@ -204,26 +192,6 @@ inline UnitVector RETRO_LightSource(float x, float y, float z)
 inline UnitVector RETRO_UnitCrossProduct(UnitVector d1, UnitVector d2)
 {
 	return { normalize(cross(d1.dir, d2.dir)) };
-}
-
-// s · D. D is unit, so s is a length. The result is a Vertex because it is
-// a displacement, not a unit direction, and not a position until
-// RETRO_AddVertex lands it on one.
-inline Vertex RETRO_ScaleUnitVector(UnitVector direction, float s)
-{
-	return { direction.dir * s };
-}
-
-// Scaling a Vertex is the same product, on something that is already a
-// displacement (or a point from the origin).
-inline Vertex RETRO_ScaleVertex(Vertex vertex, float s)
-{
-	return { vertex.pos * s };
-}
-
-inline Vertex RETRO_AddVertex(Vertex a, Vertex b)
-{
-	return { a.pos + b.pos };
 }
 
 // D1 · D2, taken on the rotated directions. Both are unit, so this is already
@@ -437,6 +405,40 @@ inline float RETRO_ValueNoise(float x, float y)
 	float a = RETRO_HashUnit(ix, iy), b = RETRO_HashUnit(ix + 1, iy);
 	float c = RETRO_HashUnit(ix, iy + 1), d = RETRO_HashUnit(ix + 1, iy + 1);
 	return mix(mix(a, b, fx), mix(c, d, fx), fy);
+}
+
+//
+// Catmull-Rom spline: the cubic from p1 at t = 0 to p2 at t = 1, leaving p1
+// along (p2 - p0) / 2 and arriving at p2 along (p3 - p1) / 2. Pieces taken
+// from overlapping runs of four points share the tangent where they meet, so
+// the curve has no corner and no jump in speed there. The basis matrix
+// multiplied out:
+//
+//   C(t) = ½ (2 p1 + (p2 − p0) t + (2 p0 − 5 p1 + 4 p2 − p3) t²
+//             + (3 p1 − p0 − 3 p2 + p3) t³)
+//
+inline vec2 RETRO_CatmullRom(vec2 p0, vec2 p1, vec2 p2, vec2 p3, float t)
+{
+	float t2 = t * t, t3 = t2 * t;
+	return (p1 * 2.0f + (p2 - p0) * t
+		+ (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * t2
+		+ (p1 * 3.0f - p0 - p2 * 3.0f + p3) * t3) * 0.5f;
+}
+
+inline vec3 RETRO_CatmullRom(vec3 p0, vec3 p1, vec3 p2, vec3 p3, float t)
+{
+	float t2 = t * t, t3 = t2 * t;
+	return (p1 * 2.0f + (p2 - p0) * t
+		+ (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * t2
+		+ (p1 * 3.0f - p0 - p2 * 3.0f + p3) * t3) * 0.5f;
+}
+
+// The spline's derivative along t, the direction the curve heads at t
+inline vec3 RETRO_CatmullRomDerivative(vec3 p0, vec3 p1, vec3 p2, vec3 p3, float t)
+{
+	return ((p2 - p0)
+		+ (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * (2 * t)
+		+ (p1 * 3.0f - p0 - p2 * 3.0f + p3) * (3 * t * t)) * 0.5f;
 }
 
 #endif

@@ -44,7 +44,7 @@ void DEMO_Render(double time, double deltatime)
 			int sourcex = x + shiftx;
 			int sourcey = y + columnshift[x];
 
-			if (sourcex >= 0 && sourcex < RETRO_WIDTH && sourcey >= 0 && sourcey < RETRO_HEIGHT) {
+			if (RETRO_OnScreen(sourcex, sourcey)) {
 				RETRO_PutPixel(x, y, image[sourcey * RETRO_WIDTH + sourcex]);
 			}
 		}
@@ -53,10 +53,7 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_Image *image = RETRO_LoadImage("assets/flag_320x240.pcx", true);
-	if (image->width != RETRO_WIDTH || image->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("The image must be the size of the screen\n");
-	}
+	RETRO_LoadImage("assets/flag_320x240.pcx", true);
 
 	// Init tables. One whole turn over N entries, so the table meets itself where the index
 	// wraps and the shear has no seam. The vertical shear is A/2, rounded once.

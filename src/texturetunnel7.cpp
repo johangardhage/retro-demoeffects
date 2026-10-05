@@ -183,13 +183,11 @@ void DEMO_Render(double time, double deltatime)
 			// orthonormal, so the sum is unit with no renormalizing needed).
 			// wall is that direction carried out to the tube wall, and
 			// center + wall is where this vertex actually sits in the world.
-			Vertex alongright = RETRO_ScaleUnitVector(ringright, ct);
-			Vertex alongdown = RETRO_ScaleUnitVector(ringdown, st);
-			Vertex radial = RETRO_AddVertex(alongright, alongdown);
-			Vertex wall = RETRO_ScaleVertex(radial, TUNNEL_RADIUS);
+			vec3 radial = ringright.dir * ct + ringdown.dir * st;
+			vec3 wall = radial * TUNNEL_RADIUS;
 
 			RingVertex *p = &ring[i][s];
-			p->vertex = RETRO_AddVertex(center, wall);
+			p->vertex = { center.pos + wall };
 
 			RETRO_ViewVertex(&p->vertex, &camera);
 			RETRO_ProjectViewVertex(&p->vertex);
@@ -201,8 +199,7 @@ void DEMO_Render(double time, double deltatime)
 			// unlit side never goes black; depth folds in the distance fog
 			// on top, and the product is scaled into the shade table's
 			// [0, FOG_SHADES) range for the Gouraud drawer to interpolate.
-			Vertex negradial = RETRO_ScaleVertex(radial, -1.0f);
-			UnitVector inward = RETRO_NormalizeUnitVector({ negradial.pos });
+			UnitVector inward = RETRO_NormalizeUnitVector({ -radial });
 			RETRO_ViewUnitVector(&inward, &camera);
 			float lambert = RETRO_RotatedDot(inward, Light);
 			float lit = mix(AMBIENT, 1.0f, RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f)));

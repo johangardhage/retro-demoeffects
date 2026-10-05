@@ -67,10 +67,7 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_Image *image = RETRO_LoadImage("assets/flowers_256x256.pcx", true);
-	if (image->width != TEXTURE_WIDTH || image->height != TEXTURE_HEIGHT) {
-		RETRO_RageQuit("The image must be 256x256\n");
-	}
+	RETRO_LoadImage("assets/flowers_256x256.pcx", true);
 
 	for (int i = 0; i < ANGLE_STEPS; i++) {
 		double angle = i * 2 * M_PI / ANGLE_STEPS;

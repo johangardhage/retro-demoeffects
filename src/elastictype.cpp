@@ -59,11 +59,6 @@ static RETRO_Font Font;
 static void DrawGlyph(const Glyph &glyph, float time, int xoffset, int yoffset, unsigned char color)
 {
 	unsigned char code = (unsigned char)glyph.letter;
-	int cell = code - Font.firstcharacter;
-	int sourcex = cell * Font.width;
-	if (cell < 0 || sourcex + Font.width > Font.atlas->width) {
-		return;
-	}
 
 	float wave = sinf(time * 2.15f + glyph.phase);
 	float cross = sinf(time * 1.31f - glyph.phase * 1.73f);
@@ -85,7 +80,7 @@ static void DrawGlyph(const Glyph &glyph, float time, int xoffset, int yoffset, 
 		int sy = CLAMP((y - top) * Font.height / rectheight, 0, Font.height);
 		for (int x = MAX(left, PANEL_LEFT); x <= MIN(right, PANEL_RIGHT); x++) {
 			int sx = CLAMP((x - left) * Font.width / rectwidth, 0, Font.width);
-			if (Font.atlas->data[sy * Font.atlas->width + sourcex + sx] != 0) {
+			if (RETRO_FontTexel(Font, code, sx, sy) != 0) {
 				buffer[y * RETRO_WIDTH + x] = color;
 			}
 		}

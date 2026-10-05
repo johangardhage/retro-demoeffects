@@ -75,20 +75,16 @@ static void DrawText(const char *text, int y, int xscale, int yscale, int tracki
 
 	for (int i = 0; i < length; i++) {
 		unsigned char code = (unsigned char)text[i];
-		int glyph = code - Font.firstcharacter;
-		int sourcex = glyph * Font.width;
 		int copywidth = MIN(Font.width, RETRO_CharWidth(Font, code));
-		if (glyph >= 0 && sourcex + Font.width <= Font.atlas->width) {
-			for (int gy = 0; gy < Font.height; gy++) {
-				for (int gx = 0; gx < copywidth; gx++) {
-					unsigned char texel = Font.atlas->data[gy * Font.atlas->width + sourcex + gx];
-					if (texel == 0) {
-						continue;
-					}
-					for (int sy = 0; sy < yscale; sy++) {
-						for (int sx = 0; sx < xscale; sx++) {
-							LogoBuffer[(y + gy * yscale + sy) * RETRO_WIDTH + (x + gx * xscale + sx)] = texel * LOGO_HEAT / 255;
-						}
+		for (int gy = 0; gy < Font.height; gy++) {
+			for (int gx = 0; gx < copywidth; gx++) {
+				unsigned char texel = RETRO_FontTexel(Font, code, gx, gy);
+				if (texel == 0) {
+					continue;
+				}
+				for (int sy = 0; sy < yscale; sy++) {
+					for (int sx = 0; sx < xscale; sx++) {
+						LogoBuffer[(y + gy * yscale + sy) * RETRO_WIDTH + (x + gx * xscale + sx)] = texel * LOGO_HEAT / 255;
 					}
 				}
 			}

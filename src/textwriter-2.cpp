@@ -81,16 +81,11 @@ void DEMO_Render(double time, double deltatime)
 
 		for (int character = 0; character < visible; character++) {
 			unsigned char code = (unsigned char)line[character];
-			int glyph = code - Font.firstcharacter;
-			int sourcex = glyph * Font.width;
-
-			if (glyph >= 0 && sourcex + Font.width <= Font.atlas->width) {
-				for (int y = 0; y < Font.height; y++) {
-					for (int x = 0; x < Font.width; x++) {
-						unsigned char color = Font.atlas->data[y * Font.atlas->width + sourcex + x];
-						if (color != 0) {
-							RETRO_PutPixel(screenx + x, screeny + y, color);
-						}
+			for (int y = 0; y < Font.height; y++) {
+				for (int x = 0; x < Font.width; x++) {
+					unsigned char color = RETRO_FontTexel(Font, code, x, y);
+					if (color != 0) {
+						RETRO_PutPixel(screenx + x, screeny + y, color);
 					}
 				}
 			}

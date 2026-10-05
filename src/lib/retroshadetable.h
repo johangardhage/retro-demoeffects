@@ -196,12 +196,7 @@ inline void RETRO_CreateShadeTable(const RETRO_Palette *palette, int colors, int
 	for (int source = 0; source < colors; source++) {
 		for (int shade = 0; shade < shades; shade++) {
 			float level = RETRO_ShadeTableLevel(shade, shades);
-			float brightness = mix(ambient, 1.0f, level);
-			RETRO_Palette target = {
-				(unsigned char)(palette[source].r * brightness + 0.5f),
-				(unsigned char)(palette[source].g * brightness + 0.5f),
-				(unsigned char)(palette[source].b * brightness + 0.5f),
-			};
+			RETRO_Palette target = RETRO_ShadeColor(palette[source], mix(ambient, 1.0f, level));
 			shadetable[source * shades + shade] =
 				RETRO_NearestPaletteIndex(target, palette, colors);
 		}

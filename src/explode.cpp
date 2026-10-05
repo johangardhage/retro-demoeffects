@@ -132,7 +132,7 @@ void DEMO_Render(double time, double deltatime)
 		float reach = BLAST_DISTANCE * particle.strength * burst;
 		int x = (int)floorf(mix(fromx, tox, carry) + reach * cosf(angle));
 		int y = (int)floorf(mix(fromy, toy, carry) + reach * sinf(angle));
-		if (x < 0 || x >= RETRO_WIDTH || y < 0 || y >= RETRO_HEIGHT) {
+		if (!RETRO_OnScreen(x, y)) {
 			continue;
 		}
 
@@ -149,9 +149,6 @@ void DEMO_Initialize(void)
 {
 	RETRO_Image *picturea = RETRO_LoadImage("assets/monkey_320x240_quantizized.pcx", true);
 	RETRO_Image *pictureb = RETRO_LoadImage("assets/flowers_320x240_quantizized.pcx");
-	if (picturea->width != RETRO_WIDTH || picturea->height != RETRO_HEIGHT || pictureb->width != RETRO_WIDTH || pictureb->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("Explode pictures must be %dx%d\n", RETRO_WIDTH, RETRO_HEIGHT);
-	}
 	RETRO_CreateColorLUT(picturea->palette, LUT_SIZE, &ColorLUT[0][0][0]);
 	Background = RETRO_NearestPaletteIndex(RETRO_BLACK, picturea->palette);
 

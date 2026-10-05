@@ -52,7 +52,7 @@ void DEMO_Render(double time, double deltatime)
 		int x = (RETRO_WIDTH / 2) + (Stars[i].x * EYE) / Stars[i].z;
 		int y = (RETRO_HEIGHT / 2) + (Stars[i].y * EYE) / Stars[i].z;
 
-		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+		if (RETRO_OnScreen(x, y)) {
 			int color = (STAR_FAR - Stars[i].z) * (SHADES - 1) / (STAR_FAR - STAR_NEAR);
 
 			RETRO_PutPixel(x, y, color);

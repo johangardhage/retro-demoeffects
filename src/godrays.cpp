@@ -347,11 +347,12 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Lay the light over the picture
+	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int i = 0; i < RETRO_WIDTH * RETRO_HEIGHT; i++) {
 		if (Light[i] <= 0.0f) continue;
-		int color = RETRO.framebuffer[i];
+		int color = buffer[i];
 		float lit = 1.0f - (1.0f - (float)Level[color] / (LIGHT_LEVELS - 1)) * expf(-Light[i]);
-		RETRO.framebuffer[i] = Base[color] + (int)(lit * (LIGHT_LEVELS - 1) + 0.5f);
+		buffer[i] = Base[color] + (int)(lit * (LIGHT_LEVELS - 1) + 0.5f);
 	}
 }
 

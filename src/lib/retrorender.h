@@ -79,6 +79,20 @@ inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible =
 	// normal, so without this every vertex on a face would cross together.
 	const float RETRO_DOT_FADE = 0.15f;
 
+	// Each vertex's normal, by the index its faces give it at that corner: a
+	// model that carries normals of its own need not list them in vertex order.
+	// A vertex on no face keeps the normal of its own index.
+	int vertexnormal[RETRO_MAX_VERTICES];
+	for (int i = 0; i < model->vertices; i++) {
+		vertexnormal[i] = i;
+	}
+	for (int i = 0; i < model->faces; i++) {
+		Face *face = &model->face[i];
+		for (int j = 0; j < face->vertices; j++) {
+			vertexnormal[face->vertex[j]] = face->vertexnormal[j];
+		}
+	}
+
 	// A vertex has no winding of its own. Visibility is whether any of the
 	// faces that meet there is front-facing, by the same screen-space cross
 	// RETRO_SortFaces already uses for every other renderer. The vertex-
@@ -111,7 +125,7 @@ inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible =
 	if (shaded) {
 		for (int i = 0; i < model->vertices; i++) {
 			drop[i] = false;
-			lambert[i] = RETRO_RotatedDot(model->normal[i], RETRO_Render.lightsource);
+			lambert[i] = RETRO_RotatedDot(model->normal[vertexnormal[i]], RETRO_Render.lightsource);
 		}
 
 		int order[RETRO_MAX_VERTICES];
@@ -151,7 +165,7 @@ inline void RETRO_RenderDotModel(Model3D *model, bool shaded, bool onlyvisible =
 		if (model->vertex[i].q > 0.0f) {
 			float fade = 1.0f;
 			if (onlyvisible) {
-				float facing = -model->normal[i].rdir.z;
+				float facing = -model->normal[vertexnormal[i]].rdir.z;
 				if (facing > 0.0f) {
 					fade = CLAMP01(facing / RETRO_DOT_FADE);
 				}
@@ -196,11 +210,7 @@ inline void RETRO_RenderWireModel(Model3D *model, bool hiddenlines, bool fire, C
 		for (int j = 0; j < face->vertices; j++) {
 			Vertex *p1 = &model->vertex[face->vertex[j]];
 			Vertex *p2 = &model->vertex[face->vertex[(j + 1) % face->vertices]];
-			if (fire) {
-				RETRO_DrawFireLine(p1->spos.x, p1->spos.y, p2->spos.x, p2->spos.y, color, model->shades, { clip.x0, clip.x1, clip.y0, clip.y1 });
-			} else {
-				RETRO_DrawLine(p1->spos.x, p1->spos.y, p2->spos.x, p2->spos.y, color, { clip.x0, clip.x1, clip.y0, clip.y1 });
-			}
+			RETRO_DrawLine(p1->spos.x, p1->spos.y, p2->spos.x, p2->spos.y, color, { clip.x0, clip.x1, clip.y0, clip.y1 }, fire ? model->shades : 0);
 		}
 	}
 }
@@ -494,13 +504,13 @@ inline void RETRO_RenderEnvironmentModel(Model3D *model, ClipRect clip = {})
 			if (bumpmapping) {
 				point[j].uv = model->uv[face->uv[j]];
 			}
-			if (!model->envmapperspective) {
-				point[j].n = normal->rdir * (side * vertex->q);
-			} else if (bumpmapping) {
+			if (model->envmapperspective && bumpmapping) {
 				point[j].n = RETRO_ReflectionNormal(normal->rdir * side, vertex->rpos, model->eye) * vertex->q;
 			} else {
 				point[j].n = normal->rdir * (side * vertex->q);
-				point[j].p = RETRO_ViewRay(vertex->rpos, model->eye) * vertex->q;
+				if (model->envmapperspective) {
+					point[j].p = RETRO_ViewRay(vertex->rpos, model->eye) * vertex->q;
+				}
 			}
 		}
 		if (bumpmapping) {

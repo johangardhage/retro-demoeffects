@@ -62,7 +62,7 @@ void DEMO_Render(double time, double deltatime)
 		int x = cx + Stars[i].radius * cos(a) * q;
 		int y = cy + Stars[i].radius * sin(a) * q;
 
-		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+		if (RETRO_OnScreen(x, y)) {
 			int color = (STAR_FAR - Stars[i].z) * (SHADES - 1) / (STAR_FAR - STAR_NEAR);
 			RETRO_PutPixel(x, y, color);
 

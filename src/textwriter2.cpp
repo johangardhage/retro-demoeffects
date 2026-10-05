@@ -130,7 +130,7 @@ void DEMO_Render(double time, double deltatime)
 				}
 				int px = x0 + xx;
 				int py = top + row * LINE_PITCH + yy;
-				if (px < 0 || px >= RETRO_WIDTH || py < 0 || py >= RETRO_HEIGHT) {
+				if (!RETRO_OnScreen(px, py)) {
 					continue;
 				}
 				if (moving && (Covered[py * RETRO_WIDTH + px] != 0) == erasing) {

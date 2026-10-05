@@ -15,7 +15,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
+#include "lib/retropalette.h"
 
 #define TIME_FADEIN 2.5 // seconds the fade in takes
 #define TIME_FADEOUT 2.5 // seconds the fade out takes
@@ -43,7 +43,8 @@ void DEMO_Render(double time, double deltatime)
 		}
 		break;
 	case FADEIN:
-		if (RETRO_FadeIn(RETRO_COLORS, step * RETRO_COLORS, RETRO_ImagePalette())) {
+		RETRO_Fade(step, RETRO_ImagePalette());
+		if (step >= 1) {
 			state = HOLD;
 			next = FADEOUT;
 			hold = TIME_HOLD;
@@ -52,7 +53,8 @@ void DEMO_Render(double time, double deltatime)
 		}
 		break;
 	case FADEOUT:
-		if (RETRO_FadeOut(RETRO_COLORS, step * RETRO_COLORS, RETRO_ImagePalette())) {
+		RETRO_Fade(1 - step, RETRO_ImagePalette());
+		if (step >= 1) {
 			state = HOLD;
 			next = FADEIN;
 			hold = TIME_HOLD;

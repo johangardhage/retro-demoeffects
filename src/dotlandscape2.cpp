@@ -30,12 +30,12 @@ static void DrawTerrainDots(const RETRO_TerrainIslandFrame &frame)
 	for (int z = 0; z < height; z++) {
 		for (int x = 0; x < width; x++) {
 			RETRO_TerrainEye eye = RETRO_TerrainIslandEye(x, RETRO_TerrainHeight(x, z), z, frame);
-			if (eye.depth <= RETRO_TerrainView.nearplane || fabsf(eye.side) > eye.depth * RETRO_TerrainViewCullSlope()) continue;
+			if (!RETRO_TerrainEyeInView(eye)) continue;
 
 			RETRO_TerrainPoint point = RETRO_ProjectTerrainView(eye);
 			int sx = (int)point.spos.x;
 			int sy = (int)point.spos.y;
-			if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) continue;
+			if (!RETRO_OnScreen(sx, sy)) continue;
 
 			if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, 1.0f / eye.depth)) {
 				RETRO_PutPixel(sx, sy, RETRO_TerrainColor(x, z));

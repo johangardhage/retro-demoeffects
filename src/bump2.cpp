@@ -116,9 +116,6 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_Image *heightmap = RETRO_LoadImage("assets/bump_320x240.pcx");
-	if (heightmap->width != RETRO_WIDTH || heightmap->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("The height map must be the size of the screen\n");
-	}
 
 	// Init palette
 	RETRO_CreateGradientPalette(0, LIGHT_COLORS * 3 / 4, RETRO_BLACK, RETRO_RED);

@@ -184,7 +184,7 @@ static unsigned char ShadeBeam(const Fragment &fragment)
 	if (IntersectBeam(eye, fragment.view, BallDepth[pixel], near, far)) {
 		Light[pixel] += IntegrateBeam(eye, fragment.view, near, far);
 	}
-	return RETRO.framebuffer[pixel]; // Palette conversion happens after all beams.
+	return RETRO_FrameBuffer()[pixel]; // Palette conversion happens after all beams.
 }
 
 // A cone truncated at the center and at BEAM_LENGTH, along +z, closed at
@@ -299,13 +299,14 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Quantize only once, so faint and overlapping beams retain their light.
+	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int pixel = 0; pixel < RETRO_WIDTH * RETRO_HEIGHT; pixel++) {
-		int color = RETRO.framebuffer[pixel];
+		int color = buffer[pixel];
 		int ramp = color / LIGHT_LEVELS * LIGHT_LEVELS;
 		float lit = (float)(color - ramp) / (LIGHT_LEVELS - 1);
 		lit = 1.0f - (1.0f - lit) * expf(-Light[pixel]);
 		int level = (int)(lit * (LIGHT_LEVELS - 1) + 0.5f);
-		RETRO.framebuffer[pixel] = ramp + CLAMP(level, 0, LIGHT_LEVELS);
+		buffer[pixel] = ramp + CLAMP(level, 0, LIGHT_LEVELS);
 	}
 }
 

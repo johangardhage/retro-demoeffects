@@ -164,7 +164,7 @@ void DEMO_Render2(double time, double deltatime)
 		int sx = ScreenX + ScreenScale * PointX;
 		int sy = ScreenY - ScreenScale * PointY;
 
-		if (sx >= 0 && sx < RETRO_WIDTH && sy >= 0 && sy < RETRO_HEIGHT) {
+		if (RETRO_OnScreen(sx, sy)) {
 			int offset = sy * RETRO_WIDTH + sx;
 			if (Density[offset] < DENSITY_MAX) {
 				Density[offset]++;

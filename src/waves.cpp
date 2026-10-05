@@ -149,7 +149,7 @@ static void DrawFloatingChar(char character, float cx, float waterline, unsigned
 
 		for (int x = 0; x < Font.width; x++) {
 			int px = left + x;
-			if (px >= 0 && px < RETRO_WIDTH && RETRO_FontInk(Font, code, x, y)) {
+			if (px >= 0 && px < RETRO_WIDTH && RETRO_FontTexel(Font, code, x, y)) {
 				RETRO_PutPixel(px, py, color);
 			}
 		}

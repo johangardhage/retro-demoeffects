@@ -11,7 +11,6 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
 #define TIME_FADEIN 1.5 // seconds to fade in the monkey from black at startup
@@ -25,7 +24,7 @@ void DEMO_Render(double time, double deltatime)
 {
 	if (time < TIME_FADEIN) {
 		// Hardware DAC palette fade-in: pure linear dimming without color shifting
-		RETRO_FadeIn(1000, (time / TIME_FADEIN) * 1000, PictureA->palette);
+		RETRO_Fade(time / TIME_FADEIN, PictureA->palette);
 		RETRO_Blit(PictureA->data);
 		return;
 	}
@@ -58,11 +57,6 @@ void DEMO_Initialize(void)
 {
 	PictureA = RETRO_LoadImage("assets/monkey_320x240_quantizized.pcx");
 	PictureB = RETRO_LoadImage("assets/flowers_320x240_quantizized.pcx");
-
-	if (PictureA->width != RETRO_WIDTH || PictureA->height != RETRO_HEIGHT ||
-		PictureB->width != RETRO_WIDTH || PictureB->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("The images must be the size of the screen\n");
-	}
 
 	// Build 3D inverse color lookup table to map blended RGB to closest palette entry
 	RETRO_CreateColorLUT(PictureA->palette, 32, &ColorLUT[0][0][0]);

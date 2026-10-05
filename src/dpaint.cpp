@@ -15,7 +15,7 @@
 // the palette swatches are drawn dynamically. The brush is
 // clipped to stay off both, though the pointer still moves freely over
 // them so the panel's own controls are reachable. Brush strokes persist in
-// Canvas rather than RETRO.framebuffer, which is rebuilt from Canvas every
+// Canvas rather than the framebuffer, which is rebuilt from Canvas every
 // frame; that's what lets the Amiga mouse pointer draw on top without
 // leaving a trail of itself behind.
 //
@@ -214,10 +214,7 @@ void DEMO_Render2(double time, double deltatime)
 		x = CLAMPWIDTH(x);
 		y = CLAMPHEIGHT(y);
 
-		// Transform logical mouse position to window position and move mouse
-		float realx, realy;
-		SDL_RenderCoordinatesToWindow(RETRO.renderer, x, y, &realx, &realy);
-		SDL_WarpMouseInWindow(RETRO.window, realx, realy);
+		RETRO_SetMousePosition(x, y);
 	}
 
 	int px = (int)x, py = (int)y;
@@ -279,7 +276,7 @@ void DEMO_Render2(double time, double deltatime)
 	DrawSwatches();
 	DrawSwatchSelection(selectedrow, selectedcol);
 	InvertBrushCell(brushkind, brushcol);
-	InvertToolButton(selectedtool, RETRO.framebuffer);
+	InvertToolButton(selectedtool, RETRO_FrameBuffer());
 	RETRO_DrawSprite(px + POINTER_HOTSPOT_OFFSET, py + POINTER_HOTSPOT_OFFSET, POINTER_SIZE, POINTER_SIZE,
 		POINTER_SIZE, POINTER_SIZE, RETRO_ImageData(wb2pointer ? 2 : 1), 0);
 
@@ -307,17 +304,13 @@ void DEMO_Initialize(void)
 		RETRO_SetColor(i, wb2->palette[i]);
 	}
 
-	RETRO_Palette vga[RETRO_COLORS];
-	RETRO_CreateDefault8bitPalette(vga);
 	for (int i = 0; i < 16; i++) {
-		RETRO_SetColor(PAINT_PALETTE_OFFSET + i, vga[i]);
+		RETRO_SetColor(PAINT_PALETTE_OFFSET + i, RETRO_PALETTE_VGA[i]);
 	}
 
 	// Start in absolute mouse mode
 	RETRO_SetMouseMode(false);
 
 	// Move mouse cursor to middle of screen
-	float realx, realy;
-	SDL_RenderCoordinatesToWindow(RETRO.renderer, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, &realx, &realy);
-	SDL_WarpMouseInWindow(RETRO.window, realx, realy);
+	RETRO_SetMousePosition(RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0);
 }

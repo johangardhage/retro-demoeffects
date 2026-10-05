@@ -86,7 +86,7 @@ void DEMO_FixedUpdate(double timestep)
 					int px = vertex[p].spos.x + x;
 					int py = vertex[p].spos.y + y;
 
-					if (px < 0 || px >= RETRO_WIDTH || py < 0 || py >= RETRO_HEIGHT) {
+					if (!RETRO_OnScreen(px, py)) {
 						continue;
 					}
 

@@ -106,7 +106,7 @@ static void PlotDot(float x, float y, float z, unsigned char color, const mat3 &
 	if (dot.q == 0.0f) return;
 
 	int sx = (int)lround(dot.spos.x), sy = (int)lround(dot.spos.y);
-	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) return;
+	if (!RETRO_OnScreen(sx, sy)) return;
 
 	// dot.q is already 1/depth from the projection, and larger means nearer,
 	// which is exactly what the shared depth test wants.

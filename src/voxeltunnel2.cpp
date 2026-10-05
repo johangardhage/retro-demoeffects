@@ -257,10 +257,6 @@ void DEMO_Initialize(void)
 {
 	Terrain = RETRO_LoadImage("assets/voxel_color_256x256.pcx", true);
 	RETRO_Image *heightmap = RETRO_LoadImage("assets/voxel_height_256x256.pcx");
-	if (Terrain->width != TEXTURE_SIZE || Terrain->height != TEXTURE_SIZE
-		|| heightmap->width != TEXTURE_SIZE || heightmap->height != TEXTURE_SIZE) {
-		RETRO_RageQuit("Terrain color and height maps must be 256x256\n");
-	}
 	HeightPixels = heightmap->data;
 
 	int maxheight = 1;

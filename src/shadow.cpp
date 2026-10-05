@@ -13,11 +13,11 @@
 // map; WORLD() takes those to map cells.
 //
 // Two point lights have a hue, so a vertex's light is three numbers: a
-// neutral level, and how much further green and red reach. All three are
+// neutral level, and how much further red and green reach. All three are
 // interpolated across a face and looked up, with the texel, in a table per
 // texture that takes the texture's own palette onto the screen's:
 //
-//   table[t][n][g][r] = nearest(texture[t] · (min(n + r, 1), min(n + g, 1), n))
+//   table[t][n][r][g] = nearest(texture[t] · (min(n + r, 1), min(n + g, 1), n))
 //
 // Each shadow is the object itself, flattened: every corner of it is
 // followed along its ray from the light to a level plane just above the plain
@@ -67,11 +67,11 @@
 #define AMBIENT_LIGHT (100 / 256.0f)
 #define INFINITE_LIGHT (100 / 256.0f)
 #define POINT_LIGHT (255 / 256.0f)
-#define POINT_LIGHT_KL 0.001f // green, attenuation per world unit
-#define POINT_LIGHT2_KL 0.002f // red
+#define POINT_LIGHT_RED_KL 0.002f // attenuation per world unit
+#define POINT_LIGHT_GREEN_KL 0.001f
 #define POINT_LIGHT_RATE radians(30) // radians a second round the world
-#define POINT_LIGHT_ORBIT WORLD(500) // green, radius about the world's center
-#define POINT_LIGHT2_ORBIT WORLD(200) // red, twice as fast the other way
+#define POINT_LIGHT_RED_ORBIT WORLD(200) // radius about the world's center, circled twice as fast as green the other way
+#define POINT_LIGHT_GREEN_ORBIT WORLD(500)
 #define POINT_LIGHT_ALTITUDE WORLD(500) // where both start
 #define POINT_LIGHT_RAISE WORLD(300) // a second, while 1 to 4 is held
 #define POINT_LIGHT_TOP WORLD(2000) // the highest 1 to 4 raise a light, and the ground's base the lowest
@@ -98,7 +98,7 @@ enum { ASSET_TERRAIN, ASSET_EARTH, ASSET_CUBE, ASSET_HEIGHTMAP };
 #define TEXTURES (ASSET_HEIGHTMAP - ASSET_TERRAIN)
 #define NO_TEXTURE -1
 enum { MODEL_SPHERE, MODEL_CUBE, MODELS };
-enum { LIGHT_GREEN, LIGHT_RED, POINT_LIGHTS };
+enum { LIGHT_RED, LIGHT_GREEN, POINT_LIGHTS };
 
 struct Object {
 	int model;
@@ -134,7 +134,7 @@ static const RETRO_Palette CubeGreen = { 0, 255, 10 }, CubeRed = { 255, 0, 0 }, 
 static const RETRO_Palette Held[] = { RETRO_BLACK, RETRO_GREEN, RETRO_WHITE, CubeGreen, CubeRed, Sky, Ground };
 #define HELD (int)(sizeof(Held) / sizeof(Held[0]))
 
-static const float PointLightKL[POINT_LIGHTS] = { POINT_LIGHT_KL, POINT_LIGHT2_KL };
+static const float PointLightKL[POINT_LIGHTS] = { POINT_LIGHT_RED_KL, POINT_LIGHT_GREEN_KL };
 static vec3 PointLightPosition[POINT_LIGHTS];
 static float PointLightAltitude[POINT_LIGHTS] = { POINT_LIGHT_ALTITUDE, POINT_LIGHT_ALTITUDE };
 
@@ -157,15 +157,6 @@ static float PointLightTerm(vec3 p, vec3 n, vec3 light, float kl)
 	return POINT_LIGHT * MAX(dot(n, l) / distance, 0.0f) / (kl * TO_WORLD(distance));
 }
 
-// A color under the light: the neutral level as the shade, and green and
-// red beyond it as the tints
-static RETRO_Palette Modulate(RETRO_Palette color, float neutral, const float *tint)
-{
-	float green = MIN(neutral + tint[LIGHT_GREEN], 1.0f);
-	float red = MIN(neutral + tint[LIGHT_RED], 1.0f);
-	return { (unsigned char)(color.r * red), (unsigned char)(color.g * green), (unsigned char)(color.b * neutral) };
-}
-
 // A vertex at p facing n, lit
 static Light LightVertex(vec3 p, vec3 n)
 {
@@ -185,7 +176,7 @@ static Light LightVertex(vec3 p, vec3 n)
 }
 
 // A world point in the camera's frame, carrying its texture coordinates and
-// its light as table levels: neutral as the shade, green and red as the tints
+// its light as table levels: neutral as the shade, red and green as the tints
 static RETRO_TerrainVertex MakeVertex(vec3 p, vec2 uv, Light light)
 {
 	RETRO_TerrainVertex vertex = {};
@@ -336,8 +327,8 @@ static void PlacePointLights(double time)
 {
 	vec3 center = RETRO_TerrainCenter();
 	float angle = fmod(time * POINT_LIGHT_RATE, 2 * M_PI);
-	PointLightPosition[LIGHT_GREEN] = { center.x - POINT_LIGHT_ORBIT * cosf(angle), PointLightAltitude[LIGHT_GREEN], center.z + POINT_LIGHT_ORBIT * sinf(angle) };
-	PointLightPosition[LIGHT_RED] = { center.x - POINT_LIGHT2_ORBIT * cosf(-2 * angle), PointLightAltitude[LIGHT_RED], center.z + POINT_LIGHT2_ORBIT * sinf(-2 * angle) };
+	PointLightPosition[LIGHT_GREEN] = { center.x - POINT_LIGHT_GREEN_ORBIT * cosf(angle), PointLightAltitude[LIGHT_GREEN], center.z + POINT_LIGHT_GREEN_ORBIT * sinf(angle) };
+	PointLightPosition[LIGHT_RED] = { center.x - POINT_LIGHT_RED_ORBIT * cosf(-2 * angle), PointLightAltitude[LIGHT_RED], center.z + POINT_LIGHT_RED_ORBIT * sinf(-2 * angle) };
 }
 
 //
@@ -355,9 +346,9 @@ static void FitScreenPalette(void)
 				vec3 p = { (float)x, RETRO_TerrainHeight(x, z), (float)z };
 				Light light = LightVertex(p, normalize(RETRO_TerrainNormal(p.x, p.z)));
 				int c = light.neutral * (LIGHT_LEVELS - 1) + 0.5f;
-				int green = light.tint[LIGHT_GREEN] * (TINT_LEVELS - 1) + 0.5f;
 				int red = light.tint[LIGHT_RED] * (TINT_LEVELS - 1) + 0.5f;
-				LightWeight[c][green][red]++;
+				int green = light.tint[LIGHT_GREEN] * (TINT_LEVELS - 1) + 0.5f;
+				LightWeight[c][red][green]++;
 			}
 		}
 	}
@@ -367,10 +358,10 @@ static void FitScreenPalette(void)
 	// cover less of the screen, and the ground's again in shadow
 	for (int texture = ASSET_TERRAIN; texture < ASSET_TERRAIN + TEXTURES; texture++) {
 		if (texture == ASSET_TERRAIN) {
-			RETRO_AddShadeTableColors(&Histogram, texture, LightTable(texture), &LightWeight[0][0][0], Modulate);
-			RETRO_AddShadeTableColors(&Histogram, texture, LightTable(texture), &LightWeight[0][0][0], Modulate, SHADOW_WEIGHT, SHADOW_LIGHT);
+			RETRO_AddShadeTableColors(&Histogram, texture, LightTable(texture), &LightWeight[0][0][0], RETRO_TintColor);
+			RETRO_AddShadeTableColors(&Histogram, texture, LightTable(texture), &LightWeight[0][0][0], RETRO_TintColor, SHADOW_WEIGHT, SHADOW_LIGHT);
 		} else {
-			RETRO_AddShadeTableColors(&Histogram, texture, LightTable(texture), &LightWeight[0][0][0], Modulate, OBJECT_WEIGHT);
+			RETRO_AddShadeTableColors(&Histogram, texture, LightTable(texture), &LightWeight[0][0][0], RETRO_TintColor, OBJECT_WEIGHT);
 		}
 	}
 
@@ -470,7 +461,7 @@ void DEMO_Initialize(void)
 
 	// A light table per texture, from its own colors to the screen's
 	for (int texture = ASSET_TERRAIN; texture < ASSET_TERRAIN + TEXTURES; texture++) {
-		RETRO_CreateShadeTable(RETRO_ImagePalette(texture), palette, LightTable(texture), Modulate);
+		RETRO_CreateShadeTable(RETRO_ImagePalette(texture), palette, LightTable(texture), RETRO_TintColor);
 	}
 
 	// Every entry, since the shadow plane reaches past the ground's edge,

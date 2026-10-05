@@ -125,7 +125,7 @@ void DEMO_Render(double time, double deltatime)
 
 				int px = x;
 				int py = sy + i - ScrollImage->height / 2;
-				if (px < 0 || px >= RETRO_WIDTH || py < 0 || py >= RETRO_HEIGHT) {
+				if (!RETRO_OnScreen(px, py)) {
 					continue;
 				}
 				RETRO_PutPixel(px, py, CLAMP256(ink * shade / SHADE_MAX));

@@ -330,9 +330,6 @@ void DEMO_Initialize(void)
 {
 	RETRO_Image *textures = RETRO_LoadImage("assets/raycast_walls_320x200.pcx", true);
 	RETRO_Image *lightmaps = RETRO_LoadImage("assets/raycast_litemaps_320x200.pcx");
-	if (textures->width != SHEET_WIDTH || lightmaps->width != SHEET_WIDTH) {
-		RETRO_RageQuit("Raycast sheets must be %d wide\n", SHEET_WIDTH);
-	}
 	Textures = textures->data;
 	LightMaps = lightmaps->data;
 

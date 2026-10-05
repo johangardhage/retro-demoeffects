@@ -10,6 +10,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retromath.h"
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
@@ -45,34 +46,15 @@ static vec2 BoardOffset(double board)
 	};
 }
 
-// The curve between p1 and p2, at t going from 0 to 1; p0 and p3 are only
-// there to hand it a tangent at each end, matching the direction between
-// that end's own neighbors: (p2-p0)/2 at p1, (p3-p1)/2 at p2. Matching
-// tangents this way, rather than easing each segment to a dead stop with a
-// smoothstep, is what keeps velocity continuous across board boundaries -
-// the flight does not stutter once per board.
-//
-// This is the textbook Catmull-Rom basis matrix multiplied out into plain
-// terms, so no matrix type is needed for four control points:
-//
-//   [ 0   2   0   0]
-//   [-1   0   1   0]  *  [p0 p1 p2 p3]^T  *  [1 t t^2 t^3]^T  /  2
-//   [ 2  -5   4  -1]
-//   [-1   3  -3   1]
-static vec2 CatmullRom(vec2 p0, vec2 p1, vec2 p2, vec2 p3, float t)
-{
-	float t2 = t * t, t3 = t2 * t;
-	return (p1 * 2.0f + (p2 - p0) * t
-		+ (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * t2
-		+ (p1 * 3.0f - p0 - p2 * 3.0f + p3) * t3) * 0.5f;
-}
-
-// Threads a smooth path through the per-board offsets, indexed by absolute
-// world depth. Control points before the first board are clamped to that
-// board's own offset instead of clamping the progress along the curve, so
-// the approach eases up with zero velocity rather than kinking the instant
-// the freeze lifts. X and Y ride the same board index and blend fraction,
-// so they are solved together rather than as two otherwise-identical paths.
+// Threads a Catmull-Rom path through the per-board offsets, indexed by
+// absolute world depth. Its tangents match across board boundaries, so the
+// velocity is continuous and the flight does not stutter once per board, as it
+// would if each segment eased to a stop. Control points before the first board
+// are clamped to that board's own offset instead of clamping the progress
+// along the curve, so the approach eases up with zero velocity rather than
+// kinking the instant the freeze lifts. X and Y ride the same board index and
+// blend fraction, so they are solved together rather than as two
+// otherwise-identical paths.
 static vec2 Path(double worldz)
 {
 	double board = worldz / CHECKER_SPACING - 1.0;
@@ -82,7 +64,7 @@ static vec2 Path(double worldz)
 	vec2 p1 = BoardOffset(MAX(board0, 0.0));
 	vec2 p2 = BoardOffset(MAX(board0 + 1.0, 0.0));
 	vec2 p3 = BoardOffset(MAX(board0 + 2.0, 0.0));
-	return CatmullRom(p0, p1, p2, p3, frac);
+	return RETRO_CatmullRom(p0, p1, p2, p3, frac);
 }
 
 void DEMO_Render(double time, double deltatime)

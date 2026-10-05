@@ -20,6 +20,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
 #define TWISTER_CENTER_X (RETRO_WIDTH / 2.0)
@@ -31,21 +32,6 @@
 
 #define TWISTER_FACE_COLOR 33 // base color of the first face
 #define TWISTER_FACE_STEP 16 // step from one face color to the next
-
-//
-// One scanline of one face, half-open in x. A back-facing edge has
-// left >= right and covers nothing, which is the silhouette test.
-//
-static void DrawSpan(int left, int right, int y, unsigned char color)
-{
-	left = MAX(left, 0);
-	right = MIN(right, RETRO_WIDTH);
-
-	unsigned char *row = RETRO_FrameBuffer() + y * RETRO_WIDTH;
-	for (int x = left; x < right; x++) {
-		row[x] = color;
-	}
-}
 
 void DEMO_Render(double time, double deltatime)
 {
@@ -65,8 +51,11 @@ void DEMO_Render(double time, double deltatime)
 			(int)lround(TWISTER_CENTER_X - cosradius),
 		};
 
+		// A back-facing face has its ends reversed and covers nothing, which is
+		// the silhouette test
+		unsigned char *row = RETRO_FrameBuffer() + y * RETRO_WIDTH;
 		for (int corner = 0; corner < 4; corner++) {
-			DrawSpan(cornerx[corner], cornerx[(corner + 1) & 3], y, TWISTER_FACE_COLOR + corner * TWISTER_FACE_STEP);
+			RETRO_DrawSpan(row, cornerx[corner], cornerx[(corner + 1) & 3], TWISTER_FACE_COLOR + corner * TWISTER_FACE_STEP);
 		}
 	}
 }

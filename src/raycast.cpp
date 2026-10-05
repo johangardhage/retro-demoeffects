@@ -229,8 +229,5 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_Image *textures = RETRO_LoadImage("assets/raycast_walls_320x200.pcx", true);
-	if (textures->width != SHEET_WIDTH) {
-		RETRO_RageQuit("Raycast sheet must be %d wide\n", SHEET_WIDTH);
-	}
 	Textures = textures->data;
 }

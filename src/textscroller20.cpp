@@ -27,15 +27,13 @@ static RETRO_Font Font;
 
 static double Sample(unsigned char character, double u, double v)
 {
-	int glyph = character - Font.firstcharacter;
-	if (glyph < 0 || (glyph + 1) * GLYPH_WIDTH > Font.atlas->width
-		|| u < 0.0 || v < 0.0 || u >= GLYPH_WIDTH || v >= GLYPH_HEIGHT) return 0.0;
+	if (u < 0.0 || v < 0.0 || u >= GLYPH_WIDTH || v >= GLYPH_HEIGHT) return 0.0;
 	int x = (int)u, y = (int)v;
 	int nextx = MIN(x + 1, GLYPH_WIDTH - 1), nexty = MIN(y + 1, GLYPH_HEIGHT - 1);
 	double fx = u - x, fy = v - y;
-	const unsigned char *top = Font.atlas->data + y * Font.atlas->width + glyph * GLYPH_WIDTH;
-	const unsigned char *bottom = Font.atlas->data + nexty * Font.atlas->width + glyph * GLYPH_WIDTH;
-	return 255.0 * mix(mix(top[x], top[nextx], fx), mix(bottom[x], bottom[nextx], fx), fy);
+	double top = mix(RETRO_FontTexel(Font, character, x, y), RETRO_FontTexel(Font, character, nextx, y), fx);
+	double bottom = mix(RETRO_FontTexel(Font, character, x, nexty), RETRO_FontTexel(Font, character, nextx, nexty), fx);
+	return 255.0 * mix(top, bottom, fy);
 }
 
 void DEMO_Render(double time, double deltatime)

@@ -57,62 +57,11 @@
 #define FIRE_FLICKER 0.15 // probability per step that a column of coals is relit
 #define FIRE_DECAY 4 // subtracted after the average, so how fast a flame dies as it rises
 
-enum { BLACK, BLUE, GREEN, CYAN, RED, MAGENTA, BROWN, LIGHTGRAY, DARKGRAY, LIGHTBLUE, LIGHTGREEN, LIGHTCYAN, LIGHTRED, LIGHTMAGENTA, YELLOW, WHITE };
+static const int RampColors[RAMP_COLORS] = { RETRO_TEXT_BLACK, RETRO_TEXT_RED, RETRO_TEXT_LIGHTRED, RETRO_TEXT_YELLOW, RETRO_TEXT_WHITE };
 
-static const int RampColors[RAMP_COLORS] = { BLACK, RED, LIGHTRED, YELLOW, WHITE };
-
-// CP437 176–178 and 219 in the 8×8 VGA font, bit 0 leftmost
-static const unsigned char ShadeGlyphs[4][8] = {
-	{ 0x22, 0x88, 0x22, 0x88, 0x22, 0x88, 0x22, 0x88 }, // ░
-	{ 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa, 0x55, 0xaa }, // ▒
-	{ 0xdb, 0xee, 0xdb, 0x77, 0xdb, 0xee, 0xdb, 0x77 }, // ▓
-	{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }, // █
-};
-
-struct TextCell {
-	unsigned char character;
-	unsigned char attribute;
-};
-
-static TextCell TextBuffer[ROWS * COLUMNS];
-static TextCell Ramp[SHADES];
+static RETRO_TextCell TextBuffer[ROWS * COLUMNS];
+static RETRO_TextCell Ramp[SHADES];
 static unsigned char Heat[(ROWS + FIRE_HIDDEN) * COLUMNS];
-
-//
-// The 8×8 glyph of a character, from the font or, for the block characters, the table above
-//
-static const unsigned char *Glyph(unsigned char character)
-{
-	if (character >= 176 && character <= 178) {
-		return ShadeGlyphs[character - 176];
-	}
-	if (character == 219) {
-		return ShadeGlyphs[3];
-	}
-	return RETRO_Glyph(character);
-}
-
-//
-// Draw the text buffer: glyph bits take the foreground, the rest the background
-//
-static void DrawText(void)
-{
-	unsigned char *buffer = RETRO_FrameBuffer();
-	for (int row = 0; row < ROWS; row++) {
-		for (int column = 0; column < COLUMNS; column++) {
-			TextCell cell = TextBuffer[row * COLUMNS + column];
-			const unsigned char *glyph = Glyph(cell.character);
-			unsigned char foreground = cell.attribute & 15;
-			unsigned char background = cell.attribute >> 4;
-			for (int y = 0; y < 8; y++) {
-				unsigned char *pixel = buffer + (row * 8 + y) * RETRO_WIDTH + column * 8;
-				for (int x = 0; x < 8; x++) {
-					pixel[x] = glyph[y] & (1 << x) ? foreground : background;
-				}
-			}
-		}
-	}
-}
 
 //
 // Heat at a cell, 0 past the side edges and below the bed
@@ -153,13 +102,13 @@ void DEMO_Render(double time, double deltatime)
 		TextBuffer[i] = Ramp[Heat[i] * SHADES / 256];
 	}
 
-	DrawText();
+	RETRO_DrawTextScreen(TextBuffer);
 }
 
 void DEMO_Initialize(void)
 {
 	// Init palette. Entries 0–15 are the 16 text colors.
-	RETRO_CreateDefault8bitPalette();
+	RETRO_SetPalette(RETRO_PALETTE_VGA);
 
 	// Init ramp. From each color to the next: the color alone, then ░ ▒ ▓ of
 	// the next one over it, and last the final color solid.
@@ -169,5 +118,5 @@ void DEMO_Initialize(void)
 		int to = RampColors[i / 4 + 1];
 		Ramp[i] = { steps[i % 4], (unsigned char)(from << 4 | to) };
 	}
-	Ramp[SHADES - 1] = { 219, (unsigned char)(BLACK << 4 | RampColors[RAMP_COLORS - 1]) };
+	Ramp[SHADES - 1] = { 219, (unsigned char)(RETRO_TEXT_BLACK << 4 | RampColors[RAMP_COLORS - 1]) };
 }

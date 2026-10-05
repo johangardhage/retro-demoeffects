@@ -75,6 +75,15 @@ inline RETRO_MouseState RETRO_GetMouseState(void)
 	return RETRO_Mouse.state;
 }
 
+// Move the pointer to (x, y) on the screen, in the same logical coordinates
+// RETRO_GetMouseState reports, the reverse of the conversion it makes
+inline void RETRO_SetMousePosition(float x, float y)
+{
+	float windowx, windowy;
+	SDL_RenderCoordinatesToWindow(RETRO.renderer, x, y, &windowx, &windowy);
+	SDL_WarpMouseInWindow(RETRO.window, windowx, windowy);
+}
+
 inline void RETRO_SetMouseMode(bool relative, bool cursor = false)
 {
 	if (relative && !SDL_GetWindowRelativeMouseMode(RETRO.window)) {

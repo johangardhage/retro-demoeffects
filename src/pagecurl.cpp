@@ -103,7 +103,7 @@ void DEMO_Render(double time, double deltatime)
 				int sx = floor(x + (s - d) * n.x);
 				int sy = floor(y + (s - d) * n.y);
 
-				if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) {
+				if (!RETRO_OnScreen(sx, sy)) {
 					continue;
 				}
 
@@ -150,12 +150,6 @@ void DEMO_Initialize(void)
 {
 	Picture[0] = RETRO_LoadImage("assets/monkey_320x240_quantizized.pcx", true);
 	Picture[1] = RETRO_LoadImage("assets/flowers_320x240_quantizized.pcx");
-
-	for (RETRO_Image *picture : Picture) {
-		if (picture->width != RETRO_WIDTH || picture->height != RETRO_HEIGHT) {
-			RETRO_RageQuit("The pictures must be the size of the screen\n");
-		}
-	}
 
 	// The pictures share this palette, so one LUT maps every shaded color back
 	RETRO_CreateColorLUT(Picture[0]->palette, 32, &ColorLUT[0][0][0]);

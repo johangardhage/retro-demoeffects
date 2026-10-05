@@ -41,13 +41,13 @@ static void DrawTerrainDots(float maxdistance)
 			float radius2 = dx * dx + dz * dz;
 			if (radius2 > maxdistance2) continue;
 
-			RETRO_TerrainOffset offset;
+			RETRO_TerrainEye eye;
 			RETRO_TerrainPoint point;
-			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, basis, &offset, &point)) continue;
+			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, basis, &eye, &point)) continue;
 
 			int sx = (int)point.spos.x;
 			int sy = (int)point.spos.y;
-			if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, 1.0f / offset.depth)) {
+			if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, 1.0f / eye.depth)) {
 				RETRO_PutPixel(sx, sy, RETRO_TerrainColor(x, z));
 			}
 		}

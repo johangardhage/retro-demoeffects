@@ -59,7 +59,7 @@ static const struct Ghost {
 
 static void AddPixel(int x, int y, int add)
 {
-	if (x < 0 || x >= RETRO_WIDTH || y < 0 || y >= RETRO_HEIGHT || add <= 0) {
+	if (!RETRO_OnScreen(x, y) || add <= 0) {
 		return;
 	}
 	RETRO_PutPixel(x, y, CLAMP256(RETRO_GetPixel(x, y) + add));

@@ -80,7 +80,7 @@ void DEMO_Render(double time, double deltatime)
 			int x = RETRO_WIDTH / 2.0 + lround(RingX[j] * RingScale[i] + swayx);
 			int y = RETRO_HEIGHT / 2.0 + lround(RingY[j] * RingScale[i] + swayy);
 
-			if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+			if (RETRO_OnScreen(x, y)) {
 				RETRO_PutPixel(x, y, color);
 			}
 		}

@@ -199,11 +199,7 @@ static float NearestError(vec3 asked, const vec3 *palettelab)
 //
 static RETRO_Palette Dim(RETRO_Palette color, float shade, const float *tint)
 {
-	return {
-		(unsigned char)(color.r * shade + 0.5f),
-		(unsigned char)(color.g * shade + 0.5f),
-		(unsigned char)(color.b * shade + 0.5f),
-	};
+	return RETRO_ShadeColor(color, shade);
 }
 
 //
@@ -392,9 +388,9 @@ static void BuildVGA(Subject *subject, const RETRO_Image *picture)
 	subject->height = picture->height;
 	subject->colors = RETRO_COLORS;
 	subject->shades = SHADES;
-	RETRO_CreateDefault8bitPalette(subject->palette);
 	for (int i = 0; i < RETRO_COLORS; i++) {
-		subject->source[i] = subject->palette[i];
+		subject->palette[i] = RETRO_PALETTE_VGA[i];
+		subject->source[i] = RETRO_PALETTE_VGA[i];
 	}
 	for (int i = 0; i < picture->width * picture->height; i++) {
 		Remapped[i] = RETRO_NearestPaletteIndex(picture->palette[picture->data[i]], subject->palette);
@@ -604,9 +600,6 @@ void DEMO_Initialize(void)
 {
 	RETRO_Image *picture = RETRO_LoadImage("assets/flowers_320x240_quantizized.pcx");
 	RETRO_Image *texture = RETRO_LoadImage("assets/mask_texmap_256x256.pcx");
-	if (picture->width != RETRO_WIDTH || picture->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("The picture must be the size of the screen\n");
-	}
 
 	// Init heat ramp
 	RETRO_CreateGradientPalette(0, 64, RETRO_BLACK, RETRO_BLUE, HeatPalette);

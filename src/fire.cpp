@@ -51,8 +51,8 @@ static unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 // smear a column into its neighbors, and wrapping those in x lets a flame at the
 // edge continue on the other side.
 //
-// RETRO_Blur keeps the rows it has already written, so every tap reads the previous
-// step: a Jacobi update on both axes, and the flame rises straight.
+// RETRO_Blur reads a copy of the field taken before the pass, so every tap reads
+// the previous step: a Jacobi update on both axes, and the flame rises straight.
 //
 // A uniform column that only decayed would fall from 255 to 0 in 255 / FIRE_DECAY
 // steps, about eighty-five here. Averaging with cooler neighbors kills a flame

@@ -63,7 +63,7 @@ void DEMO_Render(double time, double deltatime)
 		int y = Ball[i].spos.y;
 		int z = -round(Ball[i].rpos.z);
 
-		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT && z > ZMIN) {
+		if (RETRO_OnScreen(x, y) && z > ZMIN) {
 			int color = (z - ZMIN) * (SHADES - 1) / (RADIUS - ZMIN);
 
 			// Grid order is fixed at startup in model space and depth is the

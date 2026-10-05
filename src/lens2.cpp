@@ -140,9 +140,6 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	Picture = RETRO_LoadImage("assets/monkey_320x240_quantizized.pcx", true);
-	if (Picture->width != RETRO_WIDTH || Picture->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("The picture must be the size of the screen\n");
-	}
 
 	// Map every shaded, tinted or reflected color back to the picture's palette
 	RETRO_CreateColorLUT(Picture->palette, 32, &ColorLUT[0][0][0]);

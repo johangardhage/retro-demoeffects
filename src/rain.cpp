@@ -180,7 +180,7 @@ void DEMO_FixedUpdate(double timestep)
 //
 static void Plot(unsigned char *buffer, int x, int y, unsigned char color)
 {
-	if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+	if (RETRO_OnScreen(x, y)) {
 		buffer[y * RETRO_WIDTH + x] = color;
 	}
 }

@@ -64,13 +64,7 @@ static RETRO_Font Font;
 
 static void DrawChar(unsigned char code, int x, int y)
 {
-	int glyph = code - Font.firstcharacter;
-	int sourcex = glyph * Font.width;
 	int copywidth = MIN(Font.width, RETRO_CharWidth(Font, code));
-
-	if (glyph < 0 || sourcex + Font.width > Font.atlas->width) {
-		return;
-	}
 	for (int yy = 0; yy < Font.height; yy++) {
 		int py = y + yy;
 		if (py < 0 || py >= RETRO_HEIGHT) {
@@ -81,7 +75,7 @@ static void DrawChar(unsigned char code, int x, int y)
 			if (px < 0 || px >= RETRO_WIDTH) {
 				continue;
 			}
-			unsigned char color = Font.atlas->data[yy * Font.atlas->width + sourcex + xx];
+			unsigned char color = RETRO_FontTexel(Font, code, xx, yy);
 			if (color != 0) {
 				RETRO_PutPixel(px, py, color);
 			}

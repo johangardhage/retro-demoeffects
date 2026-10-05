@@ -81,13 +81,10 @@ static vec3 SplinePoint(const vec3 *control, int piece, float t, vec3 *derivativ
 	vec3 p1 = control[piece];
 	vec3 p2 = control[(piece + 1) % CONTROL_POINTS];
 	vec3 p3 = control[(piece + 2) % CONTROL_POINTS];
-	vec3 a = p2 - p0;
-	vec3 b = p0 * 2 - p1 * 5 + p2 * 4 - p3;
-	vec3 c = p1 * 3 - p0 - p2 * 3 + p3;
 
-	*derivative = (a + b * (2 * t) + c * (3 * t * t)) * 0.5f;
+	*derivative = RETRO_CatmullRomDerivative(p0, p1, p2, p3, t);
 
-	return (p1 * 2 + a * t + b * (t * t) + c * (t * t * t)) * 0.5f;
+	return RETRO_CatmullRom(p0, p1, p2, p3, t);
 }
 
 void DEMO_Render(double time, double deltatime)

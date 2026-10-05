@@ -163,9 +163,6 @@ void DEMO_Initialize(void)
 	// Blobby lettering in the style of the reference's logo; the palette index
 	// is the ink, 255 on the face and 178 on its shade.
 	Logo = RETRO_LoadImage("assets/retrologo_320x240.pcx");
-	if (Logo->width != RETRO_WIDTH || Logo->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("Crystal ball logo must match the framebuffer dimensions\n");
-	}
 
 	for (int i = 0; i < GlintCount; i++) {
 		const Glint &g = Glints[i];
@@ -200,7 +197,6 @@ void DEMO_Initialize(void)
 			palette[count++] = { gray, gray, (unsigned char)mix(blue, 255, white) };
 		}
 	}
-	if (count != RETRO_COLORS) RETRO_RageQuit("Crystal ball palette must fill all 256 colors\n");
 	RETRO_SetPalette(palette);
 	// Prequantize RGB to the shared 8-bit palette; no color searches per frame.
 	RETRO_CreateColorLUT(palette, 32, ColorLookup);

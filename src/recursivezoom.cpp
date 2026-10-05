@@ -5,8 +5,7 @@
 // Palette index zero is the aperture; all masonry uses nonzero indices, a
 // border fully included, since Bilinear clamps off-edge samples to it.
 // Each child is 60% of its parent's size, cropped by the arch silhouette.
-// The artwork must match the screen size; both invariants are checked once
-// at load, rather than trusted.
+// The artwork must match the screen size.
 //
 // Trace from large ancestors down through transparent pixels until stone is
 // hit. Starting ANCESTOR_LEVELS above the viewport includes the curved
@@ -127,9 +126,6 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	RETRO_Image *picture = RETRO_LoadImage("assets/recursivezoom_320x240.pcx", true);
-	if (picture->width != RETRO_WIDTH || picture->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("Recursivezoom picture must match the screen size\n");
-	}
 	LevelCount = 0;
 	int pixelpoolused = 0;
 

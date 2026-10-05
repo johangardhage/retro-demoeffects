@@ -64,7 +64,7 @@ void DEMO_Render(double time, double deltatime)
 		int y = Torus[i].spos.y;
 		int z = -round(Torus[i].rpos.z);
 
-		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+		if (RETRO_OnScreen(x, y)) {
 			int color = (z + furthest) * (SHADES - 1) / (2 * furthest);
 
 			if (color > RETRO_GetPixel(x, y)) {

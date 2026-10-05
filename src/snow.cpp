@@ -194,7 +194,7 @@ static void DrawFlake(unsigned char *buffer, const Flake &flake)
 	for (int i = 0; i < points; i++) {
 		int px = x + plus[i][0];
 		int py = y + plus[i][1];
-		if (px >= 0 && px < RETRO_WIDTH && py >= 0 && py < RETRO_HEIGHT) {
+		if (RETRO_OnScreen(px, py)) {
 			buffer[py * RETRO_WIDTH + px] = color;
 		}
 	}

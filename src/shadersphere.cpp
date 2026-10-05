@@ -206,10 +206,11 @@ static unsigned char ShadeRoom(vec3 origin, vec3 ray, float spread)
 static void DrawRoom(void)
 {
 	vec3 eye = { 0.0f, 0.0f, -ROOM_EYE };
+	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			vec3 ray = { (x + 0.5f - RETRO_WIDTH / 2.0f) * ROOM_PIXEL, (y + 0.5f - RETRO_HEIGHT / 2.0f) * ROOM_PIXEL, 1.0f };
-			RETRO.framebuffer[y * RETRO_WIDTH + x] = ShadeRoom(eye + ray, ray, ROOM_PIXEL);
+			buffer[y * RETRO_WIDTH + x] = ShadeRoom(eye + ray, ray, ROOM_PIXEL);
 		}
 	}
 }

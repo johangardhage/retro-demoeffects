@@ -213,8 +213,8 @@ static void DrawScene(void)
 		int color = POLE + (POLES - i) * POLE_COLORS / POLES;
 
 		if (i < POLES) {
-			RETRO_DrawLine(farleft, fararm, left, arm, color, {}, Scene);
-			RETRO_DrawLine(farright, fararm, right, arm, color, {}, Scene);
+			RETRO_DrawLine(farleft, fararm, left, arm, color, {}, 0, Scene);
+			RETRO_DrawLine(farright, fararm, right, arm, color, {}, 0, Scene);
 		}
 		RETRO_DrawRectangle(x - halfwidth, top, x + halfwidth, base, color, {}, Scene);
 		RETRO_DrawRectangle(left, arm - halfwidth, right, arm + halfwidth, color, {}, Scene);

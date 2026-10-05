@@ -120,11 +120,11 @@ static void CollectTerrainDots(float maxdistance)
 			float radius2 = dx * dx + dz * dz;
 			if (radius2 > maxdistance2) continue;
 
-			RETRO_TerrainOffset offset;
+			RETRO_TerrainEye eye;
 			RETRO_TerrainPoint point;
-			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, basis, &offset, &point)) continue;
+			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, basis, &eye, &point)) continue;
 
-			ProjectedDots[ProjectedDotCount++] = { (int)point.spos.x, (int)point.spos.y, x, z, offset.depth, RETRO_TerrainColor(x, z) };
+			ProjectedDots[ProjectedDotCount++] = { (int)point.spos.x, (int)point.spos.y, x, z, eye.depth, RETRO_TerrainColor(x, z) };
 		}
 	}
 }

@@ -40,6 +40,7 @@ void DEMO_Render(double time, double deltatime)
 {
 	int scroll = (int)fmod(time * SCROLL_SPEED, TEXTURE_SIZE);
 	static const int threshold[2][2] = { { 0, 2 }, { 3, 1 } };
+	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int offset = y * RETRO_WIDTH + x;
@@ -48,7 +49,7 @@ void DEMO_Render(double time, double deltatime)
 			int value = Shading[p.shade][Texture[v * TEXTURE_SIZE + p.u]];
 			int level = value / 17;
 			if ((value % 17) * 4 > threshold[y & 1][x & 1] * 17 + 8) level++;
-			RETRO.framebuffer[offset] = MIN(level, 15) * 17;
+			buffer[offset] = MIN(level, 15) * 17;
 		}
 	}
 }

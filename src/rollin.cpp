@@ -65,12 +65,7 @@ static unsigned char ShadeTable[RETRO_COLORS * SHADES];
 //
 static RETRO_Palette Light(RETRO_Palette color, float shade, const float *tint)
 {
-	float brightness = mix(AMBIENT, 1, shade);
-	return {
-		(unsigned char)(color.r * brightness + 0.5f),
-		(unsigned char)(color.g * brightness + 0.5f),
-		(unsigned char)(color.b * brightness + 0.5f),
-	};
+	return RETRO_ShadeColor(color, mix(AMBIENT, 1, shade));
 }
 
 void DEMO_Render(double time, double deltatime)

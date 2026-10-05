@@ -205,6 +205,7 @@ void DEMO_Render(double time, double deltatime)
 	float c = dot(q0, q0) - 1.0f;
 	float reach = dot(q0, q0) - BEAM_LENGTH * BEAM_LENGTH;
 
+	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int sy = 0; sy < RETRO_HEIGHT; sy++) {
 		for (int sx = 0; sx < RETRO_WIDTH; sx++) {
 			vec3 d = inverse * CameraRay[sy * RETRO_WIDTH + sx];
@@ -237,7 +238,7 @@ void DEMO_Render(double time, double deltatime)
 
 			float lit = 1.0f - (1.0f - shade) * expf(-light);
 			int level = (int)(lit * (LIGHT_LEVELS - 1) + 0.5f);
-			RETRO.framebuffer[sy * RETRO_WIDTH + sx] = base + CLAMP(level, 0, LIGHT_LEVELS);
+			buffer[sy * RETRO_WIDTH + sx] = base + CLAMP(level, 0, LIGHT_LEVELS);
 		}
 	}
 }

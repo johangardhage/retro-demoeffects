@@ -71,6 +71,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
+#include "lib/retrogfx.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
@@ -154,20 +155,6 @@ static float ZMap[ROAD_ZMAP_SIZE]; // the distance the row looks at, nearest fir
 static float WidthMap[ROAD_ZMAP_SIZE]; // half the road, in pixels, at that distance
 static unsigned char FogMap[ROAD_ZMAP_SIZE]; // the shade that distance is seen through
 static int ZMapEntries = 0; // the entries inside the draw distance, so the walk stops at one test
-
-//
-// Fill a scanline from x1 to x2, clipped to the screen. The ends are pixel
-// positions, not columns, so a span narrower than a pixel drops out
-//
-static void DrawSpan(unsigned char *row, float x1, float x2, unsigned char color)
-{
-	int left = x1 < 0 ? 0 : (int)x1;
-	int right = x2 > RETRO_WIDTH ? RETRO_WIDTH : (int)x2;
-
-	if (right > left) {
-		memset(row + left, color, right - left);
-	}
-}
 
 //
 // Draw a billboard standing at (x, y) on a row whose road half-width is w,
@@ -270,15 +257,15 @@ void DEMO_Render(double time, double deltatime)
 
 		unsigned char *row = dest + y * RETRO_WIDTH;
 		memset(row, grass, RETRO_WIDTH);
-		DrawSpan(row, center - w * (1 + ROAD_RUMBLE_WIDTH), center + w * (1 + ROAD_RUMBLE_WIDTH), rumble);
-		DrawSpan(row, center - w, center + w, tarmac);
+		RETRO_DrawSpan(row, center - w * (1 + ROAD_RUMBLE_WIDTH), center + w * (1 + ROAD_RUMBLE_WIDTH), rumble);
+		RETRO_DrawSpan(row, center - w, center + w, tarmac);
 
 		// Lane markings live on the light stripes only, which is what leaves
 		// a gap between one dash and the next
 		if (light) {
 			for (int i = 1; i < ROAD_LANES; i++) {
 				float lx = center - w + 2 * w * i / ROAD_LANES;
-				DrawSpan(row, lx - w * ROAD_LANE_WIDTH, lx + w * ROAD_LANE_WIDTH, MATERIAL_LANE * ROAD_SHADES + shade);
+				RETRO_DrawSpan(row, lx - w * ROAD_LANE_WIDTH, lx + w * ROAD_LANE_WIDTH, MATERIAL_LANE * ROAD_SHADES + shade);
 			}
 		}
 

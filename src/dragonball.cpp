@@ -128,7 +128,7 @@ static void FillStar(const ivec2 *pts, int n, unsigned char bit)
 			xs[b] = v;
 		}
 
-		unsigned char *row = RETRO.framebuffer + y * RETRO_WIDTH;
+		unsigned char *row = RETRO_FrameBuffer() + y * RETRO_WIDTH;
 		for (int k = 0; k + 1 < nx; k += 2) {
 			int xmin = MAX(xs[k], 0);
 			int xmax = MIN(xs[k + 1], RETRO_WIDTH - 1);
@@ -209,8 +209,9 @@ void DEMO_Render(double time, double deltatime)
 	}
 
 	// Floor, then the ball, then the stars. Background 0 is already the sky.
+	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int y = BALL_HORIZON; y < RETRO_HEIGHT; y++) {
-		memset(RETRO.framebuffer + y * RETRO_WIDTH, BANK_FLOOR, RETRO_WIDTH);
+		memset(buffer + y * RETRO_WIDTH, BANK_FLOOR, RETRO_WIDTH);
 	}
 
 	RETRO_DrawEllipse((float)BALL_CX, cy, ra, rb, BIT_BALL);
@@ -220,7 +221,7 @@ void DEMO_Render(double time, double deltatime)
 	int ymin = MAX((int)ceil(cy - rb), BALL_HORIZON);
 	int ymax = MIN((int)floor(cy + rb), RETRO_HEIGHT - 1);
 	for (int y = ymin; y <= ymax; y++) {
-		unsigned char *row = RETRO.framebuffer + y * RETRO_WIDTH;
+		unsigned char *row = buffer + y * RETRO_WIDTH;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			if (row[x] & BIT_BALL) {
 				row[x] |= BANK_FLOOR;

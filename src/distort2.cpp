@@ -52,7 +52,7 @@ void DEMO_Render(double time, double deltatime)
 			int sourcex = x + ShiftX[xoffset];
 			int sourcey = y + ShiftY[yoffset];
 
-			if (sourcex >= 0 && sourcex < RETRO_WIDTH && sourcey >= 0 && sourcey < RETRO_HEIGHT) {
+			if (RETRO_OnScreen(sourcex, sourcey)) {
 				RETRO_PutPixel(x, y, image[sourcey * RETRO_WIDTH + sourcex]);
 			}
 		}
@@ -61,10 +61,7 @@ void DEMO_Render(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_Image *image = RETRO_LoadImage("assets/flag_320x240.pcx", true);
-	if (image->width != RETRO_WIDTH || image->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("The image must be the size of the screen\n");
-	}
+	RETRO_LoadImage("assets/flag_320x240.pcx", true);
 
 	// Init tables. Each table is a sum of six unit-amplitude sinusoids: four plane waves,
 	// one hyperbolic term in x*y, and one ripple about a point far off the

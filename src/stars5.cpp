@@ -85,7 +85,7 @@ void DEMO_Render(double time, double deltatime)
 		RETRO_ProjectViewVertex(&star, EYE);
 		int x = star.spos.x;
 		int y = star.spos.y;
-		if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+		if (RETRO_OnScreen(x, y)) {
 			int color = (SHADES - 1) * (1 - distance / STAR_FAR);
 			RETRO_PutPixel(x, y, color);
 		}

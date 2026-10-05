@@ -75,9 +75,6 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	Picture = RETRO_LoadImage("assets/monkey_320x240.pcx", true);
-	if (Picture->width != RETRO_WIDTH || Picture->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("The image must be the size of the screen\n");
-	}
 	double cx = (RETRO_WIDTH - 1) / 2.0, cy = (RETRO_HEIGHT - 1) / 2.0;
 	double radius = MIN(cx, cy);
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

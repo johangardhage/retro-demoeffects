@@ -33,7 +33,7 @@ static void PlotDot(float side, float forward, float height, unsigned char color
 	if (depth < NEAR_PLANE || depth > VIEW_DISTANCE) return;
 	float sx = RETRO_WIDTH * 0.5f + side * (RETRO_WIDTH * 0.5f) / depth;
 	float sy = RETRO_HEIGHT * 0.5f - up * (RETRO_HEIGHT * 0.5f) / depth;
-	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) return;
+	if (!RETRO_OnScreen(sx, sy)) return;
 	int x = (int)sx, y = (int)sy;
 	if (RETRO_DepthTest(y * RETRO_WIDTH + x, 1.0f / depth)) {
 		RETRO_PutPixel(x, y, color);

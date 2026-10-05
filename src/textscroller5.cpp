@@ -65,7 +65,7 @@ void DEMO_Render(double time, double deltatime)
 			double radius = CIRCLE_RADIUS + (ScrollImage->height - 1) / 2.0 - row;
 			int x = lround(CIRCLE_X + radius * cs);
 			int y = lround(CIRCLE_Y + radius * sn);
-			if (x >= 0 && x < RETRO_WIDTH && y >= 0 && y < RETRO_HEIGHT) {
+			if (RETRO_OnScreen(x, y)) {
 				RETRO_PutPixel(x, y, color);
 			}
 		}

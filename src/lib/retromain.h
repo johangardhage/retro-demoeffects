@@ -9,6 +9,8 @@
 // IWYU pragma: always_keep
 
 #include <SDL3/SDL_main.h>
+#include <getopt.h> // getopt_long
+#include <libgen.h> // basename
 #include "retro.h"
 
 inline void RETRO_ParseArguments(int argc, char *argv[])

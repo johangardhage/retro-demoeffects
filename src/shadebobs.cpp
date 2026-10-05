@@ -48,12 +48,13 @@ static void DrawShadebob(double xphase1, double xphase2, double yphase1, double 
 	int xstart = x - BOB_SIZE / 2;
 	int ystart = y - BOB_SIZE / 2;
 
+	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int yy = 0; yy < BOB_SIZE; yy++) {
 		for (int xx = 0; xx < BOB_SIZE; xx++) {
 			int xpos = xx + xstart;
 			int ypos = yy + ystart;
-			if (xpos >= 0 && xpos < RETRO_WIDTH && ypos >= 0 && ypos < RETRO_HEIGHT) {
-				RETRO.framebuffer[ypos * RETRO_WIDTH + xpos] += Image[yy * BOB_SIZE + xx];
+			if (RETRO_OnScreen(xpos, ypos)) {
+				buffer[ypos * RETRO_WIDTH + xpos] += Image[yy * BOB_SIZE + xx];
 			}
 		}
 	}

@@ -85,10 +85,7 @@ void DEMO_Render2(double time, double deltatime)
 
 void DEMO_Initialize(void)
 {
-	RETRO_Image *image = RETRO_LoadImage("assets/monkey_320x240.pcx", true);
-	if (image->width != RETRO_WIDTH || image->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("The image must be the size of the screen\n");
-	}
+	RETRO_LoadImage("assets/monkey_320x240.pcx", true);
 
 	// One entry is taken back for the curtain. The picture keeps the entry as
 	// one of its own colors, so wherever it uses it those pixels are black

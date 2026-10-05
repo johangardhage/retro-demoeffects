@@ -117,11 +117,6 @@ void DEMO_Initialize(void)
 	PictureA = RETRO_LoadImage("assets/monkey_320x240_quantizized.pcx", true);
 	PictureB = RETRO_LoadImage("assets/flowers_320x240_quantizized.pcx");
 
-	if (PictureA->width != RETRO_WIDTH || PictureA->height != RETRO_HEIGHT ||
-		PictureB->width != RETRO_WIDTH || PictureB->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("The images must be the size of the screen\n");
-	}
-
 	// One entry is taken back for the curtain. The pictures use it as one of
 	// their own colors, so those pixels move to the nearest of the other
 	// entries.

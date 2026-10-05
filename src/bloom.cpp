@@ -35,7 +35,7 @@ static void DrawBlob(int xc, int yc, unsigned char color)
 			if (x * x + y * y <= BLOB_RADIUS * BLOB_RADIUS) {
 				int px = xc + x;
 				int py = yc + y;
-				if (px >= 0 && px < RETRO_WIDTH && py >= 0 && py < RETRO_HEIGHT) {
+				if (RETRO_OnScreen(px, py)) {
 					RETRO_PutPixel(px, py, color);
 				}
 			}

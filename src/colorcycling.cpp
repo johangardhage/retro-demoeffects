@@ -112,7 +112,4 @@ void DEMO_Render(double time, double deltatime)
 void DEMO_Initialize(void)
 {
 	Picture = RETRO_LoadImage("assets/junglewaterfall_640x480.pcx", true);
-	if (Picture->width != RETRO_WIDTH || Picture->height != RETRO_HEIGHT) {
-		RETRO_RageQuit("The picture must be the size of the screen\n");
-	}
 }

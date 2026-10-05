@@ -207,7 +207,7 @@ static void BuildGlyph(Model3D *model, unsigned char character)
 	memset(ink, 0, sizeof(ink));
 	for (int py = 0; py < height; py++) {
 		for (int px = 0; px < width; px++) {
-			ink[py][px] = RETRO_FontInk(Font, character, px, py);
+			ink[py][px] = RETRO_FontTexel(Font, character, px, py) != 0;
 		}
 	}
 

@@ -91,14 +91,14 @@
 #define EYE_START (HAIR_START + HAIR_SHADES)
 #define EYE_SHADES 16
 
-enum MatId { Mirror, Torso, Skin, Hair, Eye };
+enum JugglerMaterial { MAT_MIRROR, MAT_TORSO, MAT_SKIN, MAT_HAIR, MAT_EYE };
 
-struct Sphere {
+struct JugglerSphere {
 	vec3 center;
 	float radius;
-	unsigned char mat;
+	unsigned char material;
 };
-static Sphere Body[SPHERE_COUNT];
+static JugglerSphere Body[SPHERE_COUNT];
 
 static vec3 CamEye, CamCenter, CamU, CamV;
 static const vec3 LightPos = { -564, 686, 147 };
@@ -138,12 +138,12 @@ static vec2 ShadeLight(vec3 p, vec3 normal, vec3 dir, float ambient, float diffu
 	return { ambient + diffuse * lambert, glint };
 }
 
-static void MaterialRange(unsigned char mat, int &start, int &shades)
+static void MaterialRange(unsigned char material, int &start, int &shades)
 {
-	switch (mat) {
-	case Torso: start = TORSO_START; shades = TORSO_SHADES; break;
-	case Skin: start = SKIN_START; shades = SKIN_SHADES; break;
-	case Hair: start = HAIR_START; shades = HAIR_SHADES; break;
+	switch (material) {
+	case MAT_TORSO: start = TORSO_START; shades = TORSO_SHADES; break;
+	case MAT_SKIN: start = SKIN_START; shades = SKIN_SHADES; break;
+	case MAT_HAIR: start = HAIR_START; shades = HAIR_SHADES; break;
 	default: start = EYE_START; shades = EYE_SHADES; break;
 	}
 }
@@ -193,14 +193,14 @@ static unsigned char TraceScene(vec3 origin, vec3 dir)
 			break;
 		}
 
-		if (Body[hit].mat == Mirror) {
+		if (Body[hit].material == MAT_MIRROR) {
 			glint = MAX(glint, ShadeLight(pout, normal, dir, 0.0f, 0.0f).y);
 			dir = normalize(reflect(dir, normal));
 			origin = pout;
 			continue;
 		}
 
-		MaterialRange(Body[hit].mat, start, shades);
+		MaterialRange(Body[hit].material, start, shades);
 		vec2 shade = ShadeLight(pout, normal, dir, PLASTIC_AMBIENT, PLASTIC_DIFFUSE);
 		brightness = shade.x;
 		glint = MAX(glint, shade.y);
@@ -229,21 +229,21 @@ static void UpdateAppendage(int sceneindex, vec3 p, vec3 q, vec3 w, float A, flo
 
 static void CreateScene(void)
 {
-	for (int i = 2; i <= 4; i++) Body[i] = { { 110, 0, 0 }, 14, Mirror };
+	for (int i = 2; i <= 4; i++) Body[i] = { { 110, 0, 0 }, 14, MAT_MIRROR };
 	for (int i = 5; i <= 12; i++) {
 		float percent = (i - 5) / 7.0f;
-		Body[i] = { {}, 16.0f + 4.0f * percent, Torso };
+		Body[i] = { {}, 16.0f + 4.0f * percent, MAT_TORSO };
 	}
-	Body[13] = { {}, 14, Skin }; // head
-	Body[14] = { {}, 5, Skin }; // neck
+	Body[13] = { {}, 14, MAT_SKIN }; // head
+	Body[14] = { {}, 5, MAT_SKIN }; // neck
 	for (int limb = 0; limb < 4; limb++) {
 		int base = 15 + 17 * limb;
-		for (int i = 0; i <= 7; i++) Body[base + i] = { {}, 2.5f + 2.5f * i / 7.0f, Skin };
-		for (int i = 8; i <= 16; i++) Body[base + i] = { {}, 5, Skin };
+		for (int i = 0; i <= 7; i++) Body[base + i] = { {}, 2.5f + 2.5f * i / 7.0f, MAT_SKIN };
+		for (int i = 8; i <= 16; i++) Body[base + i] = { {}, 5, MAT_SKIN };
 	}
-	Body[83] = { {}, 4, Eye };
-	Body[84] = { {}, 4, Eye };
-	Body[85] = { {}, 14, Hair };
+	Body[83] = { {}, 4, MAT_EYE };
+	Body[84] = { {}, 4, MAT_EYE };
+	Body[85] = { {}, 14, MAT_HAIR };
 }
 
 static void UpdateScene(double T)

@@ -70,7 +70,7 @@
 // physically larger terminal isn't left with a dirty margin outside it.
 inline struct {
 	int fgc = CONIO_LIGHTGRAY; // current foreground, DOS attribute low nibble
-	int bgc = 40;              // current background, as an ANSI SGR code
+	int bgc = CONIO_BLACK;     // current background, DOS attribute bits 4-6
 	bool blink = false;
 	int wleft = 1, wtop = 1, wright = 80, wbottom = 25;
 } CONIO;
@@ -80,10 +80,12 @@ inline struct {
 // through this so they stay consistent with each other.
 inline void CONIO_apply_attr(void)
 {
+	// DOS orders a color's bits blue, green, red, and ANSI red, green, blue.
+	// A background is the same color's foreground code plus 10.
 	static const int fg_ansi[8] = { 30, 34, 32, 36, 31, 35, 33, 37 };
 	const char *bold = (CONIO.fgc & 0x08) ? "1" : "0";
 	const char *bl = CONIO.blink ? ";5" : "";
-	printf("\033[%s;%d;%d%sm", bold, fg_ansi[CONIO.fgc % 8], CONIO.bgc, bl);
+	printf("\033[%s;%d;%d%sm", bold, fg_ansi[CONIO.fgc % 8], fg_ansi[CONIO.bgc] + 10, bl);
 }
 
 // Coordinates are absolute screen coordinates and don't move the cursor or
@@ -135,26 +137,11 @@ inline void CONIO_setcursortype(int cur_t)
 	}
 }
 
+// A background has no bright half, so the intensity bit is dropped, as the
+// attribute byte's 3-bit background field drops it
 inline void CONIO_textbackground(int color)
 {
-	switch (color % 16) {
-	case CONIO_BLACK:          CONIO.bgc = 40; break;
-	case CONIO_BLUE:           CONIO.bgc = 44; break;
-	case CONIO_GREEN:          CONIO.bgc = 42; break;
-	case CONIO_CYAN:           CONIO.bgc = 46; break;
-	case CONIO_RED:            CONIO.bgc = 41; break;
-	case CONIO_MAGENTA:        CONIO.bgc = 45; break;
-	case CONIO_BROWN:          CONIO.bgc = 43; break;
-	case CONIO_LIGHTGRAY:      CONIO.bgc = 47; break;
-	case CONIO_DARKGRAY:       CONIO.bgc = 40; break;
-	case CONIO_LIGHTBLUE:      CONIO.bgc = 44; break;
-	case CONIO_LIGHTGREEN:     CONIO.bgc = 42; break;
-	case CONIO_LIGHTCYAN:      CONIO.bgc = 46; break;
-	case CONIO_LIGHTRED:       CONIO.bgc = 41; break;
-	case CONIO_LIGHTMAGENTA:   CONIO.bgc = 45; break;
-	case CONIO_YELLOW:         CONIO.bgc = 43; break;
-	case CONIO_WHITE:          CONIO.bgc = 47; break;
-	}
+	CONIO.bgc = color & 7;
 	CONIO_apply_attr();
 }
 
@@ -190,7 +177,7 @@ inline void CONIO_lowvideo(void)
 inline void CONIO_normvideo(void)
 {
 	CONIO.fgc = CONIO_LIGHTGRAY;
-	CONIO.bgc = 40;
+	CONIO.bgc = CONIO_BLACK;
 	CONIO.blink = false;
 	CONIO_apply_attr();
 }
@@ -440,14 +427,16 @@ inline int CONIO_cputs(const char *str)
 }
 
 // Borland's cgets protocol: str[0] is the caller-supplied max length on entry,
-// str[1] is the actual length written back, and the read text starts at str[2]
+// str[1] is the actual length written back, and the read text starts at str[2].
+// The max length counts the terminating null, so at most str[0] - 1 characters
+// are read and str needs str[0] + 2 bytes
 inline char *CONIO_cgets(char *str)
 {
 	unsigned char maxlen = (unsigned char)str[0];
 	unsigned char count = 0;
 	char *text = str + 2;
 
-	while (count < maxlen) {
+	while (count + 1 < maxlen) {
 		int ch = CONIO_getch();
 		if (ch == '\r' || ch == '\n') {
 			break;
@@ -501,7 +490,7 @@ inline char *CONIO_getpass(const char *prompt)
 inline void CONIO_reset(void)
 {
 	CONIO.fgc = CONIO_LIGHTGRAY;
-	CONIO.bgc = 40;
+	CONIO.bgc = CONIO_BLACK;
 	CONIO.blink = false;
 	CONIO.wleft = 1;
 	CONIO.wtop = 1;

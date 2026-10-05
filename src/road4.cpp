@@ -63,6 +63,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
+#include "lib/retrogfx.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
@@ -137,20 +138,6 @@ struct Edge {
 static Sprite Sprites[ROAD_SPRITES];
 static Segment Road[ROAD_MAX_SEGMENTS];
 static int RoadSegments = 0;
-
-//
-// Fill a scanline from x1 to x2, clipped to the screen. The ends are pixel
-// positions, not columns, so a span narrower than a pixel drops out
-//
-static void DrawSpan(unsigned char *row, float x1, float x2, unsigned char color)
-{
-	int left = x1 < 0 ? 0 : (int)x1;
-	int right = x2 > RETRO_WIDTH ? RETRO_WIDTH : (int)x2;
-
-	if (right > left) {
-		memset(row + left, color, right - left);
-	}
-}
 
 //
 // Draw a billboard standing on the road at (x, y), scaled by the perspective
@@ -272,15 +259,15 @@ void DEMO_Render(double time, double deltatime)
 
 				unsigned char *row = dest + y * RETRO_WIDTH;
 				memset(row, grass, RETRO_WIDTH);
-				DrawSpan(row, cx - cw * (1 + ROAD_RUMBLE_WIDTH), cx + cw * (1 + ROAD_RUMBLE_WIDTH), rumble);
-				DrawSpan(row, cx - cw, cx + cw, tarmac);
+				RETRO_DrawSpan(row, cx - cw * (1 + ROAD_RUMBLE_WIDTH), cx + cw * (1 + ROAD_RUMBLE_WIDTH), rumble);
+				RETRO_DrawSpan(row, cx - cw, cx + cw, tarmac);
 
 				// Lane markings live on the light segments only, which is
 				// what leaves a gap between one dash and the next
 				if (light) {
 					for (int i = 1; i < ROAD_LANES; i++) {
 						float lx = cx - cw + 2 * cw * i / ROAD_LANES;
-						DrawSpan(row, lx - cw * ROAD_LANE_WIDTH, lx + cw * ROAD_LANE_WIDTH, lane);
+						RETRO_DrawSpan(row, lx - cw * ROAD_LANE_WIDTH, lx + cw * ROAD_LANE_WIDTH, lane);
 					}
 				}
 			}

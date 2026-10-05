@@ -98,7 +98,7 @@ static void PlotDot(float x, float y, float z, int base, int shades, float contr
 
 	int sx = (int)lround(vertex.spos.x);
 	int sy = (int)lround(vertex.spos.y);
-	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) {
+	if (!RETRO_OnScreen(sx, sy)) {
 		return;
 	}
 
@@ -147,11 +147,12 @@ void DEMO_Render(double time, double deltatime)
 
 			for (int copy = 0; copy < 2; copy++) {
 				float col = sx - phase + copy * ScrollImage->width;
-				if (col < 0 || col >= MAP_WIDTH) {
+				int cell = (int)lround(col);
+				if (cell < 0 || cell >= MAP_WIDTH) {
 					continue;
 				}
 
-				occupied[textrow0 + sy][(int)lround(col)] = true;
+				occupied[textrow0 + sy][cell] = true;
 
 				float x = (col - ORIGIN_X) * DOT_SPACING;
 				float z = (ORIGIN_Z - (textrow0 + sy)) * DOT_SPACING;

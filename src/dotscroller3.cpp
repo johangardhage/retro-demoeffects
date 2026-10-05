@@ -30,7 +30,7 @@
 #define PITCH -0.5f
 #define NEAR_PLANE 1.0f
 #define VIEW_DISTANCE 100.0f
-#define WORLD_HEIGHT_SCALE (1.0f / 16.0f)
+#define WORLD_HEIGHT_SCALE (1.0f / 27.0f)
 #define LETTER_NEAR_FORWARD 24.0f
 #define TURN_SPEED 0.3f
 #define FORWARD_SPEED 30.0f
@@ -46,7 +46,7 @@ static void PlotDot(float side, float forward, float height, unsigned char color
 	if (depth < NEAR_PLANE || depth > VIEW_DISTANCE) return;
 	float sx = RETRO_WIDTH * 0.5f + side * (RETRO_WIDTH * 0.5f) / depth;
 	float sy = RETRO_HEIGHT * 0.5f - up * (RETRO_HEIGHT * 0.5f) / depth;
-	if (sx < 0 || sx >= RETRO_WIDTH || sy < 0 || sy >= RETRO_HEIGHT) return;
+	if (!RETRO_OnScreen(sx, sy)) return;
 	int x = (int)sx, y = (int)sy;
 	if (RETRO_DepthTest(y * RETRO_WIDTH + x, 1.0f / depth)) {
 		RETRO_PutPixel(x, y, color);

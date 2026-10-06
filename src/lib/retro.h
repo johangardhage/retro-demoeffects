@@ -174,6 +174,7 @@ inline struct {
 	bool showcursor;
 	bool showfps;
 	int fpscap;
+	bool spacepauses = true;		// holding Space pauses the mainloop
 	const char *dumpfile = NULL;	// --dumpfile writes this PPM after dumptime, then quits
 	double dumptime = 0;			// demo time of the frame that write shows
 	bool quit;
@@ -689,6 +690,12 @@ inline bool RETRO_KeyPressed(SDL_Scancode key)
 	return false;
 }
 
+// Holding Space pauses the mainloop; a demo that reads Space itself turns that off
+inline void RETRO_SetSpacePause(bool enabled)
+{
+	RETRO.spacepauses = enabled;
+}
+
 inline void RETRO_Quit(void)
 {
 	RETRO.quit = true;
@@ -749,7 +756,7 @@ inline void RETRO_Mainloop(void)
 
 		// Check events. Paused, nothing is drawn or flipped, so nothing waits
 		// on the display either; the delay keeps the loop from spinning
-		if (RETRO_KeyState(SDL_SCANCODE_SPACE)) {
+		if (RETRO.spacepauses && RETRO_KeyState(SDL_SCANCODE_SPACE)) {
 			SDL_Delay(10);
 			continue;
 		}

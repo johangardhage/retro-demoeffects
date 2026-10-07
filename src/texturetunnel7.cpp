@@ -22,8 +22,7 @@
 //
 // Always advancing in z, waving in x and y. The ring frame is the
 // camera's own: forward is the tangent, right is world-down × forward,
-// down is forward × right, the y-down, z-away frame RETRO_ViewVertex
-// already assumes. Inward normals are −(cos θ · right + sin θ · down).
+// down is forward × right, the camera's y-down, z-away frame. Inward normals are −(cos θ · right + sin θ · down).
 //
 // Each quad is one brick of a generated tile. The tile is a grouted
 // rectangle with a triangle pointing in +v, so once v runs down the
@@ -31,14 +30,16 @@
 // space, a light from the right, interpolated Gouraud through a shade
 // table so the same texel is dark red-brown on the inside of the bend
 // and bright orange on the outside. Shade is affine; UV is
-// perspective-correct. RING_NEAR keeps the closest station in front of
-// the near plane, so the drawers never see q = 0.
+// perspective-correct. Each quad is clipped to the sides of the view and
+// the near plane before it is drawn. RING_NEAR keeps the closest station
+// in front of the eye, but looking ahead into a bend can still swing the
+// near ring's wall past the near plane, and those quads are cut there
+// rather than lost.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retromath.h"
 #include "lib/retrocamera.h"
 #include "lib/retropoly.h"
 #include "lib/retropalette.h"
@@ -66,27 +67,26 @@
 #define BRIGHT_ORANGE RETRO_Palette{ 255, 86, 6 }
 
 struct RingVertex {
-	Vertex vertex;
+	vec3 eye;		// In the camera's frame
 	float shade;
 };
 
 static unsigned char Brick[TEXTURE_SIZE * TEXTURE_SIZE];
 static unsigned char FogTable[RETRO_COLORS * FOG_SHADES];
 static const RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
-static UnitVector Light;
+static vec3 Light;	// In the camera's frame
 
 // The axis at t, and the orthonormal frame a ring there is built in.
-static Vertex Path(float t)
+static vec3 Path(float t)
 {
-	return { { BEND_X * sinf(t * BEND_FX), BEND_Y * sinf(t * BEND_FY + BEND_PHASE), t } };
+	return { BEND_X * sinf(t * BEND_FX), BEND_Y * sinf(t * BEND_FY + BEND_PHASE), t };
 }
 
 // Derivative of Path. z' is 1, so the tangent never parallels world
 // down and the cross that makes right does not collapse.
-static UnitVector PathTangent(float t)
+static vec3 PathTangent(float t)
 {
-	UnitVector forward = { { BEND_X * BEND_FX * cosf(t * BEND_FX), BEND_Y * BEND_FY * cosf(t * BEND_FY + BEND_PHASE), 1.0f } };
-	return RETRO_NormalizeUnitVector(forward);
+	return normalize(vec3{ BEND_X * BEND_FX * cosf(t * BEND_FX), BEND_Y * BEND_FY * cosf(t * BEND_FY + BEND_PHASE), 1.0f });
 }
 
 static void BuildBrick(void)
@@ -115,21 +115,22 @@ static void BuildBrick(void)
 	}
 }
 
-static void DrawQuad(const RingVertex &a, const RingVertex &b, const RingVertex &c, const RingVertex &d)
+// Clip a quad to the view and draw what is left
+static void DrawQuad(const RETRO_CameraLens &lens, const RingVertex &a, const RingVertex &b, const RingVertex &c, const RingVertex &d)
 {
-	if (a.vertex.q <= 0.0f || b.vertex.q <= 0.0f || c.vertex.q <= 0.0f || d.vertex.q <= 0.0f) {
-		return;
-	}
-
 	// a near-left, b far-left, c far-right, d near-right. That winding
 	// points the inward normal at the camera. v grows toward the far ring.
-	PolygonPoint point[4] = {
-		{ a.vertex.spos, a.shade, { 0, 0 }, a.vertex.q },
-		{ b.vertex.spos, b.shade, { 0, (float)TEXTURE_SIZE }, b.vertex.q },
-		{ c.vertex.spos, c.shade, { (float)TEXTURE_SIZE, (float)TEXTURE_SIZE }, c.vertex.q },
-		{ d.vertex.spos, d.shade, { (float)TEXTURE_SIZE, 0 }, d.vertex.q }
+	RETRO_CameraVertex corner[4] = {
+		{ a.eye, { 0, 0 }, a.shade },
+		{ b.eye, { 0, (float)TEXTURE_SIZE }, b.shade },
+		{ c.eye, { (float)TEXTURE_SIZE, (float)TEXTURE_SIZE }, c.shade },
+		{ d.eye, { (float)TEXTURE_SIZE, 0 }, d.shade }
 	};
-	RETRO_DrawTexMapGouraudPolygon(point, 4, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable);
+	PolygonPoint point[4 + RETRO_CAMERA_CLIP_PLANES];
+	int points = RETRO_ClipProjectViewPolygon(lens, corner, 4, point);
+	if (points >= 3) {
+		RETRO_DrawTexMapGouraudPolygon(point, points, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable);
+	}
 }
 
 void DEMO_Render(RETRO_Time time)
@@ -137,16 +138,13 @@ void DEMO_Render(RETRO_Time time)
 	float t = (float)(time.total * FLIGHT_SPEED) + FLIGHT_START;
 
 	// Stay on the path, but aim ahead so the viewer looks into each bend.
-	Vertex origin = Path(t);
-	Vertex target = Path(t + CAMERA_LOOKAHEAD);
-	UnitVector forward = CAMERA_LOOKAHEAD > 0
-		? RETRO_NormalizeUnitVector({ target.pos - origin.pos })
-		: PathTangent(t);
-	UnitVector right, down;
+	vec3 origin = Path(t);
+	vec3 forward = CAMERA_LOOKAHEAD > 0 ? normalize(Path(t + CAMERA_LOOKAHEAD) - origin) : PathTangent(t);
+	vec3 right, down;
 	RETRO_FrameFromForward(forward, &right, &down);
 
 	RETRO_Camera camera;
-	RETRO_PlaceCamera(&camera, origin.pos, right, down, forward);
+	RETRO_PlaceCamera(&camera, origin, right, down, forward);
 
 	// World stations, not camera-relative offsets: ring k is always at
 	// k · spacing on the path. first is the nearest station still at
@@ -157,8 +155,8 @@ void DEMO_Render(RETRO_Time time)
 
 	for (int i = 0; i < RING_COUNT; i++) {
 		float along = (first + i) * (float)RING_SPACING;
-		Vertex center = Path(along);
-		UnitVector ringright, ringdown;
+		vec3 center = Path(along);
+		vec3 ringright, ringdown;
 		RETRO_FrameFromForward(PathTangent(along), &ringright, &ringdown);
 
 		// fog is 1 at the near ring, falling toward 0 at the far one. depth
@@ -183,14 +181,11 @@ void DEMO_Render(RETRO_Time time)
 			// orthonormal, so the sum is unit with no renormalizing needed).
 			// wall is that direction carried out to the tube wall, and
 			// center + wall is where this vertex actually sits in the world.
-			vec3 radial = ringright.dir * ct + ringdown.dir * st;
+			vec3 radial = ringright * ct + ringdown * st;
 			vec3 wall = radial * TUNNEL_RADIUS;
 
 			RingVertex *p = &ring[i][s];
-			p->vertex = { center.pos + wall };
-
-			RETRO_ViewVertex(&p->vertex, &camera);
-			RETRO_ProjectViewVertex(&p->vertex);
+			p->eye = RETRO_ViewPoint(&camera, center + wall);
 
 			// Lambert lighting: the wall's inward normal (back toward the
 			// tube's center, so -radial) is carried into view space and
@@ -199,9 +194,8 @@ void DEMO_Render(RETRO_Time time)
 			// unlit side never goes black; depth folds in the distance fog
 			// on top, and the product is scaled into the shade table's
 			// [0, FOG_SHADES) range for the Gouraud drawer to interpolate.
-			UnitVector inward = RETRO_NormalizeUnitVector({ -radial });
-			RETRO_ViewUnitVector(&inward, &camera);
-			float lambert = RETRO_RotatedDot(inward, Light);
+			vec3 inward = RETRO_ViewDirection(&camera, normalize(-radial));
+			float lambert = dot(inward, Light);
 			float lit = mix(AMBIENT, 1.0f, RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f)));
 			p->shade = lit * depth * (FOG_SHADES - 1);
 		}
@@ -212,7 +206,7 @@ void DEMO_Render(RETRO_Time time)
 	for (int i = RING_COUNT - 2; i >= 0; i--) {
 		for (int s = 0; s < RING_SIDES; s++) {
 			int s1 = (s + 1) % RING_SIDES;
-			DrawQuad(ring[i][s], ring[i + 1][s], ring[i + 1][s1], ring[i][s1]);
+			DrawQuad(camera.lens, ring[i][s], ring[i + 1][s], ring[i + 1][s1], ring[i][s1]);
 		}
 	}
 }
@@ -229,7 +223,7 @@ void DEMO_Initialize(void)
 	// Light travels leftward in view space, so the wall whose inward
 	// normal points left (the right-hand wall) is the bright one. It is
 	// given directly in view space rather than a world direction that
-	// RETRO_ViewUnitVector would turn into one, and fixed relative to the
+	// RETRO_ViewDirection would turn into one, and fixed relative to the
 	// camera, so it is set up once here rather than redone every frame.
-	Light = RETRO_LightSource(-0.98f, 0.06f, -0.18f);
+	Light = normalize(vec3{ -0.98f, 0.06f, -0.18f });
 }

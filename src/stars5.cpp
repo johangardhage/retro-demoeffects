@@ -16,11 +16,10 @@
 #define SPEED 600 // world units per second
 #define STAR_FAR 600
 #define STAR_NEAR 8
-#define EYE 250
 #define SHADES 64
 #define FLIGHT_PERIOD 10.0
 
-static Vertex Stars[NUM_STARS]; // World position in x, y, z; view and screen space filled per frame
+static vec3 Stars[NUM_STARS]; // Positions relative to the eye, in world axes
 
 static RETRO_Camera CameraStart;
 
@@ -68,23 +67,23 @@ void DEMO_Render(RETRO_Time time)
 	double travel = SPEED * time.delta;
 
 	for (int i = 0; i < NUM_STARS; i++) {
-		Vertex &star = Stars[i];
+		vec3 &star = Stars[i];
 		// Move the eye along its forward vector; keep positions eye-relative.
-		vec3 moved = star.pos - camera.forward * travel;
-		star.pos = { (float)Wrap(moved.x), (float)Wrap(moved.y), (float)Wrap(moved.z) };
+		vec3 moved = star - camera.forward * travel;
+		star = { (float)Wrap(moved.x), (float)Wrap(moved.y), (float)Wrap(moved.z) };
 
-		RETRO_ViewVertex(&star, &camera);
-		if (star.rpos.z <= STAR_NEAR) {
+		vec3 eye = RETRO_ViewPoint(&camera, star);
+		if (eye.z <= STAR_NEAR) {
 			continue;
 		}
-		double distance = length(star.pos);
+		double distance = length(star);
 		if (distance >= STAR_FAR) {
 			continue;
 		}
 
-		RETRO_ProjectViewVertex(&star, EYE);
-		int x = star.spos.x;
-		int y = star.spos.y;
+		vec2 screen = RETRO_ProjectViewPoint(camera.lens, eye).pos;
+		int x = screen.x;
+		int y = screen.y;
 		if (RETRO_OnScreen(x, y)) {
 			int color = (SHADES - 1) * (1 - distance / STAR_FAR);
 			RETRO_PutPixel(x, y, color);
@@ -97,7 +96,7 @@ void DEMO_Initialize(void)
 	RETRO_InitializeCamera(&CameraStart);
 	RETRO_CreateGradientPalette(0, SHADES, RETRO_BLACK, RETRO_WHITE);
 	for (int i = 0; i < NUM_STARS; i++) {
-		Stars[i].pos = {
+		Stars[i] = {
 			(float)mix(-STAR_FAR, STAR_FAR, RAND()),
 			(float)mix(-STAR_FAR, STAR_FAR, RAND()),
 			(float)mix(-STAR_FAR, STAR_FAR, RAND())

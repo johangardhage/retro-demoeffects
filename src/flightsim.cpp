@@ -204,13 +204,14 @@ static void UpdateFlight(float timestep)
 }
 
 // The view from the cockpit: the aircraft's frame, with its up turned into
-// the camera's down
+// the camera's down, through the terrain's lens
 static void PlaceCamera(void)
 {
 	Camera.pos = { RETRO_TerrainCamera.x, RETRO_TerrainCamera.height, RETRO_TerrainCamera.z };
 	Camera.right = Plane.right;
 	Camera.down = -Plane.up;
 	Camera.forward = Plane.forward;
+	Camera.lens = RETRO_TerrainLens;
 }
 
 // A world point in the aircraft's frame
@@ -244,22 +245,19 @@ static bool CellOutside(const WorldVertex *corner)
 //
 // The sky behind everything, by the height of each pixel's ray
 //
-// The ray through a pixel is the pinhole run backward: forward, plus right
-// and up by how far the pixel is from the screen's eye-level point over the
-// focal length. Its height over its length is the sine of how far above the
-// horizon it looks, so the gradient follows the horizon through any roll or
-// pitch. The square root lifts the haze quickly off the horizon into the blue.
-// A ray below the horizon looks at ground past the draw distance, which the fog
-// has already faded into the haze, so it is drawn in the haze too.
+// The ray through a pixel's center is the camera's view ray. Its height over
+// its length is the sine of how far above the horizon it looks, so the
+// gradient follows the horizon through any roll or pitch. The square root
+// lifts the haze quickly off the horizon into the blue. A ray below the
+// horizon looks at ground past the draw distance, which the fog has already
+// faded into the haze, so it is drawn in the haze too.
 //
 static void DrawSky(void)
 {
 	unsigned char *buffer = RETRO_FrameBuffer();
-	float focal = RETRO_TerrainLens.focalx;
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		vec3 row = Plane.forward + Plane.up * ((RETRO_TerrainLens.center.y - (y + 0.5f)) / focal);
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			vec3 ray = row + Plane.right * ((x + 0.5f - RETRO_WIDTH / 2.0f) / focal);
+			vec3 ray = RETRO_ViewRay(&Camera, { x + 0.5f, y + 0.5f });
 			float elevation = MAX(ray.y / length(ray), 0.0f);
 			int band = MIN((int)(sqrtf(elevation) * (SKY_BANDS - 1) + RETRO_DitherThreshold(x, y)), SKY_BANDS - 1);
 			buffer[y * RETRO_WIDTH + x] = band;

@@ -13,7 +13,6 @@
 
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retromath.h"
 #include "lib/retrocamera.h"
 #include "lib/retropoly.h"
 #include "lib/retropalette.h"
@@ -34,7 +33,7 @@
 #define BRIGHT_ORANGE RETRO_Palette{ 255, 72, 0 }
 
 struct RingVertex {
-	Vertex vertex;
+	vec3 eye;		// In the camera's frame
 	float shade;
 };
 
@@ -42,18 +41,18 @@ static RingVertex Ring[RING_COUNT][RING_SIDES];
 static unsigned char Brick[TEXTURE_SIZE * TEXTURE_SIZE];
 static unsigned char FogTable[RETRO_COLORS * FOG_SHADES];
 static const RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
-static UnitVector Light;
+static vec3 Light;	// In the camera's frame
+static RETRO_CameraLens Lens;
 
 // A single left bend continues out of sight instead of waving back.
-static Vertex Path(float t)
+static vec3 Path(float t)
 {
-	return { { -BEND_CURVE * t * t, 0, t } };
+	return { -BEND_CURVE * t * t, 0, t };
 }
 
-static UnitVector PathTangent(float t)
+static vec3 PathTangent(float t)
 {
-	UnitVector forward = { { -2.0f * BEND_CURVE * t, 0, 1.0f } };
-	return RETRO_NormalizeUnitVector(forward);
+	return normalize(vec3{ -2.0f * BEND_CURVE * t, 0, 1.0f });
 }
 
 static void BuildBrick(void)
@@ -70,40 +69,44 @@ static void BuildBrick(void)
 	}
 }
 
+// Clip a quad to the view and draw what is left
 static void DrawQuad(const RingVertex &a, const RingVertex &b, const RingVertex &c, const RingVertex &d, float scroll)
 {
-	if (a.vertex.q <= 0.0f || b.vertex.q <= 0.0f || c.vertex.q <= 0.0f || d.vertex.q <= 0.0f) {
-		return;
-	}
-
-	PolygonPoint point[4] = {
-		{ a.vertex.spos, a.shade, { 0, scroll }, a.vertex.q },
-		{ b.vertex.spos, b.shade, { 0, TEXTURE_SIZE + scroll }, b.vertex.q },
-		{ c.vertex.spos, c.shade, { (float)TEXTURE_SIZE, TEXTURE_SIZE + scroll }, c.vertex.q },
-		{ d.vertex.spos, d.shade, { (float)TEXTURE_SIZE, scroll }, d.vertex.q }
+	RETRO_CameraVertex corner[4] = {
+		{ a.eye, { 0, scroll }, a.shade },
+		{ b.eye, { 0, TEXTURE_SIZE + scroll }, b.shade },
+		{ c.eye, { (float)TEXTURE_SIZE, TEXTURE_SIZE + scroll }, c.shade },
+		{ d.eye, { (float)TEXTURE_SIZE, scroll }, d.shade }
 	};
-	RETRO_DrawTexMapGouraudPolygon(point, 4, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable, true);
+	PolygonPoint point[4 + RETRO_CAMERA_CLIP_PLANES];
+	int points = RETRO_ClipProjectViewPolygon(Lens, corner, 4, point);
+	if (points >= 3) {
+		RETRO_DrawTexMapGouraudPolygon(point, points, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable, true);
+	}
 }
 
 static void BuildTunnel(void)
 {
 	float t = 0.0f;
 
-	Vertex origin = Path(t);
-	UnitVector forward = PathTangent(t);
-	UnitVector right, down;
+	vec3 forward = PathTangent(t);
+	vec3 right, down;
 	RETRO_FrameFromForward(forward, &right, &down);
 
 	RETRO_Camera camera;
-	RETRO_PlaceCamera(&camera, origin.pos, right, down, forward);
+	RETRO_PlaceCamera(&camera, Path(t), right, down, forward);
+	camera.lens.focalx = 180;
+	camera.lens.focaly = 180;
+	camera.lens.center = { RETRO_WIDTH * 0.70f, RETRO_HEIGHT * 0.5f };
+	Lens = camera.lens;
 
 	int first = (int)ceilf((t + RING_NEAR) / RING_SPACING);
 	float far = RING_SPACING * RING_COUNT;
 
 	for (int i = 0; i < RING_COUNT; i++) {
 		float along = (first + i) * (float)RING_SPACING;
-		Vertex center = Path(along);
-		UnitVector ringright, ringdown;
+		vec3 center = Path(along);
+		vec3 ringright, ringdown;
 		RETRO_FrameFromForward(PathTangent(along), &ringright, &ringdown);
 
 		float fog = 1.0f - (along - t) / far;
@@ -115,18 +118,14 @@ static void BuildTunnel(void)
 			float ct = cosf(theta);
 			float st = sinf(theta);
 
-			vec3 radial = ringright.dir * ct + ringdown.dir * st;
+			vec3 radial = ringright * ct + ringdown * st;
 			vec3 wall = radial * TUNNEL_RADIUS;
 
 			RingVertex *p = &Ring[i][s];
-			p->vertex = { center.pos + wall };
+			p->eye = RETRO_ViewPoint(&camera, center + wall);
 
-			RETRO_ViewVertex(&p->vertex, &camera);
-			RETRO_ProjectViewVertex(&p->vertex, 180, RETRO_WIDTH * 0.70f, RETRO_HEIGHT * 0.5f);
-
-			UnitVector inward = RETRO_NormalizeUnitVector({ -radial });
-			RETRO_ViewUnitVector(&inward, &camera);
-			float lambert = RETRO_RotatedDot(inward, Light);
+			vec3 inward = RETRO_ViewDirection(&camera, normalize(-radial));
+			float lambert = dot(inward, Light);
 			float lit = mix(AMBIENT, 1.0f, RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f)));
 			p->shade = lit * depth * (FOG_SHADES - 1);
 		}
@@ -168,6 +167,6 @@ void DEMO_Initialize(void)
 
 	BuildBrick();
 
-	Light = RETRO_LightSource(-0.7f, 0.0f, -0.7f);
+	Light = normalize(vec3{ -0.7f, 0.0f, -0.7f });
 	BuildTunnel();
 }

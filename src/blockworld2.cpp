@@ -128,6 +128,7 @@
 #include "lib/retrogfx.h"
 #include "lib/retromath.h"
 #include "lib/retromouse.h"
+#include "lib/retrocamera.h"
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
@@ -495,11 +496,6 @@ static bool Collides(vec3 p)
 	return false;
 }
 
-static vec3 ViewDirection(void)
-{
-	return { cosf(Yaw) * cosf(Pitch), sinf(Pitch), sinf(Yaw) * cosf(Pitch) };
-}
-
 // How far dir is off the center of a sun or moon at center, as the larger
 // of the tangents along the square's two edges
 static float BodyExtent(vec3 dir, vec3 center)
@@ -606,10 +602,15 @@ void DEMO_Render(RETRO_Time time)
 	Yaw = fmodf(Yaw - mouse.xrel * MOUSE_SENSITIVITY, 2 * M_PI);
 	Pitch = MAX(MIN(Pitch - mouse.yrel * MOUSE_SENSITIVITY, MAX_PITCH), -MAX_PITCH);
 
-	vec3 eye = Position + vec3{ 0, EYE_HEIGHT, 0 };
-	vec3 forward = ViewDirection();
-	vec3 right = normalize(cross(vec3{ 0, 1, 0 }, forward));
-	vec3 up = cross(forward, right);
+	// Aim from a level frame facing +x, y up. The yaw turns left and the
+	// pitch looks up, the other way from the camera's turns.
+	RETRO_Camera camera;
+	RETRO_InitializeCamera(&camera, Position + vec3{ 0, EYE_HEIGHT, 0 });
+	camera.lens.focalx = FOCAL;
+	camera.lens.focaly = FOCAL;
+	RETRO_AimCamera(&camera, { 0, 0, -1 }, { 0, -1, 0 }, { 1, 0, 0 }, -Yaw, -Pitch);
+	vec3 eye = camera.pos;
+	vec3 forward = camera.forward;
 
 	// Break and place at the block under the crosshair: at once on a click,
 	// then every REPEAT_DELAY while the button is held
@@ -692,10 +693,11 @@ void DEMO_Render(RETRO_Time time)
 	// Each star in front of the eye marks the one pixel it projects to
 	bool starmap[RETRO_HEIGHT][RETRO_WIDTH] = {};
 	for (vec3 star : Stars) {
-		float depth = dot(star, forward);
-		if (star.y <= 0 || depth <= 0) continue;
-		int sx = (int)floorf(RETRO_WIDTH / 2.0f + FOCAL * dot(star, right) / depth);
-		int sy = (int)floorf(RETRO_HEIGHT / 2.0f - FOCAL * dot(star, up) / depth);
+		vec3 view = RETRO_ViewDirection(&camera, star);
+		if (star.y <= 0 || view.z <= 0) continue;
+		vec2 p = RETRO_ProjectViewPoint(camera.lens, view).pos;
+		int sx = (int)floorf(p.x);
+		int sy = (int)floorf(p.y);
 		if (sx >= 0 && sx < RETRO_WIDTH && sy >= 0 && sy < RETRO_HEIGHT) starmap[sy][sx] = true;
 	}
 
@@ -703,7 +705,7 @@ void DEMO_Render(RETRO_Time time)
 		for (int sx = 0; sx < RETRO_WIDTH; sx++) {
 			// Through the pixel's center, so that a block edge lined up with the
 			// view falls between pixels rather than on one
-			vec3 dir = normalize(forward * FOCAL + right * (sx + 0.5f - RETRO_WIDTH / 2.0f) + up * (RETRO_HEIGHT / 2.0f - sy - 0.5f));
+			vec3 dir = normalize(RETRO_ViewRay(&camera, { sx + 0.5f, sy + 0.5f }));
 
 			RayHit hit;
 			unsigned char color = SkyColor(dir);

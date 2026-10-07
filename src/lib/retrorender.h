@@ -546,8 +546,9 @@ inline void RETRO_RenderShaderModel(Model3D *model, bool flat, ClipRect clip = {
 			point[j].n = normal * (side * vertex->q);
 			point[j].p = vertex->rpos * vertex->q;
 			point[j].uv = model->uvs > 0 ? model->uv[face->uv[j]] * vertex->q : vec2{ 0.0f, 0.0f };
+			point[j].lightuv = { 0.0f, 0.0f };
 		}
-		RETRO_DrawShaderPolygon(point, face->vertices, eye, model->shader, clip);
+		RETRO_DrawShaderPolygon(point, face->vertices, eye, model->shader, NULL, clip);
 	}
 }
 

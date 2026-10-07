@@ -371,6 +371,31 @@ inline void RETRO_FreeImage(int id = 0)
 	}
 }
 
+//
+// Read a whole file into a new buffer, freed with free(). A zero byte follows
+// the data, so a text file reads as a string; size, when given, receives the
+// length without it.
+//
+inline unsigned char *RETRO_LoadFile(const char *filename, int *size = NULL)
+{
+	FILE *fp = fopen(filename, "rb");
+	if (fp == NULL) {
+		RETRO_RageQuit("Cannot open file: %s\n", filename);
+	}
+	fseek(fp, 0, SEEK_END);
+	long length = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+	unsigned char *data = (unsigned char *)malloc(length + 1);
+	if (data == NULL || fread(data, 1, length, fp) != (size_t)length) {
+		RETRO_RageQuit("Cannot read file: %s\n", filename);
+	}
+	data[length] = 0;
+	fclose(fp);
+
+	if (size) *size = (int)length;
+	return data;
+}
+
 inline RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = false)
 {
 	RETRO_Image *image = RETRO_AllocateImage();

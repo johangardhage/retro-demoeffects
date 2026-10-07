@@ -156,9 +156,8 @@ inline void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = 
 // Unit vectors and vertices, as written
 //
 // UnitVector::dir is the vector as authored. rdir is that vector after
-// a rotation (RETRO_RotateUnitVector, RETRO_ViewUnitVector). RETRO_RotatedDot
-// reads the rotated slot, because the shaded renderers have already turned
-// the model. The helpers below read and write the authored slot, which is
+// a rotation (RETRO_RotateUnitVector). RETRO_RotatedDot reads the rotated
+// slot, because the shaded renderers have already turned the model. The helpers below read and write the authored slot, which is
 // what a path tangent or a cross of two axes needs. RETRO_LightSource is
 // the exception: a light has no orientation of its own to rotate out of,
 // so it fills both slots directly.

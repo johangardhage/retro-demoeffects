@@ -23,6 +23,7 @@ struct PolygonPoint {
 	vec3 n;					// Normal, in view space; every drawer renormalizes, so any scale will do
 	vec3 p;					// Surface point, in view space; only the shader drawer reads it
 	float tint[RETRO_MAX_TINTS];	// Further light levels beside c, read with a shade table that has tints
+	vec2 lightuv;			// Light map coordinates
 };
 
 // One pixel of a surface, as a shader is handed it
@@ -33,6 +34,8 @@ struct Fragment {
 	vec3 normal;			// Unit normal, in view space, turned to the side the viewer sees
 	vec3 view;				// From the eye to position; its length is the eye's distance
 	vec2 uv;				// Texture coordinates in texels, as the model holds them, or zero without any
+	vec2 lightuv;			// Light map coordinates, or zero without any
+	const void *data;		// What the caller handed the drawer for its shader, or NULL
 };
 
 // The surface directions +u and +v run in, in view space. A bump map is a
@@ -1192,12 +1195,14 @@ inline void RETRO_DrawEnvMapPolygon(PolygonPoint *point, int points, unsigned ch
 //
 // Shader polygon
 // Every pixel is described as a Fragment and handed to shader, and what it
-// returns is written. point.p, point.n and point.uv arrive times q, so all
-// three are perspective-correct: p and uv are divided by q at each pixel,
-// and n is only normalized, which dividing it first would not change. A
-// constant n is a flat face; an interpolated one bends smoothly across it.
+// returns is written. point.p, point.n, point.uv and point.lightuv arrive
+// times q, so all four are perspective-correct: p and the coordinates are
+// divided by q at each pixel, and n is only normalized, which dividing it
+// first would not change. A constant n is a flat face; an interpolated one
+// bends smoothly across it. data reaches the shader in every fragment, so
+// what it shades with can belong to this one polygon.
 //
-inline void RETRO_DrawShaderPolygon(PolygonPoint *point, int points, vec3 eye, unsigned char (*shader)(const Fragment &fragment), ClipRect clip = {})
+inline void RETRO_DrawShaderPolygon(PolygonPoint *point, int points, vec3 eye, unsigned char (*shader)(const Fragment &fragment), const void *data = NULL, ClipRect clip = {})
 {
 	for (int triangle = 1; triangle < points - 1; triangle++) {
 		PolygonPoint *p0 = &point[0];
@@ -1214,6 +1219,8 @@ inline void RETRO_DrawShaderPolygon(PolygonPoint *point, int points, vec3 eye, u
 		vec3 dpdy = ((p1->pos.x - p0->pos.x) * (p2->p - p0->p) - (p2->pos.x - p0->pos.x) * (p1->p - p0->p)) / determinant;
 		vec2 duvdx = ((p1->uv - p0->uv) * (p2->pos.y - p0->pos.y) - (p2->uv - p0->uv) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (p2->uv - p0->uv) - (p2->pos.x - p0->pos.x) * (p1->uv - p0->uv)) / determinant;
+		vec2 dlightuvdx = ((p1->lightuv - p0->lightuv) * (p2->pos.y - p0->pos.y) - (p2->lightuv - p0->lightuv) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec2 dlightuvdy = ((p1->pos.x - p0->pos.x) * (p2->lightuv - p0->lightuv) - (p2->pos.x - p0->pos.x) * (p1->lightuv - p0->lightuv)) / determinant;
 		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
 		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
 
@@ -1226,6 +1233,7 @@ inline void RETRO_DrawShaderPolygon(PolygonPoint *point, int points, vec3 eye, u
 			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
 			vec3 p = p0->p + dpdx * (px - p0->pos.x) + dpdy * (py - p0->pos.y);
 			vec2 uv = p0->uv + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
+			vec2 lightuv = p0->lightuv + dlightuvdx * (px - p0->pos.x) + dlightuvdy * (py - p0->pos.y);
 			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
 
 			for (int x = xstart; x < xend; x++) {
@@ -1240,11 +1248,14 @@ inline void RETRO_DrawShaderPolygon(PolygonPoint *point, int points, vec3 eye, u
 					fragment.normal = normalize(n);
 					fragment.view = fragment.position - eye;
 					fragment.uv = uv * depth;
+					fragment.lightuv = lightuv * depth;
+					fragment.data = data;
 					RETRO.framebuffer[offset] = shader(fragment);
 				}
 				n += dndx;
 				p += dpdx;
 				uv += duvdx;
+				lightuv += dlightuvdx;
 				q += dqdx;
 			}
 		}

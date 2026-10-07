@@ -6,6 +6,9 @@
 // world is built of. A brush is a convex solid, the inside of a set of planes,
 // each written as three points on it and the texture its face is drawn with.
 //
+// A compiled BSP keeps its entities in the same text, without the brushes,
+// which have become its tree and faces.
+//
 // The coordinates are the file's own, z up. Nothing here knows what an
 // entity's classname or a texture's name means; that is the reader's.
 //
@@ -18,9 +21,9 @@
 #include "retro.h"
 #include "retrovector.h"
 
-#define RETRO_MAP_NAME 64				// The longest key, value or texture name, with its terminator
+#define RETRO_MAP_NAME 128				// The longest key, value or texture name, with its terminator
 #define RETRO_MAP_MAX_KEYS 16			// Keys an entity may have
-#define RETRO_MAP_MAX_ENTITIES 256
+#define RETRO_MAP_MAX_ENTITIES 512
 #define RETRO_MAP_MAX_BRUSHES 1024
 #define RETRO_MAP_MAX_PLANES 16			// Planes a brush may have
 #define RETRO_MAP_MAX_FACE (RETRO_MAP_MAX_PLANES + 4)	// Corners a face may have: a square cut once by each other plane
@@ -183,24 +186,14 @@ inline void RETRO_ReadMapBrush(RETRO_MapReader *reader, RETRO_MapBrush *brush)
 }
 
 //
-// Load a .map
+// Read a map from its text
 //
-// The whole file is read, then its entities in order, each key and value
-// kept and each brush appended to the map's list, so an entity's brushes are
-// one run of it. Freed with RETRO_FreeMap.
+// The entities in order, each key and value kept and each brush appended to
+// the map's list, so an entity's brushes are one run of it. filename is
+// what the errors call the text. Freed with RETRO_FreeMap.
 //
-inline RETRO_Map *RETRO_LoadMap(const char *filename)
+inline RETRO_Map *RETRO_ParseMap(const char *text, const char *filename)
 {
-	FILE *fp = fopen(filename, "rb");
-	if (fp == NULL) RETRO_RageQuit("Cannot open file: %s\n", filename);
-	fseek(fp, 0, SEEK_END);
-	long size = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
-	char *text = (char *)malloc(size + 1);
-	if (text == NULL || fread(text, 1, size, fp) != (size_t)size) RETRO_RageQuit("Cannot read file: %s\n", filename);
-	text[size] = 0;
-	fclose(fp);
-
 	RETRO_Map *map = (RETRO_Map *)malloc(sizeof(RETRO_Map));
 	if (map == NULL) RETRO_RageQuit("Cannot allocate map memory\n");
 	map->entities = 0;
@@ -234,6 +227,16 @@ inline RETRO_Map *RETRO_LoadMap(const char *filename)
 		}
 	}
 
+	return map;
+}
+
+//
+// Load a .map file
+//
+inline RETRO_Map *RETRO_LoadMap(const char *filename)
+{
+	char *text = (char *)RETRO_LoadFile(filename);
+	RETRO_Map *map = RETRO_ParseMap(text, filename);
 	free(text);
 	return map;
 }

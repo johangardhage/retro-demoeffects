@@ -23,28 +23,10 @@
 #define RETRO_CAMERA_FOCAL 250
 
 //
-// A free-flight camera: an eye position and an orthonormal right/down/forward
-// frame, turned about its own current axes rather than about fixed world
-// ones. Right, down and forward are screen +x, screen +y and the view
-// direction, matching the y-down, z-away convention RETRO_ProjectVertex and
-// RETRO_SortFaces already assume (retromath.h).
-//
-// rotate(ax, ay, az) builds a rotation from Euler angles taken
-// against the world's fixed axes, which is the wrong tool here: yawing left,
-// then pitching up, then yawing again would have to recover ax, ay, az from
-// the frame this camera is already at, and two of those three axes are by
-// then arbitrary directions in world space, not the coordinate axes Euler
-// angles are measured from. RETRO_YawCamera, RETRO_PitchCamera and
-// RETRO_RollCamera below turn two of the frame's own vectors about the
-// third instead, so the frame stays orthonormal and nothing is ever
-// recovered from it - the turn a Descent or Wing Commander style ship needs
-// after an arbitrary sequence of turns and rolls.
-//
-//
 // What the camera looks through: a pinhole with a focal length across and one
 // down, the point on the screen the view direction lands on, the nearest depth
 // worth drawing, and the part of the screen the view fills. The defaults are
-// RETRO_ProjectViewVertex's pinhole over the whole screen.
+// a RETRO_CAMERA_FOCAL pinhole centered on the whole screen.
 //
 struct RETRO_CameraLens {
 	float focalx = RETRO_CAMERA_FOCAL;
@@ -54,6 +36,27 @@ struct RETRO_CameraLens {
 	ClipRect view;
 };
 
+//
+// A camera: an eye position and an orthonormal right/down/forward frame.
+// Right, down and forward are screen +x, screen +y and the view direction,
+// matching the y-down, z-away convention RETRO_ProjectVertex and
+// RETRO_SortFaces already assume (retromath.h). A world keeps its own axes:
+// a y-up world has the camera's down at -up.
+//
+// The frame is oriented one of two ways:
+//
+//   - Turned turn by turn, by RETRO_YawCamera, RETRO_PitchCamera and
+//     RETRO_RollCamera, each about one of the frame's own current axes, so
+//     the frame stays orthonormal after any sequence of turns and rolls -
+//     the free flight of a Descent or Wing Commander style ship. Euler
+//     angles taken against the world's fixed axes (rotate(ax, ay, az)) are
+//     the wrong tool there: after a few turns, two of the frame's axes are
+//     arbitrary directions, not the axes the angles are measured from.
+//
+//   - Aimed afresh from a heading and pitch kept as angles, by
+//     RETRO_AimCamera - a first-person view, where the heading turns about
+//     the world's vertical and the horizon never tilts.
+//
 struct RETRO_Camera {
 	vec3 pos;			// Eye position, world space
 	vec3 right;			// Frame: screen +x
@@ -70,16 +73,14 @@ inline void RETRO_InitializeCamera(RETRO_Camera *camera, vec3 pos = { 0, 0, 0 })
 	camera->forward = { 0, 0, 1 };
 }
 
-// Eye at pos with the given orthonormal frame. The three directions are
-// taken as authored (dir), the same slot RETRO_UnitCrossProduct and
-// RETRO_NormalizeUnitVector write. They are not rotated: this is the write
-// of the camera's own frame, not a turn of an existing one.
-inline void RETRO_PlaceCamera(RETRO_Camera *camera, vec3 pos, UnitVector right, UnitVector down, UnitVector forward)
+// Eye at pos with the given orthonormal frame: the write of the camera's own
+// frame, not a turn of an existing one
+inline void RETRO_PlaceCamera(RETRO_Camera *camera, vec3 pos, vec3 right, vec3 down, vec3 forward)
 {
 	camera->pos = pos;
-	camera->right = right.dir;
-	camera->down = down.dir;
-	camera->forward = forward.dir;
+	camera->right = right;
+	camera->down = down;
+	camera->forward = forward;
 }
 
 // Move the eye along its own current axes: forward along the view direction,
@@ -130,23 +131,23 @@ inline void RETRO_RollCamera(RETRO_Camera *camera, float angle)
 	camera->down = down;
 }
 
-// World point to camera-relative rotated coordinates: vertex->pos is read
-// as a world position, not a model-space one. The frame's columns are
-// right, down and forward, so transpose(frame) is the view rotation.
-inline void RETRO_ViewVertex(Vertex *vertex, const RETRO_Camera *camera)
+//
+// Aim the camera from a level frame: set the frame to right, down and
+// forward, then turn it by yaw and pitch as RETRO_YawCamera and
+// RETRO_PitchCamera do (positive yaw turns right, positive pitch tips the
+// nose down). The yaw turns about the level frame's down axis, so about the
+// world's vertical, and the pitch about the turned right axis, which stays
+// level. Built afresh each time from a heading and pitch kept as angles, the
+// frame never picks up a roll - the look of a first-person view, where
+// turning the frame turn by turn would tilt the horizon after a look up.
+//
+inline void RETRO_AimCamera(RETRO_Camera *camera, vec3 right, vec3 down, vec3 forward, float yaw, float pitch)
 {
-	mat3 frame = { camera->right, camera->down, camera->forward };
-	vertex->rpos = transpose(frame) * (vertex->pos - camera->pos);
-}
-
-// World direction to camera-relative: the rotational half of
-// RETRO_ViewVertex. A UnitVector does not translate, so the eye is not
-// subtracted; only the frame is applied, and it lands in rdir, which is
-// the slot RETRO_RotatedDot reads.
-inline void RETRO_ViewUnitVector(UnitVector *direction, const RETRO_Camera *camera)
-{
-	mat3 frame = { camera->right, camera->down, camera->forward };
-	direction->rdir = transpose(frame) * direction->dir;
+	camera->right = right;
+	camera->down = down;
+	camera->forward = forward;
+	RETRO_YawCamera(camera, yaw);
+	RETRO_PitchCamera(camera, pitch);
 }
 
 // Two axes perpendicular to forward, in the camera's own right/down
@@ -158,42 +159,16 @@ inline void RETRO_ViewUnitVector(UnitVector *direction, const RETRO_Camera *came
 // world-down is only ever the reference used to build right - it does not
 // appear in the result, so the frame does not inherit a roll from it, only
 // an orientation.
-inline void RETRO_FrameFromForward(UnitVector forward, UnitVector *right, UnitVector *down)
+inline void RETRO_FrameFromForward(vec3 forward, vec3 *right, vec3 *down)
 {
-	UnitVector worlddown = { { 0, 1, 0 } };
-	*right = RETRO_UnitCrossProduct(worlddown, forward);
-	*down = RETRO_UnitCrossProduct(forward, *right);
-}
-
-// Pinhole projection of an already camera-relative vertex (see
-// RETRO_ViewVertex): depth is rpos.z itself, with no near-plane offset to
-// fold in, since the eye already sits at the origin of that space.
-//
-//   q  = 1 / rpos.z
-//   sx = cx + focal * rpos.x * q
-//   sy = cy + focal * rpos.y * q
-//
-// A vertex at or behind the eye is given q = 0 and parked at the principal
-// point, for the caller to drop, matching RETRO_ProjectVertex.
-inline void RETRO_ProjectViewVertex(Vertex *vertex, float focal = RETRO_CAMERA_FOCAL, float cx = (RETRO_WIDTH / 2.0), float cy = (RETRO_HEIGHT / 2.0))
-{
-	if (vertex->rpos.z <= 1.0f) {
-		vertex->q = 0.0f;
-		vertex->spos = { cx, cy };
-	} else {
-		vertex->q = 1.0f / vertex->rpos.z;
-		vertex->spos = { cx + focal * vertex->rpos.x * vertex->q, cy + focal * vertex->rpos.y * vertex->q };
-	}
+	vec3 worlddown = { 0, 1, 0 };
+	*right = normalize(cross(worlddown, forward));
+	*down = normalize(cross(forward, *right));
 }
 
 // *******************************************************************
-// Through the lens
+// Into the camera's frame
 // *******************************************************************
-
-// The most corners a polygon handed to RETRO_ClipProjectViewPolygon may have.
-// Each of the five cuts adds at most one more.
-#define RETRO_CAMERA_MAX_POLYGON 32
-#define RETRO_CAMERA_CLIP_PLANES 5
 
 // A world direction in the camera's frame: right, down and forward of the eye.
 // The rotation alone, so it does not move with the eye.
@@ -208,6 +183,15 @@ inline vec3 RETRO_ViewPoint(const RETRO_Camera *camera, vec3 point)
 	return RETRO_ViewDirection(camera, point - camera->pos);
 }
 
+// *******************************************************************
+// Through the lens
+// *******************************************************************
+
+// The most corners a polygon handed to RETRO_ClipProjectViewPolygon may have.
+// Each of the five cuts adds at most one more.
+#define RETRO_CAMERA_MAX_POLYGON 32
+#define RETRO_CAMERA_CLIP_PLANES 5
+
 // The lens's pinhole, for a point in the camera's frame in front of the eye.
 // The caller decides what is worth projecting first: a direction projects to
 // where it points, at any distance.
@@ -220,6 +204,18 @@ inline PolygonPoint RETRO_ProjectViewPoint(const RETRO_CameraLens &lens, vec3 ey
 }
 
 //
+// The world direction through a point on the screen, not normalized: the
+// pinhole run backward, forward plus right and down by how far the point is
+// from the lens's center over its focal lengths. Through a pixel's center
+// for a pixel (x, y) is p = (x + 0.5, y + 0.5).
+//
+inline vec3 RETRO_ViewRay(const RETRO_Camera *camera, vec2 p)
+{
+	const RETRO_CameraLens &lens = camera->lens;
+	return camera->forward + camera->right * ((p.x - lens.center.x) / lens.focalx) + camera->down * ((p.y - lens.center.y) / lens.focaly);
+}
+
+//
 // A polygon corner in the camera's frame, before the pinhole, with what a
 // drawer interpolates
 //
@@ -228,6 +224,7 @@ struct RETRO_CameraVertex {
 	vec2 uv;						// Texture coordinates
 	float c;						// Shade, or palette index
 	float tint[RETRO_MAX_TINTS];	// Further light levels, for a shade table with tints
+	vec2 lightuv;					// Light map coordinates
 };
 
 // The corner t of the way along an edge. Every field is linear along an edge
@@ -238,6 +235,7 @@ inline RETRO_CameraVertex RETRO_MixCameraVertex(const RETRO_CameraVertex &a, con
 	RETRO_CameraVertex v;
 	v.eye = mix(a.eye, b.eye, t);
 	v.uv = mix(a.uv, b.uv, t);
+	v.lightuv = mix(a.lightuv, b.lightuv, t);
 	v.c = mix(a.c, b.c, t);
 	for (int j = 0; j < RETRO_MAX_TINTS; j++) {
 		v.tint[j] = mix(a.tint[j], b.tint[j], t);
@@ -328,6 +326,7 @@ inline int RETRO_ClipProjectViewPolygon(const RETRO_CameraLens &lens, const RETR
 		point[i] = RETRO_ProjectViewPoint(lens, clipped[0][i].eye);
 		point[i].c = clipped[0][i].c;
 		point[i].uv = clipped[0][i].uv;
+		point[i].lightuv = clipped[0][i].lightuv;
 		for (int j = 0; j < RETRO_MAX_TINTS; j++) {
 			point[i].tint[j] = clipped[0][i].tint[j];
 		}
@@ -343,14 +342,12 @@ inline int RETRO_ClipProjectViewPolygon(const RETRO_CameraLens &lens, const RETR
 // How much the direction through a point on the screen climbs, along a
 // world's unit up
 //
-// The direction is the pinhole run backward: forward, plus right and down by
-// how far the point is from the lens's center over its focal lengths. It is
-// linear in the point, so the horizon, where it is zero, is a straight line.
+// The direction is RETRO_ViewRay's. It is linear in the point, so the
+// horizon, where the climb is zero, is a straight line.
 //
 inline float RETRO_ViewClimb(const RETRO_Camera *camera, vec2 p, vec3 up)
 {
-	const RETRO_CameraLens &lens = camera->lens;
-	return dot(camera->forward, up) + dot(camera->right, up) * (p.x - lens.center.x) / lens.focalx + dot(camera->down, up) * (p.y - lens.center.y) / lens.focaly;
+	return dot(RETRO_ViewRay(camera, p), up);
 }
 
 //

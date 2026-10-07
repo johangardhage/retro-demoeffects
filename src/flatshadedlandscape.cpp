@@ -73,6 +73,9 @@ static unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
 static const float SunRadius[LANDSCAPE_SUNRINGS] = { 11.0f, 7.0f, 4.0f };
 static const unsigned char SunColor[LANDSCAPE_SUNRINGS] = { 247, 248, 249 };
 
+// Toward the sun, carried round each frame; not necessarily unit
+static vec3 Sun;
+
 struct WorldVertex {
 	vec3 pos;
 	RETRO_CameraVertex vertex;
@@ -91,7 +94,7 @@ static WorldVertex TerrainVertex(float x, float z, const RETRO_TerrainBasis &bas
 //
 // The sun, at the point the light arrives from
 //
-// RETRO_TerrainLight is a direction and not a place, so there is no distance to
+// Sun is a direction and not a place, so there is no distance to
 // put the sun at. There does not need to be one: the pinhole divides side and
 // height by depth, all three scale together with any distance chosen, and the
 // quotients do not move. Handing the direction itself to the same projection
@@ -103,7 +106,7 @@ static WorldVertex TerrainVertex(float x, float z, const RETRO_TerrainBasis &bas
 //
 static void DrawSun(const RETRO_TerrainBasis &basis)
 {
-	vec3 eye = RETRO_TerrainCameraEye(RETRO_TerrainLight, basis);
+	vec3 eye = RETRO_TerrainCameraEye(Sun, basis);
 	if (eye.z <= 0.0f) return;
 
 	PolygonPoint point = RETRO_ProjectViewPoint(RETRO_TerrainLens, eye);
@@ -125,7 +128,7 @@ static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const World
 	// and z spacing alone, so the normal already points upward and the length
 	// is never zero.
 	vec3 normal = cross(b.pos - a.pos, c.pos - a.pos);
-	int shade = RETRO_TerrainShade(normal, LANDSCAPE_SHADES);
+	int shade = RETRO_TerrainShade(normal, Sun, LANDSCAPE_SHADES);
 
 	RETRO_DrawFlatPolygon(polygon, points, LandscapeShadeTable[basecolor][shade]);
 }
@@ -138,9 +141,9 @@ void DEMO_Render(RETRO_Time time)
 	// and not a brightness: the reach and the height set where it stands, and
 	// turning it changes which faces look at it and nothing else.
 	float sunangle = fmod(time.total, LANDSCAPE_SUNPERIOD) * (2 * M_PI / LANDSCAPE_SUNPERIOD);
-	RETRO_TerrainLight.x = cosf(sunangle) * LANDSCAPE_SUNREACH;
-	RETRO_TerrainLight.y = LANDSCAPE_SUNHEIGHT;
-	RETRO_TerrainLight.z = sinf(sunangle) * LANDSCAPE_SUNREACH;
+	Sun.x = cosf(sunangle) * LANDSCAPE_SUNREACH;
+	Sun.y = LANDSCAPE_SUNHEIGHT;
+	Sun.z = sinf(sunangle) * LANDSCAPE_SUNREACH;
 
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
 	int step = mesh.step;

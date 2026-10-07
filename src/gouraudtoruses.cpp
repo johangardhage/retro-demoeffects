@@ -109,7 +109,4 @@ void DEMO_Initialize(void)
 	// their centers by the major radius produces a Hopf link.
 	PlaceTorusInLink(Torus1, 0, -LINK_RADIUS / 2);
 	PlaceTorusInLink(Torus2, M_PI / 2, LINK_RADIUS / 2);
-
-	// Initialize directional light source coming straight from the front
-	RETRO_InitializeLightSource(0, 0, -1);
 }

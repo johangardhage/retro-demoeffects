@@ -58,6 +58,8 @@
 #define FLAG_BLUE 1 // where the blue ramp starts, past the background
 #define FLAG_GOLD (FLAG_BLUE + FLAG_SHADES)
 
+static const RETRO_Lighting Lighting = { 1, { { normalize(vec3{ FLAG_LIGHTX, FLAG_LIGHTY, FLAG_LIGHTZ }), 1 } } };
+
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase, of the wave running out along the flag and of the yaw it
@@ -118,5 +120,5 @@ void DEMO_Initialize(void)
 		model->face[i].c = (cellx >= 5 && cellx < 7) || (celly >= 4 && celly < 6) ? FLAG_SHADES : 0;
 	}
 
-	RETRO_InitializeLightSource(FLAG_LIGHTX, FLAG_LIGHTY, FLAG_LIGHTZ);
+	model->lighting = &Lighting;
 }

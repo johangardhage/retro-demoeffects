@@ -43,15 +43,15 @@ static const RETRO_ShadeTable TextShades = { InkShades, 2, SHADES };
 static PolygonPoint Project(float x, float y, vec2 uv, double time)
 {
 	double angle = (y - RETRO_HEIGHT / 2.0) * TWIST_RATE + time * ROTATION_SPEED;
-	float c = (float)cos(angle), s = (float)sin(angle);
+	mat3 twist = rotateY((float)cos(angle), (float)sin(angle));
 	Vertex vertex = {};
-	// Rotation about the vertical axis leaves height unchanged in 3D.
-	vertex.rpos = { x * c, y - RETRO_HEIGHT / 2.0f, -x * s };
+	vertex.pos = { x, y - RETRO_HEIGHT / 2.0f, 0 };
+	RETRO_RotateVertex(&vertex, twist);
 	RETRO_ProjectVertex(&vertex, 1.0f, AXIS_X, RETRO_HEIGHT / 2.0f, CAMERA_DISTANCE);
 
 	// The ribbon's normal, turned with it and tilted by the twist: the
 	// inverse-transpose of the twist's local derivative.
-	vec3 n = { -s, 0, -c };
+	vec3 n = twist * vec3{ 0, 0, -1 };
 	n.y += (float)TWIST_RATE * (vertex.rpos.x * n.z - vertex.rpos.z * n.x);
 	n = normalize(n);
 

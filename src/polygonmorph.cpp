@@ -211,6 +211,4 @@ void DEMO_Initialize(void)
 		ShapeVertex[SHAPE_TWIST][i] = { p.x * twistcos - p.z * twistsin, p.y, p.x * twistsin + p.z * twistcos };
 		ShapeVertex[SHAPE_PINCHED][i] = p * (PINCHED_SIZE * (1 - PINCHED_DEPTH * dent));
 	}
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

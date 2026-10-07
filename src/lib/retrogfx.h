@@ -36,7 +36,8 @@ struct RETRO_Rectangle {
 
 // A Bresenham line. intensity, when given, adds a random 0 to intensity - 1 to
 // every pixel's color, so the line flickers upward from color the way a
-// burning wireframe draws its edges.
+// burning wireframe draws its edges. The caller keeps color + intensity within
+// RETRO_COLORS: past it the sum wraps to the bottom of the palette.
 inline void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, RETRO_Rectangle clip = {}, unsigned char intensity = 0, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
 {
 	int clipx1 = MIN(clip.x1, bufferwidth);
@@ -85,8 +86,9 @@ inline void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, 
 }
 
 // Fill a row from x1 to x2, clipped to [0, width). The ends are pixel
-// positions, not columns: x2 is exclusive, and a span narrower than a pixel
-// drops out.
+// positions, each truncated to the column it falls in, and x2's column is
+// exclusive: a span that crosses no column boundary draws nothing, however
+// close it comes.
 inline void RETRO_DrawSpan(unsigned char *row, float x1, float x2, unsigned char color, int width = RETRO_WIDTH)
 {
 	int left = x1 < 0 ? 0 : (int)x1;
@@ -167,7 +169,7 @@ inline void RETRO_DrawEllipse(float cx, float cy, float ra, float rb, unsigned c
 // Blits image (imagewidth x imageheight) scaled to xsize x ysize, centered on
 // (xc, yc). Pixels equal to alpha are skipped; color overrides the image's
 // own index when not -1.
-inline void RETRO_DrawSprite(int xc, int yc, float xsize, float ysize, int imagewidth, int imageheight, unsigned char* image, unsigned char alpha, int color = -1, RETRO_Rectangle clip = {}, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
+inline void RETRO_DrawSprite(int xc, int yc, float xsize, float ysize, int imagewidth, int imageheight, unsigned char *image, unsigned char alpha, int color = -1, RETRO_Rectangle clip = {}, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
 {
 	int clipx1 = MIN(clip.x1, bufferwidth);
 	int clipy1 = MIN(clip.y1, bufferheight);
@@ -177,20 +179,21 @@ inline void RETRO_DrawSprite(int xc, int yc, float xsize, float ysize, int image
 	float xdelta = imagewidth / xsize;
 	float ydelta = imageheight / ysize;
 
-	// xpos/ypos truncate x + xstart/y + ystart toward zero, so the x/y where
-	// that crosses clip.x0/y0 can land a pixel early or late; widen the
-	// scanned range by one on each side and let the per-pixel check below do
-	// the exact filtering.
+	// xpos/ypos floor x + xstart/y + ystart, so a sprite hanging off the left
+	// or top keeps one source column or row per screen one rather than folding
+	// two onto the edge. Where that crosses clip.x0/y0 can still land a pixel
+	// either side of the estimate, so the scanned range is widened by one on
+	// each side and the per-pixel check below does the exact filtering.
 	int ymin = MAX(0, (int)floor(clip.y0 - ystart) - 1);
 	int ymax = MIN((int)ysize, (int)ceil(clipy1 - ystart) + 1);
 	int xmin = MAX(0, (int)floor(clip.x0 - xstart) - 1);
 	int xmax = MIN((int)xsize, (int)ceil(clipx1 - xstart) + 1);
 
 	for (int y = ymin; y < ymax; y++) {
-		int ypos = y + ystart;
+		int ypos = (int)floorf(y + ystart);
 		int ysrc = y * ydelta;
 		for (int x = xmin; x < xmax; x++) {
-			int xpos = x + xstart;
+			int xpos = (int)floorf(x + xstart);
 			int xsrc = x * xdelta;
 			if (image[ysrc * imagewidth + xsrc] != alpha && xpos >= clip.x0 && xpos < clipx1 && ypos >= clip.y0 && ypos < clipy1) {
 				if (color == -1) {

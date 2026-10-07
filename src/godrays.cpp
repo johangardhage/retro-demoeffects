@@ -380,9 +380,6 @@ void DEMO_Initialize(void)
 	HoleFrame[4] = rotateX(-M_PI / 2);
 	HoleFrame[5] = rotateX(M_PI / 2);
 
-	// Initialize light source at the eye
-	RETRO_InitializeLightSource(0, 0, -1);
-
 	Ball = RETRO_Load3DModel("assets/spherequads.obj");
 	Ball->c = BALL_START;
 	Ball->shades = BALL_SHADES;

@@ -115,6 +115,8 @@ static const int PrismFaces[PRISM_FACES][4] = {
 // The axes of a wedge in the frame of the one before it, with the joint at rest
 static const mat3 JointRest = { { 0, -1, 0 }, { -1, 0, 0 }, { 0, 0, -1 } };
 
+static const RETRO_Lighting Lighting = { 1, { { normalize(vec3{ -0.4f, -0.5f, -0.77f }), 1 } } };
+
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate rotation
@@ -252,5 +254,5 @@ void DEMO_Initialize(void)
 		}
 	}
 
-	RETRO_InitializeLightSource(-0.4, -0.5, -0.77);
+	model->lighting = &Lighting;
 }

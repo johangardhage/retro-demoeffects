@@ -38,7 +38,7 @@
 #define WATER_SHADES 32 // entries in each shade-table ramp
 #define WATER_AMBIENT 0.62f // darkest a texel may be, so troughs do not hole
 
-static const vec3 LightDir = { 0.28f, -0.18f, 0.94f }; // from above-left, toward the viewer
+static const vec3 Light = normalize(vec3{ 0.28f, -0.18f, 0.94f }); // from above-left, toward the viewer
 
 static float WaterA[RETRO_WIDTH * RETRO_HEIGHT];
 static float WaterB[RETRO_WIDTH * RETRO_HEIGHT];
@@ -116,7 +116,7 @@ void DEMO_Render(RETRO_Time time)
 			unsigned char texel = image[ry * RETRO_WIDTH + rx];
 
 			vec3 n = normalize(vec3{ -nx * WATER_BUMP, -ny * WATER_BUMP, 1.0f });
-			float lambert = MAX(dot(n, LightDir), 0.0f);
+			float lambert = MAX(dot(n, Light), 0.0f);
 			int shade = (int)(lambert * (WATER_SHADES - 1));
 			buffer[i] = ShadeTable[texel * WATER_SHADES + shade];
 		}

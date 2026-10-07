@@ -54,6 +54,7 @@
 #define SKY_LOW vec3{ 30, 30, 45 }
 #define SKY_HIGH vec3{ 215, 225, 255 }
 
+static const vec3 Light = normalize(vec3{ -0.5f, -0.6f, -1.0f }); // toward the light, in view space
 static RETRO_Image *Picture;
 static unsigned char ColorLUT[32][32][32];
 
@@ -95,7 +96,6 @@ void DEMO_Render(RETRO_Time time)
 	float r = DOME_RADIUS;
 	float f0 = (IOR - 1) * (IOR - 1) / ((IOR + 1) * (IOR + 1));
 	vec3 d = { 0, 0, 1 };
-	vec3 light = normalize(vec3{ -0.5f, -0.6f, -1.0f });
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
@@ -117,10 +117,10 @@ void DEMO_Render(RETRO_Time time)
 				// Off the glass
 				vec3 bounce = reflect(d, n);
 				vec3 sky = mix(SKY_LOW, SKY_HIGH, 0.5f - 0.5f * bounce.y);
-				float highlight = 255 * powf(MAX(0.0f, dot(bounce, light)), SHININESS);
+				float highlight = 255 * powf(MAX(0.0f, dot(bounce, Light)), SHININESS);
 				float fresnel = mix(f0, 1, powf(1 + dot(d, n), 5));
 
-				color = mix(refracted, sky, fresnel) + vec3{ highlight, highlight, highlight };
+				color = mix(refracted, sky, fresnel) + highlight;
 			} else {
 				// The picture, in the dome's shadow
 				float sx = px - SHADOW_OFFSET;

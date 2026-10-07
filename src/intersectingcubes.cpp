@@ -63,6 +63,4 @@ void DEMO_Initialize(void)
 	Cube2 = RETRO_Load3DModel("assets/cube.obj");
 	Cube2->c = 128;
 	Cube2->shades = 127;
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

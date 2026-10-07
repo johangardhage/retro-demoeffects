@@ -38,7 +38,7 @@
 #define BULGE_AMOUNT 0.12f // extra scale the traveling wave adds
 #define BULGE_WAVE 1.8f // radians of that wave per model unit of rest y
 
-static Vertex RestVertex[RETRO_MAX_VERTICES];
+static vec3 RestPos[RETRO_MAX_VERTICES];
 
 void DEMO_Render(RETRO_Time time)
 {
@@ -55,7 +55,7 @@ void DEMO_Render(RETRO_Time time)
 
 	Model3D *model = RETRO_Get3DModel();
 	for (int i = 0; i < model->vertices; i++) {
-		const vec3 &v = RestVertex[i].pos;
+		const vec3 &v = RestPos[i];
 		float b = 1 + BULGE_AMOUNT * (float)sin(BULGE_WAVE * v.y + bulge);
 		model->vertex[i].pos = { v.x * sx * b, v.y * sy, v.z * sz * b };
 	}
@@ -76,8 +76,6 @@ void DEMO_Initialize(void)
 	model->c = RETRO_PHONG_OFFSET;
 	model->shades = RETRO_PHONG_SHADES;
 	for (int i = 0; i < model->vertices; i++) {
-		RestVertex[i] = model->vertex[i];
+		RestPos[i] = model->vertex[i].pos;
 	}
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

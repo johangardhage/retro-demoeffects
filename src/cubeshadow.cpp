@@ -49,6 +49,8 @@
 #define LIGHT_CELL 2
 #define CUBE 4
 
+static const RETRO_Lighting Lighting = { 1, { { normalize(vec3{ -0.5f, -0.5f, -1 }), 1 } } };
+
 static void SetShadowColors(int index, RETRO_Palette wall)
 {
 	RETRO_SetColor(index + WALL, wall);
@@ -89,7 +91,7 @@ void DEMO_Render(RETRO_Time time)
 
 	// Draw shadow. The light source points from the cube toward the light,
 	// so the shadow is cast the other way
-	vec3 light = -RETRO_Render.lightsource.dir;
+	vec3 light = -Lighting.light[0].direction;
 	RETRO_RotateModel(ax, ay, az);
 	for (int i = 0; i < model->vertices; i++) {
 		float t = (WALLZ - model->vertex[i].rpos.z) / light.z;
@@ -117,6 +119,5 @@ void DEMO_Initialize(void)
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->shades = RETRO_COLORS - CUBE;
-
-	RETRO_InitializeLightSource(-0.5f, -0.5f, -1);
+	model->lighting = &Lighting;
 }

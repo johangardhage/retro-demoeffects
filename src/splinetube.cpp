@@ -172,6 +172,4 @@ void DEMO_Initialize(void)
 			model->face[i].vertexnormal[j] = model->face[i].vertex[j];
 		}
 	}
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

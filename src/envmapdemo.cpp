@@ -234,7 +234,4 @@ void DEMO_Initialize(void)
 		model->shades = RETRO_PHONG_SHADES;
 	}
 	SelectMode();
-
-	// Set up light source
-	RETRO_InitializeLightSource(0, 0, -1);
 }

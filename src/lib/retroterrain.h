@@ -5,13 +5,13 @@
 // over it. World x runs across the map, z along it, and height is up.
 //
 //   The map      RETRO_Terrain: two planes of bytes, read nearest, filtered
-//                or on the drawn triangles, lit by RETRO_TerrainLight
+//                or on the drawn triangles, shaded by RETRO_TerrainShade
 //   The lens     RETRO_TerrainLens, the camera lens every look ends in: a
 //                point in the camera's frame, right, down and forward of the
 //                eye, onto the screen. RETRO_TerrainView, how much is drawn
 //   Wrapping     RETRO_TerrainCamera: a yaw over a torus, flown at a fixed
-//                speed or as RETRO_Vehicle, drawn as a mesh, as dots or as
-//                columns
+//                speed or as RETRO_Vehicle, drawn as a mesh with models
+//                standing on it, as dots or as columns
 //   Island       RETRO_Island: a finite patch on a turntable, seen from
 //                outside and pitched down
 //
@@ -26,6 +26,7 @@
 #include "retropoly.h"
 #include "retromath.h"
 #include "retrocamera.h"
+#include "retroshadetable.h"
 
 // How far the wrapping look draws, in map cells. The wide lens flattens the
 // hills, so nothing hides where the ground stops: this has to reach far
@@ -56,16 +57,6 @@ inline struct {
 	bool wrap = true;					// Both axes wrap; a finite patch sets this false
 	float scale = 1.0f;					// World units per stored height value
 } RETRO_Terrain;
-
-//
-// The sun the ground is lit by
-//
-// A direction toward the light, not necessarily unit: RETRO_TerrainShade
-// divides the length out. About forty degrees up, far enough off vertical
-// to tell a slope facing it from one turned away; a sun overhead lights
-// every gentle slope alike.
-//
-inline vec3 RETRO_TerrainLight = { -0.50f, 0.62f, -0.60f };
 
 // Point the sampling at these planes. wrap false is a finite patch.
 inline void RETRO_SetTerrain(int width, int height, float scale, unsigned char *heightmap, unsigned char *colormap, bool wrap = true)
@@ -310,19 +301,21 @@ inline vec3 RETRO_TerrainNormal(float x, float z, float step = 1)
 }
 
 //
-// The shade a surface facing n takes under RETRO_TerrainLight, in [0, shades)
+// The shade a surface facing n takes under a sun toward light, in [0, shades)
 //
 // Neither vector need be unit. A height field's normals all point up, so the
 // darkest lambert it can reach is a vertical wall turned from the sun, at
 // -sqrt(1 - y^2) for a unit light. The ramp spans that band rather than
 // [-1, 1], and is not clipped at the terminator, so a face turned away
-// darkens instead of dropping to black.
+// darkens instead of dropping to black. A sun well off vertical tells a slope
+// facing it from one turned away; one overhead lights every gentle slope
+// alike.
 //
-inline int RETRO_TerrainShade(vec3 n, int shades)
+inline int RETRO_TerrainShade(vec3 n, vec3 sun, int shades)
 {
-	float llength = length(RETRO_TerrainLight);
-	float light = dot(n, RETRO_TerrainLight) / (length(n) * llength);
-	float uy = RETRO_TerrainLight.y / llength;
+	float llength = length(sun);
+	float light = dot(n, sun) / (length(n) * llength);
+	float uy = sun.y / llength;
 	float darkest = -sqrtf(1.0f - uy * uy);
 	return CLAMP((int)((light - darkest) / (1.0f - darkest) * shades), 0, shades);
 }
@@ -572,7 +565,7 @@ inline bool RETRO_ProjectTerrainDot(int x, int z, float dx, float dz, float radi
 	cell.y = -(RETRO_TerrainHeight(x, z) - RETRO_TerrainCamera.height);
 	*eye = cell;
 	*point = RETRO_ProjectViewPoint(RETRO_TerrainLens, cell);
-	return RETRO_OnScreen((int)point->pos.x, (int)point->pos.y);
+	return RETRO_OnScreen(point->pos.x, point->pos.y);
 }
 
 //
@@ -635,6 +628,74 @@ inline bool RETRO_TerrainCellVisible(const RETRO_TerrainMesh &mesh, int x, int z
 	vec3 eye = RETRO_TerrainCameraEye({ centerx, 0, centerz }, mesh.basis);
 	float halfdiagonal = mesh.step * (float)M_SQRT1_2;
 	return eye.z + halfdiagonal >= RETRO_TerrainLens.nearplane && fabsf(eye.x) <= eye.z * RETRO_TerrainViewCullSlope() + mesh.step;
+}
+
+// A world point in the wrapping camera's frame, seen from basis, as the
+// corner of a polygon to be cut at the near plane and projected
+inline RETRO_CameraVertex RETRO_TerrainCameraVertex(vec3 p, const RETRO_TerrainBasis &basis)
+{
+	RETRO_CameraVertex vertex = {};
+	vertex.eye = RETRO_TerrainPointEye(p.x, p.z, p.y, basis);
+	return vertex;
+}
+
+// The same corner with texture coordinates, and lit in color, the light
+// carried as the levels of a table lit by RETRO_TintColor
+inline RETRO_CameraVertex RETRO_TerrainTintVertex(vec3 p, vec2 uv, vec3 light, const RETRO_ShadeTable &table, const RETRO_TerrainBasis &basis)
+{
+	RETRO_CameraVertex vertex = RETRO_TerrainCameraVertex(p, basis);
+	vertex.uv = uv;
+	RETRO_TintLevels(table, light, vertex.c, vertex.tint);
+	return vertex;
+}
+
+// A polygon of such corners through the near plane and onto the screen,
+// textured and lit through the table its light was carried for
+inline void RETRO_DrawTerrainPolygon(const RETRO_CameraVertex *vertex, int count, unsigned char *texture, int texturewidth, int textureheight, const RETRO_ShadeTable &table)
+{
+	PolygonPoint polygon[RETRO_CAMERA_MAX_POLYGON + RETRO_CAMERA_CLIP_PLANES];
+	int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, vertex, count, polygon);
+	if (points < 3) return;
+	RETRO_DrawTexMapGouraudPolygon(polygon, points, texture, texturewidth, textureheight, table);
+}
+
+//
+// A model standing on the terrain, as the wrapping camera sees it from basis
+//
+// The model stands at position, turned by rotation and scaled by scale, in
+// map cells. Every corner is lit in color by lighting, in the same world, and
+// the model is textured and lit through a table lit by RETRO_TintColor, so
+// its light can have no blue but white. The faces are depth tested, not
+// sorted, so a model that is not convex needs the depth buffer
+//
+inline void RETRO_DrawTerrainModel(const Model3D *model, const mat3 &rotation, vec3 position, float scale, const RETRO_Lighting &lighting, unsigned char *texture, int texturewidth, int textureheight, const RETRO_ShadeTable &table, const RETRO_TerrainBasis &basis)
+{
+	for (int i = 0; i < model->faces; i++) {
+		const Face *face = &model->face[i];
+		RETRO_CameraVertex polygon[RETRO_MAX_FACEVERTICES];
+		for (int j = 0; j < face->vertices; j++) {
+			vec3 p = position + rotation * model->vertex[face->vertex[j]].pos * scale;
+			vec3 light = RETRO_ColorLambert(lighting, p, rotation * model->normal[face->vertexnormal[j]].dir);
+			polygon[j] = RETRO_TerrainTintVertex(p, model->uv[face->uv[j]], light, table, basis);
+		}
+		RETRO_DrawTerrainPolygon(polygon, face->vertices, texture, texturewidth, textureheight, table);
+	}
+}
+
+// The same model in one flat color, unlit
+inline void RETRO_DrawTerrainFlatModel(const Model3D *model, const mat3 &rotation, vec3 position, float scale, unsigned char color, const RETRO_TerrainBasis &basis)
+{
+	for (int i = 0; i < model->faces; i++) {
+		const Face *face = &model->face[i];
+		RETRO_CameraVertex vertex[RETRO_MAX_FACEVERTICES];
+		for (int j = 0; j < face->vertices; j++) {
+			vertex[j] = RETRO_TerrainCameraVertex(position + rotation * model->vertex[face->vertex[j]].pos * scale, basis);
+		}
+		PolygonPoint polygon[RETRO_CAMERA_MAX_POLYGON + RETRO_CAMERA_CLIP_PLANES];
+		int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, vertex, face->vertices, polygon);
+		if (points < 3) continue;
+		RETRO_DrawFlatPolygon(polygon, points, color);
+	}
 }
 
 //

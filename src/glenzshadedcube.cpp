@@ -50,6 +50,4 @@ void DEMO_Initialize(void)
 	}
 	model->c = 0;
 	model->shades = 64;
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

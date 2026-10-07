@@ -992,7 +992,7 @@ void DEMO_Render(RETRO_Time time)
 		float sunfacing = MAX(dot(FaceNormal[face], sun), 0.0f);
 		float moonfacing = MAX(-dot(FaceNormal[face], sun), 0.0f) * (1.0f - daylight);
 		vec3 sum = vec3{ 1, 1, 1 } * (SUN_AMBIENT * light + MOON_DIRECT * moonfacing) + sunlight * (SUN_DIRECT * sunfacing);
-		level[face] = min(sum * LightLevel[face], vec3{ 1, 1, 1 });
+		level[face] = min(sum * LightLevel[face], 1.0f);
 	}
 
 	// The water's light streaks pulse a little brighter and back, never far
@@ -1034,7 +1034,7 @@ void DEMO_Render(RETRO_Time time)
 		vec2 p = RETRO_ProjectViewPoint(camera.lens, view).pos;
 		int sx = (int)floorf(p.x);
 		int sy = (int)floorf(p.y);
-		if (sx >= 0 && sx < RETRO_WIDTH && sy >= 0 && sy < RETRO_HEIGHT) starmap[sy][sx] = true;
+		if (RETRO_OnScreen(sx, sy)) starmap[sy][sx] = true;
 	}
 
 	for (int sy = 0; sy < RETRO_HEIGHT; sy++) {

@@ -97,10 +97,8 @@
 
 enum { ASSET_SKY, ASSET_TERRAIN, ASSET_SKIN, ASSET_HEIGHTMAP };
 #define TEXTURES (ASSET_HEIGHTMAP - ASSET_TERRAIN)
-#define NO_TEXTURE -1
 enum { MODEL_ROBOT, MODEL_CUBE, MODELS };
-enum { LIGHT_ORANGE, LIGHT_YELLOW, POINT_LIGHTS };
-enum { TINT_RED, TINT_GREEN, TINTS };
+enum { LIGHT_ORANGE, LIGHT_YELLOW, POINT_LIGHTS, LIGHT_SUN = POINT_LIGHTS, LIGHTS };
 
 // A run of the model's frames, and how many of them it plays a second
 struct Animation {
@@ -133,22 +131,23 @@ static const Animation Animations[] = {
 };
 #define ANIMATIONS (int)(sizeof(Animations) / sizeof(Animations[0]))
 
-// Light as summed, reduced to the numbers that differ
-struct Light {
-	float neutral;		// all three channels, capped at full
-	float tint[TINTS];	// and how much further red and green reach
-};
-static_assert(TINTS <= RETRO_MAX_TINTS, "Red and green each need a tint of their own");
-
 static unsigned char LightTableData[TEXTURES][RETRO_COLORS][LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS];
 static unsigned char ShadowTable[RETRO_COLORS];
 static unsigned char ColorBlack, ColorTextGreen, ColorWhite, ColorCubeRed, ColorCubeYellow;
 static Model3D *Models[MODELS];
-static const vec3 Sun = normalize(vec3{ 1, 1, -1 }); // the infinite light, toward it
 
-static const float PointLightKL[POINT_LIGHTS] = { POINT_LIGHT_ORANGE_KL, POINT_LIGHT_YELLOW_KL };
-static const float PointLightTint[POINT_LIGHTS][TINTS] = { { 1, 128 / 255.0f }, { 1, 1 } }; // orange, and yellow
-static vec3 PointLightPosition[POINT_LIGHTS];
+// The point lights, placed each frame, and the sun, the infinite light,
+// toward it. All are in the world, in map cells, where a point light d cells
+// away dims as POINT_LIGHT / (kl TO_WORLD(d)). The point lights shine orange
+// and yellow, and the sun white, over the ambient light. The keys switch
+// them on and off in the rig
+static RETRO_Lighting Lights = { LIGHTS, {
+	{ {}, POINT_LIGHT, true, {}, 0, POINT_LIGHT_ORANGE_KL * TO_WORLD(1), { 1, 128 / 255.0f, 0 } },
+	{ {}, POINT_LIGHT, true, {}, 0, POINT_LIGHT_YELLOW_KL * TO_WORLD(1), { 1, 1, 0 } },
+	{ normalize(vec3{ 1, 1, -1 }), INFINITE_LIGHT },
+}, AMBIENT_LIGHT };
+static_assert(LIGHTS <= RETRO_MAX_LIGHTS, "The point lights and the sun share one rig");
+static const RETRO_Lighting Darkness = {}; // what everything is lit by with the lighting off
 
 // The animation playing, and where it has got to
 static int CurrentAnimation;
@@ -157,82 +156,22 @@ static float AnimationFrame;
 
 // The switches
 static bool Lighting = true;
-static bool AmbientLight = true;
-static bool InfiniteLight = true;
-static bool PointLight[POINT_LIGHTS] = { true, true };
 static bool Help = true;
 
 // The camera's frame, taken once a frame
 static RETRO_TerrainBasis View;
 
-static float PointLightTerm(vec3 p, vec3 n, vec3 light, float kl)
+// A vertex at p facing n, lit. Only the ambient light and the sun have any
+// blue in them, and they are white, as the light tables need
+static vec3 LightVertex(vec3 p, vec3 n)
 {
-	vec3 l = light - p;
-	float distance = length(l);
-	if (distance <= 0) return 0;
-	return POINT_LIGHT * MAX(dot(n, l) / distance, 0.0f) / (kl * TO_WORLD(distance));
-}
-
-// A point at p facing n, lit
-static Light LightPoint(vec3 p, vec3 n)
-{
-	Light light = {};
-	if (!Lighting) return light;
-
-	if (AmbientLight) light.neutral += AMBIENT_LIGHT;
-	if (InfiniteLight) light.neutral += INFINITE_LIGHT * MAX(dot(n, Sun), 0.0f);
-	light.neutral = MIN(light.neutral, 1.0f);
-	float sum[TINTS] = {};
-	for (int i = 0; i < POINT_LIGHTS; i++) {
-		if (!PointLight[i]) continue;
-		float term = PointLightTerm(p, n, PointLightPosition[i], PointLightKL[i]);
-		for (int c = 0; c < TINTS; c++) {
-			sum[c] += term * PointLightTint[i][c];
-		}
-	}
-	for (int c = 0; c < TINTS; c++) {
-		light.tint[c] = MIN(light.neutral + sum[c], 1.0f) - light.neutral;
-	}
-	return light;
-}
-
-// A world point in the camera's frame, carrying its texture coordinates and
-// its light as table levels: neutral as the shade, red and green as the tints
-static RETRO_CameraVertex MakeVertex(vec3 p, vec2 uv, Light light)
-{
-	RETRO_CameraVertex vertex = {};
-	vertex.eye = RETRO_TerrainPointEye(p.x, p.z, p.y, View);
-	vertex.uv = uv;
-	vertex.c = light.neutral * (LIGHT_LEVELS - 1) + 0.5f;
-	for (int c = 0; c < TINTS; c++) {
-		vertex.tint[c] = light.tint[c] * (TINT_LEVELS - 1) + 0.5f;
-	}
-	return vertex;
+	return RETRO_ColorLambert(Lighting ? Lights : Darkness, p, n);
 }
 
 // A texture's light table, from its own colors to the screen's
 static RETRO_ShadeTable LightTable(int texture)
 {
 	return { &LightTableData[texture - ASSET_TERRAIN][0][0][0][0], RETRO_COLORS, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
-}
-
-//
-// One polygon, through the near plane and onto the screen: textured and lit
-// when there is a texture, a flat color when there is not. Flat colors
-// are black with the lighting off.
-//
-static void DrawPolygon(const RETRO_CameraVertex *vertex, int count, int texture, unsigned char color)
-{
-	PolygonPoint polygon[RETRO_CAMERA_MAX_POLYGON + RETRO_CAMERA_CLIP_PLANES];
-	int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, vertex, count, polygon);
-	if (points < 3) return;
-
-	if (!Lighting) color = ColorBlack;
-	if (texture != NO_TEXTURE) {
-		RETRO_DrawTexMapGouraudPolygon(polygon, points, RETRO_ImageData(texture), TEXTURE_SIZE, TEXTURE_SIZE, LightTable(texture));
-	} else {
-		RETRO_DrawFlatPolygon(polygon, points, color);
-	}
 }
 
 // The ground at sample x, z, lit
@@ -243,13 +182,15 @@ static RETRO_CameraVertex TerrainVertex(int x, int z)
 
 	// The texture is stretched once over the patch
 	vec2 uv = { p.x * (TEXTURE_SIZE - 1) / (RETRO_Terrain.width - 1), p.z * (TEXTURE_SIZE - 1) / (RETRO_Terrain.height - 1) };
-	return MakeVertex(p, uv, LightPoint(p, n));
+	return RETRO_TerrainTintVertex(p, uv, LightVertex(p, n), LightTable(ASSET_TERRAIN), View);
 }
 
 // Each visible cell as two triangles, split along the diagonal from its
 // first corner to the opposite one
 static void DrawTerrain(const RETRO_TerrainMesh &mesh)
 {
+	unsigned char *texture = RETRO_ImageData(ASSET_TERRAIN);
+	RETRO_ShadeTable table = LightTable(ASSET_TERRAIN);
 	int step = mesh.step;
 	for (int z = mesh.minz; z < mesh.maxz; z += step) {
 		for (int x = mesh.minx; x < mesh.maxx; x += step) {
@@ -260,24 +201,9 @@ static void DrawTerrain(const RETRO_TerrainMesh &mesh)
 			RETRO_CameraVertex opposite = TerrainVertex(x + step, z + step);
 			RETRO_CameraVertex upper[3] = { first, opposite, across };
 			RETRO_CameraVertex lower[3] = { first, down, opposite };
-			DrawPolygon(upper, 3, ASSET_TERRAIN, 0);
-			DrawPolygon(lower, 3, ASSET_TERRAIN, 0);
+			RETRO_DrawTerrainPolygon(upper, 3, texture, TEXTURE_SIZE, TEXTURE_SIZE, table);
+			RETRO_DrawTerrainPolygon(lower, 3, texture, TEXTURE_SIZE, TEXTURE_SIZE, table);
 		}
-	}
-}
-
-// One of the models at a position and scale, lit at its corners
-static void DrawModel(const Model3D *model, vec3 position, float scale, int texture, unsigned char color, bool lit)
-{
-	for (int i = 0; i < model->faces; i++) {
-		const Face *face = &model->face[i];
-		RETRO_CameraVertex polygon[RETRO_MAX_FACEVERTICES];
-		for (int j = 0; j < face->vertices; j++) {
-			vec3 p = position + model->vertex[face->vertex[j]].pos * scale;
-			Light light = lit ? LightPoint(p, model->normal[face->vertexnormal[j]].dir) : Light{ 1, {} };
-			polygon[j] = MakeVertex(p, model->uv[face->uv[j]], light);
-		}
-		DrawPolygon(polygon, face->vertices, texture, color);
 	}
 }
 
@@ -303,7 +229,7 @@ static void DrawShadow(const Model3D *model, vec3 position, float scale, vec3 li
 
 		RETRO_CameraVertex shadow[RETRO_MAX_FACEVERTICES];
 		for (int j = 0; j < face->vertices; j++) {
-			shadow[j] = MakeVertex(flat[face->vertex[j]], { 0, 0 }, { 1, {} });
+			shadow[j] = RETRO_TerrainCameraVertex(flat[face->vertex[j]], View);
 		}
 		PolygonPoint polygon[RETRO_CAMERA_MAX_POLYGON + RETRO_CAMERA_CLIP_PLANES];
 		int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, shadow, face->vertices, polygon);
@@ -372,7 +298,7 @@ static void DrawText(void)
 	// Each line within the screen's 40 columns
 	snprintf(text, sizeof(text), "CAM [%5.0f,%5.0f,%5.0f] CELL [%d, %d]\nLighting [%s]: Amb=%d Inf=%d O=%d Y=%d\nAnim[%d]=%s Frm=%.1f",
 			 TO_WORLD(RETRO_TerrainCamera.x - center.x), TO_WORLD(RETRO_TerrainCamera.height), TO_WORLD(RETRO_TerrainCamera.z - center.z), (int)floorf(RETRO_TerrainCamera.x), (int)floorf(RETRO_TerrainCamera.z),
-			 Lighting ? "ON" : "OFF", AmbientLight, InfiniteLight, PointLight[LIGHT_ORANGE], PointLight[LIGHT_YELLOW],
+			 Lighting ? "ON" : "OFF", Lights.ambient > 0, Lights.light[LIGHT_SUN].on, Lights.light[LIGHT_ORANGE].on, Lights.light[LIGHT_YELLOW].on,
 			 CurrentAnimation, Animations[CurrentAnimation].name, AnimationFrame);
 	RETRO_PutString(text, 0, RETRO_HEIGHT - 28, ColorTextGreen);
 }
@@ -387,15 +313,15 @@ void DEMO_Render(RETRO_Time time)
 	static double animationstart; // when the animation playing began
 
 	if (RETRO_KeyPressed(SDL_SCANCODE_L)) Lighting = !Lighting;
-	if (RETRO_KeyPressed(SDL_SCANCODE_A)) AmbientLight = !AmbientLight;
-	if (RETRO_KeyPressed(SDL_SCANCODE_I)) InfiniteLight = !InfiniteLight;
+	if (RETRO_KeyPressed(SDL_SCANCODE_A)) Lights.ambient = Lights.ambient > 0 ? 0 : AMBIENT_LIGHT;
+	if (RETRO_KeyPressed(SDL_SCANCODE_I)) Lights.light[LIGHT_SUN].on = !Lights.light[LIGHT_SUN].on;
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
 		// Both on unless both already are
-		bool on = !(PointLight[LIGHT_ORANGE] && PointLight[LIGHT_YELLOW]);
-		PointLight[LIGHT_ORANGE] = PointLight[LIGHT_YELLOW] = on;
+		bool on = !(Lights.light[LIGHT_ORANGE].on && Lights.light[LIGHT_YELLOW].on);
+		Lights.light[LIGHT_ORANGE].on = Lights.light[LIGHT_YELLOW].on = on;
 	}
-	if (RETRO_KeyPressed(SDL_SCANCODE_O)) PointLight[LIGHT_ORANGE] = !PointLight[LIGHT_ORANGE];
-	if (RETRO_KeyPressed(SDL_SCANCODE_Y)) PointLight[LIGHT_YELLOW] = !PointLight[LIGHT_YELLOW];
+	if (RETRO_KeyPressed(SDL_SCANCODE_O)) Lights.light[LIGHT_ORANGE].on = !Lights.light[LIGHT_ORANGE].on;
+	if (RETRO_KeyPressed(SDL_SCANCODE_Y)) Lights.light[LIGHT_YELLOW].on = !Lights.light[LIGHT_YELLOW].on;
 	if (RETRO_KeyPressed(SDL_SCANCODE_H)) Help = !Help;
 	bool previous = RETRO_KeyPressed(SDL_SCANCODE_1);
 	bool next = RETRO_KeyPressed(SDL_SCANCODE_2);
@@ -414,8 +340,8 @@ void DEMO_Render(RETRO_Time time)
 	// The point lights on their paths about the world's center
 	vec3 center = RETRO_TerrainCenter();
 	float angle = fmod(time.total * POINT_LIGHT_RATE, 2 * M_PI);
-	PointLightPosition[LIGHT_ORANGE] = { center.x - POINT_LIGHT_ORANGE_ORBIT * cosf(angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_ORANGE_ORBIT * sinf(angle) };
-	PointLightPosition[LIGHT_YELLOW] = { center.x - POINT_LIGHT_YELLOW_ORBIT * cosf(-2 * angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_YELLOW_ORBIT * sinf(-2 * angle) };
+	Lights.light[LIGHT_ORANGE].position = { center.x - POINT_LIGHT_ORANGE_ORBIT * cosf(angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_ORANGE_ORBIT * sinf(angle) };
+	Lights.light[LIGHT_YELLOW].position = { center.x - POINT_LIGHT_YELLOW_ORBIT * cosf(-2 * angle), POINT_LIGHT_ALTITUDE, center.z + POINT_LIGHT_YELLOW_ORBIT * sinf(-2 * angle) };
 
 	// The mechs, side by side at the world's center
 	PoseRobot(time.total - animationstart);
@@ -425,18 +351,18 @@ void DEMO_Render(RETRO_Time time)
 	RETRO_ClearDepthBuffer();
 	DrawTerrain(mesh);
 	for (vec3 robot : robots) {
-		DrawModel(Models[MODEL_ROBOT], robot, ROBOT_SCALE, ASSET_SKIN, 0, true);
+		RETRO_DrawTerrainModel(Models[MODEL_ROBOT], identity(), robot, ROBOT_SCALE, Lighting ? Lights : Darkness, RETRO_ImageData(ASSET_SKIN), TEXTURE_SIZE, TEXTURE_SIZE, LightTable(ASSET_SKIN), View);
 	}
-	DrawModel(Models[MODEL_CUBE], PointLightPosition[LIGHT_ORANGE], LIGHT_OBJECT_SCALE, NO_TEXTURE, ColorCubeRed, false);
-	DrawModel(Models[MODEL_CUBE], PointLightPosition[LIGHT_YELLOW], LIGHT_OBJECT_SCALE, NO_TEXTURE, ColorCubeYellow, false);
+	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_ORANGE].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeRed : ColorBlack, View);
+	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_YELLOW].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeYellow : ColorBlack, View);
 
 	// A shadow of both from each point light that is on, in one pass, so that
 	// where the two overlap the ground is darkened once, as under one shadow
 	for (int i = 0; i < POINT_LIGHTS; i++) {
-		if (!Lighting || !PointLight[i]) continue;
+		if (!Lighting || !Lights.light[i].on) continue;
 		bool newpass = true;
 		for (vec3 robot : robots) {
-			DrawShadow(Models[MODEL_ROBOT], robot, ROBOT_SCALE, PointLightPosition[i], newpass);
+			DrawShadow(Models[MODEL_ROBOT], robot, ROBOT_SCALE, Lights.light[i].position, newpass);
 		}
 	}
 

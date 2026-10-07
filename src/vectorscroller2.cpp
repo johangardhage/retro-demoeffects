@@ -417,6 +417,4 @@ void DEMO_Initialize(void)
 			TextWidth += Font.width * Pixel + LETTER_GAP;
 		}
 	}
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

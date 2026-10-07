@@ -123,7 +123,7 @@ static const RETRO_Palette MaterialColor[MATERIALS] = {
 	{ 170, 170, 187 },	// Jet
 	{ 51, 51, 68 },		// Canopy
 };
-#define LIGHT vec3{ -0.40f, 0.80f, 0.45f }
+static const vec3 Light = normalize(vec3{ -0.40f, 0.80f, 0.45f }); // toward the light, in the world: up, west and south
 
 // The world, in feet: x east, y up and z south of the middle of the Golden
 // Gate Bridge, which the map gives with y north and z up. Where its origin is,
@@ -335,7 +335,7 @@ static bool OverLand(float x, float z)
 // The shade of a material a face turned toward normal takes
 static unsigned char MaterialShade(int material, vec3 normal)
 {
-	float light = MAX(dot(normal, normalize(LIGHT)), 0.0f);
+	float light = MAX(dot(normal, Light), 0.0f);
 	return MATERIAL_FIRST + material * MATERIAL_SHADES + (int)(light * (MATERIAL_SHADES - 1) + 0.5f);
 }
 

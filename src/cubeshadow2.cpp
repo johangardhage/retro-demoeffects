@@ -76,8 +76,8 @@
 
 #define WALLZ 3.0f // model units behind the cube's center the wall stands
 
-#define LIGHT_SPEED 0.6 // radians a second the light orbits the board
-#define LIGHT_RADIUS 0.8 // how far off axis it swings, in x and y
+#define LIGHT_SPEED 0.6f // radians a second the light orbits the board
+#define LIGHT_RADIUS 0.8f // how far off axis it swings, in x and y
 #define LIGHT_Z -1.1f // fixed depth component, toward the camera side
 
 #define WALL_CELL 24.0 // pixels across one checker cell
@@ -142,7 +142,8 @@ void DEMO_Render(RETRO_Time time)
 	// Orbit the light around the board. tolight points from the cube back
 	// toward the light, for the irradiance of each surface; the shadow travels
 	// the other way, out from the light and through the cube to the wall
-	vec3 tolight = normalize(RETRO_RotateLightSource(time.total, LIGHT_SPEED, LIGHT_RADIUS, LIGHT_Z));
+	double angle = time.total * LIGHT_SPEED;
+	vec3 tolight = normalize(vec3{ (float)(LIGHT_RADIUS * cos(angle)), (float)(LIGHT_RADIUS * sin(angle)), LIGHT_Z });
 	vec3 light = -tolight;
 
 	// Irradiance of the wall, whose normal faces the camera, and of each side
@@ -163,13 +164,13 @@ void DEMO_Render(RETRO_Time time)
 		front[side] = face->frontfacing;
 		float n = dot(face->facenormal.rdir, tolight);
 		vec3 direct = vec3{ 1, 1, 1 } * (DIRECT_LIGHT * fabs(n) / nwall);
-		vec3 irradiance = vec3{ ambient, ambient, ambient } + (n > 0 ? direct : direct * transmit);
+		vec3 irradiance = ambient + (n > 0 ? direct : direct * transmit);
 		pane[side] = scatter * irradiance;
 	}
 
 	// Palette for this frame: the wall, lit or in shadow, and the wall seen
 	// through every pair of front and back pane, once for each cell color
-	vec3 shadowlight = vec3{ ambient, ambient, ambient } + transmit * transmit * DIRECT_LIGHT;
+	vec3 shadowlight = ambient + transmit * transmit * DIRECT_LIGHT;
 	for (int cell = 0; cell < 2; cell++) {
 		for (int shadowed = 0; shadowed < 2; shadowed++) {
 			int base = cell * LIGHT_CELL + shadowed * SHADOW;

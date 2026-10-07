@@ -20,8 +20,9 @@
 // farthest as the small inner one, and a turn through w walks each cell
 // from one to the other, turning the figure inside out. A pinhole keeps
 // lines straight and planes flat, so in 3D an edge is still a segment and a
-// face still a flat quad. The 3D-to-2D step is the library's pinhole,
-// written out here since the corners are not a model.
+// face still a flat quad. The 3D-to-2D step is the library's pinhole, with
+// each corner a loose vertex whose 4D-projected position is already the
+// one the camera sees.
 //
 // An edge is a beam: a lit ball swept from one corner to the other,
 // BEAM_BALLS to the pixel, each written at the depth of its own surface.
@@ -94,7 +95,7 @@ static Quad Faces[FACES];
 static unsigned char BallMap[BEAM_MAP * BEAM_MAP];
 static float BallDepth[BEAM_MAP * BEAM_MAP];
 static unsigned char GlassTable[GLASS_PANES + GLASS_GLINT + 1][RETRO_COLORS];
-static const vec3 Light = { -0.4f, -0.4f, -0.82f }; // toward the light, in view space
+static const vec3 Light = normalize(vec3{ -0.4f, -0.4f, -0.82f }); // toward the light, in view space
 
 //
 // Turn the pair (p, q) by angle in their own plane
@@ -114,7 +115,7 @@ void DEMO_Render(RETRO_Time time)
 	float ayz = fmod(time.total * YZ_SPEED, 2 * M_PI);
 	float axz = fmod(time.total * XZ_SPEED, 2 * M_PI);
 
-	vec3 position[CORNERS];
+	Vertex corner[CORNERS];
 	float radius[CORNERS];
 	float focal = SCALE * RETRO_PROJECTION_EYEDISTANCE;
 
@@ -126,28 +127,25 @@ void DEMO_Render(RETRO_Time time)
 
 		// 4D to 3D, along w
 		float k = W_EYE / (W_EYE - p.w);
-		position[i] = { p.x * k, p.y * k, p.z * k };
+		corner[i].rpos = { p.x * k, p.y * k, p.z * k };
 		radius[i] = BEAM_RADIUS * k;
+		RETRO_ProjectVertex(&corner[i], SCALE);
 	}
 
 	RETRO_ClearDepthBuffer();
 
-	// Beams. 3D to 2D, as RETRO_ProjectVertex
+	// Beams
 	for (Edge edge : Edges) {
-		vec3 a = position[edge.a], b = position[edge.b];
-		float qa = 1.0f / (SCALE * a.z + RETRO_PROJECTION_EYEDISTANCE);
-		float qb = 1.0f / (SCALE * b.z + RETRO_PROJECTION_EYEDISTANCE);
-		vec2 sa = { focal * a.x * qa, focal * a.y * qa };
-		vec2 sb = { focal * b.x * qb, focal * b.y * qb };
-		int steps = ceil(distance(sa, sb) * BEAM_BALLS) + 1;
+		const Vertex &a = corner[edge.a], &b = corner[edge.b];
+		int steps = ceil(distance(a.spos, b.spos) * BEAM_BALLS) + 1;
 
 		for (int step = 0; step <= steps; step++) {
 			float t = (float)step / steps;
-			vec3 r = mix(a, b, t);
+			Vertex ball = {};
+			ball.rpos = mix(a.rpos, b.rpos, t);
+			RETRO_ProjectVertex(&ball, SCALE);
 			float ballradius = mix(radius[edge.a], radius[edge.b], t);
-			float q = 1.0f / (SCALE * r.z + RETRO_PROJECTION_EYEDISTANCE);
-			vec2 spos = { RETRO_WIDTH / 2.0f + focal * r.x * q, RETRO_HEIGHT / 2.0f + focal * r.y * q };
-			RETRO_DrawDepthSprite(spos, q, 2 * ballradius * focal * q, SCALE * ballradius, BallMap, BallDepth, BEAM_MAP);
+			RETRO_DrawDepthSprite(ball.spos, ball.q, 2 * ballradius * focal * ball.q, SCALE * ballradius, BallMap, BallDepth, BEAM_MAP);
 		}
 	}
 
@@ -156,13 +154,12 @@ void DEMO_Render(RETRO_Time time)
 	for (Quad face : Faces) {
 		PolygonPoint polygon[4] = {};
 		for (int i = 0; i < 4; i++) {
-			vec3 r = position[face.corner[i]];
-			float q = 1.0f / (SCALE * r.z + RETRO_PROJECTION_EYEDISTANCE);
-			polygon[i].pos = { RETRO_WIDTH / 2.0f + focal * r.x * q, RETRO_HEIGHT / 2.0f + focal * r.y * q };
-			polygon[i].q = 1.0f / (SCALE * (r.z + GLASS_BIAS * radius[face.corner[i]]) + RETRO_PROJECTION_EYEDISTANCE);
+			const Vertex &c = corner[face.corner[i]];
+			polygon[i].pos = c.spos;
+			polygon[i].q = 1.0f / (SCALE * (c.rpos.z + GLASS_BIAS * radius[face.corner[i]]) + RETRO_PROJECTION_EYEDISTANCE);
 		}
 
-		vec3 n = normalize(cross(position[face.corner[1]] - position[face.corner[0]], position[face.corner[3]] - position[face.corner[0]]));
+		vec3 n = normalize(cross(corner[face.corner[1]].rpos - corner[face.corner[0]].rpos, corner[face.corner[3]].rpos - corner[face.corner[0]].rpos));
 		float glint = pow(fabs(dot(n, halfway)), GLINT_POWER);
 		int panes = GLASS_PANES + lround(GLASS_GLINT * glint);
 		RETRO_DrawRemapPolygon(polygon, 4, GlassTable[panes]);

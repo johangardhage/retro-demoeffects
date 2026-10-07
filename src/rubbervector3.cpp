@@ -32,7 +32,7 @@
 #define FLUBBER_BACK_STRENGTH 0.8f // rear surface visibility, from 0 to 1
 
 static Model3D *Flubber;
-static Vertex RestVertex[RETRO_MAX_VERTICES];
+static vec3 RestPos[RETRO_MAX_VERTICES];
 
 static void BuildFlubber(Model3D *model)
 {
@@ -73,7 +73,7 @@ void DEMO_Render(RETRO_Time time)
 	float swaycos = cos(time.total * FLUBBER_SWAY_OMEGA);
 
 	for (int i = 0; i < Flubber->vertices; i++) {
-		const vec3 &v = RestVertex[i].pos;
+		const vec3 &v = RestPos[i];
 		float t = (v.y + FLUBBER_HEIGHT / 2) / FLUBBER_HEIGHT;
 		float xoffset = FLUBBER_SWAY * swaycos * sin(t * M_PI);
 		float angle = spin + FLUBBER_TWIST * (twistcos * cos(t * M_PI / 3) * twistmod + 1);
@@ -115,8 +115,6 @@ void DEMO_Initialize(void)
 	Flubber->glenzlighting.backstrength = FLUBBER_BACK_STRENGTH;
 	BuildFlubber(Flubber);
 	for (int i = 0; i < Flubber->vertices; i++) {
-		RestVertex[i] = Flubber->vertex[i];
+		RestPos[i] = Flubber->vertex[i].pos;
 	}
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

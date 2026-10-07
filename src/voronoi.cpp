@@ -43,7 +43,7 @@
 #define GLASS 1 // first entry of the hues; entry 0 is the lead
 
 static const RETRO_Palette GlassHues[GLASS_HUES] = { RETRO_SCARLET, RETRO_ORANGE, RETRO_GOLD, RETRO_SPRINGGREEN, RETRO_DARKTURQUOISE, RETRO_AZURE, RETRO_PURPLE, RETRO_HOTPINK };
-static const vec3 Light = { -0.45f, -0.55f, 0.70f }; // toward the light, unit length
+static const vec3 Light = normalize(vec3{ -0.45f, -0.55f, 0.70f }); // toward the light
 
 struct Seed {
 	float x, y; // center of its path

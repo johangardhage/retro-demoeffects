@@ -22,6 +22,8 @@
 
 static unsigned char WallShadeTable[RETRO_SHADE_TABLE_SIZE];
 
+static const RETRO_Lighting Lighting = { 1, { { normalize(vec3{ -0.28f, -0.42f, -0.86f }), 1 } } };
+
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
@@ -62,7 +64,5 @@ void DEMO_Initialize(void)
 	model->shades = RETRO_SHADE_TABLE_SHADES;
 	model->texmap = RETRO_ImageData();
 	model->shadetable = WallShadeTable;
-
-	// Init lightsource
-	RETRO_InitializeLightSource(-0.28f, -0.42f, -0.86f);
+	model->lighting = &Lighting;
 }

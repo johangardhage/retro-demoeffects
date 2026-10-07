@@ -127,7 +127,8 @@ static void DrawStars(double time)
 		if (star.x < -STAR_FIELD) star.x += 2 * STAR_FIELD;
 
 		Vertex vertex;
-		vertex.rpos = rotation * star;
+		vertex.pos = star;
+		RETRO_RotateVertex(&vertex, rotation);
 		RETRO_ProjectVertex(&vertex, PROJECTION_SCALE);
 		if (vertex.q <= 0.0f) continue;
 		int sx = (int)vertex.spos.x;

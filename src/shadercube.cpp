@@ -70,7 +70,6 @@
 #define ROOM_EYE ((float)RETRO_PROJECTION_EYEDISTANCE / RETRO_PROJECTION_SCALE) // room units from the eye to the cube's center
 #define CAMERA_PITCH 0.35f // radians the view looks down onto the cube
 
-#define SUN_DIRECTION vec3{ 0.45f, -0.8f, -0.4f } // toward the sun, in the room: right, up (-y) and behind the camera (-z)
 #define SUN_RADIUS 0.045f // radians, the disc as seen
 #define SUN_SOFTNESS 0.04f // radians, the disc the shadow is traced over; wider than the sun, for a softer shadow
 #define SUN_SAMPLES 12 // shadow rays a floor point sends; the penumbra has this many steps
@@ -99,7 +98,7 @@
 
 static mat3 RoomFrame; // view space to the room's, pitched so the camera looks down
 static mat3 RoomToCube; // the room to the cube's own frame, where it is the box ±1; set every frame
-static vec3 Sun; // unit, toward the sun, in the room
+static const vec3 Sun = normalize(vec3{ 0.45f, -0.8f, -0.4f }); // toward the sun, in the room: right, up (-y) and behind the camera (-z)
 static vec3 SunRays[SUN_SAMPLES]; // the shadow rays, in the cube's frame; set every frame
 static vec3 SunCenter; // the middle one, in the cube's frame
 static float CloudDrift; // room units the clouds have moved along x
@@ -321,7 +320,6 @@ void DEMO_Initialize(void)
 
 	// Tilting the room up by the pitch is the camera looking down by it
 	RoomFrame = rotateX(-CAMERA_PITCH);
-	Sun = normalize(SUN_DIRECTION);
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->shader = ShadeMirror;

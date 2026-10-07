@@ -37,14 +37,14 @@
 #define CYCLE_STEPS (2 * (MORPH_STEPS + HOLD_STEPS)) // morph, hold, morph back, hold
 #define MORPH_SPEED 200 // steps per second
 
-static Vertex Sphere[POINTS];
-static Vertex Torus[POINTS];
+static vec3 Sphere[POINTS];
+static vec3 Torus[POINTS];
 static Vertex Morph[POINTS];
 
-static void MorphShapes(Vertex *from, Vertex *to, float t)
+static void MorphShapes(vec3 *from, vec3 *to, float t)
 {
 	for (int i = 0; i < POINTS; i++) {
-		Morph[i].pos = mix(from[i].pos, to[i].pos, t);
+		Morph[i].pos = mix(from[i], to[i], t);
 	}
 }
 
@@ -102,7 +102,7 @@ void DEMO_Initialize(void)
 		float r = sqrt(1 - z * z);
 		float phi = RANDOMF(2 * M_PI);
 
-		Sphere[i].pos = { r * (float)cos(phi), r * (float)sin(phi), z };
+		Sphere[i] = { r * (float)cos(phi), r * (float)sin(phi), z };
 	}
 
 	// Init torus. The area element of a torus carries (R + r cos θ). Drawing θ uniformly
@@ -120,7 +120,7 @@ void DEMO_Initialize(void)
 		float phi = RANDOMF(2 * M_PI);
 		float ring = TORUS_RING + TORUS_TUBE * cos(theta);
 
-		Torus[i].pos = { ring * (float)cos(phi), ring * (float)sin(phi), (float)(TORUS_TUBE * sin(theta)) };
+		Torus[i] = { ring * (float)cos(phi), ring * (float)sin(phi), (float)(TORUS_TUBE * sin(theta)) };
 	}
 
 	MorphShapes(Torus, Torus, 0);

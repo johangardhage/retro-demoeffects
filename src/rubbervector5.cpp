@@ -39,6 +39,10 @@
 static unsigned char History[SLIME_COPIES][RETRO_HEIGHT][RETRO_WIDTH];
 static int HistoryHead;
 
+// From above left and in front, so the three faces on screen are told
+// apart and the bend can be followed across them
+static const RETRO_Lighting Lighting = { 1, { { normalize(vec3{ -1, -1, -2 }), 1 } } };
+
 //
 // Render the cube at one pose and retain the whole image
 //
@@ -104,10 +108,7 @@ void DEMO_Initialize(void)
 	Model3D *model = RETRO_Load3DModel("assets/cubequads.obj");
 	model->c = SLIME_AMBIENT;
 	model->shades = SLIME_SHADES - SLIME_AMBIENT;
-
-	// From above left and in front, so the three faces on screen are told
-	// apart and the bend can be followed across them
-	RETRO_InitializeLightSource(-1, -1, -2);
+	model->lighting = &Lighting;
 
 	// Fill the ring with the cube at rest, so the first displayed frame has a
 	// full history to multiplex rather than a black trail

@@ -5,23 +5,24 @@
 //
 // GLSL/GLM-style vector math - vec2, vec3, vec4 and ivec2, with operator
 // overloading and free functions (dot, cross, length, normalize) at global scope, bare,
-// matching GLSL naming exactly. This is the one header in the library that
-// follows industry convention instead of this library's own: everywhere
-// else is global scope with a RETRO_ prefix, specifically to keep names
-// apart across many small demos. Here that collision risk is accepted on
-// purpose - the demos this is for are small, and dot/cross/normalize/length
+// matching GLSL naming exactly. This header and retromatrix.h are the two in
+// the library that follow industry convention instead of this library's own:
+// everywhere else is global scope with a RETRO_ prefix, specifically to keep
+// names apart across many small demos. Here that collision risk is accepted
+// on purpose - the demos this is for are small, and dot/cross/normalize/length
 // read better unprefixed, the way GLSL itself reads.
 //
-// This is also the one header whose types carry no invariant: Vertex is a
+// These types, like retromatrix.h's mat3, carry no invariant: Vertex is a
 // position that has been through a pipeline of named stages, and UnitVector
-// is unit length by construction (see retromath.h) - vec3 and vec4 are
-// neither. They are for a demo that just wants plain vector algebra - a
-// particle's position, a velocity, a spline point - with no pipeline
-// attached. Do not reach for vec3 in place of Vertex or UnitVector: nothing
-// here tracks rotated vs. authored coordinates, a screen projection, or
-// unit length, and mixing the two families (say, passing a vec3 where a
-// UnitVector's assumed-unit invariant matters) would silently reopen the
-// exact class of bug retromath.h's split exists to prevent.
+// is unit length by construction (both in retromodel.h, with the helpers that
+// keep them so in retromath.h) - vec3 and vec4 are neither. They are for a
+// demo that just wants plain vector algebra - a particle's position, a
+// velocity, a spline point - with no pipeline attached. Do not reach for vec3
+// in place of Vertex or UnitVector: nothing here tracks rotated vs. authored
+// coordinates, a screen projection, or unit length, and mixing the two
+// families (say, passing a vec3 where a UnitVector's assumed-unit invariant
+// matters) would silently reopen the exact class of bug that split exists to
+// prevent.
 //
 
 #ifndef _RETROVECTOR_H_
@@ -47,7 +48,8 @@ struct vec4 {
 
 // GLSL's smoothstep: 0 at edge0, 1 at edge1 and the cubic 3t² - 2t³ between,
 // whose slope is zero at both ends, so whatever it eases starts and stops
-// without a jolt. x beyond either edge clamps to 0 or 1.
+// without a jolt. x beyond either edge clamps to 0 or 1. The edges must
+// differ: equal ones divide by zero, as GLSL leaves them undefined.
 inline float smoothstep(float edge0, float edge1, float x)
 {
 	float t = CLAMP01((x - edge0) / (edge1 - edge0));
@@ -62,7 +64,7 @@ inline double smoothstep(double edge0, double edge1, double x)
 
 // smoothstep's quintic, 6t⁵ - 15t⁴ + 10t³: the curvature is zero at both ends
 // as well as the slope, so what it eases meets a hold with no jolt in its
-// acceleration either.
+// acceleration either. The edges must differ, as for smoothstep.
 inline float smootherstep(float edge0, float edge1, float x)
 {
 	float t = CLAMP01((x - edge0) / (edge1 - edge0));
@@ -129,6 +131,10 @@ inline double radians(double degrees) { return degrees * (M_PI / 180); }
 inline vec2 operator+(vec2 a, vec2 b) { return { a.x + b.x, a.y + b.y }; }
 inline vec2 operator-(vec2 a, vec2 b) { return { a.x - b.x, a.y - b.y }; }
 inline vec2 operator-(vec2 v) { return { -v.x, -v.y }; }
+inline vec2 operator+(vec2 v, float s) { return { v.x + s, v.y + s }; }
+inline vec2 operator+(float s, vec2 v) { return v + s; }
+inline vec2 operator-(vec2 v, float s) { return { v.x - s, v.y - s }; }
+inline vec2 operator-(float s, vec2 v) { return { s - v.x, s - v.y }; }
 
 inline vec2 operator*(vec2 a, vec2 b) { return { a.x * b.x, a.y * b.y }; }
 inline vec2 operator*(vec2 v, float s) { return { v.x * s, v.y * s }; }
@@ -173,6 +179,8 @@ inline vec2 mix(vec2 a, vec2 b, float t) { return a + (b - a) * t; }
 
 inline vec2 min(vec2 a, vec2 b) { return { MIN(a.x, b.x), MIN(a.y, b.y) }; }
 inline vec2 max(vec2 a, vec2 b) { return { MAX(a.x, b.x), MAX(a.y, b.y) }; }
+inline vec2 min(vec2 v, float s) { return { MIN(v.x, s), MIN(v.y, s) }; }
+inline vec2 max(vec2 v, float s) { return { MAX(v.x, s), MAX(v.y, s) }; }
 
 //
 // vec3
@@ -181,6 +189,10 @@ inline vec2 max(vec2 a, vec2 b) { return { MAX(a.x, b.x), MAX(a.y, b.y) }; }
 inline vec3 operator+(vec3 a, vec3 b) { return { a.x + b.x, a.y + b.y, a.z + b.z }; }
 inline vec3 operator-(vec3 a, vec3 b) { return { a.x - b.x, a.y - b.y, a.z - b.z }; }
 inline vec3 operator-(vec3 v) { return { -v.x, -v.y, -v.z }; }
+inline vec3 operator+(vec3 v, float s) { return { v.x + s, v.y + s, v.z + s }; }
+inline vec3 operator+(float s, vec3 v) { return v + s; }
+inline vec3 operator-(vec3 v, float s) { return { v.x - s, v.y - s, v.z - s }; }
+inline vec3 operator-(float s, vec3 v) { return { s - v.x, s - v.y, s - v.z }; }
 
 inline vec3 operator*(vec3 a, vec3 b) { return { a.x * b.x, a.y * b.y, a.z * b.z }; }
 inline vec3 operator*(vec3 v, float s) { return { v.x * s, v.y * s, v.z * s }; }
@@ -240,6 +252,8 @@ inline vec3 refract(vec3 I, vec3 N, float eta)
 
 inline vec3 min(vec3 a, vec3 b) { return { MIN(a.x, b.x), MIN(a.y, b.y), MIN(a.z, b.z) }; }
 inline vec3 max(vec3 a, vec3 b) { return { MAX(a.x, b.x), MAX(a.y, b.y), MAX(a.z, b.z) }; }
+inline vec3 min(vec3 v, float s) { return { MIN(v.x, s), MIN(v.y, s), MIN(v.z, s) }; }
+inline vec3 max(vec3 v, float s) { return { MAX(v.x, s), MAX(v.y, s), MAX(v.z, s) }; }
 inline vec3 abs(vec3 v) { return { fabs(v.x), fabs(v.y), fabs(v.z) }; }
 inline vec3 clamp(vec3 v, float low, float high) { return { clamp(v.x, low, high), clamp(v.y, low, high), clamp(v.z, low, high) }; }
 
@@ -250,6 +264,10 @@ inline vec3 clamp(vec3 v, float low, float high) { return { clamp(v.x, low, high
 inline vec4 operator+(vec4 a, vec4 b) { return { a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w }; }
 inline vec4 operator-(vec4 a, vec4 b) { return { a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w }; }
 inline vec4 operator-(vec4 v) { return { -v.x, -v.y, -v.z, -v.w }; }
+inline vec4 operator+(vec4 v, float s) { return { v.x + s, v.y + s, v.z + s, v.w + s }; }
+inline vec4 operator+(float s, vec4 v) { return v + s; }
+inline vec4 operator-(vec4 v, float s) { return { v.x - s, v.y - s, v.z - s, v.w - s }; }
+inline vec4 operator-(float s, vec4 v) { return { s - v.x, s - v.y, s - v.z, s - v.w }; }
 
 inline vec4 operator*(vec4 a, vec4 b) { return { a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w }; }
 inline vec4 operator*(vec4 v, float s) { return { v.x * s, v.y * s, v.z * s, v.w * s }; }

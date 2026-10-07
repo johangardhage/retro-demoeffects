@@ -64,7 +64,6 @@
 #define ROOM_EYE ((float)RETRO_PROJECTION_EYEDISTANCE / RETRO_PROJECTION_SCALE) // room units from the eye to the middle of the orbit
 #define CAMERA_PITCH 0.35f // radians the view looks down onto the ball
 
-#define SUN_DIRECTION vec3{ 0.45f, -0.8f, -0.4f } // toward the sun, in the room: right, up (-y) and behind the camera (-z)
 #define SUN_RADIUS 0.045f // radians, the disc as seen
 #define SUN_SOFTNESS 0.04f // radians, the light's disc as the shadow sees it; wider than the sun, for a softer shadow
 #define SHADOW_DEPTH 0.6f // how much of the light the shadow takes away
@@ -93,7 +92,7 @@
 #define CHROME_SKY_START (CHROME_FLOOR_START + CHROME_FLOOR_SHADES * CHROME_HAZE_LEVELS)
 
 static mat3 RoomFrame; // view space to the room's, pitched so the camera looks down
-static vec3 Sun; // unit, toward the sun, in the room
+static const vec3 Sun = normalize(vec3{ 0.45f, -0.8f, -0.4f }); // toward the sun, in the room: right, up (-y) and behind the camera (-z)
 static vec3 Ball; // the ball's center, in the room; set every frame
 static float CloudDrift; // room units the clouds have moved along x
 
@@ -277,7 +276,6 @@ void DEMO_Initialize(void)
 
 	// Tilting the room up by the pitch is the camera looking down by it
 	RoomFrame = rotateX(-CAMERA_PITCH);
-	Sun = normalize(SUN_DIRECTION);
 
 	Model3D *model = RETRO_Load3DModel("assets/spherequads.obj");
 	model->shader = ShadeMirror;

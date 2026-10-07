@@ -62,8 +62,8 @@ static unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
 // comes round to face it and falls away again behind it, and the same ground is
 // seen under every direction of light in turn.
 //
-// It circles rather than rises: the elevation stays where RETRO_TerrainLight's
-// default put it, about forty degrees up. That is not only to keep the sun off
+// It circles rather than rises: the elevation stays at LANDSCAPE_SUNHEIGHT,
+// about forty degrees up. That is not only to keep the sun off
 // the horizon. RETRO_TerrainShade maps the band of lambert values a height
 // field can actually reach, and the floor of that band is fixed by the sun's
 // elevation alone, so holding the elevation holds the whole ramp still while
@@ -89,6 +89,9 @@ static unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
 static const float SunRadius[LANDSCAPE_SUNRINGS] = { 11.0f, 7.0f, 4.0f };
 static const unsigned char SunColor[LANDSCAPE_SUNRINGS] = { 247, 248, 249 };
 
+// Toward the sun, carried round each frame; not necessarily unit
+static vec3 Sun;
+
 // The texture coordinate is the world position, unwrapped; see the note above.
 // The shade rides alongside it because the drawer interpolates both.
 static RETRO_CameraVertex TerrainVertex(float x, float z, int step, const RETRO_TerrainBasis &basis)
@@ -102,14 +105,14 @@ static RETRO_CameraVertex TerrainVertex(float x, float z, int step, const RETRO_
 	// cells share along an edge is one value and not two. A face normal cannot
 	// do that: it belongs to the triangle and not to the corner, which is the
 	// whole of what separates this from flatshadedlandscape.cpp.
-	vertex.c = RETRO_TerrainShade(RETRO_TerrainNormal(x, z, step), LANDSCAPE_SHADES);
+	vertex.c = RETRO_TerrainShade(RETRO_TerrainNormal(x, z, step), Sun, LANDSCAPE_SHADES);
 	return vertex;
 }
 
 //
 // The sun, at the point the light arrives from
 //
-// RETRO_TerrainLight is a direction and not a place, so there is no distance to
+// Sun is a direction and not a place, so there is no distance to
 // put the sun at. There does not need to be one: the pinhole divides side and
 // height by depth, all three scale together with any distance chosen, and the
 // quotients do not move. Handing the direction itself to the same projection
@@ -122,7 +125,7 @@ static RETRO_CameraVertex TerrainVertex(float x, float z, int step, const RETRO_
 //
 static void DrawSun(const RETRO_TerrainBasis &basis)
 {
-	vec3 eye = RETRO_TerrainCameraEye(RETRO_TerrainLight, basis);
+	vec3 eye = RETRO_TerrainCameraEye(Sun, basis);
 	if (eye.z <= 0.0f) return;
 
 	PolygonPoint point = RETRO_ProjectViewPoint(RETRO_TerrainLens, eye);
@@ -150,9 +153,9 @@ void DEMO_Render(RETRO_Time time)
 	// and not a brightness: the reach and the height set where it stands, and
 	// turning it changes which slopes face it and nothing else.
 	float sunangle = fmod(time.total, LANDSCAPE_SUNPERIOD) * (2 * M_PI / LANDSCAPE_SUNPERIOD);
-	RETRO_TerrainLight.x = cosf(sunangle) * LANDSCAPE_SUNREACH;
-	RETRO_TerrainLight.y = LANDSCAPE_SUNHEIGHT;
-	RETRO_TerrainLight.z = sinf(sunangle) * LANDSCAPE_SUNREACH;
+	Sun.x = cosf(sunangle) * LANDSCAPE_SUNREACH;
+	Sun.y = LANDSCAPE_SUNHEIGHT;
+	Sun.z = sinf(sunangle) * LANDSCAPE_SUNREACH;
 
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
 	int step = mesh.step;

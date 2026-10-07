@@ -43,6 +43,4 @@ void DEMO_Initialize(void)
 	Model3D *model = RETRO_Load3DModel("assets/spherequads.obj");
 	model->c = RETRO_PHONG_OFFSET;
 	model->shades = RETRO_PHONG_SHADES;
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

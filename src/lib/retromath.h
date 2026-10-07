@@ -15,8 +15,7 @@
 //
 
 // Same R as RETRO_RotateVertices, applied to one vertex that is not
-// necessarily part of model->vertex - the ring and cloud effects that carry
-// their own loose points instead of a loaded mesh.
+// necessarily part of model->vertex, a loose point carried outside any mesh.
 inline void RETRO_RotateVertex(Vertex *vertex, const mat3 &matrix)
 {
 	vertex->rpos = matrix * vertex->pos;
@@ -137,15 +136,15 @@ inline void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_S
 	}
 }
 
+// The model stands at the origin with the eye that far in front of it, and
+// its origin lands on the principal point. Moving that shifts every projected
+// vertex by the same pixels, so a demo can carry the model about the screen
+// with cx, cy alone. What it cannot do that way is move it in depth, which
+// is RETRO_TranslateModel's job.
 inline void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2.0), float cy = (RETRO_HEIGHT / 2.0), Model3D *model = NULL, float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
 {
 	model = model ? model : RETRO_Get3DModel();
 
-	// The model stands at the origin with the eye that far in front of it, and
-	// its origin lands on the principal point. Moving that shifts every projected
-	// vertex by the same pixels, so a demo can carry the model about the screen
-	// with cx, cy alone. What it cannot do that way is move it in depth, which
-	// is RETRO_TranslateModel's job
 	for (int i = 0; i < model->vertices; i++) {
 		RETRO_ProjectVertex(&model->vertex[i], scale, cx, cy, eyedistance);
 	}
@@ -153,14 +152,11 @@ inline void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = 
 }
 
 //
-// Unit vectors and vertices, as written
+// Unit vectors, as written
 //
 // UnitVector::dir is the vector as authored. rdir is that vector after
-// a rotation (RETRO_RotateUnitVector). RETRO_RotatedDot reads the rotated
-// slot, because the shaded renderers have already turned the model. The helpers below read and write the authored slot, which is
-// what a path tangent or a cross of two axes needs. RETRO_LightSource is
-// the exception: a light has no orientation of its own to rotate out of,
-// so it fills both slots directly.
+// a rotation (RETRO_RotateUnitVector). The helpers below read and write the
+// authored slot, which is what a path tangent or a cross of two axes needs.
 //
 // A UnitVector is unit as it is written. Fill dir, then wrap it in
 // RETRO_NormalizeUnitVector. A zero vector (the cross of two parallel
@@ -173,17 +169,6 @@ inline UnitVector RETRO_NormalizeUnitVector(UnitVector direction)
 	return direction;
 }
 
-// A light source direction: normalized and valid for RETRO_RotatedDot
-// immediately, because a light has no orientation of its own to rotate
-// out of - it is given directly in whatever space shading happens in,
-// so both slots are filled here rather than left for a rotate or view
-// call that would never come.
-inline UnitVector RETRO_LightSource(float x, float y, float z)
-{
-	vec3 dir = normalize(vec3{ x, y, z });
-	return { dir, dir };
-}
-
 // D1 × D2 on the authored components, then normalized: the magnitude
 // (|D1||D2|sin theta) is thrown away, because a UnitVector is unit as
 // written, and this is how one is built out of two others. Parallel
@@ -193,49 +178,43 @@ inline UnitVector RETRO_UnitCrossProduct(UnitVector d1, UnitVector d2)
 	return { normalize(cross(d1.dir, d2.dir)) };
 }
 
-// D1 · D2, taken on the rotated directions. Both are unit, so this is already
-// the cosine of the angle between them and there is nothing to divide out.
-inline float RETRO_RotatedDot(UnitVector d1, UnitVector d2)
+// The mean of a face's rotated corners, where a face is lit as a whole
+inline vec3 RETRO_FaceCenter(const Model3D *model, const Face *face)
 {
-	return dot(d1.rdir, d2.rdir);
+	vec3 center = { 0, 0, 0 };
+	for (int j = 0; j < face->vertices; j++) {
+		center += model->vertex[face->vertex[j]].rpos;
+	}
+	return center / face->vertices;
 }
 
 //
 // Face visibility and index sort
 //
 
-// Farther face first: greater mean depth belongs before lesser, which is
-// the painter's order RETRO_SortFaces asks for.
-inline bool RETRO_FaceDepthBefore(int a, int b, Model3D *model)
+// Sort the indices in order[0..count) so that before(a, b, data) - true when
+// index a belongs before index b - holds down the list. data is whatever the
+// comparison reads. Each comparison breaks its ties on the index, lower
+// first, so no two indices ever tie and the order is fully determined: a
+// list that starts in increasing index order sorts as a stable sort would
+// sort it, and the same keys give the same order every frame.
+//
+// A quicksort, the middle element as the pivot.
+inline void RETRO_SortIndices(int *order, int count, bool (*before)(int a, int b, const void *data), const void *data)
 {
-	return model->face[a].depth > model->face[b].depth;
-}
+	if (count < 2) {
+		return;
+	}
 
-// Lower model-space x, then y, then z. Groups split-mesh copies of one
-// vertex so they sit adjacent in RETRO_RenderDotModel.
-inline bool RETRO_VertexPosBefore(int a, int b, Model3D *model)
-{
-	vec3 pa = model->vertex[a].pos, pb = model->vertex[b].pos;
-	if (pa.x != pb.x) return pa.x < pb.x;
-	if (pa.y != pb.y) return pa.y < pb.y;
-	return pa.z < pb.z;
-}
-
-// In-place quicksort of order[lo..hi]. Pivot is the middle element.
-// before(a, b, model) is the order: true means a belongs before b.
-// RETRO_SortFaces passes drawface and RETRO_FaceDepthBefore;
-// RETRO_RenderDotModel passes a vertex index list and RETRO_VertexPosBefore.
-inline void RETRO_QuickSort(int *order, int lo, int hi, bool (*before)(int a, int b, Model3D *model), Model3D *model)
-{
-	int i = lo;
-	int j = hi;
-	int pivot = order[(lo + hi) / 2];
+	int i = 0;
+	int j = count - 1;
+	int pivot = order[count / 2];
 
 	while (i <= j) {
-		while (before(order[i], pivot, model)) {
+		while (before(order[i], pivot, data)) {
 			i++;
 		}
-		while (before(pivot, order[j], model)) {
+		while (before(pivot, order[j], data)) {
 			j--;
 		}
 
@@ -246,12 +225,44 @@ inline void RETRO_QuickSort(int *order, int lo, int hi, bool (*before)(int a, in
 		}
 	}
 
-	if (i < hi) {
-		RETRO_QuickSort(order, i, hi, before, model);
-	}
-	if (lo < j) {
-		RETRO_QuickSort(order, lo, j, before, model);
-	}
+	RETRO_SortIndices(order, j + 1, before, data);
+	RETRO_SortIndices(order + i, count - i, before, data);
+}
+
+// Lower key first, data being the keys indexed as order is
+inline bool RETRO_KeyBefore(int a, int b, const void *data)
+{
+	const float *key = (const float *)data;
+	if (key[a] != key[b]) return key[a] < key[b];
+	return a < b;
+}
+
+// The common case: lowest key[order[i]] first. A farthest-first list passes
+// negated depths.
+inline void RETRO_SortIndices(int *order, const float *key, int count)
+{
+	RETRO_SortIndices(order, count, RETRO_KeyBefore, key);
+}
+
+// Farther face first: greater mean depth belongs before lesser, which is
+// the painter's order RETRO_SortFaces asks for. data is the model.
+inline bool RETRO_FaceDepthBefore(int a, int b, const void *data)
+{
+	const Model3D *model = (const Model3D *)data;
+	if (model->face[a].depth != model->face[b].depth) return model->face[a].depth > model->face[b].depth;
+	return a < b;
+}
+
+// Lower model-space x, then y, then z. Groups split-mesh copies of one
+// vertex so they sit adjacent in RETRO_RenderDotModel. data is the model.
+inline bool RETRO_VertexPosBefore(int a, int b, const void *data)
+{
+	const Model3D *model = (const Model3D *)data;
+	vec3 pa = model->vertex[a].pos, pb = model->vertex[b].pos;
+	if (pa.x != pb.x) return pa.x < pb.x;
+	if (pa.y != pb.y) return pa.y < pb.y;
+	if (pa.z != pb.z) return pa.z < pb.z;
+	return a < b;
 }
 
 // Drop faces behind the near plane (any vertex with q <= 0). Front-facing is
@@ -305,17 +316,16 @@ inline void RETRO_SortFaces(bool backfaces = false, Model3D *model = NULL)
 			model->drawfaces++;
 		}
 	}
-	if (model->drawfaces > 1) {
-		RETRO_QuickSort(model->drawface, 0, model->drawfaces - 1, RETRO_FaceDepthBefore, model);
-	}
+	RETRO_SortIndices(model->drawface, model->drawfaces, RETRO_FaceDepthBefore, model);
 }
 
 //
 // The convex outline of count points, as the indices of its corners in turn,
 // wrapped one corner at a time: from the leftmost, each next corner is the
 // point every other lies to one side of, the farthest when several line up.
-// Duplicates share a position, so the outline is closed by position. None
-// when it would take more than maxcorners corners.
+// The corners run clockwise on the y-down screen. Duplicates share a
+// position, so the outline is closed by position. None when it would take
+// more than maxcorners corners.
 //
 inline int RETRO_ConvexOutline(const vec2 *point, int count, int *outline, int maxcorners)
 {

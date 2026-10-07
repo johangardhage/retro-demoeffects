@@ -41,7 +41,7 @@ static RingVertex Ring[RING_COUNT][RING_SIDES];
 static unsigned char Brick[TEXTURE_SIZE * TEXTURE_SIZE];
 static unsigned char FogTable[RETRO_COLORS * FOG_SHADES];
 static const RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
-static vec3 Light;	// In the camera's frame
+static const vec3 Light = normalize(vec3{ -0.7f, 0.0f, -0.7f }); // toward the light, in the camera's frame
 static RETRO_CameraLens Lens;
 
 // A single left bend continues out of sight instead of waving back.
@@ -167,6 +167,5 @@ void DEMO_Initialize(void)
 
 	BuildBrick();
 
-	Light = normalize(vec3{ -0.7f, 0.0f, -0.7f });
 	BuildTunnel();
 }

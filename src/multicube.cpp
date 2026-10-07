@@ -63,6 +63,8 @@ static unsigned char NoiseMap[TEXMAP * TEXMAP];
 static unsigned char CheckMap[TEXMAP * TEXMAP];
 static unsigned char ShadeTable[RETRO_SHADE_TABLE_COLORS * RETRO_SHADE_TABLE_SHADES];
 
+static const RETRO_Lighting Lighting = { 1, { { normalize(vec3{ 0.4f, -0.2f, -1.0f }), 1 } } };
+
 void DEMO_Render(RETRO_Time time)
 {
 	float ax = fmod(time.total * ROT_X, 2 * M_PI);
@@ -91,7 +93,7 @@ void DEMO_Render(RETRO_Time time)
 	RETRO_RenderModel(RETRO_POLY_DOT, RETRO_SHADE_FLAT, Dots, true, { .y0 = y[0], .y1 = y[1] });
 
 	Cube->c = 0;
-	Cube->shades = 0;
+	Cube->shades = RETRO_SHADE_TABLE_SHADES;
 	Cube->texmap = NoiseMap;
 	RETRO_RenderModel(RETRO_POLY_TEXTURE, RETRO_SHADE_FLAT, Cube, true, { .y0 = y[1], .y1 = y[2] });
 
@@ -103,7 +105,7 @@ void DEMO_Render(RETRO_Time time)
 	RETRO_RenderModel(RETRO_POLY_GLENZ, RETRO_SHADE_FLAT, Cube, true, { .y0 = y[2], .y1 = y[3] });
 
 	Cube->c = 0;
-	Cube->shades = 0;
+	Cube->shades = RETRO_SHADE_TABLE_SHADES;
 	Cube->texmap = CheckMap;
 	for (int i = 0; i < Cube->faces; i++) {
 		Cube->face[i].c = Cube->face[i].backc = 0;
@@ -174,5 +176,6 @@ void DEMO_Initialize(void)
 	Dots->c = COL_GRAY + 6;
 	Dots->shades = COL_GLENZ - Dots->c;
 
-	RETRO_InitializeLightSource(0.4f, -0.2f, -1.0f);
+	Cube->lighting = &Lighting;
+	Dots->lighting = &Lighting;
 }

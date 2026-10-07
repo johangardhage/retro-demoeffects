@@ -61,16 +61,13 @@ void DEMO_Render(RETRO_Time time)
 	}
 
 	// Painter's order: larger rz is farther from the eye.
-	int order[BALLS] = { 0, 1, 2, 3, 4, 5 };
-	for (int i = 1; i < BALLS; i++) {
-		int ball = order[i];
-		int j = i;
-		while (j > 0 && balls[order[j - 1]].rpos.z < balls[ball].rpos.z) {
-			order[j] = order[j - 1];
-			j--;
-		}
-		order[j] = ball;
+	int order[BALLS];
+	float nearness[BALLS];
+	for (int i = 0; i < BALLS; i++) {
+		order[i] = i;
+		nearness[i] = -balls[i].rpos.z;
 	}
+	RETRO_SortIndices(order, nearness, BALLS);
 
 	for (int i = 0; i < BALLS; i++) {
 		Vertex *ball = &balls[order[i]];

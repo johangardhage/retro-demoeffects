@@ -16,10 +16,10 @@
 #include "retropoly.h"
 
 // A pinhole's worth of focal length, decoupled from any near-plane offset.
-// RETRO_PROJECTION_EYEDISTANCE (retromath.h) is not reused here: it is half
-// of a coupled scale*eyedistance pair meant for a model that sits some
-// distance in front of the camera, and there is no scale/eyedistance choice
-// that gives a camera-relative point a plain q = focal / depth.
+// RETRO_PROJECTION_EYEDISTANCE (retromath.h) is half of a coupled
+// scale * eyedistance pair, for a model that sits some distance in front of
+// the eye, and no choice of the two makes depth rpos.z itself with focal
+// scaling only x and y, as a camera-relative point needs.
 #define RETRO_CAMERA_FOCAL 250
 
 //

@@ -51,7 +51,7 @@ static void PlotDot(float x, float y, float z, const RETRO_TerrainIslandFrame &f
 	if (eye.z <= RETRO_TerrainLens.nearplane) return;
 
 	PolygonPoint point = RETRO_ProjectViewPoint(RETRO_TerrainLens, eye);
-	if (point.pos.x < 0 || point.pos.x >= RETRO_WIDTH || point.pos.y < 0 || point.pos.y >= RETRO_HEIGHT) return;
+	if (!RETRO_OnScreen(point.pos.x, point.pos.y)) return;
 
 	int sx = (int)point.pos.x;
 	int sy = (int)point.pos.y;

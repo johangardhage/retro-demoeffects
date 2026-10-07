@@ -156,14 +156,11 @@ void DEMO_Initialize(void)
 	int order[RETRO_COLORS], rank[RETRO_COLORS];
 	float luminance[RETRO_COLORS];
 	for (int i = 0; i < RETRO_COLORS; i++) {
+		order[i] = i;
 		RETRO_Palette color = picturea->palette[i];
 		luminance[i] = 0.299f * color.r + 0.587f * color.g + 0.114f * color.b;
-		int j = i;
-		for (; j > 0 && luminance[order[j - 1]] > luminance[i]; j--) {
-			order[j] = order[j - 1];
-		}
-		order[j] = i;
 	}
+	RETRO_SortIndices(order, luminance, RETRO_COLORS);
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		rank[order[i]] = i;
 	}

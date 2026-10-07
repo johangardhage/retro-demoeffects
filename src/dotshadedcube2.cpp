@@ -37,6 +37,4 @@ void DEMO_Initialize(void)
 	Model3D *model = RETRO_Load3DModel("assets/subcubequads.obj");
 	model->c = 1;
 	model->shades = RETRO_COLORS - 1;
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

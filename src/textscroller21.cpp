@@ -34,7 +34,7 @@
 // for the first.
 //
 // A letter is flat, so it has one shade. A lamp up and to the left of the eye
-// lights it by the cosine of the angle between LIGHT and the side of the
+// lights it by the cosine of the angle between Light and the side of the
 // letter that is seen, the outside of one facing the eye and the inside of
 // one facing away, over a floor of AMBIENT. That takes it up the first
 // GLEAM_START of a ramp of SHADES entries, from a dark gold to the full one.
@@ -66,7 +66,6 @@ static const char *const Message[] = { "RETRO DEMOEFFECTS..." };
 #define WOBBLE 0.22f
 #define WOBBLE_SPEED 0.7
 #define CAMERA_DISTANCE 400.0f
-#define LIGHT vec3{ -0.45f, -0.35f, -0.82f } // toward the lamp: left, up and out of the screen
 #define AMBIENT 0.35f // light on a letter turned edge on to the lamp
 #define BACK_LIGHT 0.4f // what is left of the light at the back of the ring
 #define SHININESS 12 // how sharply the gleam falls off as a letter turns from the lamp
@@ -78,6 +77,7 @@ static const char *const Message[] = { "RETRO DEMOEFFECTS..." };
 #define SKY (INK + SHADES)
 #define SKY_SHADES 64
 
+static const vec3 Light = normalize(vec3{ -0.45f, -0.35f, -0.82f }); // toward the lamp: left, up and out of the screen
 static RETRO_Font Font;
 static int MessageLength;
 static float Radius;
@@ -131,7 +131,7 @@ static void DrawLetters(float ax, float phase, bool facing, bool solidity)
 
 		// The side that is seen is lit, less the further back on the ring it is.
 		vec3 normal = matrix * vec3{ 0, 0, -1 };
-		float lambert = MAX(dot(facing ? normal : -normal, normalize(LIGHT)), 0.0f);
+		float lambert = MAX(dot(facing ? normal : -normal, Light), 0.0f);
 		float light = GLEAM_START * mix(AMBIENT, 1, lambert) + (1 - GLEAM_START) * powf(lambert, SHININESS);
 		float dim = 1 - (1 - BACK_LIGHT) * (normal.z + 1) / 2;
 		int shade = CLAMP((int)(light * dim * SHADES), 0, SHADES);

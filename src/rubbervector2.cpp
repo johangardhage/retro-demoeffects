@@ -34,7 +34,7 @@
 #define RUBBER_WAVE1 1.5f     // radians a wave's phase turns per model unit along
 #define RUBBER_WAVE2 1.0f     // the next axis, and along the one after that
 
-static Vertex RestVertex[RETRO_MAX_VERTICES];
+static vec3 RestPos[RETRO_MAX_VERTICES];
 
 void DEMO_Render(RETRO_Time time)
 {
@@ -50,7 +50,7 @@ void DEMO_Render(RETRO_Time time)
 	// when k is not an integer.
 	Model3D *model = RETRO_Get3DModel();
 	for (int i = 0; i < model->vertices; i++) {
-		const vec3 &v = RestVertex[i].pos;
+		const vec3 &v = RestPos[i];
 		model->vertex[i].pos = {
 			v.x + RUBBER_AMOUNT * (float)sin(phasex + RUBBER_WAVE1 * v.y + RUBBER_WAVE2 * v.z),
 			v.y + RUBBER_AMOUNT * (float)sin(phasey + RUBBER_WAVE1 * v.z + RUBBER_WAVE2 * v.x),
@@ -76,8 +76,6 @@ void DEMO_Initialize(void)
 	model->c = RETRO_PHONG_OFFSET;
 	model->shades = RETRO_PHONG_SHADES;
 	for (int i = 0; i < model->vertices; i++) {
-		RestVertex[i] = model->vertex[i];
+		RestPos[i] = model->vertex[i].pos;
 	}
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

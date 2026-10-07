@@ -84,6 +84,7 @@
 
 static RETRO_ColorHistogram Histogram;
 static unsigned char LandscapeTable[RETRO_COLORS * LANDSCAPE_SHADES * FOG_LEVELS];
+static const vec3 Sun = { -0.50f, 0.45f, -0.75f }; // toward the sun, low in the sky ahead at takeoff; not necessarily unit
 
 //
 // A map color lit and fogged: shade from the ambient floor to full light, then
@@ -277,7 +278,7 @@ static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const World
 	if (points < 3) return;
 
 	vec3 normal = cross(b.pos - a.pos, c.pos - a.pos);
-	int shade = RETRO_TerrainShade(normal, LANDSCAPE_SHADES);
+	int shade = RETRO_TerrainShade(normal, Sun, LANDSCAPE_SHADES);
 
 	vec3 center = (a.pos + b.pos + c.pos) * (1.0f / 3.0f);
 	float distance = hypotf(center.x - RETRO_TerrainCamera.x, center.z - RETRO_TerrainCamera.z);
@@ -322,9 +323,6 @@ void DEMO_Render(RETRO_Time time)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTerrain("assets/voxel_color_1024x1024.pcx", "assets/voxel_height_1024x1024.pcx");
-
-	// The light, low in the sky ahead at takeoff
-	RETRO_TerrainLight = { -0.50f, 0.45f, -0.75f };
 
 	// The palette holds the sky, and is fitted around it to the
 	// map's colors at every shade and fog level, each weighed by how much of

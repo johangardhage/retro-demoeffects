@@ -251,10 +251,9 @@ void DEMO_Render(RETRO_Time time)
 		ivec2 pts[STAR_VERTS];
 		for (int i = 0; i < STAR_VERTS; i++) {
 			RETRO_RotateVertex(&star[i], matrix);
-			float depth = MAX(BALL_EYE + star[i].rpos.z, 0.1f);
-			float q = 1.0f / depth;
-			pts[i].x = lround(BALL_CX + ra * star[i].rpos.x * BALL_EYE * q);
-			pts[i].y = lround(cy + rb * star[i].rpos.y * BALL_EYE * q);
+			RETRO_ProjectVertex(&star[i], 1, 0, 0, BALL_EYE);
+			pts[i].x = lround(BALL_CX + ra * star[i].spos.x);
+			pts[i].y = lround(cy + rb * star[i].spos.y);
 		}
 
 		unsigned char bit = normal.rdir.z < 0.0f ? BIT_FRONT : BIT_BACK;

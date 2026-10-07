@@ -163,11 +163,6 @@ void DEMO_Initialize(void)
 		Cube->face[i].c = (n.x > n.y && n.x > n.z ? 0 : (n.y > n.z ? 1 : 2)) * RUBBER_SHADES;
 	}
 
-	// Head on, as the other flat shaded cubes have it. The three faces on screen
-	// are already told apart by their ramps, so the light is left to shade them
-	// rather than to separate them
-	RETRO_InitializeLightSource(0, 0, -1);
-
 	// Fill the ring with the cube at rest, so the first displayed frame has a
 	// full history to multiplex rather than a black trail. From the first step
 	// onward each slot is replaced naturally as the ring advances.

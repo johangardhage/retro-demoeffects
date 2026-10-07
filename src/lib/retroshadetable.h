@@ -20,8 +20,8 @@
 #define RETRO_SHADE_TABLE_SIZE (RETRO_SHADE_TABLE_COLORS * RETRO_SHADE_TABLE_SHADES)
 
 // Light levels a shade table may carry beside its shade, one per colored
-// light lifting a channel of its own
-#define RETRO_MAX_TINTS 2
+// light lifting a channel of its own, or one each for red, green and blue
+#define RETRO_MAX_TINTS 3
 
 // A shade table and the shape it was read at. The lookup is
 // table[color * shades + shade], which is what RETRO_CreatePhongShadeTable and
@@ -37,10 +37,12 @@
 // such light is a tint, with tints[i] entries, and each shade holds all of
 // them in turn, the last varying fastest. With one tint the lookup is
 // table[(color * shades + shade) * tints[0] + tint[0]], and every further tint
-// multiplies in the same way. A drawer that takes a table reads as many of
-// PolygonPoint::tint as the table has tints beside c. The tints end at the
-// first with no entries, so a table without any, the default, is the plain
-// table, and no tint is read.
+// multiplies in the same way. RETRO_DrawTexMapGouraudPolygon reads as many of
+// PolygonPoint::tint as the table has tints beside c; the other texture
+// drawers that take a table step no tints, and draw nothing with one that has
+// them rather than read it at the wrong stride. The tints end at the first
+// with no entries, so a table without any, the default, is the plain table,
+// and no tint is read.
 struct RETRO_ShadeTable {
 	unsigned char *table;	// Rows of shades, one row per texture color
 	int colors;				// Texture colors the table has a row for
@@ -49,7 +51,7 @@ struct RETRO_ShadeTable {
 };
 
 // *******************************************************************
-// Private functions
+// Public functions
 // *******************************************************************
 
 //
@@ -61,6 +63,10 @@ inline float RETRO_ShadeTableLevel(int step, int steps)
 {
 	return steps > 1 ? (float)step / (steps - 1) : 0;
 }
+
+// *******************************************************************
+// Private functions
+// *******************************************************************
 
 //
 // How many tint entries each shade of a table holds: every tint's levels
@@ -157,8 +163,9 @@ inline void RETRO_CreatePhongShadeTablePalette(const RETRO_Palette *texturepalet
 // separate
 //
 // The caller owns the table, one per material, and hands it to a model through
-// Model3D::shadetable. A model without one draws nothing rather than drawing
-// wrong, since the texture mappers stop on a table they were not given
+// Model3D::shadetable. A model without one draws nothing shaded rather than
+// drawing wrong, since the shaded texture mappers stop on a table they were
+// not given
 //
 // Only the rows of the first texturecolors texels are written. The rest keep
 // whatever the table held, so a texel past them draws entry 0 of a zeroed table
@@ -201,6 +208,87 @@ inline void RETRO_CreateShadeTable(const RETRO_Palette *palette, int colors, int
 				RETRO_NearestPaletteIndex(target, palette, colors);
 		}
 	}
+}
+
+//
+// A color light table: what a material looks like under light of any color,
+// for a model lit in color. Its three tints are the levels of red, green and
+// blue light, each from none to full over the table's entries along it, and
+// its shade has a single entry. It has a row for each of its colors, taken
+// from materials: one for a model of one material, or one for each color of
+// a texture, which then has to keep to them. Each entry is the palette color
+// nearest its material with each channel scaled by its light
+//
+inline void RETRO_CreateColorLightTable(const RETRO_Palette *materials, const RETRO_Palette *palette, const RETRO_ShadeTable &table)
+{
+	int reds = table.tints[0], greens = table.tints[1], blues = table.tints[2];
+	int entries = reds * greens * blues;
+	for (int color = 0; color < table.colors; color++) {
+		RETRO_Palette material = materials[color];
+		unsigned char *row = table.table + color * entries;
+		for (int r = 0; r < reds; r++) {
+			for (int g = 0; g < greens; g++) {
+				for (int b = 0; b < blues; b++) {
+					RETRO_Palette lit = {
+						(unsigned char)(material.r * r / (reds - 1)),
+						(unsigned char)(material.g * g / (greens - 1)),
+						(unsigned char)(material.b * b / (blues - 1))
+					};
+					row[(r * greens + g) * blues + b] = RETRO_NearestPaletteIndex(lit, palette);
+				}
+			}
+		}
+	}
+}
+
+// Light of a color as the levels of a color light table: red, green and blue
+// as its three tints, each held to full and scaled to the table's levels
+// along it, plus a half for the drawers to round down
+inline void RETRO_ColorLevels(const RETRO_ShadeTable &table, vec3 light, float *tint)
+{
+	light = min(light, 1.0f);
+	tint[0] = light.x * (table.tints[0] - 1) + 0.5f;
+	tint[1] = light.y * (table.tints[1] - 1) + 0.5f;
+	tint[2] = light.z * (table.tints[2] - 1) + 0.5f;
+}
+
+// The same light's place among the table's lights, as RETRO_AddShadeTableColors
+// lays out its light weights, rounded as the drawers round it
+inline int RETRO_ColorEntry(const RETRO_ShadeTable &table, vec3 light)
+{
+	float tint[RETRO_MAX_TINTS];
+	RETRO_ColorLevels(table, light, tint);
+	return ((int)tint[0] * table.tints[1] + (int)tint[1]) * table.tints[2] + (int)tint[2];
+}
+
+// The entry of a color light table for the same light on the row of color
+inline unsigned char RETRO_ColorLightEntry(const RETRO_ShadeTable &table, vec3 light, int color = 0)
+{
+	return table.table[color * table.tints[0] * table.tints[1] * table.tints[2] + RETRO_ColorEntry(table, light)];
+}
+
+// Light of a color as the levels of a table lit by RETRO_TintColor: blue, the
+// light all three channels have, as the shade, and how much further red and
+// green reach as the two tints, each held to full and scaled to the table's
+// levels along it, plus a half for the drawers to round down. Such a table
+// holds light whose only blue is white, so that blue is never more than red
+// or green
+inline void RETRO_TintLevels(const RETRO_ShadeTable &table, vec3 light, float &shade, float *tint)
+{
+	light = min(light, 1.0f);
+	shade = light.z * (table.shades - 1) + 0.5f;
+	tint[0] = (light.x - light.z) * (table.tints[0] - 1) + 0.5f;
+	tint[1] = (light.y - light.z) * (table.tints[1] - 1) + 0.5f;
+}
+
+// The same light's place among the table's lights, shade * entries + entry,
+// as RETRO_AddShadeTableColors lays out its light weights, rounded as the
+// drawers round it
+inline int RETRO_TintEntry(const RETRO_ShadeTable &table, vec3 light)
+{
+	float shade, tint[RETRO_MAX_TINTS];
+	RETRO_TintLevels(table, light, shade, tint);
+	return ((int)shade * table.tints[0] + (int)tint[0]) * table.tints[1] + (int)tint[1];
 }
 
 //

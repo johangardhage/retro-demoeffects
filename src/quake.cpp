@@ -41,6 +41,7 @@
 #include "lib/retromouse.h"
 #include "lib/retrocamera.h"
 #include "lib/retrobsp.h"
+#include "lib/retromath.h"
 
 #define MOVEMENT_SPEED		480.0f	// World units per second
 #define TURN_SPEED			180.0f	// Degrees per second, from the arrow keys
@@ -89,13 +90,6 @@ struct Lightmap
 	const unsigned char *samples;	// The blocks, in the BSP's lighting lump
 };
 
-// A face drawn this frame, with its key for sorting near to far
-struct VisibleFace
-{
-	int face;
-	float distance;			// Squared distance from the camera to its first corner
-};
-
 // What the shader colors a face's pixels with
 struct FaceShading
 {
@@ -108,7 +102,8 @@ static RETRO_BSP Map;
 static Texture *Textures;
 static Corner *Corners;					// Every face's corners, at their index in the BSP's edge list
 static Lightmap *Lightmaps;				// One per face
-static VisibleFace *VisibleFaces;		// The faces drawn this frame, near to far
+static int *VisibleFaces;				// The faces drawn this frame, near to far
+static float *FaceDistance;				// Squared distance from the camera to each face's first corner
 static bool *Listed;					// Whether a face is in this frame's list yet
 static unsigned char LightTable[256 * 256];	// The shade of each color at each light level
 static unsigned char Checkerboard[16 * 16 + 8 * 8 + 4 * 4 + 2 * 2];	// The missing texture's mip levels
@@ -353,22 +348,15 @@ static void DrawScene(void)
 			}
 			Listed[index] = true;
 			vec3 delta = Corners[face->firstedge].point - Camera.pos;
-			VisibleFaces[count++] = { index, dot(delta, delta) };
+			FaceDistance[index] = dot(delta, delta);
+			VisibleFaces[count++] = index;
 		}
 	}
 
-	// Insertion sort keeps faces at the same distance in the order listed
-	for (int i = 1; i < count; i++) {
-		VisibleFace face = VisibleFaces[i];
-		int j = i - 1;
-		for (; j >= 0 && VisibleFaces[j].distance > face.distance; j--) {
-			VisibleFaces[j + 1] = VisibleFaces[j];
-		}
-		VisibleFaces[j + 1] = face;
-	}
-
+	// Faces at the same distance go in face order
+	RETRO_SortIndices(VisibleFaces, FaceDistance, count);
 	for (int i = 0; i < count; i++) {
-		DrawFace(VisibleFaces[i].face);
+		DrawFace(VisibleFaces[i]);
 	}
 }
 
@@ -442,7 +430,8 @@ static void DecodeFaces(void)
 	int count = Map.numfaces();
 	Corners = new Corner [Map.numsurfedges()];
 	Lightmaps = new Lightmap [count];
-	VisibleFaces = new VisibleFace [count];
+	VisibleFaces = new int [count];
+	FaceDistance = new float [count];
 	Listed = new bool [count];
 
 	for (int i = 0; i < count; i++) {
@@ -570,5 +559,6 @@ void DEMO_Deinitialize(void)
 	delete[] Corners;
 	delete[] Lightmaps;
 	delete[] VisibleFaces;
+	delete[] FaceDistance;
 	delete[] Listed;
 }

@@ -27,6 +27,13 @@
 // level; read bare through the palette it keeps to the dark half, below the
 // highlight.
 //
+// The light is a headlight, which the shaded texture modes, the bumps and the
+// Phong mode are lit by; the matcaps and the metal environment map are
+// front-lit by construction. The Phong mode reads the same palette as the
+// matcap, and the textured Phong mode the same shade table as the matcap
+// texture mode, so each pair shows the same material, per pixel and by
+// lookup.
+//
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
@@ -57,6 +64,7 @@ struct Mode {
 	unsigned char *shadetable = NULL;
 	unsigned char *envmap = NULL;
 	unsigned char color = 0;
+	int shades = RETRO_SHADE_TABLE_SHADES; // the texture modes' shade table, all of it
 	int envmapradius = 0;
 	int bumpgrazing = RETRO_BUMP_GRAZING;
 };
@@ -100,6 +108,10 @@ void DEMO_Render(RETRO_Time time)
 		mode = { .rendertype = RETRO_POLY_TEXTURE, .shadertype = RETRO_SHADE_MATCAP, .shadetable = MaterialShadeTables[MATERIAL_PHONG], .envmap = MiniPhongMap, .color = 128, .envmapradius = 90 };
 		RETRO_Set6bitPalette(MaterialPalette);
 	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_4)) {
+		mode = { .rendertype = RETRO_POLY_TEXTURE, .shadertype = RETRO_SHADE_PHONG, .shadetable = MaterialShadeTables[MATERIAL_PHONG] };
+		RETRO_Set6bitPalette(MaterialPalette);
+	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_D)) {
 		mode = { .rendertype = RETRO_POLY_DOT, .color = 255 };
 		RETRO_Set6bitPalette(MaterialPalette);
@@ -116,6 +128,10 @@ void DEMO_Render(RETRO_Time time)
 		mode = { .rendertype = RETRO_POLY_MATCAP, .envmap = MiniPhongMap, .color = 128, .envmapradius = 90, .bumpgrazing = RETRO_BUMP_GRAZING * 3 / 2 };
 		RETRO_Set6bitPalette(PhongPalette);
 	}
+	if (RETRO_KeyPressed(SDL_SCANCODE_F)) {
+		mode = { .rendertype = RETRO_POLY_PHONG, .shades = RETRO_COLORS };
+		RETRO_Set6bitPalette(PhongPalette);
+	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_M)) {
 		mode = { .rendertype = RETRO_POLY_ENVIRONMENT, .envmap = RETRO_ImageData(ASSET_ENVMAP), .color = 128, .envmapradius = 90, .bumpgrazing = RETRO_BUMP_GRAZING * 2 };
 		RETRO_Set6bitPalette(RETRO_ImagePalette(ASSET_ENVMAP));
@@ -127,6 +143,7 @@ void DEMO_Render(RETRO_Time time)
 	model->envmap = mode.envmap;
 	model->bumpmap = bumpmap;
 	model->c = mode.color;
+	model->shades = mode.shades;
 	model->envmapradius = mode.envmapradius;
 	model->bumpgrazing = mode.bumpgrazing;
 
@@ -192,11 +209,13 @@ void DEMO_Render(RETRO_Time time)
 		RETRO_PutString("1 to use flat shaded texture mapping", 0, 130, 255);
 		RETRO_PutString("2 to use gouraud shaded texture mapping", 0, 140, 255);
 		RETRO_PutString("3 to use matcap shaded texture mapping", 0, 150, 255);
-		RETRO_PutString("m to use metal environment mapping", 0, 160, 255);
-		RETRO_PutString("p to use matcap mapping", 0, 170, 255);
-		RETRO_PutString("o to use mini matcap mapping", 0, 180, 255);
-		RETRO_PutString("b to toggle bumpmapping", 0, 190, 255);
-		RETRO_PutString("h to toggle this help screen", 0, 210, 255);
+		RETRO_PutString("4 to use phong shaded texture mapping", 0, 160, 255);
+		RETRO_PutString("m to use metal environment mapping", 0, 170, 255);
+		RETRO_PutString("p to use matcap mapping", 0, 180, 255);
+		RETRO_PutString("o to use mini matcap mapping", 0, 190, 255);
+		RETRO_PutString("f to use phong shading", 0, 200, 255);
+		RETRO_PutString("b to toggle bumpmapping", 0, 210, 255);
+		RETRO_PutString("h to toggle this help screen", 0, 230, 255);
 	}
 }
 
@@ -228,7 +247,4 @@ void DEMO_Initialize(void)
 	// Load model. Every mode that reads a texture reads the same one
 	Model3D *model = RETRO_Load3DModel("assets/mask.obj");
 	model->texmap = RETRO_ImageData(ASSET_TEXMAP);
-
-	// Set up light source
-	RETRO_InitializeLightSource(0, 0, -1);
 }

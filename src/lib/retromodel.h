@@ -10,12 +10,11 @@
 #include "retro.h"
 #include "retromatrix.h"
 #include "retrovector.h"
+#include "retropoly.h"
 
-struct Fragment; // one pixel of a surface, for Model3D::shader; see retropoly.h
-
-// The grazing height G is the height difference that tilts a normal all the
-// way to grazing. The gradient across two texels, divided by the surface they
-// span and by G, is the tilt, so a larger G reads shallower. A metal env map
+// The grazing height G is the height difference across two texels that tilts
+// a normal 45°. That difference, divided by the surface one texel covers and
+// by G, is the tilt, so a larger G reads shallower. A metal env map
 // turns a small tilt into a different color, so it wants a shallower G; a
 // shade table has only the material ramp to spend, so it takes the deeper
 // default. Below about 24 a finely detailed bump map breaks a highlight up
@@ -24,8 +23,10 @@ struct Fragment; // one pixel of a surface, for Model3D::shader; see retropoly.h
 #define RETRO_BUMP_GRAZING 32
 #define RETRO_ENVMAP_SIZE 256
 
-// The loader scales a model's UVs by this, so they come out as texels of a map this
-// wide, and the renderers stride the texture and bump maps by it. All three have to agree.
+// The loaders scale a model's UVs by this, so they come out as texels of a map this
+// wide. It is also the default texture, bump and stencil map size, but the renderers
+// stride each map by the model's own width, so a model given a map of another size
+// sets that width and rescales its UVs to match.
 #define RETRO_TEXMAP_SIZE 256
 
 #define RETRO_MAX_VERTICES 1000
@@ -52,15 +53,14 @@ struct Vertex {
 //
 // Unlike a Vertex it has no screen form and does not translate, which is the
 // whole distinction - RETRO_TranslateModel moves vertices and leaves these
-// alone, so only the rotation reaches them. Normals, tangents and the light
-// share the type because the library only ever rotates: a normal is strictly a
-// covector and transforms by the inverse transpose, which for an orthonormal
-// matrix is the matrix itself.
+// alone, so only the rotation reaches them. Normals and tangents share the
+// type because the library only ever rotates: a normal is strictly a covector
+// and transforms by the inverse transpose, which for an orthonormal matrix is
+// the matrix itself.
 struct UnitVector {
 	vec3 dir;					// Model space direction, unit length
 	vec3 rdir;					// Rotated direction, still unit
 };
-
 
 struct Face {
 	int vertices;								// Number of vertices in face
@@ -77,7 +77,7 @@ struct Face {
 	bool frontfacing;							// Which side the winding shows. Only set for a face that
 												// reached the winding test, so read it only for a face in
 												// the draw list
-	float depth;									// Mean rotated depth, the painter's sort key
+	float depth;								// Mean rotated depth, the painter's sort key
 	int material;								// Which of the model's material names the face was listed
 												// under, and 0 for a face listed before any
 };
@@ -113,6 +113,14 @@ struct Model3D {
 	int drawfaces;								// Number of faces in the draw list
 	int drawface[RETRO_MAX_FACES];				// Faces to draw, sorted far to near
 	mat3 matrix;								// Rotation matrix
+	const RETRO_Lighting *lighting;				// The lights it is shaded by, RETRO_Headlight
+												// unless it is given others
+	RETRO_ShadeTable colortable;				// With a table, flat, Gouraud and Phong light it in the
+												// lights' colors and look the result up here, red,
+												// green and blue as its three tints, textured or not:
+												// a texture's table has a row for each of its colors;
+												// see RETRO_CreateColorLightTable. Without one, only
+												// their brightness counts
 	int c;										// The base the shading is measured from, which the
 												// renderer decides the space of: the first entry of the
 												// model's own ramp for the palette renderers, and a level
@@ -135,7 +143,7 @@ struct Model3D {
 												// back face is drawn at all; Glenz draws both sides
 												// regardless, but still reads this for how to light the
 												// back one, and the wireframe path ignores it entirely
-	unsigned char mask;							// The palette index bits a masked write replaces,
+	unsigned char mask = 0xff;					// The palette index bits a masked write replaces,
 												// leaving the rest of each pixel as it was
 	float *frame = NULL;						// Morph targets: frames blocks of vertices model space
 												// x, y, z, the same vertex list posed differently. Only
@@ -162,7 +170,7 @@ struct Model3D {
 	unsigned char *bumpmap = NULL;				// Bump texture
 	int bumpmapwidth = RETRO_TEXMAP_SIZE;		// Bump texture width, which need not match the texture's
 	int bumpmapheight = RETRO_TEXMAP_SIZE;		// Bump texture height
-	int bumpgrazing = RETRO_BUMP_GRAZING;		// Height difference that tilts a normal to grazing
+	int bumpgrazing = RETRO_BUMP_GRAZING;		// Height difference across two bump texels that tilts a normal 45°
 	unsigned char *stencilmap = NULL;			// Stencil picture, read in screen space behind each face
 	int stencilmapwidth = RETRO_TEXMAP_SIZE;	// Stencil picture width
 	int stencilmapheight = RETRO_TEXMAP_SIZE;	// Stencil picture height
@@ -174,7 +182,8 @@ struct Model3D {
 												// along -z, as RETRO_ProjectModel last placed it. What
 												// envmapperspective aims each view ray from; zero, a
 												// model never projected that way, keeps every ray parallel
-												// to the view axis
+												// to the view axis. RETRO_POLY_SHADER has no such
+												// fallback and needs it set
 	GlenzLighting glenzlighting;				// Configuration for the Glenz renderer
 	char material[RETRO_MAX_MATERIALS][RETRO_MATERIAL_NAME];	// The names a file's usemtl lines give its parts,
 												// in the order they first appear. What each one looks
@@ -225,6 +234,7 @@ inline Model3D *RETRO_Allocate3DModel(void)
 	}
 	memset(model, 0, sizeof(Model3D));
 	model->glenzlighting = GlenzLighting{};
+	model->lighting = &RETRO_Headlight;
 	model->texmapwidth = RETRO_TEXMAP_SIZE;
 	model->texmapheight = RETRO_TEXMAP_SIZE;
 	model->envmapwidth = RETRO_ENVMAP_SIZE;
@@ -653,14 +663,16 @@ inline void RETRO_BlendModelPoses(int a, int b, float s, Model3D *model = NULL)
 //
 // Only the vertices move. The poses carry no normals, so a model that is
 // shaded needs RETRO_InitializeFaceNormals and RETRO_InitializeVertexNormals
-// run over the result before it is drawn
+// run over the result before it is drawn, and one that is bump mapped
+// RETRO_InitializeFaceTangents as well. RETRO_InitializeVertexNormals derives
+// the normals afresh, replacing any the model's file supplied
 //
 inline void RETRO_MorphModel(float u, Model3D *model = NULL)
 {
 	model = model ? model : RETRO_Get3DModel();
 
 	if (model->frames == 0) {
-		RETRO_RageQuit("RETRO_MorphModel needs an animation, load one with RETRO_Load3DModel\n");
+		RETRO_RageQuit("RETRO_MorphModel needs a model with poses: RETRO_Load3DModel with an animation, RETRO_Load3DModelFrames, RETRO_LoadMD2Model or RETRO_LoadMD3Model\n");
 	}
 
 	float f = CLAMP01(u) * (model->frames - 1);
@@ -687,13 +699,13 @@ inline int RETRO_ModelMaterial(const Model3D *model, const char *name)
 // Nothing downstream converts them: a drawer indexes the texture with what UV holds, so
 // they have to be texels by the time it gets there, and this is where that happens. The
 // map they are scaled into is RETRO_TEXMAP_SIZE square, which is what texmapwidth and
-// texmapheight start out as, and no demo has yet given a model a texture of another size.
+// texmapheight start out as; a model given a texture of another size rescales them.
 //
 // The animation is a printf pattern and a frame count, handed on to
 // RETRO_Load3DModelFrames, and the file named here is the model those poses are
 // read against: it is what fixes the topology and how many vertices a pose has
-// to name. A model with no animation is loaded exactly as it was before there
-// were any, since the pattern defaults to none
+// to name. Without a pattern, the default, the model is loaded still, with no
+// poses
 //
 inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = NULL, int frames = 0)
 {
@@ -742,26 +754,42 @@ inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = 
 				RETRO_RageQuit("Too many faces to fit the face list: %s\n", filename);
 			}
 
+			// The rest of the line, so the face is read to its last corner and no
+			// further: a corner past what a face holds is an error, not the start
+			// of the next line
+			char line[256];
+			if (fgets(line, sizeof(line), fp) == NULL) {
+				line[0] = '\0';
+			} else if (strchr(line, '\n') == NULL && !feof(fp)) {
+				RETRO_RageQuit("Cannot read face, line too long: %s\n", filename);
+			}
+
+			Face *face = &model->face[faces];
+			int corners = 0, offset = 0, consumed = 0;
+
 			// int, not unsigned: %d writes an int, and an index of 0 in the file
 			// would wrap on the -1 below before the range check ever saw it
-			int vertex[4], uv[4], normal[4];
-			int matches = fscanf(fp, "%d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n", &vertex[0], &uv[0], &normal[0], &vertex[1], &uv[1], &normal[1], &vertex[2], &uv[2], &normal[2], &vertex[3], &uv[3], &normal[3]);
-
-			// Whole triples only: matches / 3 would keep a short face whose leftover
-			// zeros pass the bounds check.
-			if (matches != 9 && matches != 12) {
-				RETRO_RageQuit("Cannot read face, expected three or four v/uv/n triples: %s\n", filename);
+			int vertex, uv, normal;
+			while (sscanf(line + offset, " %d/%d/%d%n", &vertex, &uv, &normal, &consumed) == 3) {
+				if (corners == RETRO_MAX_FACEVERTICES) {
+					RETRO_RageQuit("Face has more than %d corners: %s\n", RETRO_MAX_FACEVERTICES, filename);
+				}
+				face->vertex[corners] = vertex - 1;
+				face->uv[corners] = uv - 1;
+				face->vertexnormal[corners] = normal - 1;
+				corners++;
+				offset += consumed;
 			}
 
-			model->face[faces].vertices = matches / 3;
-			model->face[faces].material = material;
-
-			// Store vertex indices to face
-			for (int i = 0; i < model->face[faces].vertices; i++) {
-				model->face[faces].vertex[i] = vertex[i] - 1;
-				model->face[faces].uv[i] = uv[i] - 1;
-				model->face[faces].vertexnormal[i] = normal[i] - 1;
+			// Whole triples only: anything left but whitespace is a corner that is
+			// not one
+			const char *rest = line + offset;
+			if (corners < 3 || strspn(rest, " \t\r\n") != strlen(rest)) {
+				RETRO_RageQuit("Cannot read face, expected 3 to %d v/uv/n triples: %s\n", RETRO_MAX_FACEVERTICES, filename);
 			}
+
+			face->vertices = corners;
+			face->material = material;
 			faces++;
 		} else if (strcmp(row, "usemtl") == 0) { // The faces after this belong to a part
 			if (fscanf(fp, "%127s", row) != 1 || strlen(row) >= RETRO_MATERIAL_NAME) {
@@ -1106,9 +1134,10 @@ inline void RETRO_Save3DModel(const char *filename, Model3D *model)
 		fprintf(fp, "v %f %f %f\n", model->vertex[i].pos.x, model->vertex[i].pos.y, model->vertex[i].pos.z);
 	}
 
-	// Save UV coordinates, back from texels to the 0 to 1 the loader scales up
+	// Save UV coordinates, back from texels to the 0 to 1 the loader scales up.
+	// They are texels of the model's own map, which need not be the loader's size
 	for (int i = 0; i < model->uvs; i++) {
-		fprintf(fp, "vt %f %f\n", model->uv[i].x / RETRO_TEXMAP_SIZE, model->uv[i].y / RETRO_TEXMAP_SIZE);
+		fprintf(fp, "vt %f %f\n", model->uv[i].x / model->texmapwidth, model->uv[i].y / model->texmapheight);
 	}
 
 	// Save normals
@@ -1119,9 +1148,9 @@ inline void RETRO_Save3DModel(const char *filename, Model3D *model)
 	// Save faces, each run of one material under its name
 	int material = -1;
 	for (int i = 0; i < model->faces; i++) {
-		// The loader reads three or four corners, so only those are written
+		// The loader reads three corners or more, so only those are written
 		Face *face = &model->face[i];
-		if (face->vertices != 3 && face->vertices != 4) {
+		if (face->vertices < 3) {
 			continue;
 		}
 		if (model->materials > 0 && face->material != material) {

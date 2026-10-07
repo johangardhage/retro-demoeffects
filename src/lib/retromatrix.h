@@ -39,6 +39,10 @@ inline mat3 transpose(const mat3 &m)
 
 // GLM-style axis maps. The (c, s) overloads do not require c²+s² = 1; a
 // squash effect can feed a pair that is not unit.
+//
+// A positive angle turns right-handed about each axis: rotateX carries +y
+// toward +z, rotateY +z toward +x, and rotateZ +x toward +y, which on the
+// y-down screen is clockwise.
 inline mat3 rotateX(float c, float s) { return { { 1, 0, 0 }, { 0, c, s }, { 0, -s, c } }; }
 inline mat3 rotateY(float c, float s) { return { { c, 0, -s }, { 0, 1, 0 }, { s, 0, c } }; }
 inline mat3 rotateZ(float c, float s) { return { { c, s, 0 }, { -s, c, 0 }, { 0, 0, 1 } }; }

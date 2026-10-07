@@ -119,6 +119,4 @@ void DEMO_Initialize(void)
 	model->c = RETRO_PHONG_OFFSET;
 	model->shades = RETRO_PHONG_SHADES;
 	BuildKnot(model);
-
-	RETRO_InitializeLightSource(0, 0, -1);
 }

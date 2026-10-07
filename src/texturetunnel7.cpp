@@ -74,7 +74,11 @@ struct RingVertex {
 static unsigned char Brick[TEXTURE_SIZE * TEXTURE_SIZE];
 static unsigned char FogTable[RETRO_COLORS * FOG_SHADES];
 static const RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
-static vec3 Light;	// In the camera's frame
+// Toward the light, in the camera's frame. It travels leftward, so the wall
+// whose inward normal points left (the right-hand wall) is the bright one. It
+// is given in view space rather than as a world direction RETRO_ViewDirection
+// would turn into one, so it stays fixed relative to the camera.
+static const vec3 Light = normalize(vec3{ -0.98f, 0.06f, -0.18f });
 
 // The axis at t, and the orthonormal frame a ring there is built in.
 static vec3 Path(float t)
@@ -219,11 +223,4 @@ void DEMO_Initialize(void)
 	RETRO_CreateShadeTable(palette, RETRO_COLORS, FOG_SHADES, FogTable);
 
 	BuildBrick();
-
-	// Light travels leftward in view space, so the wall whose inward
-	// normal points left (the right-hand wall) is the bright one. It is
-	// given directly in view space rather than a world direction that
-	// RETRO_ViewDirection would turn into one, and fixed relative to the
-	// camera, so it is set up once here rather than redone every frame.
-	Light = normalize(vec3{ -0.98f, 0.06f, -0.18f });
 }

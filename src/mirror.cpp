@@ -51,7 +51,7 @@
 
 static Model3D *Floor;
 static Model3D *Mirror;
-static Vertex MirrorRest[RETRO_MAX_VERTICES];
+static vec3 MirrorRest[RETRO_MAX_VERTICES];
 static vec3 CameraScene;
 
 static void BuildFloor(Model3D *model)
@@ -231,7 +231,7 @@ void DEMO_Render(RETRO_Time time)
 
 	mat3 tumble = rotate(ax, ay, az);
 	for (int i = 0; i < Mirror->vertices; i++) {
-		Mirror->vertex[i].pos = tumble * MirrorRest[i].pos - vec3{ 0, MIRROR_HOVER, 0 };
+		Mirror->vertex[i].pos = tumble * MirrorRest[i] - vec3{ 0, MIRROR_HOVER, 0 };
 	}
 	RETRO_InitializeFaceNormals(Mirror);
 
@@ -260,6 +260,6 @@ void DEMO_Initialize(void)
 	Mirror = RETRO_Allocate3DModel();
 	BuildMirror(Mirror);
 	for (int i = 0; i < Mirror->vertices; i++) {
-		MirrorRest[i] = Mirror->vertex[i];
+		MirrorRest[i] = Mirror->vertex[i].pos;
 	}
 }

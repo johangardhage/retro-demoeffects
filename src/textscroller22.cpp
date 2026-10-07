@@ -132,21 +132,16 @@ void DEMO_Render(RETRO_Time time)
 	double angleperpixel = 2 * M_PI / (length * WRAP_WIDTH);
 	int order[256];
 	double angle[256];
+	float depth[256];
 	int cursor = 0;
 	for (int i = 0; i < length; i++) {
 		order[i] = i;
 		int width = RETRO_CharWidth(Font, (unsigned char)ScrollText[0][i]);
 		angle[i] = phase + (cursor + width / 2.0) * angleperpixel;
+		depth[i] = cos(angle[i]);
 		cursor += width;
 	}
-	for (int i = 1; i < length; i++) {
-		int item = order[i], j = i;
-		while (j > 0 && cos(angle[order[j - 1]]) > cos(angle[item])) {
-			order[j] = order[j - 1];
-			j--;
-		}
-		order[j] = item;
-	}
+	RETRO_SortIndices(order, depth, length);
 	for (int n = 0; n < length; n++) {
 		int i = order[n];
 		DrawGlyph(i, angle[i], true, paintdepth);

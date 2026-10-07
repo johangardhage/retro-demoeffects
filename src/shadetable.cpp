@@ -86,6 +86,7 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retrofont.h"
+#include "lib/retromath.h"
 #include "lib/retroshadetable.h"
 #include "lib/retrovector.h"
 
@@ -245,6 +246,7 @@ static void SortColors(Subject *subject)
 {
 	float key[RETRO_COLORS];
 	for (int color = 0; color < subject->colors; color++) {
+		subject->order[color] = color;
 		vec3 lab = Lab(ColorVector(subject->source[color]));
 		float lightness = lab.x / 100;
 		if (hypotf(lab.y, lab.z) < GRAY_CHROMA) {
@@ -255,13 +257,7 @@ static void SortColors(Subject *subject)
 		}
 	}
 
-	for (int i = 0; i < subject->colors; i++) {
-		int place = i;
-		for (; place > 0 && key[subject->order[place - 1]] > key[i]; place--) {
-			subject->order[place] = subject->order[place - 1];
-		}
-		subject->order[place] = i;
-	}
+	RETRO_SortIndices(subject->order, key, subject->colors);
 }
 
 //

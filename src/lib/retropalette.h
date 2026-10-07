@@ -310,6 +310,14 @@ inline RETRO_Palette RETRO_TintColor(RETRO_Palette color, float neutral, const f
 	return { (unsigned char)(color.r * red), (unsigned char)(color.g * green), (unsigned char)(color.b * neutral) };
 }
 
+// A color under light of a color, as a color light table lights it: each
+// channel scaled by its own tint, red, green and blue, with the fraction
+// dropped and the shade unused. Shaped as a shade table's light.
+inline RETRO_Palette RETRO_LightColor(RETRO_Palette color, float shade, const float *tint)
+{
+	return { (unsigned char)(color.r * tint[0]), (unsigned char)(color.g * tint[1]), (unsigned char)(color.b * tint[2]) };
+}
+
 //
 // Encode an amount of light for display, by the sRGB transfer function of
 // IEC 61966-2-1. Lighting adds and multiplies amounts of light, so it has to
@@ -466,14 +474,15 @@ inline float RETRO_PhongIntensity(float facecolor, float lightcolor, float ambie
 //
 // A face color lit at the angle theta, every channel by the phong reflection
 // model under the light's own color. face is in intensities between 0.0 and
-// 1.0 and the result is scaled to colormax
+// 1.0 and the result is scaled to colormax, each component rounded to the
+// nearest level as RETRO_CreateShadingRamps rounds its own
 //
 inline RETRO_Palette RETRO_PhongColor(vec3 face, float theta, float specularity, float falloff, int colormax)
 {
 	RETRO_Palette color;
-	color.r = colormax * RETRO_PhongIntensity(face.x, RETRO_LIGHT_R, RETRO_AMBIENT_R, theta, specularity, falloff);
-	color.g = colormax * RETRO_PhongIntensity(face.y, RETRO_LIGHT_G, RETRO_AMBIENT_G, theta, specularity, falloff);
-	color.b = colormax * RETRO_PhongIntensity(face.z, RETRO_LIGHT_B, RETRO_AMBIENT_B, theta, specularity, falloff);
+	color.r = colormax * RETRO_PhongIntensity(face.x, RETRO_LIGHT_R, RETRO_AMBIENT_R, theta, specularity, falloff) + 0.5f;
+	color.g = colormax * RETRO_PhongIntensity(face.y, RETRO_LIGHT_G, RETRO_AMBIENT_G, theta, specularity, falloff) + 0.5f;
+	color.b = colormax * RETRO_PhongIntensity(face.z, RETRO_LIGHT_B, RETRO_AMBIENT_B, theta, specularity, falloff) + 0.5f;
 	return color;
 }
 
@@ -565,6 +574,11 @@ inline void RETRO_CreateMattePalette(RETRO_Palette face = RETRO_DEEPPINK, RETRO_
 //
 // Outside the disk the darkest material shade is kept rather than black, so a
 // grazing lookup never punches a hole
+//
+// The disk is centered where the lookup centers it: texel x is read for u in
+// [x, x + 1), so the map's middle, index (W - 1) / 2, sits at u = W / 2. Its
+// rim is (W - 1) / 2 texels out, half a texel short of the W / 2 a full-disk
+// lookup reaches, and that lookup's u = W clamps onto the rim texel
 //
 inline void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 {
@@ -871,8 +885,12 @@ inline void RETRO_AddHistogramColor(RETRO_ColorHistogram *histogram, RETRO_Palet
 // it was given. The held entries are never moved, but they take the colors
 // nearest them like any other entry
 //
+// With no colors to fit, the entries after the held ones are left as they are
+//
 inline void RETRO_FitPalette(const vec3 *color, const float *weight, int count, RETRO_Palette *palette, int held, int colors, int iterations, int colormax)
 {
+	if (count <= 0) return;
+
 	float *distance = (float *)malloc(count * sizeof(float));
 	if (!distance) {
 		RETRO_RageQuit("Cannot allocate palette fitting memory\n");

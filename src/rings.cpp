@@ -116,6 +116,8 @@
 static const float RING_PITCH = (1.0f - HOLE) / (RING_COUNT - 1 + RING_FILL);
 static const float RING_WIDTH = RING_FILL * RING_PITCH;
 
+static RETRO_Lighting Lighting = { 1, { { {}, 1 } } }; // its direction set every frame
+
 struct RingStop {
 	float t;
 	RETRO_Palette color;
@@ -286,10 +288,10 @@ void DEMO_Render(RETRO_Time time)
 {
 	float angle1 = (float)fmod(time.total * LIGHT_SPEED_1 + LIGHT_PHASE_1, 2.0 * M_PI);
 	float angle2 = (float)fmod(time.total * LIGHT_SPEED_2 + LIGHT_PHASE_2, 2.0 * M_PI);
-	RETRO_Render.lightsource = RETRO_LightSource(
+	Lighting.light[0].direction = normalize(vec3{
 		LIGHT_REACH * 0.5f * (cosf(angle1) + cosf(angle2)),
 		-LIGHT_REACH * 0.5f * (sinf(angle1) + sinf(angle2)),
-		LIGHT_Z);
+		LIGHT_Z });
 
 	// Vertices and faces are packed one band at a time: four corners and
 	// four quads a segment. Each band is turned about the center, then
@@ -327,11 +329,10 @@ void DEMO_Render(RETRO_Time time)
 		for (int i = 0; i < perring; i++) {
 			RETRO_RotateVertex(&model->vertex[base + i], matrix);
 			model->vertex[base + i].rpos.y -= fall;
-			model->normal[base + i].rdir = matrix * model->normal[base + i].dir;
+			RETRO_RotateUnitVector(&model->normal[base + i], matrix);
 		}
 		for (int i = 0; i < SEGMENTS * 2; i++) {
-			UnitVector *normal = &model->normal[WallNormal(ring, 0, WALL_TOP) + i];
-			normal->rdir = matrix * normal->dir;
+			RETRO_RotateUnitVector(&model->normal[WallNormal(ring, 0, WALL_TOP) + i], matrix);
 		}
 	}
 
@@ -356,6 +357,7 @@ void DEMO_Initialize(void)
 	Model3D *model = RETRO_Allocate3DModel();
 	model->c = 1;
 	model->shades = BAND_SHADES;
+	model->lighting = &Lighting;
 	BuildRings(model);
 	RETRO_InitializeFaceNormals(model);
 	BuildHighlightNormals(model);

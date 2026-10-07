@@ -92,12 +92,12 @@ static bool TerrainOccludes(const ProjectedDot &dot)
 {
 	const float samplestep = 2.0f;
 	float height = RETRO_TerrainHeight(dot.worldx, dot.worldz);
-	for (float distance = RETRO_TerrainView.nearplane + samplestep;
+	for (float distance = RETRO_TerrainLens.nearplane + samplestep;
 		distance < dot.depth - samplestep; distance += samplestep) {
 		float t = distance / dot.depth;
-		float x = mix(RETRO_Camera.x, dot.worldx, t);
-		float z = mix(RETRO_Camera.z, dot.worldz, t);
-		float rayheight = mix(RETRO_Camera.height, height, t);
+		float x = mix(RETRO_TerrainCamera.x, dot.worldx, t);
+		float z = mix(RETRO_TerrainCamera.z, dot.worldz, t);
+		float rayheight = mix(RETRO_TerrainCamera.height, height, t);
 		if (RETRO_TerrainHeightLinear(x, z) > rayheight + 1.0f) return true;
 	}
 	return false;
@@ -106,25 +106,25 @@ static bool TerrainOccludes(const ProjectedDot &dot)
 // Project a smoothly distance-thinned grid inside the view radius.
 static void CollectTerrainDots(float maxdistance)
 {
-	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
+	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_TerrainCamera.heading);
 	float maxdistance2 = maxdistance * maxdistance;
-	int minx = (int)floorf(RETRO_Camera.x - maxdistance);
-	int maxx = (int)ceilf(RETRO_Camera.x + maxdistance);
-	int minz = (int)floorf(RETRO_Camera.z - maxdistance);
-	int maxz = (int)ceilf(RETRO_Camera.z + maxdistance);
+	int minx = (int)floorf(RETRO_TerrainCamera.x - maxdistance);
+	int maxx = (int)ceilf(RETRO_TerrainCamera.x + maxdistance);
+	int minz = (int)floorf(RETRO_TerrainCamera.z - maxdistance);
+	int maxz = (int)ceilf(RETRO_TerrainCamera.z + maxdistance);
 
 	for (int z = minz; z <= maxz; z++) {
-		float dz = z - RETRO_Camera.z;
+		float dz = z - RETRO_TerrainCamera.z;
 		for (int x = minx; x <= maxx; x++) {
-			float dx = x - RETRO_Camera.x;
+			float dx = x - RETRO_TerrainCamera.x;
 			float radius2 = dx * dx + dz * dz;
 			if (radius2 > maxdistance2) continue;
 
-			RETRO_TerrainEye eye;
-			RETRO_TerrainPoint point;
+			vec3 eye;
+			PolygonPoint point;
 			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, basis, &eye, &point)) continue;
 
-			ProjectedDots[ProjectedDotCount++] = { (int)point.spos.x, (int)point.spos.y, x, z, eye.depth, RETRO_TerrainColor(x, z) };
+			ProjectedDots[ProjectedDotCount++] = { (int)point.pos.x, (int)point.pos.y, x, z, eye.z, RETRO_TerrainColor(x, z) };
 		}
 	}
 }

@@ -47,14 +47,14 @@ static RETRO_Image *ScrollImage;
 // Terrain and letters use the same perspective and pixel depth buffer.
 static void PlotDot(float x, float y, float z, const RETRO_TerrainIslandFrame &frame, unsigned char color)
 {
-	RETRO_TerrainEye eye = RETRO_TerrainIslandEye(x, y, z, frame);
-	if (eye.depth <= RETRO_TerrainView.nearplane) return;
+	vec3 eye = RETRO_TerrainIslandEye(x, y, z, frame);
+	if (eye.z <= RETRO_TerrainLens.nearplane) return;
 
-	RETRO_TerrainPoint point = RETRO_ProjectTerrainView(eye);
-	if (point.spos.x < 0 || point.spos.x >= RETRO_WIDTH || point.spos.y < 0 || point.spos.y >= RETRO_HEIGHT) return;
+	PolygonPoint point = RETRO_ProjectViewPoint(RETRO_TerrainLens, eye);
+	if (point.pos.x < 0 || point.pos.x >= RETRO_WIDTH || point.pos.y < 0 || point.pos.y >= RETRO_HEIGHT) return;
 
-	int sx = (int)point.spos.x;
-	int sy = (int)point.spos.y;
+	int sx = (int)point.pos.x;
+	int sy = (int)point.pos.y;
 	if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, point.q)) {
 		RETRO_PutPixel(sx, sy, color);
 	}

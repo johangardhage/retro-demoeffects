@@ -33,6 +33,8 @@ struct Fragment; // one pixel of a surface, for Model3D::shader; see retropoly.h
 #define RETRO_MAX_NORMALS 1500 // a two sided mesh needs one per side of a vertex
 #define RETRO_MAX_FACES 2000
 #define RETRO_MAX_FACEVERTICES 5
+#define RETRO_MAX_MATERIALS 16
+#define RETRO_MATERIAL_NAME 32 // the longest material name, with its terminator
 #define RETRO_MAX_MODELS 32 // a demo can hold several models at once, as it can images; a
 									// per-character glyph cache is the heaviest current user
 
@@ -76,6 +78,8 @@ struct Face {
 												// reached the winding test, so read it only for a face in
 												// the draw list
 	float depth;									// Mean rotated depth, the painter's sort key
+	int material;								// Which of the model's material names the face was listed
+												// under, and 0 for a face listed before any
 };
 
 // Default cap on Glenz's additive framebuffer write: the unsigned char
@@ -172,6 +176,10 @@ struct Model3D {
 												// model never projected that way, keeps every ray parallel
 												// to the view axis
 	GlenzLighting glenzlighting;				// Configuration for the Glenz renderer
+	char material[RETRO_MAX_MATERIALS][RETRO_MATERIAL_NAME];	// The names a file's usemtl lines give its parts,
+												// in the order they first appear. What each one looks
+												// like is the demo's to decide, so no library is read
+	int materials;								// Material names held, or zero for a file without any
 };
 
 inline struct {
@@ -663,6 +671,15 @@ inline void RETRO_MorphModel(float u, Model3D *model = NULL)
 	RETRO_BlendModelPoses(a, b, f - a, model);
 }
 
+// The index of a material the model's file named, or -1 if it named none so
+inline int RETRO_ModelMaterial(const Model3D *model, const char *name)
+{
+	for (int i = 0; i < model->materials; i++) {
+		if (strcmp(model->material[i], name) == 0) return i;
+	}
+	return -1;
+}
+
 //
 // Load a model, scaling its 0 to 1 UVs into texels, and with it the animation
 // that poses it, if it is given one
@@ -688,6 +705,7 @@ inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = 
 	}
 
 	int vertices = 0, uvs = 0, normals = 0, faces = 0;
+	int material = 0;
 
 	// Check before writing: overflow walks into the next list in this struct.
 	char row[128];
@@ -736,6 +754,7 @@ inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = 
 			}
 
 			model->face[faces].vertices = matches / 3;
+			model->face[faces].material = material;
 
 			// Store vertex indices to face
 			for (int i = 0; i < model->face[faces].vertices; i++) {
@@ -744,6 +763,18 @@ inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = 
 				model->face[faces].vertexnormal[i] = normal[i] - 1;
 			}
 			faces++;
+		} else if (strcmp(row, "usemtl") == 0) { // The faces after this belong to a part
+			if (fscanf(fp, "%127s", row) != 1 || strlen(row) >= RETRO_MATERIAL_NAME) {
+				RETRO_RageQuit("Cannot read material name, expected one shorter than %d: %s\n", RETRO_MATERIAL_NAME, filename);
+			}
+			material = RETRO_ModelMaterial(model, row);
+			if (material < 0) {
+				if (model->materials >= RETRO_MAX_MATERIALS) {
+					RETRO_RageQuit("Too many materials to fit the material list: %s\n", filename);
+				}
+				material = model->materials++;
+				strcpy(model->material[material], row);
+			}
 		} else { // Probably a comment, eat up the rest of the line
 			fgets(row, 128, fp);
 		}
@@ -1085,12 +1116,17 @@ inline void RETRO_Save3DModel(const char *filename, Model3D *model)
 		fprintf(fp, "vn %f %f %f\n", model->normal[i].dir.x, model->normal[i].dir.y, model->normal[i].dir.z);
 	}
 
-	// Save faces
+	// Save faces, each run of one material under its name
+	int material = -1;
 	for (int i = 0; i < model->faces; i++) {
 		// The loader reads three or four corners, so only those are written
 		Face *face = &model->face[i];
 		if (face->vertices != 3 && face->vertices != 4) {
 			continue;
+		}
+		if (model->materials > 0 && face->material != material) {
+			material = face->material;
+			fprintf(fp, "usemtl %s\n", model->material[material]);
 		}
 		fprintf(fp, "f");
 		for (int j = 0; j < face->vertices; j++) {

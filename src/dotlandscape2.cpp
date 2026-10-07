@@ -29,15 +29,15 @@ static void DrawTerrainDots(const RETRO_TerrainIslandFrame &frame)
 
 	for (int z = 0; z < height; z++) {
 		for (int x = 0; x < width; x++) {
-			RETRO_TerrainEye eye = RETRO_TerrainIslandEye(x, RETRO_TerrainHeight(x, z), z, frame);
+			vec3 eye = RETRO_TerrainIslandEye(x, RETRO_TerrainHeight(x, z), z, frame);
 			if (!RETRO_TerrainEyeInView(eye)) continue;
 
-			RETRO_TerrainPoint point = RETRO_ProjectTerrainView(eye);
-			int sx = (int)point.spos.x;
-			int sy = (int)point.spos.y;
+			PolygonPoint point = RETRO_ProjectViewPoint(RETRO_TerrainLens, eye);
+			int sx = (int)point.pos.x;
+			int sy = (int)point.pos.y;
 			if (!RETRO_OnScreen(sx, sy)) continue;
 
-			if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, 1.0f / eye.depth)) {
+			if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, 1.0f / eye.z)) {
 				RETRO_PutPixel(sx, sy, RETRO_TerrainColor(x, z));
 			}
 		}

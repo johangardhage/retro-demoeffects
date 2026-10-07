@@ -75,7 +75,7 @@ static const unsigned char SunColor[LANDSCAPE_SUNRINGS] = { 247, 248, 249 };
 
 struct WorldVertex {
 	vec3 pos;
-	RETRO_TerrainVertex vertex;
+	RETRO_CameraVertex vertex;
 };
 
 // The world position is kept alongside the camera's view of it: the face
@@ -103,20 +103,20 @@ static WorldVertex TerrainVertex(float x, float z, const RETRO_TerrainBasis &bas
 //
 static void DrawSun(const RETRO_TerrainBasis &basis)
 {
-	RETRO_TerrainEye eye = RETRO_TerrainCameraEye(RETRO_TerrainLight, basis);
-	if (eye.depth <= 0.0f) return;
+	vec3 eye = RETRO_TerrainCameraEye(RETRO_TerrainLight, basis);
+	if (eye.z <= 0.0f) return;
 
-	RETRO_TerrainPoint point = RETRO_ProjectTerrainView(eye);
+	PolygonPoint point = RETRO_ProjectViewPoint(RETRO_TerrainLens, eye);
 	for (int ring = 0; ring < LANDSCAPE_SUNRINGS; ring++) {
-		RETRO_DrawEllipse(point.spos.x, point.spos.y, SunRadius[ring], SunRadius[ring], SunColor[ring]);
+		RETRO_DrawEllipse(point.pos.x, point.pos.y, SunRadius[ring], SunRadius[ring], SunColor[ring]);
 	}
 }
 
 static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const WorldVertex &c, unsigned char basecolor)
 {
-	RETRO_TerrainVertex triangle[3] = { a.vertex, b.vertex, c.vertex };
+	RETRO_CameraVertex triangle[3] = { a.vertex, b.vertex, c.vertex };
 	PolygonPoint polygon[4];
-	int points = RETRO_ClipProjectTerrainPolygon(triangle, 3, polygon);
+	int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, triangle, 3, polygon);
 	if (points < 3) return;
 
 	// The unnormalized cross product supplies both the face normal and its
@@ -201,6 +201,6 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(SunColor[1], RETRO_FAWN);
 	RETRO_SetColor(SunColor[2], RETRO_BLANCHEDALMOND);
 
-	RETRO_TerrainView.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_TerrainLens.nearplane = LANDSCAPE_NEARPLANE;
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

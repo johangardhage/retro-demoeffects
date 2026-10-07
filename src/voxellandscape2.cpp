@@ -106,20 +106,20 @@ void DEMO_Render(RETRO_Time time)
 	// hundred thousand of those a frame. Taken into locals the compiler can hold
 	// them in registers; left as fields of a library global it has to assume the
 	// walk might change them and load each one again every time.
-	float horizon = RETRO_TerrainView.horizon;
+	float horizon = RETRO_TerrainLens.center.y;
 	float distance = RETRO_TerrainView.distance;
 
 	// The eye in stored heights and the focal length in world units per stored
 	// height: the walk then subtracts a map byte from a map byte and scales the
 	// difference once, instead of scaling every byte it reads. Both sides of the
 	// projection are moved together, so it is the picture it always was.
-	float focal = RETRO_TerrainView.focaly * RETRO_Terrain.scale;
-	float cameraheight = RETRO_Camera.height / RETRO_Terrain.scale;
+	float focal = RETRO_TerrainLens.focaly * RETRO_Terrain.scale;
+	float cameraheight = RETRO_TerrainCamera.height / RETRO_Terrain.scale;
 
 	// The slice is the lens's frustum on the ground. The two ends keep that
 	// bearing at every depth, so the heading and the slope are taken once here
 	// and only scaled by z below
-	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
+	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_TerrainCamera.heading);
 	RETRO_TerrainSlice slice = RETRO_TerrainViewSlice(basis);
 
 	// Where each column has been painted down to, and the color it last
@@ -138,8 +138,8 @@ void DEMO_Render(RETRO_Time time)
 		vec2 pr = z * slice.right;
 		vec2 d = (pr - pl) / RETRO_WIDTH;
 
-		pl.x += RETRO_Camera.x;
-		pl.y += RETRO_Camera.z;
+		pl.x += RETRO_TerrainCamera.x;
+		pl.y += RETRO_TerrainCamera.z;
 		float invz = focal / z;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			int heightonscreen = (int)((cameraheight - RETRO_TerrainSampleLinear(heightmap, pl.x, pl.y)) * invz + horizon);

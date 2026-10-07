@@ -27,27 +27,27 @@
 // Draw a smoothly distance-thinned grid inside the view radius.
 static void DrawTerrainDots(float maxdistance)
 {
-	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
+	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_TerrainCamera.heading);
 	float maxdistance2 = maxdistance * maxdistance;
-	int minx = (int)floorf(RETRO_Camera.x - maxdistance);
-	int maxx = (int)ceilf(RETRO_Camera.x + maxdistance);
-	int minz = (int)floorf(RETRO_Camera.z - maxdistance);
-	int maxz = (int)ceilf(RETRO_Camera.z + maxdistance);
+	int minx = (int)floorf(RETRO_TerrainCamera.x - maxdistance);
+	int maxx = (int)ceilf(RETRO_TerrainCamera.x + maxdistance);
+	int minz = (int)floorf(RETRO_TerrainCamera.z - maxdistance);
+	int maxz = (int)ceilf(RETRO_TerrainCamera.z + maxdistance);
 
 	for (int z = minz; z <= maxz; z++) {
-		float dz = z - RETRO_Camera.z;
+		float dz = z - RETRO_TerrainCamera.z;
 		for (int x = minx; x <= maxx; x++) {
-			float dx = x - RETRO_Camera.x;
+			float dx = x - RETRO_TerrainCamera.x;
 			float radius2 = dx * dx + dz * dz;
 			if (radius2 > maxdistance2) continue;
 
-			RETRO_TerrainEye eye;
-			RETRO_TerrainPoint point;
+			vec3 eye;
+			PolygonPoint point;
 			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, basis, &eye, &point)) continue;
 
-			int sx = (int)point.spos.x;
-			int sy = (int)point.spos.y;
-			if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, 1.0f / eye.depth)) {
+			int sx = (int)point.pos.x;
+			int sy = (int)point.pos.y;
+			if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, 1.0f / eye.z)) {
 				RETRO_PutPixel(sx, sy, RETRO_TerrainColor(x, z));
 			}
 		}

@@ -7,10 +7,13 @@
 #ifndef _RETROCAMERA_H_
 #define _RETROCAMERA_H_
 
+#include <float.h> // FLT_MIN
 #include "retro.h"
+#include "retrogfx.h"
 #include "retromodel.h"
 #include "retromath.h"
 #include "retromatrix.h"
+#include "retropoly.h"
 
 // A pinhole's worth of focal length, decoupled from any near-plane offset.
 // RETRO_PROJECTION_EYEDISTANCE (retromath.h) is not reused here: it is half
@@ -37,11 +40,26 @@
 // recovered from it - the turn a Descent or Wing Commander style ship needs
 // after an arbitrary sequence of turns and rolls.
 //
+//
+// What the camera looks through: a pinhole with a focal length across and one
+// down, the point on the screen the view direction lands on, the nearest depth
+// worth drawing, and the part of the screen the view fills. The defaults are
+// RETRO_ProjectViewVertex's pinhole over the whole screen.
+//
+struct RETRO_CameraLens {
+	float focalx = RETRO_CAMERA_FOCAL;
+	float focaly = RETRO_CAMERA_FOCAL;
+	vec2 center = { RETRO_WIDTH / 2.0f, RETRO_HEIGHT / 2.0f };
+	float nearplane = 1.0f;
+	ClipRect view;
+};
+
 struct RETRO_Camera {
 	vec3 pos;			// Eye position, world space
 	vec3 right;			// Frame: screen +x
 	vec3 down;			// Frame: screen +y
 	vec3 forward;		// Frame: view direction
+	RETRO_CameraLens lens;
 };
 
 inline void RETRO_InitializeCamera(RETRO_Camera *camera, vec3 pos = { 0, 0, 0 })
@@ -165,6 +183,245 @@ inline void RETRO_ProjectViewVertex(Vertex *vertex, float focal = RETRO_CAMERA_F
 	} else {
 		vertex->q = 1.0f / vertex->rpos.z;
 		vertex->spos = { cx + focal * vertex->rpos.x * vertex->q, cy + focal * vertex->rpos.y * vertex->q };
+	}
+}
+
+// *******************************************************************
+// Through the lens
+// *******************************************************************
+
+// The most corners a polygon handed to RETRO_ClipProjectViewPolygon may have.
+// Each of the five cuts adds at most one more.
+#define RETRO_CAMERA_MAX_POLYGON 32
+#define RETRO_CAMERA_CLIP_PLANES 5
+
+// A world direction in the camera's frame: right, down and forward of the eye.
+// The rotation alone, so it does not move with the eye.
+inline vec3 RETRO_ViewDirection(const RETRO_Camera *camera, vec3 direction)
+{
+	return { dot(direction, camera->right), dot(direction, camera->down), dot(direction, camera->forward) };
+}
+
+// A world point in the camera's frame
+inline vec3 RETRO_ViewPoint(const RETRO_Camera *camera, vec3 point)
+{
+	return RETRO_ViewDirection(camera, point - camera->pos);
+}
+
+// The lens's pinhole, for a point in the camera's frame in front of the eye.
+// The caller decides what is worth projecting first: a direction projects to
+// where it points, at any distance.
+inline PolygonPoint RETRO_ProjectViewPoint(const RETRO_CameraLens &lens, vec3 eye)
+{
+	PolygonPoint point = {};
+	point.q = 1.0f / eye.z;
+	point.pos = { lens.center.x + lens.focalx * eye.x * point.q, lens.center.y + lens.focaly * eye.y * point.q };
+	return point;
+}
+
+//
+// A polygon corner in the camera's frame, before the pinhole, with what a
+// drawer interpolates
+//
+struct RETRO_CameraVertex {
+	vec3 eye;						// Right, down and forward of the eye
+	vec2 uv;						// Texture coordinates
+	float c;						// Shade, or palette index
+	float tint[RETRO_MAX_TINTS];	// Further light levels, for a shade table with tints
+};
+
+// The corner t of the way along an edge. Every field is linear along an edge
+// in the camera's frame, so a cut corner is the same mix of the edge's ends
+// in all of them.
+inline RETRO_CameraVertex RETRO_MixCameraVertex(const RETRO_CameraVertex &a, const RETRO_CameraVertex &b, float t)
+{
+	RETRO_CameraVertex v;
+	v.eye = mix(a.eye, b.eye, t);
+	v.uv = mix(a.uv, b.uv, t);
+	v.c = mix(a.c, b.c, t);
+	for (int j = 0; j < RETRO_MAX_TINTS; j++) {
+		v.tint[j] = mix(a.tint[j], b.tint[j], t);
+	}
+	return v;
+}
+
+// The part of a polygon on the side of a plane through the eye where
+// dot(plane, eye) is not negative
+inline int RETRO_ClipViewPolygonToPlane(const RETRO_CameraVertex *vertex, int count, RETRO_CameraVertex *clipped, vec3 plane)
+{
+	int points = 0;
+	for (int i = 0; i < count; i++) {
+		const RETRO_CameraVertex &a = vertex[i];
+		const RETRO_CameraVertex &b = vertex[(i + 1) % count];
+		float da = dot(plane, a.eye);
+		float db = dot(plane, b.eye);
+		if (da >= 0) clipped[points++] = a;
+		if ((da >= 0) != (db >= 0)) clipped[points++] = RETRO_MixCameraVertex(a, b, da / (da - db));
+	}
+	return points;
+}
+
+// The part of a polygon at or past the near plane. A cut corner is set on the
+// plane exactly, so rounding cannot leave it a hair behind.
+inline int RETRO_ClipViewPolygonToNearPlane(const RETRO_CameraVertex *vertex, int count, RETRO_CameraVertex *clipped, float nearplane)
+{
+	int points = 0;
+	for (int i = 0; i < count; i++) {
+		const RETRO_CameraVertex &a = vertex[i];
+		const RETRO_CameraVertex &b = vertex[(i + 1) % count];
+		bool ainside = a.eye.z >= nearplane;
+		bool binside = b.eye.z >= nearplane;
+		if (ainside) clipped[points++] = a;
+		if (ainside != binside) {
+			RETRO_CameraVertex &v = clipped[points++];
+			v = RETRO_MixCameraVertex(a, b, (nearplane - a.eye.z) / (b.eye.z - a.eye.z));
+			v.eye.z = nearplane;
+		}
+	}
+	return points;
+}
+
+//
+// Clip a polygon in the camera's frame to the view, then project it
+//
+// The four sides of the view are planes through the eye, each a pixel outside
+// the edge of lens.view so rounding at the edge leaves no gap. They meet at
+// the eye, so between them they also cut away everything behind it, and a
+// polygon reaching far past the edge of the screen is not projected far off
+// it. The near plane is cut last.
+//
+// count may be up to RETRO_CAMERA_MAX_POLYGON, and point must have room for
+// RETRO_CAMERA_CLIP_PLANES more. Returns the corners written; fewer than three
+// is nothing to draw.
+//
+inline int RETRO_ClipProjectViewPolygon(const RETRO_CameraLens &lens, const RETRO_CameraVertex *vertex, int count, PolygonPoint *point)
+{
+	float left = (lens.view.x0 - 1 - lens.center.x) / lens.focalx;
+	float right = (lens.view.x1 + 1 - lens.center.x) / lens.focalx;
+	float top = (lens.view.y0 - 1 - lens.center.y) / lens.focaly;
+	float bottom = (lens.view.y1 + 1 - lens.center.y) / lens.focaly;
+	vec3 sides[4] = { { 1, 0, -left }, { -1, 0, right }, { 0, 1, -top }, { 0, -1, bottom } };
+
+	// Most polygons are inside all four sides, and a cut that keeps every
+	// corner would only copy them
+	bool inside = true;
+	for (int i = 0; i < count && inside; i++) {
+		for (const vec3 &side : sides) {
+			if (dot(side, vertex[i].eye) < 0) {
+				inside = false;
+				break;
+			}
+		}
+	}
+
+	RETRO_CameraVertex clipped[2][RETRO_CAMERA_MAX_POLYGON + RETRO_CAMERA_CLIP_PLANES];
+	const RETRO_CameraVertex *from = vertex;
+	for (int i = 0; i < 4 && !inside; i++) {
+		count = RETRO_ClipViewPolygonToPlane(from, count, clipped[i % 2], sides[i]);
+		if (count < 3) return 0;
+		from = clipped[i % 2];
+	}
+	count = RETRO_ClipViewPolygonToNearPlane(from, count, clipped[0], lens.nearplane);
+	if (count < 3) return 0;
+
+	for (int i = 0; i < count; i++) {
+		point[i] = RETRO_ProjectViewPoint(lens, clipped[0][i].eye);
+		point[i].c = clipped[0][i].c;
+		point[i].uv = clipped[0][i].uv;
+		for (int j = 0; j < RETRO_MAX_TINTS; j++) {
+			point[i].tint[j] = clipped[0][i].tint[j];
+		}
+	}
+	return count;
+}
+
+// *******************************************************************
+// A flat world through the lens
+// *******************************************************************
+
+//
+// How much the direction through a point on the screen climbs, along a
+// world's unit up
+//
+// The direction is the pinhole run backward: forward, plus right and down by
+// how far the point is from the lens's center over its focal lengths. It is
+// linear in the point, so the horizon, where it is zero, is a straight line.
+//
+inline float RETRO_ViewClimb(const RETRO_Camera *camera, vec2 p, vec3 up)
+{
+	const RETRO_CameraLens &lens = camera->lens;
+	return dot(camera->forward, up) + dot(camera->right, up) * (p.x - lens.center.x) / lens.focalx + dot(camera->down, up) * (p.y - lens.center.y) / lens.focaly;
+}
+
+//
+// The sky and the ground of a flat world, split along the horizon
+//
+// The lens's view is filled with sky, then the part of it below the horizon
+// with ground: the view's corners cut along the horizon as a polygon's edges
+// are cut at a plane. The ground goes through the depth buffer at the
+// faintest depth a cleared buffer still takes, so anything drawn after it
+// covers it.
+//
+inline void RETRO_DrawHorizon(const RETRO_Camera *camera, vec3 up, unsigned char sky, unsigned char ground)
+{
+	const ClipRect &view = camera->lens.view;
+	RETRO_DrawRectangle(view.x0, view.y0, view.x1 - 1, view.y1 - 1, sky);
+
+	vec2 corner[4] = { { (float)view.x0, (float)view.y0 }, { (float)view.x1, (float)view.y0 }, { (float)view.x1, (float)view.y1 }, { (float)view.x0, (float)view.y1 } };
+	PolygonPoint below[5];
+	int points = 0;
+	for (int i = 0; i < 4; i++) {
+		vec2 a = corner[i], b = corner[(i + 1) % 4];
+		float ca = RETRO_ViewClimb(camera, a, up), cb = RETRO_ViewClimb(camera, b, up);
+		if (ca < 0) {
+			below[points] = {};
+			below[points++].pos = a;
+		}
+		if ((ca < 0) != (cb < 0)) {
+			below[points] = {};
+			below[points++].pos = mix(a, b, ca / (ca - cb));
+		}
+	}
+	for (int i = 0; i < points; i++) {
+		below[i].q = FLT_MIN;
+	}
+	if (points >= 3) RETRO_DrawFlatPolygon(below, points, ground, view);
+}
+
+//
+// A world line, a pixel at a time through the depth buffer
+//
+// It is cut at nearplane, which may be further out than the lens's own, so
+// that neither end lands far off the screen and the steps stay few. q is
+// linear across the screen, so it is interpolated along the steps as it is
+// across a face. Only the lens's view is drawn in.
+//
+inline void RETRO_DrawViewLine(const RETRO_Camera *camera, vec3 from, vec3 to, unsigned char color, float nearplane)
+{
+	vec3 a = RETRO_ViewPoint(camera, from);
+	vec3 b = RETRO_ViewPoint(camera, to);
+	if (a.z < nearplane && b.z < nearplane) return;
+	if (a.z < nearplane || b.z < nearplane) {
+		vec3 cut = mix(a, b, (nearplane - a.z) / (b.z - a.z));
+		cut.z = nearplane;
+		if (a.z < nearplane) a = cut;
+		else b = cut;
+	}
+
+	const ClipRect &view = camera->lens.view;
+	PolygonPoint pa = RETRO_ProjectViewPoint(camera->lens, a);
+	PolygonPoint pb = RETRO_ProjectViewPoint(camera->lens, b);
+	vec2 delta = pb.pos - pa.pos;
+	int steps = MAX((int)ceilf(MAX(fabsf(delta.x), fabsf(delta.y))), 1);
+	for (int i = 0; i <= steps; i++) {
+		float t = (float)i / steps;
+		int x = (int)floorf(pa.pos.x + delta.x * t);
+		int y = (int)floorf(pa.pos.y + delta.y * t);
+		if (x < view.x0 || x >= view.x1 || y < view.y0 || y >= view.y1) continue;
+		int offset = y * RETRO_WIDTH + x;
+		if (RETRO_DepthTest(offset, mix(pa.q, pb.q, t))) {
+			RETRO.framebuffer[offset] = color;
+		}
 	}
 }
 

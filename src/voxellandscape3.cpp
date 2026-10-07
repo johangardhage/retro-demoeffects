@@ -68,15 +68,15 @@ void DEMO_Render(RETRO_Time time)
 	int mapxmask = RETRO_Terrain.width - 1;
 	int mapzmask = RETRO_Terrain.height - 1;
 	int mapstride = RETRO_Terrain.width;
-	float focal = RETRO_TerrainView.focaly;
-	float horizon = RETRO_TerrainView.horizon;
+	float focal = RETRO_TerrainLens.focaly;
+	float horizon = RETRO_TerrainLens.center.y;
 	float distance = RETRO_TerrainView.distance;
-	float cameraheight = RETRO_Camera.height;
+	float cameraheight = RETRO_TerrainCamera.height;
 
 	// The slice is the lens's frustum on the ground. The two ends keep that
 	// bearing at every depth, so the heading and the slope are taken once here
 	// and only scaled by z below
-	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_Camera.heading);
+	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_TerrainCamera.heading);
 	RETRO_TerrainSlice slice = RETRO_TerrainViewSlice(basis);
 
 	int hiddeny[RETRO_WIDTH];
@@ -91,8 +91,8 @@ void DEMO_Render(RETRO_Time time)
 		vec2 pr = z * slice.right;
 		vec2 d = (pr - pl) / RETRO_WIDTH;
 
-		pl.x += RETRO_Camera.x;
-		pl.y += RETRO_Camera.z;
+		pl.x += RETRO_TerrainCamera.x;
+		pl.y += RETRO_TerrainCamera.z;
 		float invz = focal / z;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			// floor and not a cast: the walk runs negative wherever the camera

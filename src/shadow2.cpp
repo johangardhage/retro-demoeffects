@@ -180,9 +180,9 @@ static Light LightVertex(vec3 p, vec3 n)
 
 // A world point in the camera's frame, carrying its texture coordinates and
 // its light as table levels: neutral as the shade, red and green as the tints
-static RETRO_TerrainVertex MakeVertex(vec3 p, vec2 uv, Light light)
+static RETRO_CameraVertex MakeVertex(vec3 p, vec2 uv, Light light)
 {
-	RETRO_TerrainVertex vertex = {};
+	RETRO_CameraVertex vertex = {};
 	vertex.eye = RETRO_TerrainPointEye(p.x, p.z, p.y, View);
 	vertex.uv = uv;
 	vertex.c = light.neutral * (LIGHT_LEVELS - 1) + 0.5f;
@@ -203,10 +203,10 @@ static RETRO_ShadeTable LightTable(int texture)
 // when there is a texture, a flat color when there is not. Flat colors
 // are black with the lighting off.
 //
-static void DrawPolygon(const RETRO_TerrainVertex *vertex, int count, int texture, unsigned char color)
+static void DrawPolygon(const RETRO_CameraVertex *vertex, int count, int texture, unsigned char color)
 {
-	PolygonPoint polygon[RETRO_TERRAIN_MAX_POLYGON + 1];
-	int points = RETRO_ClipProjectTerrainPolygon(vertex, count, polygon);
+	PolygonPoint polygon[RETRO_CAMERA_MAX_POLYGON + RETRO_CAMERA_CLIP_PLANES];
+	int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, vertex, count, polygon);
 	if (points < 3) return;
 
 	if (!Lighting) color = ColorBlack;
@@ -218,7 +218,7 @@ static void DrawPolygon(const RETRO_TerrainVertex *vertex, int count, int textur
 }
 
 // The ground at sample x, z, lit
-static RETRO_TerrainVertex TerrainVertex(int x, int z)
+static RETRO_CameraVertex TerrainVertex(int x, int z)
 {
 	vec3 p = { (float)x, RETRO_TerrainHeight(x, z), (float)z };
 	vec3 n = normalize(RETRO_TerrainNormal(p.x, p.z));
@@ -236,12 +236,12 @@ static void DrawTerrain(const RETRO_TerrainMesh &mesh)
 	for (int z = mesh.minz; z < mesh.maxz; z += step) {
 		for (int x = mesh.minx; x < mesh.maxx; x += step) {
 			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
-			RETRO_TerrainVertex first = TerrainVertex(x, z);
-			RETRO_TerrainVertex across = TerrainVertex(x + step, z);
-			RETRO_TerrainVertex down = TerrainVertex(x, z + step);
-			RETRO_TerrainVertex opposite = TerrainVertex(x + step, z + step);
-			RETRO_TerrainVertex upper[3] = { first, opposite, across };
-			RETRO_TerrainVertex lower[3] = { first, down, opposite };
+			RETRO_CameraVertex first = TerrainVertex(x, z);
+			RETRO_CameraVertex across = TerrainVertex(x + step, z);
+			RETRO_CameraVertex down = TerrainVertex(x, z + step);
+			RETRO_CameraVertex opposite = TerrainVertex(x + step, z + step);
+			RETRO_CameraVertex upper[3] = { first, opposite, across };
+			RETRO_CameraVertex lower[3] = { first, down, opposite };
 			DrawPolygon(upper, 3, ASSET_TERRAIN, 0);
 			DrawPolygon(lower, 3, ASSET_TERRAIN, 0);
 		}
@@ -253,7 +253,7 @@ static void DrawModel(const Model3D *model, vec3 position, float scale, int text
 {
 	for (int i = 0; i < model->faces; i++) {
 		const Face *face = &model->face[i];
-		RETRO_TerrainVertex polygon[RETRO_MAX_FACEVERTICES];
+		RETRO_CameraVertex polygon[RETRO_MAX_FACEVERTICES];
 		for (int j = 0; j < face->vertices; j++) {
 			vec3 p = position + model->vertex[face->vertex[j]].pos * scale;
 			Light light = lit ? LightVertex(p, model->normal[face->vertexnormal[j]].dir) : Light{ 1, {} };
@@ -300,7 +300,7 @@ static void DrawShadow(const Model3D *model, vec3 position, float scale, vec3 li
 	int corners = RETRO_ConvexOutline(seen, model->vertices, outline, SHADOW_MAX_CORNERS);
 	if (corners < 3) return;
 
-	RETRO_TerrainVertex shadow[SHADOW_MAX_CORNERS];
+	RETRO_CameraVertex shadow[SHADOW_MAX_CORNERS];
 	for (int i = 0; i < corners; i++) {
 		vec3 corner = position + model->vertex[outline[i]].pos * scale;
 		vec3 p;
@@ -312,11 +312,11 @@ static void DrawShadow(const Model3D *model, vec3 position, float scale, vec3 li
 	// past it. Fanned from the center's shadow instead, the triangles stay
 	// inside the outline; each is clipped on its own, so the near plane
 	// cannot move the fan off that center
-	RETRO_TerrainVertex middle = MakeVertex({ center.x, center.y + SHADOW_LIFT, center.z }, { 0, 0 }, { 1, {} });
+	RETRO_CameraVertex middle = MakeVertex({ center.x, center.y + SHADOW_LIFT, center.z }, { 0, 0 }, { 1, {} });
 	for (int i = 0; i < corners; i++) {
-		RETRO_TerrainVertex triangle[3] = { middle, shadow[i], shadow[(i + 1) % corners] };
+		RETRO_CameraVertex triangle[3] = { middle, shadow[i], shadow[(i + 1) % corners] };
 		PolygonPoint polygon[4];
-		int points = RETRO_ClipProjectTerrainPolygon(triangle, 3, polygon);
+		int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, triangle, 3, polygon);
 		// One pass for the whole fan, including overlapping triangles.
 		RETRO_DrawRemapPolygon(polygon, points, ShadowTable, i == 0);
 	}
@@ -345,7 +345,7 @@ static void DrawText(void)
 	vec3 center = RETRO_TerrainCenter();
 	// Each line within the screen's 40 columns
 	snprintf(text, sizeof(text), "CAM [%5.0f,%5.0f,%5.0f] CELL [%d, %d]\nLighting [%s]: Amb=%d Inf=%d G=%d R=%d\nGreen y=%.0f Red y=%.0f\nShadow cast from [%s]",
-			 TO_WORLD(RETRO_Camera.x - center.x), TO_WORLD(RETRO_Camera.height), TO_WORLD(RETRO_Camera.z - center.z), (int)floorf(RETRO_Camera.x), (int)floorf(RETRO_Camera.z),
+			 TO_WORLD(RETRO_TerrainCamera.x - center.x), TO_WORLD(RETRO_TerrainCamera.height), TO_WORLD(RETRO_TerrainCamera.z - center.z), (int)floorf(RETRO_TerrainCamera.x), (int)floorf(RETRO_TerrainCamera.z),
 			 Lighting ? "ON" : "OFF", AmbientLight, InfiniteLight, PointLight[LIGHT_GREEN], PointLight[LIGHT_RED], TO_WORLD(PointLightAltitude[LIGHT_GREEN]), TO_WORLD(PointLightAltitude[LIGHT_RED]),
 			 CastFromAbove ? "ABOVE" : "POINT LIGHTS");
 	RETRO_PutString(text, 0, RETRO_HEIGHT - 37, ColorTextGreen);
@@ -498,19 +498,19 @@ void DEMO_Initialize(void)
 	RETRO_CreateShadeTable(palette, RETRO_COLORS, 1, ShadowTable, SHADOW_LIGHT);
 
 	// The lens: 90 degrees across, square pixels, pitched by the jeep
-	RETRO_TerrainView.focalx = RETRO_WIDTH / 2.0f;
-	RETRO_TerrainView.focaly = RETRO_WIDTH / 2.0f;
+	RETRO_TerrainLens.focalx = RETRO_WIDTH / 2.0f;
+	RETRO_TerrainLens.focaly = RETRO_WIDTH / 2.0f;
 	RETRO_TerrainView.step = 1;
 	RETRO_TerrainView.distance = RETRO_Terrain.width * 3 / 2;
-	RETRO_TerrainView.nearplane = WORLD(10);
+	RETRO_TerrainLens.nearplane = WORLD(10);
 
 	// The camera starts 500 up and 400 short of the center, looking at it,
 	// and falls onto the ground
 	vec3 center = RETRO_TerrainCenter();
-	RETRO_Camera.x = center.x;
-	RETRO_Camera.z = center.z - WORLD(400);
-	RETRO_Camera.height = WORLD(500);
-	RETRO_Camera.heading = M_PI;
+	RETRO_TerrainCamera.x = center.x;
+	RETRO_TerrainCamera.z = center.z - WORLD(400);
+	RETRO_TerrainCamera.height = WORLD(500);
+	RETRO_TerrainCamera.heading = M_PI;
 
 	// The hovering jeep the camera rides
 	RETRO_Vehicle.acceleration = WORLD(900);

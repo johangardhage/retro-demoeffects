@@ -51,4 +51,18 @@ inline mat3 rotateZ(float angle) { return rotateZ(cos(angle), sin(angle)); }
 inline mat3 rotate(float cx, float sx, float cy, float sy, float cz, float sz) { return rotateZ(cz, sz) * rotateY(cy, sy) * rotateX(cx, sx); }
 inline mat3 rotate(float ax, float ay, float az) { return rotateZ(az) * rotateY(ay) * rotateX(ax); }
 
+// GLM-style axis-angle map about a unit axis, counterclockwise seen from the
+// axis's tip, as rotateX, rotateY and rotateZ turn about theirs. Rodrigues'
+// formula, c I + s [axis]x + (1 - c) axis axisᵀ, one column per basis vector.
+inline mat3 rotate(float angle, vec3 axis)
+{
+	float c = cos(angle), s = sin(angle), t = 1 - c;
+	vec3 k = axis;
+	return {
+		{ c + t * k.x * k.x, s * k.z + t * k.y * k.x, -s * k.y + t * k.z * k.x },
+		{ -s * k.z + t * k.x * k.y, c + t * k.y * k.y, s * k.x + t * k.z * k.y },
+		{ s * k.y + t * k.x * k.z, -s * k.x + t * k.y * k.z, c + t * k.z * k.z }
+	};
+}
+
 #endif

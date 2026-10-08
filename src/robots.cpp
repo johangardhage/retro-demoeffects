@@ -159,7 +159,7 @@ static bool Lighting = true;
 static bool Help = true;
 
 // The camera's frame, taken once a frame
-static RETRO_TerrainBasis View;
+static RETRO_Camera View;
 
 // A vertex at p facing n, lit. Only the ambient light and the sun have any
 // blue in them, and they are white, as the light tables need
@@ -182,60 +182,7 @@ static RETRO_CameraVertex TerrainVertex(int x, int z)
 
 	// The texture is stretched once over the patch
 	vec2 uv = { p.x * (TEXTURE_SIZE - 1) / (RETRO_Terrain.width - 1), p.z * (TEXTURE_SIZE - 1) / (RETRO_Terrain.height - 1) };
-	return RETRO_TerrainTintVertex(p, uv, LightVertex(p, n), LightTable(ASSET_TERRAIN), View);
-}
-
-// Each visible cell as two triangles, split along the diagonal from its
-// first corner to the opposite one
-static void DrawTerrain(const RETRO_TerrainMesh &mesh)
-{
-	unsigned char *texture = RETRO_ImageData(ASSET_TERRAIN);
-	RETRO_ShadeTable table = LightTable(ASSET_TERRAIN);
-	int step = mesh.step;
-	for (int z = mesh.minz; z < mesh.maxz; z += step) {
-		for (int x = mesh.minx; x < mesh.maxx; x += step) {
-			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
-			RETRO_CameraVertex first = TerrainVertex(x, z);
-			RETRO_CameraVertex across = TerrainVertex(x + step, z);
-			RETRO_CameraVertex down = TerrainVertex(x, z + step);
-			RETRO_CameraVertex opposite = TerrainVertex(x + step, z + step);
-			RETRO_CameraVertex upper[3] = { first, opposite, across };
-			RETRO_CameraVertex lower[3] = { first, down, opposite };
-			RETRO_DrawTerrainPolygon(upper, 3, texture, TEXTURE_SIZE, TEXTURE_SIZE, table);
-			RETRO_DrawTerrainPolygon(lower, 3, texture, TEXTURE_SIZE, TEXTURE_SIZE, table);
-		}
-	}
-}
-
-//
-// The shadow of a model at a position and scale, cast by a point light onto
-// the shadow plane, in the pass newpass begins or the one before it. None
-// when a corner is level with the light or above it, since its ray never
-// comes down to the plane
-//
-static void DrawShadow(const Model3D *model, vec3 position, float scale, vec3 light, bool &newpass)
-{
-	vec3 flat[RETRO_MAX_VERTICES];
-	for (int i = 0; i < model->vertices; i++) {
-		vec3 p = position + model->vertex[i].pos * scale;
-		if (p.y >= light.y) return;
-		flat[i] = mix(light, p, (light.y - SHADOW_PLANE) / (light.y - p.y));
-	}
-
-	for (int i = 0; i < model->faces; i++) {
-		const Face *face = &model->face[i];
-		vec3 first = position + model->vertex[face->vertex[0]].pos * scale;
-		if (dot(face->facenormal.dir, light - first) <= 0) continue;
-
-		RETRO_CameraVertex shadow[RETRO_MAX_FACEVERTICES];
-		for (int j = 0; j < face->vertices; j++) {
-			shadow[j] = RETRO_TerrainCameraVertex(flat[face->vertex[j]], View);
-		}
-		PolygonPoint polygon[RETRO_CAMERA_MAX_POLYGON + RETRO_CAMERA_CLIP_PLANES];
-		int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, shadow, face->vertices, polygon);
-		RETRO_DrawRemapPolygon(polygon, points, ShadowTable, newpass);
-		newpass = false;
-	}
+	return RETRO_TerrainTintVertex(p, uv, LightVertex(p, n), LightTable(ASSET_TERRAIN), &View);
 }
 
 //
@@ -264,12 +211,17 @@ static void PoseRobot(double time)
 }
 
 // The sunset, which drifts to the left, and turns the other way to the camera
+// The sky drifts, and turns with the heading. It rides up and down with the
+// horizon as the vehicle's nose tips, from where it sits at the resting
+// pitch, the image's top or bottom row repeated over whatever it uncovers.
 static void DrawSky(double time)
 {
 	int scroll = WRAP((float)(time * SKY_DRIFT - RETRO_TerrainCamera.heading * SKY_TURN), RETRO_WIDTH);
+	float tip = tanf(RETRO_Vehicle.restpitch) - tanf(RETRO_Vehicle.pitch);
+	int rise = (int)lroundf(View.lens.focaly * tip);
 	const unsigned char *sky = RETRO_ImageData(ASSET_SKY);
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		const unsigned char *row = &sky[y * RETRO_WIDTH];
+		const unsigned char *row = &sky[CLAMPHEIGHT(y - rise) * RETRO_WIDTH];
 		unsigned char *screen = RETRO_FrameBuffer() + y * RETRO_WIDTH;
 		memcpy(screen, row + scroll, RETRO_WIDTH - scroll);
 		memcpy(screen + RETRO_WIDTH - scroll, row, scroll);
@@ -335,7 +287,7 @@ void DEMO_Render(RETRO_Time time)
 	}
 
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
-	View = mesh.basis;
+	View = mesh.camera;
 
 	// The point lights on their paths about the world's center
 	vec3 center = RETRO_TerrainCenter();
@@ -349,12 +301,12 @@ void DEMO_Render(RETRO_Time time)
 
 	DrawSky(time.total);
 	RETRO_ClearDepthBuffer();
-	DrawTerrain(mesh);
+	RETRO_DrawTerrainMesh(mesh, TerrainVertex, RETRO_ImageData(ASSET_TERRAIN), TEXTURE_SIZE, TEXTURE_SIZE, LightTable(ASSET_TERRAIN));
 	for (vec3 robot : robots) {
-		RETRO_DrawTerrainModel(Models[MODEL_ROBOT], identity(), robot, ROBOT_SCALE, Lighting ? Lights : Darkness, RETRO_ImageData(ASSET_SKIN), TEXTURE_SIZE, TEXTURE_SIZE, LightTable(ASSET_SKIN), View);
+		RETRO_DrawTerrainModel(Models[MODEL_ROBOT], identity(), robot, ROBOT_SCALE, Lighting ? Lights : Darkness, RETRO_ImageData(ASSET_SKIN), TEXTURE_SIZE, TEXTURE_SIZE, LightTable(ASSET_SKIN), &View);
 	}
-	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_ORANGE].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeRed : ColorBlack, View);
-	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_YELLOW].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeYellow : ColorBlack, View);
+	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_ORANGE].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeRed : ColorBlack, &View);
+	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_YELLOW].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeYellow : ColorBlack, &View);
 
 	// A shadow of both from each point light that is on, in one pass, so that
 	// where the two overlap the ground is darkened once, as under one shadow
@@ -362,7 +314,7 @@ void DEMO_Render(RETRO_Time time)
 		if (!Lighting || !Lights.light[i].on) continue;
 		bool newpass = true;
 		for (vec3 robot : robots) {
-			DrawShadow(Models[MODEL_ROBOT], robot, ROBOT_SCALE, Lights.light[i].position, newpass);
+			RETRO_DrawTerrainShadow(Models[MODEL_ROBOT], identity(), robot, ROBOT_SCALE, Lights.light[i].position, SHADOW_PLANE, ShadowTable, &View, newpass);
 		}
 	}
 
@@ -411,11 +363,12 @@ void DEMO_Initialize(void)
 	RETRO_CreateShadeTable(palette, RETRO_COLORS, 1, ShadowTable, SHADOW_LIGHT);
 
 	// The lens: 90 degrees across, square pixels, pitched by the jeep
-	RETRO_TerrainLens.focalx = RETRO_WIDTH / 2.0f;
-	RETRO_TerrainLens.focaly = RETRO_WIDTH / 2.0f;
+	RETRO_TerrainCamera.lens.focalx = RETRO_WIDTH / 2.0f;
+	RETRO_TerrainCamera.lens.focaly = RETRO_WIDTH / 2.0f;
+	RETRO_TerrainCamera.lens.center.y = RETRO_HEIGHT / 2.0f; // the vehicle pitches about the middle
 	RETRO_TerrainView.step = 1;
 	RETRO_TerrainView.distance = RETRO_Terrain.width * 3 / 2;
-	RETRO_TerrainLens.nearplane = WORLD(10);
+	RETRO_TerrainCamera.lens.nearplane = WORLD(10);
 
 	// The camera starts 500 up and 400 in front of the mechs, halfway between
 	// them and looking them in the face, along +x, and falls onto the ground

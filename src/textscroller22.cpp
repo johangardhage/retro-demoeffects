@@ -61,27 +61,18 @@ static const char *const ScrollText[] = { "    RETRO DEMOEFFECTS..." };
 
 static RETRO_Font Font;
 
-// Transform a point from a character's tangent plane into screen space.
-// Local x follows the ring tangent and local y runs down the character.
-static Vertex Project(const mat3 &matrix, double localx, double localy)
-{
-	Vertex vertex = {};
-	vertex.pos = { (float)localx, (float)localy, -RING_RADIUS };
-
-	RETRO_RotateVertex(&vertex, matrix);
-	RETRO_ProjectVertex(&vertex, PROJECTION_SCALE, RETRO_WIDTH / 2.0, RING_Y, CAMERA_DISTANCE);
-	return vertex;
-}
-
 // Project and fill one source-font pixel as a screen-space quadrilateral.
-// Increasing paintdepth makes each later cell cover the ones before it.
+// Its corners lie in the character's tangent plane, where local x follows
+// the ring tangent and local y runs down the character. Increasing
+// paintdepth makes each later cell cover the ones before it.
 static void DrawCell(const mat3 &matrix, double x, double y, int color, float &paintdepth)
 {
-	Vertex p[4] = { Project(matrix, x, y), Project(matrix, x + 1, y), Project(matrix, x + 1, y + 1), Project(matrix, x, y + 1) };
+	static const vec2 corner[4] = { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } };
 	PolygonPoint poly[4] = {};
 	paintdepth += 0.0001f;
 	for (int i = 0; i < 4; i++) {
-		poly[i].pos = p[i].spos;
+		vec3 local = { (float)(x + corner[i].x), (float)(y + corner[i].y), -RING_RADIUS };
+		poly[i].pos = RETRO_ProjectPoint(matrix * local, PROJECTION_SCALE, RETRO_WIDTH / 2.0, RING_Y, CAMERA_DISTANCE).spos;
 		poly[i].q = paintdepth;
 	}
 	RETRO_DrawFlatPolygon(poly, 4, color);

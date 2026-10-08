@@ -48,12 +48,7 @@ static float SceneDepth[RETRO_WIDTH * RETRO_HEIGHT];
 
 static PolygonPoint Project(const mat3 &matrix, float offset, float x, float y, vec2 uv)
 {
-	Vertex vertex = {};
-	vertex.pos = { x, y, -RADIUS };
-	RETRO_RotateVertex(&vertex, matrix);
-	vertex.rpos.x += offset;
-	RETRO_ProjectVertex(&vertex, 1.0f, RETRO_WIDTH / 2.0f,
-		RETRO_HEIGHT / 2.0f, CAMERA_DISTANCE);
+	Vertex vertex = RETRO_ProjectPoint(matrix * vec3{ x, y, -RADIUS } + vec3{ offset, 0, 0 }, 1.0f, RETRO_WIDTH / 2.0f, RETRO_HEIGHT / 2.0f, CAMERA_DISTANCE);
 	return { vertex.spos, 0, uv, vertex.q };
 }
 

@@ -63,20 +63,6 @@ static int Bounce(double position, int size)
 	return lround(m > size - 1 ? 2 * (size - 1) - m : m);
 }
 
-//
-// The color a part of a turn round the color circle: red at 0, then yellow,
-// green, cyan, blue and magenta a sixth of a turn apart
-//
-static RETRO_Palette Hue(double turns)
-{
-	double sixths = fract(turns) * 6;
-	return {
-		(unsigned char)(255 * CLAMP01(fabs(sixths - 3) - 1)),
-		(unsigned char)(255 * CLAMP01(2 - fabs(sixths - 2))),
-		(unsigned char)(255 * CLAMP01(2 - fabs(sixths - 4))),
-	};
-}
-
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
@@ -90,7 +76,7 @@ void DEMO_Render(RETRO_Time time)
 		for (int j = TRAIL - 1; j >= 0; j--) {
 			double t = phase - j * TRAIL_STEP;
 			int entry = LINE_RAMP0 + i * TRAIL + j;
-			RETRO_SetColor(entry, Hue(line.hue + t / HUE_PERIOD) * ((float)(TRAIL - j) / TRAIL));
+			RETRO_SetColor(entry, RETRO_HSLColor(fract(line.hue + t / HUE_PERIOD), 1, 0.5f) * ((float)(TRAIL - j) / TRAIL));
 
 			int x1 = Bounce(line.from.x + line.fromspeed.x * t, RETRO_WIDTH);
 			int y1 = Bounce(line.from.y + line.fromspeed.y * t, RETRO_HEIGHT);

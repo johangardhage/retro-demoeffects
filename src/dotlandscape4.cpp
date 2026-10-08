@@ -88,41 +88,40 @@ static void OrderDotsByDepth(void)
 // The screen-column horizon is a fast broad-phase test, but cannot account for
 // holes between projected samples. Ray sampling closes those holes and also
 // handles ridges which happen to project between two screen columns.
-static bool TerrainOccludes(const ProjectedDot &dot)
+static bool TerrainOccludes(const RETRO_Camera *camera, const ProjectedDot &dot)
 {
 	const float samplestep = 2.0f;
 	float height = RETRO_TerrainHeight(dot.worldx, dot.worldz);
-	for (float distance = RETRO_TerrainLens.nearplane + samplestep;
+	for (float distance = camera->lens.nearplane + samplestep;
 		distance < dot.depth - samplestep; distance += samplestep) {
 		float t = distance / dot.depth;
-		float x = mix(RETRO_TerrainCamera.x, dot.worldx, t);
-		float z = mix(RETRO_TerrainCamera.z, dot.worldz, t);
-		float rayheight = mix(RETRO_TerrainCamera.height, height, t);
+		float x = mix(camera->pos.x, dot.worldx, t);
+		float z = mix(camera->pos.z, dot.worldz, t);
+		float rayheight = mix(camera->pos.y, height, t);
 		if (RETRO_TerrainHeightLinear(x, z) > rayheight + 1.0f) return true;
 	}
 	return false;
 }
 
 // Project a smoothly distance-thinned grid inside the view radius.
-static void CollectTerrainDots(float maxdistance)
+static void CollectTerrainDots(const RETRO_Camera *camera, float maxdistance)
 {
-	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_TerrainCamera.heading);
 	float maxdistance2 = maxdistance * maxdistance;
-	int minx = (int)floorf(RETRO_TerrainCamera.x - maxdistance);
-	int maxx = (int)ceilf(RETRO_TerrainCamera.x + maxdistance);
-	int minz = (int)floorf(RETRO_TerrainCamera.z - maxdistance);
-	int maxz = (int)ceilf(RETRO_TerrainCamera.z + maxdistance);
+	int minx = (int)floorf(camera->pos.x - maxdistance);
+	int maxx = (int)ceilf(camera->pos.x + maxdistance);
+	int minz = (int)floorf(camera->pos.z - maxdistance);
+	int maxz = (int)ceilf(camera->pos.z + maxdistance);
 
 	for (int z = minz; z <= maxz; z++) {
-		float dz = z - RETRO_TerrainCamera.z;
+		float dz = z - camera->pos.z;
 		for (int x = minx; x <= maxx; x++) {
-			float dx = x - RETRO_TerrainCamera.x;
+			float dx = x - camera->pos.x;
 			float radius2 = dx * dx + dz * dz;
 			if (radius2 > maxdistance2) continue;
 
 			vec3 eye;
 			PolygonPoint point;
-			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, basis, &eye, &point)) continue;
+			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, camera, &eye, &point)) continue;
 
 			ProjectedDots[ProjectedDotCount++] = { (int)point.pos.x, (int)point.pos.y, x, z, eye.z, RETRO_TerrainColor(x, z) };
 		}
@@ -132,8 +131,9 @@ static void CollectTerrainDots(float maxdistance)
 void DEMO_Render(RETRO_Time time)
 {
 	RETRO_UpdateTerrainCamera(time.delta);
+	RETRO_Camera view = RETRO_TerrainViewCamera();
 	ProjectedDotCount = 0;
-	CollectTerrainDots(RETRO_TerrainView.distance);
+	CollectTerrainDots(&view, RETRO_TerrainView.distance);
 
 	// A pixel z-buffer only resolves dots that project to the very same pixel.
 	// Take them front-to-back instead and maintain the highest visible terrain
@@ -144,7 +144,7 @@ void DEMO_Render(RETRO_Time time)
 	for (int i = 0; i < ProjectedDotCount; i++) {
 		const ProjectedDot &dot = ProjectedDots[DotOrder[i]];
 		if (dot.y >= columntop[dot.x]) continue;
-		if (TerrainOccludes(dot)) continue;
+		if (TerrainOccludes(&view, dot)) continue;
 		RETRO_PutPixel(dot.x, dot.y, dot.color);
 		columntop[dot.x] = dot.y;
 	}
@@ -162,5 +162,6 @@ void DEMO_Initialize(void)
 		RETRO_RageQuit("Terrain view distance is beyond what the dot lists hold\n");
 	}
 
+	RETRO_TerrainCamera.truepitch = true; // PageUp/PageDown tip the view
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

@@ -51,18 +51,18 @@
 #define LINE_MIDDLE RETRO_Palette{ 0, 150, 255 }
 #define LINE_NEAR RETRO_Palette{ 200, 255, 255 }
 
-static RETRO_CameraVertex TerrainVertex(float x, float z, const RETRO_TerrainBasis &basis)
+static RETRO_CameraVertex TerrainVertex(float x, float z, const RETRO_Camera *camera)
 {
 	RETRO_CameraVertex vertex = {};
-	vertex.eye = RETRO_TerrainPointEye(x, z, RETRO_TerrainHeight(x, z), basis);
+	vertex.eye = RETRO_ViewPoint(camera, { x, RETRO_TerrainHeight(x, z), z });
 	return vertex;
 }
 
-static void DrawTriangle(const RETRO_CameraVertex &a, const RETRO_CameraVertex &b, const RETRO_CameraVertex &c, unsigned char color)
+static void DrawTriangle(const RETRO_CameraLens &lens, const RETRO_CameraVertex &a, const RETRO_CameraVertex &b, const RETRO_CameraVertex &c, unsigned char color)
 {
 	RETRO_CameraVertex triangle[3] = { a, b, c };
 	PolygonPoint polygon[4];
-	int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, triangle, 3, polygon);
+	int points = RETRO_ClipProjectViewPolygon(lens, triangle, 3, polygon);
 	if (points < 3) return;
 
 	RETRO_DrawFlatPolygon(polygon, points, color);
@@ -71,19 +71,19 @@ static void DrawTriangle(const RETRO_CameraVertex &a, const RETRO_CameraVertex &
 //
 // The point of the line from behind to front that is on the near plane
 //
-static vec3 CutAtNearPlane(vec3 behind, vec3 front)
+static vec3 CutAtNearPlane(float nearplane, vec3 behind, vec3 front)
 {
-	float t = (RETRO_TerrainLens.nearplane - behind.z) / (front.z - behind.z);
+	float t = (nearplane - behind.z) / (front.z - behind.z);
 	return {
 		mix(behind.x, front.x, t),
 		mix(behind.y, front.y, t),
-		RETRO_TerrainLens.nearplane,
+		nearplane,
 	};
 }
 
-static void DrawLine(vec3 a, vec3 b)
+static void DrawLine(const RETRO_CameraLens &lens, vec3 a, vec3 b)
 {
-	float nearplane = RETRO_TerrainLens.nearplane;
+	float nearplane = lens.nearplane;
 	if (a.z < nearplane && b.z < nearplane) return;
 
 	// The color is taken at the middle of the whole line
@@ -92,13 +92,13 @@ static void DrawLine(vec3 a, vec3 b)
 	unsigned char color = LINE_RAMP0 + CLAMP((int)(fade * LINE_SHADES), 0, LINE_SHADES);
 
 	if (a.z < nearplane) {
-		a = CutAtNearPlane(a, b);
+		a = CutAtNearPlane(nearplane, a, b);
 	} else if (b.z < nearplane) {
-		b = CutAtNearPlane(b, a);
+		b = CutAtNearPlane(nearplane, b, a);
 	}
 
-	PolygonPoint from = RETRO_ProjectViewPoint(RETRO_TerrainLens, a);
-	PolygonPoint to = RETRO_ProjectViewPoint(RETRO_TerrainLens, b);
+	PolygonPoint from = RETRO_ProjectViewPoint(lens, a);
+	PolygonPoint to = RETRO_ProjectViewPoint(lens, b);
 	RETRO_DrawLine((int)floorf(from.pos.x), (int)floorf(from.pos.y), (int)floorf(to.pos.x), (int)floorf(to.pos.y), color);
 }
 
@@ -132,18 +132,18 @@ void DEMO_Render(RETRO_Time time)
 			int x = FarFirst(i, mesh.minx, mesh.maxx, camerax, step);
 			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
 
-			RETRO_CameraVertex p00 = TerrainVertex(x, z, mesh.basis);
-			RETRO_CameraVertex p10 = TerrainVertex(x + step, z, mesh.basis);
-			RETRO_CameraVertex p01 = TerrainVertex(x, z + step, mesh.basis);
-			RETRO_CameraVertex p11 = TerrainVertex(x + step, z + step, mesh.basis);
+			RETRO_CameraVertex p00 = TerrainVertex(x, z, &mesh.camera);
+			RETRO_CameraVertex p10 = TerrainVertex(x + step, z, &mesh.camera);
+			RETRO_CameraVertex p01 = TerrainVertex(x, z + step, &mesh.camera);
+			RETRO_CameraVertex p11 = TerrainVertex(x + step, z + step, &mesh.camera);
 
-			DrawTriangle(p00, p11, p10, SKY);
-			DrawTriangle(p00, p01, p11, SKY);
+			DrawTriangle(mesh.camera.lens, p00, p11, p10, SKY);
+			DrawTriangle(mesh.camera.lens, p00, p01, p11, SKY);
 
-			DrawLine(p00.eye, p10.eye);
-			DrawLine(p10.eye, p11.eye);
-			DrawLine(p11.eye, p01.eye);
-			DrawLine(p01.eye, p00.eye);
+			DrawLine(mesh.camera.lens, p00.eye, p10.eye);
+			DrawLine(mesh.camera.lens, p10.eye, p11.eye);
+			DrawLine(mesh.camera.lens, p11.eye, p01.eye);
+			DrawLine(mesh.camera.lens, p01.eye, p00.eye);
 		}
 	}
 }
@@ -160,6 +160,7 @@ void DEMO_Initialize(void)
 
 	RETRO_TerrainView.step = LANDSCAPE_STEP;
 	RETRO_TerrainView.distance = LANDSCAPE_DISTANCE;
-	RETRO_TerrainLens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_TerrainCamera.lens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_TerrainCamera.truepitch = true; // PageUp/PageDown tip the view
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

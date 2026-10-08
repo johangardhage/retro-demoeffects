@@ -68,10 +68,7 @@ static float Shade(double depth)
 
 static PolygonPoint Project(float x, float z, vec2 uv, float shade)
 {
-	Vertex vertex = {};
-	vertex.pos = { x, 0, z };
-	RETRO_RotateVertex(&vertex, CameraMatrix);
-	RETRO_ProjectVertex(&vertex, 1.0f, RETRO_WIDTH / 2.0f, CY, CAMERA_DISTANCE);
+	Vertex vertex = RETRO_ProjectPoint(CameraMatrix * vec3{ x, 0, z }, 1.0f, RETRO_WIDTH / 2.0f, CY, CAMERA_DISTANCE);
 	return { vertex.spos, shade, uv, vertex.q };
 }
 

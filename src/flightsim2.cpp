@@ -70,6 +70,7 @@
 #include "lib/retrogfx.h"
 #include "lib/retrofont.h"
 #include "lib/retropoly.h"
+#include "lib/retromodel.h"
 #include "lib/retrocamera.h"
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"

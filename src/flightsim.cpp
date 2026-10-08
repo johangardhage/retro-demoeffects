@@ -212,7 +212,7 @@ static void PlaceCamera(void)
 	Camera.right = Plane.right;
 	Camera.down = -Plane.up;
 	Camera.forward = Plane.forward;
-	Camera.lens = RETRO_TerrainLens;
+	Camera.lens = RETRO_TerrainCamera.lens;
 }
 
 // A world point in the aircraft's frame
@@ -220,27 +220,8 @@ static WorldVertex TerrainVertex(float x, float z)
 {
 	WorldVertex vertex = {};
 	vertex.pos = { x, RETRO_TerrainHeight(x, z), z };
-	vertex.vertex.eye = RETRO_ViewPoint(&Camera, vertex.pos);
+	vertex.vertex = RETRO_ViewVertex(&Camera, vertex.pos);
 	return vertex;
-}
-
-// Whether all four corners are outside one plane of the frustum. The side
-// planes are widened a little past the screen edges for the same reason the
-// terrain library's cull wedge is.
-static bool CellOutside(const WorldVertex *corner)
-{
-	float slopex = (RETRO_WIDTH * 0.5f) / RETRO_TerrainLens.focalx * 1.05f;
-	float slopey = (RETRO_HEIGHT * 0.5f) / RETRO_TerrainLens.focaly * 1.05f;
-	int behind = 0, left = 0, right = 0, above = 0, below = 0;
-	for (int i = 0; i < 4; i++) {
-		const vec3 &eye = corner[i].vertex.eye;
-		if (eye.z < RETRO_TerrainLens.nearplane) behind++;
-		if (eye.x < -eye.z * slopex) left++;
-		if (eye.x > eye.z * slopex) right++;
-		if (eye.y < -eye.z * slopey) above++;
-		if (eye.y > eye.z * slopey) below++;
-	}
-	return behind == 4 || left == 4 || right == 4 || above == 4 || below == 4;
 }
 
 //
@@ -274,14 +255,14 @@ static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const World
 {
 	RETRO_CameraVertex triangle[3] = { a.vertex, b.vertex, c.vertex };
 	PolygonPoint polygon[4];
-	int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, triangle, 3, polygon);
+	int points = RETRO_ClipProjectViewPolygon(Camera.lens, triangle, 3, polygon);
 	if (points < 3) return;
 
 	vec3 normal = cross(b.pos - a.pos, c.pos - a.pos);
 	int shade = RETRO_TerrainShade(normal, Sun, LANDSCAPE_SHADES);
 
 	vec3 center = (a.pos + b.pos + c.pos) * (1.0f / 3.0f);
-	float distance = hypotf(center.x - RETRO_TerrainCamera.x, center.z - RETRO_TerrainCamera.z);
+	float distance = hypotf(center.x - Camera.pos.x, center.z - Camera.pos.z);
 	float fog = clamp((distance - FOG_START) / (RETRO_TerrainView.distance - FOG_START), 0.0f, 1.0f);
 	int level = (int)(fog * (FOG_LEVELS - 1) + 0.5f);
 
@@ -293,7 +274,10 @@ void DEMO_Render(RETRO_Time time)
 	UpdateFlight(time.delta);
 	PlaceCamera();
 
-	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
+	// The walk is taken around the cockpit's own camera, which pitches and
+	// rolls, so a cell is held to the draw distance by its center and to the
+	// view by its corners
+	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh(Camera);
 	int step = mesh.step;
 
 	RETRO_ClearDepthBuffer();
@@ -301,9 +285,7 @@ void DEMO_Render(RETRO_Time time)
 
 	for (int z = mesh.minz; z < mesh.maxz; z += step) {
 		for (int x = mesh.minx; x < mesh.maxx; x += step) {
-			float centerx = x + step / 2.0f - RETRO_TerrainCamera.x;
-			float centerz = z + step / 2.0f - RETRO_TerrainCamera.z;
-			if (centerx * centerx + centerz * centerz > mesh.distance2) continue;
+			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
 
 			WorldVertex corner[4] = {
 				TerrainVertex(x, z),
@@ -311,7 +293,8 @@ void DEMO_Render(RETRO_Time time)
 				TerrainVertex(x, z + step),
 				TerrainVertex(x + step, z + step),
 			};
-			if (CellOutside(corner)) continue;
+			RETRO_CameraVertex eyes[4] = { corner[0].vertex, corner[1].vertex, corner[2].vertex, corner[3].vertex };
+			if (RETRO_ViewCornersOutside(Camera.lens, eyes, 4)) continue;
 
 			unsigned char color = RETRO_TerrainColor(x + step / 2.0f, z + step / 2.0f);
 			DrawTriangle(corner[0], corner[3], corner[1], color);
@@ -345,10 +328,10 @@ void DEMO_Initialize(void)
 	RETRO_CreateShadeTable(RETRO_ImagePalette(0), palette, shadetable, Light);
 
 	RETRO_TerrainView.step = LANDSCAPE_STEP;
-	RETRO_TerrainLens.nearplane = LANDSCAPE_NEARPLANE;
-	RETRO_TerrainLens.focalx = RETRO_WIDTH * 0.5f;
-	RETRO_TerrainLens.focaly = RETRO_WIDTH * 0.5f;
-	RETRO_TerrainLens.center.y = RETRO_HEIGHT * 0.5f;
+	RETRO_TerrainCamera.lens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_TerrainCamera.lens.focalx = RETRO_WIDTH * 0.5f;
+	RETRO_TerrainCamera.lens.focaly = RETRO_WIDTH * 0.5f;
+	RETRO_TerrainCamera.lens.center.y = RETRO_HEIGHT * 0.5f;
 
 	RETRO_TerrainCamera.x = RETRO_Terrain.width * 0.5f;
 	RETRO_TerrainCamera.z = (float)RETRO_TERRAIN_DISTANCE;

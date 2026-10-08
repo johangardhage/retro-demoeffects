@@ -89,12 +89,8 @@ static void BuildTunnel(void)
 {
 	float t = 0.0f;
 
-	vec3 forward = PathTangent(t);
-	vec3 right, down;
-	RETRO_FrameFromForward(forward, &right, &down);
-
 	RETRO_Camera camera;
-	RETRO_PlaceCamera(&camera, Path(t), right, down, forward);
+	RETRO_LookAlong(&camera, Path(t), PathTangent(t));
 	camera.lens.focalx = 180;
 	camera.lens.focaly = 180;
 	camera.lens.center = { RETRO_WIDTH * 0.70f, RETRO_HEIGHT * 0.5f };

@@ -86,11 +86,7 @@ static bool GlyphLit(int x, int y)
 // ramp's ends instead of huddling near the middle of it.
 static void PlotDot(float x, float y, float z, int base, int shades, float contrast, const mat3 &matrix)
 {
-	Vertex vertex = {};
-	vertex.pos = { x, y, z };
-	RETRO_RotateVertex(&vertex, matrix);
-	vertex.rpos.z += OBJECT_Z;
-	RETRO_ProjectVertex(&vertex, PROJECTION_SCALE);
+	Vertex vertex = RETRO_ProjectPoint(matrix * vec3{ x, y, z } + vec3{ 0, 0, OBJECT_Z }, PROJECTION_SCALE);
 
 	if (vertex.q == 0.0f) {
 		return;

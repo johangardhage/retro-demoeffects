@@ -136,6 +136,17 @@ inline void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_S
 	}
 }
 
+// A loose point already turned into view space, projected the same way, as
+// a vertex of no model. A point in its own space is turned on the way in,
+// RETRO_ProjectPoint(matrix * p), and moved by adding to it there
+inline Vertex RETRO_ProjectPoint(vec3 rpos, float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2.0), float cy = (RETRO_HEIGHT / 2.0), float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
+{
+	Vertex vertex = {};
+	vertex.rpos = rpos;
+	RETRO_ProjectVertex(&vertex, scale, cx, cy, eyedistance);
+	return vertex;
+}
+
 // The model stands at the origin with the eye that far in front of it, and
 // its origin lands on the principal point. Moving that shifts every projected
 // vertex by the same pixels, so a demo can carry the model about the screen
@@ -149,33 +160,6 @@ inline void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = 
 		RETRO_ProjectVertex(&model->vertex[i], scale, cx, cy, eyedistance);
 	}
 	model->eye = eyedistance / scale;
-}
-
-//
-// Unit vectors, as written
-//
-// UnitVector::dir is the vector as authored. rdir is that vector after
-// a rotation (RETRO_RotateUnitVector). The helpers below read and write the
-// authored slot, which is what a path tangent or a cross of two axes needs.
-//
-// A UnitVector is unit as it is written. Fill dir, then wrap it in
-// RETRO_NormalizeUnitVector. A zero vector (the cross of two parallel
-// inputs) is stored as zero; the only reader that has to care is the
-// next cross, which then also yields zero.
-//
-inline UnitVector RETRO_NormalizeUnitVector(UnitVector direction)
-{
-	direction.dir = normalize(direction.dir);
-	return direction;
-}
-
-// D1 × D2 on the authored components, then normalized: the magnitude
-// (|D1||D2|sin theta) is thrown away, because a UnitVector is unit as
-// written, and this is how one is built out of two others. Parallel
-// inputs write the zero direction.
-inline UnitVector RETRO_UnitCrossProduct(UnitVector d1, UnitVector d2)
-{
-	return { normalize(cross(d1.dir, d2.dir)) };
 }
 
 // The mean of a face's rotated corners, where a face is lit as a whole
@@ -395,10 +379,25 @@ inline unsigned int RETRO_Hash(int x, int y)
 	return hash ^ (hash >> 16);
 }
 
+// The same hash of a position on a 3D grid, the third coordinate folded in
+// after the first two. The third coordinate also serves as a stream: hashes
+// of one 2D position that must not agree, such as where a tree stands and how
+// tall it grows, take a stream each instead of offsetting a coordinate, which
+// can land one stream on another's positions.
+inline unsigned int RETRO_Hash(int x, int y, int z)
+{
+	return RETRO_Hash((int)RETRO_Hash(x, y), z);
+}
+
 // The hash of a grid position as a fraction, in [0, 1]
 inline float RETRO_HashUnit(int x, int y)
 {
 	return (RETRO_Hash(x, y) & 65535u) / 65535.0f;
+}
+
+inline float RETRO_HashUnit(int x, int y, int z)
+{
+	return (RETRO_Hash(x, y, z) & 65535u) / 65535.0f;
 }
 
 // Value noise, in [0, 1]: the fractions hashed at the four grid points around
@@ -414,6 +413,64 @@ inline float RETRO_ValueNoise(float x, float y)
 	float a = RETRO_HashUnit(ix, iy), b = RETRO_HashUnit(ix + 1, iy);
 	float c = RETRO_HashUnit(ix, iy + 1), d = RETRO_HashUnit(ix + 1, iy + 1);
 	return mix(mix(a, b, fx), mix(c, d, fx), fy);
+}
+
+// The gradient hashed at a lattice corner, dotted with the offset (x, y, z)
+// from it. The low four bits of the hash pick one of the twelve edge
+// directions of a cube, (±1, ±1, 0), (±1, 0, ±1) and (0, ±1, ±1), four of
+// them twice, which keeps the choice to a mask and a few compares.
+inline float RETRO_NoiseGradient(unsigned int hash, float x, float y, float z)
+{
+	int h = hash & 15;
+	float u = h < 8 ? x : y;
+	float v = h < 4 ? y : (h == 12 || h == 14 ? x : z);
+	return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
+}
+
+// Perlin's gradient noise, in [-1, 1]: zero at every grid point, with a
+// gradient hashed there, and blended across the cell on smootherstep, whose
+// flat second derivative leaves no crease at the cell walls even where the
+// noise is differentiated, as a flow field does. Smoother than value noise,
+// whose features sit on the grid; this one's sit between grid points. One
+// grid unit is about one feature, as for RETRO_ValueNoise.
+//
+// A period above zero makes the noise repeat after that many grid units
+// along each axis, by folding the corners onto the period before they are
+// hashed. A coordinate that has to grow forever, such as time, can then be
+// wrapped on the period with no seam, before a float runs out of precision.
+//
+inline float RETRO_PerlinNoise(float x, float y, float z, int period = 0)
+{
+	int ix = (int)floorf(x), iy = (int)floorf(y), iz = (int)floorf(z);
+	x -= ix;
+	y -= iy;
+	z -= iz;
+
+	// The corners either side along each axis
+	int x0 = ix, x1 = ix + 1, y0 = iy, y1 = iy + 1, z0 = iz, z1 = iz + 1;
+	if (period > 0) {
+		x0 = WRAP(x0, period);
+		x1 = WRAP(x1, period);
+		y0 = WRAP(y0, period);
+		y1 = WRAP(y1, period);
+		z0 = WRAP(z0, period);
+		z1 = WRAP(z1, period);
+	}
+
+	float u = smootherstep(0.0f, 1.0f, x);
+	float v = smootherstep(0.0f, 1.0f, y);
+	float w = smootherstep(0.0f, 1.0f, z);
+
+	// Blend along x, then y, then z
+	float near = mix(mix(RETRO_NoiseGradient(RETRO_Hash(x0, y0, z0), x, y, z),
+						 RETRO_NoiseGradient(RETRO_Hash(x1, y0, z0), x - 1, y, z), u),
+					 mix(RETRO_NoiseGradient(RETRO_Hash(x0, y1, z0), x, y - 1, z),
+						 RETRO_NoiseGradient(RETRO_Hash(x1, y1, z0), x - 1, y - 1, z), u), v);
+	float far = mix(mix(RETRO_NoiseGradient(RETRO_Hash(x0, y0, z1), x, y, z - 1),
+						RETRO_NoiseGradient(RETRO_Hash(x1, y0, z1), x - 1, y, z - 1), u),
+					mix(RETRO_NoiseGradient(RETRO_Hash(x0, y1, z1), x, y - 1, z - 1),
+						RETRO_NoiseGradient(RETRO_Hash(x1, y1, z1), x - 1, y - 1, z - 1), u), v);
+	return mix(near, far, w);
 }
 
 //

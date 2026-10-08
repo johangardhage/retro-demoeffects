@@ -290,15 +290,6 @@ inline const RETRO_MapEntity *RETRO_FindMapEntity(const RETRO_Map *map, const ch
 // Brushes
 // *******************************************************************
 
-// Whether a point is inside a brush, or on its surface
-inline bool RETRO_InsideMapBrush(const RETRO_MapBrush &brush, vec3 p)
-{
-	for (int i = 0; i < brush.planes; i++) {
-		if (dot(brush.plane[i].normal, p) > brush.plane[i].distance) return false;
-	}
-	return true;
-}
-
 //
 // The polygon of one of a brush's faces
 //

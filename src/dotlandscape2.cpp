@@ -22,17 +22,17 @@
 #define ISLAND_START_ROTATION -0.5f // A modest turn off dead-on at startup, as dotscroller4
 
 // Draw the finite 128x128 terrain through the island look.
-static void DrawTerrainDots(const RETRO_TerrainIslandFrame &frame)
+static void DrawTerrainDots(const RETRO_Camera *camera)
 {
 	int width = RETRO_Terrain.width;
 	int height = RETRO_Terrain.height;
 
 	for (int z = 0; z < height; z++) {
 		for (int x = 0; x < width; x++) {
-			vec3 eye = RETRO_TerrainIslandEye(x, RETRO_TerrainHeight(x, z), z, frame);
-			if (!RETRO_TerrainEyeInView(eye)) continue;
+			vec3 eye = RETRO_ViewPoint(camera, { (float)x, RETRO_TerrainHeight(x, z), (float)z });
+			if (!RETRO_TerrainEyeInView(camera->lens, eye)) continue;
 
-			PolygonPoint point = RETRO_ProjectViewPoint(RETRO_TerrainLens, eye);
+			PolygonPoint point = RETRO_ProjectViewPoint(camera->lens, eye);
 			int sx = (int)point.pos.x;
 			int sy = (int)point.pos.y;
 			if (!RETRO_OnScreen(sx, sy)) continue;
@@ -48,7 +48,8 @@ void DEMO_Render(RETRO_Time time)
 {
 	RETRO_UpdateTerrainIsland(time.delta);
 	RETRO_ClearDepthBuffer();
-	DrawTerrainDots(RETRO_BuildTerrainIslandFrame());
+	RETRO_Camera camera = RETRO_TerrainIslandCamera();
+	DrawTerrainDots(&camera);
 }
 
 void DEMO_Initialize(void)

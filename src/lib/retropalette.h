@@ -299,6 +299,34 @@ inline RETRO_Palette RETRO_ShadeColor(RETRO_Palette color, float brightness)
 	};
 }
 
+//
+// A color from its hue, saturation and lightness, each from 0 to 1, each
+// component rounded to the nearest
+//
+// The hue is a part of a turn round the color circle: red at 0, then yellow,
+// green, cyan, blue and magenta a sixth of a turn apart, and only its
+// fraction counts, so a hue can run on round the circle. Full saturation at
+// lightness 0.5 is the pure hue; lightness runs it down to black and up to
+// white, and saturation fades it toward the gray of that lightness.
+//
+// One channel of it, n being where the channel sits round the circle in
+// twelfths of a turn: 0 for red, 8 for green and 4 for blue
+inline unsigned char RETRO_HSLChannel(float n, float hue, float saturation, float lightness)
+{
+	float k = fmodf(n + fract(hue) * 12, 12);
+	float a = saturation * MIN(lightness, 1 - lightness);
+	return CLAMP256((lightness - a * clamp(MIN(k - 3, 9 - k), -1.0f, 1.0f)) * 255 + 0.5f);
+}
+
+inline RETRO_Palette RETRO_HSLColor(float hue, float saturation, float lightness)
+{
+	return {
+		RETRO_HSLChannel(0, hue, saturation, lightness),
+		RETRO_HSLChannel(8, hue, saturation, lightness),
+		RETRO_HSLChannel(4, hue, saturation, lightness),
+	};
+}
+
 // A color under white light at neutral, with a red and a green light adding
 // to their own channels on top of it, tint[0] being how much further red
 // reaches and tint[1] green. Each channel is capped at full and the fraction

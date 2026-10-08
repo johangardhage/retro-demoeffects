@@ -65,8 +65,11 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrorender.h"
+#include "lib/retropoly.h"
+#include "lib/retromodel.h"
+#include "lib/retromath.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define ROTATION_SPEED 1.1 // radians a second, about each axis
 

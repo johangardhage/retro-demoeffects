@@ -44,6 +44,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
 #define SPANS 32
@@ -188,26 +189,6 @@ void DEMO_Render(RETRO_Time time)
 	}
 }
 
-// Nearest palette entry in RGB, by d² = Δr² + Δg² + Δb²
-static unsigned char ClosestColor(RETRO_Palette *palette, unsigned char r, unsigned char g, unsigned char b)
-{
-	long dist = 1 << 30;
-	unsigned char color = 0;
-
-	for (int i = 0; i < RETRO_COLORS; i++) {
-		long newdist = (r - palette[i].r) * (r - palette[i].r) + (g - palette[i].g) * (g - palette[i].g) + (b - palette[i].b) * (b - palette[i].b);
-		if (newdist == 0) {
-			return i;
-		}
-		if (newdist < dist) {
-			color = i;
-			dist = newdist;
-		}
-	}
-
-	return color;
-}
-
 void DEMO_Initialize(void)
 {
 	RETRO_LoadImage("assets/flowers_256x256.pcx", true);
@@ -231,17 +212,17 @@ void DEMO_Initialize(void)
 		unsigned char b = palette[i].b;
 
 		for (int s = 0; s < DIFFUSE_SHADES; s++) {
-			FlubberShadeTable[i * SHADE_LUT_WIDTH + s] = ClosestColor(palette,
-				r * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV,
-				g * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV,
-				b * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV);
+			FlubberShadeTable[i * SHADE_LUT_WIDTH + s] = RETRO_NearestPaletteIndex({
+				(unsigned char)(r * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV),
+				(unsigned char)(g * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV),
+				(unsigned char)(b * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV) }, palette);
 		}
 
 		for (int h = 0; h < SPECULAR_SHADES; h++) {
-			FlubberShadeTable[i * SHADE_LUT_WIDTH + h + DIFFUSE_SHADES] = ClosestColor(palette,
-				r + (255 - r) * h / FLUBBER_SPECULAR_DIV,
-				g + (255 - g) * h / FLUBBER_SPECULAR_DIV,
-				b + (255 - b) * h / FLUBBER_SPECULAR_DIV);
+			FlubberShadeTable[i * SHADE_LUT_WIDTH + h + DIFFUSE_SHADES] = RETRO_NearestPaletteIndex({
+				(unsigned char)(r + (255 - r) * h / FLUBBER_SPECULAR_DIV),
+				(unsigned char)(g + (255 - g) * h / FLUBBER_SPECULAR_DIV),
+				(unsigned char)(b + (255 - b) * h / FLUBBER_SPECULAR_DIV) }, palette);
 		}
 	}
 

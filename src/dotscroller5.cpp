@@ -98,11 +98,7 @@ static void SampleLandscape(int offsetx, int offsety)
 
 static void PlotDot(float x, float y, float z, unsigned char color, const mat3 &matrix)
 {
-	Vertex dot = {};
-	dot.pos = { x, y, z };
-	RETRO_RotateVertex(&dot, matrix);
-	dot.rpos.z += OBJECT_Z;
-	RETRO_ProjectVertex(&dot, PROJECTION_SCALE);
+	Vertex dot = RETRO_ProjectPoint(matrix * vec3{ x, y, z } + vec3{ 0, 0, OBJECT_Z }, PROJECTION_SCALE);
 	if (dot.q == 0.0f) return;
 
 	int sx = (int)lround(dot.spos.x), sy = (int)lround(dot.spos.y);

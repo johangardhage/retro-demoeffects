@@ -114,13 +114,6 @@ static float Noise(void)
 	return RANDOMF(2) + RANDOMF(2) + RANDOMF(2) - 3.0f;
 }
 
-static vec2 Rotate(vec2 v, float angle)
-{
-	float c = cosf(angle);
-	float s = sinf(angle);
-	return { v.x * c - v.y * s, v.x * s + v.y * c };
-}
-
 //
 // Fill point[1 .. count-2] between the two fixed ends by midpoint displacement
 //
@@ -262,7 +255,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 			vec2 root = arc.point[branch.root];
 			vec2 span = arc.point[ARC_POINTS - 1] - root;
 			branch.point[0] = root;
-			branch.point[BRANCH_POINTS - 1] = root + Rotate(span, branch.bend) * branch.reach;
+			branch.point[BRANCH_POINTS - 1] = root + rotate(span, branch.bend) * branch.reach;
 			Displace(branch.point, branch.offset, BRANCH_POINTS, ARC_JITTER);
 		}
 	}

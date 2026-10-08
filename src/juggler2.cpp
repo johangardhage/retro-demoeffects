@@ -415,39 +415,16 @@ static void UpdateScene(double T)
 
 #define QUANTIZE_BITS 6 // 64 levels a channel
 #define QUANTIZE_LEVELS (1 << QUANTIZE_BITS)
-static unsigned char ColorLookup[QUANTIZE_LEVELS * QUANTIZE_LEVELS * QUANTIZE_LEVELS];
+static unsigned char ColorLookup[QUANTIZE_LEVELS][QUANTIZE_LEVELS][QUANTIZE_LEVELS];
 
-// The nearest of the 256 built colors by squared distance, for every color
-// a 6-bit-a-channel cube can hold - built once, since a search this size
-// once a pixel, every displayed frame, is not free
-static void BuildColorLookup(void)
-{
-	for (int r = 0; r < QUANTIZE_LEVELS; r++) {
-		for (int g = 0; g < QUANTIZE_LEVELS; g++) {
-			for (int b = 0; b < QUANTIZE_LEVELS; b++) {
-				vec3 color = { r / (float)(QUANTIZE_LEVELS - 1), g / (float)(QUANTIZE_LEVELS - 1), b / (float)(QUANTIZE_LEVELS - 1) };
-				float best = 1e30f;
-				int index = 0;
-				for (int i = 0; i < RETRO_COLORS; i++) {
-					vec3 d = color - Palette[i];
-					float err = dot(d, d);
-					if (err < best) {
-						best = err;
-						index = i;
-					}
-				}
-				ColorLookup[(r * QUANTIZE_LEVELS + g) * QUANTIZE_LEVELS + b] = (unsigned char)index;
-			}
-		}
-	}
-}
-
+// A color in 0..1 a channel, as the nearest entry. The cube is indexed by
+// each channel's byte with its low bits shifted off
 static unsigned char QuantizeToPalette(vec3 color)
 {
-	int r = (int)(CLAMP01(color.x) * (QUANTIZE_LEVELS - 1) + 0.5f);
-	int g = (int)(CLAMP01(color.y) * (QUANTIZE_LEVELS - 1) + 0.5f);
-	int b = (int)(CLAMP01(color.z) * (QUANTIZE_LEVELS - 1) + 0.5f);
-	return ColorLookup[(r * QUANTIZE_LEVELS + g) * QUANTIZE_LEVELS + b];
+	int r = CLAMP256(CLAMP01(color.x) * 255 + 0.5f) >> (8 - QUANTIZE_BITS);
+	int g = CLAMP256(CLAMP01(color.y) * 255 + 0.5f) >> (8 - QUANTIZE_BITS);
+	int b = CLAMP256(CLAMP01(color.z) * 255 + 0.5f) >> (8 - QUANTIZE_BITS);
+	return ColorLookup[r][g][b];
 }
 
 void DEMO_Render(RETRO_Time time)
@@ -503,10 +480,16 @@ void DEMO_Initialize(void)
 	for (int shade = 0; shade < PALETTE_WHITE_SHADES; shade++) {
 		Palette[index++] = vec3{ 1, 1, 1 } * (shade / (float)(PALETTE_WHITE_SHADES - 1));
 	}
+	RETRO_Palette palette[RETRO_COLORS];
 	for (int i = 0; i < RETRO_COLORS; i++) {
-		RETRO_SetColor(i, (unsigned char)(Palette[i].x * 255), (unsigned char)(Palette[i].y * 255), (unsigned char)(Palette[i].z * 255));
+		palette[i] = { (unsigned char)(Palette[i].x * 255), (unsigned char)(Palette[i].y * 255), (unsigned char)(Palette[i].z * 255) };
 	}
-	BuildColorLookup();
+	RETRO_SetPalette(palette);
+
+	// The nearest of the 256 built colors for every color a 6-bit-a-channel
+	// cube can hold - built once, since a search this size once a pixel, every
+	// displayed frame, is not free
+	RETRO_CreateColorLUT(palette, QUANTIZE_LEVELS, &ColorLookup[0][0][0]);
 
 	// A camera obscura: w points from the look-at point back to the eye, u
 	// and v complete a right-handed frame around it, and the virtual screen

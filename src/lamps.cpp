@@ -200,9 +200,7 @@ static void FitColorPalette(const RETRO_Image *marble, const RETRO_Palette *mate
 static void DrawLamp(int i, bool colored)
 {
 	vec3 position = Lighting.light[i].position;
-	Vertex lamp = {};
-	lamp.rpos = position;
-	RETRO_ProjectVertex(&lamp, PROJECTION_SCALE);
+	Vertex lamp = RETRO_ProjectPoint(position, PROJECTION_SCALE);
 	if (lamp.q == 0.0f) return;
 
 	float radius = LAMP_SIZE * PROJECTION_SCALE * RETRO_PROJECTION_EYEDISTANCE * lamp.q;

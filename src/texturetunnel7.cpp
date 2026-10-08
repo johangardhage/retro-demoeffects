@@ -144,11 +144,8 @@ void DEMO_Render(RETRO_Time time)
 	// Stay on the path, but aim ahead so the viewer looks into each bend.
 	vec3 origin = Path(t);
 	vec3 forward = CAMERA_LOOKAHEAD > 0 ? normalize(Path(t + CAMERA_LOOKAHEAD) - origin) : PathTangent(t);
-	vec3 right, down;
-	RETRO_FrameFromForward(forward, &right, &down);
-
 	RETRO_Camera camera;
-	RETRO_PlaceCamera(&camera, origin, right, down, forward);
+	RETRO_LookAlong(&camera, origin, forward);
 
 	// World stations, not camera-relative offsets: ring k is always at
 	// k · spacing on the path. first is the nearest station still at

@@ -27,23 +27,23 @@
 // Draw a smoothly distance-thinned grid inside the view radius.
 static void DrawTerrainDots(float maxdistance)
 {
-	RETRO_TerrainBasis basis = RETRO_TerrainHeadingBasis(RETRO_TerrainCamera.heading);
+	RETRO_Camera view = RETRO_TerrainViewCamera();
 	float maxdistance2 = maxdistance * maxdistance;
-	int minx = (int)floorf(RETRO_TerrainCamera.x - maxdistance);
-	int maxx = (int)ceilf(RETRO_TerrainCamera.x + maxdistance);
-	int minz = (int)floorf(RETRO_TerrainCamera.z - maxdistance);
-	int maxz = (int)ceilf(RETRO_TerrainCamera.z + maxdistance);
+	int minx = (int)floorf(view.pos.x - maxdistance);
+	int maxx = (int)ceilf(view.pos.x + maxdistance);
+	int minz = (int)floorf(view.pos.z - maxdistance);
+	int maxz = (int)ceilf(view.pos.z + maxdistance);
 
 	for (int z = minz; z <= maxz; z++) {
-		float dz = z - RETRO_TerrainCamera.z;
+		float dz = z - view.pos.z;
 		for (int x = minx; x <= maxx; x++) {
-			float dx = x - RETRO_TerrainCamera.x;
+			float dx = x - view.pos.x;
 			float radius2 = dx * dx + dz * dz;
 			if (radius2 > maxdistance2) continue;
 
 			vec3 eye;
 			PolygonPoint point;
-			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, basis, &eye, &point)) continue;
+			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, &view, &eye, &point)) continue;
 
 			int sx = (int)point.pos.x;
 			int sy = (int)point.pos.y;
@@ -65,5 +65,6 @@ void DEMO_Initialize(void)
 {
 	RETRO_LoadTerrain("assets/voxel_color_1024x1024.pcx", "assets/voxel_height_1024x1024.pcx");
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
+	RETRO_TerrainCamera.truepitch = true; // PageUp/PageDown tip the view
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

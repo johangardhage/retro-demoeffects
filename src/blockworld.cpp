@@ -87,8 +87,6 @@
 #define JUMP_SPEED 9.0f // rises 9² / (2 × 32) = 1.27 blocks
 #define MAX_FALL_SPEED 40.0f // two thirds of a block a step, so a fall never passes through one
 #define CONTACT_GAP 0.001f // left between the box and a block it is pushed back from
-#define MOUSE_SENSITIVITY 0.003f // radians per mouse unit
-#define MAX_PITCH 1.5f // radians, short of straight up or down
 
 #define TEXTURE_SIZE 16
 #define TEXEL_HOLE 255 // a leaves texel the ray passes through
@@ -159,7 +157,7 @@ static void PlantTree(int x, int y, int z, int trunk)
 		for (int dz = -radius; dz <= radius; dz++) {
 			for (int dx = -radius; dx <= radius; dx++) {
 				bool corner = abs(dx) == radius && abs(dz) == radius;
-				if (corner && (ly == top + 1 || RETRO_HashUnit(x + dx * 7 + ly, z + dz * 13) < 0.6f)) continue;
+				if (corner && (ly == top + 1 || RETRO_HashUnit(x + dx, z + dz, ly) < 0.6f)) continue;
 				SetBlock(x + dx, ly, z + dz, LEAVES);
 			}
 		}
@@ -183,22 +181,26 @@ static void CreateWorld(void)
 
 	for (int cz = 0; cz < WORLD_SIZE / TREE_CELL; cz++) {
 		for (int cx = 0; cx < WORLD_SIZE / TREE_CELL; cx++) {
-			if (RETRO_HashUnit(cx, cz + 1000) > TREE_CHANCE) continue;
-			int x = cx * TREE_CELL + 2 + RETRO_Hash(cx, cz + 2000) % (TREE_CELL - 4);
-			int z = cz * TREE_CELL + 2 + RETRO_Hash(cx, cz + 3000) % (TREE_CELL - 4);
+			// A hash stream each for whether the cell has a tree, where in the
+			// cell it stands, and how tall it grows
+			if (RETRO_HashUnit(cx, cz, 0) > TREE_CHANCE) continue;
+			int x = cx * TREE_CELL + 2 + RETRO_Hash(cx, cz, 1) % (TREE_CELL - 4);
+			int z = cz * TREE_CELL + 2 + RETRO_Hash(cx, cz, 2) % (TREE_CELL - 4);
 			int h = (int)GroundHeight(x, z);
 			if (World[h][z][x] != GRASS) continue;
-			int trunk = TREE_MIN_TRUNK + RETRO_Hash(cx, cz + 4000) % (TREE_MAX_TRUNK - TREE_MIN_TRUNK + 1);
+			int trunk = TREE_MIN_TRUNK + RETRO_Hash(cx, cz, 3) % (TREE_MAX_TRUNK - TREE_MIN_TRUNK + 1);
 			if (h + trunk + 2 >= WORLD_HEIGHT) continue;
 			PlantTree(x, h + 1, z, trunk);
 		}
 	}
 }
 
-// One of n colors from first on, picked by a texel's hash
+// One of n colors from first on, picked by a texel's hash. Each texture hashes
+// in a stream of its own, and a hash a whole column shares takes the row
+// above the texture, -1, which no texel uses.
 static unsigned char PickColor(int texture, int x, int y, int first, int n)
 {
-	return first + RETRO_Hash(x + texture * TEXTURE_SIZE, y) % n;
+	return first + RETRO_Hash(x, y, texture) % n;
 }
 
 static void CreateTextures(void)
@@ -210,22 +212,22 @@ static void CreateTextures(void)
 			Textures[TEX_SAND][y][x] = PickColor(TEX_SAND, x, y, SAND1, 2);
 
 			// Grass hangs a ragged two to four texels over the dirt
-			int fringe = 2 + RETRO_Hash(x, TEX_GRASS_SIDE) % 3;
+			int fringe = 2 + RETRO_Hash(x, -1, TEX_GRASS_SIDE) % 3;
 			Textures[TEX_GRASS_SIDE][y][x] = y < fringe ? PickColor(TEX_GRASS_SIDE, x, y, GRASS1, 3) : PickColor(TEX_GRASS_SIDE, x, y, DIRT1, 3);
 
 			// Water is mostly the darker blue, with short light streaks
-			Textures[TEX_WATER][y][x] = RETRO_Hash(x / 3, y + TEX_WATER * TEXTURE_SIZE) % 5 == 0 ? WATER2 : WATER1;
+			Textures[TEX_WATER][y][x] = RETRO_Hash(x / 3, y, TEX_WATER) % 5 == 0 ? WATER2 : WATER1;
 
 			// Bark runs in vertical stripes, a little broken up
-			bool stripe = RETRO_Hash(x, TEX_LOG_SIDE) % 3 == 0;
-			bool knot = RETRO_Hash(x + TEX_LOG_SIDE * TEXTURE_SIZE, y) % 7 == 0;
+			bool stripe = RETRO_Hash(x, -1, TEX_LOG_SIDE) % 3 == 0;
+			bool knot = RETRO_Hash(x, y, TEX_LOG_SIDE) % 7 == 0;
 			Textures[TEX_LOG_SIDE][y][x] = stripe != knot ? BARK1 : BARK2;
 
 			// The cut end shows bark around the edge and growth rings inside
 			int ring = (int)MAX(fabsf(x - 7.5f), fabsf(y - 7.5f));
 			Textures[TEX_LOG_TOP][y][x] = ring == 7 ? BARK1 : (ring & 1 ? WOOD1 : WOOD2);
 
-			float leaf = RETRO_HashUnit(x + TEX_LEAVES * TEXTURE_SIZE, y);
+			float leaf = RETRO_HashUnit(x, y, TEX_LEAVES);
 			Textures[TEX_LEAVES][y][x] = leaf < 0.2f ? TEXEL_HOLE : (leaf < 0.6f ? LEAF1 : LEAF2);
 		}
 	}
@@ -233,7 +235,13 @@ static void CreateTextures(void)
 
 static vec3 Position; // the player's feet
 static float VelocityY;
-static float Yaw, Pitch;
+static RETRO_Look Look;
+
+// The world's level frame, which the look turns: facing +x at a yaw of zero,
+// with y up
+static const vec3 LevelRight = { 0, 0, -1 };
+static const vec3 LevelDown = { 0, -1, 0 };
+static const vec3 LevelForward = { 1, 0, 0 };
 static bool OnGround;
 
 // The sky seen along dir, dithered across its gradient
@@ -347,7 +355,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	float dt = time.delta;
 
 	// Walk along the ground, whichever way the player looks
-	vec3 forward = { cosf(Yaw), 0, sinf(Yaw) };
+	vec3 forward = { cosf(Look.yaw), 0, sinf(Look.yaw) };
 	vec3 right = { forward.z, 0, -forward.x };
 	vec3 move = { 0, 0, 0 };
 	if (RETRO_KeyState(SDL_SCANCODE_W)) move = move + forward;
@@ -385,17 +393,14 @@ void DEMO_FixedUpdate(RETRO_Time time)
 void DEMO_Render(RETRO_Time time)
 {
 	// Look, once a frame so that turning is as smooth as the display
-	RETRO_MouseState mouse = RETRO_GetMouseState();
-	Yaw = fmodf(Yaw - mouse.xrel * MOUSE_SENSITIVITY, 2 * M_PI);
-	Pitch = MAX(MIN(Pitch - mouse.yrel * MOUSE_SENSITIVITY, MAX_PITCH), -MAX_PITCH);
+	RETRO_MouseLook(&Look);
 
-	// Aim from a level frame facing +x, y up. The yaw turns left and the
-	// pitch looks up, the other way from the camera's turns.
+	// Aim from the level frame, facing +x with y up
 	RETRO_Camera camera;
 	RETRO_InitializeCamera(&camera, Position + vec3{ 0, EYE_HEIGHT, 0 });
 	camera.lens.focalx = FOCAL;
 	camera.lens.focaly = FOCAL;
-	RETRO_AimCamera(&camera, { 0, 0, -1 }, { 0, -1, 0 }, { 1, 0, 0 }, -Yaw, -Pitch);
+	RETRO_AimLook(&camera, Look, LevelRight, LevelDown, LevelForward);
 
 	for (int sy = 0; sy < RETRO_HEIGHT; sy++) {
 		for (int sx = 0; sx < RETRO_WIDTH; sx++) {

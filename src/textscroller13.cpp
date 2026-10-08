@@ -77,10 +77,7 @@ static unsigned char Background[RETRO_WIDTH * RETRO_HEIGHT];
 
 static PolygonPoint Project(float x, float y, vec2 uv)
 {
-	Vertex vertex = {};
-	vertex.pos = { x, y, 0 };
-	RETRO_RotateVertex(&vertex, CameraMatrix);
-	RETRO_ProjectVertex(&vertex, 1.0f, CX, CY, CAMERA_DISTANCE);
+	Vertex vertex = RETRO_ProjectPoint(CameraMatrix * vec3{ x, y, 0 }, 1.0f, CX, CY, CAMERA_DISTANCE);
 	return { vertex.spos, 0, uv, vertex.q };
 }
 

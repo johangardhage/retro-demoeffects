@@ -10,10 +10,9 @@
 #include <float.h> // FLT_MIN
 #include "retro.h"
 #include "retrogfx.h"
-#include "retromodel.h"
-#include "retromath.h"
-#include "retromatrix.h"
+#include "retromouse.h"
 #include "retropoly.h"
+#include "retrovector.h"
 
 // A pinhole's worth of focal length, decoupled from any near-plane offset.
 // RETRO_PROJECTION_EYEDISTANCE (retromath.h) is half of a coupled
@@ -150,6 +149,52 @@ inline void RETRO_AimCamera(RETRO_Camera *camera, vec3 right, vec3 down, vec3 fo
 	RETRO_PitchCamera(camera, pitch);
 }
 
+//
+// A first-person look: a heading and a pitch kept as angles, moved by the
+// mouse, and the camera aimed from them
+//
+// The angles turn the way a player thinks of them, the other way round from
+// the camera's own turns: a positive yaw turns left and a positive pitch looks
+// up. The mouse moves them as it moves a cursor, right turning right and down
+// looking down. The yaw is kept within a turn either way, and the pitch held
+// short of straight up or down, where the heading would stop meaning anything.
+//
+struct RETRO_Look {
+	float yaw = 0;				// Radians, turning left
+	float pitch = 0;			// Radians, looking up
+	float sensitivity = 0.003f;	// Radians a unit of mouse motion turns
+	float maxpitch = 1.5f;		// Radians the pitch is held within, up or down
+};
+
+// Turn the look by these angles, the look's way round
+inline void RETRO_TurnLook(RETRO_Look *look, float yaw, float pitch)
+{
+	look->yaw = fmodf(look->yaw + yaw, 2 * M_PI);
+	look->pitch = clamp(look->pitch + pitch, -look->maxpitch, look->maxpitch);
+}
+
+// Turn the look by the mouse's motion in a state already read. Reading the
+// state takes the motion since the last read, so a caller that also wants
+// the buttons reads it once and hands it here.
+inline void RETRO_MouseLook(RETRO_Look *look, const RETRO_MouseState &mouse)
+{
+	RETRO_TurnLook(look, -mouse.xrel * look->sensitivity, -mouse.yrel * look->sensitivity);
+}
+
+// The same, reading the mouse
+inline void RETRO_MouseLook(RETRO_Look *look)
+{
+	RETRO_MouseLook(look, RETRO_GetMouseState());
+}
+
+// Aim the camera from the look: the world's level frame - its right, down and
+// forward at a yaw of zero - turned by the yaw and tipped by the pitch. The
+// frame never picks up a roll, so the horizon stays level.
+inline void RETRO_AimLook(RETRO_Camera *camera, const RETRO_Look &look, vec3 right, vec3 down, vec3 forward)
+{
+	RETRO_AimCamera(camera, right, down, forward, -look.yaw, -look.pitch);
+}
+
 // Two axes perpendicular to forward, in the camera's own right/down
 // convention: right is world-down cross forward, down is forward cross
 // right. Building a ring's cross-section frame from its own tangent, or a
@@ -164,6 +209,16 @@ inline void RETRO_FrameFromForward(vec3 forward, vec3 *right, vec3 *down)
 	vec3 worlddown = { 0, 1, 0 };
 	*right = normalize(cross(worlddown, forward));
 	*down = normalize(cross(forward, *right));
+}
+
+// Eye at pos looking along forward, a unit direction, in the frame
+// RETRO_FrameFromForward builds round it: the way a camera following a path
+// looks along the path
+inline void RETRO_LookAlong(RETRO_Camera *camera, vec3 pos, vec3 forward)
+{
+	vec3 right, down;
+	RETRO_FrameFromForward(forward, &right, &down);
+	RETRO_PlaceCamera(camera, pos, right, down, forward);
 }
 
 // *******************************************************************
@@ -227,6 +282,14 @@ struct RETRO_CameraVertex {
 	vec2 lightuv;					// Light map coordinates
 };
 
+// A world point as such a corner, with nothing yet to interpolate
+inline RETRO_CameraVertex RETRO_ViewVertex(const RETRO_Camera *camera, vec3 point)
+{
+	RETRO_CameraVertex vertex = {};
+	vertex.eye = RETRO_ViewPoint(camera, point);
+	return vertex;
+}
+
 // The corner t of the way along an edge. Every field is linear along an edge
 // in the camera's frame, so a cut corner is the same mix of the edge's ends
 // in all of them.
@@ -277,6 +340,34 @@ inline int RETRO_ClipViewPolygonToNearPlane(const RETRO_CameraVertex *vertex, in
 		}
 	}
 	return points;
+}
+
+//
+// Whether corners in the camera's frame all lie outside one plane of the view
+//
+// The planes are the near plane and the four sides of the lens's view, each
+// side's slope scaled by widen so a shape on the screen edge is kept rather
+// than thrown out. Corners that are not all outside one plane may still miss
+// the view, but the test is cheap, holds for any camera however it is turned,
+// and catches nearly everything that does.
+//
+inline bool RETRO_ViewCornersOutside(const RETRO_CameraLens &lens, const RETRO_CameraVertex *vertex, int count, float widen = 1.05f)
+{
+	float left = (lens.center.x - lens.view.x0) / lens.focalx * widen;
+	float right = (lens.view.x1 - lens.center.x) / lens.focalx * widen;
+	float top = (lens.center.y - lens.view.y0) / lens.focaly * widen;
+	float bottom = (lens.view.y1 - lens.center.y) / lens.focaly * widen;
+
+	int behind = 0, leftof = 0, rightof = 0, above = 0, below = 0;
+	for (int i = 0; i < count; i++) {
+		const vec3 &eye = vertex[i].eye;
+		if (eye.z < lens.nearplane) behind++;
+		if (eye.x < -eye.z * left) leftof++;
+		if (eye.x > eye.z * right) rightof++;
+		if (eye.y < -eye.z * top) above++;
+		if (eye.y > eye.z * bottom) below++;
+	}
+	return behind == count || leftof == count || rightof == count || above == count || below == count;
 }
 
 //

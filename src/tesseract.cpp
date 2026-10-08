@@ -127,9 +127,8 @@ void DEMO_Render(RETRO_Time time)
 
 		// 4D to 3D, along w
 		float k = W_EYE / (W_EYE - p.w);
-		corner[i].rpos = { p.x * k, p.y * k, p.z * k };
+		corner[i] = RETRO_ProjectPoint({ p.x * k, p.y * k, p.z * k }, SCALE);
 		radius[i] = BEAM_RADIUS * k;
-		RETRO_ProjectVertex(&corner[i], SCALE);
 	}
 
 	RETRO_ClearDepthBuffer();
@@ -141,9 +140,7 @@ void DEMO_Render(RETRO_Time time)
 
 		for (int step = 0; step <= steps; step++) {
 			float t = (float)step / steps;
-			Vertex ball = {};
-			ball.rpos = mix(a.rpos, b.rpos, t);
-			RETRO_ProjectVertex(&ball, SCALE);
+			Vertex ball = RETRO_ProjectPoint(mix(a.rpos, b.rpos, t), SCALE);
 			float ballradius = mix(radius[edge.a], radius[edge.b], t);
 			RETRO_DrawDepthSprite(ball.spos, ball.q, 2 * ballradius * focal * ball.q, SCALE * ballradius, BallMap, BallDepth, BEAM_MAP);
 		}

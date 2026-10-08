@@ -44,10 +44,7 @@ static PolygonPoint Project(float x, float y, vec2 uv, double time)
 {
 	double angle = (y - RETRO_HEIGHT / 2.0) * TWIST_RATE + time * ROTATION_SPEED;
 	mat3 twist = rotateY((float)cos(angle), (float)sin(angle));
-	Vertex vertex = {};
-	vertex.pos = { x, y - RETRO_HEIGHT / 2.0f, 0 };
-	RETRO_RotateVertex(&vertex, twist);
-	RETRO_ProjectVertex(&vertex, 1.0f, AXIS_X, RETRO_HEIGHT / 2.0f, CAMERA_DISTANCE);
+	Vertex vertex = RETRO_ProjectPoint(twist * vec3{ x, y - RETRO_HEIGHT / 2.0f, 0 }, 1.0f, AXIS_X, RETRO_HEIGHT / 2.0f, CAMERA_DISTANCE);
 
 	// The ribbon's normal, turned with it and tilted by the twist: the
 	// inverse-transpose of the twist's local derivative.

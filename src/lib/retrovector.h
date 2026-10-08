@@ -177,6 +177,15 @@ inline vec2 normalize(vec2 v)
 
 inline vec2 mix(vec2 a, vec2 b, float t) { return a + (b - a) * t; }
 
+// v turned by angle radians, from +x toward +y: counterclockwise in the math
+// (y-up) sense, so clockwise on this library's y-down screen, as cross reads
+inline vec2 rotate(vec2 v, float angle)
+{
+	float c = cosf(angle);
+	float s = sinf(angle);
+	return { v.x * c - v.y * s, v.x * s + v.y * c };
+}
+
 inline vec2 min(vec2 a, vec2 b) { return { MIN(a.x, b.x), MIN(a.y, b.y) }; }
 inline vec2 max(vec2 a, vec2 b) { return { MAX(a.x, b.x), MAX(a.y, b.y) }; }
 inline vec2 min(vec2 v, float s) { return { MIN(v.x, s), MIN(v.y, s) }; }

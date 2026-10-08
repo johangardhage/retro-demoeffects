@@ -44,9 +44,9 @@
 #include "lib/retromath.h"
 
 #define MOVEMENT_SPEED		480.0f	// World units per second
-#define TURN_SPEED			180.0f	// Degrees per second, from the arrow keys
-#define PITCH_SPEED			60.0f	// Degrees per second, from Page Up/Page Down
-#define MOUSE_SENSITIVITY	0.3f	// Degrees per mouse step
+#define TURN_SPEED			radians(180)	// Radians per second, from the arrow keys
+#define PITCH_SPEED			radians(60)		// Radians per second, from Page Up/Page Down
+#define MOUSE_SENSITIVITY	radians(0.3)	// Radians per mouse step
 #define EYE_HEIGHT			22.0f	// World units from the player's origin up to the eye, as in Quake
 #define ANIMATION_RATE		10.0	// Frames per second of animated textures and light styles
 #define LIGHT_STYLES		256		// Light styles a face can name
@@ -110,7 +110,7 @@ static unsigned char Checkerboard[16 * 16 + 8 * 8 + 4 * 4 + 2 * 2];	// The missi
 static float LightScale[LIGHT_STYLES];	// Each light style's brightness now, 1 being normal
 static double Time;						// Seconds since the start, which the animations run on
 static RETRO_Camera Camera;
-static float Yaw, Pitch;				// Degrees: the heading about the up axis, and the look up or down
+static RETRO_Look Look;				// The heading about the up axis, and the look up or down
 
 //
 // The sky's two layers along the view ray through a pixel. The texture holds
@@ -495,18 +495,17 @@ void DEMO_Render(RETRO_Time time)
 	if (RETRO_KeyState(SDL_SCANCODE_S) || RETRO_KeyState(SDL_SCANCODE_DOWN)) walk -= MOVEMENT_SPEED * dt;
 	if (RETRO_KeyState(SDL_SCANCODE_D)) strafe += MOVEMENT_SPEED * dt;
 	if (RETRO_KeyState(SDL_SCANCODE_A)) strafe -= MOVEMENT_SPEED * dt;
-	if (RETRO_KeyState(SDL_SCANCODE_LEFT)) Yaw += TURN_SPEED * dt;
-	if (RETRO_KeyState(SDL_SCANCODE_RIGHT)) Yaw -= TURN_SPEED * dt;
-	if (RETRO_KeyState(SDL_SCANCODE_PAGEUP)) Pitch += PITCH_SPEED * dt;
-	if (RETRO_KeyState(SDL_SCANCODE_PAGEDOWN)) Pitch -= PITCH_SPEED * dt;
+	float turn = 0;
+	float tilt = 0;
+	if (RETRO_KeyState(SDL_SCANCODE_LEFT)) turn += TURN_SPEED * dt;
+	if (RETRO_KeyState(SDL_SCANCODE_RIGHT)) turn -= TURN_SPEED * dt;
+	if (RETRO_KeyState(SDL_SCANCODE_PAGEUP)) tilt += PITCH_SPEED * dt;
+	if (RETRO_KeyState(SDL_SCANCODE_PAGEDOWN)) tilt -= PITCH_SPEED * dt;
+	RETRO_TurnLook(&Look, turn, tilt);
+	RETRO_MouseLook(&Look);
 
-	RETRO_MouseState mouse = RETRO_GetMouseState();
-	Yaw = fmodf(Yaw - mouse.xrel * MOUSE_SENSITIVITY, 360.0f);
-	Pitch = clamp(Pitch - mouse.yrel * MOUSE_SENSITIVITY, -90.0f, 90.0f);
-
-	// Aim from a level frame facing +x; Quake's z is up. The heading turns
-	// left and the pitch looks up, the other way from the camera's turns.
-	RETRO_AimCamera(&Camera, { 0, -1, 0 }, { 0, 0, -1 }, { 1, 0, 0 }, -Yaw * (float)M_PI / 180.0f, -Pitch * (float)M_PI / 180.0f);
+	// Aim from a level frame facing +x; Quake's z is up
+	RETRO_AimLook(&Camera, Look, { 0, -1, 0 }, { 0, 0, -1 }, { 1, 0, 0 });
 
 	// Walking flies along the view, and strafing is level
 	RETRO_MoveCamera(&Camera, walk, strafe);
@@ -534,8 +533,9 @@ void DEMO_Initialize(void)
 	RETRO_InitializeCamera(&Camera, RETRO_MapVector(*start, "origin") + vec3{ 0.0f, 0.0f, EYE_HEIGHT });
 	Camera.lens.focalx = RETRO_WIDTH / 2.0f;
 	Camera.lens.focaly = RETRO_WIDTH / 2.0f;
-	Yaw = RETRO_MapNumber(*start, "angle");
-	Pitch = 0.0f;
+	Look.yaw = radians(RETRO_MapNumber(*start, "angle"));
+	Look.sensitivity = MOUSE_SENSITIVITY;
+	Look.maxpitch = radians(90);
 	RETRO_SetMouseMode(true);
 
 	// Each color shaded by each light level, from the colormap's 64 rows,

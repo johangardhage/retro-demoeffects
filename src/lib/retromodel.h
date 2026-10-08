@@ -47,7 +47,7 @@ struct Vertex {
 };
 
 // A unit vector: where something points. Every UnitVector is normalized as it
-// is written (fill dir, then RETRO_NormalizeUnitVector), so nothing that
+// is written (dir is filled with a normalized vector), so nothing that
 // reads one has to divide it out first, and the model's rotation is orthonormal,
 // so it stays unit all the way to the drawers.
 //

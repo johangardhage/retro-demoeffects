@@ -110,10 +110,7 @@ static PolygonPoint Project(vec3 point, vec3 normal, float top, double time)
 	float y = point.y + top - RETRO_HEIGHT / 2.0f;
 	double angle = y * TWIST_RATE + time * ROTATION_SPEED;
 	mat3 twist = rotateY((float)cos(angle), (float)sin(angle));
-	Vertex vertex = {};
-	vertex.pos = { point.x, y, point.z };
-	RETRO_RotateVertex(&vertex, twist);
-	RETRO_ProjectVertex(&vertex, 1.0f, AXIS_X, RETRO_HEIGHT / 2.0f, CAMERA_DISTANCE);
+	Vertex vertex = RETRO_ProjectPoint(twist * vec3{ point.x, y, point.z }, 1.0f, AXIS_X, RETRO_HEIGHT / 2.0f, CAMERA_DISTANCE);
 
 	// Inverse-transpose of the twist's local derivative: the surface
 	// normal tilts with the deformation, not just with its Y rotation.

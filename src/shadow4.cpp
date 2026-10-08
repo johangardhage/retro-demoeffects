@@ -53,7 +53,6 @@
 #include "lib/retrogfx.h"
 #include "lib/retropoly.h"
 #include "lib/retromodel.h"
-#include "lib/retromath.h"
 #include "lib/retroterrain.h"
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
@@ -137,7 +136,7 @@ static bool Lighting = true;
 static bool Help = true;
 
 // The camera's frame, taken once a frame
-static RETRO_TerrainBasis View;
+static RETRO_Camera View;
 
 // A vertex at p facing n, lit. Only the ambient light and the sun have any
 // blue in them, and they are white, as the light tables need
@@ -166,29 +165,7 @@ static RETRO_CameraVertex TerrainVertex(int x, int z)
 
 	// The texture is stretched once over the patch
 	vec2 uv = { p.x * (TEXTURE_SIZE - 1) / (RETRO_Terrain.width - 1), p.z * (TEXTURE_SIZE - 1) / (RETRO_Terrain.height - 1) };
-	return RETRO_TerrainTintVertex(p, uv, LightVertex(p, n), LightTable(), View);
-}
-
-// Each visible cell as two triangles, split along the diagonal from its
-// first corner to the opposite one
-static void DrawTerrain(const RETRO_TerrainMesh &mesh)
-{
-	unsigned char *texture = RETRO_ImageData(ASSET_TERRAIN);
-	RETRO_ShadeTable table = LightTable();
-	int step = mesh.step;
-	for (int z = mesh.minz; z < mesh.maxz; z += step) {
-		for (int x = mesh.minx; x < mesh.maxx; x += step) {
-			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
-			RETRO_CameraVertex first = TerrainVertex(x, z);
-			RETRO_CameraVertex across = TerrainVertex(x + step, z);
-			RETRO_CameraVertex down = TerrainVertex(x, z + step);
-			RETRO_CameraVertex opposite = TerrainVertex(x + step, z + step);
-			RETRO_CameraVertex upper[3] = { first, opposite, across };
-			RETRO_CameraVertex lower[3] = { first, down, opposite };
-			RETRO_DrawTerrainPolygon(upper, 3, texture, TEXTURE_SIZE, TEXTURE_SIZE, table);
-			RETRO_DrawTerrainPolygon(lower, 3, texture, TEXTURE_SIZE, TEXTURE_SIZE, table);
-		}
-	}
+	return RETRO_TerrainTintVertex(p, uv, LightVertex(p, n), LightTable(), &View);
 }
 
 //
@@ -301,7 +278,7 @@ void DEMO_Render(RETRO_Time time)
 	}
 
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
-	View = mesh.basis;
+	View = mesh.camera;
 
 	PlacePointLights(time.total);
 	vec3 center = RETRO_TerrainCenter();
@@ -320,15 +297,14 @@ void DEMO_Render(RETRO_Time time)
 		appliedlightmap = lightmap;
 	}
 
-	// The sky, and a band of ground color below it for wherever the
-	// landscape does not reach
-	RETRO_Clear(ColorSky);
-	RETRO_DrawRectangle(0, (int)(RETRO_HEIGHT * 0.38f), RETRO_WIDTH - 1, RETRO_HEIGHT - 1, ColorGround);
+	// The sky, and the ground color below the camera's horizon for wherever
+	// the landscape does not reach, so it follows the vehicle's pitch
 	RETRO_ClearDepthBuffer();
-	DrawTerrain(mesh);
-	RETRO_DrawTerrainModel(Models[MODEL_FAN], spin, object, OBJECT_SCALE, Lighting ? Lights : Darkness, &GrayTexel, 1, 1, GrayLightTable(), View);
-	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_GREEN].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeGreen : ColorBlack, View);
-	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_RED].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeRed : ColorBlack, View);
+	RETRO_DrawHorizon(&View, { 0, 1, 0 }, ColorSky, ColorGround);
+	RETRO_DrawTerrainMesh(mesh, TerrainVertex, RETRO_ImageData(ASSET_TERRAIN), TEXTURE_SIZE, TEXTURE_SIZE, LightTable());
+	RETRO_DrawTerrainModel(Models[MODEL_FAN], spin, object, OBJECT_SCALE, Lighting ? Lights : Darkness, &GrayTexel, 1, 1, GrayLightTable(), &View);
+	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_GREEN].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeGreen : ColorBlack, &View);
+	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_RED].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeRed : ColorBlack, &View);
 
 	DrawText();
 }
@@ -366,11 +342,12 @@ void DEMO_Initialize(void)
 	RETRO_CreateShadeTable(&Gray, palette, GrayLightTable(), RETRO_TintColor);
 
 	// The lens: 90 degrees across, square pixels, pitched by the jeep
-	RETRO_TerrainLens.focalx = RETRO_WIDTH / 2.0f;
-	RETRO_TerrainLens.focaly = RETRO_WIDTH / 2.0f;
+	RETRO_TerrainCamera.lens.focalx = RETRO_WIDTH / 2.0f;
+	RETRO_TerrainCamera.lens.focaly = RETRO_WIDTH / 2.0f;
+	RETRO_TerrainCamera.lens.center.y = RETRO_HEIGHT / 2.0f; // the vehicle pitches about the middle
 	RETRO_TerrainView.step = 1;
 	RETRO_TerrainView.distance = RETRO_Terrain.width * 3 / 2;
-	RETRO_TerrainLens.nearplane = WORLD(10);
+	RETRO_TerrainCamera.lens.nearplane = WORLD(10);
 
 	// The camera starts 500 up and 400 short of the center, looking at it,
 	// and falls onto the ground

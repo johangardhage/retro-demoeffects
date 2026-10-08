@@ -28,10 +28,10 @@
 //   fade(t) = 6t⁵ − 15t⁴ + 10t³
 //
 // whose first and second derivatives are zero at both ends, so the field has no
-// crease where two cells meet. The hash is a shuffled table of 256 entries, so
-// the noise repeats every 256 cells along each axis. The screen is a few cells
-// across. The third axis is time, and phase wraps on the whole table, where
-// the field is the one it started as.
+// crease where two cells meet. The hash is of the corner's coordinates,
+// folded onto NOISE_PERIOD cells, so the noise repeats after that many along
+// each axis. The screen is a few cells across. The third axis is time, and
+// phase wraps on the period, where the field is the one it started as.
 //
 // A particle adds to a count where it stands, shared between the four pixels
 // around the point by how near it is to each, and every step the count keeps
@@ -44,6 +44,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retromath.h"
 #include "lib/retropalette.h"
 
 #define NUM_PARTICLES 4000
@@ -63,57 +64,6 @@ struct Particle {
 
 static Particle Particles[NUM_PARTICLES];
 static float Trail[RETRO_WIDTH * RETRO_HEIGHT];
-static unsigned char Permutation[NOISE_PERIOD * 2];
-
-//
-// The gradient at a lattice corner, dotted with the offset from it
-//
-// The low four bits of the hash pick one of the twelve edge directions of a
-// cube, (±1, ±1, 0), (±1, 0, ±1) and (0, ±1, ±1), four of them twice.
-//
-static float Gradient(int hash, float x, float y, float z)
-{
-	int h = hash & 15;
-	float u = h < 8 ? x : y;
-	float v = h < 4 ? y : (h == 12 || h == 14 ? x : z);
-
-	return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
-}
-
-//
-// Perlin noise, in [-1, 1]
-//
-static float Noise(float x, float y, float z)
-{
-	// The cell, and the point inside it
-	int cellx = (int)floorf(x) & (NOISE_PERIOD - 1);
-	int celly = (int)floorf(y) & (NOISE_PERIOD - 1);
-	int cellz = (int)floorf(z) & (NOISE_PERIOD - 1);
-	x = fract(x);
-	y = fract(y);
-	z = fract(z);
-
-	float u = smootherstep(0.0f, 1.0f, x);
-	float v = smootherstep(0.0f, 1.0f, y);
-	float w = smootherstep(0.0f, 1.0f, z);
-
-	// Hash the eight corners
-	int a = Permutation[cellx] + celly;
-	int aa = Permutation[a] + cellz;
-	int ab = Permutation[a + 1] + cellz;
-	int b = Permutation[cellx + 1] + celly;
-	int ba = Permutation[b] + cellz;
-	int bb = Permutation[b + 1] + cellz;
-
-	// Blend along x, then y, then z
-	float near = mix(mix(Gradient(Permutation[aa], x, y, z), Gradient(Permutation[ba], x - 1, y, z), u),
-					 mix(Gradient(Permutation[ab], x, y - 1, z), Gradient(Permutation[bb], x - 1, y - 1, z), u), v);
-	float far = mix(mix(Gradient(Permutation[aa + 1], x, y, z - 1), Gradient(Permutation[ba + 1], x - 1, y, z - 1), u),
-					mix(Gradient(Permutation[ab + 1], x, y - 1, z - 1), Gradient(Permutation[bb + 1], x - 1, y - 1, z - 1), u), v);
-
-	return mix(near, far, w);
-}
-
 static void SowParticle(Particle *particle)
 {
 	particle->x = RANDOMF(RETRO_WIDTH);
@@ -134,7 +84,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 
 	for (Particle &particle : Particles) {
 		// Carry the particle one step along the field
-		float angle = 2 * M_PI * FIELD_TURNS * Noise(particle.x * FIELD_SCALE, particle.y * FIELD_SCALE, phase);
+		float angle = 2 * M_PI * FIELD_TURNS * RETRO_PerlinNoise(particle.x * FIELD_SCALE, particle.y * FIELD_SCALE, phase, NOISE_PERIOD);
 		particle.x += PARTICLE_SPEED * cosf(angle);
 		particle.y += PARTICLE_SPEED * sinf(angle);
 		particle.life--;
@@ -179,19 +129,6 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(64, 128, RETRO_INDIGO, RETRO_DEEPPINK);
 	RETRO_CreateGradientPalette(128, 208, RETRO_DEEPPINK, RETRO_MARIGOLD);
 	RETRO_CreateGradientPalette(208, RETRO_COLORS, RETRO_MARIGOLD, RETRO_WHITE);
-
-	// Shuffle the hash table, and lay it out twice so a corner one cell on
-	// needs no wrap
-	for (int i = 0; i < NOISE_PERIOD; i++) {
-		Permutation[i] = i;
-	}
-	for (int i = NOISE_PERIOD - 1; i > 0; i--) {
-		int j = RANDOM(i + 1);
-		SWAP(Permutation[i], Permutation[j]);
-	}
-	for (int i = 0; i < NOISE_PERIOD; i++) {
-		Permutation[NOISE_PERIOD + i] = Permutation[i];
-	}
 
 	for (Particle &particle : Particles) {
 		SowParticle(&particle);

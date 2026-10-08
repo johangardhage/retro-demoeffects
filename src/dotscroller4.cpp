@@ -45,12 +45,12 @@ static const char *const ScrollText[] = { " RETRO DEMOEFFECTS...    " };
 static RETRO_Image *ScrollImage;
 
 // Terrain and letters use the same perspective and pixel depth buffer.
-static void PlotDot(float x, float y, float z, const RETRO_TerrainIslandFrame &frame, unsigned char color)
+static void PlotDot(float x, float y, float z, const RETRO_Camera *camera, unsigned char color)
 {
-	vec3 eye = RETRO_TerrainIslandEye(x, y, z, frame);
-	if (eye.z <= RETRO_TerrainLens.nearplane) return;
+	vec3 eye = RETRO_ViewPoint(camera, { x, y, z });
+	if (eye.z <= camera->lens.nearplane) return;
 
-	PolygonPoint point = RETRO_ProjectViewPoint(RETRO_TerrainLens, eye);
+	PolygonPoint point = RETRO_ProjectViewPoint(camera->lens, eye);
 	if (!RETRO_OnScreen(point.pos.x, point.pos.y)) return;
 
 	int sx = (int)point.pos.x;
@@ -67,11 +67,11 @@ void DEMO_Render(RETRO_Time time)
 
 	RETRO_UpdateTerrainIsland(time.delta);
 	RETRO_ClearDepthBuffer();
-	RETRO_TerrainIslandFrame frame = RETRO_BuildTerrainIslandFrame();
+	RETRO_Camera camera = RETRO_TerrainIslandCamera();
 
 	for (int z = 0; z < mapheight; z++) {
 		for (int x = 0; x < mapwidth; x++) {
-			PlotDot(x, RETRO_TerrainHeight(x, z), z, frame, RETRO_TerrainColor(x, z));
+			PlotDot(x, RETRO_TerrainHeight(x, z), z, &camera, RETRO_TerrainColor(x, z));
 		}
 	}
 
@@ -86,7 +86,7 @@ void DEMO_Render(RETRO_Time time)
 			float mapx = mapwidth + sx * LETTER_DOT_SPACING - phase;
 			if (mapx < 0 || mapx >= mapwidth) continue;
 			float height = RETRO_TerrainHeightLinear(mapx, mapz) + LETTER_HEIGHT_OFFSET;
-			PlotDot(mapx, height, mapz, frame, LETTER_COLOR_BASE + sy);
+			PlotDot(mapx, height, mapz, &camera, LETTER_COLOR_BASE + sy);
 		}
 	}
 }

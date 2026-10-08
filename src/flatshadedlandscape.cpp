@@ -83,11 +83,11 @@ struct WorldVertex {
 
 // The world position is kept alongside the camera's view of it: the face
 // normal below is taken in world space, which the camera's frame no longer is.
-static WorldVertex TerrainVertex(float x, float z, const RETRO_TerrainBasis &basis)
+static WorldVertex TerrainVertex(float x, float z, const RETRO_Camera *camera)
 {
 	WorldVertex vertex = {};
 	vertex.pos = { x, RETRO_TerrainHeight(x, z), z };
-	vertex.vertex.eye = RETRO_TerrainPointEye(x, z, vertex.pos.y, basis);
+	vertex.vertex.eye = RETRO_ViewPoint(camera, vertex.pos);
 	return vertex;
 }
 
@@ -104,22 +104,22 @@ static WorldVertex TerrainVertex(float x, float z, const RETRO_TerrainBasis &bas
 // It is drawn before the mesh and writes no depth, so any hill standing in
 // front of it covers it, and the sun sets behind a ridge rather than through it.
 //
-static void DrawSun(const RETRO_TerrainBasis &basis)
+static void DrawSun(const RETRO_Camera *camera)
 {
-	vec3 eye = RETRO_TerrainCameraEye(Sun, basis);
+	vec3 eye = RETRO_ViewDirection(camera, Sun);
 	if (eye.z <= 0.0f) return;
 
-	PolygonPoint point = RETRO_ProjectViewPoint(RETRO_TerrainLens, eye);
+	PolygonPoint point = RETRO_ProjectViewPoint(camera->lens, eye);
 	for (int ring = 0; ring < LANDSCAPE_SUNRINGS; ring++) {
 		RETRO_DrawEllipse(point.pos.x, point.pos.y, SunRadius[ring], SunRadius[ring], SunColor[ring]);
 	}
 }
 
-static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const WorldVertex &c, unsigned char basecolor)
+static void DrawTriangle(const RETRO_CameraLens &lens, const WorldVertex &a, const WorldVertex &b, const WorldVertex &c, unsigned char basecolor)
 {
 	RETRO_CameraVertex triangle[3] = { a.vertex, b.vertex, c.vertex };
 	PolygonPoint polygon[4];
-	int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, triangle, 3, polygon);
+	int points = RETRO_ClipProjectViewPolygon(lens, triangle, 3, polygon);
 	if (points < 3) return;
 
 	// The unnormalized cross product supplies both the face normal and its
@@ -149,20 +149,20 @@ void DEMO_Render(RETRO_Time time)
 	int step = mesh.step;
 
 	RETRO_ClearDepthBuffer();
-	DrawSun(mesh.basis);
+	DrawSun(&mesh.camera);
 
 	for (int z = mesh.minz; z < mesh.maxz; z += step) {
 		for (int x = mesh.minx; x < mesh.maxx; x += step) {
 			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
 
-			WorldVertex p00 = TerrainVertex(x, z, mesh.basis);
-			WorldVertex p10 = TerrainVertex(x + step, z, mesh.basis);
-			WorldVertex p01 = TerrainVertex(x, z + step, mesh.basis);
-			WorldVertex p11 = TerrainVertex(x + step, z + step, mesh.basis);
+			WorldVertex p00 = TerrainVertex(x, z, &mesh.camera);
+			WorldVertex p10 = TerrainVertex(x + step, z, &mesh.camera);
+			WorldVertex p01 = TerrainVertex(x, z + step, &mesh.camera);
+			WorldVertex p11 = TerrainVertex(x + step, z + step, &mesh.camera);
 
 			unsigned char color = RETRO_TerrainColor(x + step / 2.0f, z + step / 2.0f);
-			DrawTriangle(p00, p11, p10, color);
-			DrawTriangle(p00, p01, p11, color);
+			DrawTriangle(mesh.camera.lens, p00, p11, p10, color);
+			DrawTriangle(mesh.camera.lens, p00, p01, p11, color);
 		}
 	}
 }
@@ -204,6 +204,7 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(SunColor[1], RETRO_FAWN);
 	RETRO_SetColor(SunColor[2], RETRO_BLANCHEDALMOND);
 
-	RETRO_TerrainLens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_TerrainCamera.lens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_TerrainCamera.truepitch = true; // PageUp/PageDown tip the view
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

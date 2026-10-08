@@ -35,18 +35,18 @@
 // Near enough that a camera flown down onto the ground still sees it
 #define LANDSCAPE_NEARPLANE 0.25f
 
-static RETRO_CameraVertex TerrainVertex(float x, float z, const RETRO_TerrainBasis &basis)
+static RETRO_CameraVertex TerrainVertex(float x, float z, const RETRO_Camera *camera)
 {
 	RETRO_CameraVertex vertex = {};
-	vertex.eye = RETRO_TerrainPointEye(x, z, RETRO_TerrainHeight(x, z), basis);
+	vertex.eye = RETRO_ViewPoint(camera, { x, RETRO_TerrainHeight(x, z), z });
 	return vertex;
 }
 
-static void DrawTriangle(const RETRO_CameraVertex &a, const RETRO_CameraVertex &b, const RETRO_CameraVertex &c, unsigned char color)
+static void DrawTriangle(const RETRO_CameraLens &lens, const RETRO_CameraVertex &a, const RETRO_CameraVertex &b, const RETRO_CameraVertex &c, unsigned char color)
 {
 	RETRO_CameraVertex triangle[3] = { a, b, c };
 	PolygonPoint polygon[4];
-	int points = RETRO_ClipProjectViewPolygon(RETRO_TerrainLens, triangle, 3, polygon);
+	int points = RETRO_ClipProjectViewPolygon(lens, triangle, 3, polygon);
 	if (points < 3) return;
 
 	RETRO_DrawFlatPolygon(polygon, points, color);
@@ -63,14 +63,14 @@ void DEMO_Render(RETRO_Time time)
 		for (int x = mesh.minx; x < mesh.maxx; x += step) {
 			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
 
-			RETRO_CameraVertex p00 = TerrainVertex(x, z, mesh.basis);
-			RETRO_CameraVertex p10 = TerrainVertex(x + step, z, mesh.basis);
-			RETRO_CameraVertex p01 = TerrainVertex(x, z + step, mesh.basis);
-			RETRO_CameraVertex p11 = TerrainVertex(x + step, z + step, mesh.basis);
+			RETRO_CameraVertex p00 = TerrainVertex(x, z, &mesh.camera);
+			RETRO_CameraVertex p10 = TerrainVertex(x + step, z, &mesh.camera);
+			RETRO_CameraVertex p01 = TerrainVertex(x, z + step, &mesh.camera);
+			RETRO_CameraVertex p11 = TerrainVertex(x + step, z + step, &mesh.camera);
 
 			unsigned char color = RETRO_TerrainColor(x + step / 2.0f, z + step / 2.0f);
-			DrawTriangle(p00, p11, p10, color);
-			DrawTriangle(p00, p01, p11, color);
+			DrawTriangle(mesh.camera.lens, p00, p11, p10, color);
+			DrawTriangle(mesh.camera.lens, p00, p01, p11, color);
 		}
 	}
 }
@@ -84,6 +84,7 @@ void DEMO_Initialize(void)
 	// Sky, in an entry the color map never uses
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
 
-	RETRO_TerrainLens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_TerrainCamera.lens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_TerrainCamera.truepitch = true; // PageUp/PageDown tip the view
 	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

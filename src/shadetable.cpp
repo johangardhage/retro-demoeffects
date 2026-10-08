@@ -204,17 +204,6 @@ static RETRO_Palette Dim(RETRO_Palette color, float shade, const float *tint)
 }
 
 //
-// A channel of a color from its hue, lightness and saturation, each from 0 to
-// 1: n is 0 for red, 8 for green and 4 for blue
-//
-static unsigned char HueChannel(float n, float hue, float saturation, float lightness)
-{
-	float k = fmodf(n + hue * 12, 12);
-	float a = saturation * MIN(lightness, 1 - lightness);
-	return CLAMP256((lightness - a * clamp(MIN(k - 3, 9 - k), -1.0f, 1.0f)) * 255 + 0.5f);
-}
-
-//
 // Count how many texels of a picture have each color
 //
 static void CountTexels(Subject *subject)
@@ -523,11 +512,7 @@ static void DrawMatch(const Subject &subject, double time)
 		float lightness = (y + 0.5f) / half;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			float hue = (x + 0.5f) / RETRO_WIDTH;
-			RETRO_Palette target = {
-				HueChannel(0, hue, saturation, lightness),
-				HueChannel(8, hue, saturation, lightness),
-				HueChannel(4, hue, saturation, lightness),
-			};
+			RETRO_Palette target = RETRO_HSLColor(hue, saturation, lightness);
 			buffer[y * RETRO_WIDTH + x] = RETRO_NearestPaletteIndex(target, subject.palette);
 			buffer[(half + y) * RETRO_WIDTH + x] = subject.lut[target.r >> 3][target.g >> 3][target.b >> 3];
 		}

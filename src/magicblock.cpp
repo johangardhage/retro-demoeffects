@@ -20,8 +20,11 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrorender.h"
+#include "lib/retropoly.h"
+#include "lib/retromodel.h"
+#include "lib/retromath.h"
 #include "lib/retropalette.h"
+#include "lib/retrovector.h"
 
 #define BLOCK_SPEED_X  0.86f
 #define BLOCK_SPEED_Y -0.43f
@@ -102,10 +105,7 @@ static void DrawSection(Model3D *cubemodel, vec3 normal)
 		if (count >= 3) {
 			PolygonPoint pts[8];
 			for (int i = 0; i < count; i++) {
-				Vertex tempvertex;
-				tempvertex.rpos = clipped[i];
-				RETRO_ProjectVertex(&tempvertex, PROJECTION_SCALE);
-				pts[i].pos = tempvertex.spos;
+				pts[i].pos = RETRO_ProjectPoint(clipped[i], PROJECTION_SCALE).spos;
 			}
 			RETRO_DrawMaskedPolygon(pts, count, face->c, cubemodel->mask);
 		}
@@ -126,10 +126,7 @@ static void DrawStars(double time)
 		star.x -= travel;
 		if (star.x < -STAR_FIELD) star.x += 2 * STAR_FIELD;
 
-		Vertex vertex;
-		vertex.pos = star;
-		RETRO_RotateVertex(&vertex, rotation);
-		RETRO_ProjectVertex(&vertex, PROJECTION_SCALE);
+		Vertex vertex = RETRO_ProjectPoint(rotation * star, PROJECTION_SCALE);
 		if (vertex.q <= 0.0f) continue;
 		int sx = (int)vertex.spos.x;
 		int sy = (int)vertex.spos.y;

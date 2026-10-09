@@ -130,10 +130,10 @@ static void DrawQuad(const RETRO_CameraLens &lens, const RingVertex &a, const Ri
 		{ c.eye, { (float)TEXTURE_SIZE, (float)TEXTURE_SIZE }, c.shade },
 		{ d.eye, { (float)TEXTURE_SIZE, 0 }, d.shade }
 	};
-	PolygonPoint point[4 + RETRO_CAMERA_CLIP_PLANES];
-	int points = RETRO_ClipProjectViewPolygon(lens, corner, 4, point);
-	if (points >= 3) {
-		RETRO_DrawTexMapGouraudPolygon(point, points, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable);
+	RETRO_ProjectedPolygon projected;
+	RETRO_CameraClipProject(lens, corner, 4, &projected);
+	if (projected.count >= 3) {
+		RETRO_DrawTexMapGouraudPolygon(projected.point, projected.count, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable);
 	}
 }
 
@@ -158,7 +158,7 @@ void DEMO_Render(RETRO_Time time)
 		float along = (first + i) * (float)RING_SPACING;
 		vec3 center = Path(along);
 		vec3 ringright, ringdown;
-		RETRO_FrameFromForward(PathTangent(along), &ringright, &ringdown);
+		RETRO_FrameFromForward(PathTangent(along), { 0, 1, 0 }, &ringright, &ringdown);
 
 		// fog is 1 at the near ring, falling toward 0 at the far one. depth
 		// eases that into [FOG_KEEP, 1] by squaring (1 - fog) instead of fog

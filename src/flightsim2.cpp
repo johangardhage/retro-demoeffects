@@ -83,7 +83,6 @@
 #define VIEW_EYELEVEL 73.0f			// The boresight's row
 #define VIEW_NEARPLANE 1.0f			// Feet
 #define VIEW_LINENEARPLANE 20.0f	// Lines are cut further out, so no end lands far off the screen
-#define VIEW_MAXPOLYGON (FACE_MAXCORNERS + RETRO_CAMERA_CLIP_PLANES)	// A face, and one more corner for each cut
 #define FACE_MAXCORNERS RETRO_MAP_MAX_FACE	// A map brush's face is a square cut once by each other plane
 
 // The palette: flat colors, sixteen grays at 17 apart, and a ramp of shades
@@ -751,22 +750,20 @@ static void PlaceCamera(void)
 
 	vec3 level = { Plane.forward.x, 0, Plane.forward.z };
 	if (length(level) > 0.01f) ahead = normalize(level);
-	Camera.pos = Plane.position - ahead * CHASE_DISTANCE + worldup * CHASE_HEIGHT;
-	Camera.forward = normalize(Plane.position - Camera.pos);
-	Camera.right = normalize(cross(Camera.forward, worldup));
-	Camera.down = cross(Camera.forward, Camera.right);
+	vec3 eye = Plane.position - ahead * CHASE_DISTANCE + worldup * CHASE_HEIGHT;
+	RETRO_LookAlong(&Camera, eye, normalize(Plane.position - eye), -worldup);
 	Camera.lens.center = { RETRO_WIDTH / 2.0f, RETRO_HEIGHT / 2.0f };
 	Camera.lens.view = { 0, RETRO_WIDTH, 0, RETRO_HEIGHT };
 }
 
 // A world polygon onto the screen, through the lens
-static int ProjectPolygon(const vec3 *corner, int corners, PolygonPoint *point)
+static void ProjectPolygon(const vec3 *corner, int corners, RETRO_ProjectedPolygon *projected)
 {
 	RETRO_CameraVertex vertex[FACE_MAXCORNERS] = {};
 	for (int i = 0; i < corners; i++) {
 		vertex[i].eye = RETRO_ViewPoint(&Camera, corner[i]);
 	}
-	return RETRO_ClipProjectViewPolygon(Camera.lens, vertex, corners, point);
+	RETRO_CameraClipProject(Camera.lens, vertex, corners, projected);
 }
 
 // The ground in order, each polygon a step nearer than the one before
@@ -774,12 +771,12 @@ static void DrawGround(ClipRect clip)
 {
 	for (int i = 0; i < GroundCount; i++) {
 		const GroundPolygon &ground = Ground[i];
-		PolygonPoint polygon[VIEW_MAXPOLYGON];
-		int points = ProjectPolygon(ground.corner, ground.corners, polygon);
-		for (int j = 0; j < points; j++) {
-			polygon[j].q = i + 2.0f;
+		RETRO_ProjectedPolygon projected;
+		ProjectPolygon(ground.corner, ground.corners, &projected);
+		for (int j = 0; j < projected.count; j++) {
+			projected.point[j].q = i + 2.0f;
 		}
-		if (points >= 3) RETRO_DrawFlatPolygon(polygon, points, ground.color, clip);
+		if (projected.count >= 3) RETRO_DrawFlatPolygon(projected.point, projected.count, ground.color, clip);
 	}
 }
 
@@ -787,9 +784,9 @@ static void DrawFace(const WorldFace &face, ClipRect clip)
 {
 	if (dot(face.normal, Plane.position - face.corner[0]) <= 0) return;
 
-	PolygonPoint polygon[VIEW_MAXPOLYGON];
-	int points = ProjectPolygon(face.corner, face.corners, polygon);
-	if (points >= 3) RETRO_DrawFlatPolygon(polygon, points, face.color, clip);
+	RETRO_ProjectedPolygon projected;
+	ProjectPolygon(face.corner, face.corners, &projected);
+	if (projected.count >= 3) RETRO_DrawFlatPolygon(projected.point, projected.count, face.color, clip);
 }
 
 // A direction of the aircraft's own, in the world. The model's z runs toward
@@ -814,9 +811,9 @@ static void DrawJet(ClipRect clip)
 		if (dot(normal, Camera.pos - corner[0]) <= 0) continue;
 
 		int material = face.material == JetCanopy ? MATERIAL_CANOPY : face.material == JetGear ? MATERIAL_DECK : MATERIAL_JET;
-		PolygonPoint polygon[VIEW_MAXPOLYGON];
-		int points = ProjectPolygon(corner, face.vertices, polygon);
-		if (points >= 3) RETRO_DrawFlatPolygon(polygon, points, MaterialShade(material, normal), clip);
+		RETRO_ProjectedPolygon projected;
+		ProjectPolygon(corner, face.vertices, &projected);
+		if (projected.count >= 3) RETRO_DrawFlatPolygon(projected.point, projected.count, MaterialShade(material, normal), clip);
 	}
 }
 
@@ -1072,10 +1069,11 @@ static void DrawCompass(void)
 }
 
 //
-// The attitude ball: the view's horizon again, as RETRO_ViewClimb finds it, through a
-// wider lens, sky above and ground below, with a white line along it a pixel
-// wide and the aircraft fixed at the middle. climb grows by steep for each
-// pixel straight across the line.
+// The attitude ball: sky where a direction through the pixel climbs and ground
+// where it falls, the aircraft fixed at the middle. climb is that direction's
+// part along the world's up, taken from Plane.forward at the middle and from
+// Plane.right and Plane.up out across the ball. It grows by steep for each
+// pixel straight across the horizon, so the white line stays a pixel wide.
 //
 static void DrawAttitude(void)
 {
@@ -1155,6 +1153,33 @@ static void DrawPanel(void)
 	if (message) RETRO_PutString(message, 159 - RETRO_StringWidth(message) / 2, 193, COLOR_RED);
 }
 
+//
+// A cable, a pixel at a time through the depth buffer
+//
+// It is cut further out than the lens's own near plane, so neither end lands
+// far off the screen and the steps stay few. q is linear across the screen,
+// so it is interpolated along the steps as it is across a face. Only the
+// lens's view is drawn in.
+//
+static void DrawCable(vec3 from, vec3 to, unsigned char color)
+{
+	vec3 a = RETRO_ViewPoint(&Camera, from);
+	vec3 b = RETRO_ViewPoint(&Camera, to);
+	if (!RETRO_CutViewLine(&a, &b, VIEW_LINENEARPLANE)) return;
+
+	PolygonPoint pa = RETRO_ProjectViewPoint(Camera.lens, a);
+	PolygonPoint pb = RETRO_ProjectViewPoint(Camera.lens, b);
+	vec2 delta = pb.pos - pa.pos;
+	int steps = MAX((int)ceilf(MAX(fabsf(delta.x), fabsf(delta.y))), 1);
+	for (int i = 0; i <= steps; i++) {
+		float t = (float)i / steps;
+		int x = (int)floorf(pa.pos.x + delta.x * t);
+		int y = (int)floorf(pa.pos.y + delta.y * t);
+		if (!RETRO_LensViewContains(Camera.lens, x, y)) continue;
+		if (RETRO_DepthTest(y * RETRO_WIDTH + x, mix(pa.q, pb.q, t))) RETRO_PutPixel(x, y, color);
+	}
+}
+
 void DEMO_Render(RETRO_Time time)
 {
 	UpdateFlight(time.delta);
@@ -1165,7 +1190,10 @@ void DEMO_Render(RETRO_Time time)
 
 	ClipRect clip = Camera.lens.view;
 	RETRO_ClearDepthBuffer();
-	RETRO_DrawHorizon(&Camera, { 0, 1, 0 }, COLOR_SKY, COLOR_SEA);
+	RETRO_DrawRectangle(clip.x0, clip.y0, clip.x1 - 1, clip.y1 - 1, COLOR_SKY);
+	PolygonPoint below[5];
+	int count = RETRO_ClipHorizon(&Camera, { 0, 1, 0 }, below);
+	if (count >= 3) RETRO_DrawFlatPolygon(below, count, COLOR_SEA, clip);
 	DrawGround(clip);
 	RETRO_ClearDepthBuffer();
 	for (int i = 0; i < FaceCount; i++) {
@@ -1173,7 +1201,7 @@ void DEMO_Render(RETRO_Time time)
 	}
 	if (ChaseView) DrawJet(clip);
 	for (int i = 0; i < LineCount; i++) {
-		RETRO_DrawViewLine(&Camera, Lines[i].a, Lines[i].b, Lines[i].color, VIEW_LINENEARPLANE);
+		DrawCable(Lines[i].a, Lines[i].b, Lines[i].color);
 	}
 
 	if (ChaseView) {

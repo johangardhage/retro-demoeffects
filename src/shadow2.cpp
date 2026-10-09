@@ -163,15 +163,14 @@ static RETRO_ShadeTable LightTable(int texture)
 	return { &LightTableData[texture - ASSET_TERRAIN][0][0][0][0], RETRO_COLORS, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
 }
 
-// The ground at sample x, z, lit
-static RETRO_CameraVertex TerrainVertex(int x, int z)
+// The ground's corner at p, as the mesh's camera sees it, lit
+static RETRO_CameraVertex TerrainVertex(vec3 p, const RETRO_CameraVertex &corner)
 {
-	vec3 p = { (float)x, RETRO_TerrainHeight(x, z), (float)z };
 	vec3 n = normalize(RETRO_TerrainNormal(p.x, p.z));
 
 	// The texture is stretched once over the patch
 	vec2 uv = { p.x * (TEXTURE_SIZE - 1) / (RETRO_Terrain.width - 1), p.z * (TEXTURE_SIZE - 1) / (RETRO_Terrain.height - 1) };
-	return RETRO_TerrainTintVertex(p, uv, LightVertex(p, n), LightTable(ASSET_TERRAIN), &View);
+	return RETRO_TerrainTintVertex(corner, uv, LightVertex(p, n), LightTable(ASSET_TERRAIN));
 }
 
 // Where the ray from light through p meets the ground
@@ -226,10 +225,10 @@ static void DrawShadow(const Model3D *model, vec3 position, float scale, vec3 li
 	RETRO_CameraVertex middle = RETRO_ViewVertex(&View, { center.x, center.y + SHADOW_LIFT, center.z });
 	for (int i = 0; i < corners; i++) {
 		RETRO_CameraVertex triangle[3] = { middle, shadow[i], shadow[(i + 1) % corners] };
-		PolygonPoint polygon[4];
-		int points = RETRO_ClipProjectViewPolygon(View.lens, triangle, 3, polygon);
+		RETRO_ProjectedTriangle projected;
+		RETRO_CameraClipProjectTriangle(View.lens, triangle[0], triangle[1], triangle[2], &projected);
 		// One pass for the whole fan, including overlapping triangles.
-		RETRO_DrawRemapPolygon(polygon, points, ShadowTable, i == 0);
+		RETRO_DrawRemapPolygon(projected.point, projected.count, ShadowTable, i == 0);
 	}
 }
 
@@ -256,7 +255,7 @@ static void DrawText(void)
 	vec3 center = RETRO_TerrainCenter();
 	// Each line within the screen's 40 columns
 	snprintf(text, sizeof(text), "CAM [%5.0f,%5.0f,%5.0f] CELL [%d, %d]\nLighting [%s]: Amb=%d Inf=%d G=%d R=%d\nGreen y=%.0f Red y=%.0f\nShadow cast from [%s]",
-			 TO_WORLD(RETRO_TerrainCamera.x - center.x), TO_WORLD(RETRO_TerrainCamera.height), TO_WORLD(RETRO_TerrainCamera.z - center.z), (int)floorf(RETRO_TerrainCamera.x), (int)floorf(RETRO_TerrainCamera.z),
+			 TO_WORLD(RETRO_Rider.x - center.x), TO_WORLD(RETRO_Rider.height), TO_WORLD(RETRO_Rider.z - center.z), (int)floorf(RETRO_Rider.x), (int)floorf(RETRO_Rider.z),
 			 Lighting ? "ON" : "OFF", Lights.ambient > 0, Lights.light[LIGHT_SUN].on, Lights.light[LIGHT_GREEN].on, Lights.light[LIGHT_RED].on, TO_WORLD(PointLightAltitude[LIGHT_GREEN]), TO_WORLD(PointLightAltitude[LIGHT_RED]),
 			 CastFromAbove ? "ABOVE" : "POINT LIGHTS");
 	RETRO_PutString(text, 0, RETRO_HEIGHT - 37, ColorTextGreen);
@@ -352,7 +351,11 @@ void DEMO_Render(RETRO_Time time)
 	// The sky, and the ground color below the camera's horizon for wherever
 	// the landscape does not reach, so it follows the vehicle's pitch
 	RETRO_ClearDepthBuffer();
-	RETRO_DrawHorizon(&View, { 0, 1, 0 }, ColorSky, ColorGround);
+	const ClipRect &view = View.lens.view;
+	RETRO_DrawRectangle(view.x0, view.y0, view.x1 - 1, view.y1 - 1, ColorSky);
+	PolygonPoint below[5];
+	int count = RETRO_ClipHorizon(&View, { 0, 1, 0 }, below);
+	if (count >= 3) RETRO_DrawFlatPolygon(below, count, ColorGround, view);
 	RETRO_DrawTerrainMesh(mesh, TerrainVertex, RETRO_ImageData(ASSET_TERRAIN), TEXTURE_SIZE, TEXTURE_SIZE, LightTable(ASSET_TERRAIN));
 	RETRO_DrawTerrainModel(model, identity(), object, OBJECT_SCALE, Lighting ? Lights : Darkness, RETRO_ImageData(selected.texture), TEXTURE_SIZE, TEXTURE_SIZE, LightTable(selected.texture), &View);
 	RETRO_DrawTerrainFlatModel(Models[MODEL_CUBE], identity(), Lights.light[LIGHT_GREEN].position, LIGHT_OBJECT_SCALE, Lighting ? ColorCubeGreen : ColorBlack, &View);
@@ -405,20 +408,20 @@ void DEMO_Initialize(void)
 	RETRO_CreateShadeTable(palette, RETRO_COLORS, 1, ShadowTable, SHADOW_LIGHT);
 
 	// The lens: 90 degrees across, square pixels, pitched by the jeep
-	RETRO_TerrainCamera.lens.focalx = RETRO_WIDTH / 2.0f;
-	RETRO_TerrainCamera.lens.focaly = RETRO_WIDTH / 2.0f;
-	RETRO_TerrainCamera.lens.center.y = RETRO_HEIGHT / 2.0f; // the vehicle pitches about the middle
-	RETRO_TerrainView.step = 1;
-	RETRO_TerrainView.distance = RETRO_Terrain.width * 3 / 2;
-	RETRO_TerrainCamera.lens.nearplane = WORLD(10);
+	RETRO_Rider.lens.focalx = RETRO_WIDTH / 2.0f;
+	RETRO_Rider.lens.focaly = RETRO_WIDTH / 2.0f;
+	RETRO_Rider.lens.center.y = RETRO_HEIGHT / 2.0f; // the vehicle pitches about the middle
+	RETRO_TerrainDraw.step = 1;
+	RETRO_TerrainDraw.distance = RETRO_Terrain.width * 3 / 2;
+	RETRO_Rider.lens.nearplane = WORLD(10);
 
 	// The camera starts 500 up and 400 short of the center, looking at it,
 	// and falls onto the ground
 	vec3 center = RETRO_TerrainCenter();
-	RETRO_TerrainCamera.x = center.x;
-	RETRO_TerrainCamera.z = center.z - WORLD(400);
-	RETRO_TerrainCamera.height = WORLD(500);
-	RETRO_TerrainCamera.heading = M_PI;
+	RETRO_Rider.x = center.x;
+	RETRO_Rider.z = center.z - WORLD(400);
+	RETRO_Rider.height = WORLD(500);
+	RETRO_Rider.heading = M_PI;
 
 	// The hovering jeep the camera rides
 	RETRO_Vehicle.acceleration = WORLD(900);

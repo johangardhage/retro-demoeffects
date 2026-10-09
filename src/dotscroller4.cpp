@@ -44,20 +44,15 @@
 static const char *const ScrollText[] = { " RETRO DEMOEFFECTS...    " };
 static RETRO_Image *ScrollImage;
 
-// Terrain and letters use the same perspective and pixel depth buffer.
-static void PlotDot(float x, float y, float z, const RETRO_Camera *camera, unsigned char color)
+// The terrain and the letters share one depth-tested pixel.
+static void PlotDot(const RETRO_CameraLens &lens, vec3 eye, unsigned char color)
 {
-	vec3 eye = RETRO_ViewPoint(camera, { x, y, z });
-	if (eye.z <= camera->lens.nearplane) return;
-
-	PolygonPoint point = RETRO_ProjectViewPoint(camera->lens, eye);
-	if (!RETRO_OnScreen(point.pos.x, point.pos.y)) return;
-
-	int sx = (int)point.pos.x;
-	int sy = (int)point.pos.y;
-	if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, point.q)) {
-		RETRO_PutPixel(sx, sy, color);
-	}
+	if (eye.z < lens.nearplane) return;
+	PolygonPoint point = RETRO_ProjectViewPoint(lens, eye);
+	int x = (int)floorf(point.pos.x);
+	int y = (int)floorf(point.pos.y);
+	if (!RETRO_LensViewContains(lens, x, y)) return;
+	if (RETRO_DepthTest(y * RETRO_WIDTH + x, point.q)) RETRO_PutPixel(x, y, color);
 }
 
 void DEMO_Render(RETRO_Time time)
@@ -67,11 +62,12 @@ void DEMO_Render(RETRO_Time time)
 
 	RETRO_UpdateTerrainIsland(time.delta);
 	RETRO_ClearDepthBuffer();
-	RETRO_Camera camera = RETRO_TerrainIslandCamera();
+	RETRO_Camera camera = RETRO_CameraFromIsland();
 
+	// The terrain, a dot per cell, and the letters after it in the same depth buffer
 	for (int z = 0; z < mapheight; z++) {
 		for (int x = 0; x < mapwidth; x++) {
-			PlotDot(x, RETRO_TerrainHeight(x, z), z, &camera, RETRO_TerrainColor(x, z));
+			PlotDot(camera.lens, RETRO_ViewPoint(&camera, { (float)x, RETRO_TerrainHeight(x, z), (float)z }), RETRO_TerrainColor(x, z));
 		}
 	}
 
@@ -86,7 +82,7 @@ void DEMO_Render(RETRO_Time time)
 			float mapx = mapwidth + sx * LETTER_DOT_SPACING - phase;
 			if (mapx < 0 || mapx >= mapwidth) continue;
 			float height = RETRO_TerrainHeightLinear(mapx, mapz) + LETTER_HEIGHT_OFFSET;
-			PlotDot(mapx, height, mapz, &camera, LETTER_COLOR_BASE + sy);
+			PlotDot(camera.lens, RETRO_ViewPoint(&camera, { mapx, height, mapz }), LETTER_COLOR_BASE + sy);
 		}
 	}
 }
@@ -102,6 +98,6 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(LETTER_COLOR_BASE, LETTER_COLOR_BASE + ScrollImage->height, RETRO_GOLD, RETRO_WHITE);
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
 
-	RETRO_LookDownAtTerrain();
+	RETRO_PlaceTerrainIsland();
 	RETRO_Island.rotation = ISLAND_START_ROTATION;
 }

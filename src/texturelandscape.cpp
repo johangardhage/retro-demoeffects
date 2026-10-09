@@ -4,7 +4,7 @@
 // The same mesh as flatlandscape.cpp with the color map read per pixel instead
 // of per quad: the map is the texture, sampled perspective-correct across every
 // triangle, so a quad shows the ground it actually covers rather than the one
-// color its center happened to land on. Each quad spans RETRO_TerrainView.step
+// color its center happened to land on. Each quad spans RETRO_TerrainDraw.step
 // cells on a side, so that is step by step texels a flat fill was spending a
 // single color on.
 //
@@ -42,44 +42,26 @@
 // Near enough that a camera flown down onto the ground still sees it
 #define LANDSCAPE_NEARPLANE 0.25f
 
-static RETRO_CameraVertex TerrainVertex(float x, float z, const RETRO_Camera *camera)
+static void DrawCell(const RETRO_TerrainMesh &mesh, const RETRO_TerrainCell &cell, const void *)
 {
-	RETRO_CameraVertex vertex = {};
-	vertex.eye = RETRO_ViewPoint(camera, { x, RETRO_TerrainHeight(x, z), z });
-	vertex.uv = { x, z };
-	return vertex;
-}
-
-static void DrawTriangle(const RETRO_CameraLens &lens, const RETRO_CameraVertex &a, const RETRO_CameraVertex &b, const RETRO_CameraVertex &c)
-{
-	RETRO_CameraVertex triangle[3] = { a, b, c };
-	PolygonPoint polygon[4];
-	int points = RETRO_ClipProjectViewPolygon(lens, triangle, 3, polygon);
-	if (points < 3) return;
-
-	RETRO_DrawTexMapPolygon(polygon, points, RETRO_Terrain.colormap, RETRO_Terrain.width, RETRO_Terrain.height, RETRO_Terrain.wrap);
+	// Each corner textured by the color map where it stands
+	RETRO_CameraVertex corner[4];
+	for (int i = 0; i < 4; i++) {
+		corner[i] = cell.corner[i];
+		corner[i].uv = { cell.pos[i].x, cell.pos[i].z };
+	}
+	for (const int *t : RETRO_TerrainCellTriangles) {
+		RETRO_ProjectedTriangle projected;
+		RETRO_CameraClipProjectTriangle(mesh.camera.lens, corner[t[0]], corner[t[1]], corner[t[2]], &projected);
+		if (projected.count >= 3) RETRO_DrawTexMapPolygon(projected.point, projected.count, RETRO_Terrain.colormap, RETRO_Terrain.width, RETRO_Terrain.height, RETRO_Terrain.wrap);
+	}
 }
 
 void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainCamera(time.delta);
-	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
-	int step = mesh.step;
-
+	RETRO_UpdateTerrainRider(time.delta);
 	RETRO_ClearDepthBuffer();
-	for (int z = mesh.minz; z < mesh.maxz; z += step) {
-		for (int x = mesh.minx; x < mesh.maxx; x += step) {
-			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
-
-			RETRO_CameraVertex p00 = TerrainVertex(x, z, &mesh.camera);
-			RETRO_CameraVertex p10 = TerrainVertex(x + step, z, &mesh.camera);
-			RETRO_CameraVertex p01 = TerrainVertex(x, z + step, &mesh.camera);
-			RETRO_CameraVertex p11 = TerrainVertex(x + step, z + step, &mesh.camera);
-
-			DrawTriangle(mesh.camera.lens, p00, p11, p10);
-			DrawTriangle(mesh.camera.lens, p00, p01, p11);
-		}
-	}
+	RETRO_WalkTerrainMesh(RETRO_BuildTerrainMesh(), DrawCell);
 }
 
 void DEMO_Initialize(void)
@@ -91,7 +73,7 @@ void DEMO_Initialize(void)
 	// Sky, in an entry the color map never uses
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
 
-	RETRO_TerrainCamera.lens.nearplane = LANDSCAPE_NEARPLANE;
-	RETRO_TerrainCamera.truepitch = true; // PageUp/PageDown tip the view
-	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
+	RETRO_Rider.lens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_Rider.truepitch = true; // PageUp/PageDown tip the view
+	RETRO_PlaceTerrainRider(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

@@ -2,7 +2,7 @@
 // Flat-shaded landscape
 //
 // The 1024x1024 voxel height and color maps drawn as a wrapping triangle mesh.
-// Each mesh quad spans RETRO_TerrainView.step cells on a side and becomes two
+// Each mesh quad spans RETRO_TerrainDraw.step cells on a side and becomes two
 // flat-shaded polygons. Their color is the color map at the quad's center and
 // their light is the triangle normal, quantized through eight palette-matched
 // brightness levels. A depth buffer resolves the mesh without requiring a
@@ -76,20 +76,12 @@ static const unsigned char SunColor[LANDSCAPE_SUNRINGS] = { 247, 248, 249 };
 // Toward the sun, carried round each frame; not necessarily unit
 static vec3 Sun;
 
+// The world position is kept alongside the camera's view of it: the face
+// normal below is taken in world space, which the camera's frame no longer is.
 struct WorldVertex {
 	vec3 pos;
 	RETRO_CameraVertex vertex;
 };
-
-// The world position is kept alongside the camera's view of it: the face
-// normal below is taken in world space, which the camera's frame no longer is.
-static WorldVertex TerrainVertex(float x, float z, const RETRO_Camera *camera)
-{
-	WorldVertex vertex = {};
-	vertex.pos = { x, RETRO_TerrainHeight(x, z), z };
-	vertex.vertex.eye = RETRO_ViewPoint(camera, vertex.pos);
-	return vertex;
-}
 
 //
 // The sun, at the point the light arrives from
@@ -106,10 +98,8 @@ static WorldVertex TerrainVertex(float x, float z, const RETRO_Camera *camera)
 //
 static void DrawSun(const RETRO_Camera *camera)
 {
-	vec3 eye = RETRO_ViewDirection(camera, Sun);
-	if (eye.z <= 0.0f) return;
-
-	PolygonPoint point = RETRO_ProjectViewPoint(camera->lens, eye);
+	PolygonPoint point;
+	if (!RETRO_ProjectViewDirection(camera, Sun, &point)) return;
 	for (int ring = 0; ring < LANDSCAPE_SUNRINGS; ring++) {
 		RETRO_DrawEllipse(point.pos.x, point.pos.y, SunRadius[ring], SunRadius[ring], SunColor[ring]);
 	}
@@ -117,10 +107,9 @@ static void DrawSun(const RETRO_Camera *camera)
 
 static void DrawTriangle(const RETRO_CameraLens &lens, const WorldVertex &a, const WorldVertex &b, const WorldVertex &c, unsigned char basecolor)
 {
-	RETRO_CameraVertex triangle[3] = { a.vertex, b.vertex, c.vertex };
-	PolygonPoint polygon[4];
-	int points = RETRO_ClipProjectViewPolygon(lens, triangle, 3, polygon);
-	if (points < 3) return;
+	RETRO_ProjectedTriangle projected;
+	RETRO_CameraClipProjectTriangle(lens, a.vertex, b.vertex, c.vertex, &projected);
+	if (projected.count < 3) return;
 
 	// The unnormalized cross product supplies both the face normal and its
 	// area. A height field over a regular grid fixes the vertical component at
@@ -130,12 +119,25 @@ static void DrawTriangle(const RETRO_CameraLens &lens, const WorldVertex &a, con
 	vec3 normal = cross(b.pos - a.pos, c.pos - a.pos);
 	int shade = RETRO_TerrainShade(normal, Sun, LANDSCAPE_SHADES);
 
-	RETRO_DrawFlatPolygon(polygon, points, LandscapeShadeTable[basecolor][shade]);
+	RETRO_DrawFlatPolygon(projected.point, projected.count, LandscapeShadeTable[basecolor][shade]);
+}
+
+static void DrawCell(const RETRO_TerrainMesh &mesh, const RETRO_TerrainCell &cell, const void *)
+{
+	WorldVertex corner[4];
+	for (int i = 0; i < 4; i++) {
+		corner[i] = { cell.pos[i], cell.corner[i] };
+	}
+
+	unsigned char color = RETRO_TerrainCellColor(mesh, cell);
+	for (const int *t : RETRO_TerrainCellTriangles) {
+		DrawTriangle(mesh.camera.lens, corner[t[0]], corner[t[1]], corner[t[2]], color);
+	}
 }
 
 void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainCamera(time.delta);
+	RETRO_UpdateTerrainRider(time.delta);
 
 	// Carry the sun round. Shade divides the length out, so this is a direction
 	// and not a brightness: the reach and the height set where it stands, and
@@ -146,25 +148,10 @@ void DEMO_Render(RETRO_Time time)
 	Sun.z = sinf(sunangle) * LANDSCAPE_SUNREACH;
 
 	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
-	int step = mesh.step;
 
 	RETRO_ClearDepthBuffer();
 	DrawSun(&mesh.camera);
-
-	for (int z = mesh.minz; z < mesh.maxz; z += step) {
-		for (int x = mesh.minx; x < mesh.maxx; x += step) {
-			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
-
-			WorldVertex p00 = TerrainVertex(x, z, &mesh.camera);
-			WorldVertex p10 = TerrainVertex(x + step, z, &mesh.camera);
-			WorldVertex p01 = TerrainVertex(x, z + step, &mesh.camera);
-			WorldVertex p11 = TerrainVertex(x + step, z + step, &mesh.camera);
-
-			unsigned char color = RETRO_TerrainColor(x + step / 2.0f, z + step / 2.0f);
-			DrawTriangle(mesh.camera.lens, p00, p11, p10, color);
-			DrawTriangle(mesh.camera.lens, p00, p01, p11, color);
-		}
-	}
+	RETRO_WalkTerrainMesh(mesh, DrawCell);
 }
 
 void DEMO_Initialize(void)
@@ -204,7 +191,7 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(SunColor[1], RETRO_FAWN);
 	RETRO_SetColor(SunColor[2], RETRO_BLANCHEDALMOND);
 
-	RETRO_TerrainCamera.lens.nearplane = LANDSCAPE_NEARPLANE;
-	RETRO_TerrainCamera.truepitch = true; // PageUp/PageDown tip the view
-	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
+	RETRO_Rider.lens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_Rider.truepitch = true; // PageUp/PageDown tip the view
+	RETRO_PlaceTerrainRider(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

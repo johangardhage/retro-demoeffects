@@ -21,41 +21,35 @@
 #define WORLD_HEIGHT_SCALE (1.0f / 8.0f) // Same relief as dotscroller4
 #define ISLAND_START_ROTATION -0.5f // A modest turn off dead-on at startup, as dotscroller4
 
-// Draw the finite 128x128 terrain through the island look.
-static void DrawTerrainDots(const RETRO_Camera *camera)
+static void PlotDot(const RETRO_CameraLens &lens, vec3 eye, unsigned char color)
 {
-	int width = RETRO_Terrain.width;
-	int height = RETRO_Terrain.height;
-
-	for (int z = 0; z < height; z++) {
-		for (int x = 0; x < width; x++) {
-			vec3 eye = RETRO_ViewPoint(camera, { (float)x, RETRO_TerrainHeight(x, z), (float)z });
-			if (!RETRO_TerrainEyeInView(camera->lens, eye)) continue;
-
-			PolygonPoint point = RETRO_ProjectViewPoint(camera->lens, eye);
-			int sx = (int)point.pos.x;
-			int sy = (int)point.pos.y;
-			if (!RETRO_OnScreen(sx, sy)) continue;
-
-			if (RETRO_DepthTest(sy * RETRO_WIDTH + sx, 1.0f / eye.z)) {
-				RETRO_PutPixel(sx, sy, RETRO_TerrainColor(x, z));
-			}
-		}
-	}
+	if (eye.z < lens.nearplane) return;
+	PolygonPoint point = RETRO_ProjectViewPoint(lens, eye);
+	int x = (int)floorf(point.pos.x);
+	int y = (int)floorf(point.pos.y);
+	if (!RETRO_LensViewContains(lens, x, y)) return;
+	if (RETRO_DepthTest(y * RETRO_WIDTH + x, point.q)) RETRO_PutPixel(x, y, color);
 }
 
 void DEMO_Render(RETRO_Time time)
 {
 	RETRO_UpdateTerrainIsland(time.delta);
 	RETRO_ClearDepthBuffer();
-	RETRO_Camera camera = RETRO_TerrainIslandCamera();
-	DrawTerrainDots(&camera);
+
+	// The finite 128x128 terrain, every cell a dot, through the island look
+	RETRO_Camera camera = RETRO_CameraFromIsland();
+	for (int z = 0; z < RETRO_Terrain.height; z++) {
+		for (int x = 0; x < RETRO_Terrain.width; x++) {
+			vec3 eye = RETRO_ViewPoint(&camera, { (float)x, RETRO_TerrainHeight(x, z), (float)z });
+			PlotDot(camera.lens, eye, RETRO_TerrainColor(x, z));
+		}
+	}
 }
 
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTerrain("assets/voxel_color_128x128.pcx", "assets/voxel_height_128x128.pcx", WORLD_HEIGHT_SCALE, false);
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
-	RETRO_LookDownAtTerrain();
+	RETRO_PlaceTerrainIsland();
 	RETRO_Island.rotation = ISLAND_START_ROTATION;
 }

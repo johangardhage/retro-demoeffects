@@ -611,7 +611,7 @@ void DEMO_Render(RETRO_Time time)
 
 	// Aim from the level frame, facing +x with y up
 	RETRO_Camera camera;
-	RETRO_InitializeCamera(&camera, Position + vec3{ 0, EYE_HEIGHT, 0 });
+	camera.pos = Position + vec3{ 0, EYE_HEIGHT, 0 };
 	camera.lens.focalx = FOCAL;
 	camera.lens.focaly = FOCAL;
 	RETRO_AimLook(&camera, Look, LevelRight, LevelDown, LevelForward);

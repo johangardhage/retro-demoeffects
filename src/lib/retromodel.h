@@ -213,8 +213,11 @@ inline Model3D *RETRO_Get3DModel(int id = 0)
 // Allocate a model and register it
 //
 // A model built in code rather than read from a file is allocated here too, so
-// it is reached and released like any other. Defaults are assigned by hand
-// because malloc and memset go around the member initializers Model3D declares.
+// it is reached and released like any other. The allocation is calloc rather
+// than malloc: the counts, pointers and arrays have to start at zero, and
+// Model3D's member initializers make the type non-trivial, so memset cannot
+// be given a Model3D *. calloc does not run those initializers, so the
+// defaults that are not zero are assigned by hand.
 //
 inline Model3D *RETRO_Allocate3DModel(void)
 {
@@ -228,11 +231,10 @@ inline Model3D *RETRO_Allocate3DModel(void)
 		RETRO_RageQuit("Too many 3D models to fit the model list\n");
 	}
 
-	Model3D *model = (Model3D *)malloc(sizeof(Model3D));
+	Model3D *model = (Model3D *)calloc(1, sizeof(Model3D));
 	if (model == NULL) {
 		RETRO_RageQuit("Cannot allocate 3D model memory\n");
 	}
-	memset(model, 0, sizeof(Model3D));
 	model->glenzlighting = GlenzLighting{};
 	model->lighting = &RETRO_Headlight;
 	model->texmapwidth = RETRO_TEXMAP_SIZE;

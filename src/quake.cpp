@@ -271,13 +271,14 @@ static void DrawFace(int index)
 	// Clip the face to the view and shade what is left. The shader drawer takes
 	// the coordinates times q, and reads neither a normal nor a view-space
 	// point from them.
-	PolygonPoint point[RETRO_CAMERA_MAX_POLYGON + RETRO_CAMERA_CLIP_PLANES] = {};
-	int count = RETRO_ClipProjectViewPolygon(Camera.lens, vertex, face->numedges, point);
-	for (int i = 0; i < count; i++) {
+	RETRO_ProjectedPolygon projected;
+	RETRO_CameraClipProject(Camera.lens, vertex, face->numedges, &projected);
+	PolygonPoint *point = projected.point;
+	for (int i = 0; i < projected.count; i++) {
 		point[i].uv = point[i].uv * point[i].q;
 		point[i].lightuv = point[i].lightuv * point[i].q;
 	}
-	RETRO_DrawShaderPolygon(point, count, {}, ShadeFace, &shading);
+	RETRO_DrawShaderPolygon(point, projected.count, {}, ShadeFace, &shading);
 }
 
 //
@@ -530,7 +531,7 @@ void DEMO_Initialize(void)
 	if (start == NULL) {
 		RETRO_RageQuit("Map has no info_player_start\n");
 	}
-	RETRO_InitializeCamera(&Camera, RETRO_MapVector(*start, "origin") + vec3{ 0.0f, 0.0f, EYE_HEIGHT });
+	Camera.pos = RETRO_MapVector(*start, "origin") + vec3{ 0.0f, 0.0f, EYE_HEIGHT };
 	Camera.lens.focalx = RETRO_WIDTH / 2.0f;
 	Camera.lens.focaly = RETRO_WIDTH / 2.0f;
 	Look.yaw = radians(RETRO_MapNumber(*start, "angle"));

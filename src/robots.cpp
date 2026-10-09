@@ -161,28 +161,23 @@ static bool Help = true;
 // The camera's frame, taken once a frame
 static RETRO_Camera View;
 
-// A vertex at p facing n, lit. Only the ambient light and the sun have any
-// blue in them, and they are white, as the light tables need
-static vec3 LightVertex(vec3 p, vec3 n)
-{
-	return RETRO_ColorLambert(Lighting ? Lights : Darkness, p, n);
-}
-
 // A texture's light table, from its own colors to the screen's
 static RETRO_ShadeTable LightTable(int texture)
 {
 	return { &LightTableData[texture - ASSET_TERRAIN][0][0][0][0], RETRO_COLORS, LIGHT_LEVELS, { TINT_LEVELS, TINT_LEVELS } };
 }
 
-// The ground at sample x, z, lit
-static RETRO_CameraVertex TerrainVertex(int x, int z)
+// The ground's corner at p, as the mesh's camera sees it, lit
+static RETRO_CameraVertex TerrainVertex(vec3 p, const RETRO_CameraVertex &corner)
 {
-	vec3 p = { (float)x, RETRO_TerrainHeight(x, z), (float)z };
 	vec3 n = normalize(RETRO_TerrainNormal(p.x, p.z));
 
-	// The texture is stretched once over the patch
+	// The texture is stretched once over the patch. Only the ambient light and
+	// the sun have any blue in them, and they are white, as the light tables
+	// need
 	vec2 uv = { p.x * (TEXTURE_SIZE - 1) / (RETRO_Terrain.width - 1), p.z * (TEXTURE_SIZE - 1) / (RETRO_Terrain.height - 1) };
-	return RETRO_TerrainTintVertex(p, uv, LightVertex(p, n), LightTable(ASSET_TERRAIN), &View);
+	vec3 light = RETRO_ColorLambert(Lighting ? Lights : Darkness, p, n);
+	return RETRO_TerrainTintVertex(corner, uv, light, LightTable(ASSET_TERRAIN));
 }
 
 //
@@ -216,7 +211,7 @@ static void PoseRobot(double time)
 // pitch, the image's top or bottom row repeated over whatever it uncovers.
 static void DrawSky(double time)
 {
-	int scroll = WRAP((float)(time * SKY_DRIFT - RETRO_TerrainCamera.heading * SKY_TURN), RETRO_WIDTH);
+	int scroll = WRAP((float)(time * SKY_DRIFT - RETRO_Rider.heading * SKY_TURN), RETRO_WIDTH);
 	float tip = tanf(RETRO_Vehicle.restpitch) - tanf(RETRO_Vehicle.pitch);
 	int rise = (int)lroundf(View.lens.focaly * tip);
 	const unsigned char *sky = RETRO_ImageData(ASSET_SKY);
@@ -249,7 +244,7 @@ static void DrawText(void)
 	vec3 center = RETRO_TerrainCenter();
 	// Each line within the screen's 40 columns
 	snprintf(text, sizeof(text), "CAM [%5.0f,%5.0f,%5.0f] CELL [%d, %d]\nLighting [%s]: Amb=%d Inf=%d O=%d Y=%d\nAnim[%d]=%s Frm=%.1f",
-			 TO_WORLD(RETRO_TerrainCamera.x - center.x), TO_WORLD(RETRO_TerrainCamera.height), TO_WORLD(RETRO_TerrainCamera.z - center.z), (int)floorf(RETRO_TerrainCamera.x), (int)floorf(RETRO_TerrainCamera.z),
+			 TO_WORLD(RETRO_Rider.x - center.x), TO_WORLD(RETRO_Rider.height), TO_WORLD(RETRO_Rider.z - center.z), (int)floorf(RETRO_Rider.x), (int)floorf(RETRO_Rider.z),
 			 Lighting ? "ON" : "OFF", Lights.ambient > 0, Lights.light[LIGHT_SUN].on, Lights.light[LIGHT_ORANGE].on, Lights.light[LIGHT_YELLOW].on,
 			 CurrentAnimation, Animations[CurrentAnimation].name, AnimationFrame);
 	RETRO_PutString(text, 0, RETRO_HEIGHT - 28, ColorTextGreen);
@@ -363,20 +358,20 @@ void DEMO_Initialize(void)
 	RETRO_CreateShadeTable(palette, RETRO_COLORS, 1, ShadowTable, SHADOW_LIGHT);
 
 	// The lens: 90 degrees across, square pixels, pitched by the jeep
-	RETRO_TerrainCamera.lens.focalx = RETRO_WIDTH / 2.0f;
-	RETRO_TerrainCamera.lens.focaly = RETRO_WIDTH / 2.0f;
-	RETRO_TerrainCamera.lens.center.y = RETRO_HEIGHT / 2.0f; // the vehicle pitches about the middle
-	RETRO_TerrainView.step = 1;
-	RETRO_TerrainView.distance = RETRO_Terrain.width * 3 / 2;
-	RETRO_TerrainCamera.lens.nearplane = WORLD(10);
+	RETRO_Rider.lens.focalx = RETRO_WIDTH / 2.0f;
+	RETRO_Rider.lens.focaly = RETRO_WIDTH / 2.0f;
+	RETRO_Rider.lens.center.y = RETRO_HEIGHT / 2.0f; // the vehicle pitches about the middle
+	RETRO_TerrainDraw.step = 1;
+	RETRO_TerrainDraw.distance = RETRO_Terrain.width * 3 / 2;
+	RETRO_Rider.lens.nearplane = WORLD(10);
 
 	// The camera starts 500 up and 400 in front of the mechs, halfway between
 	// them and looking them in the face, along +x, and falls onto the ground
 	vec3 center = RETRO_TerrainCenter();
-	RETRO_TerrainCamera.x = center.x - WORLD(400);
-	RETRO_TerrainCamera.z = center.z + ROBOT_SPACING / 2;
-	RETRO_TerrainCamera.height = WORLD(500);
-	RETRO_TerrainCamera.heading = 3 * M_PI / 2;
+	RETRO_Rider.x = center.x - WORLD(400);
+	RETRO_Rider.z = center.z + ROBOT_SPACING / 2;
+	RETRO_Rider.height = WORLD(500);
+	RETRO_Rider.heading = 3 * M_PI / 2;
 
 	// The hovering jeep the camera rides
 	RETRO_Vehicle.acceleration = WORLD(900);

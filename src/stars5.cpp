@@ -93,7 +93,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	RETRO_InitializeCamera(&CameraStart);
 	RETRO_CreateGradientPalette(0, SHADES, RETRO_BLACK, RETRO_WHITE);
 	for (int i = 0; i < NUM_STARS; i++) {
 		Stars[i] = {

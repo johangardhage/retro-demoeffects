@@ -2,8 +2,8 @@
 // Flight sim
 //
 // An aircraft flown over the 1024x1024 voxel height and color maps, drawn as
-// the flat-shaded triangle mesh of flatshadedlandscape.cpp. The wrapping
-// camera there has only a heading; an aircraft also pitches and rolls, so the
+// the flat-shaded triangle mesh of flatshadedlandscape.cpp. The rider
+// there has only a heading; an aircraft also pitches and rolls, so the
 // view here is a free frame of right, up and forward vectors in world space,
 // turned about its own axes. A world point lands in that frame as three dot
 // products, and the near-plane clip and pinhole of the terrain library take
@@ -51,7 +51,7 @@
 #define LANDSCAPE_SHADES 8
 #define LANDSCAPE_AMBIENT 0.55f
 #define LANDSCAPE_NEARPLANE 0.5f
-#define LANDSCAPE_STEP 6
+#define LANDSCAPE_STEP 8
 
 // The ground fades into the haze along the horizon over this many levels,
 // starting this far out and gone into it at the draw distance
@@ -104,10 +104,11 @@ struct Aircraft {
 	float throttle;
 };
 
-// Level, heading along decreasing z like the wrapping camera at heading zero
+// Level, heading along decreasing z like the rider at heading zero
 static Aircraft Plane = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, -1 }, 120.0f, 120.0f };
 static RETRO_Camera Camera;
 
+// A ground corner in the world and in the aircraft's frame
 struct WorldVertex {
 	vec3 pos;
 	RETRO_CameraVertex vertex;
@@ -122,27 +123,6 @@ static void TurnPlane(vec3 axis, float angle)
 	Plane.right = turn * Plane.right;
 	Plane.up = turn * Plane.up;
 	Plane.forward = turn * Plane.forward;
-}
-
-// The ground as drawn: the mesh triangle under (x, z), split along the same
-// diagonal the mesh is, rather than the map at full resolution, which a mesh
-// several cells across cuts corners off
-static float MeshHeight(float x, float z)
-{
-	float step = LANDSCAPE_STEP;
-	float x0 = floorf(x / step) * step;
-	float z0 = floorf(z / step) * step;
-	float fx = (x - x0) / step;
-	float fz = (z - z0) / step;
-	float h00 = RETRO_TerrainHeight(x0, z0);
-	float h10 = RETRO_TerrainHeight(x0 + step, z0);
-	float h01 = RETRO_TerrainHeight(x0, z0 + step);
-	float h11 = RETRO_TerrainHeight(x0 + step, z0 + step);
-	if (fx >= fz) {
-		return h00 + fx * (h10 - h00) + fz * (h11 - h10);
-	} else {
-		return h00 + fz * (h01 - h00) + fx * (h11 - h01);
-	}
 }
 
 static void UpdateFlight(float timestep)
@@ -186,42 +166,22 @@ static void UpdateFlight(float timestep)
 	if (Plane.speed < FLIGHT_STALLSPEED) sink += (1.0f - Plane.speed / FLIGHT_STALLSPEED) * FLIGHT_STALLSINK;
 
 	vec3 velocity = Plane.forward * Plane.speed - worldup * sink;
-	RETRO_TerrainCamera.x += velocity.x * timestep;
-	RETRO_TerrainCamera.z += velocity.z * timestep;
-	RETRO_TerrainCamera.height = MIN(RETRO_TerrainCamera.height + velocity.y * timestep, FLIGHT_CEILING);
-	RETRO_WrapTerrainCamera();
+	RETRO_Rider.x += velocity.x * timestep;
+	RETRO_Rider.z += velocity.z * timestep;
+	RETRO_Rider.height = MIN(RETRO_Rider.height + velocity.y * timestep, FLIGHT_CEILING);
+	RETRO_WrapTerrainRider();
 
 	// On the ground. The nose is turned about the horizontal axis across it,
 	// cross(forward, up), which lifts it toward the sky whichever way up the
 	// aircraft is, by exactly the angle it was pointing down.
-	float floor = MeshHeight(RETRO_TerrainCamera.x, RETRO_TerrainCamera.z) + FLIGHT_CLEARANCE;
-	if (RETRO_TerrainCamera.height < floor) {
-		RETRO_TerrainCamera.height = floor;
+	float floor = RETRO_TerrainHeightTriangle(RETRO_Rider.x, RETRO_Rider.z, LANDSCAPE_STEP) + FLIGHT_CLEARANCE;
+	if (RETRO_Rider.height < floor) {
+		RETRO_Rider.height = floor;
 		vec3 across = cross(Plane.forward, worldup);
 		if (Plane.forward.y < 0 && length(across) > 0) {
 			TurnPlane(normalize(across), -asinf(Plane.forward.y));
 		}
 	}
-}
-
-// The view from the cockpit: the aircraft's frame, with its up turned into
-// the camera's down, through the terrain's lens
-static void PlaceCamera(void)
-{
-	Camera.pos = { RETRO_TerrainCamera.x, RETRO_TerrainCamera.height, RETRO_TerrainCamera.z };
-	Camera.right = Plane.right;
-	Camera.down = -Plane.up;
-	Camera.forward = Plane.forward;
-	Camera.lens = RETRO_TerrainCamera.lens;
-}
-
-// A world point in the aircraft's frame
-static WorldVertex TerrainVertex(float x, float z)
-{
-	WorldVertex vertex = {};
-	vertex.pos = { x, RETRO_TerrainHeight(x, z), z };
-	vertex.vertex = RETRO_ViewVertex(&Camera, vertex.pos);
-	return vertex;
 }
 
 //
@@ -253,54 +213,46 @@ static void DrawSky(void)
 // ground below a high aircraft stays clear.
 static void DrawTriangle(const WorldVertex &a, const WorldVertex &b, const WorldVertex &c, unsigned char basecolor)
 {
-	RETRO_CameraVertex triangle[3] = { a.vertex, b.vertex, c.vertex };
-	PolygonPoint polygon[4];
-	int points = RETRO_ClipProjectViewPolygon(Camera.lens, triangle, 3, polygon);
-	if (points < 3) return;
+	RETRO_ProjectedTriangle projected;
+	RETRO_CameraClipProjectTriangle(Camera.lens, a.vertex, b.vertex, c.vertex, &projected);
+	if (projected.count < 3) return;
 
 	vec3 normal = cross(b.pos - a.pos, c.pos - a.pos);
 	int shade = RETRO_TerrainShade(normal, Sun, LANDSCAPE_SHADES);
 
 	vec3 center = (a.pos + b.pos + c.pos) * (1.0f / 3.0f);
 	float distance = hypotf(center.x - Camera.pos.x, center.z - Camera.pos.z);
-	float fog = clamp((distance - FOG_START) / (RETRO_TerrainView.distance - FOG_START), 0.0f, 1.0f);
+	float fog = clamp((distance - FOG_START) / (RETRO_TerrainDraw.distance - FOG_START), 0.0f, 1.0f);
 	int level = (int)(fog * (FOG_LEVELS - 1) + 0.5f);
 
-	RETRO_DrawFlatPolygon(polygon, points, LandscapeTable[(basecolor * LANDSCAPE_SHADES + shade) * FOG_LEVELS + level]);
+	RETRO_DrawFlatPolygon(projected.point, projected.count, LandscapeTable[(basecolor * LANDSCAPE_SHADES + shade) * FOG_LEVELS + level]);
+}
+
+static void DrawCell(const RETRO_TerrainMesh &mesh, const RETRO_TerrainCell &cell, const void *)
+{
+	WorldVertex corner[4];
+	for (int i = 0; i < 4; i++) {
+		corner[i] = { cell.pos[i], cell.corner[i] };
+	}
+
+	unsigned char color = RETRO_TerrainCellColor(mesh, cell);
+	for (const int *t : RETRO_TerrainCellTriangles) {
+		DrawTriangle(corner[t[0]], corner[t[1]], corner[t[2]], color);
+	}
 }
 
 void DEMO_Render(RETRO_Time time)
 {
 	UpdateFlight(time.delta);
-	PlaceCamera();
 
-	// The walk is taken around the cockpit's own camera, which pitches and
-	// rolls, so a cell is held to the draw distance by its center and to the
-	// view by its corners
-	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh(Camera);
-	int step = mesh.step;
+	// The view from the cockpit: the aircraft's frame, with its up turned into
+	// the camera's down, through the terrain's lens
+	RETRO_PlaceCamera(&Camera, { RETRO_Rider.x, RETRO_Rider.height, RETRO_Rider.z }, Plane.right, -Plane.up, Plane.forward);
+	Camera.lens = RETRO_Rider.lens;
 
 	RETRO_ClearDepthBuffer();
 	DrawSky();
-
-	for (int z = mesh.minz; z < mesh.maxz; z += step) {
-		for (int x = mesh.minx; x < mesh.maxx; x += step) {
-			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
-
-			WorldVertex corner[4] = {
-				TerrainVertex(x, z),
-				TerrainVertex(x + step, z),
-				TerrainVertex(x, z + step),
-				TerrainVertex(x + step, z + step),
-			};
-			RETRO_CameraVertex eyes[4] = { corner[0].vertex, corner[1].vertex, corner[2].vertex, corner[3].vertex };
-			if (RETRO_ViewCornersOutside(Camera.lens, eyes, 4)) continue;
-
-			unsigned char color = RETRO_TerrainColor(x + step / 2.0f, z + step / 2.0f);
-			DrawTriangle(corner[0], corner[3], corner[1], color);
-			DrawTriangle(corner[0], corner[2], corner[3], color);
-		}
-	}
+	RETRO_WalkTerrainMesh(RETRO_BuildTerrainMesh(Camera), DrawCell);
 }
 
 void DEMO_Initialize(void)
@@ -327,13 +279,13 @@ void DEMO_Initialize(void)
 	RETRO_SetPalette(palette);
 	RETRO_CreateShadeTable(RETRO_ImagePalette(0), palette, shadetable, Light);
 
-	RETRO_TerrainView.step = LANDSCAPE_STEP;
-	RETRO_TerrainCamera.lens.nearplane = LANDSCAPE_NEARPLANE;
-	RETRO_TerrainCamera.lens.focalx = RETRO_WIDTH * 0.5f;
-	RETRO_TerrainCamera.lens.focaly = RETRO_WIDTH * 0.5f;
-	RETRO_TerrainCamera.lens.center.y = RETRO_HEIGHT * 0.5f;
+	RETRO_TerrainDraw.step = LANDSCAPE_STEP;
+	RETRO_Rider.lens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_Rider.lens.focalx = RETRO_WIDTH * 0.5f;
+	RETRO_Rider.lens.focaly = RETRO_WIDTH * 0.5f;
+	RETRO_Rider.lens.center.y = RETRO_HEIGHT * 0.5f;
 
-	RETRO_TerrainCamera.x = RETRO_Terrain.width * 0.5f;
-	RETRO_TerrainCamera.z = (float)RETRO_TERRAIN_DISTANCE;
-	RETRO_TerrainCamera.height = MeshHeight(RETRO_TerrainCamera.x, RETRO_TerrainCamera.z) + 80.0f;
+	RETRO_Rider.x = RETRO_Terrain.width * 0.5f;
+	RETRO_Rider.z = (float)RETRO_TERRAIN_DISTANCE;
+	RETRO_Rider.height = RETRO_TerrainHeightTriangle(RETRO_Rider.x, RETRO_Rider.z, LANDSCAPE_STEP) + 80.0f;
 }

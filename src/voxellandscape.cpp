@@ -97,7 +97,7 @@ static unsigned char ColorMap[MAP_WIDTH * MAP_HEIGHT];
 
 void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainCamera(time.delta);
+	RETRO_UpdateTerrainRider(time.delta);
 
 	unsigned char *colormap = RETRO_Terrain.colormap;
 	unsigned char *heightmap = RETRO_Terrain.heightmap;
@@ -107,9 +107,9 @@ void DEMO_Render(RETRO_Time time)
 	// hundred thousand of those a frame. Taken into locals the compiler can hold
 	// them in registers; left as fields of the camera it has to assume the
 	// walk might change them and load each one again every time.
-	RETRO_Camera view = RETRO_TerrainViewCamera();
+	RETRO_Camera view = RETRO_CameraFromRider();
 	float horizon = view.lens.center.y;
-	float distance = RETRO_TerrainView.distance;
+	float distance = RETRO_TerrainDraw.distance;
 
 	// The eye in stored heights and the focal length in world units per stored
 	// height: the walk then subtracts a map byte from a map byte and scales the
@@ -117,47 +117,34 @@ void DEMO_Render(RETRO_Time time)
 	// projection are moved together, so it is the picture it always was.
 	float focal = view.lens.focaly * RETRO_Terrain.scale;
 	float cameraheight = view.pos.y / RETRO_Terrain.scale;
-
-	// The slice is the lens's frustum on the ground. The two ends keep that
-	// bearing at every depth, so the heading and the slope are taken once here
-	// and only scaled by z below
-	RETRO_TerrainSlice slice = RETRO_TerrainViewSlice(&view);
+	int top = view.lens.view.y0;
 
 	// Where each column has been painted down to
 	int hiddeny[RETRO_WIDTH];
 	for (int i = 0; i < RETRO_WIDTH; i++) {
-		hiddeny[i] = RETRO_HEIGHT;
+		hiddeny[i] = view.lens.view.y1;
 	}
-	float deltaz = VOXEL_NEAR;
 
 	// Draw from front to back
-	for (float z = VOXEL_NEAR; z < distance; z += deltaz) {
-		vec2 pl = z * slice.left;
-		vec2 pr = z * slice.right;
-		vec2 d = (pr - pl) / RETRO_WIDTH;
-
-		pl.x += RETRO_TerrainCamera.x;
-		pl.y += RETRO_TerrainCamera.z;
-		float invz = focal / z;
-		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int heightonscreen = (int)((cameraheight - RETRO_TerrainSampleLinear(heightmap, pl.x, pl.y)) * invz + horizon);
-			if (heightonscreen < 0) {
-				heightonscreen = 0;
+	for (RETRO_TerrainColumnCut cut = RETRO_FirstTerrainColumnCut(view, VOXEL_NEAR, VOXEL_LOD); cut.z < distance; RETRO_NextTerrainColumnCut(&cut)) {
+		float invz = focal * cut.invz;
+		vec2 p = cut.left;
+		for (int x = view.lens.view.x0; x < view.lens.view.x1; x++, p += cut.step) {
+			int heightonscreen = (int)((cameraheight - RETRO_TerrainSampleLinearMasked(heightmap, p.x, p.y)) * invz + horizon);
+			if (heightonscreen < top) {
+				heightonscreen = top;
 			}
 
 			// One color for the whole strip, so nothing has to be carried from
-			// the slice before and the top of the screen is a plain clamp
-			unsigned char color = (unsigned char)RETRO_TerrainSampleLinear(colormap, pl.x, pl.y);
+			// the slice before and the top of the view is a plain clamp
+			unsigned char color = (unsigned char)RETRO_TerrainSampleLinearMasked(colormap, p.x, p.y);
 			for (int y = heightonscreen; y < hiddeny[x]; y++) {
 				buffer[y * RETRO_WIDTH + x] = color;
 			}
 			if (heightonscreen < hiddeny[x]) {
 				hiddeny[x] = heightonscreen;
 			}
-
-			pl += d;
 		}
-		deltaz += VOXEL_LOD;
 	}
 }
 
@@ -168,5 +155,5 @@ void DEMO_Initialize(void)
 
 	RETRO_BuildDisplacementTerrain(HeightMap, ColorMap, MAP_WIDTH, MAP_HEIGHT, VOXEL_WORLD_SCALE);
 	RETRO_ScaleTerrainWorld(VOXEL_WORLD_SCALE);
-	RETRO_PlaceTerrainCamera(0, 0);
+	RETRO_PlaceTerrainRider(0, 0);
 }

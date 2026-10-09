@@ -6,7 +6,7 @@
 // color of the sky. A filled quad shows nothing of itself, but it covers what
 // is behind it, so the far side of a hill and the ground beyond a ridge are
 // hidden and the grid reads as a solid surface rather than as a tangle of
-// lines. Each quad spans RETRO_TerrainView.step cells on a side.
+// lines. Each quad spans RETRO_TerrainDraw.step cells on a side.
 //
 // A line has no depth to test against a depth buffer with, so the quads are
 // drawn in order instead, the farthest first, and each is filled and then
@@ -51,101 +51,42 @@
 #define LINE_MIDDLE RETRO_Palette{ 0, 150, 255 }
 #define LINE_NEAR RETRO_Palette{ 200, 255, 255 }
 
-static RETRO_CameraVertex TerrainVertex(float x, float z, const RETRO_Camera *camera)
-{
-	RETRO_CameraVertex vertex = {};
-	vertex.eye = RETRO_ViewPoint(camera, { x, RETRO_TerrainHeight(x, z), z });
-	return vertex;
-}
-
-static void DrawTriangle(const RETRO_CameraLens &lens, const RETRO_CameraVertex &a, const RETRO_CameraVertex &b, const RETRO_CameraVertex &c, unsigned char color)
-{
-	RETRO_CameraVertex triangle[3] = { a, b, c };
-	PolygonPoint polygon[4];
-	int points = RETRO_ClipProjectViewPolygon(lens, triangle, 3, polygon);
-	if (points < 3) return;
-
-	RETRO_DrawFlatPolygon(polygon, points, color);
-}
-
-//
-// The point of the line from behind to front that is on the near plane
-//
-static vec3 CutAtNearPlane(float nearplane, vec3 behind, vec3 front)
-{
-	float t = (nearplane - behind.z) / (front.z - behind.z);
-	return {
-		mix(behind.x, front.x, t),
-		mix(behind.y, front.y, t),
-		nearplane,
-	};
-}
-
 static void DrawLine(const RETRO_CameraLens &lens, vec3 a, vec3 b)
 {
-	float nearplane = lens.nearplane;
-	if (a.z < nearplane && b.z < nearplane) return;
-
-	// The color is taken at the middle of the whole line
+	// The color is taken at the middle of the whole line, before it is cut
 	float distance = length(vec2{ a.x + b.x, a.z + b.z }) / 2;
-	float fade = 1 - distance / RETRO_TerrainView.distance;
+	float fade = 1 - distance / RETRO_TerrainDraw.distance;
 	unsigned char color = LINE_RAMP0 + CLAMP((int)(fade * LINE_SHADES), 0, LINE_SHADES);
 
-	if (a.z < nearplane) {
-		a = CutAtNearPlane(nearplane, a, b);
-	} else if (b.z < nearplane) {
-		b = CutAtNearPlane(nearplane, b, a);
-	}
+	if (!RETRO_CutViewLine(&a, &b, lens.nearplane)) return;
 
 	PolygonPoint from = RETRO_ProjectViewPoint(lens, a);
 	PolygonPoint to = RETRO_ProjectViewPoint(lens, b);
 	RETRO_DrawLine((int)floorf(from.pos.x), (int)floorf(from.pos.y), (int)floorf(to.pos.x), (int)floorf(to.pos.y), color);
 }
 
-//
-// The i'th of the rows or columns of the mesh from min up to max, taken from
-// its two ends in toward the one the camera is over
-//
-static int FarFirst(int i, int min, int max, int camera, int step)
+static void DrawCell(const RETRO_TerrainMesh &mesh, const RETRO_TerrainCell &cell, const void *)
 {
-	int before = (camera - min) / step;
-	return i < before ? min + i * step : max - step - (i - before) * step;
+	const RETRO_CameraVertex &p00 = cell.corner[0], &p10 = cell.corner[1], &p01 = cell.corner[2], &p11 = cell.corner[3];
+
+	for (const int *t : RETRO_TerrainCellTriangles) {
+		RETRO_ProjectedTriangle projected;
+		RETRO_CameraClipProjectTriangle(mesh.camera.lens, cell.corner[t[0]], cell.corner[t[1]], cell.corner[t[2]], &projected);
+		if (projected.count >= 3) RETRO_DrawFlatPolygon(projected.point, projected.count, SKY);
+	}
+
+	DrawLine(mesh.camera.lens, p00.eye, p10.eye);
+	DrawLine(mesh.camera.lens, p10.eye, p11.eye);
+	DrawLine(mesh.camera.lens, p11.eye, p01.eye);
+	DrawLine(mesh.camera.lens, p01.eye, p00.eye);
 }
 
 void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainCamera(time.delta);
-	RETRO_TerrainMesh mesh = RETRO_BuildTerrainMesh();
-	int step = mesh.step;
-
-	// The quad the camera is over, and the rows and columns of the mesh
-	int camerax = (int)floorf(RETRO_TerrainCamera.x / step) * step;
-	int cameraz = (int)floorf(RETRO_TerrainCamera.z / step) * step;
-	int columns = (mesh.maxx - mesh.minx) / step;
-	int rows = (mesh.maxz - mesh.minz) / step;
-
+	RETRO_UpdateTerrainRider(time.delta);
 	RETRO_ClearDepthBuffer();
-	for (int j = 0; j < rows; j++) {
-		int z = FarFirst(j, mesh.minz, mesh.maxz, cameraz, step);
-
-		for (int i = 0; i < columns; i++) {
-			int x = FarFirst(i, mesh.minx, mesh.maxx, camerax, step);
-			if (!RETRO_TerrainCellVisible(mesh, x, z)) continue;
-
-			RETRO_CameraVertex p00 = TerrainVertex(x, z, &mesh.camera);
-			RETRO_CameraVertex p10 = TerrainVertex(x + step, z, &mesh.camera);
-			RETRO_CameraVertex p01 = TerrainVertex(x, z + step, &mesh.camera);
-			RETRO_CameraVertex p11 = TerrainVertex(x + step, z + step, &mesh.camera);
-
-			DrawTriangle(mesh.camera.lens, p00, p11, p10, SKY);
-			DrawTriangle(mesh.camera.lens, p00, p01, p11, SKY);
-
-			DrawLine(mesh.camera.lens, p00.eye, p10.eye);
-			DrawLine(mesh.camera.lens, p10.eye, p11.eye);
-			DrawLine(mesh.camera.lens, p11.eye, p01.eye);
-			DrawLine(mesh.camera.lens, p01.eye, p00.eye);
-		}
-	}
+	// Far cells first: the lines are not depth tested, so a nearer quad has to paint over them
+	RETRO_WalkTerrainMesh(RETRO_BuildTerrainMesh(), DrawCell, NULL, true);
 }
 
 void DEMO_Initialize(void)
@@ -158,9 +99,9 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(LINE_RAMP0, LINE_RAMP0 + LINE_SHADES / 2, RETRO_NIGHTSKY, LINE_MIDDLE);
 	RETRO_CreateGradientPalette(LINE_RAMP0 + LINE_SHADES / 2, LINE_RAMP0 + LINE_SHADES, LINE_MIDDLE, LINE_NEAR);
 
-	RETRO_TerrainView.step = LANDSCAPE_STEP;
-	RETRO_TerrainView.distance = LANDSCAPE_DISTANCE;
-	RETRO_TerrainCamera.lens.nearplane = LANDSCAPE_NEARPLANE;
-	RETRO_TerrainCamera.truepitch = true; // PageUp/PageDown tip the view
-	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
+	RETRO_TerrainDraw.step = LANDSCAPE_STEP;
+	RETRO_TerrainDraw.distance = LANDSCAPE_DISTANCE;
+	RETRO_Rider.lens.nearplane = LANDSCAPE_NEARPLANE;
+	RETRO_Rider.truepitch = true; // PageUp/PageDown tip the view
+	RETRO_PlaceTerrainRider(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

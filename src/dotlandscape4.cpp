@@ -103,37 +103,27 @@ static bool TerrainOccludes(const RETRO_Camera *camera, const ProjectedDot &dot)
 	return false;
 }
 
-// Project a smoothly distance-thinned grid inside the view radius.
-static void CollectTerrainDots(const RETRO_Camera *camera, float maxdistance)
+// One dot of a smoothly distance-thinned grid inside the view radius, kept
+// for drawing in depth order.
+//
+// The radius is taken across the ground, but a dot's depth runs along the
+// view, which takes in how far the ground is below the eye too: tipped down
+// over a valley, a dot inside the radius can lie deeper than it. Those are
+// dropped, so every depth has its place in OrderDotsByDepth's count.
+static void CollectDot(int x, int z, vec3 eye, PolygonPoint point, const void *data)
 {
-	float maxdistance2 = maxdistance * maxdistance;
-	int minx = (int)floorf(camera->pos.x - maxdistance);
-	int maxx = (int)ceilf(camera->pos.x + maxdistance);
-	int minz = (int)floorf(camera->pos.z - maxdistance);
-	int maxz = (int)ceilf(camera->pos.z + maxdistance);
-
-	for (int z = minz; z <= maxz; z++) {
-		float dz = z - camera->pos.z;
-		for (int x = minx; x <= maxx; x++) {
-			float dx = x - camera->pos.x;
-			float radius2 = dx * dx + dz * dz;
-			if (radius2 > maxdistance2) continue;
-
-			vec3 eye;
-			PolygonPoint point;
-			if (!RETRO_ProjectTerrainDot(x, z, dx, dz, radius2, camera, &eye, &point)) continue;
-
-			ProjectedDots[ProjectedDotCount++] = { (int)point.pos.x, (int)point.pos.y, x, z, eye.z, RETRO_TerrainColor(x, z) };
-		}
-	}
+	float maxdistance = *(const float *)data;
+	if (eye.z > maxdistance) return;
+	ProjectedDots[ProjectedDotCount++] = { (int)point.pos.x, (int)point.pos.y, x, z, eye.z, RETRO_TerrainColor(x, z) };
 }
 
 void DEMO_Render(RETRO_Time time)
 {
-	RETRO_UpdateTerrainCamera(time.delta);
-	RETRO_Camera view = RETRO_TerrainViewCamera();
+	RETRO_UpdateTerrainRider(time.delta);
+	RETRO_Camera view = RETRO_CameraFromRider();
+	float distance = RETRO_TerrainDraw.distance;
 	ProjectedDotCount = 0;
-	CollectTerrainDots(&view, RETRO_TerrainView.distance);
+	RETRO_WalkTerrainDots(&view, distance, CollectDot, &distance);
 
 	// A pixel z-buffer only resolves dots that project to the very same pixel.
 	// Take them front-to-back instead and maintain the highest visible terrain
@@ -158,10 +148,10 @@ void DEMO_Initialize(void)
 	// The two lists above hold a view reaching WORLD_MAX_DISTANCE. Said here,
 	// where a wider one stops the demo at startup, rather than found out as a
 	// collector writing past the end of them
-	if (RETRO_TerrainView.distance > WORLD_MAX_DISTANCE) {
+	if (RETRO_TerrainDraw.distance > WORLD_MAX_DISTANCE) {
 		RETRO_RageQuit("Terrain view distance is beyond what the dot lists hold\n");
 	}
 
-	RETRO_TerrainCamera.truepitch = true; // PageUp/PageDown tip the view
-	RETRO_PlaceTerrainCamera(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
+	RETRO_Rider.truepitch = true; // PageUp/PageDown tip the view
+	RETRO_PlaceTerrainRider(RETRO_Terrain.width * 0.5f, (float)RETRO_TERRAIN_DISTANCE);
 }

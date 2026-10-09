@@ -10,12 +10,17 @@
 
 #include <SDL3/SDL_main.h>
 #include <getopt.h> // getopt_long
-#include <libgen.h> // basename
 #include "retro.h"
 
 inline void RETRO_ParseArguments(int argc, char *argv[])
 {
-	RETRO.basename = basename(argv[0]);
+	char *program = argv[0];
+	for (char *p = program; *p != '\0'; ++p) {
+		if (*p == '/') {
+			program = p + 1;
+		}
+	}
+	RETRO.basename = program;
 	static struct option long_options[] = {
 		{"help", no_argument, 0, 'h'},
 		{"window", no_argument, 0, 'w'},

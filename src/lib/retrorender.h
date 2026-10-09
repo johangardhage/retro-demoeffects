@@ -553,16 +553,17 @@ inline void RETRO_RenderTextureModel(Model3D *model, RETRO_POLY_SHADE shadertype
 // normal that reflects I0 to R instead, the half-way vector N' = (R - I0)
 // normalized, with R unit. That is exact at the corners and bends in between.
 
-// The view ray I to rpos from the eye at (0, 0, -eye), or I0 without an eye
-inline vec3 RETRO_ViewRay(vec3 rpos, float eye)
+// I, from the eye at (0, 0, -eye) to rpos, or I0 without an eye. The camera's
+// RETRO_ViewRay is the direction through a screen point.
+inline vec3 RETRO_EyeRay(vec3 rpos, float eye)
 {
 	return eye > 0.0f ? vec3{ rpos.x, rpos.y, rpos.z + eye } : vec3{ 0.0f, 0.0f, 1.0f };
 }
 
-// R = I - 2(N·I)N, the view ray to rpos reflected about the unit normal n
+// R = I - 2(N·I)N, RETRO_EyeRay reflected about the unit normal n
 inline vec3 RETRO_ReflectionVector(vec3 n, vec3 rpos, float eye)
 {
-	return reflect(RETRO_ViewRay(rpos, eye), n);
+	return reflect(RETRO_EyeRay(rpos, eye), n);
 }
 
 // N', the normal that reflects I0 to that R, for the bumped path to tilt
@@ -594,7 +595,7 @@ inline void RETRO_RenderEnvironmentModel(Model3D *model, ClipRect clip = {})
 			} else {
 				point[j].n = normal->rdir * (side * vertex->q);
 				if (model->envmapperspective) {
-					point[j].p = RETRO_ViewRay(vertex->rpos, model->eye) * vertex->q;
+					point[j].p = RETRO_EyeRay(vertex->rpos, model->eye) * vertex->q;
 				}
 			}
 		}

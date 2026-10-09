@@ -78,10 +78,10 @@ static void DrawQuad(const RingVertex &a, const RingVertex &b, const RingVertex 
 		{ c.eye, { (float)TEXTURE_SIZE, TEXTURE_SIZE + scroll }, c.shade },
 		{ d.eye, { (float)TEXTURE_SIZE, scroll }, d.shade }
 	};
-	PolygonPoint point[4 + RETRO_CAMERA_CLIP_PLANES];
-	int points = RETRO_ClipProjectViewPolygon(Lens, corner, 4, point);
-	if (points >= 3) {
-		RETRO_DrawTexMapGouraudPolygon(point, points, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable, true);
+	RETRO_ProjectedPolygon projected;
+	RETRO_CameraClipProject(Lens, corner, 4, &projected);
+	if (projected.count >= 3) {
+		RETRO_DrawTexMapGouraudPolygon(projected.point, projected.count, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable, true);
 	}
 }
 
@@ -103,7 +103,7 @@ static void BuildTunnel(void)
 		float along = (first + i) * (float)RING_SPACING;
 		vec3 center = Path(along);
 		vec3 ringright, ringdown;
-		RETRO_FrameFromForward(PathTangent(along), &ringright, &ringdown);
+		RETRO_FrameFromForward(PathTangent(along), { 0, 1, 0 }, &ringright, &ringdown);
 
 		float fog = 1.0f - (along - t) / far;
 		float ease = 1.0f - fog;

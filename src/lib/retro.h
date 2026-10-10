@@ -109,6 +109,10 @@ inline int CLAMP(float n, int l, int h) { return CLAMP((double)n, l, h); }
 inline int CLAMP(unsigned n, int l, int h) { return CLAMP((int)n, l, h); }
 inline int CLAMP(long n, int l, int h) { return CLAMP((int)n, l, h); }
 inline int CLAMP(unsigned long n, int l, int h) { return CLAMP((int)n, l, h); }
+// Floating point bounds would be cut to integers. clamp (retrovector.h) is the
+// floating point one.
+int CLAMP(float n, float l, float h) = delete;
+int CLAMP(double n, double l, double h) = delete;
 #define CLAMP64(n) CLAMP((n), 0, 64)
 #define CLAMP128(n) CLAMP((n), 0, 128)
 #define CLAMP256(n) CLAMP((n), 0, 256)
@@ -136,6 +140,10 @@ inline int WRAP(float n, int h) { return WRAP((double)n, h); }
 inline int WRAP(unsigned n, int h) { return WRAP((int)n, h); }
 inline int WRAP(long n, int h) { return WRAP((int)n, h); }
 inline int WRAP(unsigned long n, int h) { return WRAP((int)n, h); }
+// A floating point period would be cut to an integer. mod (retrovector.h) is
+// the floating point one.
+int WRAP(float n, float h) = delete;
+int WRAP(double n, double h) = delete;
 #define WRAP64(n) WRAP((n), 64)
 #define WRAP128(n) WRAP((n), 128)
 #define WRAP256(n) WRAP((n), 256)

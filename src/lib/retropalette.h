@@ -276,6 +276,13 @@ inline RETRO_Palette operator*(RETRO_Palette color, float s)
 	return { (unsigned char)(color.r * s), (unsigned char)(color.g * s), (unsigned char)(color.b * s) };
 }
 
+// GLSL's vector sum for colors: each component of a added to b's, held to
+// 255. On a 6-bit palette the caller holds the sum to 63 itself.
+inline RETRO_Palette operator+(RETRO_Palette a, RETRO_Palette b)
+{
+	return { (unsigned char)MIN(a.r + b.r, 255), (unsigned char)MIN(a.g + b.g, 255), (unsigned char)MIN(a.b + b.b, 255) };
+}
+
 // Every color of palette at level, from black at 0 to the palette itself at
 // 1, the fraction dropped as operator* drops it: C = level * C_loaded. A fade
 // in runs level up from 0, a fade out down from 1.

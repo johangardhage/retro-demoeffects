@@ -1842,6 +1842,70 @@ inline void RETRO_DrawEnvMapBumpPolygon(const PolygonPoint *point, int points, u
 }
 
 //
+// Environment polygon with an offset map
+// The map is read where the normal points, moved by the two offsets the UVs
+// pick: a bump that is not a tilt of the normal but a shift in the map, and
+// so does not turn with the surface. The UVs are perspective-correct and wrap
+// around the offset map, which they read in texels of a texmapwidth by
+// texmapheight map.
+//
+inline void RETRO_DrawEnvMapOffsetPolygon(const PolygonPoint *point, int points, unsigned char *envmap, const signed char *offsetmap, bool lightingmap, int envmapwidth, int envmapheight, int envmapradius, int texmapwidth, int texmapheight, int offsetmapwidth, int offsetmapheight, ClipRect clip = {})
+{
+	if (envmap == NULL || offsetmap == NULL) return;
+
+	const float epsilon = 1.0e-12f;
+
+	vec2 offsettexel = { (float)offsetmapwidth / texmapwidth, (float)offsetmapheight / texmapheight };
+
+	for (int triangle = 1; triangle < points - 1; triangle++) {
+		const PolygonPoint *p0 = &point[0];
+		const PolygonPoint *p1 = &point[triangle];
+		const PolygonPoint *p2 = &point[triangle + 1];
+		TriangleSpan span[RETRO_HEIGHT];
+		int ystart, yend;
+		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
+		if (determinant == 0.0f) continue;
+
+		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
+		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
+		float dqdy = ((p1->pos.x - p0->pos.x) * (p2->q - p0->q) - (p2->pos.x - p0->pos.x) * (p1->q - p0->q)) / determinant;
+		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
+		vec3 dndy = ((p1->pos.x - p0->pos.x) * (p2->n - p0->n) - (p2->pos.x - p0->pos.x) * (p1->n - p0->n)) / determinant;
+
+		for (int y = ystart; y < yend; y++) {
+			if (span[y].left > span[y].right) continue;
+			int xstart = MAX((int)ceil(span[y].left - 0.5f), clip.x0);
+			int xend = MIN((int)ceil(span[y].right - 0.5f), clip.x1);
+			float px = xstart + 0.5f;
+			float py = y + 0.5f;
+			vec2 uv = uv0 + duvdx * (px - p0->pos.x) + duvdy * (py - p0->pos.y);
+			float q = p0->q + dqdx * (px - p0->pos.x) + dqdy * (py - p0->pos.y);
+			vec3 n = p0->n + dndx * (px - p0->pos.x) + dndy * (py - p0->pos.y);
+
+			for (int x = xstart; x < xend; x++) {
+				int pixel = y * RETRO_WIDTH + x;
+				if (fabs(q) > epsilon && RETRO_DepthTest(pixel, q)) {
+					float inverseq = 1.0f / q;
+					int u = WRAP(uv.x * inverseq * offsettexel.x, offsetmapwidth);
+					int v = WRAP(uv.y * inverseq * offsettexel.y, offsetmapheight);
+					const signed char *offset = &offsetmap[(v * offsetmapwidth + u) * 2];
+					float e, w;
+					RETRO_GetEnvMapCoordinates(n, lightingmap, envmapwidth, envmapheight, envmapradius, e, w);
+					unsigned int envmapu = CLAMP(e + offset[0], 0, envmapwidth);
+					unsigned int envmapv = CLAMP(w + offset[1], 0, envmapheight);
+					RETRO.framebuffer[pixel] = envmap[envmapv * envmapwidth + envmapu];
+				}
+				uv += duvdx;
+				q += dqdx;
+				n += dndx;
+			}
+		}
+	}
+}
+
+//
 // A sprite, depth tested against a surface of its own.
 //
 // The map is flat; what it stands for need not be. A second map gives, per

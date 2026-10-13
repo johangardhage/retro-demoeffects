@@ -643,10 +643,12 @@ inline void RETRO_RenderShaderModel(Model3D *model, bool flat, ClipRect clip = {
 // Matcap: the map holds a canned lighting response, sampled by screen-facing
 // normal. n * q is interpolated (perspective-correct) and renormalizing it
 // is the same direction as dividing by q, the same trick RETRO_RenderPhongModel
-// uses for a true per-pixel normal.
+// uses for a true per-pixel normal. An offset map, where the model has one,
+// takes the place of the bump.
 inline void RETRO_RenderMatcapModel(Model3D *model, ClipRect clip = {})
 {
 	RETRO_SortFaces(model->twosided, model);
+	bool offsetmapping = model->offsetmap != NULL;
 	bool bumpmapping = model->bumpmap != NULL;
 
 	for (int i = 0; i < model->drawfaces; i++) {
@@ -659,12 +661,14 @@ inline void RETRO_RenderMatcapModel(Model3D *model, ClipRect clip = {})
 			UnitVector *normal = &model->normal[face->vertexnormal[j]];
 			point[j].pos = vertex->spos;
 			point[j].q = vertex->q;
-			if (bumpmapping) {
+			if (bumpmapping || offsetmapping) {
 				point[j].uv = model->uv[face->uv[j]];
 			}
 			point[j].n = normal->rdir * (side * vertex->q);
 		}
-		if (bumpmapping) {
+		if (offsetmapping) {
+			RETRO_DrawEnvMapOffsetPolygon(point, face->vertices, model->envmap, model->offsetmap, true, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, model->offsetmapwidth, model->offsetmapheight, clip);
+		} else if (bumpmapping) {
 			RETRO_DrawEnvMapBumpPolygon(point, face->vertices, model->envmap, model->bumpmap, model->bumpgrazing, true, frame, model->envmapwidth, model->envmapheight, model->envmapradius, model->texmapwidth, model->texmapheight, model->bumpmapwidth, model->bumpmapheight, clip);
 		} else {
 			RETRO_DrawEnvMapPolygon(point, face->vertices, model->envmap, true, false, model->envmapwidth, model->envmapheight, model->envmapradius, clip);

@@ -381,8 +381,9 @@ inline struct {
 	int distance = RETRO_TERRAIN_DISTANCE;				// How far the wrapping look draws, in map cells
 } RETRO_TerrainDraw;
 
-// A lens's cull wedge: the sides of RETRO_ViewCornersOutside, taken once for
-// a walk rather than per point
+// A lens's cull wedge: left and right of RETRO_LensViewSlopes, widened by
+// RETRO_CAMERA_CULL_WIDEN, taken once for a walk rather than per point.
+// Top and bottom are RETRO_FrustumCornersOutside, after the corners are read.
 inline RETRO_LensSlopes RETRO_TerrainWedge(const RETRO_CameraLens &lens)
 {
 	return RETRO_LensViewSlopes(lens, RETRO_CAMERA_CULL_WIDEN);
@@ -538,16 +539,18 @@ inline RETRO_TerrainSlice RETRO_TerrainSliceFromCamera(const RETRO_Camera *camer
 // The slice is cut at depths from nearz outward, each a further lod beyond
 // the last gap, so the far ground, covering fewer pixels, costs fewer cuts.
 // A cut is sampled once per column of the lens's view: left is the map point
-// (x, z) under the view's left column, step the way from one column to the
-// next, and invz 1 / the cut's depth for the pinhole. The walk itself is the
-// effect's, so its sampling stays in the effect's own loop, from
+// (x, z) under the center of the view's left column, half a column in from
+// its left edge, the ray through that pixel's center. step is the way from
+// one column's center to the next, and invz 1 / the cut's depth for the
+// pinhole. The walk itself is the effect's, so its sampling stays in the
+// effect's own loop, from
 // RETRO_FirstTerrainColumnCut while z is short of the draw distance, by
 // RETRO_NextTerrainColumnCut.
 //
 struct RETRO_TerrainColumnCut {
 	float z;					// Depth of the cut
 	float invz;					// and 1 / it
-	vec2 left;					// Map point under the view's left column
+	vec2 left;					// Map point under the center of the view's left column
 	vec2 step;					// From one column to the next
 	float deltaz;				// The gap to the next cut
 	float lod;					// What each gap adds to the next
@@ -560,8 +563,8 @@ struct RETRO_TerrainColumnCut {
 inline void RETRO_PlaceTerrainColumnCut(RETRO_TerrainColumnCut *cut)
 {
 	cut->invz = 1.0f / cut->z;
-	cut->left = cut->eye + cut->slice.left * cut->z;
 	cut->step = (cut->slice.right - cut->slice.left) * (cut->z / cut->columns);
+	cut->left = cut->eye + cut->slice.left * cut->z + cut->step * 0.5f;
 }
 
 inline RETRO_TerrainColumnCut RETRO_FirstTerrainColumnCut(const RETRO_Camera &camera, float nearz, float lod)
@@ -1039,9 +1042,11 @@ inline void RETRO_WrapTerrainRider(void)
 //
 // PageUp and PageDown look up and down, the horizon held in the view: past
 // either edge there would be nothing but sky or ground to steer by. A view
-// that may tip, truepitch, turns its pitch, at the rate that moves the
-// horizon horizonspeed rows a second near the lens's center. One that may
-// not, as a voxel look, slides the lens's center row instead.
+// that may tip, truepitch, turns its pitch so the horizon moves horizonspeed
+// rows a second at any pitch. The horizon row is center.y - focaly tan(pitch),
+// which moves focaly / cos(pitch)^2 rows a radian, so the angle is scaled by
+// cos(pitch)^2. One that may not, as a voxel look, slides the lens's center
+// row instead.
 //
 // The ride height follows the ground exponentially, with the rate taken from
 // the timestep, so cresting a ridge does not snap the eye at any frame rate.
@@ -1073,8 +1078,10 @@ inline void RETRO_UpdateTerrainRider(float timestep)
 
 	RETRO_CameraLens &lens = RETRO_Rider.lens;
 	if (RETRO_Rider.truepitch) {
-		// The horizon sits at center.y - focaly tan(pitch)
-		float rate = timestep * RETRO_Rider.horizonspeed / lens.focaly;
+		// The horizon sits at center.y - focaly tan(pitch), and moves
+		// focaly / cos(pitch)^2 rows a radian
+		float cosine = cosf(RETRO_Rider.pitch);
+		float rate = timestep * RETRO_Rider.horizonspeed * cosine * cosine / lens.focaly;
 		if (RETRO_KeyState(SDL_SCANCODE_PAGEUP)) RETRO_Rider.pitch -= rate;
 		if (RETRO_KeyState(SDL_SCANCODE_PAGEDOWN)) RETRO_Rider.pitch += rate;
 		float lowest = atanf((lens.center.y - lens.view.y1) / lens.focaly);

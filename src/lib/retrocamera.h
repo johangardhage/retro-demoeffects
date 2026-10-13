@@ -410,12 +410,6 @@ inline bool RETRO_FrustumCornersOutside(const RETRO_CameraFrustum &frustum, cons
 	return outside != 0;
 }
 
-// The same against the lens's view, widened by widen
-inline bool RETRO_ViewCornersOutside(const RETRO_CameraLens &lens, const RETRO_CameraVertex *vertex, int count, float widen = RETRO_CAMERA_CULL_WIDEN)
-{
-	return RETRO_FrustumCornersOutside(RETRO_LensFrustum(lens, widen), vertex, count);
-}
-
 //
 // Clip a polygon in the camera's frame to the view, then project it
 //

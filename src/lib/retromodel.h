@@ -171,6 +171,14 @@ struct Model3D {
 	int bumpmapwidth = RETRO_TEXMAP_SIZE;		// Bump texture width, which need not match the texture's
 	int bumpmapheight = RETRO_TEXMAP_SIZE;		// Bump texture height
 	int bumpgrazing = RETRO_BUMP_GRAZING;		// Height difference across two bump texels that tilts a normal 45°
+	signed char *offsetmap = NULL;				// Lighting map offsets for RETRO_POLY_MATCAP, two a texel, across
+												// then down, in texels of envmap. Where it is set the map is read
+												// that far from where the normal points, and bumpmap is not
+												// read. Unlike a bump it stays put in the map as the surface
+												// turns. Read through the UVs, wrapping, as texels of a
+												// texmapwidth by texmapheight map. Other renderers ignore it
+	int offsetmapwidth = RETRO_TEXMAP_SIZE;		// Offset map width, in texels, each two bytes
+	int offsetmapheight = RETRO_TEXMAP_SIZE;	// Offset map height
 	unsigned char *stencilmap = NULL;			// Stencil picture, read in screen space behind each face
 	int stencilmapwidth = RETRO_TEXMAP_SIZE;	// Stencil picture width
 	int stencilmapheight = RETRO_TEXMAP_SIZE;	// Stencil picture height
@@ -243,6 +251,8 @@ inline Model3D *RETRO_Allocate3DModel(void)
 	model->envmapheight = RETRO_ENVMAP_SIZE;
 	model->bumpmapwidth = RETRO_TEXMAP_SIZE;
 	model->bumpmapheight = RETRO_TEXMAP_SIZE;
+	model->offsetmapwidth = RETRO_TEXMAP_SIZE;
+	model->offsetmapheight = RETRO_TEXMAP_SIZE;
 	model->stencilmapwidth = RETRO_TEXMAP_SIZE;
 	model->stencilmapheight = RETRO_TEXMAP_SIZE;
 	model->envmapradius = RETRO_ENVMAP_SIZE / 2;

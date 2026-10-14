@@ -36,8 +36,6 @@ void DEMO_Render(RETRO_Time time)
 	// Ping-pong the captured frames: flat, the head leans in, then it lets go.
 	float u = phase < 0.5f ? phase * 2.0f : 2.0f - phase * 2.0f;
 	RETRO_MorphModel(u);
-	RETRO_InitializeFaceNormals();
-	RETRO_InitializeVertexNormals();
 
 	// Draw wall
 	RETRO_RotateModel(pitch, yaw, roll);

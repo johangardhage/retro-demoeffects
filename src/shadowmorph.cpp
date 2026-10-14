@@ -116,19 +116,14 @@ static void ShadeCatMap(float yaw, float pitch)
 
 void DEMO_Render(RETRO_Time time)
 {
-	// The two keyframes the time falls between, and how far it is between them
-	const double length = Keyframes[KEYFRAMES - 1].time;
-	double seconds = mod(time.total, length);
-	int key = 0;
-	while (key < KEYFRAMES - 2 && seconds >= Keyframes[key + 1].time) {
-		key++;
-	}
-	const Keyframe &from = Keyframes[key];
-	const Keyframe &to = Keyframes[key + 1];
-	float t = CLAMP01((float)((seconds - from.time) / (to.time - from.time)));
+	// The two keyframes this moment falls between. The time leads each one,
+	// so the keyframes are walked a keyframe apart
+	RETRO_KeyframeLoop span = RETRO_LoopKeyframes(time.total, Keyframes, KEYFRAMES, sizeof(Keyframe));
+	const Keyframe &from = Keyframes[span.key];
+	const Keyframe &to = Keyframes[span.key + 1];
 
 	// The bronze palette mixed toward the steel one, which the hoop map carries
-	float morph = mix(from.morph, to.morph, t);
+	float morph = mix(from.morph, to.morph, span.t);
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, mix(BronzeMap->palette[i], HoopMap->palette[i], morph));
 	}
@@ -138,10 +133,10 @@ void DEMO_Render(RETRO_Time time)
 	// The camera and its pitch come from the keyframes. The yaw turns steadily,
 	// YAW_TURNS times a loop, and the cat's yaw turns CAT_TURNS more on top of
 	// it, so both come round whole at the end of the loop.
-	double loop = seconds / length;
-	vec3 cam = mix(from.cam, to.cam, t);
+	double loop = span.seconds / span.length;
+	vec3 cam = mix(from.cam, to.cam, span.t);
 	float yaw = (float)(2 * M_PI * mod(loop * YAW_TURNS, 1.0));
-	float pitch = (float)radians(mix(from.pitch, to.pitch, t));
+	float pitch = (float)radians(mix(from.pitch, to.pitch, span.t));
 	float catturn = (float)(2 * M_PI * mod(loop * (YAW_TURNS + CAT_TURNS), 1.0));
 
 	ShadeCatMap(yaw, pitch);
@@ -149,7 +144,7 @@ void DEMO_Render(RETRO_Time time)
 	// The bump strength scales the height field's tilt, which the library sets
 	// by the grazing height, so the grazing height goes as one over the
 	// strength. A strength under 1/256 is no bump at all.
-	float bump = mix(from.bump, to.bump, t);
+	float bump = mix(from.bump, to.bump, span.t);
 	Cat->bumpmap = NULL;
 	if (bump >= 1.0f / 256) {
 		Cat->bumpmap = HeightField->data;

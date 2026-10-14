@@ -200,7 +200,6 @@ static void PoseRobot(double time)
 		next = MIN((int)frame + 1, frames - 1);
 	}
 	RETRO_BlendModelPoses(animation.first + (int)frame, animation.first + next, fract(frame), Models[MODEL_ROBOT]);
-	RETRO_InitializeFaceNormals(Models[MODEL_ROBOT]);
 	RETRO_InitializeVertexNormals(Models[MODEL_ROBOT]);
 	AnimationFrame = animation.first + frame;
 }

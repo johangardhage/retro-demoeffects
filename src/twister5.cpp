@@ -29,7 +29,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retropalette.h"
+#include "lib/retroshadetable.h"
 
 #define TWISTER_PERIOD 512
 #define TWISTER_CYCLE ((double)RETRO_ANGLES_PER_TURN / TWISTER_PERIOD)
@@ -61,30 +61,19 @@
 static unsigned char TwisterShadeTable[RETRO_COLORS * TWISTER_SHADES];
 
 //
-// Map every source texel through a chrome ramp and back into the picture's
-// own palette. The lower TWISTER_DIFFUSE entries run from ambient to the
-// face color; the remaining TWISTER_SPECULAR entries walk from that color
-// toward white, which is the metal highlight.
+// A color through the chrome ramp, which RETRO_CreateShadeTable maps back
+// into the picture's own palette. The lower TWISTER_DIFFUSE entries run from
+// ambient to the face color; the remaining TWISTER_SPECULAR entries walk from
+// that color toward white, which is the metal highlight.
 //
-static void CreateChromeShadeTable(const RETRO_Palette *palette)
+static RETRO_Palette Chrome(RETRO_Palette color, float level, const float *)
 {
-	for (int source = 0; source < RETRO_COLORS; source++) {
-		RETRO_Palette color = palette[source];
-
-		for (int shade = 0; shade < TWISTER_SHADES; shade++) {
-			RETRO_Palette target;
-			if (shade < TWISTER_DIFFUSE) {
-				float level = (float)shade / (TWISTER_DIFFUSE - 1);
-				float brightness = mix(TWISTER_AMBIENT, 1.0f, level);
-				target = color * brightness;
-			} else {
-				float t = (float)(shade - TWISTER_DIFFUSE + 1) / TWISTER_SPECULAR * TWISTER_SPECULAR_MIX;
-				target = mix(color, RETRO_WHITE, t);
-			}
-			TwisterShadeTable[source * TWISTER_SHADES + shade] =
-				RETRO_NearestPaletteIndex(target, palette, RETRO_COLORS);
-		}
+	// The level where the diffuse entries end and the specular ones begin
+	const float top = (float)(TWISTER_DIFFUSE - 1) / (TWISTER_SHADES - 1);
+	if (level <= top) {
+		return color * mix(TWISTER_AMBIENT, 1.0f, level / top);
 	}
+	return mix(color, RETRO_WHITE, (level - top) / (1 - top) * TWISTER_SPECULAR_MIX);
 }
 
 //
@@ -167,6 +156,6 @@ void DEMO_Initialize(void)
 	RETRO_LoadImage("assets/flowers_256x256.pcx", true);
 	RETRO_Palette *palette = RETRO_ImagePalette();
 
-	CreateChromeShadeTable(palette);
+	RETRO_CreateShadeTable(palette, palette, { TwisterShadeTable, RETRO_COLORS, TWISTER_SHADES }, Chrome);
 	RETRO_SetColor(0, RETRO_BLACK);
 }

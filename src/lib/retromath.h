@@ -119,13 +119,15 @@ inline void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = 
 // taken as floats, so a horizon need not land on a whole one.
 //
 // A vertex at or behind the near plane is given q = 0 and parked at the
-// principal point, for the caller to drop.
+// principal point, for the caller to drop. The plane sits a pixel from the
+// eye, or at the screen itself with screenclip, for a scene the camera flies
+// through, so nothing reaching out of the screen is drawn.
 //
-inline void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2.0), float cy = (RETRO_HEIGHT / 2.0), float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
+inline void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2.0), float cy = (RETRO_HEIGHT / 2.0), float eyedistance = RETRO_PROJECTION_EYEDISTANCE, bool screenclip = false)
 {
 	float depth = scale * vertex->rpos.z + eyedistance;
 
-	if (depth <= 1.0f) {
+	if (depth <= (screenclip ? eyedistance : 1.0f)) {
 		vertex->q = 0.0f;
 		vertex->spos = { cx, cy };
 	} else {
@@ -139,11 +141,11 @@ inline void RETRO_ProjectVertex(Vertex *vertex, float scale = RETRO_PROJECTION_S
 // A loose point already turned into view space, projected the same way, as
 // a vertex of no model. A point in its own space is turned on the way in,
 // RETRO_ProjectPoint(matrix * p), and moved by adding to it there
-inline Vertex RETRO_ProjectPoint(vec3 rpos, float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2.0), float cy = (RETRO_HEIGHT / 2.0), float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
+inline Vertex RETRO_ProjectPoint(vec3 rpos, float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2.0), float cy = (RETRO_HEIGHT / 2.0), float eyedistance = RETRO_PROJECTION_EYEDISTANCE, bool screenclip = false)
 {
 	Vertex vertex = {};
 	vertex.rpos = rpos;
-	RETRO_ProjectVertex(&vertex, scale, cx, cy, eyedistance);
+	RETRO_ProjectVertex(&vertex, scale, cx, cy, eyedistance, screenclip);
 	return vertex;
 }
 
@@ -152,12 +154,12 @@ inline Vertex RETRO_ProjectPoint(vec3 rpos, float scale = RETRO_PROJECTION_SCALE
 // vertex by the same pixels, so a demo can carry the model about the screen
 // with cx, cy alone. What it cannot do that way is move it in depth, which
 // is RETRO_TranslateModel's job.
-inline void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2.0), float cy = (RETRO_HEIGHT / 2.0), Model3D *model = NULL, float eyedistance = RETRO_PROJECTION_EYEDISTANCE)
+inline void RETRO_ProjectModel(float scale = RETRO_PROJECTION_SCALE, float cx = (RETRO_WIDTH / 2.0), float cy = (RETRO_HEIGHT / 2.0), Model3D *model = NULL, float eyedistance = RETRO_PROJECTION_EYEDISTANCE, bool screenclip = false)
 {
 	model = model ? model : RETRO_Get3DModel();
 
 	for (int i = 0; i < model->vertices; i++) {
-		RETRO_ProjectVertex(&model->vertex[i], scale, cx, cy, eyedistance);
+		RETRO_ProjectVertex(&model->vertex[i], scale, cx, cy, eyedistance, screenclip);
 	}
 	model->eye = eyedistance / scale;
 }
@@ -170,6 +172,45 @@ inline vec3 RETRO_FaceCenter(const Model3D *model, const Face *face)
 		center += model->vertex[face->vertex[j]].rpos;
 	}
 	return center / face->vertices;
+}
+
+//
+// Keyframes
+//
+
+// One moment in a loop of keyframes. key is the keyframe at or just before
+// it, and t how far that span is toward the next, from 0 to 1. seconds is the
+// moment, and length the time of the last keyframe, where the loop returns
+// to the first
+struct RETRO_KeyframeLoop {
+	int key;
+	float t;
+	double seconds;
+	double length;
+};
+
+// Where total falls in a loop of keyframes. The first opens the loop and the
+// last closes it, so those two are one instant and the clock wraps there.
+// There must be at least two, and the times must rise strictly: equal ones
+// divide by zero. A clock that lands before the first keyframe is held at it.
+//
+// Each keyframe is its own struct, so keys points at the first and stride is
+// its size. The time is the first member, a float, and the next one sits
+// stride bytes on
+inline RETRO_KeyframeLoop RETRO_LoopKeyframes(double total, const void *keys, int count, int stride)
+{
+	const unsigned char *base = (const unsigned char *)keys;
+	RETRO_KeyframeLoop loop;
+	loop.length = *(const float *)(base + (size_t)(count - 1) * stride);
+	loop.seconds = mod(total, loop.length);
+	loop.key = 0;
+	while (loop.key < count - 2 && loop.seconds >= *(const float *)(base + (size_t)(loop.key + 1) * stride)) {
+		loop.key++;
+	}
+	float from = *(const float *)(base + (size_t)loop.key * stride);
+	float to = *(const float *)(base + (size_t)(loop.key + 1) * stride);
+	loop.t = CLAMP01((float)((loop.seconds - from) / (to - from)));
+	return loop;
 }
 
 //

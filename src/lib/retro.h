@@ -241,6 +241,12 @@ inline RETRO_Palette RETRO_To6bitColor(RETRO_Palette color)
 	return { (unsigned char)(color.r >> 2), (unsigned char)(color.g >> 2), (unsigned char)(color.b >> 2) };
 }
 
+// And back: a 6-bit color on the 8-bit scale, as RETRO_Set6bitColor puts it
+inline RETRO_Palette RETRO_To8bitColor(RETRO_Palette color)
+{
+	return { (unsigned char)((color.r & 63) << 2), (unsigned char)((color.g & 63) << 2), (unsigned char)((color.b & 63) << 2) };
+}
+
 inline RETRO_Palette RETRO_Get6bitColor(int color)
 {
 	return RETRO_To6bitColor(RETRO_GetColor(color));

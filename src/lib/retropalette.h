@@ -654,9 +654,10 @@ inline void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 //
 //   r = |((x - cx)/cx, (y - cy)/cy)|
 //   alpha = r * π/2
-//   entry = max(brightest - floor(steps * r), 0)
+//   entry = max(brightest - floor(steps * r), dimmest)
 //
-// Past the edge, r ≥ 1, the entry is 0, so the lit ball is round
+// Past the edge, r ≥ 1, the entry is dimmest, so the lit ball is round. A
+// dimmest above 0 keeps the whole map lit at least that much
 //
 // It is not a drop-in for RETRO_CreatePhongMap. The environment lookup reads
 // the texel at W/2 + radius * N, taking the offset to be the normal itself,
@@ -667,7 +668,7 @@ inline void RETRO_CreatePhongMap(unsigned char *buffer, int width, int height)
 // map's half width never reaches the grazing rim. That is the look it was
 // made for, not the lighting
 //
-inline void RETRO_CreateRoundAnglePhongMap(unsigned char *buffer, int width, int height, int brightest = RETRO_COLORS - 1, float steps = RETRO_COLORS - 1)
+inline void RETRO_CreateRoundAnglePhongMap(unsigned char *buffer, int width, int height, int brightest = RETRO_COLORS - 1, float steps = RETRO_COLORS - 1, int dimmest = 0)
 {
 	float centerx = (width - 1) * 0.5f;
 	float centery = (height - 1) * 0.5f;
@@ -678,9 +679,9 @@ inline void RETRO_CreateRoundAnglePhongMap(unsigned char *buffer, int width, int
 			float dx = (x - centerx) / centerx;
 			float radius = hypotf(dx, dy);
 
-			int paletteindex = 0;
+			int paletteindex = dimmest;
 			if (radius < 1.0f) {
-				paletteindex = MAX(brightest - (int)floor(radius * steps), 0);
+				paletteindex = MAX(brightest - (int)floor(radius * steps), dimmest);
 			}
 			buffer[y * width + x] = paletteindex;
 		}

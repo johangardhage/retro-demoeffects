@@ -433,13 +433,13 @@ static void BuildPhong(Subject *subject, const RETRO_Image *texture)
 	RETRO_CreatePhongShadeTablePalette(texture->palette, subject->colors, palette);
 	RETRO_CreatePhongShadeTable(texture->palette, subject->colors, palette, subject->table);
 	for (int i = 0; i < RETRO_COLORS; i++) {
-		subject->palette[i] = { (unsigned char)(palette[i].r << 2), (unsigned char)(palette[i].g << 2), (unsigned char)(palette[i].b << 2) };
+		subject->palette[i] = RETRO_To8bitColor(palette[i]);
 	}
 
 	for (int color = 0; color < subject->colors; color++) {
 		RETRO_Palette face = texture->palette[color];
 		face = { (unsigned char)CLAMP64(face.r), (unsigned char)CLAMP64(face.g), (unsigned char)CLAMP64(face.b) };
-		subject->source[color] = { (unsigned char)(face.r << 2), (unsigned char)(face.g << 2), (unsigned char)(face.b << 2) };
+		subject->source[color] = RETRO_To8bitColor(face);
 		for (int shade = 0; shade < subject->shades; shade++) {
 			float theta = RETRO_IncidenceAngle(shade, subject->shades);
 			subject->ideal[color * subject->shades + shade] = vec3{

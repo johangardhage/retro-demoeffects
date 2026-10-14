@@ -44,7 +44,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retropalette.h"
+#include "lib/retroshadetable.h"
 #include "lib/retrovector.h"
 
 #define SPANS 32
@@ -189,6 +189,30 @@ void DEMO_Render(RETRO_Time time)
 	}
 }
 
+//
+// A color at a lumel of the shade table. Diffuse is C · (120 + s) / 360,
+// from one-third ambient up to almost C. Specular lerps toward white as
+// C + (255 − C) · h / 23 and never quite reaches it (h max is 15)
+//
+static RETRO_Palette Flubber(RETRO_Palette color, float level, const float *)
+{
+	int lumel = (int)lroundf(level * (SHADE_LUT_WIDTH - 1));
+	if (lumel < DIFFUSE_SHADES) {
+		int s = lumel;
+		return {
+			(unsigned char)(color.r * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV),
+			(unsigned char)(color.g * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV),
+			(unsigned char)(color.b * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV)
+		};
+	}
+	int h = lumel - DIFFUSE_SHADES;
+	return {
+		(unsigned char)(color.r + (255 - color.r) * h / FLUBBER_SPECULAR_DIV),
+		(unsigned char)(color.g + (255 - color.g) * h / FLUBBER_SPECULAR_DIV),
+		(unsigned char)(color.b + (255 - color.b) * h / FLUBBER_SPECULAR_DIV)
+	};
+}
+
 void DEMO_Initialize(void)
 {
 	RETRO_LoadImage("assets/flowers_256x256.pcx", true);
@@ -202,29 +226,8 @@ void DEMO_Initialize(void)
 	}
 
 	// Calculate light reflections. Each palette color is shaded against
-	// itself and snapped back into the same palette. Diffuse is
-	// C · (120 + s) / 360, from one-third ambient up to almost C.
-	// Specular lerps toward white as C + (255 − C) · h / 23 and never
-	// quite reaches it (h max is 15).
-	for (int i = 0; i < RETRO_COLORS; i++) {
-		unsigned char r = palette[i].r;
-		unsigned char g = palette[i].g;
-		unsigned char b = palette[i].b;
-
-		for (int s = 0; s < DIFFUSE_SHADES; s++) {
-			FlubberShadeTable[i * SHADE_LUT_WIDTH + s] = RETRO_NearestPaletteIndex({
-				(unsigned char)(r * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV),
-				(unsigned char)(g * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV),
-				(unsigned char)(b * (FLUBBER_DIFFUSE_BASE + s) / FLUBBER_DIFFUSE_DIV) }, palette);
-		}
-
-		for (int h = 0; h < SPECULAR_SHADES; h++) {
-			FlubberShadeTable[i * SHADE_LUT_WIDTH + h + DIFFUSE_SHADES] = RETRO_NearestPaletteIndex({
-				(unsigned char)(r + (255 - r) * h / FLUBBER_SPECULAR_DIV),
-				(unsigned char)(g + (255 - g) * h / FLUBBER_SPECULAR_DIV),
-				(unsigned char)(b + (255 - b) * h / FLUBBER_SPECULAR_DIV) }, palette);
-		}
-	}
+	// itself and snapped back into the same palette
+	RETRO_CreateShadeTable(palette, palette, { FlubberShadeTable, RETRO_COLORS, SHADE_LUT_WIDTH }, Flubber);
 
 	// Create flubber. One 2D ellipse in xz, reused on every scanline.
 	// The "normal" used for lighting is the unit tangent from the

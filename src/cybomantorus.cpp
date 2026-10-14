@@ -163,8 +163,6 @@ void DEMO_Render(RETRO_Time time)
 		float swim = time.total * FISH_SWIM_SPEED + FISH_START_PHASE + i * (2.0f * M_PI / FISH_COUNT);
 		float cycle = time.total * FISH_ANIMATION_SPEED + i * FISH_ANIMATION_OFFSET;
 		RETRO_MorphModel(fract(cycle), Fish);
-		RETRO_InitializeFaceNormals(Fish);
-		RETRO_InitializeVertexNormals(Fish);
 		RETRO_RotateModel(swim + M_PI * 0.5f, 0.0f, phase, Fish);
 		float ringy = RING_RADIUS * sinf(swim);
 		float ringz = -RING_RADIUS * cosf(swim);

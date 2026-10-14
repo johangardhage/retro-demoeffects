@@ -184,16 +184,13 @@ static void DrawReflection(const Pose &pose)
 
 void DEMO_Render(RETRO_Time time)
 {
-	// The two keyframes the time falls between, and how far it is between them
-	const double length = Keyframes[KEYFRAMES - 1].time;
-	double seconds = mod(time.total, length);
-	int key = 0;
-	while (key < KEYFRAMES - 2 && seconds >= Keyframes[key + 1].time) {
-		key++;
-	}
-	const Keyframe &from = Keyframes[key];
-	const Keyframe &to = Keyframes[key + 1];
-	float t = CLAMP01((float)((seconds - from.time) / (to.time - from.time)));
+	// The two keyframes this moment falls between. The time leads each one,
+	// so the keyframes are walked a keyframe apart
+	RETRO_KeyframeLoop span = RETRO_LoopKeyframes(time.total, Keyframes, KEYFRAMES, sizeof(Keyframe));
+	const Keyframe &from = Keyframes[span.key];
+	const Keyframe &to = Keyframes[span.key + 1];
+	double seconds = span.seconds;
+	float t = span.t;
 
 	// The ring's height from the keyframes, and its bob on top, carrying on up
 	// past its place as it lands and then settling back. Its shadow moves a

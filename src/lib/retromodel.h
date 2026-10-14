@@ -152,6 +152,11 @@ struct Model3D {
 												// with the pose. Allocated only when an animation is
 												// loaded, and read through RETRO_MorphModel
 	int frames;									// Morph targets held, or zero for a still model
+	float *framenormal = NULL;					// Each morph target's vertex normals, frames blocks of
+												// one normal x, y, z a vertex, unit length, normal i
+												// being vertex i's. Only a file that poses its normals
+												// as well holds them, and with them
+												// RETRO_BlendModelPoses blends the normals too
 	unsigned char *texmap = NULL;				// Texture
 	int texmapwidth = RETRO_TEXMAP_SIZE;		// Texture width, which is also the space the UVs are in
 	int texmapheight = RETRO_TEXMAP_SIZE;		// Texture height
@@ -269,6 +274,7 @@ inline void RETRO_Free3DModel(int id = 0)
 {
 	if (id >= 0 && id < RETRO_MAX_MODELS && RETRO_Model.model[id]) {
 		free(RETRO_Model.model[id]->frame);
+		free(RETRO_Model.model[id]->framenormal);
 		free(RETRO_Model.model[id]);
 		RETRO_Model.model[id] = NULL;
 		RETRO_Model.models--;
@@ -564,13 +570,16 @@ inline void RETRO_InitializeFaceUVs(Model3D *model = NULL)
 }
 
 //
-// Room for frames poses of the model's vertices, replacing any it held
+// Room for frames poses of the model's vertices, and with normals of a normal
+// for each of them as well, replacing any it held
 //
-inline void RETRO_AllocateModelFrames(Model3D *model, int frames)
+inline void RETRO_AllocateModelFrames(Model3D *model, int frames, bool normals = false)
 {
 	free(model->frame);
+	free(model->framenormal);
 	model->frame = (float *)malloc((size_t)frames * model->vertices * 3 * sizeof(float));
-	if (model->frame == NULL) {
+	model->framenormal = normals ? (float *)malloc((size_t)frames * model->vertices * 3 * sizeof(float)) : NULL;
+	if (model->frame == NULL || (normals && model->framenormal == NULL)) {
 		RETRO_RageQuit("Cannot allocate animation memory\n");
 	}
 	model->frames = frames;
@@ -640,7 +649,10 @@ inline void RETRO_Load3DModelFrames(Model3D *model, const char *pattern, int fra
 // RETRO_MorphModel runs the poses in order through this. Called directly it
 // serves an animation that does not: a loop closing from its last pose back to
 // its first, or one of several sequences held in the same list of poses.
-// Normals are left as they were, as RETRO_MorphModel leaves them
+// Normals are left as they were, unless the poses carry their own: then they
+// are mixed the same way and made unit again, as the vertex normals. The face
+// normals and tangents are made again from the blended vertices, so they
+// follow the pose whatever the model is drawn with
 //
 inline void RETRO_BlendModelPoses(int a, int b, float s, Model3D *model = NULL)
 {
@@ -660,6 +672,29 @@ inline void RETRO_BlendModelPoses(int a, int b, float s, Model3D *model = NULL)
 			mix(from[i * 3 + 2], to[i * 3 + 2], s)
 		};
 	}
+
+	if (model->framenormal) {
+		const float *fromnormal = &model->framenormal[(size_t)a * model->vertices * 3];
+		const float *tonormal = &model->framenormal[(size_t)b * model->vertices * 3];
+
+		for (int i = 0; i < model->vertices; i++) {
+			vec3 n = {
+				mix(fromnormal[i * 3], tonormal[i * 3], s),
+				mix(fromnormal[i * 3 + 1], tonormal[i * 3 + 1], s),
+				mix(fromnormal[i * 3 + 2], tonormal[i * 3 + 2], s)
+			};
+			// Normals facing apart cancel halfway, leaving nothing to make unit:
+			// the nearer pose's stands in
+			if (dot(n, n) < 1e-12f) {
+				const float *nearer = s < 0.5f ? fromnormal : tonormal;
+				n = { nearer[i * 3], nearer[i * 3 + 1], nearer[i * 3 + 2] };
+			}
+			model->normal[i].dir = normalize(n);
+		}
+	}
+
+	RETRO_InitializeFaceNormals(model);
+	RETRO_InitializeFaceTangents(model);
 }
 
 //
@@ -673,11 +708,13 @@ inline void RETRO_BlendModelPoses(int a, int b, float s, Model3D *model = NULL)
 // the clock: it decides what u does with time, whether that is once through,
 // a loop, or a ping-pong.
 //
-// Only the vertices move. The poses carry no normals, so a model that is
-// shaded needs RETRO_InitializeFaceNormals and RETRO_InitializeVertexNormals
-// run over the result before it is drawn, and one that is bump mapped
-// RETRO_InitializeFaceTangents as well. RETRO_InitializeVertexNormals derives
-// the normals afresh, replacing any the model's file supplied
+// The vertices move, and the vertex normals too if the poses carry them, as an
+// MD3's do, and the face normals and tangents with them, see
+// RETRO_BlendModelPoses. Without posed normals a model that is
+// Gouraud or Phong shaded needs RETRO_InitializeFaceNormals and
+// RETRO_InitializeVertexNormals.
+// RETRO_InitializeVertexNormals derives the normals afresh, replacing any the
+// model's file supplied, until poses that carry normals are blended again
 //
 inline void RETRO_MorphModel(float u, Model3D *model = NULL)
 {
@@ -990,8 +1027,6 @@ inline Model3D *RETRO_LoadMD2Model(const char *filename)
 	free(data);
 
 	RETRO_BlendModelPoses(0, 0, 0, model);
-	RETRO_InitializeFaceNormals(model);
-	RETRO_InitializeFaceTangents(model);
 	RETRO_InitializeVertexNormals(model);
 
 	return model;
@@ -1007,9 +1042,16 @@ inline Model3D *RETRO_LoadMD2Model(const char *filename)
 // list, all posed by the same frames. The turn from Quake's z up, the reversed
 // triangles and the texture coordinates are handled as for MD2, except that
 // the coordinates are already 0 to 1 and are only scaled to texels. The first
-// frame stands as the model's own vertex list, and the normals the frames
-// carry, two bytes each, are not read: the model's are derived from its first
-// frame, and a pose leaves them as they were, as an OBJ animation's does
+// frame stands as the model's own vertex list.
+//
+// Each frame carries a normal for each vertex, two bytes, a latitude and a
+// longitude each a 255th of a turn. They are posed with the vertices, so
+// RETRO_BlendModelPoses blends them too, and the first frame's stand as the
+// model's own:
+//
+//   n = (cos lat sin lng, sin lat sin lng, cos lng)
+//
+// turned from Quake's z up as the points are
 //
 inline Model3D *RETRO_LoadMD3Model(const char *filename, float scale = 64.0f)
 {
@@ -1068,7 +1110,9 @@ inline Model3D *RETRO_LoadMD3Model(const char *filename, float scale = 64.0f)
 	model->uvs = vertices;
 	model->faces = faces;
 
-	RETRO_AllocateModelFrames(model, frames);
+	model->normals = vertices;
+
+	RETRO_AllocateModelFrames(model, frames, true);
 
 	int firstvertex = 0, firstface = 0;
 	offset = surfaceoffset;
@@ -1097,6 +1141,7 @@ inline Model3D *RETRO_LoadMD3Model(const char *filename, float scale = 64.0f)
 				}
 				face->vertex[j] = firstvertex + vertex;
 				face->uv[j] = firstvertex + vertex;
+				face->vertexnormal[j] = firstvertex + vertex;
 			}
 		}
 
@@ -1110,6 +1155,13 @@ inline Model3D *RETRO_LoadMD3Model(const char *filename, float scale = 64.0f)
 				pose[i * 3] = x;
 				pose[i * 3 + 1] = z;
 				pose[i * 3 + 2] = -y;
+
+				float lat = source[i * 8 + 7] * (float)(2 * M_PI / 255);
+				float lng = source[i * 8 + 6] * (float)(2 * M_PI / 255);
+				float *normal = &model->framenormal[((size_t)frame * vertices + firstvertex + i) * 3];
+				normal[0] = cosf(lat) * sinf(lng);
+				normal[1] = cosf(lng);
+				normal[2] = -sinf(lat) * sinf(lng);
 			}
 		}
 
@@ -1120,9 +1172,6 @@ inline Model3D *RETRO_LoadMD3Model(const char *filename, float scale = 64.0f)
 	free(data);
 
 	RETRO_BlendModelPoses(0, 0, 0, model);
-	RETRO_InitializeFaceNormals(model);
-	RETRO_InitializeFaceTangents(model);
-	RETRO_InitializeVertexNormals(model);
 
 	return model;
 }

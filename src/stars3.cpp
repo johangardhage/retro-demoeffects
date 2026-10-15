@@ -1,18 +1,17 @@
 //
-// Vortex starfield
+// Stars, vortex
 //
 // Stars on cylinders, flying toward the eye with a twist. Star i holds a
-// radius R, an angle θ and a depth z. The pinhole is the same as stars2
+// radius R, an angle θ and a depth z, and is projected through a pinhole
 //
 //   sx = W/2 + R cos(θ + k/z) · EYE / z
 //   sy = H/2 + R sin(θ + k/z) · EYE / z
 //
-// except the angle is taken at θ + k/z rather than at θ. k/z is a
-// stronger twist near the eye, so the cylinders read as a vortex
-// rather than as a straight tube. z shrinks at SPEED; at z ≤ STAR_NEAR
-// the star is reborn at STAR_FAR on a fresh angle. Brightness is the
-// remaining depth, as in stars2. Three radii keep the tube from being
-// a single ring.
+// with the angle taken at θ + k/z rather than at θ. k/z is a stronger twist
+// near the eye, so the cylinders read as a vortex rather than as a straight
+// tube. z shrinks at SPEED; at z ≤ STAR_NEAR the star is reborn at STAR_FAR
+// on a fresh angle. Brightness is the remaining depth. Three radii keep the
+// tube from being a single ring.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

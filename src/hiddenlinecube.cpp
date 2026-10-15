@@ -1,10 +1,10 @@
 //
 // Hidden line cube
 //
-// Same wireframe as wirecube.cpp, but only the front faces. The
-// screen-space cross (s1 − s0) × (s2 − s0) < 0 drops the back faces, so
-// an edge that belongs only to a back face disappears. Shared edges of a
-// front face stay. Euler angles live on 2π.
+// A wireframe cube showing only its front faces. The screen-space cross (s1 −
+// s0) × (s2 − s0) < 0 drops the back faces, so an edge that belongs only to a
+// back face disappears. Shared edges of a front face stay. Euler angles live
+// on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

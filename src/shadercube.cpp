@@ -3,15 +3,14 @@
 //
 // A mirror cube tumbling over a checker floor under an open sky. Each face is
 // a plane mirror (RETRO_POLY_SHADER with RETRO_SHADE_FLAT, and ShadeMirror):
-// it reflects with its own face normal, so the checker it shows keeps straight
-// edges, and the room is traced per pixel rather than read from a map, because
-// what a flat mirror shows is mostly parallax. A reflection map holds the room
-// as seen from one point, as though it were infinitely far away: a flat face
-// then shows only the few tens of degrees its view rays spread over, one sky
-// shade or one square. Here the floor lies ROOM_FLOOR below the cube, so two
-// points of a face two units apart see floor two units apart, and the squares
-// slide across the face as it turns. See shadersphere.cpp for a curved mirror
-// in the same room.
+// it reflects with its own face normal, so the checker it shows keeps
+// straight edges, and the room is traced per pixel rather than read from a
+// map, because what a flat mirror shows is mostly parallax. A reflection map
+// holds the room as seen from one point, as though it were infinitely far
+// away: a flat face then shows only the few tens of degrees its view rays
+// spread over, one sky shade or one square. Here the floor lies ROOM_FLOOR
+// below the cube, so two points of a face two units apart see floor two units
+// apart, and the squares slide across the face as it turns.
 //
 // ShadeRoom is the whole room, and draws the background as well as the
 // reflections, so what the cube reflects is the room behind it. A ray is

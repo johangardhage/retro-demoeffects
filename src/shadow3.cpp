@@ -1,5 +1,5 @@
 //
-// Shadow 3
+// Shadow, of a fan
 //
 // A flat, lit, sandstone plain to drive over, a fan spinning over its center,
 // and four lights - ambient, a sun, and a green and a red point light

@@ -1,5 +1,5 @@
 //
-// Dot landscape scroller
+// Dot scroller, on a sine platform
 //
 // A finite grid of dots is the landscape, a sine in x and z so the platform
 // is not a plane. The font (see FONT below) is packed into one strip at

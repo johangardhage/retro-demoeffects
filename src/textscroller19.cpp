@@ -1,11 +1,10 @@
 //
 // Scroller, on a racing sine
 //
-// Big chunky letters crawl slowly to the left while a sine wave races
-// through them several times faster, so the text is thrown up and down
-// rather than carried along the wave. As in textscroller3.cpp the font strip
-// (see FONT below) is sampled a column at a time and each column dropped by
-// the sine at that column,
+// Big chunky letters crawl slowly to the left while a sine wave races through
+// them several times faster, so the text is thrown up and down rather than
+// carried along the wave. The font strip (see FONT below) is sampled a column
+// at a time and each column dropped by the sine at that column,
 //
 //   texel = strip[row][(x + phase) mod stripwidth]
 //   y     = scrolly + WAVE_AMP sin(wave + x WAVE_RATE)

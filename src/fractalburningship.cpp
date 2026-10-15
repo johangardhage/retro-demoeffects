@@ -1,8 +1,8 @@
 //
 // Burning ship
 //
-// Escape-time burning ship. Same recurrence as fractalmandelbrot.cpp, but both
-// parts of z are folded into the positive quadrant before it is squared:
+// Escape-time burning ship. The Mandelbrot recurrence, but both parts of z
+// are folded into the positive quadrant before it is squared:
 //
 //   z0 = 0
 //   z' = (|Re z| + i |Im z|)² + p

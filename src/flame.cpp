@@ -3,9 +3,9 @@
 //
 // A temperature field, one byte per pixel, plus a bed of integer heat along
 // the bottom row. Heat is seeded in the bed and the picture is whatever that
-// heat becomes after it has risen and cooled. This is not the 8-tap fire of
-// fire.cpp (no blur, no self term, no κ∇²T). Each simulation step scatters
-// a cell one row up with a 1-pixel x jitter:
+// heat becomes after it has risen and cooled. There is no blur, no self term
+// and no κ∇²T. Each simulation step scatters a cell one row up with a 1-pixel
+// x jitter:
 //
 //   T'(x + j, y − 1) = T(x, y) − random(DECAY)     j ∈ {−1, 0, +1}
 //

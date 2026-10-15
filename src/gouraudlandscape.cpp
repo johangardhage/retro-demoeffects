@@ -1,16 +1,14 @@
 //
 // Gouraud-shaded landscape
 //
-// The same mesh and the same texture as texturelandscape.cpp with a light put
-// back over it: the color map is still read per pixel, but every map vertex
-// also carries a shade, and that shade is interpolated across the triangle
-// rather than held constant over it. A hillside therefore turns into the sun
-// across its own width instead of stepping from one quad's shade to the next.
+// A textured landscape mesh with a light over it: the color map is read per
+// pixel while every map vertex also carries a shade, and that shade is
+// interpolated across the triangle rather than held constant over it. A
+// hillside therefore turns into the sun across its own width instead of
+// stepping from one quad's shade to the next.
 //
-// This is the third look at the same mesh: flatlandscape.cpp takes no light,
-// flatshadedlandscape.cpp takes one per face, and this one takes one per
-// vertex. All three keep the map's own colors, and the shade table is what
-// makes that affordable in each of them.
+// The map keeps its own colors, and the shade table is what makes that
+// affordable.
 //
 // The mesh reaches further than the map is wide, so a cell's world position is
 // handed in as its texture coordinate unwrapped and the drawer is asked to fold
@@ -123,8 +121,7 @@ static void DrawCell(const RETRO_TerrainMesh &mesh, const RETRO_TerrainCell &cel
 	// Central differences over the mesh spacing make the same normal whenever
 	// this map vertex is visited from an adjacent cell, so the shade the two
 	// cells share along an edge is one value and not two. A face normal cannot
-	// do that: it belongs to the triangle and not to the corner, which is the
-	// whole of what separates this from flatshadedlandscape.cpp.
+	// do that: it belongs to the triangle and not to the corner.
 	RETRO_CameraVertex corner[4];
 	for (int i = 0; i < 4; i++) {
 		vec3 p = cell.pos[i];
@@ -165,8 +162,7 @@ void DEMO_Initialize(void)
 
 	// Match each darkened source color back to the nearest entry in the map's
 	// own palette, so the texture can be lit without replacing its terrain
-	// colors with a generic material ramp. flatshadedlandscape.cpp lights the
-	// same map through the same table, one shade per face instead of per vertex.
+	// colors with a generic material ramp.
 	//
 	// The ambient floor is what makes that affordable. A photographed palette
 	// carries a picture's colors and not ramps, so an entry darkened toward

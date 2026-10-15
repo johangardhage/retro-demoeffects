@@ -1,5 +1,5 @@
 //
-// 3D diagonal dot scroller
+// Dot scroller, 3D diagonal
 //
 // The font (see FONT below) is packed into one horizontal strip at startup
 // and sampled as a strip of points,

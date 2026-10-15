@@ -1,5 +1,5 @@
 //
-// Flubber, as textured spans
+// Twister, elliptic flubber
 //
 // A 32-span elliptic cylinder, one scanline at a time. The cross-section is
 // one 2D ellipse, reused on every row:

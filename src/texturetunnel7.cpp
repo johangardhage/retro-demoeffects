@@ -1,223 +1,112 @@
 //
-// Tunnel, bent
+// Tunnel, free-directional
 //
-// A brick tube whose axis is a 3D curve, not a straight vanishing point.
-// Rings sit at fixed stations k · spacing on the path, each in the plane
-// perpendicular to the tangent there, and consecutive rings are a quad
-// each side. The camera walks t along the same path and looks a little
-// ahead into the bend, so station k slides toward
-// the eye. The first drawn ring is the smallest k with k · spacing ≥
-// t + RING_NEAR; the one that has just passed RING_NEAR is dropped and
-// a new one is taken on at the far end. That recycle is what flies you
-// through. A mesh locked to t + (i + 1) · spacing would keep every
-// brick at a constant depth and only the sine window would change, which
-// is a snake in front of the camera rather than a tunnel the camera
-// travels. texturetunnel.cpp is the polar 1/r form of a straight tube;
-// this one is the mesh, because a polar map about one center cannot
-// offset each ring from the last.
+// A tube that the camera is inside of rather than a picture of one seen down
+// its length: the camera flies along it, strays from its middle and turns all
+// the way round as it goes, from looking along the tube, across it into the
+// wall, back the way it came, into the wall on the other side and round to
+// the front again. Nothing is looked up from a table, since there is no one
+// view that a table could hold. A ray is sent out through every pixel and met
+// with the wall.
 //
-// The path is
+// The tube is the cylinder x² + y² = R² about the z axis. A ray from the eye
+// at o along the unit direction d is at o + t d, and is on the wall where
 //
-//   p(t) = (Ax sin(ωx t),  Ay sin(ωy t + φ),  t)
+//   a t² + 2 b t + c = 0,   a = dx² + dy²
+//                           b = ox dx + oy dy
+//                           c = ox² + oy² - R²
 //
-// Always advancing in z, waving in x and y. The ring frame is the
-// camera's own: forward is the tangent, right is world-down × forward,
-// down is forward × right, the camera's y-down, z-away frame. Inward normals are −(cos θ · right + sin θ · down).
+// The eye is inside the tube, so c is negative, the roots have different
+// signs, and the one ahead of the eye is
 //
-// Each quad is one brick of a generated tile. The tile is a grouted
-// rectangle with a triangle pointing in +v, so once v runs down the
-// tube the triangles point at the far end. Lighting is Lambert in view
-// space, a light from the right, interpolated Gouraud through a shade
-// table so the same texel is dark red-brown on the inside of the bend
-// and bright orange on the outside. Shade is affine; UV is
-// perspective-correct. Each quad is clipped to the sides of the view and
-// the near plane before it is drawn. RING_NEAR keeps the closest station
-// in front of the eye, but looking ahead into a bend can still swing the
-// near ring's wall past the near plane, and those quads are cut there
-// rather than lost.
+//   t = (-b + √(b² - a c)) / a
+//
+// A ray along the tube never gets to the wall: a is 0 and t is without end,
+// which is the black at the far end of the tube. The wall is hit at
+// p = o + t d, and the texture is laid on it by where around the tube that is
+// and where along it:
+//
+//   u = atan2(py, px) / 2π · TEXTURE_TURNS    textures around the tube
+//   v = pz / TEXTURE_LENGTH                   textures along it
+//
+// d is the ray through the pixel, (x - W/2, y - H/2, FOCAL), turned by the
+// camera's rotation: about the camera's upright by ay, which is the turn all
+// the way round, and then about the axis of the tube by az, so that the turn
+// does not always sweep the same side of the wall. The flight is all in o:
+// its z goes up steadily, and phase lives on TEXTURE_LENGTH, after which the
+// wall is the same again, while its x and y go round the axis at TUNNEL_SWAY
+// from it.
+//
+// The wall is darkened by how far off it was hit, down to black at
+// TUNNEL_FOG. The texture's bytes are palette indices, so the darkening is a
+// lookup: FogTable holds, for every color of the texture at every one of
+// TUNNEL_FOG_SHADES levels, the palette entry nearest to it. The level is
+// ordered-dithered between neighbors, so the steps from one to the next do
+// not show as rings down the tube.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocamera.h"
-#include "lib/retropoly.h"
-#include "lib/retropalette.h"
+#include "lib/retromatrix.h"
 #include "lib/retroshadetable.h"
 
-#define RING_SIDES 20
-#define RING_COUNT 36 // rings in front of the eye
-#define TUNNEL_RADIUS 48
-#define RING_SPACING 14 // world units from one ring to the next
-#define RING_NEAR 10 // nearest a station is allowed to the eye, in path units
-#define BEND_X 95 // how far the axis wanders off x
-#define BEND_Y 58
-#define BEND_FX 0.007f // radians of that wander per world unit of t
-#define BEND_FY 0.009f
-#define BEND_PHASE 1.1f
-#define FLIGHT_START ((float)M_PI / (2.0f * BEND_FX)) // t where x' = 0, so the opening looks along the tube
-#define FLIGHT_SPEED 108 // world units of t a second
-#define CAMERA_LOOKAHEAD 100 // path units ahead to aim into the bend; 0 follows the tangent
-#define TEXTURE_SIZE 64
-#define GROUT 3 // texels of mortar on the leading edges; the trailing edges are brick so neighbors do not double it
-#define FOG_SHADES 32
-#define AMBIENT 0.46f // unlit walls stay a dark red, not black
-#define FOG_KEEP 0.62f // far-end shade as a fraction of the lit shade
+#define TEXTURE_WIDTH 256
+#define TEXTURE_HEIGHT 256
+#define TEXTURE_TURNS 3 // times the texture goes around the tube
+#define TEXTURE_LENGTH 2.0f // length of tube a texture covers
+#define TUNNEL_RADIUS 1.0f
+#define TUNNEL_SWAY 0.45f // how far from the axis the camera flies
+#define TUNNEL_SWAY_SPEED 0.9 // radians per second it goes round the axis at
+#define TUNNEL_SPEED 1.6 // length of tube flown per second
+#define TUNNEL_FOG 6.0f // how far off the wall is black
+#define TUNNEL_FOG_SHADES 32 // steps from black to full color
+#define FOCAL (RETRO_WIDTH / 2) // pixels from the eye to the screen
+#define ROTATION_SPEED_Y 0.5 // radians per second
+#define ROTATION_SPEED_Z 0.17
 
-#define BRIGHT_ORANGE RETRO_Palette{ 255, 86, 6 }
-
-struct RingVertex {
-	vec3 eye;		// In the camera's frame
-	float shade;
-};
-
-static unsigned char Brick[TEXTURE_SIZE * TEXTURE_SIZE];
-static unsigned char FogTable[RETRO_COLORS * FOG_SHADES];
-static const RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
-// Toward the light, in the camera's frame. It travels leftward, so the wall
-// whose inward normal points left (the right-hand wall) is the bright one. It
-// is given in view space rather than as a world direction RETRO_ViewDirection
-// would turn into one, so it stays fixed relative to the camera.
-static const vec3 Light = normalize(vec3{ -0.98f, 0.06f, -0.18f });
-
-// The axis at t, and the orthonormal frame a ring there is built in.
-static vec3 Path(float t)
-{
-	return { BEND_X * sinf(t * BEND_FX), BEND_Y * sinf(t * BEND_FY + BEND_PHASE), t };
-}
-
-// Derivative of Path. z' is 1, so the tangent never parallels world
-// down and the cross that makes right does not collapse.
-static vec3 PathTangent(float t)
-{
-	return normalize(vec3{ BEND_X * BEND_FX * cosf(t * BEND_FX), BEND_Y * BEND_FY * cosf(t * BEND_FY + BEND_PHASE), 1.0f });
-}
-
-static void BuildBrick(void)
-{
-	// The triangle is mixed with the brick rather than filled solid, which
-	// is the dithered mortar-and-wedge look of the reference.
-	for (int y = 0; y < TEXTURE_SIZE; y++) {
-		for (int x = 0; x < TEXTURE_SIZE; x++) {
-			unsigned char color;
-			if (x < GROUT || y < GROUT) {
-				color = 64;
-			} else {
-				float nx = (x + 0.5f) / TEXTURE_SIZE;
-				float ny = (y + 0.5f) / TEXTURE_SIZE;
-				// Apex at +v, base at v = 0: the triangle points down the tube.
-				bool wedge = nx > ny * 0.62f && nx < 1.0f - ny * 0.62f;
-				int dither = RETRO_DitherLevel(x, y);
-				if (wedge) {
-					color = dither < 10 ? 102 : 148;
-				} else {
-					color = dither < 6 ? 196 : 238;
-				}
-			}
-			Brick[y * TEXTURE_SIZE + x] = color;
-		}
-	}
-}
-
-// Clip a quad to the view and draw what is left
-static void DrawQuad(const RETRO_CameraLens &lens, const RingVertex &a, const RingVertex &b, const RingVertex &c, const RingVertex &d)
-{
-	// a near-left, b far-left, c far-right, d near-right. That winding
-	// points the inward normal at the camera. v grows toward the far ring.
-	RETRO_CameraVertex corner[4] = {
-		{ a.eye, { 0, 0 }, a.shade },
-		{ b.eye, { 0, (float)TEXTURE_SIZE }, b.shade },
-		{ c.eye, { (float)TEXTURE_SIZE, (float)TEXTURE_SIZE }, c.shade },
-		{ d.eye, { (float)TEXTURE_SIZE, 0 }, d.shade }
-	};
-	RETRO_ProjectedPolygon projected;
-	RETRO_CameraClipProject(lens, corner, 4, &projected);
-	if (projected.count >= 3) {
-		RETRO_DrawTexMapGouraudPolygon(projected.point, projected.count, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable);
-	}
-}
+static unsigned char FogTable[RETRO_COLORS * TUNNEL_FOG_SHADES];
 
 void DEMO_Render(RETRO_Time time)
 {
-	float t = (float)(time.total * FLIGHT_SPEED) + FLIGHT_START;
+	// Calculate rotation
+	float ay = fmod(time.total * ROTATION_SPEED_Y, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED_Z, 2 * M_PI);
 
-	// Stay on the path, but aim ahead so the viewer looks into each bend.
-	vec3 origin = Path(t);
-	vec3 forward = CAMERA_LOOKAHEAD > 0 ? normalize(Path(t + CAMERA_LOOKAHEAD) - origin) : PathTangent(t);
-	RETRO_Camera camera;
-	RETRO_LookAlong(&camera, origin, forward);
+	// Calculate phase
+	float phase = fmod(time.total * TUNNEL_SPEED, TEXTURE_LENGTH);
+	float sway = fmod(time.total * TUNNEL_SWAY_SPEED, 2 * M_PI);
 
-	// World stations, not camera-relative offsets: ring k is always at
-	// k · spacing on the path. first is the nearest station still at
-	// least RING_NEAR in front of the eye.
-	int first = (int)ceilf((t + RING_NEAR) / RING_SPACING);
-	float far = RING_SPACING * RING_COUNT;
-	RingVertex ring[RING_COUNT][RING_SIDES];
+	unsigned char *image = RETRO_ImageData();
 
-	for (int i = 0; i < RING_COUNT; i++) {
-		float along = (first + i) * (float)RING_SPACING;
-		vec3 center = Path(along);
-		vec3 ringright, ringdown;
-		RETRO_FrameFromForward(PathTangent(along), { 0, 1, 0 }, &ringright, &ringdown);
+	mat3 rotation = rotateZ(az) * rotateY(ay);
+	vec3 eye = { TUNNEL_SWAY * cosf(sway), TUNNEL_SWAY * sinf(sway), phase };
+	float c = eye.x * eye.x + eye.y * eye.y - TUNNEL_RADIUS * TUNNEL_RADIUS;
 
-		// fog is 1 at the near ring, falling toward 0 at the far one. depth
-		// eases that into [FOG_KEEP, 1] by squaring (1 - fog) instead of fog
-		// itself, so the slope is shallow near the camera and steepens
-		// toward the far end - the near bricks stay crisp and the falloff
-		// gathers pace as the tube recedes, rather than fading at a
-		// constant rate throughout.
-		float fog = 1.0f - (along - t) / far;
-		float ease = 1.0f - fog;
-		float depth = 1.0f - (1.0f - FOG_KEEP) * ease * ease;
+	// Draw tunnel, a ray through every pixel
+	for (int y = 0; y < RETRO_HEIGHT; y++) {
+		for (int x = 0; x < RETRO_WIDTH; x++) {
+			vec3 ray = rotation * normalize(vec3{ x + 0.5f - RETRO_WIDTH / 2, y + 0.5f - RETRO_HEIGHT / 2, FOCAL });
 
-		for (int s = 0; s < RING_SIDES; s++) {
-			// theta walks one full turn around the ring; ct, st are its
-			// position in the ring's own right/down plane.
-			float theta = s * (2.0f * (float)M_PI / RING_SIDES);
-			float ct = cosf(theta);
-			float st = sinf(theta);
+			// How far off the ray meets the wall, without end for a ray along the tube
+			float a = ray.x * ray.x + ray.y * ray.y;
+			float b = eye.x * ray.x + eye.y * ray.y;
+			float distance = MIN((-b + sqrtf(b * b - a * c)) / a, TUNNEL_FOG);
+			vec3 hit = eye + distance * ray;
 
-			// radial is the unit outward direction at this angle (ct, st is
-			// already on the unit circle, and ringright/ringdown are
-			// orthonormal, so the sum is unit with no renormalizing needed).
-			// wall is that direction carried out to the tube wall, and
-			// center + wall is where this vertex actually sits in the world.
-			vec3 radial = ringright * ct + ringdown * st;
-			vec3 wall = radial * TUNNEL_RADIUS;
+			int tx = WRAP(atan2f(hit.y, hit.x) / (2 * M_PI) * TEXTURE_TURNS * TEXTURE_WIDTH, TEXTURE_WIDTH);
+			int ty = WRAP(hit.z / TEXTURE_LENGTH * TEXTURE_HEIGHT, TEXTURE_HEIGHT);
+			int shade = (1 - distance / TUNNEL_FOG) * (TUNNEL_FOG_SHADES - 1) + RETRO_DitherThreshold(x, y);
+			unsigned char color = image[ty * TEXTURE_WIDTH + tx];
 
-			RingVertex *p = &ring[i][s];
-			p->eye = RETRO_ViewPoint(&camera, center + wall);
-
-			// Lambert lighting: the wall's inward normal (back toward the
-			// tube's center, so -radial) is carried into view space and
-			// dotted with the fixed view-space light. lit is that term
-			// eased through the shade table and floored at AMBIENT so the
-			// unlit side never goes black; depth folds in the distance fog
-			// on top, and the product is scaled into the shade table's
-			// [0, FOG_SHADES) range for the Gouraud drawer to interpolate.
-			vec3 inward = RETRO_ViewDirection(&camera, normalize(-radial));
-			float lambert = dot(inward, Light);
-			float lit = mix(AMBIENT, 1.0f, RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f)));
-			p->shade = lit * depth * (FOG_SHADES - 1);
-		}
-	}
-
-	RETRO_ClearDepthBuffer();
-
-	for (int i = RING_COUNT - 2; i >= 0; i--) {
-		for (int s = 0; s < RING_SIDES; s++) {
-			int s1 = (s + 1) % RING_SIDES;
-			DrawQuad(camera.lens, ring[i][s], ring[i + 1][s], ring[i + 1][s1], ring[i][s1]);
+			RETRO_PutPixel(x, y, FogTable[color * TUNNEL_FOG_SHADES + shade]);
 		}
 	}
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_Palette palette[RETRO_COLORS];
-	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, BRIGHT_ORANGE, palette);
-	RETRO_SetPalette(palette);
-	RETRO_CreateShadeTable(palette, RETRO_COLORS, FOG_SHADES, FogTable);
+	RETRO_Image *picture = RETRO_LoadImage("assets/flowers_256x256.pcx", true);
 
-	BuildBrick();
+	RETRO_CreateShadeTable(picture->palette, RETRO_COLORS, TUNNEL_FOG_SHADES, FogTable);
 }

@@ -29,11 +29,8 @@
 //
 // This is the classic technique unsoftened: a cell read whole and a strip
 // filled with one tone. It holds up here because a photograph brings its own
-// grain to cover a seam, and because 1024 cells across a 320 pixel screen is a
-// cell to a few pixels. voxellandscape.cpp and voxellandscape2.cpp walk the
-// same segment over a map they generate, a quarter the size and slope shaded
-// with no texture in it, and have to filter and shade to make that ground
-// read.
+// grain to cover a seam, and because 1024 cells across a 320 pixel screen is
+// a cell to a few pixels.
 //
 // Left/Right turn and Up/Down move along the viewing direction. W/S are
 // alternate forward/back controls and A/D strafe. Tab toggles a flycam, in

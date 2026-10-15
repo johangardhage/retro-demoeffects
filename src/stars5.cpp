@@ -1,5 +1,5 @@
 //
-// Star flight
+// Stars, cruising and rolling
 //
 // Cruise, turn onto a new heading, then roll through the stars. Stars wrap in a
 // world-aligned box around the moving eye. A spherical fade hides the wrapping,

@@ -1,10 +1,10 @@
 //
 // Phong shaded cube
 //
-// The same eight corner normals as gouraudcube.cpp, stored as n q and
-// interpolated in screen space. Normalizing the interpolated n q is the
-// same direction as divide-by-q then normalize (q > 0 in front of the
-// near plane). The pixel is then
+// The cube's eight corner normals, stored as n q and interpolated in screen
+// space. Normalizing the interpolated n q is the same direction as
+// divide-by-q then normalize (q > 0 in front of the near plane). The pixel is
+// then
 //
 //   I = ShadeFractionFromLambert(max(N · L, 0))
 //   color = c + intensity · I

@@ -2,8 +2,8 @@
 // God rays, from fragment shaders
 //
 // A rotating ball with six glowing holes and volumetric beams, rendered
-// through polygon coverage and fragment shaders. godrays3.cpp traces the
-// same scene directly; this version shades only pixels covered by a model.
+// through polygon coverage and fragment shaders, so only pixels covered by a
+// model are shaded.
 //
 // The ball shader locates holes in its local frame and softens their rims.
 // Each beam shader intersects the view ray with a truncated cone, stops at

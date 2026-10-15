@@ -6,8 +6,8 @@
 //   x' = sin(a y) - cos(b x)
 //   y' = sin(c x) - cos(d y)
 //
-// It is not a contraction and there is nothing self-similar about it, which is
-// what sets it apart from the affine systems in fractalifs.cpp. The orbit is
+// It is not a contraction and there is nothing self-similar about it, which
+// is what sets it apart from an affine iterated function system. The orbit is
 // chaotic: two points a hair apart are anywhere at all a few hundred steps
 // later. What stays put is where the orbit is dense, and that is the picture.
 //

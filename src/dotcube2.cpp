@@ -1,10 +1,9 @@
 //
 // Dot cube, outer dots only
 //
-// Same as dotcube.cpp, but only vertices of a front-facing face are
-// stamped - the same screen-space winding RETRO_SortFaces uses for
-// hiddenlinecube.cpp, so the far side of the cube disappears. Euler
-// angles live on 2π.
+// A cube of dots, but only vertices of a front-facing face are stamped - the
+// same screen-space winding RETRO_SortFaces uses, so the far side of the cube
+// disappears. Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

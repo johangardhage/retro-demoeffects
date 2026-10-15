@@ -1,11 +1,11 @@
 //
-// Dot landscape scroller, cruising
+// Dot scroller, over a cruising landscape
 //
 // A dot scroller over the 128x128 voxel_height_128x128.pcx height field,
 // tiled without limit and painted with its paired voxel_color_128x128.pcx
-// colormap, as in dotlandscape.cpp. The camera cruises and
-// turns automatically. The text strip travels with the camera, scrolling
-// sideways while each letter dot follows the terrain beneath it.
+// colormap. The camera cruises and turns automatically. The text strip
+// travels with the camera, scrolling sideways while each letter dot follows
+// the terrain beneath it.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

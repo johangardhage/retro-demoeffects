@@ -1,5 +1,5 @@
 //
-// Reflective raytraced spheres
+// Raytrace, reflecting spheres
 //
 // Three moving chrome spheres over a shadowed checkerboard. Every ray finds
 // the nearest sphere or floor; reflected rays repeat that same scene query,

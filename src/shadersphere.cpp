@@ -1,13 +1,12 @@
 //
 // Mirror sphere
 //
-// A mirror ball orbiting over a checker floor under an open sky, the room of
-// shadercube.cpp. The ball is RETRO_POLY_SHADER with its vertex normals
-// interpolated, and ShadeMirror reflects each pixel's view ray about its own
-// normal, at its own point, and traces the room from there, so the floor under
-// the ball is the floor the ball stands over, not a map baked from its center.
-// See matcapcube.cpp's RETRO_POLY_MATCAP for the canned-highlight technique
-// this is not.
+// A mirror ball orbiting over a checker floor under an open sky. The ball is
+// RETRO_POLY_SHADER with its vertex normals interpolated, and ShadeMirror
+// reflects each pixel's view ray about its own normal, at its own point, and
+// traces the room from there, so the floor under the ball is the floor the
+// ball stands over, not a map baked from its center. It is not a canned
+// highlight like RETRO_POLY_MATCAP.
 //
 // ShadeRoom is the whole room, and draws the background as well as the
 // reflections, so what the ball reflects is the room behind it. A ray is

@@ -34,22 +34,19 @@
 // swapping which formula drives which sphere there is invisible, and a pair
 // of one-way parabolas becomes a seamless loop with no motion blending.
 //
-// This is the plain one of the three, and its technique is the simplest of them
-// too: no color arithmetic at all. Every hit resolves to a kind (sky, a floor
-// tile, or one of the body's materials) plus a brightness and whether it is
-// inside Eric Graham's real glint() cone, and RampIndex turns that straight
-// into an index already sitting in that kind's own two-part palette ramp -
-// black up to the kind's own hue, then that hue up to white (see
-// CreateMaterialRamp) - no color accumulator, no palette search. The highlight
-// test itself is the exact same one juggler2.cpp and juggler3.cpp use (see
-// Glint): a hard cos² cutoff, not a blend, since any blend of a ramp's hue and
-// its white end shows as a visible band of some third color against a saturated
-// background, however narrow. What stays plain here, unlike those two files, is
-// ambient (flat, not their sky-shaped AMBIENT_SHAPE) and the mirror, which
-// never dims what it reflects.
+// The technique uses no color arithmetic at all. Every hit resolves to a kind
+// (sky, a floor tile, or one of the body's materials) plus a brightness and
+// whether it is inside Eric Graham's real glint() cone, and RampIndex turns
+// that straight into an index already sitting in that kind's own two-part
+// palette ramp - black up to the kind's own hue, then that hue up to white
+// (see CreateMaterialRamp) - no color accumulator, no palette search. The
+// highlight test (see Glint) is a hard cos² cutoff, not a blend, since any
+// blend of a ramp's hue and its white end shows as a visible band of some
+// third color against a saturated background, however narrow. Ambient is
+// flat, and the mirror never dims what it reflects.
 //
 // One camera ray a pixel, retraced live from continuous time every
-// displayed frame, the same as juggler2.cpp.
+// displayed frame.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -65,12 +62,12 @@
 #define SCREEN_WIDTH 100.0f // world units the virtual screen spans; with FOCAL_DISTANCE this sets the field of view
 #define FLOOR_TILE 107.0f // world units per checker tile
 #define PLASTIC_AMBIENT 0.05f
-#define PLASTIC_DIFFUSE 1.3f // >1, unlike juggler2.cpp/juggler3.cpp's 1.0 - flat ambient here has no AMBIENT_SHAPE boost to lean on, so diffuse alone makes up the difference
+#define PLASTIC_DIFFUSE 1.3f // >1, since flat ambient has no boost to lean on, so diffuse alone makes up the difference
 #define MATTE_AMBIENT 0.15f
 #define MATTE_DIFFUSE 1.5f
 // Eric Graham's real glint() test: not a Phong falloff, a hard cutoff on
 // cos² of the angle between the camera ray's reflection and the light -
-// see Glint. The same constant and test juggler2.cpp and juggler3.cpp use
+// see Glint
 #define MINGLINT 0.95f
 #define JUGGLE_RATE 30.0 // "T" units a second, so the 30-unit pattern in UpdateScene loops once a second
 #define SPHERE_COUNT 86
@@ -114,8 +111,7 @@ static bool Shadowed(vec3 origin, vec3 dir, float maxdist)
 
 // Eric Graham's real glint(): is p inside the tight cone where the light's
 // reflection about normal lines up with the view direction? A hard cutoff
-// on cos² of that angle, not a Phong falloff - see MINGLINT. Identical to
-// juggler2.cpp/juggler3.cpp's own Glint
+// on cos² of that angle, not a Phong falloff - see MINGLINT
 static bool Glint(vec3 normal, vec3 l, float lambert, vec3 dir)
 {
 	vec3 r = normal * (2.0f * lambert) - l;
@@ -123,9 +119,8 @@ static bool Glint(vec3 normal, vec3 l, float lambert, vec3 dir)
 	return rdotmd > 0.0f && rdotmd * rdotmd > MINGLINT;
 }
 
-// Ambient plus diffuse in x, whether p is inside Glint's cone in y (1 or 0) -
-// ambient here is flat, unlike juggler2.cpp/juggler3.cpp's sky-shaped
-// AMBIENT_SHAPE, but the glint test itself is exactly theirs
+// Ambient plus diffuse in x, whether p is inside Glint's cone in y (1 or 0).
+// Ambient is flat
 static vec2 ShadeLight(vec3 p, vec3 normal, vec3 dir, float ambient, float diffuse)
 {
 	vec3 tolight = LightPos - p;
@@ -211,7 +206,7 @@ static unsigned char TraceScene(vec3 origin, vec3 dir)
 }
 
 // Places j where circles of radius A (about p) and B (about q) meet in the
-// plane normal to w - see juggler2.cpp for the two-triangle solve. Every
+// plane normal to w. Every
 // limb tapers over 8 spheres each side, so that count is not a parameter
 static void UpdateAppendage(int sceneindex, vec3 p, vec3 q, vec3 w, float A, float B)
 {

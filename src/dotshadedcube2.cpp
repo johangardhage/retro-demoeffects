@@ -1,11 +1,10 @@
 //
 // Dot cube, shaded, outer dots only
 //
-// dotshadedcube.cpp's lighting and dotcube2.cpp's visibility test together:
-// only vertices of a front-facing face are stamped, each shaded by
-// RETRO_ShadeFractionFromLambert(N·L) against its own vertex normal. The
-// ramp still keeps a dim floor rather than black so a silhouette fade cannot
-// fall through to the background. Euler angles live on 2π.
+// A cube of dots where only vertices of a front-facing face are stamped, each
+// shaded by RETRO_ShadeFractionFromLambert(N·L) against its own vertex
+// normal. The ramp keeps a dim floor rather than black so a silhouette fade
+// cannot fall through to the background. Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

@@ -1,5 +1,5 @@
 //
-// Twister 3
+// Twister, textured
 //
 // A square column drawn one scanline at a time, wrapped in the flowers
 // picture, which climbs the two faces that are turned toward the viewer.

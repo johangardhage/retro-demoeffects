@@ -1,8 +1,8 @@
 //
 // Fire logo
 //
-// A rising heat field, one byte per pixel, the same idea as fire.cpp but
-// with the logo burning as a second, standing source of fuel:
+// A rising heat field, one byte per pixel, with the logo burning as a second,
+// standing source of fuel:
 //
 //   T' = max(0, mean(seven taps) − FIRE_DECAY)
 //
@@ -122,7 +122,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 }
 
 //
-// Draw the field, dropping the fuel bed the way fire.cpp does
+// Draw the field, dropping the fuel bed
 //
 void DEMO_Render(RETRO_Time time)
 {

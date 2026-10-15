@@ -1,5 +1,5 @@
 //
-// Plane 2
+// Plane, with a sky and fog
 //
 // Plane with a sky and distance fog. The camera sits a height PLANE_EYE
 // above the plane. Row y is counted up from the bottom of the screen, so

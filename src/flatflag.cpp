@@ -1,18 +1,17 @@
 //
 // Waving flag, flat filled
 //
-// The same flag and the same wave as flatshadedflag.cpp with the light taken
-// away: one constant color per face, so blue is blue wherever it lies. The wave
-// is left to read from the silhouette rippling and from the cross bending
-// across it, which is what a flag looked like before anyone could afford a
-// lambert term per face.
+// A waving flag of polygons with no light: one constant color per face, so
+// blue is blue wherever it lies. The wave is left to read from the silhouette
+// rippling and from the cross bending across it, which is what a flag looked
+// like before anyone could afford a lambert term per face.
 //
-// Giving the reverse of the cloth its own colors, the way flatcube.cpp gives
-// each side of the cube one, buys nothing here: this wave turns the surface by
-// about 64 degrees at the fly, and with the flag yawed no further than SWAY it
-// only just passes edge on at the ends of the sway. Measured over a sway cycle
-// the far side is a few dozen pixels in one frame out of twelve, so the second
-// pair of colors would be specks rather than a fold.
+// Giving the reverse of the cloth its own colors buys nothing here: this wave
+// turns the surface by about 64 degrees at the fly, and with the flag yawed
+// no further than SWAY it only just passes edge on at the ends of the sway.
+// Measured over a sway cycle the far side is a few dozen pixels in one frame
+// out of twelve, so the second pair of colors would be specks rather than a
+// fold.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

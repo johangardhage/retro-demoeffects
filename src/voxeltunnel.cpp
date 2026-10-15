@@ -63,9 +63,6 @@
 // sample wraps by a floor and a mask: a cast toward zero would fold
 // (−1, 0) onto texel 0, and θ lives in [−π, π].
 //
-// voxeltunnel2.cpp is this march twisting as it goes, with far walls
-// faded toward the aperture.
-//
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #define RETRO_HEIGHT 200

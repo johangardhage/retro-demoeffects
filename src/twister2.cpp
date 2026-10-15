@@ -1,21 +1,20 @@
 //
-// Twister 2
+// Twister, swaying
 //
-// A square column drawn one scanline at a time, as twister.cpp does, but on
-// an axis that will not hold still. At row y the four vertices sit on the
-// circle x = cx(y) + RADIUS sin(θ(y) + k·90°), k = 0..3, and both cx and θ
-// are waves running down the column off one clock:
+// A square column drawn one scanline at a time, on an axis that will not hold
+// still. At row y the four vertices sit on the circle x = cx(y) + RADIUS
+// sin(θ(y) + k·90°), k = 0..3, and both cx and θ are waves running down the
+// column off one clock:
 //
 //   θ(y)  = TWIST · (1 + sin(phase + y · TWIST_WAVE)) / 2
 //   centerx(y) = CENTER_X + SWAY · sin(phase + y · SWAY_WAVE)
 //
-// So the twist is not linear in y the way twister.cpp's is. It is a sine of
-// y whose amplitude is TWIST, two whole turns, which is what lets the column
-// corkscrew back on itself several times over rather than lean through a
-// third of a turn. And the axis itself snakes: SWAY_WAVE runs four times as
-// fast as the twist wave, so the column wanders about half a period of S
-// curve down its length while the twist is still working through an eighth
-// of its own.
+// So the twist is not linear in y. It is a sine of y whose amplitude is
+// TWIST, two whole turns, which is what lets the column corkscrew back on
+// itself several times over rather than lean through a third of a turn. And
+// the axis itself snakes: SWAY_WAVE runs four times as fast as the twist
+// wave, so the column wanders about half a period of S curve down its length
+// while the twist is still working through an eighth of its own.
 //
 // An edge is drawn only when its left x is smaller than its right x, which
 // is the facing test for a 2D silhouette - a back edge has x_left > x_right

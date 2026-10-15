@@ -1,5 +1,5 @@
 //
-// Classic Amiga rubber vector
+// Rubber vector, classic Amiga
 //
 // The cube itself never bends. One rigid cube is rendered per simulation step
 // and each of its scanlines is packed into a few colored spans. Old scanlines
@@ -23,8 +23,7 @@
 // away from the light goes dark rather than picking up the first ramp's hue.
 //
 // This reproduces the characteristic scanline-multiplexed Amiga effect rather
-// than deforming a subdivided mesh as rubbervector.cpp, rubbervector2.cpp and
-// rubbervector3.cpp do.
+// than deforming a subdivided mesh.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

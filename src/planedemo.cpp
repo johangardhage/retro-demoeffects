@@ -1,10 +1,9 @@
 //
 // Plane demo
 //
-// The dual-plane variant of Plane: a mode-7 floor and a mode-7 ceiling,
-// split at the horizon y = H/2. Depth z is the distance from that
-// horizon — down the screen is the land, up is the sky. At depth z the
-// half-width of the frustum is
+// Two planes: a mode-7 floor and a mode-7 ceiling, split at the horizon
+// y = H/2. Depth z is the distance from that horizon — down the screen is the
+// land, up is the sky. At depth z the half-width of the frustum is
 //
 //   w(z) = 2z + PLANE_NEAR
 //

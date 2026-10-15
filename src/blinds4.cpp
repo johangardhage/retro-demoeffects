@@ -1,5 +1,5 @@
 //
-// Blinds 4
+// Blinds, horizontal
 //
 // A horizontal-blind transition between two pictures. The screen is split into
 // narrow horizontal slats, each carrying a strip of one picture on its front

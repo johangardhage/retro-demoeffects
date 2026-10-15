@@ -3,10 +3,9 @@
 //
 // spherequads.obj wrapped in an equirectangular Earth map: u runs around the
 // equator and v pole to pole, so each texel row is a parallel and each column
-// a meridian. Unlit and perspective-correct like texturecube.cpp; only the
-// 16 x 8 facets of the sphere show at the silhouette. The three axes turn at
-// unequal rates, so the globe tumbles instead of spinning about one pole.
-// Euler angles live on 2π.
+// a meridian. Unlit and perspective-correct; only the 16 x 8 facets of the
+// sphere show at the silhouette. The three axes turn at unequal rates, so the
+// globe tumbles instead of spinning about one pole. Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

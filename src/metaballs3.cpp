@@ -1,7 +1,7 @@
 //
-// 3D metaballs
+// Metaballs, in 3D
 //
-// The same 1/r² field as metaballs.cpp, in 3-space. At a point p
+// A 1/r² field of metaballs in 3-space. At a point p
 //
 //   F(p) = sum_i  T R_i² / |p − c_i|²
 //
@@ -37,7 +37,7 @@
 //   ∇F = sum_i −2 T R_i² (p − c_i) / |p − c_i|⁴
 //   N  = −∇F / |∇F|
 //
-// L = (0, 0, −1) is the same headlight as phongcube.cpp. The shade is
+// L = (0, 0, −1) is a headlight. The shade is
 // ShadeFractionFromLambert(max(N·L, 0)) into a plastic Phong ramp.
 //
 // Each center rides its own 3-axis Lissajous. Whole-number rates keep

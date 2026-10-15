@@ -1,5 +1,5 @@
 //
-// Pseudo 3D road 2
+// Pseudo 3D road, with a sky and fog
 //
 // The road with a sky and distance fog, drawn the way the arcade machines
 // drew it: one scanline at a time, bottom to top, with no per-pixel and no

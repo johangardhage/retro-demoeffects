@@ -1,9 +1,8 @@
 //
 // 3D lightsourced Glenz scroller
 //
-// The same extruded glyph helix as vectorscroller.cpp, drawn as lightsourced
-// Glenz vectors: both sides of every face, additive palette indices, one
-// Lambert term per face, the same shade as glenzshadedcube.cpp
+// An extruded glyph helix, drawn as lightsourced Glenz vectors: both sides of
+// every face, additive palette indices, one Lambert term per face
 //
 //   shade = c + face->c + (N · L) · intensity
 //
@@ -54,7 +53,7 @@
 #define LETTER_ROCK 0.25f // radians the rock reaches about x and about z
 #define LETTER_ROCK_SPEED 0.7f // radians a second around the rock
 
-#define GLENZ_FACE 30 // added to a face before the Lambert term, as in glenzshadedcube.cpp
+#define GLENZ_FACE 30 // added to a face before the Lambert term
 #define GLENZ_SHADES 64 // Lambert range of one face; the add fills at 3 · shades
 
 #define MAX_GLYPH_SIZE 32 // atlas cell; a 16×16 font still fits the ink mask

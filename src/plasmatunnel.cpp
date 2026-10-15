@@ -1,9 +1,9 @@
 //
 // Plasma tunnel
 //
-// A 160×100 polar map, looked up into the flowers photo from texturetunnel3
-// and doubled to 320×200. The map is a stack of rings: a ring of radius zr,
-// walked by its angle θ, lands on
+// A 160×100 polar map, looked up into a photo of flowers and doubled to
+// 320×200. The map is a stack of rings: a ring of radius zr, walked by its
+// angle θ, lands on
 //
 //   x = zr (sin θ − cos θ) + 80
 //   y = 0.8 · zr (sin θ + cos θ) + 50

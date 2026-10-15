@@ -1,5 +1,5 @@
 //
-// Blinds 7
+// Blinds, wipe
 //
 // A blinds wipe between two pictures. The screen is split into vertical slats
 // and nothing turns: every slat uncovers its strip of the second picture

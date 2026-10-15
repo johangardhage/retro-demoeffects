@@ -1,5 +1,5 @@
 //
-// Crossfade 2 (Dithered)
+// Crossfade, dithered
 //
 // Two still pictures, smoothly blended in 24-bit RGB space using a 256-color
 // optimal palette shared between both pictures, indexed via a 3D inverse color

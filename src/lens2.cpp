@@ -1,9 +1,9 @@
 //
 // Lens, refracting glass
 //
-// Refraction: a magnifying lens as a real piece of glass, bending the
-// picture by Snell's law and lit like one. The lens.cpp magnifier traced
-// through physically, with reflection, a highlight, a tint and a shadow.
+// Refraction: a magnifying lens as a real piece of glass, bending the picture
+// by Snell's law and lit like one. A magnifier traced through physically,
+// with reflection, a highlight, a tint and a shadow.
 //
 // A glass dome sliding over a picture, like a paperweight: a hemisphere of
 // radius R whose flat side lies on the picture. The view is straight down

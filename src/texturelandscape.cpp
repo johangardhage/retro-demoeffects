@@ -1,12 +1,12 @@
 //
 // Texture mapped landscape
 //
-// The same mesh as flatlandscape.cpp with the color map read per pixel instead
-// of per quad: the map is the texture, sampled perspective-correct across every
-// triangle, so a quad shows the ground it actually covers rather than the one
-// color its center happened to land on. Each quad spans RETRO_TerrainDraw.step
-// cells on a side, so that is step by step texels a flat fill was spending a
-// single color on.
+// A landscape mesh with the color map read per pixel instead of per quad: the
+// map is the texture, sampled perspective-correct across every triangle, so a
+// quad shows the ground it actually covers rather than the one color its
+// center happened to land on. Each quad spans RETRO_TerrainDraw.step cells on
+// a side, so that is step by step texels a flat fill was spending a single
+// color on.
 //
 // No light is taken here either. What reads the ground is the same as it is
 // there - the silhouette, the ridges cutting in front of one another, and the

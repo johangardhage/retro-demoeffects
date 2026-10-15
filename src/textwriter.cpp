@@ -9,18 +9,17 @@
 // next page is written from a clear screen. The cycle wraps, so the
 // first page follows the last.
 //
-// Unlike textwriter-2.cpp, all pages are a single call to
-// RETRO_GenerateTextImage: a null slot is an empty row, so each page
-// occupies the inner bound of rows and each line is already centered
-// within the widest one. Revealing copies a cutoff prefix of that strip,
-// the cutoff being the sum of RETRO_CharWidth over the characters already
-// written, so a proportional font is not clipped mid-glyph. A line break
-// takes one character of the remaining budget, the same as a glyph. The
+// All pages are a single call to RETRO_GenerateTextImage: a null slot is an
+// empty row, so each page occupies the inner bound of rows and each line is
+// already centered within the widest one. Revealing copies a cutoff prefix of
+// that strip, the cutoff being the sum of RETRO_CharWidth over the characters
+// already written, so a proportional font is not clipped mid-glyph. A line
+// break takes one character of the remaining budget, the same as a glyph. The
 // pages are a 2D array of lines rather than strings broken up by '\n', so
-// ScrollText[page][row] is already a line's own text, with no scan needed
-// to find where it ends. The inner bound is the longest page; unused
-// slots are null. Every page is drawn in a block that tall, centered, so
-// they all start on the same row.
+// ScrollText[page][row] is already a line's own text, with no scan needed to
+// find where it ends. The inner bound is the longest page; unused slots are
+// null. Every page is drawn in a block that tall, centered, so they all start
+// on the same row.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

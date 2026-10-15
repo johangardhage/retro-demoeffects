@@ -1,12 +1,11 @@
 //
-// Rotating dot landscape
+// Dot landscape, rotating island
 //
 // The 128x128 voxel_height_128x128.pcx landscape, paired with its own
 // voxel_color_128x128.pcx colormap, rendered as a field of dots. The island
 // look is the terrain library's: the camera is pitched down so the island
 // fills the frame, the patch turns about its center, and the camera dollies
 // along the viewing axis between stops that keep the finite patch in view.
-// The same look as dotscroller4.cpp, which shares these assets.
 // Left and Right rotate the terrain. Up/W and Down/S move the camera forward
 // and backward.
 //
@@ -18,8 +17,8 @@
 #include "lib/retropoly.h"
 #include "lib/retroterrain.h"
 
-#define WORLD_HEIGHT_SCALE (1.0f / 8.0f) // Same relief as dotscroller4
-#define ISLAND_START_ROTATION -0.5f // A modest turn off dead-on at startup, as dotscroller4
+#define WORLD_HEIGHT_SCALE (1.0f / 8.0f)
+#define ISLAND_START_ROTATION -0.5f // A modest turn off dead-on at startup
 
 static void PlotDot(const RETRO_CameraLens &lens, vec3 eye, unsigned char color)
 {

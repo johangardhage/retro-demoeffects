@@ -1,5 +1,5 @@
 //
-// Plasma 3
+// Plasma, chunky
 //
 // Three moving sine waves are averaged into a low-resolution color field. One
 // wave travels horizontally, another vertically, and a third crosses the image

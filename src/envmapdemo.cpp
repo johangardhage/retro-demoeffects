@@ -17,12 +17,11 @@
 // the silhouette lands short of the map's rim all the way round.
 //
 // The diamond map, RETRO_CreateDiamondAnglePhongMap through the same palette,
-// is the one maskdemo lights the mask with. It steps evenly in angle along
-// each axis instead, which matches the round map along the axes but bends its
-// rim in along the diagonals, into a diamond. At maskdemo's radius of 90 a
-// diagonal silhouette lands on that rim, where the ramp drops to black within
-// a texel and the cube's corners speckle, so it is read at 85 here; the
-// corners still come out darker than the sides.
+// steps evenly in angle along each axis instead, which matches the round map
+// along the axes but bends its rim in along the diagonals, into a diamond. At
+// a radius of 90 a diagonal silhouette lands on that rim, where the ramp
+// drops to black within a texel and the cube's corners speckle, so it is read
+// at 85 here; the corners still come out darker than the sides.
 //
 // The phong map, RETRO_CreatePhongMap over RETRO_CreateMaterialPalette, is
 // the lighting itself, read across the whole map, so a normal turned past

@@ -1,5 +1,5 @@
 //
-// Blinds 9
+// Blinds, with a glint
 //
 // A vertical-blind transition between two pictures, with a glint on the
 // turning slats. The screen is split into narrow vertical slats, each carrying

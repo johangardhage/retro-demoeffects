@@ -1,5 +1,5 @@
 //
-// Blinds 8
+// Blinds, in perspective
 //
 // A vertical-blind transition between two pictures, with the slats in
 // perspective. The screen is split into vertical slats, each carrying a strip

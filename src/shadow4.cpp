@@ -1,5 +1,5 @@
 //
-// Shadow 4
+// Shadow, from lightmaps
 //
 // A flat, lit, sandstone plain to drive over, a fan spinning over its center,
 // and four lights - ambient, a sun, and a green and a red point light

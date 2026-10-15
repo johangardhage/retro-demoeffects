@@ -1,8 +1,8 @@
 //
-// Scroller
+// Scroller, from the font atlas
 //
-// The same right-to-left scroll as textscroller.cpp, but with no strip built
-// up front: a screen column's sample position in text space,
+// A right-to-left scroll with no strip built up front: a screen column's
+// sample position in text space,
 //
 //   sample = (x + phase) mod (sizeof(ScrollText) · FONT.width)
 //

@@ -1,16 +1,16 @@
 //
-// Block world 2
+// Block world, day and night
 //
-// blockworld.cpp's world to build in, under a sky that turns from day to
-// night: walk its hills and its sea, and break and place its blocks.
+// A world of blocks to build in, under a sky that turns from day to night:
+// walk its hills and its sea, and break and place its blocks.
 //
-// The world, its textures and its colors are blockworld.cpp's, twice as
-// wide and with a floor of bedrock under the dirt, and so is the drawing:
-// one ray per pixel walked through the grid cell by cell and fogged toward
-// the horizon. The camera is the player's eye, EYE_HEIGHT above their feet,
-// turned by the mouse: yaw about the vertical and pitch up or down, short
-// of straight. The mouse is read once a frame, not once a simulation step,
-// so turning is as smooth as the display.
+// The world is a grid of textured blocks: grassy hills, sandy shores, a flat
+// sea and oak trees, over a floor of bedrock. It is drawn one ray per pixel
+// walked through the grid cell by cell and fogged toward the horizon. The
+// camera is the player's eye, EYE_HEIGHT above their feet, turned by the
+// mouse: yaw about the vertical and pitch up or down, short of straight. The
+// mouse is read once a frame, not once a simulation step, so turning is as
+// smooth as the display.
 //
 // The player is a box PLAYER_RADIUS to each side and PLAYER_HEIGHT tall
 // that every block stops, water too, so the player walks on the sea. Each

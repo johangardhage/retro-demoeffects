@@ -1,10 +1,10 @@
 //
 // Plasma cube
 //
-// The same product of two traveling-wave sums as plasma.cpp, written
-// into a 256² texture and mapped onto a cube. The table is sine rather
-// than cosine (a 90° phase), one turn in degrees, indices WRAP360.
-// t lives in [0, 720) so the integer t/2 term covers a full period.
+// A plasma, the product of two traveling-wave sums, written into a 256²
+// texture and mapped onto a cube. The table is sine rather than cosine (a 90°
+// phase), one turn in degrees, indices WRAP360. t lives in [0, 720) so the
+// integer t/2 term covers a full period.
 //
 //   X(x, t) = 75 + sin(2x + t/2) + sin(x + 2t) + 2 sin(x/2 + t)
 //   Y(y, t) = 75 + 2 sin(y + 2t) + sin(2y + t/2) + 2 sin(y + t)

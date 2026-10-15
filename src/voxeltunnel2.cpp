@@ -1,12 +1,10 @@
 //
 // Voxel tunnel, with depth fog
 //
-// A photographed height field wrapped around a cylinder and seen from
-// inside it. Classic bitmap tunnels invert a constant radius in closed
-// form, v ∝ 1/r. The radius here depends on depth, so that invert is the
-// first root of an implicit and is marched. voxeltunnel.cpp is this
-// march with nothing moving but the flight. Here the flight is the
-// same and the tube twists as it passes.
+// A photographed height field wrapped around a cylinder and seen from inside
+// it. Classic bitmap tunnels invert a constant radius in closed form, v ∝
+// 1/r. The radius here depends on depth, so that invert is the first root of
+// an implicit and is marched. The tube flies and twists as it passes.
 //
 // The lens is a pinhole on the tunnel axis, Z forward, X right, Y down
 // with the framebuffer:

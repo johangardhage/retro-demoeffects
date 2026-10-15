@@ -1,9 +1,9 @@
 //
-// Plane 3
+// Plane, from a ray-plane hit
 //
-// The same floor as Plane 4, using the usual ray-plane hit instead of
-// Cramer's rule. The camera sits at the origin looking toward +Z with
-// focal length D = PLANE_DISTANCE. Screen point (sx, sy) is the ray
+// A checkered floor, found with the usual ray-plane hit. The camera sits at
+// the origin looking toward +Z with focal length D = PLANE_DISTANCE. Screen
+// point (sx, sy) is the ray
 //
 //   r = (sx − W/2, sy − H/2, D)
 //
@@ -39,11 +39,10 @@
 //
 //   Δs = λ U_x / P²,   Δt = λ V_x / P²
 //
-// The texel is (s P, t P), wrapped. This is the same intersection as
-// Plane 4; Cramer's a/c and b/c are these dots. Rows above PLANE_FIRST_ROW
-// are left undrawn (r_y is small, λ blows up). xd, yd live on P; ang
-// lives on 360°. The texture is a generated P×P wrapping checker of
-// FIELD_TILE-texel squares. Color 0 is the sky (the cleared upper half).
+// The texel is (s P, t P), wrapped. Rows above PLANE_FIRST_ROW are left
+// undrawn (r_y is small, λ blows up). xd, yd live on P; ang lives on 360°.
+// The texture is a generated P×P wrapping checker of FIELD_TILE-texel
+// squares. Color 0 is the sky (the cleared upper half).
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

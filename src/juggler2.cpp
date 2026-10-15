@@ -34,21 +34,18 @@
 // swapping which formula drives which sphere there is invisible, and a pair
 // of one-way parabolas becomes a seamless loop with no motion blending.
 //
-// This file's technique: real linear-light RGB, the same engine juggler3.cpp
-// uses - ambient, diffuse and reflection added into one color accumulator
-// per ray, rather than an index picked off a fixed palette ramp, so a chrome
-// ball genuinely reddens against the torso instead of that being
-// approximated. The one exception is Eric Graham's real glint() highlight
-// (see TraceScene and MINGLINT), which is not additive at all: found, it
-// replaces ambient and diffuse outright with flat white; not found, it
-// contributes nothing, ever.
+// The technique is real linear-light RGB: ambient, diffuse and reflection
+// added into one color accumulator per ray, rather than an index picked off a
+// fixed palette ramp, so a chrome ball genuinely reddens against the torso
+// instead of that being approximated. The one exception is Eric Graham's real
+// glint() highlight (see TraceScene and MINGLINT), which is not additive at
+// all: found, it replaces ambient and diffuse outright with flat white; not
+// found, it contributes nothing, ever.
 //
 // One camera ray a pixel, retraced live from continuous time every displayed
-// frame, with no antialiasing at all - juggler3.cpp's four samples and its
-// quantize-then-vote combine step are the only difference between the two
-// files, so a silhouette edge here is a hard cut rather than a blend. That
-// single sample a pixel is what keeps this faster than juggler3.cpp, though
-// slower than picking a ramp index directly the way juggler.cpp does.
+// frame, with no antialiasing at all, so a silhouette edge is a hard cut
+// rather than a blend. That single sample a pixel keeps it fast, though
+// slower than picking a ramp index directly would be.
 //
 // Eric Graham's real 1987 source (recovered and republished by Ernie Wright
 // and by AlphaPixel) gives each mirror sphere its own color, <.9,.9,.9>,

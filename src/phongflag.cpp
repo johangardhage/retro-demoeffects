@@ -1,12 +1,12 @@
 //
 // Waving flag, phong shaded
 //
-// The same flag and the same analytic normals as gouraudflag.cpp, but the
-// normal is interpolated across a face and lit at every pixel instead of being
-// lit at the corners and the shade interpolated. Cloth is where that difference
-// shows: a sheen sits on the crest of a fold, which is inside a quad and not on
-// its corners, so gouraud walks straight past it and phong draws it moving over
-// the cloth as the wave runs out.
+// A waving flag of polygons with analytic normals, where the normal is
+// interpolated across a face and lit at every pixel instead of being lit at
+// the corners and the shade interpolated. Cloth is where that difference
+// shows: a sheen sits on the crest of a fold, which is inside a quad and not
+// on its corners, so gouraud walks straight past it and phong draws it moving
+// over the cloth as the wave runs out.
 //
 // Sheen, not plastic. RETRO_K_SPECULAR over RETRO_K_FALLOFF is a tight white
 // highlight, which on a mesh this coarse would be a bright spot crossing one

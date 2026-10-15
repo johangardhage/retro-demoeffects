@@ -34,30 +34,26 @@
 // swapping which formula drives which sphere there is invisible, and a pair
 // of one-way parabolas becomes a seamless loop with no motion blending.
 //
-// This file's technique: real linear-light RGB, the same engine
-// juggler2.cpp uses - ambient, diffuse and reflection are added into one
-// color accumulator per ray, rather than an index picked off a fixed
-// palette ramp the way juggler.cpp does it, so a chrome ball genuinely
-// reddens against the torso instead of that being approximated. The one
-// exception is Eric Graham's real glint() highlight (see TraceScene and
-// MINGLINT), which is not additive at all: found, it replaces ambient and
-// diffuse outright with flat white; not found, it contributes nothing,
-// ever.
+// The technique is real linear-light RGB: ambient, diffuse and reflection are
+// added into one color accumulator per ray, rather than an index picked off a
+// fixed palette ramp, so a chrome ball genuinely reddens against the torso
+// instead of that being approximated. The one exception is Eric Graham's real
+// glint() highlight (see TraceScene and MINGLINT), which is not additive at
+// all: found, it replaces ambient and diffuse outright with flat white; not
+// found, it contributes nothing, ever.
 //
-// Four camera rays a pixel, a quarter-pixel apart, are each quantized to
-// the palette on their own and the most common result wins, rather than
-// averaging their four raw colors and quantizing once. This palette is a
-// handful of disjoint hue-to-black ramps, not a full RGB cube, so averaging
-// two different materials' colors first can land on a point that sits on
-// no ramp at all - nearest-color search then resolves that to whatever
-// ramp happens to be closest, usually an unrelated gray. Quantizing each
-// sample before combining them never produces a color that was not
-// already on some ramp. That antialiasing is what lets a mirror ball's
-// reflected checkerboard read as fine detail instead of a blocky mosaic,
-// and lets a silhouette edge blend two materials instead of hard-cutting
-// between them - retraced live from continuous time, at real cost: four
-// samples a pixel every displayed frame against juggler2.cpp's one, using
-// the same engine, make this the slowest of the three.
+// Four camera rays a pixel, a quarter-pixel apart, are each quantized to the
+// palette on their own and the most common result wins, rather than averaging
+// their four raw colors and quantizing once. This palette is a handful of
+// disjoint hue-to-black ramps, not a full RGB cube, so averaging two
+// different materials' colors first can land on a point that sits on no ramp
+// at all - nearest-color search then resolves that to whatever ramp happens
+// to be closest, usually an unrelated gray. Quantizing each sample before
+// combining them never produces a color that was not already on some ramp.
+// That antialiasing is what lets a mirror ball's reflected checkerboard read
+// as fine detail instead of a blocky mosaic, and lets a silhouette edge blend
+// two materials instead of hard-cutting between them - retraced live from
+// continuous time, at real cost: four samples a pixel every displayed frame.
 //
 // Eric Graham's real 1987 source (recovered and republished by Ernie Wright
 // and by AlphaPixel) gives each mirror sphere its own color, <.9,.9,.9>,
@@ -92,8 +88,7 @@
 // before it is shown - so the weight that makes a 0.4 or 0.15 photograph
 // measurement come out right, after that encoding, is the measurement
 // decoded by RETRO_SRGBToLinear, not the measurement itself. Both are
-// AMBIENT_SHAPE's anchor value below, not the literal ambient weight - see the identical
-// constants in juggler2.cpp, whose comment this mirrors
+// AMBIENT_SHAPE's anchor value below, not the literal ambient weight
 #define PLASTIC_AMBIENT RETRO_SRGBToLinear(40 / 255.0f)
 #define PLASTIC_DIFFUSE 1.0f
 #define PLASTIC_SPECULAR 1.0f

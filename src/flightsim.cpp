@@ -2,14 +2,13 @@
 // Flight sim
 //
 // An aircraft flown over the 1024x1024 voxel height and color maps, drawn as
-// the flat-shaded triangle mesh of flatshadedlandscape.cpp. The rider
-// there has only a heading; an aircraft also pitches and rolls, so the
-// view here is a free frame of right, up and forward vectors in world space,
-// turned about its own axes. A world point lands in that frame as three dot
-// products, and the near-plane clip and pinhole of the terrain library take
-// it from there. The two focal lengths are equal and the principal point sits
-// at the middle of the screen, so a roll turns the picture about its center
-// without stretching it.
+// a flat-shaded triangle mesh. An aircraft pitches and rolls as well as
+// turning, so the view is a free frame of right, up and forward vectors in
+// world space, turned about its own axes. A world point lands in that frame
+// as three dot products, and the near-plane clip and pinhole of the terrain
+// library take it from there. The two focal lengths are equal and the
+// principal point sits at the middle of the screen, so a roll turns the
+// picture about its center without stretching it.
 //
 // The flight model is arcade:
 //

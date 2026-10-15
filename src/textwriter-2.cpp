@@ -1,5 +1,5 @@
 //
-// Text writer, one character at a time
+// Text writer, from the font atlas
 //
 // Pages of text appear in place, one character at a time (see FONT below).
 // Nothing scrolls: a page is written, held, then replaced by the next.
@@ -9,13 +9,12 @@
 // next page is written from a clear screen. The cycle wraps, so the
 // first page follows the last.
 //
-// Unlike textwriter.cpp, no RETRO_GenerateTextImage strip is built: every
-// glyph is read straight out of RETRO_LoadFont's atlas at render time. The
-// pages are a 2D array of lines rather than strings broken up by '\n', so
-// ScrollText[page][row] is already a line's own text, with no scan needed
-// to find where it ends. The inner bound is the longest page; unused
-// slots are null. Every page is drawn in a block that tall, centered, so
-// they all start on the same row.
+// No RETRO_GenerateTextImage strip is built: every glyph is read straight out
+// of RETRO_LoadFont's atlas at render time. The pages are a 2D array of lines
+// rather than strings broken up by '\n', so ScrollText[page][row] is already
+// a line's own text, with no scan needed to find where it ends. The inner
+// bound is the longest page; unused slots are null. Every page is drawn in a
+// block that tall, centered, so they all start on the same row.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

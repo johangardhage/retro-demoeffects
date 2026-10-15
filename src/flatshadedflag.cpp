@@ -1,9 +1,9 @@
 //
 // Waving flag, flat shaded
 //
-// The same flag as flag.cpp, as polygons rather than pixels: flag.obj is
-// a grid of quads with one flat color each, and the wave is in the geometry
-// instead of in a height field sampled per pixel.
+// A waving flag as polygons rather than pixels: flag.obj is a grid of quads
+// with one flat color each, and the wave is in the geometry instead of in a
+// height field sampled per pixel.
 //
 // The asset is a flat sheet. Every frame the wave is written into z,
 //

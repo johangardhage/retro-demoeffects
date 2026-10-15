@@ -1,12 +1,12 @@
 //
 // Wireframe landscape
 //
-// The same mesh as flatlandscape.cpp drawn as a grid: only the edges of the
-// mesh quads are drawn, as lines, and the quads themselves are filled with the
-// color of the sky. A filled quad shows nothing of itself, but it covers what
-// is behind it, so the far side of a hill and the ground beyond a ridge are
-// hidden and the grid reads as a solid surface rather than as a tangle of
-// lines. Each quad spans RETRO_TerrainDraw.step cells on a side.
+// A landscape mesh drawn as a grid: only the edges of the mesh quads are
+// drawn, as lines, and the quads themselves are filled with the color of the
+// sky. A filled quad shows nothing of itself, but it covers what is behind
+// it, so the far side of a hill and the ground beyond a ridge are hidden and
+// the grid reads as a solid surface rather than as a tangle of lines. Each
+// quad spans RETRO_TerrainDraw.step cells on a side.
 //
 // A line has no depth to test against a depth buffer with, so the quads are
 // drawn in order instead, the farthest first, and each is filled and then

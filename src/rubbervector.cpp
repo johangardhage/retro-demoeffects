@@ -1,12 +1,8 @@
 //
-// Jelly cube
+// Rubber vector, jelly cube
 //
-// A subdivided cube that squashes as a volume rather than bending as a
-// mesh: rubbervector2.cpp bends it with three traveling sine waves,
-// rubbervector3.cpp twists a Glenz-shaded column of triangles, and
-// rubbervector4.cpp gets the classic Amiga look without deforming a mesh
-// at all, by scanline-multiplexing a ring of rigid rendered frames. This
-// one scales. The three axes take a pulse 120° apart
+// A subdivided cube that squashes as a volume rather than bending as a mesh:
+// it scales. The three axes take a pulse 120° apart
 //
 //   s_x = 1 + A sin(φ)
 //   s_y = 1 + A sin(φ + 2π/3)

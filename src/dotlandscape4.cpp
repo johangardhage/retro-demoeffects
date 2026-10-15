@@ -1,5 +1,5 @@
 //
-// Occlusion-correct dot landscape
+// Dot landscape, occlusion-correct
 //
 // The 1024x1024 voxel landscape rendered as a point cloud. Unlike a voxel
 // renderer, it never joins samples into columns: every terrain texel is an

@@ -1,7 +1,7 @@
 //
 // Bump mapping, shaded per pixel
 //
-// The same height map as bump.cpp, lit by Blinn-Phong at every pixel. The
+// A height map lit by Blinn-Phong at every pixel. The
 // frame is the screen: y grows down, z toward the viewer (orthographic).
 // The height field h(x, y) is the surface (x, y, h). Its tangents are
 // (1, 0, hx) and (0, 1, hy), so

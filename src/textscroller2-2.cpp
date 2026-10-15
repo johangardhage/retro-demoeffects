@@ -1,5 +1,5 @@
 //
-// Scroller, vertical pages
+// Scroller, vertical pages from the font atlas
 //
 // Pages of centered text (see ScrollText below) rise from below the
 // screen to above it at a constant rate,
@@ -10,13 +10,13 @@
 // RETRO_HEIGHT + stack height, with the whole stack above it. Both ends of
 // that range are fully off-screen, so the loop back to phase 0 is seamless.
 //
-// Unlike textscroller2.cpp, no RETRO_GenerateTextImage page is built: every
-// glyph is read straight out of RETRO_LoadFont's atlas at render time. The
-// pages are a 2D array of lines rather than strings broken up by '\n', so
-// ScrollText[page][row] is already a line's own text, with no scan needed
-// to find where it ends. The inner bound is the longest page; unused
-// slots are null. Every page occupies that many rows, so the stack height
-// that phase needs is counted by the compiler from the array itself.
+// No RETRO_GenerateTextImage page is built: every glyph is read straight out
+// of RETRO_LoadFont's atlas at render time. The pages are a 2D array of lines
+// rather than strings broken up by '\n', so ScrollText[page][row] is already
+// a line's own text, with no scan needed to find where it ends. The inner
+// bound is the longest page; unused slots are null. Every page occupies that
+// many rows, so the stack height that phase needs is counted by the compiler
+// from the array itself.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

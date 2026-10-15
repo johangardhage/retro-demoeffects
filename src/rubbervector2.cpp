@@ -1,5 +1,5 @@
 //
-// Rubber vector
+// Rubber vector, bent by sine waves
 //
 // A filled cube bent by three traveling sine waves before the usual rotation
 // and perspective projection. subcubequads.obj is an ordinary unit

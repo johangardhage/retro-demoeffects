@@ -1,21 +1,20 @@
 //
-// Twister 5
+// Twister, chrome
 //
-// The flowers-wrapped square column from twister3, chrome-shaded and
-// allowed to change thickness. twister3's torsion still winds the square
-// up and down the period; on top of that the radius and the axis are waves
-// in y, so the silhouette is an hourglass that snakes rather than a prism
-// of constant width.
+// A flowers-wrapped square column, chrome-shaded and allowed to change
+// thickness. Its torsion winds the square up and down the period; on top of
+// that the radius and the axis are waves in y, so the silhouette is an
+// hourglass that snakes rather than a prism of constant width.
 //
 //   radius(y)   = RADIUS + RADIUS_WAVE · sin(phase_r + y · RADIUS_Y)
 //   centerx(y) = CENTER_X + SWAY · sin(phase_s + y · SWAY_Y)
 //   θ(y)        = (y · torsion(phase) + phase) · TURNS
 //
-// torsion is twister3's envelope, TORSION · sin(7 phase) · cos(phase). The
-// four corners still ride a circle of that radius, and the two faces
-// turned toward the viewer are the walk from the leftmost corner through
-// the nearest to the rightmost. Each face carries a quarter of the flowers
-// picture, squeezed to whatever width the face has on screen.
+// torsion is the envelope TORSION · sin(7 phase) · cos(phase). The four
+// corners ride a circle of that radius, and the two faces turned toward the
+// viewer are the walk from the leftmost corner through the nearest to the
+// rightmost. Each face carries a quarter of the flowers picture, squeezed to
+// whatever width the face has on screen.
 //
 // Lighting is a cylinder, not a depth cue. Across a span the surface is
 // treated as facing (x − cx) / radius. Shade is a mix of a broad phong

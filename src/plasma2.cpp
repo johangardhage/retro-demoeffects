@@ -1,5 +1,5 @@
 //
-// Plasma 2
+// Plasma, cycling palette
 //
 // A static field of four sines, then a cycling palette. The value stored
 // at (x, y) is the mean of four [0, 256] waves

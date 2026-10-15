@@ -1,5 +1,5 @@
 //
-// Blinds 2
+// Blinds, over a picture
 //
 // A vertical-blind transition over a picture. The picture is split into narrow
 // vertical slats, each carrying its own strip of it. Each slat folds around its

@@ -1,8 +1,8 @@
 //
-// Scroller, on a sine
+// Scroller, on a sine from the font atlas
 //
-// The same right-to-left sine scroll as textscroller3.cpp, but with no strip
-// built up front: a screen column's sample position in text space,
+// A right-to-left sine scroll with no strip built up front: a screen column's
+// sample position in text space,
 //
 //   sample = (x + phase) mod (sizeof(ScrollText) · FONT.width)
 //

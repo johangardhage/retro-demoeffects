@@ -1,5 +1,5 @@
 //
-// Blinds 5
+// Blinds, checkerboard flip
 //
 // A checkerboard flip between two pictures. The screen is cut into square
 // tiles, each carrying a piece of one picture on its front and the same piece

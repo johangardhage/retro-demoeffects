@@ -33,12 +33,12 @@
 // miles past the edge of the screen is not projected to a point miles off it.
 //
 // The flight starts parked at the stern of a carrier outside the Golden Gate.
-// The flight model is the arcade one of flightsim.cpp in feet and knots, with
-// the throttle in percent of full power and a fuel load to burn. The aircraft
-// is held an eye height above the sea, or above the carrier's deck. It lands
-// on the deck, the runway or the land with its gear down and its wings near
-// level, which the ground then holds level; touching down with the gear up,
-// banked onto a wing tip or on the sea is a crash.
+// The flight model is an arcade one in feet and knots, with the throttle in
+// percent of full power and a fuel load to burn. The aircraft is held an eye
+// height above the sea, or above the carrier's deck. It lands on the deck,
+// the runway or the land with its gear down and its wings near level, which
+// the ground then holds level; touching down with the gear up, banked onto a
+// wing tip or on the sea is a crash.
 //
 // The HUD: a heading tape, a boresight cross, speed and altitude, the load
 // factor, and a pitch ladder lying on the world. The panel: a stores display,

@@ -19,13 +19,13 @@
 //
 // with f, r and u the camera's forward, right and up, so that a block edge
 // lined up with the view falls between pixels rather than on one. The ray
-// walks the grid cell by cell (a DDA), as raycast.cpp does across its map
-// but in all three axes: for each it keeps the t of the next grid plane it
-// will cross, steps over whichever is nearest, and stops at the first block
-// it enters. The axis of the last plane crossed is the face hit, and the
-// hit point o + t d, taken modulo one block across that face, picks the
-// texel of the block's top, side or bottom texture. A leaves texel that is
-// a hole lets the ray walk on, so a crown is seen through.
+// walks the grid cell by cell (a DDA) in all three axes: for each it keeps
+// the t of the next grid plane it will cross, steps over whichever is
+// nearest, and stops at the first block it enters. The axis of the last plane
+// crossed is the face hit, and the hit point o + t d, taken modulo one block
+// across that face, picks the texel of the block's top, side or bottom
+// texture. A leaves texel that is a hole lets the ray walk on, so a crown is
+// seen through.
 //
 // Each face is lit by its axis alone, top brightest and the two side axes
 // darker by different amounts, so a block's edges read without a light

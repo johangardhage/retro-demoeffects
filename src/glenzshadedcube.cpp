@@ -1,8 +1,7 @@
 //
 // Glenz shaded cube
 //
-// The same additive blit as glenzcube.cpp, but each face writes a
-// Lambert shade instead of a bit:
+// The faces are blitted additively, each writing a Lambert shade:
 //
 //   shade = c + face->c + (N · L) · intensity
 //

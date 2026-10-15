@@ -1,12 +1,9 @@
 //
 // Raymarch
 //
-// raytrace.cpp's own scene and its own sphere, down to the position
-// and bounce formulas, so the two are directly comparable frame for frame -
-// what differs is only how the ray finds the sphere.
-//
-// raytrace.cpp solves |O + t D - C|^2 = r^2 for t in closed form.
-// Here the ray is walked instead: the sphere's signed distance field
+// A mirror sphere bouncing over a checkered floor, found by walking the ray
+// rather than by solving |O + t D - C|^2 = r^2 for t in closed form. The
+// sphere's signed distance field
 //
 //   SDF(p) = |p - C| - r
 //
@@ -19,16 +16,15 @@
 // not merely a fair one, so the walk needs no safety margin and converges
 // in a handful of steps - sphere tracing at its cheapest, on the one shape
 // simple enough to check the technique against a closed form. The floor and
-// sky stay raytrace.cpp's plane equation and sun glow, not marched,
-// since a plane already has one.
+// sky are a plane equation and a sun glow, not marched, since a plane already
+// has a closed form.
 //
 // The surface normal is the field's own gradient, six calls of finite
-// difference around the hit rather than the analytic p - C a sphere would
-// let a demo take as a shortcut - marched like any other SDF, so the normal
-// too is the general technique and not a fact special-cased for this shape.
-// From there the mirror shading, and the shadow ray asking whether the
-// sphere lies between a floor point and the light, are raytrace.cpp's
-// own, marched instead of solved.
+// difference around the hit rather than the analytic p - C a sphere would let
+// a demo take as a shortcut - marched like any other SDF, so the normal too
+// is the general technique and not a fact special-cased for this shape. The
+// shadow ray, asking whether the sphere lies between a floor point and the
+// light, is marched too.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -95,7 +91,7 @@ static bool MarchSphere(vec3 origin, vec3 dir, float maxdist, float &t)
 	return false;
 }
 
-// raytrace.cpp's SphereShadowed, marched instead of solved
+// Whether the sphere lies along the ray within maxdist, marched
 static bool SphereOccluded(vec3 origin, vec3 dir, float maxdist)
 {
 	float t = 0.0f;
@@ -123,11 +119,11 @@ struct EnvironmentHit {
 	float brightness; // 0..1, already carrying the tile's own albedo
 };
 
-// raytrace.cpp's TraceEnvironment, unchanged but for asking SphereOccluded
-// rather than SphereShadowed whether the floor is lit. floort carries the
-// plane hit distance over from DEMO_Render's own march-distance cap, so the
-// primary ray's floor division is not paid twice; a fresh ray, such as the
-// mirror's reflection, passes -1.0f and this works it out itself.
+// The floor or sky a ray meets, asking SphereOccluded whether the floor is
+// lit. floort carries the plane hit distance over from DEMO_Render's own
+// march-distance cap, so the primary ray's floor division is not paid twice;
+// a fresh ray, such as the mirror's reflection, passes -1.0f and this works
+// it out itself.
 static EnvironmentHit TraceEnvironment(vec3 origin, vec3 dir, vec3 light, float floort = -1.0f)
 {
 	EnvironmentHit hit;
@@ -194,8 +190,8 @@ static unsigned char TraceScene(vec3 origin, vec3 dir, vec3 light)
 
 void DEMO_Render(RETRO_Time time)
 {
-	// raytrace.cpp's own bounce, boingball's parabola: w = 2 frac(phase) - 1,
-	// height = PEAK (1 - w^2), and the same side-to-side drift
+	// The sphere bounces on a parabola, w = 2 frac(phase) - 1,
+	// height = PEAK (1 - w^2), and drifts from side to side
 	float bouncephase = fract(time.total * SPHERE_BOUNCE_SPEED);
 	float w = 2.0f * bouncephase - 1.0f;
 	float bounce = SPHERE_BOUNCE_HEIGHT * (1.0f - w * w);

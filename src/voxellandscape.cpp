@@ -32,26 +32,21 @@
 // too, and that edge was a different color, so a slope arrives as a stack of
 // flat tones with a step at every seam - which is what flat shading a face
 // does, and the near strips stand tall enough to show it.
-// voxellandscape2.cpp shades each strip between its two edges instead, and is
-// otherwise this effect line for line; the pair is the terrain answer to
-// flatshadedcube and gouraudcube.
 //
 // The lens and the camera are the terrain library's, so what is this effect's
 // own is the frustum-to-ground segment above and the column walk that fills it.
-// voxellandscape3.cpp walks the same segment over a photographed map, and
-// reads it cell by cell rather than filtering between them: a photograph
-// carries its own grain, which covers a seam. Nothing here does - the color
-// is a slope shade with no texture in it - and the map is a quarter the size,
-// so a cell arrives four times the size. Filtering the map is what this one
-// keeps of the two smoothings; shading the strips is what it gives up.
+// The map is filtered between cells rather than read cell by cell: a
+// photograph would carry its own grain to cover a seam, but the color here is
+// a slope shade with no texture in it, and the map is small, so a cell
+// arrives large.
 //
-// The world here is a quarter of the one those maps make: 256 cells across
-// where they are 1024. Every length is scaled to suit - the height the ground
-// is read at, the height the eye rides at, how fast it flies, how far it sees
-// and how closely the slices are spaced - and a pinhole cannot tell a world
-// from a quarter of one seen from a quarter of the height, so through the same
-// lens this renders the same landscape as the demos over the larger maps, and
-// is crossed in the same time.
+// The world here is 256 cells across, a quarter of a 1024-cell photographed
+// map. Every length is scaled to suit - the height the ground is read at, the
+// height the eye rides at, how fast it flies, how far it sees and how closely
+// the slices are spaced - and a pinhole cannot tell a world from a quarter of
+// one seen from a quarter of the height, so through the same lens this
+// renders the same landscape as a larger map would, and is crossed in the
+// same time.
 //
 // Midpoint displacement fills the byte range far more evenly than a photograph
 // does, so a stored height here is not a world height and the terrain carries

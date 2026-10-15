@@ -1,9 +1,9 @@
 //
 // Fireworks
 //
-// Rockets and the sparks they throw. y grows down, so a rocket's climb
-// is a negative vy and gravity is +g, the same sign as particles.cpp.
-// A rocket is symplectic Euler with no exceptions
+// Rockets and the sparks they throw. y grows down, so a rocket's climb is a
+// negative vy and gravity is +g. A rocket is symplectic Euler with no
+// exceptions
 //
 //   v' = v + (0, g)
 //   x' = x + v'

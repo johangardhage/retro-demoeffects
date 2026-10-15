@@ -2,8 +2,8 @@
 // Cube shadow
 //
 // A flat shaded cube turning in front of a checkerboard wall, casting a dark
-// shadow on it. The cube is lit with one Lambert term per face, as in the
-// flat shaded cube, by a light up and to the left of the camera.
+// shadow on it. The cube is lit with one Lambert term per face, by a light up
+// and to the left of the camera.
 //
 // The wall is a rotator that turns slowly in its own plane: each pixel's
 // offset from screen center is rotated by angle, and the parity of its two

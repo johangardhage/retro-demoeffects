@@ -1,12 +1,12 @@
 //
 // Pseudo 3D road
 //
-// The same road as Road 3, walked as scanlines the way the arcade machines
-// drew it instead of projected as quads: one row at a time, bottom to top,
-// with no per-pixel and no per-quad divide anywhere in the frame. Every
-// scanline below the horizon is a distance, and those distances are a table
-// built once. Inverting the projection of the ground plane, a camera at
-// ROAD_CAMERA_HEIGHT looking at row H/2 + i sees
+// A road walked as scanlines the way the arcade machines drew it, instead of
+// projected as quads: one row at a time, bottom to top, with no per-pixel and
+// no per-quad divide anywhere in the frame. Every scanline below the horizon
+// is a distance, and those distances are a table built once. Inverting the
+// projection of the ground plane, a camera at ROAD_CAMERA_HEIGHT looking at
+// row H/2 + i sees
 //
 //   z = D h (H/2) / i,  w = D ROAD_WIDTH (W/2) / z
 //

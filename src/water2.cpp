@@ -1,19 +1,18 @@
 //
 // Water, with a lit surface
 //
-// The same leapfrog height field as water.cpp, then two things that file
-// does not do: a disk droplet instead of a point, and a Lambert term from
-// the slope, looked up in a shade table of the still picture.
+// A leapfrog height field with a disk droplet instead of a point, and a
+// Lambert term from the slope, looked up in a shade table of the still
+// picture.
 //
 //   ∂²h/∂t² = c² ∇²h
 //
-// Leapfrog with the five-point Laplacian and λ = 1/2, then WATER_DAMP,
-// then the (4, 1, 1, 1, 1) / 8 smoothing pass. The one-pixel frame stays
-// Dirichlet 0. A droplet is a cosine disk in h, radius WATER_DROP_RADIUS,
-// so the first ring is already a circle instead of a pixel that has to
-// spread. The picture is sampled at the same first-order slope offset as
-// water.cpp. The surface is (x, y, h) with y down and z toward the viewer,
-// so
+// Leapfrog with the five-point Laplacian and λ = 1/2, then WATER_DAMP, then
+// the (4, 1, 1, 1, 1) / 8 smoothing pass. The one-pixel frame stays Dirichlet
+// 0. A droplet is a cosine disk in h, radius WATER_DROP_RADIUS, so the first
+// ring is already a circle instead of a pixel that has to spread. The picture
+// is sampled at a first-order slope offset. The surface is (x, y, h) with y
+// down and z toward the viewer, so
 //
 //   N = (−hx, −hy, 1) / |…|
 //

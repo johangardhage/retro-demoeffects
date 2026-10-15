@@ -1,10 +1,10 @@
 //
-// Pseudo 3D road 3
+// Pseudo 3D road, as quads
 //
-// The same road as Road, projected as quads instead of walked as scanlines.
-// The road is a strip of quads, each ROAD_SEGMENT_LENGTH deep, laid end to
-// end along z and drawn in perspective. A point at world (x, y, z) seen from
-// a camera at (cx, cy, cz) lands at
+// A road projected as quads instead of walked as scanlines. The road is a
+// strip of quads, each ROAD_SEGMENT_LENGTH deep, laid end to end along z and
+// drawn in perspective. A point at world (x, y, z) seen from a camera at (cx,
+// cy, cz) lands at
 //
 //   s  = D / (z - cz)
 //   sx = W/2 + s (x - cx) W/2

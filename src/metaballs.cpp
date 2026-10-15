@@ -1,9 +1,8 @@
 //
 // Metaballs
 //
-// An implicit field, the 1/r² cousin of the compact Wyvill kernel in
-// blobs.cpp. Blinn's original used a Gaussian; this is the algebraic
-// form. At pixel p
+// An implicit field, the 1/r² cousin of the compact Wyvill kernel. Blinn's
+// original used a Gaussian; this is the algebraic form. At pixel p
 //
 //   F(p) = sum_i  T R_i² / |p − c_i|²
 //

@@ -1,10 +1,9 @@
 //
 // Fluid
 //
-// Two inks stirred into water. The same stable-fluids solver as smoke.cpp,
-// with the buoyancy taken out and the nozzles replaced by two paddles that
-// sweep Lissajous paths through the tank, each dragging the water with it
-// and trailing its own ink. Each fixed step:
+// Two inks stirred into water by a stable-fluids solver, with two paddles
+// that sweep Lissajous paths through the tank, each dragging the water with
+// it and trailing its own ink. Each fixed step:
 //
 //   1. Stir     paddle k sits at
 //                 p_k(phase) = center + (STIR_REACH_X sin(a_k phase + α_k),
@@ -13,7 +12,7 @@
 //                 dp_k/dt = dp_k/dphase · 2π / STIR_PERIOD.
 //               It pulls u, v toward that velocity and adds its ink, both
 //               weighted by exp(−r² / EMIT_RADIUS²).
-//   2. Confine  vorticity confinement, as in smoke.cpp:
+//   2. Confine  vorticity confinement:
 //                 f = CONFINEMENT (N_y ω, −N_x ω),  N = ∇|ω| / |∇|ω||
 //   3. Project  PROJECT_ITERATIONS of Gauss-Seidel on ∇²p = ∇·u, warm
 //               started from the previous step, then u −= ∇p.

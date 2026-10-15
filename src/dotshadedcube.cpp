@@ -1,7 +1,7 @@
 //
 // Dot cube, shaded
 //
-// Same dot cube as dotcube.cpp, but each vertex takes its brightness from
+// A cube of dots, each vertex taking its brightness from
 // RETRO_ShadeFractionFromLambert(N·L), N being the vertex normal
 // RETRO_InitializeVertexNormals averaged in from the faces around it. That
 // clamps a vertex turned away from the light to the ramp's own floor, so the

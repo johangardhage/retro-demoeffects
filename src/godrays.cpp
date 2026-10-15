@@ -34,7 +34,7 @@
 #define BEAM_SEGMENTS 16 // corners around each beam section
 #define BEAM_CORE 0.6f // share of a beam's radius its bright core spans
 #define BEAM_EDGE 0.85f // brightness at the core's rim, of the middle's
-#define BEAM_DENSITY 0.62f // calibrated for this radial profile to match the other demos side-on
+#define BEAM_DENSITY 0.62f // calibrated for this radial profile, seen side-on
 #define BEAM_NEAR_DEPTH 1.0f // matches RETRO_ProjectVertex's near plane
 
 #define PATH_Z 0.5f // ball radii the middle of the path lies behind the origin

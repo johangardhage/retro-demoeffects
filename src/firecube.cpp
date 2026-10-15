@@ -2,9 +2,9 @@
 // Burning wireframe cube
 //
 // The cube is drawn as wireframe into a framebuffer that is never cleared,
-// then the same 8-tap fire blur as fire.cpp runs once per step. Shade
-// SHADE_WIREFIRE writes color + random(intensity) along each edge, so the
-// edges seed the flame and the blur lifts it. Euler angles live on 2π.
+// then an 8-tap fire blur runs once per step. Shade SHADE_WIREFIRE writes
+// color + random(intensity) along each edge, so the edges seed the flame and
+// the blur lifts it. Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

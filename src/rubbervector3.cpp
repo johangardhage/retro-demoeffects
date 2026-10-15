@@ -1,5 +1,5 @@
 //
-// Flubber, as glenz polygons
+// Rubber vector, glenz flubber
 //
 // A faceted rubber column with black and gold bands. Both sides are drawn with
 // additive Glenz polygons. Palette banks encode black/black, black/gold and

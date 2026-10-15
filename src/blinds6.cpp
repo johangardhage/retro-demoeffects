@@ -1,5 +1,5 @@
 //
-// Blinds 6
+// Blinds, center out or shuffled
 //
 // A vertical-blind transition between two pictures, with the slats turning in
 // an order of their own. The screen is split into narrow vertical slats, each

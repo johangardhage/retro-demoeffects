@@ -1,5 +1,5 @@
 //
-// Tunnel, fixed bend from a 2D lookup
+// Tunnel, bend from a 2D lookup
 //
 // A fixed-bend tunnel using only a 2D texture-coordinate lookup. Screen-space
 // circles shrink and drift left. Each pixel uses the first contour that leaves

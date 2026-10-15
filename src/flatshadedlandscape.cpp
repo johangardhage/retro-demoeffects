@@ -9,12 +9,9 @@
 // painter's sort.
 //
 // The sun circles the sky and is drawn where it stands, so the same ground is
-// seen lit from every direction in turn and a ridge can be watched brightening
-// and falling away again. A face carries one normal over the whole of it, so
-// the light lands as facets: gouraudlandscape.cpp takes a normal per vertex
-// instead and the same sun crosses it smoothly.
-//
-// flatlandscape.cpp is the same mesh with the light taken away.
+// seen lit from every direction in turn and a ridge can be watched
+// brightening and falling away again. A face carries one normal over the
+// whole of it, so the light lands as facets.
 //
 // A triangle reaching from behind the camera into view is cut at the near
 // plane rather than dropped, so a camera flown low over the ground still has
@@ -160,8 +157,7 @@ void DEMO_Initialize(void)
 
 	// Match each darkened source color back to the nearest entry in the map's
 	// own palette. Faces can therefore be lit without replacing its terrain
-	// colors with a generic material ramp. gouraudlandscape.cpp lights the same
-	// map through the same table, one shade per vertex instead of per face.
+	// colors with a generic material ramp.
 	//
 	// The ambient floor is what makes that affordable. A photographed palette
 	// carries a picture's colors and not ramps, so an entry darkened toward

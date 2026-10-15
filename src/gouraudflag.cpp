@@ -1,14 +1,13 @@
 //
 // Waving flag, gouraud shaded
 //
-// The same flag and the same wave as flatshadedflag.cpp, lit per vertex instead
-// of per face, so the cloth reads as one curved surface rather than as a grid
-// of facets. Gouraud needs a normal at every vertex, and the two ways of
-// getting one both fail here. Taking them from the faces cannot work on a two
-// sided mesh: the front and back copy of a quad carry opposite normals into the
-// same vertex, which sum to zero. Taking them from the asset cannot work
-// either, since the sheet is deformed every frame. So they are differentiated
-// from the wave itself,
+// A waving flag of polygons, lit per vertex instead of per face, so the cloth
+// reads as one curved surface rather than as a grid of facets. Gouraud needs
+// a normal at every vertex, and the two ways of getting one both fail here.
+// Taking them from the faces cannot work on a two sided mesh: the front and
+// back copy of a quad carry opposite normals into the same vertex, which sum
+// to zero. Taking them from the asset cannot work either, since the sheet is
+// deformed every frame. So they are differentiated from the wave itself,
 //
 //   z = AMP u W / (1 + HALF),   W = sin(A) + HALF sin(B)
 //

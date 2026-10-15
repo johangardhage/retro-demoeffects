@@ -10,7 +10,7 @@
 // WAVES is a whole number, so the wave closes around the ring: ball 0 and
 // ball BALLS - 1 are neighbors on the same wave rather than either side of a
 // step. The ring is rebuilt every frame, then rotated and projected as loose
-// vertices, the way stars3.cpp carries its box of stars.
+// vertices.
 //
 // A ball is a sprite, not a mesh: RETRO_CreateBallMap draws the lit sphere
 // once, along with the hemisphere's depth, and RETRO_DrawDepthSprite scales

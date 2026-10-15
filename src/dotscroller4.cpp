@@ -1,5 +1,5 @@
 //
-// Dot world scroller
+// Dot scroller, on a rotating island
 //
 // The 128x128 voxel_height_128x128.pcx landscape in a zoomed-out island view,
 // with a scroller (see FONT below) packed into one strip at startup. Every
@@ -28,7 +28,7 @@
 #include "lib/retropoly.h"
 #include "lib/retroterrain.h"
 
-#define WORLD_HEIGHT_SCALE (1.0f / 8.0f) // Same relief as dotlandscape2
+#define WORLD_HEIGHT_SCALE (1.0f / 8.0f)
 #define ISLAND_START_ROTATION -0.5f // A modest turn off dead-on at startup
 
 #define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }

@@ -1,5 +1,5 @@
 //
-// Raytraced sphere
+// Raytrace, mirror sphere
 //
 // A true raytracer, not an environment map: every pixel casts its own ray and
 // the mirror ball's reflection is found by actually reflecting that ray off
@@ -148,7 +148,7 @@ static unsigned char TraceScene(vec3 origin, vec3 dir, vec3 light)
 
 void DEMO_Render(RETRO_Time time)
 {
-	// The sphere bounces on boingball's own parabola, w = 2 frac(phase) - 1,
+	// The sphere bounces on a parabola, w = 2 frac(phase) - 1,
 	// height = PEAK (1 - w^2), and drifts back and forth across the floor
 	float bouncephase = fract(time.total * SPHERE_BOUNCE_SPEED);
 	float w = 2.0f * bouncephase - 1.0f;

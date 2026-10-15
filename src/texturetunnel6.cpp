@@ -1,167 +1,188 @@
 //
-// Tunnel, fixed bend
+// Tunnel, bend from moving rings
 //
-// Reuses texturetunnel7's ring mesh, perspective-correct textured quads,
-// generated triangle tile and Gouraud shade table. The camera and bend
-// stay fixed; scrolling the wrapping V coordinate gives forward travel.
-// Geometry and lighting are built once, leaving only the textured draw
-// for each frame. The right wall glows orange and the left stays dark red.
+// A curved textured tube that snakes about, drawn as rings of pixels from the
+// vanishing point out.
+//
+// Every pixel belongs to one ring, its distance r from the ring's center,
+// and has an angle a around it. Ring r is the wall at depth
+//
+//   depth = PERSPECTIVE / r     texture rows
+//
+// so the rings near the middle are far away and the wall nears toward the
+// edges of the screen. A pixel shows the texel at row depth + t and
+// column a + t, t = SPEED x seconds, so the wall flies at you SPEED rows a
+// second and turns SPEED columns a second. The wall is wobbly: the rings are
+// pulled in and out by WOBBLE pixels in seven lobes around, so they lie in a
+// wavy pattern.
+//
+// The pixels are kept ring by ring, so each ring can be drawn around a center
+// of its own. The center of a ring runs around a circle of PATH_RADIUS
+// pixels, a turn every PATH_TURN rows of depth, so the far end swings about
+// the near one as the tunnel flies. A ring is drawn over and over along a
+// line from the center of the ring inside it to its own, so it leaves no gaps
+// between them. Rings are drawn from the far end out, each covering the one
+// inside it, and what none of them reaches this frame is left as the last one
+// drew it, so the tunnel is drawn over the frame before.
+//
+// The texture is 256 x 128, two copies of a 128 x 128 tile side by side, so
+// the 256 angles around the tube go round the tile twice.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
-#define RETRO_HEIGHT 200
-
 #include "lib/retro.h"
 #include "lib/retromain.h"
-#include "lib/retrocamera.h"
-#include "lib/retropoly.h"
-#include "lib/retropalette.h"
-#include "lib/retroshadetable.h"
 
-#define RING_SIDES 32
-#define RING_COUNT 64
-#define TUNNEL_RADIUS 48
-#define RING_SPACING 8
-#define RING_NEAR 10
-#define BEND_CURVE 0.0025f
-#define FLIGHT_SPEED 72
-#define TEXTURE_SIZE 64
-#define FOG_SHADES 32
-#define AMBIENT 0.40f
-#define FOG_KEEP 0.92f
+#define SPEED 70.0                         // rows the wall flies and columns it turns a second, one a VGA frame
 
-#define BRIGHT_ORANGE RETRO_Palette{ 255, 72, 0 }
+#define TEXTURE_WIDTH 256
+#define TEXTURE_HEIGHT 128
+#define ANGLES 256                         // texture columns around the tube
 
-struct RingVertex {
-	vec3 eye;		// In the camera's frame
-	float shade;
+#define FIRST 16                           // the far end, the first ring drawn
+#define RINGS 256                          // one past the last ring, out past the screen's corners
+#define PERSPECTIVE 1134                   // rows of depth at a ring of one pixel
+#define WOBBLE 4                           // pixels the wall is pulled in and out
+#define LOBES 7
+#define PATH_RADIUS 15
+#define PATH_TURN 128                      // rows of depth over which the path turns
+
+// The pixels are made for every offset a center on the path can reach the
+// screen from
+#define REACH_X (RETRO_WIDTH / 2 + PATH_RADIUS + 1)
+#define REACH_Y (RETRO_HEIGHT / 2 + PATH_RADIUS + 1)
+#define MAX_PIXELS ((2 * REACH_X) * (2 * REACH_Y))
+
+struct Pixel {
+	short x, y;                            // from the center of its ring
+	unsigned char angle;
 };
 
-static RingVertex Ring[RING_COUNT][RING_SIDES];
-static unsigned char Brick[TEXTURE_SIZE * TEXTURE_SIZE];
-static unsigned char FogTable[RETRO_COLORS * FOG_SHADES];
-static const RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SHADES };
-static const vec3 Light = normalize(vec3{ -0.7f, 0.0f, -0.7f }); // toward the light, in the camera's frame
-static RETRO_CameraLens Lens;
+static Pixel Pixels[MAX_PIXELS];
+static int RingStart[RINGS + 1];           // a ring's pixels are RingStart[r] up to RingStart[r + 1]
 
-// A single left bend continues out of sight instead of waving back.
-static vec3 Path(float t)
+//
+// The ring and angle of a pixel at (x, y) from the center. The pixel is
+// measured from its middle, so the rings are round about the center rather
+// than about the pixel right of and below it
+//
+static void Measure(int x, int y, int *ring, int *angle)
 {
-	return { -BEND_CURVE * t * t, 0, t };
+	double fx = x + 0.5;
+	double fy = y + 0.5;
+	double a = atan2(fy, fx);
+	*ring = (int)floor(sqrt(fx * fx + fy * fy) - WOBBLE * sin(LOBES * a));
+	*angle = WRAP(a * ANGLES / (2 * M_PI), ANGLES);
 }
 
-static vec3 PathTangent(float t)
+//
+// Sorts every pixel into its ring, counting the pixels of each ring first
+// so they can be laid out ring after ring
+//
+static void CreateRings(void)
 {
-	return normalize(vec3{ -2.0f * BEND_CURVE * t, 0, 1.0f });
-}
+	for (int y = -REACH_Y; y < REACH_Y; y++) {
+		for (int x = -REACH_X; x < REACH_X; x++) {
+			int r, a;
+			Measure(x, y, &r, &a);
+			if (r >= FIRST && r < RINGS) RingStart[r + 1]++;
+		}
+	}
+	for (int r = 0; r < RINGS; r++) {
+		RingStart[r + 1] += RingStart[r];
+	}
 
-static void BuildBrick(void)
-{
-	// A dark triangle on an orange tile. Dither after projection so the
-	// pattern stays at screen-pixel scale instead of aliasing in the distance.
-	for (int y = 0; y < TEXTURE_SIZE; y++) {
-		for (int x = 0; x < TEXTURE_SIZE; x++) {
-			float nx = (x + 0.5f) / TEXTURE_SIZE;
-			float ny = (y + 0.5f) / TEXTURE_SIZE;
-			bool wedge = nx > ny * 0.5f && nx < 1.0f - ny * 0.5f;
-			Brick[y * TEXTURE_SIZE + x] = wedge ? 128 : 248;
+	int next[RINGS];
+	memcpy(next, RingStart, sizeof(next));
+	for (int y = -REACH_Y; y < REACH_Y; y++) {
+		for (int x = -REACH_X; x < REACH_X; x++) {
+			int r, a;
+			Measure(x, y, &r, &a);
+			if (r >= FIRST && r < RINGS) {
+				Pixels[next[r]++] = { (short)x, (short)y, (unsigned char)a };
+			}
 		}
 	}
 }
 
-// Clip a quad to the view and draw what is left
-static void DrawQuad(const RingVertex &a, const RingVertex &b, const RingVertex &c, const RingVertex &d, float scroll)
+//
+// Where the center of a ring is from the middle of the screen, travel texels
+// into the flight
+//
+static void Center(int ring, int travel, int *x, int *y)
 {
-	RETRO_CameraVertex corner[4] = {
-		{ a.eye, { 0, scroll }, a.shade },
-		{ b.eye, { 0, TEXTURE_SIZE + scroll }, b.shade },
-		{ c.eye, { (float)TEXTURE_SIZE, TEXTURE_SIZE + scroll }, c.shade },
-		{ d.eye, { (float)TEXTURE_SIZE, scroll }, d.shade }
-	};
-	RETRO_ProjectedPolygon projected;
-	RETRO_CameraClipProject(Lens, corner, 4, &projected);
-	if (projected.count >= 3) {
-		RETRO_DrawTexMapGouraudPolygon(projected.point, projected.count, Brick, TEXTURE_SIZE, TEXTURE_SIZE, BrickShadeTable, true);
+	double angle = (PERSPECTIVE / ring + travel) * RETRO_ANGLES_PER_TURN / PATH_TURN;
+	*x = (int)lround(PATH_RADIUS * COS(angle));
+	*y = (int)lround(PATH_RADIUS * SIN(angle));
+}
+
+static void DrawRing(int ring, int cx, int cy, int travel)
+{
+	unsigned char *screen = RETRO_FrameBuffer();
+	const unsigned char *row = RETRO_ImageData() + WRAP(PERSPECTIVE / ring + travel, TEXTURE_HEIGHT) * TEXTURE_WIDTH;
+	for (int i = RingStart[ring]; i < RingStart[ring + 1]; i++) {
+		const Pixel &pixel = Pixels[i];
+		int x = cx + pixel.x;
+		int y = cy + pixel.y;
+		if (x < 0 || x >= RETRO_WIDTH || y < 0 || y >= RETRO_HEIGHT) continue;
+		screen[y * RETRO_WIDTH + x] = row[(travel + pixel.angle) % TEXTURE_WIDTH];
 	}
 }
 
-static void BuildTunnel(void)
+//
+// Draws the rings from the far end out, each along the line from the center
+// of the ring inside it to its own. The line takes a pixel step at a time and
+// draws on both sides of a diagonal step, so the ring never jumps a pixel
+//
+static void DrawTunnel(int travel)
 {
-	float t = 0.0f;
+	unsigned char *screen = RETRO_FrameBuffer();
+	int px, py;
+	Center(FIRST, travel, &px, &py);
+	int x = RETRO_WIDTH / 2 + px;
+	int y = RETRO_HEIGHT / 2 + py;
 
-	RETRO_Camera camera;
-	RETRO_LookAlong(&camera, Path(t), PathTangent(t));
-	camera.lens.focalx = 180;
-	camera.lens.focaly = 180;
-	camera.lens.center = { RETRO_WIDTH * 0.70f, RETRO_HEIGHT * 0.5f };
-	Lens = camera.lens;
-
-	int first = (int)ceilf((t + RING_NEAR) / RING_SPACING);
-	float far = RING_SPACING * RING_COUNT;
-
-	for (int i = 0; i < RING_COUNT; i++) {
-		float along = (first + i) * (float)RING_SPACING;
-		vec3 center = Path(along);
-		vec3 ringright, ringdown;
-		RETRO_FrameFromForward(PathTangent(along), { 0, 1, 0 }, &ringright, &ringdown);
-
-		float fog = 1.0f - (along - t) / far;
-		float ease = 1.0f - fog;
-		float depth = 1.0f - (1.0f - FOG_KEEP) * ease * ease;
-
-		for (int s = 0; s < RING_SIDES; s++) {
-			float theta = s * (2.0f * (float)M_PI / RING_SIDES);
-			float ct = cosf(theta);
-			float st = sinf(theta);
-
-			vec3 radial = ringright * ct + ringdown * st;
-			vec3 wall = radial * TUNNEL_RADIUS;
-
-			RingVertex *p = &Ring[i][s];
-			p->eye = RETRO_ViewPoint(&camera, center + wall);
-
-			vec3 inward = RETRO_ViewDirection(&camera, normalize(-radial));
-			float lambert = dot(inward, Light);
-			float lit = mix(AMBIENT, 1.0f, RETRO_ShadeFractionFromLambert(MAX(lambert, 0.0f)));
-			p->shade = lit * depth * (FOG_SHADES - 1);
+	// The hole at the far end, inside the first ring
+	for (int hy = y - FIRST; hy < y + FIRST; hy++) {
+		for (int hx = x - FIRST; hx < x + FIRST; hx++) {
+			screen[hy * RETRO_WIDTH + hx] = 0;
 		}
+	}
+
+	for (int r = FIRST; r < RINGS; r++) {
+		int nx, ny;
+		Center(r, travel, &nx, &ny);
+		int dx = abs(nx - px);
+		int dy = abs(ny - py);
+		int sx = nx < px ? -1 : 1;
+		int sy = ny < py ? -1 : 1;
+		int major = MAX(dx, dy);
+		int minor = MIN(dx, dy);
+		int error = 0;
+		for (int i = 0; i < major; i++) {
+			DrawRing(r, x, y, travel);
+			if (dx > dy) x += sx; else y += sy;
+			error += minor;
+			if (error >= major) {
+				DrawRing(r, x, y, travel);
+				if (dx > dy) y += sy; else x += sx;
+				error -= major;
+			}
+		}
+		DrawRing(r, x, y, travel);
+		px = nx;
+		py = ny;
 	}
 }
 
-void DEMO_Render(RETRO_Time time)
+void DEMO_Render2(RETRO_Time time)
 {
-	float scroll = fract(time.total * FLIGHT_SPEED / RING_SPACING) * TEXTURE_SIZE;
-	RETRO_ClearDepthBuffer();
-
-	for (int i = RING_COUNT - 2; i >= 0; i--) {
-		for (int s = 0; s < RING_SIDES; s++) {
-			int s1 = (s + 1) % RING_SIDES;
-			DrawQuad(Ring[i][s], Ring[i + 1][s], Ring[i + 1][s1], Ring[i][s1], scroll);
-		}
-	}
-
-	// Ordered two-by-two dithering into sixteen orange intensity levels.
-	static const int threshold[2][2] = { { 0, 2 }, { 3, 1 } };
-	unsigned char *buffer = RETRO_FrameBuffer();
-	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int offset = y * RETRO_WIDTH + x;
-			int value = buffer[offset];
-			int level = value / 17;
-			if ((value % 17) * 4 > threshold[y & 1][x & 1] * 17 + 8) level++;
-			buffer[offset] = MIN(level, 15) * 17;
-		}
-	}
+	DrawTunnel((int)(time.total * SPEED));
+	RETRO_Flip();
 }
 
 void DEMO_Initialize(void)
 {
-	RETRO_Palette palette[RETRO_COLORS];
-	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, BRIGHT_ORANGE, palette);
-	RETRO_SetPalette(palette);
-	RETRO_CreateShadeTable(palette, RETRO_COLORS, FOG_SHADES, FogTable);
-
-	BuildBrick();
-
-	BuildTunnel();
+	RETRO_LoadImage("assets/swirls_256x128.pcx", true);
+	CreateRings();
 }

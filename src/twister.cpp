@@ -8,10 +8,9 @@
 //   θ(y) = phase + torsion(phase) y / HEIGHT
 //
 // so the column winds up, straightens, and twists in the other direction as
-// it turns, like twister3's animated torsion. An edge is drawn only when its
-// left x is smaller than its right x: that is the facing test for a 2D
-// silhouette (a back edge has x_left > x_right). Each face has its own color.
-// phase lives on 2π.
+// it turns. An edge is drawn only when its left x is smaller than its right
+// x: that is the facing test for a 2D silhouette (a back edge has x_left >
+// x_right). Each face has its own color. phase lives on 2π.
 //
 // Vertices are rounded once and the spans are half-open, [x_left, x_right),
 // so two faces that share a vertex tile exactly.

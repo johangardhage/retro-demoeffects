@@ -1,15 +1,15 @@
 //
-// Vector slime
+// Rubber vector, slime
 //
-// The multiplexed rubber cube of rubbervector4, cut finer. Rigid cube images
-// are retained in a ring, one per simulation step, but the displayed picture is
-// assembled from narrow vertical strips rather than whole scanlines. Two sines
-// traveling down the screen choose how old each row's source image is, and a
-// third traveling across it adds a little more age strip by strip, so the
-// cube wobbles sideways as well as bending from top to bottom.
+// A multiplexed rubber cube. Rigid cube images are retained in a ring, one
+// per simulation step, but the displayed picture is assembled from narrow
+// vertical strips rather than whole scanlines. Two sines traveling down the
+// screen choose how old each row's source image is, and a third traveling
+// across it adds a little more age strip by strip, so the cube wobbles
+// sideways as well as bending from top to bottom.
 //
-// The images are kept whole rather than packed into spans as rubbervector4
-// packs them, since a strip needs every pixel of its source line.
+// The images are kept whole rather than packed into spans, since a strip
+// needs every pixel of its source line.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -46,8 +46,8 @@ static const RETRO_Lighting Lighting = { 1, { { normalize(vec3{ -1, -1, -2 }), 1
 //
 // Render the cube at one pose and retain the whole image
 //
-// The framebuffer is scratch space for this, as in rubbervector4: DEMO_Render
-// is given a cleared framebuffer, so none of what is drawn here is displayed.
+// The framebuffer is scratch space for this: DEMO_Render is given a cleared
+// framebuffer, so none of what is drawn here is displayed.
 //
 static void RetainCubeImage(float angle, unsigned char *image)
 {
@@ -65,7 +65,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	static float angle;
 	angle = fmod(angle + time.delta * ROTATION_SPEED, 2 * M_PI);
 
-	// The head is the newest image, as in rubbervector4
+	// The head is the newest image
 	HistoryHead = (HistoryHead + 1) % SLIME_COPIES;
 
 	RetainCubeImage(angle, History[HistoryHead][0]);

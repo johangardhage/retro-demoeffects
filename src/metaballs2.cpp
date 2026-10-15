@@ -1,17 +1,16 @@
 //
-// Metaballs 2
+// Metaballs, as density
 //
-// The same 1/r² field as metaballs.cpp, drawn as density instead of the
-// solid F ≥ T:
+// A 1/r² field of metaballs, drawn as density instead of the solid F ≥ T:
 //
 //   F(p) = sum_i  r_i / |p − c_i|²
 //   color = clamp(20 F, 0, 255)
 //
-// r_i is the charge T R_i². One ball of strength r meets color 20 on
-// the circle of radius √r, where 20 r / (√r)² = 20. |p−c|² is floored at 10⁻⁴
-// as in metaballs.cpp. Each center rides its own (cos, sin) at its own whole
-// multiple of the phase and its own offset, so the four do not move as one.
-// Whole multiples keep every orbit closed on the same 360-entry table.
+// r_i is the charge T R_i². One ball of strength r meets color 20 on the
+// circle of radius √r, where 20 r / (√r)² = 20. |p−c|² is floored at 10⁻⁴.
+// Each center rides its own (cos, sin) at its own whole multiple of the phase
+// and its own offset, so the four do not move as one. Whole multiples keep
+// every orbit closed on the same 360-entry table.
 //
 // The palette is not a Phong of ∇F. Density is treated as a Lambert
 // term I = cos(π (255 − i) / 512), then

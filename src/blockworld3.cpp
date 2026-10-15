@@ -1,17 +1,17 @@
 //
-// Block world 3
+// Block world, brought to life
 //
-// blockworld2.cpp's world brought to life: walk, sprint and sneak over its
+// A world of blocks brought to life: walk, sprint and sneak over its
 // hills, swim its sea or fly over it, break and place its blocks, and watch
 // its water flow, its sand fall and its blocks cast shadows.
 //
-// The world, its textures and its colors are blockworld.cpp's, twice as
-// wide and with a floor of bedrock under the dirt, and so is the drawing:
-// one ray per pixel walked through the grid cell by cell and fogged toward
-// the horizon. The camera is the player's eye, EYE_HEIGHT above their feet,
-// turned by the mouse: yaw about the vertical and pitch up or down, short
-// of straight. The mouse is read once a frame, not once a simulation step,
-// so turning is as smooth as the display.
+// The world is a grid of textured blocks: grassy hills, sandy shores, a flat
+// sea and oak trees, over a floor of bedrock. It is drawn one ray per pixel
+// walked through the grid cell by cell and fogged toward the horizon. The
+// camera is the player's eye, EYE_HEIGHT above their feet, turned by the
+// mouse: yaw about the vertical and pitch up or down, short of straight. The
+// mouse is read once a frame, not once a simulation step, so turning is as
+// smooth as the display.
 //
 // The player is a box PLAYER_RADIUS to each side and PLAYER_HEIGHT tall
 // that every solid block stops; air and water do not. Each step moves the

@@ -1,9 +1,9 @@
 //
-// Plane 4
+// Plane, from Cramer's rule
 //
-// The same floor as Plane 3, using Cramer's rule instead of the ray-plane
-// equation. The camera sits at the origin looking toward +Z with
-// focal length D = PLANE_DISTANCE. Screen point (sx, sy) is the ray
+// A checkered floor, found with Cramer's rule instead of the ray-plane
+// equation. The camera sits at the origin looking toward +Z with focal length
+// D = PLANE_DISTANCE. Screen point (sx, sy) is the ray
 //
 //   r = (sx − W/2, sy − H/2, D)
 //

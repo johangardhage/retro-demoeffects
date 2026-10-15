@@ -3,9 +3,7 @@
 //
 // The 256x256 voxel_height_256x256.pcx height field, paired with its own
 // voxel_color_256x256.pcx color map, tiled without limit and rendered as a
-// point cloud in perspective. The same camera as dotscroller3.cpp,
-// which pairs the equivalent 128x128 pair with a scrolling text strip and a
-// turning camera; here the camera cruises straight ahead instead.
+// point cloud in perspective. The camera cruises straight ahead.
 //
 // There are no controls.
 //

@@ -1,5 +1,5 @@
 //
-// Pseudo 3D road 4
+// Pseudo 3D road, as quads with fog and sprites
 //
 // The road is a strip of quads, each ROAD_SEGMENT_LENGTH deep, laid end to
 // end along z and drawn in perspective. A point at world (x, y, z) seen from

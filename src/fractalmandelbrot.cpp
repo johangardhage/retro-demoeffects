@@ -1,15 +1,14 @@
 //
 // Mandelbrot
 //
-// Escape-time Mandelbrot set. Same recurrence as fractaljulia.cpp, but c is the
-// pixel and z starts at 0:
+// Escape-time Mandelbrot set. c is the pixel and z starts at 0:
 //
 //   z0 = 0
 //   z' = z² + p
 //
-// p is the same square-aspect map as Julia. The color is the normalized
-// iteration count mu = n + 1 − log2(log |z|), offset by 32; the interior and
-// counts past 223 share 255, black in the default 8-bit palette.
+// p is the pixel on a square-aspect map of the plane. The color is the
+// normalized iteration count mu = n + 1 − log2(log |z|), offset by 32; the
+// interior and counts past 223 share 255, black in the default 8-bit palette.
 //
 // Points inside the main cardioid and the period-2 bulb never escape, and
 // both regions have a closed form:

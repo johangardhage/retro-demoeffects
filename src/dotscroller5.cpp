@@ -1,5 +1,5 @@
 //
-// Dot landscape scroller, raised by the terrain
+// Dot scroller, raised by the terrain
 //
 // Terrain samples raise a fixed text mask into columns of dots. The sampling
 // window orbits the map while the patch rocks.

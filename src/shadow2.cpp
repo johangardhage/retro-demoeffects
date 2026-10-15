@@ -1,5 +1,5 @@
 //
-// Shadow 2
+// Shadow, on the ground
 //
 // A lit, textured landscape to drive over, an object orbiting above it, and
 // four lights - ambient, a sun, and a green and a red point light circling

@@ -1,5 +1,5 @@
 //
-// Endless dot landscape
+// Dot landscape, endless
 //
 // The 1024x1024 voxel landscape rendered as a perspective point cloud. Unlike
 // a voxel renderer, it never joins samples into columns: every terrain texel is

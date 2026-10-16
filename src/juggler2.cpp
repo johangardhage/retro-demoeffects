@@ -98,7 +98,7 @@ constexpr float MINGLINT = 0.95f;
 // rescaled by 2/3 so a patch facing level with the horizon - N.up = 0,
 // roughly what the camera sees head-on - lands on exactly the material's
 // own ambient weight, leaving its calibration above where it was
-#define AMBIENT_SHAPE(normal) (((normal).y + 1.5f) * (2.0f / 3.0f))
+constexpr float AMBIENT_SHAPE(vec3 normal) { return (normal.y + 1.5f) * (2.0f / 3.0f); }
 
 constexpr int PALETTE_MATERIAL_SHADES = 32; // six materials x 32 = 192
 constexpr int PALETTE_SKY_SHADES = 56; // a big, smooth, prominent area - measured at roughly half of every rendered pixel, so worth far more than a small one

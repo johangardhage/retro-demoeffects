@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROCAMERA_H_
-#define _RETROCAMERA_H_
+#pragma once
 
 #include <float.h> // FLT_MIN
 #include "retro.h"
@@ -85,7 +84,8 @@ inline void RETRO_MoveCamera(RETRO_Camera *camera, float forward, float right = 
 // slides leftward on screen.
 inline void RETRO_YawCamera(RETRO_Camera *camera, float angle)
 {
-	float c = cos(angle), s = sin(angle);
+	float c = cos(angle);
+	float s = sin(angle);
 
 	vec3 right = camera->right * c - camera->forward * s;
 	vec3 forward = camera->forward * c + camera->right * s;
@@ -99,7 +99,8 @@ inline void RETRO_YawCamera(RETRO_Camera *camera, float angle)
 // world slides upward on screen.
 inline void RETRO_PitchCamera(RETRO_Camera *camera, float angle)
 {
-	float c = cos(angle), s = sin(angle);
+	float c = cos(angle);
+	float s = sin(angle);
 
 	vec3 down = camera->down * c - camera->forward * s;
 	vec3 forward = camera->forward * c + camera->down * s;
@@ -112,7 +113,8 @@ inline void RETRO_PitchCamera(RETRO_Camera *camera, float angle)
 // rotates counterclockwise on screen.
 inline void RETRO_RollCamera(RETRO_Camera *camera, float angle)
 {
-	float c = cos(angle), s = sin(angle);
+	float c = cos(angle);
+	float s = sin(angle);
 
 	vec3 right = camera->right * c + camera->down * s;
 	vec3 down = camera->down * c - camera->right * s;
@@ -524,8 +526,10 @@ inline int RETRO_ClipHorizon(const RETRO_Camera *camera, vec3 up, PolygonPoint *
 	vec2 corner[4] = { { (float)view.x0, (float)view.y0 }, { (float)view.x1, (float)view.y0 }, { (float)view.x1, (float)view.y1 }, { (float)view.x0, (float)view.y1 } };
 	int points = 0;
 	for (int i = 0; i < 4; i++) {
-		vec2 a = corner[i], b = corner[(i + 1) % 4];
-		float ca = dot(RETRO_ViewRay(camera, a), up), cb = dot(RETRO_ViewRay(camera, b), up);
+		vec2 a = corner[i];
+		vec2 b = corner[(i + 1) % 4];
+		float ca = dot(RETRO_ViewRay(camera, a), up);
+		float cb = dot(RETRO_ViewRay(camera, b), up);
 		if (ca < 0) {
 			below[points] = {};
 			below[points++].pos = a;
@@ -554,5 +558,3 @@ inline bool RETRO_CutViewLine(vec3 *a, vec3 *b, float nearplane)
 	}
 	return true;
 }
-
-#endif

@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROCONIO_H_
-#define _RETROCONIO_H_
+#pragma once
 
 #include <stdio.h>  // printf, fflush, EOF
 #include <unistd.h> // read, STDIN_FILENO
@@ -43,9 +42,9 @@
 
 enum {
 	CONIO_BLACK, CONIO_BLUE, CONIO_GREEN, CONIO_CYAN, CONIO_RED, CONIO_MAGENTA, CONIO_BROWN, CONIO_LIGHTGRAY,
-	CONIO_DARKGRAY, CONIO_LIGHTBLUE, CONIO_LIGHTGREEN, CONIO_LIGHTCYAN, CONIO_LIGHTRED, CONIO_LIGHTMAGENTA, CONIO_YELLOW, CONIO_WHITE
+	CONIO_DARKGRAY, CONIO_LIGHTBLUE, CONIO_LIGHTGREEN, CONIO_LIGHTCYAN, CONIO_LIGHTRED, CONIO_LIGHTMAGENTA, CONIO_YELLOW, CONIO_WHITE,
+	CONIO_BLINK = 128
 };
-constexpr int CONIO_BLINK = 128;
 
 enum { _NOCURSOR, _SOLIDCURSOR, _NORMALCURSOR };
 
@@ -58,7 +57,10 @@ inline struct {
 	int fgc = CONIO_LIGHTGRAY; // current foreground, DOS attribute low nibble
 	int bgc = CONIO_BLACK;     // current background, DOS attribute bits 4-6
 	bool blink = false;
-	int wleft = 1, wtop = 1, wright = 80, wbottom = 25;
+	int wleft = 1;
+	int wtop = 1;
+	int wright = 80;
+	int wbottom = 25;
 } CONIO;
 
 // The single place that turns (fgc, bgc, blink) into the actual SGR escape;
@@ -120,6 +122,7 @@ inline void CONIO_setcursortype(int cur_t)
 	case _NOCURSOR:      printf("\033[?25l"); break;
 	case _SOLIDCURSOR:   printf("\033[?25h\033[2 q"); break;
 	case _NORMALCURSOR:  printf("\033[?25h\033[4 q"); break;
+	default:             break;
 	}
 }
 
@@ -493,5 +496,3 @@ inline void CONIO_reset(void)
 	// needing to know it.
 	printf("\033[?25h\033[0 q\033[m\033[2J\033[1;1f");
 }
-
-#endif

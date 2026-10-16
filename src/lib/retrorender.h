@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETRORENDER_H_
-#define _RETRORENDER_H_
+#pragma once
 
 #include "retromodel.h"
 #include "retropoly.h"
@@ -778,5 +777,3 @@ inline void RETRO_RenderModel(RETRO_POLY_TYPE rendertype, RETRO_POLY_SHADE shade
 		break;
 	}
 }
-
-#endif

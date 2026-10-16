@@ -59,7 +59,8 @@ struct StrokePoint { double x, y, light; bool cyan; };
 // brightness changes caused by the sampling points landing between pixels.
 static void DrawStrokeSegment(const StrokePoint &a, const StrokePoint &b)
 {
-	double dx = b.x - a.x, dy = b.y - a.y;
+	double dx = b.x - a.x;
+	double dy = b.y - a.y;
 	double length2 = dx * dx + dy * dy;
 	int left = MAX(0, (int)floor(MIN(a.x, b.x) - 1.0));
 	int right = MIN(RETRO_WIDTH - 1, (int)ceil(MAX(a.x, b.x) + 1.0));
@@ -122,14 +123,16 @@ void DEMO_Render(RETRO_Time time)
 			double x = RETRO_WIDTH + 3.0 + LetterOffsets[i] - phase + repeat * period;
 			if (!LetterPaths[i] || x < -21.0 || x >= RETRO_WIDTH + 2.0) continue;
 			bool connected = false;
-			double lastx = 0, lasty = 0;
+			double lastx = 0;
+			double lasty = 0;
 			for (const char *p = LetterPaths[i]; *p;) {
 				if (*p == '/') {
 					connected = false;
 					p++;
 					continue;
 				}
-				double gx = *p++ - '0', gy = *p++ - '0';
+				double gx = *p++ - '0';
+				double gy = *p++ - '0';
 				if (connected) Stroke(x, lastx, lasty, gx, gy, time.total);
 				lastx = gx;
 				lasty = gy;
@@ -141,7 +144,8 @@ void DEMO_Render(RETRO_Time time)
 	// Composite once, after rasterization. Each bar has its own visible
 	// face, and its own palette ramp from untouched magenta to foreground ink.
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		int bar = -1, row = 0;
+		int bar = -1;
+		int row = 0;
 		if (abs(y - UPPER_BAR_Y) <= BAR_ROWS / 2) {
 			bar = 0;
 			row = y - UPPER_BAR_Y + BAR_ROWS / 2;

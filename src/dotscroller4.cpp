@@ -41,7 +41,7 @@ constexpr float LETTER_BASE_Z = 54.4f;
 constexpr float LETTER_HEIGHT_OFFSET = 2.5f;
 constexpr float SCROLL_SPEED = 34.0f; // world units per second
 
-static const char *const ScrollText[] = { " RETRO DEMOEFFECTS...    " };
+static const char ScrollText[] = " RETRO DEMOEFFECTS...    ";
 static RETRO_Image *ScrollImage;
 
 // The terrain and the letters share one depth-tested pixel.
@@ -90,7 +90,7 @@ void DEMO_Render(RETRO_Time time)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTerrain("assets/voxel_color_128x128.pcx", "assets/voxel_height_128x128.pcx", WORLD_HEIGHT_SCALE, false);
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText);
 	if (ScrollImage->height > RETRO_COLORS - LETTER_COLOR_BASE) {
 		RETRO_RageQuit("Scroller font is too tall for the letter palette\n");
 	}

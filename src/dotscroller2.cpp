@@ -35,7 +35,7 @@ constexpr int DEPTH_WAVELENGTH = 220;
 constexpr double DEPTH_SPEED = 2.0; // radians per second
 constexpr int CAMERA_DISTANCE = 360;
 
-static const char *const ScrollText[] = { "       RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "       RETRO DEMOEFFECTS...";
 
 static RETRO_Image *ScrollImage;
 
@@ -84,6 +84,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText);
 	RETRO_SetPalette(ScrollImage->palette);
 }

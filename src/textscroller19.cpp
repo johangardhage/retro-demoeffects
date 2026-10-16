@@ -36,7 +36,7 @@ constexpr int COLOR_STEPS = 120; // palette entries in one turn of the color ram
 constexpr double COLOR_RATE = 0.8; // ramp entries per pixel, so one turn per 150 pixels
 constexpr int COLOR_SPEED = 100; // ramp entries per second
 
-static const char *const ScrollText[] = { "                    RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "                    RETRO DEMOEFFECTS...";
 
 static const RETRO_Palette ColorStops[] = {
 	{ 255, 240, 255 }, // white
@@ -46,6 +46,8 @@ static const RETRO_Palette ColorStops[] = {
 	{ 140, 30, 255 }, // purple
 	{ 200, 160, 255 }, // lavender
 };
+
+constexpr int COLOR_STOPS = (int)(sizeof(ColorStops) / sizeof(ColorStops[0]));
 
 static RETRO_Image *ScrollImage;
 
@@ -78,13 +80,12 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText);
 
 	// Color 0 is the black background, 1 to COLOR_STEPS the cyclic ramp
-	int stops = sizeof(ColorStops) / sizeof(ColorStops[0]);
-	int length = COLOR_STEPS / stops;
+	int length = COLOR_STEPS / COLOR_STOPS;
 	RETRO_SetColor(0, RETRO_BLACK);
-	for (int i = 0; i < stops; i++) {
-		RETRO_CreateGradientPalette(1 + i * length, 1 + (i + 1) * length, ColorStops[i], ColorStops[(i + 1) % stops]);
+	for (int i = 0; i < COLOR_STOPS; i++) {
+		RETRO_CreateGradientPalette(1 + i * length, 1 + (i + 1) * length, ColorStops[i], ColorStops[(i + 1) % COLOR_STOPS]);
 	}
 }

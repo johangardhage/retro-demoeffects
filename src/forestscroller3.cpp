@@ -24,7 +24,7 @@
 // opens on blank cells and only fills in as the window catches up. A cell whose
 // sample is blank is still touched, with a font value of 0, which is what
 // erases a stroke once the window has scrolled past it - skip that and old
-// letters would stay lit under new ones forever. BAND_CYCLE - the strip's width
+// letters would stay lit under new ones forever. BandCycle() - the strip's width
 // plus that same lead-in, which serves as the gap between laps - is what window
 // wraps on, looping the banner forever.
 //
@@ -39,12 +39,11 @@
 
 constexpr char FOREST_BACKGROUND[] = "assets/forest_320x200.pcx";
 constexpr char FOREST_BAND[] = "assets/forest_band_640x32.pcx";
-#define FOREST_SCATTER { "assets/forest_scatter1.dat", "assets/forest_scatter2.dat", "assets/forest_scatter3.dat" }
+constexpr const char *FOREST_SCATTER[] = { "assets/forest_scatter1.dat", "assets/forest_scatter2.dat", "assets/forest_scatter3.dat" };
 
 constexpr int CELL_ROWS = 31;
 constexpr int CELL_COLS = 237;
 constexpr int CELL_XOFFSET = 104; // the generated text strip column the grid's rightmost column starts sampling at
-#define BAND_CYCLE (Band->width + CELL_XOFFSET) // one lap of the window, band plus its lead-in gap
 constexpr int SCATTER_SETS = 3;
 constexpr int TICKS_PER_WINDOW = SCATTER_SETS; // fixed ticks a full round through the three maps takes, so the window advances one column per round
 constexpr int FONT_BOOST = 128; // nonzero font pixels select the background palette's glow range
@@ -57,6 +56,12 @@ static int ScatterCount[SCATTER_SETS][CELL_ROWS * CELL_COLS];
 
 static unsigned char *Background;
 static RETRO_Image *Band;
+
+// One lap of the window, band plus its lead-in gap
+static int BandCycle(void)
+{
+	return Band->width + CELL_XOFFSET;
+}
 
 // A scatter map is, cell-major over CELL_ROWS x CELL_COLS cells, a u16 point
 // count followed by that many u16 screen addresses. Loading it fills addr as
@@ -108,7 +113,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 				continue;
 			}
 
-			int strip = WRAP(col + window, BAND_CYCLE);
+			int strip = WRAP(col + window, BandCycle());
 			unsigned char fontvalue = 0;
 			if (strip >= CELL_XOFFSET) {
 				unsigned char shading = Band->data[(row * Band->height / CELL_ROWS) * Band->width + (strip - CELL_XOFFSET)];
@@ -125,7 +130,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 		}
 	}
 
-	tick = WRAP(tick + 1, BAND_CYCLE * TICKS_PER_WINDOW);
+	tick = WRAP(tick + 1, BandCycle() * TICKS_PER_WINDOW);
 }
 
 void DEMO_Initialize(void)
@@ -136,8 +141,7 @@ void DEMO_Initialize(void)
 
 	Band = RETRO_LoadImage(FOREST_BAND);
 
-	const char *scatterfiles[SCATTER_SETS] = FOREST_SCATTER;
 	for (int set = 0; set < SCATTER_SETS; set++) {
-		LoadScatterMap(scatterfiles[set], ScatterAddr[set], ScatterOffset[set], ScatterCount[set]);
+		LoadScatterMap(FOREST_SCATTER[set], ScatterAddr[set], ScatterOffset[set], ScatterCount[set]);
 	}
 }

@@ -60,6 +60,9 @@ static const char *const ScrollText[][12] = {
 	},
 };
 
+constexpr int PAGES = (int)(sizeof(ScrollText) / sizeof(ScrollText[0]));
+constexpr int PAGE_ROWS = (int)(sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]));
+
 static RETRO_Font Font;
 
 static void DrawChar(unsigned char code, int x, int y)
@@ -85,9 +88,7 @@ static void DrawChar(unsigned char code, int x, int y)
 
 void DEMO_Render(RETRO_Time time)
 {
-	int pages = sizeof(ScrollText) / sizeof(ScrollText[0]);
-	int lines = sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]);
-	int rows = pages * lines;
+	int rows = PAGES * PAGE_ROWS;
 
 	// Calculate phase
 	double travel = RETRO_HEIGHT + rows * Font.height;
@@ -95,7 +96,7 @@ void DEMO_Render(RETRO_Time time)
 	int top = RETRO_HEIGHT - (int)phase;
 
 	for (int row = 0; row < rows; row++) {
-		const char *line = ScrollText[row / lines][row % lines];
+		const char *line = ScrollText[row / PAGE_ROWS][row % PAGE_ROWS];
 		if (line == NULL) {
 			continue;
 		}

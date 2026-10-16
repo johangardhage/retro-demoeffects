@@ -63,10 +63,11 @@ void DEMO_Render(RETRO_Time time)
 		float u = 0;
 		float halfw = 2 * z + PLANE_NEAR;
 		float du = midx / halfw;
+		int v = PLANE_SKY_V / z; // whole rows
 
 		for (int x = 0; x < midx; x++) {
 			int xsrc = WRAP(u / PLANE_SKY_U, PLANE_MAP);
-			int ysrc = WRAP(PLANE_SKY_V / z + (phase / PLANE_SKY_SCROLL), PLANE_MAP);
+			int ysrc = WRAP(v + (phase / PLANE_SKY_SCROLL), PLANE_MAP);
 			dest[(PLANE_VIEW - z) * RETRO_WIDTH + (midx + x)] = sky[ysrc * PLANE_MAP + (PLANE_MAP - 1 - xsrc)];
 			dest[(PLANE_VIEW - z) * RETRO_WIDTH + (midx - 1 - x)] = sky[ysrc * PLANE_MAP + xsrc];
 			u += du;
@@ -78,10 +79,11 @@ void DEMO_Render(RETRO_Time time)
 		float u = 0;
 		float halfw = 2 * z + PLANE_NEAR;
 		float du = midx / halfw;
+		int v = PLANE_LAND_V / (z + 1); // whole rows
 
 		for (int x = 0; x < midx; x++) {
 			int xsrc = WRAP(u, PLANE_MAP);
-			int ysrc = WRAP(PLANE_LAND_V / (z + 1) + phase, PLANE_MAP);
+			int ysrc = WRAP(v + phase, PLANE_MAP);
 			dest[(PLANE_VIEW + z) * RETRO_WIDTH + (midx + x)] = land[ysrc * PLANE_MAP + (PLANE_MAP - 1 - xsrc)];
 			dest[(PLANE_VIEW + z) * RETRO_WIDTH + (midx - 1 - x)] = land[ysrc * PLANE_MAP + xsrc];
 			u += du;

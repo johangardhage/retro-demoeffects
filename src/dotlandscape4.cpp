@@ -92,8 +92,9 @@ static bool TerrainOccludes(const RETRO_Camera *camera, const ProjectedDot &dot)
 {
 	const float samplestep = 2.0f;
 	float height = RETRO_TerrainHeight(dot.worldx, dot.worldz);
-	for (float distance = camera->lens.nearplane + samplestep;
-		distance < dot.depth - samplestep; distance += samplestep) {
+	for (int step = 1;; step++) {
+		float distance = camera->lens.nearplane + step * samplestep;
+		if (distance >= dot.depth - samplestep) break;
 		float t = distance / dot.depth;
 		float x = mix(camera->pos.x, dot.worldx, t);
 		float z = mix(camera->pos.z, dot.worldz, t);

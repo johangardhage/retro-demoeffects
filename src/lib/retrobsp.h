@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROBSP_H_
-#define _RETROBSP_H_
+#pragma once
 
 #include "retro.h"
 #include "retromap.h"
@@ -423,5 +422,3 @@ inline int RETRO_BSPVisibleLeaves(RETRO_BSP *bsp, dleaf_t *leaf, int *leaves)
 	}
 	return count;
 }
-
-#endif

@@ -57,6 +57,9 @@ static const char *const ScrollText[][12] = {
 	},
 };
 
+constexpr int PAGES = (int)(sizeof(ScrollText) / sizeof(ScrollText[0]));
+constexpr int PAGE_ROWS = (int)(sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]));
+
 static RETRO_Image *PageImage;
 static unsigned char Covered[RETRO_HEIGHT * RETRO_WIDTH];
 
@@ -86,13 +89,11 @@ static void PlotDisc(unsigned char *dest, double hx, double hy, unsigned char co
 
 void DEMO_Render(RETRO_Time time)
 {
-	int pages = sizeof(ScrollText) / sizeof(ScrollText[0]);
-	int lines = sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]);
-	int block = (lines - 1) * LINE_PITCH + FONT.height;
+	int block = (PAGE_ROWS - 1) * LINE_PITCH + FONT.height;
 	int top = MAX(RETRO_HEIGHT - block, 0) / 2;
 	int bottom = top + block - 1;
 	double pagetime = 2 * CROSS_TIME + TIME_HOLD + TIME_BLANK;
-	double slot = fmod(time.total / pagetime, pages);
+	double slot = fmod(time.total / pagetime, PAGES);
 	int page = (int)slot;
 	double t = (slot - page) * pagetime;
 
@@ -109,7 +110,8 @@ void DEMO_Render(RETRO_Time time)
 		u = (t - CROSS_TIME - TIME_HOLD) / CROSS_TIME;
 	}
 
-	double hx = 0, hy = 0;
+	double hx = 0;
+	double hy = 0;
 	if (moving) {
 		memset(Covered, 0, sizeof(Covered));
 		int steps = MAX(1, (int)(u * PATH_STEPS));
@@ -121,9 +123,9 @@ void DEMO_Render(RETRO_Time time)
 
 	int x0 = (RETRO_WIDTH - PageImage->width) / 2;
 	unsigned char *buffer = RETRO_FrameBuffer();
-	for (int row = 0; row < lines && ScrollText[page][row] != NULL; row++) {
+	for (int row = 0; row < PAGE_ROWS && ScrollText[page][row] != NULL; row++) {
 		for (int yy = 0; yy < FONT.height; yy++) {
-			const unsigned char *src = PageImage->data + ((page * lines + row) * FONT.height + yy) * PageImage->width;
+			const unsigned char *src = PageImage->data + ((page * PAGE_ROWS + row) * FONT.height + yy) * PageImage->width;
 			for (int xx = 0; xx < PageImage->width; xx++) {
 				if (src[xx] == 0) {
 					continue;
@@ -148,7 +150,7 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), &ScrollText[0][0], sizeof(ScrollText) / sizeof(ScrollText[0][0]));
+	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), &ScrollText[0][0], PAGES * PAGE_ROWS);
 	RETRO_SetPalette(PageImage->palette);
 	if (SHOW_BRUSH) {
 		RETRO_SetColor(COLOR_BRUSH, RETRO_YELLOW);

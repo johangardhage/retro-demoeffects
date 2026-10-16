@@ -86,7 +86,7 @@ void DEMO_Render(RETRO_Time time)
 	// Draw tunnel, a ray through every pixel
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			vec3 ray = rotation * normalize(vec3{ x + 0.5f - RETRO_WIDTH / 2, y + 0.5f - RETRO_HEIGHT / 2, FOCAL });
+			vec3 ray = rotation * normalize(vec3{ x + 0.5f - RETRO_WIDTH / 2.0f, y + 0.5f - RETRO_HEIGHT / 2.0f, FOCAL });
 
 			// How far off the ray meets the wall, without end for a ray along the tube
 			float a = ray.x * ray.x + ray.y * ray.y;

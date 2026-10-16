@@ -39,8 +39,8 @@ void DEMO_Render(RETRO_Time time)
 	double phase = fmod(time.total * RETRO_ANGLES_PER_TURN / LENS_PERIOD, RETRO_ANGLES_PER_TURN);
 	int swingx = RETRO_WIDTH / 2 - LENS_RADIUS - LENS_MARGIN;
 	int swingy = RETRO_HEIGHT / 2 - LENS_RADIUS - LENS_MARGIN;
-	int cx = RETRO_WIDTH / 2 + swingx * COS(2 * phase + RETRO_ANGLES_PER_TURN / 16);
-	int cy = RETRO_HEIGHT / 2 + swingy * COS(3 * phase);
+	int cx = RETRO_WIDTH / 2.0 + swingx * COS(2 * phase + RETRO_ANGLES_PER_TURN / 16.0);
+	int cy = RETRO_HEIGHT / 2.0 + swingy * COS(3 * phase);
 
 	unsigned char *image = RETRO_ImageData();
 	unsigned char *buffer = RETRO_FrameBuffer();

@@ -72,6 +72,8 @@ static const char *const ScrollText[] = {
 	"DEMOEFFECTS...",
 };
 
+constexpr int LINES = (int)(sizeof(ScrollText) / sizeof(ScrollText[0]));
+
 static RETRO_Image *PageImage;
 
 void DEMO_Render(RETRO_Time time)
@@ -112,6 +114,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]), FONT_SCALE);
+	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, LINES, FONT_SCALE);
 	RETRO_SetPalette(PageImage->palette);
 }

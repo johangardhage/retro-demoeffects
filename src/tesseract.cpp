@@ -102,7 +102,8 @@ static const vec3 Light = normalize(vec3{ -0.4f, -0.4f, -0.82f }); // toward the
 //
 static void RotatePlane(float &p, float &q, float angle)
 {
-	float c = cos(angle), s = sin(angle);
+	float c = cos(angle);
+	float s = sin(angle);
 	float np = p * c - q * s;
 	q = p * s + q * c;
 	p = np;
@@ -135,7 +136,8 @@ void DEMO_Render(RETRO_Time time)
 
 	// Beams
 	for (Edge edge : Edges) {
-		const Vertex &a = corner[edge.a], &b = corner[edge.b];
+		const Vertex &a = corner[edge.a];
+		const Vertex &b = corner[edge.b];
 		int steps = ceil(distance(a.spos, b.spos) * BEAM_BALLS) + 1;
 
 		for (int step = 0; step <= steps; step++) {
@@ -208,7 +210,8 @@ void DEMO_Initialize(void)
 	for (int i = 0; i < CORNERS; i++) {
 		for (int d = 0; d < 4; d++) {
 			for (int e = d + 1; e < 4; e++) {
-				int u = 1 << d, v = 1 << e;
+				int u = 1 << d;
+				int v = 1 << e;
 				if (!(i & (u | v))) {
 					Faces[faces++] = { { i, i | u, i | u | v, i | v } };
 				}

@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROMODEL_H_
-#define _RETROMODEL_H_
+#pragma once
 
 #include "retro.h"
 #include "retromatrix.h"
@@ -765,7 +764,10 @@ inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = 
 		RETRO_RageQuit("Cannot open file: %s\n", filename);
 	}
 
-	int vertices = 0, uvs = 0, normals = 0, faces = 0;
+	int vertices = 0;
+	int uvs = 0;
+	int normals = 0;
+	int faces = 0;
 	int material = 0;
 
 	// Check before writing: overflow walks into the next list in this struct.
@@ -814,7 +816,9 @@ inline Model3D *RETRO_Load3DModel(const char *filename, const char *animation = 
 			}
 
 			Face *face = &model->face[faces];
-			int corners = 0, offset = 0, consumed = 0;
+			int corners = 0;
+			int offset = 0;
+			int consumed = 0;
 
 			// int, not unsigned: %d writes an int, and an index of 0 in the file
 			// would wrap on the -1 below before the range check ever saw it
@@ -963,9 +967,16 @@ inline Model3D *RETRO_LoadMD2Model(const char *filename)
 	for (int i = 0; i < 17; i++) {
 		header[i] = RETRO_ReadInt32(&data[i * 4]);
 	}
-	int skinwidth = header[2], skinheight = header[3], framesize = header[4];
-	int vertices = header[6], uvs = header[7], faces = header[8], frames = header[10];
-	int uvoffset = header[12], faceoffset = header[13], frameoffset = header[14];
+	int skinwidth = header[2];
+	int skinheight = header[3];
+	int framesize = header[4];
+	int vertices = header[6];
+	int uvs = header[7];
+	int faces = header[8];
+	int frames = header[10];
+	int uvoffset = header[12];
+	int faceoffset = header[13];
+	int frameoffset = header[14];
 
 	if (memcmp(data, "IDP2", 4) != 0 || header[1] != 8) {
 		RETRO_RageQuit("Not an MD2 model: %s\n", filename);
@@ -1072,7 +1083,8 @@ inline Model3D *RETRO_LoadMD3Model(const char *filename, float scale = 64.0f)
 
 	// Walk the surfaces once to count them into the model lists, checking each
 	// part against the end of the file before it is read
-	int vertices = 0, faces = 0;
+	int vertices = 0;
+	int faces = 0;
 	long offset = surfaceoffset;
 
 	for (int s = 0; s < surfaces; s++) {
@@ -1114,7 +1126,8 @@ inline Model3D *RETRO_LoadMD3Model(const char *filename, float scale = 64.0f)
 
 	RETRO_AllocateModelFrames(model, frames, true);
 
-	int firstvertex = 0, firstface = 0;
+	int firstvertex = 0;
+	int firstface = 0;
 	offset = surfaceoffset;
 
 	for (int s = 0; s < surfaces; s++) {
@@ -1234,5 +1247,3 @@ inline void RETRO_Deinitialize_3D(void)
 		RETRO_Free3DModel(i);
 	}
 }
-
-#endif

@@ -23,7 +23,7 @@ constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 
 constexpr int SCROLL_SPEED = 200; // texels per second
 
-static const char *const ScrollText[] = { "                    RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "                    RETRO DEMOEFFECTS...";
 
 static RETRO_Image *ScrollImage;
 
@@ -47,6 +47,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText);
 	RETRO_SetPalette(ScrollImage->palette);
 }

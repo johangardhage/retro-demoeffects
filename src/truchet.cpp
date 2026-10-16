@@ -65,17 +65,21 @@ void DEMO_Render(RETRO_Time time)
 	double angle = TURN_ANGLE * sin(turnphase);
 	double camerax = time.total * SCROLL_SPEED;
 	double cameray = SCROLL_SWAY * sin(swayphase);
-	double stepx = cos(angle) / size, stepy = sin(angle) / size;
+	double stepx = cos(angle) / size;
+	double stepy = sin(angle) / size;
 	double outline = TUBE_OUTLINE / size;
 
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			// Find the tile and the corner of its nearer arc
-			int px = x - RETRO_WIDTH / 2, py = y - RETRO_HEIGHT / 2;
+			int px = x - RETRO_WIDTH / 2;
+			int py = y - RETRO_HEIGHT / 2;
 			double wx = camerax + px * stepx - py * stepy;
 			double wy = cameray + px * stepy + py * stepx;
-			int tilex = (int)floor(wx), tiley = (int)floor(wy);
-			double fx = wx - tilex, fy = wy - tiley;
+			int tilex = (int)floor(wx);
+			int tiley = (int)floor(wy);
+			double fx = wx - tilex;
+			double fy = wy - tiley;
 			int cornerx, cornery;
 			if (RETRO_Hash(tilex, tiley) & 1) {
 				// Arcs round the top right and bottom left corners
@@ -85,7 +89,8 @@ void DEMO_Render(RETRO_Time time)
 				// Round the top left and bottom right
 				cornerx = cornery = fx + fy > 1;
 			}
-			double vx = fx - cornerx, vy = fy - cornery;
+			double vx = fx - cornerx;
+			double vy = fy - cornery;
 			double r = sqrt(vx * vx + vy * vy);
 			int parity = (tilex + cornerx + tiley + cornery) & 1;
 			double off = fabs(r - 0.5);

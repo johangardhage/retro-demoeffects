@@ -288,7 +288,8 @@ static int WallLight(int x, int y, int frontx, int fronty)
 	}
 	static const int sides[4][2] = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
 	for (const int *side : sides) {
-		int nx = x + side[0], ny = y + side[1];
+		int nx = x + side[0];
+		int ny = y + side[1];
 		if (nx >= 0 && nx < MAP_SIZE && ny >= 0 && ny < MAP_SIZE && Walls[nx][ny] == 0 && FloorLights[nx][ny] != 0) {
 			return 0;
 		}
@@ -305,11 +306,14 @@ void DEMO_Render(RETRO_Time time)
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Move the camera under the arrow keys
-	bool left = RETRO_KeyState(SDL_SCANCODE_LEFT), right = RETRO_KeyState(SDL_SCANCODE_RIGHT);
-	bool up = RETRO_KeyState(SDL_SCANCODE_UP), down = RETRO_KeyState(SDL_SCANCODE_DOWN);
+	bool left = RETRO_KeyState(SDL_SCANCODE_LEFT);
+	bool right = RETRO_KeyState(SDL_SCANCODE_RIGHT);
+	bool up = RETRO_KeyState(SDL_SCANCODE_UP);
+	bool down = RETRO_KeyState(SDL_SCANCODE_DOWN);
 	angle = (float)fmod(angle + ((right ? 1 : 0) - (left ? 1 : 0)) * TURN_SPEED * time.delta, 2 * M_PI);
 	float step = (float)(((up ? 1 : 0) - (down ? 1 : 0)) * WALK_SPEED * time.delta);
-	float nextx = position.x + step * cosf(angle), nexty = position.y + step * sinf(angle);
+	float nextx = position.x + step * cosf(angle);
+	float nexty = position.y + step * sinf(angle);
 	if (!Blocked(nextx, position.y)) {
 		position.x = nextx;
 	}
@@ -321,13 +325,16 @@ void DEMO_Render(RETRO_Time time)
 
 	// Open the doors the camera is near, close the others
 	for (Door &door : Doors) {
-		float dx = position.x - (door.x + 0.5f), dy = position.y - (door.y + 0.5f);
+		float dx = position.x - (door.x + 0.5f);
+		float dy = position.y - (door.y + 0.5f);
 		bool near = dx * dx + dy * dy < DOOR_RANGE * DOOR_RANGE;
 		door.open = CLAMP01(door.open + (float)((near ? 1 : -1) * DOOR_SPEED * time.delta));
 	}
 	float halfwidth = (float)tan(radians(RAYCAST_FOV / 2.0));
-	float dirx = cosf(angle), diry = sinf(angle);
-	float planex = -diry * halfwidth, planey = dirx * halfwidth;
+	float dirx = cosf(angle);
+	float diry = sinf(angle);
+	float planex = -diry * halfwidth;
+	float planey = dirx * halfwidth;
 	float focal = RETRO_WIDTH / (2 * halfwidth);
 	float eye = 0.5f + BOB_HEIGHT * sinf((float)phase);
 	float horizon = RETRO_HEIGHT / 2.0f;
@@ -342,11 +349,14 @@ void DEMO_Render(RETRO_Time time)
 	for (int x = 0; x < RETRO_WIDTH; x++) {
 		// Walk the column's ray across the grid to the first wall or closed part of a door
 		float camera = 2.0f * (x + 0.5f) / RETRO_WIDTH - 1;
-		float rayx = dirx + planex * camera, rayy = diry + planey * camera;
-		int cellx = (int)floorf(position.x), celly = (int)floorf(position.y);
+		float rayx = dirx + planex * camera;
+		float rayy = diry + planey * camera;
+		int cellx = (int)floorf(position.x);
+		int celly = (int)floorf(position.y);
 		float deltax = rayx != 0 ? fabsf(1 / rayx) : 1e30f;
 		float deltay = rayy != 0 ? fabsf(1 / rayy) : 1e30f;
-		int stepx = rayx < 0 ? -1 : 1, stepy = rayy < 0 ? -1 : 1;
+		int stepx = rayx < 0 ? -1 : 1;
+		int stepy = rayy < 0 ? -1 : 1;
 		float sidex = (rayx < 0 ? position.x - cellx : cellx + 1 - position.x) * deltax;
 		float sidey = (rayy < 0 ? position.y - celly : celly + 1 - position.y) * deltay;
 		bool alongx = true;
@@ -405,8 +415,10 @@ void DEMO_Render(RETRO_Time time)
 
 			// Floor below the wall, ceiling above, the texel's row along y and its column along x
 			float distance = rowdistance[y];
-			float floorx = position.x + distance * rayx, floory = position.y + distance * rayy;
-			int mapx = (int)floorf(floorx), mapy = (int)floorf(floory);
+			float floorx = position.x + distance * rayx;
+			float floory = position.y + distance * rayy;
+			int mapx = (int)floorf(floorx);
+			int mapy = (int)floorf(floory);
 			int tx = CLAMP((floorx - mapx) * TILE_SIZE, 0, TILE_SIZE);
 			int ty = CLAMP((floory - mapy) * TILE_SIZE, 0, TILE_SIZE);
 			bool below = y + 0.5f >= bottom;

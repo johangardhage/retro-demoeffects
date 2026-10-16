@@ -120,7 +120,7 @@ void DEMO_Render(RETRO_Time time)
 		int ysrc = CLAMP(HORIZON - d + (int)lroundf(d * WATER_TILT * sinf(WATER_KZ * z - WATER_SPEED * t)), 0, HORIZON);
 		int level = 1 + (d - 1) * WATER_LEVELS / (RETRO_HEIGHT - HORIZON);
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			float xw = (float)(x - RETRO_WIDTH / 2) / d;
+			float xw = (x - RETRO_WIDTH / 2.0f) / d;
 			int xsrc = CLAMP(x + (int)lroundf(d * WATER_SWAY * sinf(WATER_KX * xw + WATER_KZ2 * z + WATER_SWAYSPEED * t)), 0, RETRO_WIDTH);
 			buffer[y * RETRO_WIDTH + x] = buffer[ysrc * RETRO_WIDTH + xsrc] + level * SCENE_COLORS;
 		}

@@ -116,7 +116,8 @@ static void DrawWall(double time)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 	double angle = time * WALL_SPEED;
-	double ca = cos(angle), sa = sin(angle);
+	double ca = cos(angle);
+	double sa = sin(angle);
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		double dy = (y + 0.5) - RETRO_HEIGHT / 2.0;
 		for (int x = 0; x < RETRO_WIDTH; x++) {
@@ -159,8 +160,8 @@ void DEMO_Render(RETRO_Time time)
 	// agree, so the second simply writes the same again
 	RETRO_ProjectModel(SCALE, CX, CY);
 	RETRO_SortFaces(true, model);
-	bool front[SIDES];
-	vec3 pane[SIDES];
+	bool front[SIDES] = {};
+	vec3 pane[SIDES] = {};
 	for (int i = 0; i < model->drawfaces; i++) {
 		Face *face = &model->face[model->drawface[i]];
 		int side = FaceSide[model->drawface[i]];

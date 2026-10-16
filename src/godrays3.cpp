@@ -120,7 +120,8 @@ static float IntegrateHaze(vec3 origin, vec3 direction, float entry, float exit,
 	struct Span { int first, end; } spans[6];
 	int count = 0;
 	for (int beam = 0; beam < 6; beam++) {
-		float near = entry, far = exit;
+		float near = entry;
+		float far = exit;
 		if (!BeamBounds(origin, direction, beam / 2, beam % 2 ? -1.0f : 1.0f, near, far)) continue;
 		// Round outward to keep boundary samples despite floating-point error.
 		Span span = { MAX(0, (int)floor((near - entry) / step - 0.5f)),
@@ -174,8 +175,11 @@ static void BuildWall(void)
 	// thinning out into the middle of the screen
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			float px = (x / WALL_PIXEL + 0.5f) * WALL_PIXEL;
-			float py = (y / WALL_PIXEL + 0.5f) * WALL_PIXEL;
+			// The middle of the block the pixel is in
+			int blockx = x / WALL_PIXEL;
+			int blocky = y / WALL_PIXEL;
+			float px = (blockx + 0.5f) * WALL_PIXEL;
+			float py = (blocky + 0.5f) * WALL_PIXEL;
 			float dx = px - RETRO_WIDTH / 2.0f;
 			float dy = py - RETRO_HEIGHT / 2.0f;
 			float r = hypotf(dx, dy);

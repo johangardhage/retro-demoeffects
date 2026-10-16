@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROMAIN_H_
-#define _RETROMAIN_H_
+#pragma once
 // IWYU pragma: always_keep
 
 #include <SDL3/SDL_main.h>
@@ -154,5 +153,3 @@ int main(int argc, char *argv[]) // NOLINT(misc-definitions-in-headers)
 
 	return 0;
 }
-
-#endif

@@ -30,7 +30,8 @@ static ivec2 DistortTable[WARP_HEIGHT * WARP_WIDTH];
 
 void DEMO_Render(RETRO_Time time)
 {
-	static float dz = 0, dw = 0;
+	static float dz = 0;
+	static float dw = 0;
 
 	// Calculate phase
 	float alpha = fmod(time.total * WARP_ALPHA_SPEED, 2 * M_PI);

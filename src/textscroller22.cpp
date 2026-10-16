@@ -48,7 +48,7 @@
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 //const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
-static const char *const ScrollText[] = { "    RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "    RETRO DEMOEFFECTS...";
 
 // Ring geometry and perspective projection.
 constexpr double RING_RADIUS = 86.0;
@@ -84,7 +84,7 @@ static void DrawGlyph(int letter, double angle, bool shadow, float &paintdepth)
 	bool back = cos(angle) < 0;
 	int color = back ? (shadow ? 4 : 3) : (shadow ? 5 : 6);
 	double yoff = shadow ? Font.height / 8.0 : 0.0;
-	unsigned char code = (unsigned char)ScrollText[0][letter];
+	unsigned char code = (unsigned char)ScrollText[letter];
 	int width = RETRO_CharWidth(Font, code);
 	int copywidth = MIN(Font.width, width);
 	mat3 matrix = rotateX((float)RING_TILT) * rotateY((float)-angle);
@@ -119,7 +119,7 @@ void DEMO_Render(RETRO_Time time)
 	// Draw scroller
 	RETRO_ClearDepthBuffer();
 	float paintdepth = 1.0f;
-	int length = (int)strlen(ScrollText[0]);
+	int length = (int)strlen(ScrollText);
 	double angleperpixel = 2 * M_PI / (length * WRAP_WIDTH);
 	int order[256];
 	double angle[256];
@@ -127,7 +127,7 @@ void DEMO_Render(RETRO_Time time)
 	int cursor = 0;
 	for (int i = 0; i < length; i++) {
 		order[i] = i;
-		int width = RETRO_CharWidth(Font, (unsigned char)ScrollText[0][i]);
+		int width = RETRO_CharWidth(Font, (unsigned char)ScrollText[i]);
 		angle[i] = phase + (cursor + width / 2.0) * angleperpixel;
 		depth[i] = cos(angle[i]);
 		cursor += width;

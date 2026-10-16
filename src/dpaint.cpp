@@ -166,7 +166,8 @@ static void PaintBrush(int cx, int cy, BrushKind kind, int size, unsigned char c
 		int centery = (bounds.top + bounds.bottom) / 2;
 		for (int sy = bounds.top; sy <= bounds.bottom; sy++) {
 			for (int sx = bounds.left; sx <= bounds.right; sx++) {
-				int xx = cx + sx - centerx, yy = cy + sy - centery;
+				int xx = cx + sx - centerx;
+				int yy = cy + sy - centery;
 				if (Canvas[sy * RETRO_WIDTH + sx] == 0 &&
 					xx >= 0 && xx < CANVAS_RIGHT && yy >= CANVAS_TOP && yy < RETRO_HEIGHT) {
 					Canvas[yy * RETRO_WIDTH + xx] = color;
@@ -190,12 +191,14 @@ static void PaintBrush(int cx, int cy, BrushKind kind, int size, unsigned char c
 
 void DEMO_Render2(RETRO_Time time)
 {
-	static float x = RETRO_WIDTH / 2.0, y = RETRO_HEIGHT / 2.0;
+	static float x = RETRO_WIDTH / 2.0;
+	static float y = RETRO_HEIGHT / 2.0;
 	static bool wb2pointer = false; // false = Workbench 1.3, true = Workbench 2.0
 	static BrushKind brushkind = BRUSH_ROUND;
 	static int brushsize = 0;
 	static int brushcol = 0; // matches brushsize/brushkind above by default
-	static int selectedrow = 7, selectedcol = 1; // white
+	static int selectedrow = 7; // white
+	static int selectedcol = 1;
 	static int paintcolor = SwatchColor(selectedrow, selectedcol);
 	static int selectedtool = TOOL_DEFAULT_SELECTION;
 
@@ -217,7 +220,8 @@ void DEMO_Render2(RETRO_Time time)
 		RETRO_SetMousePosition(x, y);
 	}
 
-	int px = (int)x, py = (int)y;
+	int px = (int)x;
+	int py = (int)y;
 
 	// Swap Amiga pointer style
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {

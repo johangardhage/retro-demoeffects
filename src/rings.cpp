@@ -133,14 +133,14 @@ static const RingStop RingColors[] = {
 	{ 1.00f, { 8, 10, 46 } },
 };
 
+constexpr int RING_STOPS = (int)(sizeof(RingColors) / sizeof(RingColors[0]));
+
 static RETRO_Palette ColorAt(float t)
 {
-	const int stops = (int)(sizeof(RingColors) / sizeof(RingColors[0]));
-
 	if (t <= RingColors[0].t) {
 		return RingColors[0].color;
 	}
-	for (int i = 1; i < stops; i++) {
+	for (int i = 1; i < RING_STOPS; i++) {
 		if (t > RingColors[i].t) {
 			continue;
 		}
@@ -148,7 +148,7 @@ static RETRO_Palette ColorAt(float t)
 		float k = span > 0.0f ? (t - RingColors[i - 1].t) / span : 0.0f;
 		return mix(RingColors[i - 1].color, RingColors[i].color, k);
 	}
-	return RingColors[stops - 1].color;
+	return RingColors[RING_STOPS - 1].color;
 }
 
 // Four corners of one segment, in this order.

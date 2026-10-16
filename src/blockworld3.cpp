@@ -486,7 +486,9 @@ static vec3 Stars[STAR_COUNT];
 // The block at a point, with air outside the world
 static int BlockAt(vec3 p)
 {
-	int x = (int)floorf(p.x), y = (int)floorf(p.y), z = (int)floorf(p.z);
+	int x = (int)floorf(p.x);
+	int y = (int)floorf(p.y);
+	int z = (int)floorf(p.z);
 	if (x < 0 || x >= WORLD_SIZE || y < 0 || y >= WORLD_HEIGHT || z < 0 || z >= WORLD_SIZE) return AIR;
 	return World[y][z][x];
 }
@@ -497,12 +499,18 @@ static int BlockAt(vec3 p)
 // water into air stops there, at the surface seen from below.
 static bool WalkRay(vec3 origin, vec3 dir, float maxdistance, int clear, bool holes, bool surface, RayHit &hit)
 {
-	int x = (int)floorf(origin.x), y = (int)floorf(origin.y), z = (int)floorf(origin.z);
+	int x = (int)floorf(origin.x);
+	int y = (int)floorf(origin.y);
+	int z = (int)floorf(origin.z);
 	int from = BlockAt(origin);
-	int stepx = dir.x < 0 ? -1 : 1, stepy = dir.y < 0 ? -1 : 1, stepz = dir.z < 0 ? -1 : 1;
+	int stepx = dir.x < 0 ? -1 : 1;
+	int stepy = dir.y < 0 ? -1 : 1;
+	int stepz = dir.z < 0 ? -1 : 1;
 
 	// t across one cell along each axis, and t to the first plane crossed
-	float deltax = fabsf(1.0f / dir.x), deltay = fabsf(1.0f / dir.y), deltaz = fabsf(1.0f / dir.z);
+	float deltax = fabsf(1.0f / dir.x);
+	float deltay = fabsf(1.0f / dir.y);
+	float deltaz = fabsf(1.0f / dir.z);
 	float nextx = (dir.x < 0 ? origin.x - x : x + 1 - origin.x) * deltax;
 	float nexty = (dir.y < 0 ? origin.y - y : y + 1 - origin.y) * deltay;
 	float nextz = (dir.z < 0 ? origin.z - z : z + 1 - origin.z) * deltaz;
@@ -598,9 +606,12 @@ static bool Solid(int x, int y, int z)
 // Whether the player's box, standing at p, overlaps a solid cell
 static bool Collides(vec3 p)
 {
-	int x1 = (int)floorf(p.x - PLAYER_RADIUS), x2 = (int)floorf(p.x + PLAYER_RADIUS);
-	int z1 = (int)floorf(p.z - PLAYER_RADIUS), z2 = (int)floorf(p.z + PLAYER_RADIUS);
-	int y1 = (int)floorf(p.y), y2 = (int)floorf(p.y + PLAYER_HEIGHT);
+	int x1 = (int)floorf(p.x - PLAYER_RADIUS);
+	int x2 = (int)floorf(p.x + PLAYER_RADIUS);
+	int z1 = (int)floorf(p.z - PLAYER_RADIUS);
+	int z2 = (int)floorf(p.z + PLAYER_RADIUS);
+	int y1 = (int)floorf(p.y);
+	int y2 = (int)floorf(p.y + PLAYER_HEIGHT);
 	for (int y = y1; y <= y2; y++) {
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {
@@ -614,8 +625,10 @@ static bool Collides(vec3 p)
 // Whether a solid cell lies under any part of the player's box, standing at p
 static bool Supported(vec3 p)
 {
-	int x1 = (int)floorf(p.x - PLAYER_RADIUS), x2 = (int)floorf(p.x + PLAYER_RADIUS);
-	int z1 = (int)floorf(p.z - PLAYER_RADIUS), z2 = (int)floorf(p.z + PLAYER_RADIUS);
+	int x1 = (int)floorf(p.x - PLAYER_RADIUS);
+	int x2 = (int)floorf(p.x + PLAYER_RADIUS);
+	int z1 = (int)floorf(p.z - PLAYER_RADIUS);
+	int z2 = (int)floorf(p.z + PLAYER_RADIUS);
 	int y = (int)floorf(p.y) - 1;
 	for (int z = z1; z <= z2; z++) {
 		for (int x = x1; x <= x2; x++) {
@@ -682,7 +695,8 @@ static unsigned char UnderwaterColor(int texel, int light, int fogstep)
 
 static void DrawCrosshair(void)
 {
-	int cx = RETRO_WIDTH / 2, cy = RETRO_HEIGHT / 2;
+	int cx = RETRO_WIDTH / 2;
+	int cy = RETRO_HEIGHT / 2;
 	RETRO_DrawHline(cx - 4, cx + 4, cy, CROSSHAIR_COLOR);
 	RETRO_DrawVline(cx, cy - 4, cy + 4, CROSSHAIR_COLOR);
 }
@@ -693,7 +707,8 @@ static void DrawHotbar(void)
 	int left = (RETRO_WIDTH - HOTBAR_SLOTS * SLOT_SIZE) / 2;
 	int top = RETRO_HEIGHT - SLOT_SIZE - 4;
 	for (int slot = 0; slot < HOTBAR_SLOTS; slot++) {
-		int x0 = left + slot * SLOT_SIZE, y0 = top;
+		int x0 = left + slot * SLOT_SIZE;
+		int y0 = top;
 		RETRO_DrawRectangle(x0, y0, x0 + SLOT_SIZE - 1, y0 + SLOT_SIZE - 1, slot == Selected ? CROSSHAIR_COLOR : OUTLINE_COLOR);
 		int texture = BlockTexture[Hotbar[slot]][1];
 		for (int ty = 0; ty < TEXTURE_SIZE; ty++) {
@@ -738,7 +753,9 @@ static void StepQueue(UpdateQueue &queue, void (*step)(int x, int y, int z))
 	int count = queue.count;
 	for (int i = 0; i < count; i++) {
 		int cell = queue.cells[i];
-		int x = cell % WORLD_SIZE, z = cell / WORLD_SIZE % WORLD_SIZE, y = cell / (WORLD_SIZE * WORLD_SIZE);
+		int x = cell % WORLD_SIZE;
+		int z = cell / WORLD_SIZE % WORLD_SIZE;
+		int y = cell / (WORLD_SIZE * WORLD_SIZE);
 		Queued[y][z][x] &= ~queue.bit;
 		step(x, y, z);
 	}
@@ -757,7 +774,8 @@ static void FlowWater(int x, int y, int z)
 	}
 	static const int Side[4][2] = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
 	for (const int *d : Side) {
-		int nx = x + d[0], nz = z + d[1];
+		int nx = x + d[0];
+		int nz = z + d[1];
 		if (nx >= 0 && nx < WORLD_SIZE && nz >= 0 && nz < WORLD_SIZE && World[y][nz][nx] == AIR) SetAndUpdate(nx, y, nz, WATER);
 	}
 }
@@ -785,7 +803,8 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	float dt = time.delta;
 
 	// The water and the sand step at their own pace
-	static double nextwater = 0, nextsand = 0;
+	static double nextwater = 0;
+	static double nextsand = 0;
 	if (time.total >= nextwater) {
 		nextwater = time.total + WATER_DELAY;
 		StepQueue(WaterQueue, FlowWater);
@@ -939,7 +958,9 @@ void DEMO_Render(RETRO_Time time)
 		SetAndUpdate(target.x, target.y, target.z, AIR);
 		targeting = WalkRay(eye, forward, REACH, WATER, false, false, target);
 	} else if (targeting && placing && target.lasty < WORLD_HEIGHT) {
-		int x = target.lastx, y = target.lasty, z = target.lastz;
+		int x = target.lastx;
+		int y = target.lasty;
+		int z = target.lastz;
 		int previous = World[y][z][x];
 		World[y][z][x] = Hotbar[Selected];
 		if (Collides(Position)) {
@@ -1091,7 +1112,8 @@ void DEMO_Render(RETRO_Time time)
 			float cloudt = (CLOUD_HEIGHT - eye.y) / dir.y;
 			if (!underwater && cloudt > 0 && cloudt < CLOUD_DISTANCE && (missed || cloudt < hit.t)) {
 				vec3 p = eye + dir * cloudt;
-				int cellx = (int)floorf((p.x + clouddrift) / CLOUD_CELL), cellz = (int)floorf(p.z / CLOUD_CELL);
+				int cellx = (int)floorf((p.x + clouddrift) / CLOUD_CELL);
+				int cellz = (int)floorf(p.z / CLOUD_CELL);
 				if (RETRO_ValueNoise(cellx * CLOUD_SCALE, cellz * CLOUD_SCALE) > CLOUD_COVER) color = CLOUD_COLOR;
 			}
 			RETRO_PutPixel(sx, sy, color);

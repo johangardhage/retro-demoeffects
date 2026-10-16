@@ -48,8 +48,8 @@ static void CreateTables(void)
 {
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			double fx = x - RETRO_WIDTH / 2 + 0.5;
-			double fy = y - RETRO_HEIGHT / 2 + 0.5;
+			double fx = x - RETRO_WIDTH / 2.0 + 0.5;
+			double fy = y - RETRO_HEIGHT / 2.0 + 0.5;
 			int r = (int)floor(sqrt(fx * fx + fy * fy));
 			DepthTable[y][x] = r < FIRST ? HOLE : PERSPECTIVE / r;
 			AngleTable[y][x] = WRAP(atan2(fy, fx) * ANGLES / (2 * M_PI), ANGLES);

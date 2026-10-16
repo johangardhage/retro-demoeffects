@@ -185,7 +185,7 @@ static void DrawScene(void)
 		bool dash = fmodf(z, 2 * DASH_LENGTH) < DASH_LENGTH;
 
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			float side = fabsf(x + 0.5f - RETRO_WIDTH / 2) / d;
+			float side = fabsf(x + 0.5f - RETRO_WIDTH / 2.0f) / d;
 			int grain = (int)(RETRO_Hash(x, y) % 5) - 2;
 
 			if (side >= ROAD_HALFWIDTH) {
@@ -200,10 +200,12 @@ static void DrawScene(void)
 
 	// Draw poles from the farthest to the nearest, each with a crossbar and a
 	// wire from either end of it to the pole behind
-	int farleft = 0, farright = 0, fararm = 0;
+	int farleft = 0;
+	int farright = 0;
+	int fararm = 0;
 	for (int i = POLES; i >= 1; i--) {
 		float d = FOCAL / (i * POLE_SPACING);
-		int x = RETRO_WIDTH / 2 - POLE_OFFSET * d;
+		int x = RETRO_WIDTH / 2.0f - POLE_OFFSET * d;
 		int base = HORIZON + d;
 		int top = base - POLE_HEIGHT * d;
 		int arm = top + POLE_ARMDROP * d;

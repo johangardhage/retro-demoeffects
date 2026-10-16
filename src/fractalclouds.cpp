@@ -81,7 +81,8 @@ static void BuildField(void)
 
 	// A displacement sum has no fixed range, so the field is stretched into the
 	// byte range it is read in rather than assumed to arrive there
-	float low = field[0], high = field[0];
+	float low = field[0];
+	float high = field[0];
 	for (int i = 0; i < MAP_SIZE * MAP_SIZE; i++) {
 		low = MIN(low, field[i]);
 		high = MAX(high, field[i]);

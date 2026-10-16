@@ -10,8 +10,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROFONT_H_
-#define _RETROFONT_H_
+#pragma once
 
 #include "retro.h"
 
@@ -1024,4 +1023,8 @@ inline RETRO_Image *RETRO_GenerateTextImage(const RETRO_Font &font, const char *
 	return image;
 }
 
-#endif
+// The same for a single line of text
+inline RETRO_Image *RETRO_GenerateTextImage(const RETRO_Font &font, const char *text, int scale = 1, int spacing = 0)
+{
+	return RETRO_GenerateTextImage(font, &text, 1, scale, spacing);
+}

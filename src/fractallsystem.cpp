@@ -126,7 +126,10 @@ static void StartGeneration(void)
 	TraceString(curve->axiom, Generation);
 
 	// The box the path fills
-	float left = 0, right = 0, bottom = 0, top = 0;
+	float left = 0;
+	float right = 0;
+	float bottom = 0;
+	float top = 0;
 	for (int i = 0; i < Points; i++) {
 		left = MIN(left, Path[i].x);
 		right = MAX(right, Path[i].x);

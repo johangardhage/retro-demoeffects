@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROMATH_H_
-#define _RETROMATH_H_
+#pragma once
 
 #include "retro.h"
 #include "retromodel.h"
@@ -283,7 +282,8 @@ inline bool RETRO_FaceDepthBefore(int a, int b, const void *data)
 inline bool RETRO_VertexPosBefore(int a, int b, const void *data)
 {
 	const Model3D *model = (const Model3D *)data;
-	vec3 pa = model->vertex[a].pos, pb = model->vertex[b].pos;
+	vec3 pa = model->vertex[a].pos;
+	vec3 pb = model->vertex[b].pos;
 	if (pa.x != pb.x) return pa.x < pb.x;
 	if (pa.y != pb.y) return pa.y < pb.y;
 	if (pa.z != pb.z) return pa.z < pb.z;
@@ -448,11 +448,14 @@ inline float RETRO_HashUnit(int x, int y, int z)
 // it wants and sums octaves for detail.
 inline float RETRO_ValueNoise(float x, float y)
 {
-	int ix = (int)floorf(x), iy = (int)floorf(y);
+	int ix = (int)floorf(x);
+	int iy = (int)floorf(y);
 	float fx = smoothstep(0.0f, 1.0f, x - ix);
 	float fy = smoothstep(0.0f, 1.0f, y - iy);
-	float a = RETRO_HashUnit(ix, iy), b = RETRO_HashUnit(ix + 1, iy);
-	float c = RETRO_HashUnit(ix, iy + 1), d = RETRO_HashUnit(ix + 1, iy + 1);
+	float a = RETRO_HashUnit(ix, iy);
+	float b = RETRO_HashUnit(ix + 1, iy);
+	float c = RETRO_HashUnit(ix, iy + 1);
+	float d = RETRO_HashUnit(ix + 1, iy + 1);
 	return mix(mix(a, b, fx), mix(c, d, fx), fy);
 }
 
@@ -482,13 +485,20 @@ inline float RETRO_NoiseGradient(unsigned int hash, float x, float y, float z)
 //
 inline float RETRO_PerlinNoise(float x, float y, float z, int period = 0)
 {
-	int ix = (int)floorf(x), iy = (int)floorf(y), iz = (int)floorf(z);
+	int ix = (int)floorf(x);
+	int iy = (int)floorf(y);
+	int iz = (int)floorf(z);
 	x -= ix;
 	y -= iy;
 	z -= iz;
 
 	// The corners either side along each axis
-	int x0 = ix, x1 = ix + 1, y0 = iy, y1 = iy + 1, z0 = iz, z1 = iz + 1;
+	int x0 = ix;
+	int x1 = ix + 1;
+	int y0 = iy;
+	int y1 = iy + 1;
+	int z0 = iz;
+	int z1 = iz + 1;
 	if (period > 0) {
 		x0 = WRAP(x0, period);
 		x1 = WRAP(x1, period);
@@ -526,7 +536,8 @@ inline float RETRO_PerlinNoise(float x, float y, float z, int period = 0)
 //
 inline vec2 RETRO_CatmullRom(vec2 p0, vec2 p1, vec2 p2, vec2 p3, float t)
 {
-	float t2 = t * t, t3 = t2 * t;
+	float t2 = t * t;
+	float t3 = t2 * t;
 	return (p1 * 2.0f + (p2 - p0) * t
 		+ (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * t2
 		+ (p1 * 3.0f - p0 - p2 * 3.0f + p3) * t3) * 0.5f;
@@ -534,7 +545,8 @@ inline vec2 RETRO_CatmullRom(vec2 p0, vec2 p1, vec2 p2, vec2 p3, float t)
 
 inline vec3 RETRO_CatmullRom(vec3 p0, vec3 p1, vec3 p2, vec3 p3, float t)
 {
-	float t2 = t * t, t3 = t2 * t;
+	float t2 = t * t;
+	float t3 = t2 * t;
 	return (p1 * 2.0f + (p2 - p0) * t
 		+ (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * t2
 		+ (p1 * 3.0f - p0 - p2 * 3.0f + p3) * t3) * 0.5f;
@@ -547,5 +559,3 @@ inline vec3 RETRO_CatmullRomDerivative(vec3 p0, vec3 p1, vec3 p2, vec3 p3, float
 		+ (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * (2 * t)
 		+ (p1 * 3.0f - p0 - p2 * 3.0f + p3) * (3 * t * t)) * 0.5f;
 }
-
-#endif

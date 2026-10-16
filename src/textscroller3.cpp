@@ -37,7 +37,7 @@ constexpr int WAVE_AMP = 40; // pixels either side of the middle a column reache
 constexpr double WAVE_RATE = 1.2; // table units of the sine per pixel, so 1.5 waves across
 constexpr int WAVE_SPEED = 90; // table units per second
 
-static const char *const ScrollText[] = { "                    RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "                    RETRO DEMOEFFECTS...";
 
 static RETRO_Image *ScrollImage;
 
@@ -69,6 +69,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText);
 	RETRO_SetPalette(ScrollImage->palette);
 }

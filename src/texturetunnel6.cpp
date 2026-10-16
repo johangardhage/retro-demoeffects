@@ -111,7 +111,8 @@ static void CreateRings(void)
 //
 static void Center(int ring, int travel, int *x, int *y)
 {
-	double angle = (PERSPECTIVE / ring + travel) * RETRO_ANGLES_PER_TURN / PATH_TURN;
+	int depth = PERSPECTIVE / ring + travel;
+	double angle = (double)depth * RETRO_ANGLES_PER_TURN / PATH_TURN;
 	*x = (int)lround(PATH_RADIUS * COS(angle));
 	*y = (int)lround(PATH_RADIUS * SIN(angle));
 }
@@ -161,11 +162,19 @@ static void DrawTunnel(int travel)
 		int error = 0;
 		for (int i = 0; i < major; i++) {
 			DrawRing(r, x, y, travel);
-			if (dx > dy) x += sx; else y += sy;
+			if (dx > dy) {
+				x += sx;
+			} else {
+				y += sy;
+			}
 			error += minor;
 			if (error >= major) {
 				DrawRing(r, x, y, travel);
-				if (dx > dy) y += sy; else x += sx;
+				if (dx > dy) {
+					y += sy;
+				} else {
+					x += sx;
+				}
 				error -= major;
 			}
 		}

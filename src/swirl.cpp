@@ -28,16 +28,22 @@ static unsigned char ColorLUT[64][64][64];
 
 static unsigned char SamplePicture(double x, double y)
 {
-	int ix = (int)floor(x), iy = (int)floor(y);
-	double fx = x - ix, fy = y - iy;
-	int x0 = CLAMP(ix, 0, Picture->width), x1 = CLAMP(ix + 1, 0, Picture->width);
-	int y0 = CLAMP(iy, 0, Picture->height), y1 = CLAMP(iy + 1, 0, Picture->height);
+	int ix = (int)floor(x);
+	int iy = (int)floor(y);
+	double fx = x - ix;
+	double fy = y - iy;
+	int x0 = CLAMP(ix, 0, Picture->width);
+	int x1 = CLAMP(ix + 1, 0, Picture->width);
+	int y0 = CLAMP(iy, 0, Picture->height);
+	int y1 = CLAMP(iy + 1, 0, Picture->height);
 	RETRO_Palette a = Picture->palette[Picture->data[y0 * Picture->width + x0]];
 	RETRO_Palette b = Picture->palette[Picture->data[y0 * Picture->width + x1]];
 	RETRO_Palette c = Picture->palette[Picture->data[y1 * Picture->width + x0]];
 	RETRO_Palette d = Picture->palette[Picture->data[y1 * Picture->width + x1]];
-	double wa = (1 - fx) * (1 - fy), wb = fx * (1 - fy);
-	double wc = (1 - fx) * fy, wd = fx * fy;
+	double wa = (1 - fx) * (1 - fy);
+	double wb = fx * (1 - fy);
+	double wc = (1 - fx) * fy;
+	double wd = fx * fy;
 	int r = CLAMP256(wa * a.r + wb * b.r + wc * c.r + wd * d.r) >> 2;
 	int g = CLAMP256(wa * a.g + wb * b.g + wc * c.g + wd * d.g) >> 2;
 	int blue = CLAMP256(wa * a.b + wb * b.b + wc * c.b + wd * d.b) >> 2;
@@ -49,7 +55,8 @@ void DEMO_Render(RETRO_Time time)
 	// Calculate phase
 	double phase = fmod(time.total, TWIST_PERIOD) / TWIST_PERIOD;
 	double twist = TWIST_AMOUNT * sin(2 * M_PI * phase);
-	double cx = (RETRO_WIDTH - 1) / 2.0, cy = (RETRO_HEIGHT - 1) / 2.0;
+	double cx = (RETRO_WIDTH - 1) / 2.0;
+	double cy = (RETRO_HEIGHT - 1) / 2.0;
 	unsigned char *buffer = RETRO_FrameBuffer();
 
 	// Preserve the exact source palette indices at the untwisted moments.
@@ -65,8 +72,10 @@ void DEMO_Render(RETRO_Time time)
 				continue;
 			}
 			double angle = twist * Falloff[y][x];
-			double c = cos(angle), s = sin(angle);
-			double dx = x - cx, dy = y - cy;
+			double c = cos(angle);
+			double s = sin(angle);
+			double dx = x - cx;
+			double dy = y - cy;
 			buffer[offset] = SamplePicture(cx + dx * c - dy * s, cy + dx * s + dy * c);
 		}
 	}
@@ -75,11 +84,13 @@ void DEMO_Render(RETRO_Time time)
 void DEMO_Initialize(void)
 {
 	Picture = RETRO_LoadImage("assets/monkey_320x240.pcx", true);
-	double cx = (RETRO_WIDTH - 1) / 2.0, cy = (RETRO_HEIGHT - 1) / 2.0;
+	double cx = (RETRO_WIDTH - 1) / 2.0;
+	double cy = (RETRO_HEIGHT - 1) / 2.0;
 	double radius = MIN(cx, cy);
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			double dx = x - cx, dy = y - cy;
+			double dx = x - cx;
+			double dy = y - cy;
 			double f = MAX(0.0, 1 - (dx * dx + dy * dy) / (radius * radius));
 			Falloff[y][x] = f * f;
 		}

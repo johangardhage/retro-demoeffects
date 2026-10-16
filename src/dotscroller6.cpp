@@ -58,7 +58,7 @@ constexpr double PITCH = 1.15; // radians of x the view holds, looking down
 constexpr float OBJECT_Z = 55.0f; // model units the patch is pushed back after the turn
 constexpr float PROJECTION_SCALE = 1.0f; // the dots are built in pixels, so the projection adds no scale
 
-static const char *const ScrollText[] = { "     RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "     RETRO DEMOEFFECTS...";
 
 static RETRO_Image *ScrollImage;
 
@@ -175,7 +175,7 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(1 + GROUND_SHADES, 1 + GROUND_SHADES + LETTER_SHADES, RETRO_BLACK, RETRO_WHITE);
 	RETRO_SetColor(0, RETRO_BLACK);
 
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText);
 	if (ScrollImage->height > MAP_DEPTH) {
 		RETRO_RageQuit("Scroll strip is taller than the landscape\n");
 	}

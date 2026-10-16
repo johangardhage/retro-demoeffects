@@ -33,7 +33,7 @@ constexpr int WAVE_SKEW = 2; // and per dot along the axis the displacement acts
 constexpr int WAVE_SPEED = 200; // table entries traveled per second
 
 // Flag of Sweden, SFS 1982:269: 16:10, divided 5:2:9 across and 4:2:4 down.
-static const unsigned char SwedishFlag[10][16] = {
+static const unsigned char SwedishFlag[][16] = {
 	{1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -46,6 +46,9 @@ static const unsigned char SwedishFlag[10][16] = {
 	{1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 };
 
+constexpr int FLAG_COLUMNS = (int)sizeof(SwedishFlag[0]);
+constexpr int FLAG_ROWS = (int)(sizeof(SwedishFlag) / sizeof(SwedishFlag[0]));
+
 static int SineTable[SINE_VALUES];
 
 void DEMO_Render(RETRO_Time time)
@@ -54,15 +57,12 @@ void DEMO_Render(RETRO_Time time)
 	double phase = fmod(time.total * WAVE_SPEED, SINE_VALUES);
 	int iphase = phase;
 
-	int flagwidth = sizeof(SwedishFlag[0]);
-	int flagheight = sizeof(SwedishFlag) / sizeof(SwedishFlag[0]);
-
-	int left = (RETRO_WIDTH - (flagwidth * FLAG_SUBDIV - 1) * DOT_SPACING) / 2;
-	int top = (RETRO_HEIGHT - (flagheight * FLAG_SUBDIV - 1) * DOT_SPACING) / 2;
+	int left = (RETRO_WIDTH - (FLAG_COLUMNS * FLAG_SUBDIV - 1) * DOT_SPACING) / 2;
+	int top = (RETRO_HEIGHT - (FLAG_ROWS * FLAG_SUBDIV - 1) * DOT_SPACING) / 2;
 
 	// Draw flag
-	for (int celly = 0; celly < flagheight; celly++) {
-		for (int cellx = 0; cellx < flagwidth; cellx++) {
+	for (int celly = 0; celly < FLAG_ROWS; celly++) {
+		for (int cellx = 0; cellx < FLAG_COLUMNS; cellx++) {
 			unsigned char color = SwedishFlag[celly][cellx];
 
 			for (int doty = 0; doty < FLAG_SUBDIV; doty++) {

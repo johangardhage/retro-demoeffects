@@ -33,7 +33,7 @@ constexpr int CIRCLE_GAP = 16; // pixels of open circumference before the bottom
 constexpr int SAMPLES_PER_PIXEL = 2;
 constexpr int CIRCLE_SAMPLES = (int)((2 * M_PI * CIRCLE_RADIUS - CIRCLE_GAP) * SAMPLES_PER_PIXEL);
 
-static const char *const ScrollText[] = { "                          RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "                          RETRO DEMOEFFECTS...";
 
 static RETRO_Image *ScrollImage;
 
@@ -74,6 +74,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText);
 	RETRO_SetPalette(ScrollImage->palette);
 }

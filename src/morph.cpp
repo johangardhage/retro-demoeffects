@@ -128,7 +128,8 @@ void DEMO_Render(RETRO_Time time)
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			vec2 p = { (float)x, (float)y };
-			vec2 suma = {}, sumb = {};
+			vec2 suma = {};
+			vec2 sumb = {};
 			float weights = 0;
 			for (int i = 0; i < FEATURES; i++) {
 				vec2 offset = p - from[i];

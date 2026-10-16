@@ -20,8 +20,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROTERRAIN_H_
-#define _RETROTERRAIN_H_
+#pragma once
 
 #include "retro.h"
 #include "retrovector.h"
@@ -351,7 +350,8 @@ inline bool RETRO_TerrainRayHit(vec3 origin, vec3 direction, float step, vec3 &h
 		return true;
 	}
 
-	float above = t - step, below = t;
+	float above = t - step;
+	float below = t;
 	for (int i = 0; i < 8; i++) {
 		float middle = (above + below) * 0.5f;
 		vec3 q = origin + direction * middle;
@@ -829,7 +829,8 @@ inline void RETRO_WalkTerrainMesh(const RETRO_TerrainMesh &mesh, void (*cell)(co
 			c.x = x;
 			c.z = z;
 			for (int k = 0; k < 4; k++) {
-				int cx = x + (k & 1) * step, cz = z + (k >> 1) * step;
+				int cx = x + (k & 1) * step;
+				int cz = z + (k >> 1) * step;
 				c.pos[k] = { (float)cx, RETRO_TerrainHeight(cx, cz), (float)cz };
 				c.corner[k] = RETRO_ViewVertex(&mesh.camera, c.pos[k]);
 			}
@@ -1158,7 +1159,8 @@ inline void RETRO_UpdateTerrainVehicle(float timestep)
 
 	// The ground the vehicle is over is the height halfway across its cell,
 	// the average of the cell's corners
-	int x = (int)floorf(RETRO_Rider.x), z = (int)floorf(RETRO_Rider.z);
+	int x = (int)floorf(RETRO_Rider.x);
+	int z = (int)floorf(RETRO_Rider.z);
 	if (RETRO_Terrain.wrap || (x >= 0 && z >= 0 && x < RETRO_Terrain.width - 1 && z < RETRO_Terrain.height - 1)) {
 		float depth = RETRO_TerrainHeightLinear(x + 0.5f, z + 0.5f) - (RETRO_Rider.height - v.clearance);
 		if (depth > 0) {
@@ -1290,5 +1292,3 @@ inline void RETRO_UpdateTerrainIsland(float timestep)
 	if (RETRO_KeyState(SDL_SCANCODE_DOWN) || RETRO_KeyState(SDL_SCANCODE_S)) RETRO_Island.z += distance;
 	RETRO_Island.z = clamp(RETRO_Island.z, RETRO_Island.nearestz, RETRO_Island.farthestz);
 }
-
-#endif

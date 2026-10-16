@@ -89,7 +89,7 @@ static const Mesh Meshes[] = {
 	{"assets/mask.obj", "MASK", 0.5f, -M_PI / 2, M_PI}
 };
 
-static const int MeshCount = sizeof(Meshes) / sizeof(Meshes[0]);
+constexpr int MESHES = (int)(sizeof(Meshes) / sizeof(Meshes[0]));
 
 static unsigned char RoundMapData[ANGLEMAP_SIZE * ANGLEMAP_SIZE];
 static unsigned char DiamondMapData[ANGLEMAP_SIZE * ANGLEMAP_SIZE];
@@ -108,7 +108,7 @@ static const Matcap Matcaps[] = {
 	{"PHONG MAP", PhongMapData, PHONGMAP_SIZE, PHONGMAP_SIZE / 2}
 };
 
-static const int MatcapCount = sizeof(Matcaps) / sizeof(Matcaps[0]);
+constexpr int MATCAPS = (int)(sizeof(Matcaps) / sizeof(Matcaps[0]));
 
 static RETRO_POLY_TYPE RenderType = RETRO_POLY_MATCAP;
 static int MatcapIndex = MATCAP_ROUND;
@@ -116,7 +116,7 @@ static bool Perspective = true;
 
 static void SelectMode(void)
 {
-	for (int i = 0; i < MeshCount; i++) {
+	for (int i = 0; i < MESHES; i++) {
 		Model3D *model = RETRO_Get3DModel(i);
 		if (RenderType == RETRO_POLY_ENVIRONMENT) {
 			model->envmap = RETRO_ImageData(ASSET_ENVMAP);
@@ -158,7 +158,7 @@ void DEMO_Render(RETRO_Time time)
 		SelectMode();
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_M)) {
-		meshindex = (meshindex + 1) % MeshCount;
+		meshindex = (meshindex + 1) % MESHES;
 		SelectMode();
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_P) && RenderType == RETRO_POLY_ENVIRONMENT) {
@@ -166,7 +166,7 @@ void DEMO_Render(RETRO_Time time)
 		SelectMode();
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_C)) {
-		MatcapIndex = (MatcapIndex + 1) % MatcapCount;
+		MatcapIndex = (MatcapIndex + 1) % MATCAPS;
 		SelectMode();
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_SPACE)) {

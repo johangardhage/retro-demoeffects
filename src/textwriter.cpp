@@ -64,18 +64,19 @@ static const char *const ScrollText[][12] = {
 	},
 };
 
+constexpr int PAGES = (int)(sizeof(ScrollText) / sizeof(ScrollText[0]));
+constexpr int PAGE_ROWS = (int)(sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]));
+
 static RETRO_Image *PageImage;
 
 void DEMO_Render(RETRO_Time time)
 {
-	int pages = sizeof(ScrollText) / sizeof(ScrollText[0]);
-	int lines = sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]);
-	double slot = fmod(time.total / PAGE_TIME, pages);
+	double slot = fmod(time.total / PAGE_TIME, PAGES);
 	int page = (int)slot;
 	int remaining = (int)((slot - page) * PAGE_TIME * CHARACTERS_PER_SECOND);
-	int texty = (RETRO_HEIGHT - lines * FONT.height) / 2;
+	int texty = (RETRO_HEIGHT - PAGE_ROWS * FONT.height) / 2;
 
-	for (int row = 0; row < lines && ScrollText[page][row] != NULL && remaining > 0; row++) {
+	for (int row = 0; row < PAGE_ROWS && ScrollText[page][row] != NULL && remaining > 0; row++) {
 		const char *line = ScrollText[page][row];
 		int length = 0;
 		int width = 0;
@@ -92,7 +93,7 @@ void DEMO_Render(RETRO_Time time)
 			}
 			int sourcex = (PageImage->width - width) / 2;
 			int screenx = (RETRO_WIDTH - width) / 2;
-			int sourcey = (page * lines + row) * FONT.height;
+			int sourcey = (page * PAGE_ROWS + row) * FONT.height;
 			int screeny = texty + row * FONT.height;
 
 			for (int y = 0; y < FONT.height; y++) {
@@ -111,6 +112,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), &ScrollText[0][0], sizeof(ScrollText) / sizeof(ScrollText[0][0]));
+	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), &ScrollText[0][0], PAGES * PAGE_ROWS);
 	RETRO_SetPalette(PageImage->palette);
 }

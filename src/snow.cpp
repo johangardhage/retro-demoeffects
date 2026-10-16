@@ -158,7 +158,10 @@ void DEMO_FixedUpdate(RETRO_Time time)
 
 	// Melt every exposed layer of snow in a few random columns, the deeper the more
 	static double melt = 0;
-	for (melt += SNOW_MELT * time.delta; melt >= 1; melt--) {
+	melt += SNOW_MELT * time.delta;
+	int melts = (int)melt;
+	melt -= melts;
+	for (int i = 0; i < melts; i++) {
 		int x = RANDOM(RETRO_WIDTH);
 		for (int top = 0; top < RETRO_HEIGHT; top++) {
 			if (World[top * RETRO_WIDTH + x] != SETTLED || (top > 0 && World[(top - 1) * RETRO_WIDTH + x] != EMPTY)) {

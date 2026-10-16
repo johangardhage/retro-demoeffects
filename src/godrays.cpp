@@ -301,8 +301,11 @@ static void BuildWall(void)
 	// thinning out into the middle of the screen
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			float px = (x / WALL_PIXEL + 0.5f) * WALL_PIXEL;
-			float py = (y / WALL_PIXEL + 0.5f) * WALL_PIXEL;
+			// The middle of the block the pixel is in
+			int blockx = x / WALL_PIXEL;
+			int blocky = y / WALL_PIXEL;
+			float px = (blockx + 0.5f) * WALL_PIXEL;
+			float py = (blocky + 0.5f) * WALL_PIXEL;
 			float dx = px - RETRO_WIDTH / 2.0f;
 			float dy = py - RETRO_HEIGHT / 2.0f;
 			float r = hypotf(dx, dy);

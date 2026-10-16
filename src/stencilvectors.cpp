@@ -41,7 +41,8 @@ void DEMO_Render(RETRO_Time time)
 	int iscroll = (int)scroll;
 
 	// Draw cube
-	RETRO_Get3DModel()->stencilmaporigin = { (float)iscroll, (float)(iscroll / 2) };
+	int halfscroll = iscroll / 2;
+	RETRO_Get3DModel()->stencilmaporigin = { (float)iscroll, (float)halfscroll };
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
 	RETRO_RenderModel(RETRO_POLY_STENCIL);

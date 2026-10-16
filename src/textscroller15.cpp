@@ -120,7 +120,8 @@ void DEMO_Initialize(void)
 		{ 202, 91 }, { 160, 133 }, { 188, 161 }, { 174, 176 },
 		{ 188, 190 }, { 160, 216 } };
 	for (int segment = 0; segment < 8; segment++) {
-		vec2 a = edge[segment], b = edge[segment + 1];
+		vec2 a = edge[segment];
+		vec2 b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
 			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
 			for (int x = 0; x < right; x++) {

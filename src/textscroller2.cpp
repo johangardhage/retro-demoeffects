@@ -62,6 +62,9 @@ static const char *const ScrollText[][12] = {
 	},
 };
 
+constexpr int PAGES = (int)(sizeof(ScrollText) / sizeof(ScrollText[0]));
+constexpr int PAGE_ROWS = (int)(sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]));
+
 static RETRO_Image *PageImage;
 
 void DEMO_Render(RETRO_Time time)
@@ -89,6 +92,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), &ScrollText[0][0], sizeof(ScrollText) / sizeof(ScrollText[0][0]));
+	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), &ScrollText[0][0], PAGES * PAGE_ROWS);
 	RETRO_SetPalette(PageImage->palette);
 }

@@ -260,7 +260,8 @@ static void ScoreTable(Subject *subject)
 	}
 
 	float total = 0;
-	int used = 0, entries = 0;
+	int used = 0;
+	int entries = 0;
 	for (int color = 0; color < subject->colors; color++) {
 		float weight = subject->weight[color];
 		bool seen[RETRO_COLORS] = {};
@@ -558,6 +559,8 @@ void DEMO_Render(RETRO_Time time)
 		break;
 	case PAGE_MATCH:
 		DrawMatch(subject, time.total);
+		break;
+	default:
 		break;
 	}
 

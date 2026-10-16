@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROSHADETABLE_H_
-#define _RETROSHADETABLE_H_
+#pragma once
 
 #include "retropalette.h"
 
@@ -221,7 +220,9 @@ inline void RETRO_CreateShadeTable(const RETRO_Palette *palette, int colors, int
 //
 inline void RETRO_CreateColorLightTable(const RETRO_Palette *materials, const RETRO_Palette *palette, const RETRO_ShadeTable &table)
 {
-	int reds = table.tints[0], greens = table.tints[1], blues = table.tints[2];
+	int reds = table.tints[0];
+	int greens = table.tints[1];
+	int blues = table.tints[2];
 	int entries = reds * greens * blues;
 	for (int color = 0; color < table.colors; color++) {
 		RETRO_Palette material = materials[color];
@@ -364,5 +365,3 @@ inline void RETRO_AddShadeTableColors(RETRO_ColorHistogram *histogram, int image
 	for (int i = 0; i < source->width * source->height; i++) texels[source->data[i]]++;
 	RETRO_AddShadeTableColors(histogram, source->palette, texels, shadetable, lightweight, light, weight, brightness);
 }
-
-#endif

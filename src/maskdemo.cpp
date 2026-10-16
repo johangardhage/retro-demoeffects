@@ -148,7 +148,10 @@ void DEMO_Render(RETRO_Time time)
 	model->bumpgrazing = mode.bumpgrazing;
 
 	// Start with the mask's authored face upright before rotating all three axes.
-	static float ax = -M_PI / 2, ay = 0, az = M_PI, distance = 0.5;
+	static float ax = -M_PI / 2;
+	static float ay = 0;
+	static float az = M_PI;
+	static float distance = 0.5;
 	if (rotate) {
 		ax += time.delta * ROTATION_SPEED;
 		ay += time.delta * ROTATION_SPEED;

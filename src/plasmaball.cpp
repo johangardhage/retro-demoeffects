@@ -135,7 +135,9 @@ static void Displace(vec2 *point, const float *offset, int count, float jitter)
 //
 static void Respawn(Branch *branch)
 {
-	branch->root = ARC_POINTS / 4 + RANDOM(ARC_POINTS / 2);
+	// In the middle half of the filament
+	int span = ARC_POINTS / 2;
+	branch->root = ARC_POINTS / 4 + RANDOM(span);
 	branch->life = 2 + RANDOM(BRANCH_LIFE - 1);
 	branch->bend = (float)mix(0.3, 0.9, RAND()) * (RANDOM(2) ? 1.0f : -1.0f);
 	branch->reach = mix(0.25, 0.5, RAND());

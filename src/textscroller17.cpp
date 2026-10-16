@@ -61,8 +61,10 @@ static bool ShadowInk(int x, int y, int phase)
 // coverage, rather than introducing an unrelated blurred drop shadow.
 static float ShadowCoverage(float x, float y, int phase)
 {
-	int ix = (int)floorf(x), iy = (int)floorf(y);
-	float fx = x - ix, fy = y - iy;
+	int ix = (int)floorf(x);
+	int iy = (int)floorf(y);
+	float fx = x - ix;
+	float fy = y - iy;
 	float top = mix(ShadowInk(ix, iy, phase), ShadowInk(ix + 1, iy, phase), fx);
 	float bottom = mix(ShadowInk(ix, iy + 1, phase), ShadowInk(ix + 1, iy + 1, phase), fx);
 	return mix(top, bottom, fy);
@@ -86,11 +88,13 @@ void DEMO_Render(RETRO_Time time)
 	float slopey = 1.03f * sinf(ay + 0.5f);
 	vec3 light = normalize(vec3{ slopex, slopey, 1 });
 	float wallscale = (EYE_DISTANCE + WALL_DEPTH) / EYE_DISTANCE;
-	float centerx = RETRO_WIDTH * 0.5f, centery = RETRO_HEIGHT * 0.5f;
+	float centerx = RETRO_WIDTH * 0.5f;
+	float centery = RETRO_HEIGHT * 0.5f;
 
 	// The plaque is bright stone that the shadow darkens to roughly half.
 	// The rim is a bevel in the wall plane: the same light and the same shadow.
-	float stoneambient = 0.5f, stonediffuse = 0.62f;
+	float stoneambient = 0.5f;
+	float stonediffuse = 0.62f;
 	for (int y = -2; y < WALL_HEIGHT + 2; y++) {
 		for (int x = -2; x < WALL_WIDTH + 2; x++) {
 			float shadow = ShadowCoverage(centerx + (WALL_X + x - centerx) * wallscale + WALL_DEPTH * slopex,
@@ -120,7 +124,9 @@ void DEMO_Render(RETRO_Time time)
 	// so letters away from it go nearly black. The glint needs a viewer at a
 	// finite distance; with parallel view rays a flat face would shade evenly.
 	// A one-pixel bevel tilts outward at the glyph boundary to catch it.
-	float textdiffuse = 0.1f, textspecular = 1.25f, shininess = 8.0f;
+	float textdiffuse = 0.1f;
+	float textspecular = 1.25f;
+	float shininess = 8.0f;
 	for (int y = 0; y < ScrollImage->height; y++) {
 		for (int x = TEXT_MARGIN; x < RETRO_WIDTH - TEXT_MARGIN; x++) {
 			int sourcex = x + phase;
@@ -180,8 +186,10 @@ void DEMO_Initialize(void)
 	}
 	for (int y = 0; y < WALL_HEIGHT; y++) {
 		for (int x = 0; x < WALL_WIDTH; x++) {
-			int left = CLAMP(x - 1, 0, WALL_WIDTH), right = CLAMP(x + 1, 0, WALL_WIDTH);
-			int up = CLAMP(y - 1, 0, WALL_HEIGHT), down = CLAMP(y + 1, 0, WALL_HEIGHT);
+			int left = CLAMP(x - 1, 0, WALL_WIDTH);
+			int right = CLAMP(x + 1, 0, WALL_WIDTH);
+			int up = CLAMP(y - 1, 0, WALL_HEIGHT);
+			int down = CLAMP(y + 1, 0, WALL_HEIGHT);
 			float nx = (height[y][left] - height[y][right]) * 1.5f;
 			float ny = (height[up][x] - height[down][x]) * 1.5f;
 			StoneNormals[y][x] = normalize(vec3{ nx, ny, 1.0f });

@@ -28,9 +28,12 @@ static RETRO_Font Font;
 static double Sample(unsigned char character, double u, double v)
 {
 	if (u < 0.0 || v < 0.0 || u >= GLYPH_WIDTH || v >= GLYPH_HEIGHT) return 0.0;
-	int x = (int)u, y = (int)v;
-	int nextx = MIN(x + 1, GLYPH_WIDTH - 1), nexty = MIN(y + 1, GLYPH_HEIGHT - 1);
-	double fx = u - x, fy = v - y;
+	int x = (int)u;
+	int y = (int)v;
+	int nextx = MIN(x + 1, GLYPH_WIDTH - 1);
+	int nexty = MIN(y + 1, GLYPH_HEIGHT - 1);
+	double fx = u - x;
+	double fy = v - y;
 	double top = mix(RETRO_FontTexel(Font, character, x, y), RETRO_FontTexel(Font, character, nextx, y), fx);
 	double bottom = mix(RETRO_FontTexel(Font, character, x, nexty), RETRO_FontTexel(Font, character, nextx, nexty), fx);
 	return 255.0 * mix(top, bottom, fy);

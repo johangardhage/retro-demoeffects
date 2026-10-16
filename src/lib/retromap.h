@@ -15,8 +15,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROMAP_H_
-#define _RETROMAP_H_
+#pragma once
 
 #include "retro.h"
 #include "retrovector.h"
@@ -332,14 +331,17 @@ inline int RETRO_MapBrushFace(const RETRO_MapBrush &brush, int face, vec3 *corne
 	polygon[0][1] = origin + right * size - up * size;
 	polygon[0][2] = origin + right * size + up * size;
 	polygon[0][3] = origin - right * size + up * size;
-	int count = 4, from = 0;
+	int count = 4;
+	int from = 0;
 	for (int i = 0; i < brush.planes && count >= 3; i++) {
 		if (i == face) continue;
 		const RETRO_MapPlane &cut = brush.plane[i];
-		vec3 *in = polygon[from], *out = polygon[1 - from];
+		vec3 *in = polygon[from];
+		vec3 *out = polygon[1 - from];
 		int points = 0;
 		for (int j = 0; j < count; j++) {
-			vec3 a = in[j], b = in[(j + 1) % count];
+			vec3 a = in[j];
+			vec3 b = in[(j + 1) % count];
 			float da = dot(cut.normal, a) - cut.distance;
 			float db = dot(cut.normal, b) - cut.distance;
 			if (da <= 0) out[points++] = a;
@@ -354,5 +356,3 @@ inline int RETRO_MapBrushFace(const RETRO_MapBrush &brush, int face, vec3 *corne
 	}
 	return count;
 }
-
-#endif

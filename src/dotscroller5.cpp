@@ -43,6 +43,9 @@ constexpr float PROJECTION_SCALE = 1.0f;
 constexpr int MAX_MAP = 256;
 
 static const char *const ScrollText[] = { "RETRO", "DEMO" };
+
+constexpr int LINES = (int)(sizeof(ScrollText) / sizeof(ScrollText[0]));
+
 static RETRO_Image *HeightMap, *ColorMap, *TextImage;
 
 static unsigned char HeightSample[MAX_MAP * MAX_MAP];
@@ -52,7 +55,8 @@ static unsigned char ColorSample[MAX_MAP * MAX_MAP];
 // letter is looked up directly rather than cached in a mask array.
 static bool GlyphLit(int row, int col)
 {
-	int imagerow = row - GROUND_PAD, imagecol = col - GROUND_PAD;
+	int imagerow = row - GROUND_PAD;
+	int imagecol = col - GROUND_PAD;
 	if (imagerow < 0 || imagerow >= TextImage->height) return false;
 	if (imagecol < 0 || imagecol >= TextImage->width) return false;
 	return TextImage->data[imagerow * TextImage->width + imagecol] != 0;
@@ -62,7 +66,8 @@ static void SampleLandscape(int offsetx, int offsety)
 {
 	int mapwidth = TextImage->width + 2 * GROUND_PAD;
 	int mapheight = TextImage->height + 2 * GROUND_PAD;
-	int low = 255, high = 0;
+	int low = 255;
+	int high = 0;
 	for (int row = 0; row < mapheight; row++) {
 		for (int col = 0; col < mapwidth; col++) {
 			int cell = row * mapwidth + col;
@@ -101,7 +106,8 @@ static void PlotDot(float x, float y, float z, unsigned char color, const mat3 &
 	Vertex dot = RETRO_ProjectPoint(matrix * vec3{ x, y, z } + vec3{ 0, 0, OBJECT_Z }, PROJECTION_SCALE);
 	if (dot.q == 0.0f) return;
 
-	int sx = (int)lround(dot.spos.x), sy = (int)lround(dot.spos.y);
+	int sx = (int)lround(dot.spos.x);
+	int sy = (int)lround(dot.spos.y);
 	if (!RETRO_OnScreen(sx, sy)) return;
 
 	// dot.q is already 1/depth from the projection, and larger means nearer,
@@ -149,7 +155,7 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	TextImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	TextImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, LINES);
 	HeightMap = RETRO_LoadImage("assets/voxel_height_256x256.pcx");
 	ColorMap = RETRO_LoadImage("assets/voxel_color_256x256.pcx", true);
 	RETRO_SetColor(GROUND_COLOR_INDEX, RETRO_MIDNIGHTBLUE);

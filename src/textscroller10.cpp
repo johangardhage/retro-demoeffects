@@ -48,7 +48,7 @@ constexpr int COLUMN_SHADES = 64;
 constexpr int COLUMN_TEXT_SHADE = 64; // added to a letter's texel, selecting the second palette ramp
 constexpr int COLUMN_SPEED = 60; // table units per second
 
-static const char *const ScrollText[] = { "           RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "           RETRO DEMOEFFECTS...";
 
 static RETRO_Image *ScrollImage;
 
@@ -127,7 +127,7 @@ void DEMO_Initialize(void)
 {
 	// Generate the scrolling strip, then give it two pink depth ramps: one
 	// for the background and one, offset by COLUMN_TEXT_SHADE, for the letters
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]), FONT_SCALE);
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, FONT_SCALE);
 	RETRO_CreateGradientPalette(0, 64, RETRO_BLACK, RETRO_DEEPPINK);
 	RETRO_CreateGradientPalette(64, 128, RETRO_WINE, RETRO_PINK);
 }

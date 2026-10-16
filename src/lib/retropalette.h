@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROPALETTE_H_
-#define _RETROPALETTE_H_
+#pragma once
 
 #include "retro.h"
 #include "retrovector.h"
@@ -15,9 +14,9 @@
 // *******************************************************************
 
 // Named colors, with 8-bit components as used by RETRO_SetPalette. A demo can
-// name its own colors the same way, for example #define EMBER RETRO_RGB(0x140014)
+// name its own colors the same way.
 
-#define RETRO_RGB(hex) RETRO_Palette{ ((hex) >> 16) & 0xff, ((hex) >> 8) & 0xff, (hex) & 0xff }
+constexpr RETRO_Palette RETRO_RGB(unsigned hex) { return { (unsigned char)(hex >> 16 & 0xff), (unsigned char)(hex >> 8 & 0xff), (unsigned char)(hex & 0xff) }; }
 
 // Whites, grays and blacks
 constexpr RETRO_Palette RETRO_WHITE = { 255, 255, 255 };
@@ -1017,5 +1016,3 @@ inline void RETRO_CreateHistogramPalette(const RETRO_ColorHistogram *histogram, 
 	free(weight);
 	free(color);
 }
-
-#endif

@@ -68,7 +68,7 @@ constexpr int SHADE_AMP = 80; // shade is in [20, 180] as depth runs through [âˆ
 constexpr int SHADE_MAX = SHADE_MID + SHADE_AMP; // full shade, so ink Â· SHADE_MAX / SHADE_MAX is the atlas gray
 constexpr double BACK_DIM = 0.4; // extra scale on the back
 
-static const char *const ScrollText[] = { "                               RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "                               RETRO DEMOEFFECTS...";
 
 static RETRO_Image *ScrollImage;
 
@@ -133,11 +133,12 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText);
 
 	// Remember the darkest and lightest grays the atlas actually uses so the
 	// shade ramp can be built from them
-	int dim = 255, lit = 0;
+	int dim = 255;
+	int lit = 0;
 	for (int i = 0; i < ScrollImage->width * ScrollImage->height; i++) {
 		unsigned char ink = ScrollImage->data[i];
 		if (ink != 0) {

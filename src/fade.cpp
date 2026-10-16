@@ -21,12 +21,12 @@ constexpr double TIME_FADEIN = 2.5; // seconds the fade in takes
 constexpr double TIME_FADEOUT = 2.5; // seconds the fade out takes
 constexpr double TIME_HOLD = 0.5; // seconds held on black or on the picture
 
-enum { FADEIN, FADEOUT, HOLD };
+enum FadeState { FADEIN, FADEOUT, HOLD };
 
 void DEMO_Render(RETRO_Time time)
 {
-	static int state = HOLD;
-	static int next = FADEIN;
+	static FadeState state = HOLD;
+	static FadeState next = FADEIN;
 	static double hold = TIME_HOLD;
 	static double step = 0;
 

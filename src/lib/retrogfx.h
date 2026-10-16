@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROGFX_H_
-#define _RETROGFX_H_
+#pragma once
 
 #include "retro.h"
 
@@ -276,5 +275,3 @@ inline void RETRO_Blur(RETRO_BLUR_PATTERN blur, int decay = 0, RETRO_BLUR_MODE m
 		}
 	}
 }
-
-#endif

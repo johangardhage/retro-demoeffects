@@ -33,7 +33,7 @@ constexpr int IMAGE_HEIGHT = 256;
 constexpr double SCROLL_SPEED = 200.0; // strip columns per second
 constexpr double ROTATION_SPEED = 2.0; // radians per second, about each axis
 
-static const char *const ScrollText[] = { "     RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "     RETRO DEMOEFFECTS...";
 
 static RETRO_Image *ScrollImage;
 static unsigned char Image[IMAGE_WIDTH * IMAGE_HEIGHT];
@@ -104,7 +104,7 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]), FONT_SCALE, FONT_SPACING);
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, FONT_SCALE, FONT_SPACING);
 	ScrollY = (IMAGE_HEIGHT - ScrollImage->height) / 2;
 
 	for (int i = 0; i < ScrollImage->width * ScrollImage->height; i++) {

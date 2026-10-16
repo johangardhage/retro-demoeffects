@@ -55,13 +55,15 @@ constexpr int BAR_LAG = 30; // table units a bar rides behind the bar before it
 constexpr int BAR_AMP = 62; // pixels either side of the middle a bar reaches
 constexpr int BAR_SPEED = 75; // table units per second
 
-static const char *const ScrollText[] = { "       RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "       RETRO DEMOEFFECTS...";
 
 static const RETRO_Palette GroundStops[] = {
 	{ 30, 60, 200 }, // blue
 	{ 130, 40, 190 }, // purple
 	{ 0, 130, 150 }, // teal
 };
+
+constexpr int GROUND_STOPS = (int)(sizeof(GroundStops) / sizeof(GroundStops[0]));
 
 // One color per bar, in draw order
 static const RETRO_Palette BarColors[BARS] = { RETRO_RED, RETRO_ORANGE, RETRO_YELLOW, RETRO_GREEN };
@@ -118,15 +120,14 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]), FONT_SCALE);
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, FONT_SCALE);
 
 	// Init palette. Entry 0 is the black background, then the cyclic ramp of
 	// the ground
-	int stops = sizeof(GroundStops) / sizeof(GroundStops[0]);
-	int length = GROUND_STEPS / stops;
+	int length = GROUND_STEPS / GROUND_STOPS;
 	RETRO_SetColor(0, RETRO_BLACK);
-	for (int i = 0; i < stops; i++) {
-		RETRO_CreateGradientPalette(GROUND_RAMP0 + i * length, GROUND_RAMP0 + (i + 1) * length, GroundStops[i], GroundStops[(i + 1) % stops]);
+	for (int i = 0; i < GROUND_STOPS; i++) {
+		RETRO_CreateGradientPalette(GROUND_RAMP0 + i * length, GROUND_RAMP0 + (i + 1) * length, GroundStops[i], GroundStops[(i + 1) % GROUND_STOPS]);
 	}
 
 	// Each bar is a tube: a dark rim rising to its own hue over most of the way

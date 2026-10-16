@@ -94,7 +94,9 @@ void DEMO_Render(RETRO_Time time)
 				candidate[1] = arc;
 				candidates = 2;
 			}
-			float red = 0, green = 0, blue = 0;
+			float red = 0;
+			float green = 0;
+			float blue = 0;
 			bool covered = false;
 
 			for (int i = 0; i < candidates && !covered; i++) {

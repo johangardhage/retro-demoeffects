@@ -80,8 +80,8 @@ void DEMO_Render(RETRO_Time time)
 	// Aim the lamps
 	vec3 axis[LAMPS];
 	for (int i = 0; i < LAMPS; i++) {
-		float aimx = RETRO_WIDTH / 2 + (RETRO_WIDTH / 2 - AIM_MARGIN) * cosf(Lamps[i].xrate * phase + Lamps[i].xphase);
-		float aimy = RETRO_HEIGHT / 2 + (RETRO_HEIGHT / 2 - AIM_MARGIN) * cosf(Lamps[i].yrate * phase);
+		float aimx = RETRO_WIDTH / 2.0f + (RETRO_WIDTH / 2.0f - AIM_MARGIN) * cosf(Lamps[i].xrate * phase + Lamps[i].xphase);
+		float aimy = RETRO_HEIGHT / 2.0f + (RETRO_HEIGHT / 2.0f - AIM_MARGIN) * cosf(Lamps[i].yrate * phase);
 
 		axis[i] = normalize(vec3{ aimx - Lamps[i].x, aimy - Lamps[i].y, LAMP_HEIGHT });
 	}

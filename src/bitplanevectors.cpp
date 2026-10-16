@@ -60,7 +60,9 @@ void DEMO_Initialize(void)
 	// the sum of their colors
 	RETRO_Palette palette[RETRO_COLORS] = {};
 	for (int i = 0; i < 1 << PLATE_COUNT; i++) {
-		int r = 0, g = 0, b = 0;
+		int r = 0;
+		int g = 0;
+		int b = 0;
 		for (int k = 0; k < PLATE_COUNT; k++) {
 			if (i & (1 << k)) {
 				r += Plates[k].color.r;

@@ -59,9 +59,12 @@ static Sample Bilinear(int level, double u, double v)
 	const Level &map = Levels[level];
 	double x = (u + 0.5) * map.width - 0.5;
 	double y = (v + 0.5) * map.height - 0.5;
-	int ix = (int)floor(x), iy = (int)floor(y);
-	int x0 = CLAMP(ix, 0, map.width), x1 = CLAMP(ix + 1, 0, map.width);
-	int y0 = CLAMP(iy, 0, map.height), y1 = CLAMP(iy + 1, 0, map.height);
+	int ix = (int)floor(x);
+	int iy = (int)floor(y);
+	int x0 = CLAMP(ix, 0, map.width);
+	int x1 = CLAMP(ix + 1, 0, map.width);
+	int y0 = CLAMP(iy, 0, map.height);
+	int y1 = CLAMP(iy + 1, 0, map.height);
 	return Mix(Mix(map.pixels[y0 * map.width + x0], map.pixels[y0 * map.width + x1], x - ix),
 		Mix(map.pixels[y1 * map.width + x0], map.pixels[y1 * map.width + x1], x - ix), y - iy);
 }
@@ -72,8 +75,10 @@ static Sample Bilinear(int level, double u, double v)
 // rather than the average dropping to fewer samples.
 static Sample DownsampleTexel(const Level &parent, int x, int y)
 {
-	int x0 = x * 2, x1 = MIN(x0 + 1, parent.width - 1);
-	int y0 = y * 2, y1 = MIN(y0 + 1, parent.height - 1);
+	int x0 = x * 2;
+	int x1 = MIN(x0 + 1, parent.width - 1);
+	int y0 = y * 2;
+	int y1 = MIN(y0 + 1, parent.height - 1);
 	Sample a = parent.pixels[y0 * parent.width + x0];
 	Sample b = parent.pixels[y0 * parent.width + x1];
 	Sample c = parent.pixels[y1 * parent.width + x0];

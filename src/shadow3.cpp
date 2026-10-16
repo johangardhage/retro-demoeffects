@@ -62,8 +62,8 @@
 #include "lib/retrovector.h"
 
 // The terrain is 1000 world units across 16 samples
-#define WORLD(units) ((units) * (16 - 1) / 1000.0f)
-#define TO_WORLD(cells) ((cells) * 1000.0f / (16 - 1))
+constexpr float WORLD(float units) { return units * (16 - 1) / 1000.0f; }
+constexpr float TO_WORLD(float cells) { return cells * 1000.0f / (16 - 1); }
 
 constexpr float TERRAIN_SCALE = WORLD(700.0f / 255); // map cells of height per stored byte
 
@@ -128,7 +128,10 @@ static RETRO_ColorHistogram Histogram;
 static float LightWeight[LIGHT_LEVELS * TINT_LEVELS * TINT_LEVELS]; // how often the ground sees each light, laid out as the tables
 
 // The colors drawn besides the textures, held in the palette exactly
-static const RETRO_Palette CubeGreen = { 0, 255, 10 }, CubeRed = { 255, 0, 0 }, Sky = { 50, 50, 200 }, Ground = { 25, 50, 110 };
+static const RETRO_Palette CubeGreen = { 0, 255, 10 };
+static const RETRO_Palette CubeRed = { 255, 0, 0 };
+static const RETRO_Palette Sky = { 50, 50, 200 };
+static const RETRO_Palette Ground = { 25, 50, 110 };
 static const RETRO_Palette Held[] = { RETRO_BLACK, RETRO_GREEN, RETRO_WHITE, CubeGreen, CubeRed, Sky, Ground };
 constexpr int HELD = (int)(sizeof(Held) / sizeof(Held[0]));
 

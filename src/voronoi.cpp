@@ -69,7 +69,8 @@ void DEMO_Render(RETRO_Time time)
 	}
 	for (int i = 0; i < SEEDS; i++) {
 		for (int j = 0; j < SEEDS; j++) {
-			float dx = seedx[j] - seedx[i], dy = seedy[j] - seedy[i];
+			float dx = seedx[j] - seedx[i];
+			float dy = seedy[j] - seedy[i];
 			invgap[i][j] = i == j ? 0 : 0.5f / MAX(hypotf(dx, dy), 0.001f);
 		}
 	}
@@ -81,7 +82,8 @@ void DEMO_Render(RETRO_Time time)
 			float distance[SEEDS];
 			int nearest = 0;
 			for (int i = 0; i < SEEDS; i++) {
-				float dx = x - seedx[i], dy = y - seedy[i];
+				float dx = x - seedx[i];
+				float dy = y - seedy[i];
 				distance[i] = dx * dx + dy * dy;
 				if (distance[i] < distance[nearest]) {
 					nearest = i;

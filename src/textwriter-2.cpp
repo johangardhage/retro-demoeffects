@@ -59,18 +59,19 @@ static const char *const ScrollText[][12] = {
 	},
 };
 
+constexpr int PAGES = (int)(sizeof(ScrollText) / sizeof(ScrollText[0]));
+constexpr int PAGE_ROWS = (int)(sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]));
+
 static RETRO_Font Font;
 
 void DEMO_Render(RETRO_Time time)
 {
-	int pages = sizeof(ScrollText) / sizeof(ScrollText[0]);
-	int lines = sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]);
-	double slot = fmod(time.total / PAGE_TIME, pages);
+	double slot = fmod(time.total / PAGE_TIME, PAGES);
 	int page = (int)slot;
 	int remaining = (int)((slot - page) * PAGE_TIME * CHARACTERS_PER_SECOND);
-	int texty = (RETRO_HEIGHT - lines * Font.height) / 2;
+	int texty = (RETRO_HEIGHT - PAGE_ROWS * Font.height) / 2;
 
-	for (int row = 0; row < lines && ScrollText[page][row] != NULL && remaining > 0; row++) {
+	for (int row = 0; row < PAGE_ROWS && ScrollText[page][row] != NULL && remaining > 0; row++) {
 		const char *line = ScrollText[page][row];
 		int length = (int)strlen(line);
 		int visible = MIN(remaining, length);

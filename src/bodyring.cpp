@@ -56,15 +56,15 @@ constexpr int SHADOW_REACH = 100;          // the ring's height beyond which it 
 constexpr int SHADOW_OFFSET = 32;          // the shaded metal is 32 entries past the lit
 
 // Eye distances n pixels span at depth z, for placing things just off screen
-#define PIXELS(n, z) ((n) * ((z) + 1) / FOCAL)
+constexpr float PIXELS(float n, float z) { return n * (z + 1) / FOCAL; }
 
 constexpr float NECK_HEIGHT = 2.0f;        // eye distances the neck's top is above the torso's middle
 constexpr float NECK_DEPTH = 0.25f;        // and at most behind it, as the torso starts turned away
 constexpr float TORSO_REACH = 2.2f;        // eye distances the ring reaches across from the torso's axis, circling it
 constexpr float TORSO_NEAR = 7.7f;         // the torso's depth as it rises
 constexpr float TORSO_FAR = 8.0f;          // and once the knot is in
-constexpr float TORSO_BELOW = NECK_HEIGHT + PIXELS(RETRO_HEIGHT / 2, TORSO_NEAR + NECK_DEPTH); // the height it rises from, the neck's top on the bottom edge
-constexpr float TORSO_LEAVES = -(TORSO_REACH + PIXELS(RETRO_WIDTH / 2, TORSO_FAR)); // where it leaves to, past the left edge with its ring
+constexpr float TORSO_BELOW = NECK_HEIGHT + PIXELS(RETRO_HEIGHT / 2.0f, TORSO_NEAR + NECK_DEPTH); // the height it rises from, the neck's top on the bottom edge
+constexpr float TORSO_LEAVES = -(TORSO_REACH + PIXELS(RETRO_WIDTH / 2.0f, TORSO_FAR)); // where it leaves to, past the left edge with its ring
 constexpr float SPIN_START = 2.3f;         // the time the torso has risen and starts to spin
 constexpr float SPIN_SPEED = -74.0f;       // degrees a second it spins
 constexpr float ROCK_START = 7.1f;         // the time it starts to rock and the ring to circle it
@@ -80,8 +80,8 @@ constexpr float CIRCLE_RADIUS = 0.43f;     // eye distances it swings off the to
 constexpr float KNOT_RADIUS = 2.86f;       // eye distances the knot reaches from its middle, whichever way it turns
 constexpr float KNOT_FAR = 20.0f;          // its depth as it flies in
 constexpr float KNOT_NEAR = 8.3f;          // and once it is in
-constexpr float KNOT_OUTSIDE = -(KNOT_RADIUS + PIXELS(RETRO_WIDTH / 2, KNOT_FAR)); // where it flies in from, past the left edge
-constexpr float KNOT_LEAVES = KNOT_RADIUS + PIXELS(RETRO_WIDTH / 2, KNOT_NEAR); // and leaves to, past the right edge
+constexpr float KNOT_OUTSIDE = -(KNOT_RADIUS + PIXELS(RETRO_WIDTH / 2.0f, KNOT_FAR)); // where it flies in from, past the left edge
+constexpr float KNOT_LEAVES = KNOT_RADIUS + PIXELS(RETRO_WIDTH / 2.0f, KNOT_NEAR); // and leaves to, past the right edge
 constexpr float KNOT_START = 9.0f;         // the time it flies in at
 constexpr vec3 TUMBLE_SPEED = { 6.0f, -43.0f, -18.5f }; // degrees a second it pitches, yaws and rolls
 

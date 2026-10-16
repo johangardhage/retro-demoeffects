@@ -16,14 +16,13 @@
 #include "lib/retropoly.h"
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
-static const char *const ScrollText[] = { "RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = "RETRO DEMOEFFECTS...";
 constexpr float RADIUS = 128.0f;
 constexpr float LETTER_WIDTH = 48.0f;
 constexpr float LETTER_HEIGHT = 108.0f;
 constexpr double TURN_SPEED = 2.5; // radians per second along the path
 constexpr double LETTER_DELAY = 0.25; // seconds between letters, independent of message length
 constexpr int GAP_LETTERS = 4; // empty letter slots before the message repeats
-#define PERIOD ((LetterCount + GAP_LETTERS) * LETTER_DELAY)
 constexpr float CAMERA_DISTANCE = 300.0f;
 constexpr int TOP = 24;
 constexpr int BOTTOM = 216;
@@ -41,6 +40,13 @@ constexpr float SHININESS = 80.0f;
 
 static RETRO_Font Font;
 static int LetterCount;
+
+// Seconds before the message repeats
+static double Period(void)
+{
+	return (LetterCount + GAP_LETTERS) * LETTER_DELAY;
+}
+
 static RETRO_Image *TextStrip;
 static unsigned char Background[RETRO_WIDTH * RETRO_HEIGHT];
 static unsigned char Scene[RETRO_WIDTH * RETRO_HEIGHT];
@@ -61,7 +67,7 @@ void DEMO_Render(RETRO_Time time)
 	for (int i = 0; i < LetterCount; i++) {
 		double age = time.total - i * LETTER_DELAY;
 		if (age < 0) continue;
-		double angle = ENTRY_ANGLE - fmod(age, PERIOD) * TURN_SPEED;
+		double angle = ENTRY_ANGLE - fmod(age, Period()) * TURN_SPEED;
 		// Straight tangents join the back and front of the right-hand turn.
 		// Clamp the orientation on both straight sections so entry and exit
 		// translate the letters without rotating them.
@@ -81,7 +87,8 @@ void DEMO_Render(RETRO_Time time)
 		};
 
 		// The letter's screen bounds; nothing outside them is cleared, drawn or read.
-		vec2 low = quad[0].pos, high = quad[0].pos;
+		vec2 low = quad[0].pos;
+		vec2 high = quad[0].pos;
 		for (const PolygonPoint &point : quad) {
 			low = min(low, point.pos);
 			high = max(high, point.pos);
@@ -139,8 +146,8 @@ void DEMO_Initialize(void)
 	RETRO_SetPalette(colors, sizeof(colors) / sizeof(colors[0]));
 
 	Font = RETRO_LoadFont(FONT);
-	LetterCount = (int)strlen(ScrollText[0]);
-	TextStrip = RETRO_GenerateTextImage(Font, ScrollText, 1);
+	LetterCount = (int)strlen(ScrollText);
+	TextStrip = RETRO_GenerateTextImage(Font, ScrollText);
 	for (int i = 0; i < TextStrip->width * TextStrip->height; i++) {
 		TextStrip->data[i] = TextStrip->data[i] != 0;
 	}
@@ -150,7 +157,8 @@ void DEMO_Initialize(void)
 		{ 202, 91 }, { 160, 133 }, { 188, 161 }, { 174, 176 },
 		{ 188, 190 }, { 160, BOTTOM } };
 	for (int segment = 0; segment < 8; segment++) {
-		vec2 a = edge[segment], b = edge[segment + 1];
+		vec2 a = edge[segment];
+		vec2 b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
 			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
 			for (int x = 0; x < right; x++) {

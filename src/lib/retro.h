@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETRO_H_
-#define _RETRO_H_
+#pragma once
 
 #include <SDL3/SDL.h>
 #include <math.h> // cos, sin, pow
@@ -204,7 +203,7 @@ inline struct {
 // Public functions
 // *******************************************************************
 
-inline void RETRO_RageQuit(const char *message, ...)
+[[noreturn]] inline void RETRO_RageQuit(const char *message, ...)
 {
 	va_list args;
 	va_start(args, message);
@@ -245,11 +244,6 @@ inline RETRO_Palette RETRO_To6bitColor(RETRO_Palette color)
 inline RETRO_Palette RETRO_To8bitColor(RETRO_Palette color)
 {
 	return { (unsigned char)((color.r & 63) << 2), (unsigned char)((color.g & 63) << 2), (unsigned char)((color.b & 63) << 2) };
-}
-
-inline RETRO_Palette RETRO_Get6bitColor(int color)
-{
-	return RETRO_To6bitColor(RETRO_GetColor(color));
 }
 
 inline void RETRO_SetColor(int color, unsigned char r, unsigned char g, unsigned char b)
@@ -396,9 +390,10 @@ inline unsigned char *RETRO_LoadFile(const char *filename, int *size = NULL)
 	if (fp == NULL) {
 		RETRO_RageQuit("Cannot open file: %s\n", filename);
 	}
-	fseek(fp, 0, SEEK_END);
-	long length = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
+	long length = fseek(fp, 0, SEEK_END) == 0 ? ftell(fp) : -1;
+	if (length < 0 || fseek(fp, 0, SEEK_SET) != 0) {
+		RETRO_RageQuit("Cannot read file: %s\n", filename);
+	}
 	unsigned char *data = (unsigned char *)malloc(length + 1);
 	if (data == NULL || fread(data, 1, length, fp) != (size_t)length) {
 		RETRO_RageQuit("Cannot read file: %s\n", filename);
@@ -475,12 +470,13 @@ inline RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = fals
 		}
 	}
 
-	// Read palette from end of file
-	fseek(fp, -768, SEEK_END);
+	// Read palette from end of file, after the 0x0C that marks it
+	unsigned char rgb[768];
+	if (fseek(fp, -769, SEEK_END) != 0 || fgetc(fp) != 0x0C || fread(rgb, 1, sizeof(rgb), fp) != sizeof(rgb)) {
+		RETRO_RageQuit("Cannot read palette: %s\n", filename);
+	}
 	for (int i = 0; i < 256; i++) {
-		image->palette[i].r = fgetc(fp);
-		image->palette[i].g = fgetc(fp);
-		image->palette[i].b = fgetc(fp);
+		image->palette[i] = { rgb[i * 3], rgb[i * 3 + 1], rgb[i * 3 + 2] };
 	}
 
 	// Close file
@@ -855,5 +851,3 @@ inline void RETRO_Mainloop(void)
 		}
 	}
 }
-
-#endif

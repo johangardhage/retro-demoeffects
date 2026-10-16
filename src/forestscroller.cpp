@@ -27,7 +27,6 @@ constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 
 constexpr int CELL_COLS = 237; // the grid along the spray
 constexpr int CELL_XOFFSET = 104; // the lap's lead-in gap
-#define BAND_CYCLE (Band->width + CELL_XOFFSET) // one lap of the window, band plus its lead-in gap
 constexpr double TICKS_PER_WINDOW = 2.5; // average ticks per column (20% faster than three ticks)
 constexpr double END_ACCELERATION = 0.10; // reduce column density near the narrow tip, ramping back to normal by the wide end
 constexpr double EXIT_ACCELERATION = 0.30; // push column density past normal right at the wide end
@@ -52,7 +51,13 @@ constexpr double VY = 0.34202014;
 static unsigned char *Background;
 static RETRO_Image *Band;
 
-static const char *const ScrollText[] = { "RETRO DEMOEFFECTS..." };
+// One lap of the window, band plus its lead-in gap
+static int BandCycle(void)
+{
+	return Band->width + CELL_XOFFSET;
+}
+
+static const char ScrollText[] = "RETRO DEMOEFFECTS...";
 
 static unsigned char ForegroundMask[RETRO_WIDTH * RETRO_HEIGHT];
 
@@ -112,7 +117,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 			double textt = t + END_ACCELERATION * (1 - t) * (1 - t) - EXIT_ACCELERATION * t * (1 - t);
 			int col = (int)lround(textt * (CELL_COLS - 1));
 			// Negative columns carry the lettering past the wide-end anchor.
-			int strip = WRAP(col + window, BAND_CYCLE);
+			int strip = WRAP(col + window, BandCycle());
 			// At startup there is no previous lap trailing through the extension.
 			bool waitingfortext = firstlap && col + window < 0;
 
@@ -132,7 +137,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 		}
 	}
 
-	tick = WRAP(tick + 1, (int)(BAND_CYCLE * TICKS_PER_WINDOW));
+	tick = WRAP(tick + 1, (int)(BandCycle() * TICKS_PER_WINDOW));
 	if (tick == 0) {
 		firstlap = false;
 	}
@@ -144,7 +149,7 @@ void DEMO_Initialize(void)
 	Background = background->data;
 	RETRO_Blit(Background);
 
-	Band = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]), 2);
+	Band = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, 2);
 
 	for (int addr = 0; addr < RETRO_WIDTH * RETRO_HEIGHT; addr++) {
 		RETRO_Palette color = background->palette[Background[addr]];

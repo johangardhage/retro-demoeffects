@@ -62,8 +62,6 @@ constexpr float CY = RETRO_HEIGHT * 0.50f;
 constexpr double ENTRY_Y = 170.0;
 constexpr double EXIT_Y = -145.0;
 constexpr double PASS_GAP = 1.5;
-#define LINE_HEIGHT (Font.height * GLYPH_HEIGHT)
-#define PASS_CYCLE ((ENTRY_Y - EXIT_Y + LINE_HEIGHT + (LINES - 1) * LINE_SPACING) / SCROLL_SPEED + PASS_GAP)
 
 // The ink flashes white on a beat and decays back to its base gray.
 constexpr double FLASH_PERIOD = 0.95;
@@ -71,6 +69,19 @@ constexpr double FLASH_DECAY = 0.18;
 constexpr RETRO_Palette INK = { 192, 187, 193 };
 
 static RETRO_Font Font;
+
+// The height of one line of text
+static float LineHeight(void)
+{
+	return Font.height * GLYPH_HEIGHT;
+}
+
+// Seconds for one pass of the text, the gap after it included
+static double PassCycle(void)
+{
+	return (ENTRY_Y - EXIT_Y + LineHeight() + (LINES - 1) * LINE_SPACING) / SCROLL_SPEED + PASS_GAP;
+}
+
 static RETRO_Image *TextStrip;
 static mat3 CameraMatrix;
 static unsigned char Background[RETRO_WIDTH * RETRO_HEIGHT];
@@ -87,17 +98,18 @@ void DEMO_Render(RETRO_Time time)
 	double flash = exp(-fmod(time.total, FLASH_PERIOD) / FLASH_DECAY);
 	RETRO_SetColor(3, mix(INK, RETRO_WHITE, flash));
 
-	double firstrow = ENTRY_Y - fmod(time.total, PASS_CYCLE) * SCROLL_SPEED;
+	double firstrow = ENTRY_Y - fmod(time.total, PassCycle()) * SCROLL_SPEED;
 	RETRO_ClearDepthBuffer();
 	for (int i = 0; i < LINES; i++) {
 		float top = (float)(firstrow + i * LINE_SPACING);
-		float bottom = top + LINE_HEIGHT;
+		float bottom = top + LineHeight();
 		if (bottom < EXIT_Y || top > ENTRY_Y) continue;
 
 		// Only the line's own ink, which the strip centers within its widest line.
 		int linewidth = RETRO_TextLineWidth(Font, CrawlText[i]);
 		if (linewidth == 0) continue;
-		float left = (float)((TextStrip->width - linewidth) / 2);
+		int inset = (TextStrip->width - linewidth) / 2;
+		float left = (float)inset;
 		float right = left + linewidth;
 		float center = TextStrip->width / 2.0f;
 		float v = (float)(i * Font.height);
@@ -134,7 +146,8 @@ void DEMO_Initialize(void)
 		{ 247, 91 }, { 205, 133 }, { 233, 161 }, { 219, 176 },
 		{ 233, 190 }, { 205, 216 } };
 	for (int segment = 0; segment < 8; segment++) {
-		vec2 a = edge[segment], b = edge[segment + 1];
+		vec2 a = edge[segment];
+		vec2 b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
 			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
 			for (int x = RETRO_WIDTH - right; x < RETRO_WIDTH; x++) {

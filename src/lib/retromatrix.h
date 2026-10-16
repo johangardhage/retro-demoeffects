@@ -1,8 +1,6 @@
 //
 // Retro graphics library
 //
-// Author: Johan Gardhage <johan.gardhage@gmail.com>
-//
 // GLSL/GLM-style 3x3 matrix - mat3, with operator overloading at global
 // scope, bare, matching GLSL naming exactly. Stored as three columns, the
 // same layout and multiplication convention as GLSL's mat3: mat3(c0, c1, c2)
@@ -11,9 +9,10 @@
 // the library's RETRO_ prefix, for the same reason: plain matrix algebra
 // reads better unprefixed, the way GLSL itself reads.
 //
+// Author: Johan Gardhage <johan.gardhage@gmail.com>
+//
 
-#ifndef _RETROMATRIX_H_
-#define _RETROMATRIX_H_
+#pragma once
 
 #include "retrovector.h"
 
@@ -60,7 +59,9 @@ inline mat3 rotate(float ax, float ay, float az) { return rotateZ(az) * rotateY(
 // formula, c I + s [axis]x + (1 - c) axis axisᵀ, one column per basis vector.
 inline mat3 rotate(float angle, vec3 axis)
 {
-	float c = cos(angle), s = sin(angle), t = 1 - c;
+	float c = cos(angle);
+	float s = sin(angle);
+	float t = 1 - c;
 	vec3 k = axis;
 	return {
 		{ c + t * k.x * k.x, s * k.z + t * k.y * k.x, -s * k.y + t * k.z * k.x },
@@ -68,5 +69,3 @@ inline mat3 rotate(float angle, vec3 axis)
 		{ s * k.y + t * k.x * k.z, -s * k.x + t * k.y * k.z, c + t * k.z * k.z }
 	};
 }
-
-#endif

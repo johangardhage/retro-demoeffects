@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROPOLY_H_
-#define _RETROPOLY_H_
+#pragma once
 
 #include "retropalette.h"
 #include "retroshadetable.h"
@@ -725,7 +724,9 @@ inline void RETRO_DrawGouraudBumpPolygon(const PolygonPoint *point, int points, 
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 		float dcdx = ((p1->c - p0->c) * (p2->pos.y - p0->pos.y) - (p2->c - p0->c) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -938,7 +939,9 @@ inline void RETRO_DrawPhongBumpPolygon(const PolygonPoint *point, int points, un
 			dpdx = ((p1->p - p0->p) * (p2->pos.y - p0->pos.y) - (p2->p - p0->p) * (p1->pos.y - p0->pos.y)) / determinant;
 			dpdy = ((p1->pos.x - p0->pos.x) * (p2->p - p0->p) - (p2->pos.x - p0->pos.x) * (p1->p - p0->p)) / determinant;
 		}
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 
@@ -1025,7 +1028,9 @@ inline void RETRO_DrawTexMapPolygon(const PolygonPoint *point, int points, unsig
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -1087,7 +1092,9 @@ inline void RETRO_DrawTexMapGouraudPolygon(const PolygonPoint *point, int points
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 		float dcdx = ((p1->c - p0->c) * (p2->pos.y - p0->pos.y) - (p2->c - p0->c) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -1193,7 +1200,9 @@ inline void RETRO_DrawTexMapBumpPolygon(const PolygonPoint *point, int points, u
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 		float dcdx = ((p1->c - p0->c) * (p2->pos.y - p0->pos.y) - (p2->c - p0->c) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -1312,7 +1321,9 @@ inline void RETRO_DrawTexMapPhongPolygon(const PolygonPoint *point, int points, 
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -1405,7 +1416,9 @@ inline void RETRO_DrawTexMapPhongBumpPolygon(const PolygonPoint *point, int poin
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -1496,7 +1509,9 @@ inline void RETRO_DrawTexMapEnvMapPolygon(const PolygonPoint *point, int points,
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 		vec3 dndx = { 0.0f, 0.0f, 0.0f };
@@ -1580,7 +1595,9 @@ inline void RETRO_DrawTexMapEnvMapBumpPolygon(const PolygonPoint *point, int poi
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 		vec3 dndx = ((p1->n - p0->n) * (p2->pos.y - p0->pos.y) - (p2->n - p0->n) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -1794,7 +1811,9 @@ inline void RETRO_DrawEnvMapBumpPolygon(const PolygonPoint *point, int points, u
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -1866,7 +1885,9 @@ inline void RETRO_DrawEnvMapOffsetPolygon(const PolygonPoint *point, int points,
 		float determinant = RETRO_ScanTriangle(p0, p1, p2, span, ystart, yend, clip);
 		if (determinant == 0.0f) continue;
 
-		vec2 uv0 = p0->uv * p0->q, uv1 = p1->uv * p1->q, uv2 = p2->uv * p2->q;
+		vec2 uv0 = p0->uv * p0->q;
+		vec2 uv1 = p1->uv * p1->q;
+		vec2 uv2 = p2->uv * p2->q;
 		vec2 duvdx = ((uv1 - uv0) * (p2->pos.y - p0->pos.y) - (uv2 - uv0) * (p1->pos.y - p0->pos.y)) / determinant;
 		vec2 duvdy = ((p1->pos.x - p0->pos.x) * (uv2 - uv0) - (p2->pos.x - p0->pos.x) * (uv1 - uv0)) / determinant;
 		float dqdx = ((p1->q - p0->q) * (p2->pos.y - p0->pos.y) - (p2->q - p0->q) * (p1->pos.y - p0->pos.y)) / determinant;
@@ -1960,5 +1981,3 @@ inline void RETRO_DrawDepthSprite(vec2 spos, float q, float size, float thicknes
 		}
 	}
 }
-
-#endif

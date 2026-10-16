@@ -87,7 +87,8 @@ void DEMO_Render(RETRO_Time time)
 		// Only the line's own ink, which the strip centers within its widest line.
 		int linewidth = RETRO_TextLineWidth(Font, CrawlText[i]);
 		if (linewidth == 0) continue;
-		float left = (float)((TextStrip->width - linewidth) / 2);
+		int inset = (TextStrip->width - linewidth) / 2;
+		float left = (float)inset;
 		float right = left + linewidth;
 		float center = TextStrip->width / 2.0f;
 		float v = (float)(i * Font.height);

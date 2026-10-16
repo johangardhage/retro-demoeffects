@@ -136,10 +136,22 @@ static vec2 ShadeLight(vec3 p, vec3 normal, vec3 dir, float ambient, float diffu
 static void MaterialRange(unsigned char material, int &start, int &shades)
 {
 	switch (material) {
-	case MAT_TORSO: start = TORSO_START; shades = TORSO_SHADES; break;
-	case MAT_SKIN: start = SKIN_START; shades = SKIN_SHADES; break;
-	case MAT_HAIR: start = HAIR_START; shades = HAIR_SHADES; break;
-	default: start = EYE_START; shades = EYE_SHADES; break;
+	case MAT_TORSO:
+		start = TORSO_START;
+		shades = TORSO_SHADES;
+		break;
+	case MAT_SKIN:
+		start = SKIN_START;
+		shades = SKIN_SHADES;
+		break;
+	case MAT_HAIR:
+		start = HAIR_START;
+		shades = HAIR_SHADES;
+		break;
+	default:
+		start = EYE_START;
+		shades = EYE_SHADES;
+		break;
 	}
 }
 
@@ -158,7 +170,8 @@ static int RampIndex(int start, int shades, float brightness, float glint)
 static unsigned char TraceScene(vec3 origin, vec3 dir)
 {
 	float glint = 0.0f; // brightest glint seen on any mirror bounce along the way, carried to whatever is finally resolved
-	int start = SKY_START, shades = SKY_SHADES; // sky by default, if the bounce budget runs out mid-mirror-chain
+	int start = SKY_START; // sky by default, if the bounce budget runs out mid-mirror-chain
+	int shades = SKY_SHADES;
 	float brightness = CLAMP01(dir.y);
 
 	for (int bounce = 0; bounce < MAX_BOUNCES; bounce++) {
@@ -166,14 +179,24 @@ static unsigned char TraceScene(vec3 origin, vec3 dir)
 		bool floorhit = false;
 		if (dir.y < -NEAR_T) {
 			float t = -origin.y / dir.y;
-			if (t > NEAR_T) { nearest = t; floorhit = true; }
+			if (t > NEAR_T) {
+				nearest = t;
+				floorhit = true;
+			}
 		}
 		int hit = -1;
 		for (int i = 2; i < SPHERE_COUNT; i++) {
 			float t;
-			if (RETRO_IntersectSphere(origin, dir, Body[i].center, Body[i].radius, NEAR_T, t) && t < nearest) { nearest = t; hit = i; floorhit = false; }
+			if (RETRO_IntersectSphere(origin, dir, Body[i].center, Body[i].radius, NEAR_T, t) && t < nearest) {
+				nearest = t;
+				hit = i;
+				floorhit = false;
+			}
 		}
-		if (hit < 0 && !floorhit) { brightness = CLAMP01(dir.y); break; }
+		if (hit < 0 && !floorhit) {
+			brightness = CLAMP01(dir.y);
+			break;
+		}
 
 		vec3 p = origin + dir * nearest;
 		vec3 normal = floorhit ? vec3{ 0, 1, 0 } : normalize(p - Body[hit].center);
@@ -181,7 +204,8 @@ static unsigned char TraceScene(vec3 origin, vec3 dir)
 		vec3 pout = p + normal * 0.35f;
 
 		if (floorhit) {
-			int tilex = (int)floorf(p.x / FLOOR_TILE), tilez = (int)floorf(p.z / FLOOR_TILE);
+			int tilex = (int)floorf(p.x / FLOOR_TILE);
+			int tilez = (int)floorf(p.z / FLOOR_TILE);
 			start = ((tilex + tilez) & 1) == 0 ? FLOOR_GREEN_START : FLOOR_YELLOW_START;
 			shades = FLOOR_SHADES;
 			brightness = ShadeLight(pout, normal, dir, MATTE_AMBIENT, MATTE_DIFFUSE).x;
@@ -243,10 +267,16 @@ static void CreateScene(void)
 
 static void UpdateScene(double T)
 {
-	const double X0 = -182, X1 = -108, Y0 = 88, HY = 184;
-	const double HVX = (X0 - X1) / 60.0, LVX = (X1 - X0) / 30.0;
-	const double HH = HY - Y0, HVY = 4.0 * HH / 60.0;
-	const double G = HVY * HVY / (2.0 * HH), LVY = 0.5 * G * 30.0;
+	const double X0 = -182;
+	const double X1 = -108;
+	const double Y0 = 88;
+	const double HY = 184;
+	const double HVX = (X0 - X1) / 60.0;
+	const double LVX = (X1 - X0) / 30.0;
+	const double HH = HY - Y0;
+	const double HVY = 4.0 * HH / 60.0;
+	const double G = HVY * HVY / (2.0 * HH);
+	const double LVY = 0.5 * G * 30.0;
 
 	// T grows without bound over the session's runtime, so it is wrapped
 	// into each ball's own period before use - see the file header for why
@@ -289,9 +319,12 @@ static void UpdateScene(double T)
 	n = q - (o + v * 45.41217f + u * 19.91111f);
 	UpdateAppendage(66, p, q, n, 44.294f, 46.098f);
 
-	Body[83].center = o + v * 69.0f + u * -7.0f; Body[83].center.x = 142;
-	Body[84].center = o + v * 69.0f + u * 7.0f; Body[84].center.x = 142;
-	Body[85].center = o + v * 71.0f; Body[85].center.x = 152;
+	Body[83].center = o + v * 69.0f + u * -7.0f;
+	Body[83].center.x = 142;
+	Body[84].center = o + v * 69.0f + u * 7.0f;
+	Body[84].center.x = 142;
+	Body[85].center = o + v * 71.0f;
+	Body[85].center.x = 152;
 }
 
 void DEMO_Render(RETRO_Time time)
@@ -300,7 +333,8 @@ void DEMO_Render(RETRO_Time time)
 	float ratio = SCREEN_WIDTH / RETRO_WIDTH;
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			float a = ratio * (x + 0.5f - RETRO_WIDTH / 2.0f), b = ratio * (RETRO_HEIGHT / 2.0f - (y + 0.5f));
+			float a = ratio * (x + 0.5f - RETRO_WIDTH / 2.0f);
+			float b = ratio * (RETRO_HEIGHT / 2.0f - (y + 0.5f));
 			vec3 dir = normalize(CamCenter + CamU * a + CamV * b - CamEye);
 			RETRO_PutPixel(x, y, TraceScene(CamEye, dir));
 		}

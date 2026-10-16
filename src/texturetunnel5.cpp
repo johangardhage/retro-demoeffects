@@ -76,7 +76,8 @@ void DEMO_Initialize(void)
 		for (int x = 0; x < RETRO_WIDTH; x++) {
 			// Find the FIRST crossing: distant circles can overlap again on
 			// the inside of the bend. A single global bisection misses this.
-			float low = 1.0f, high = 1.0f;
+			float low = 1.0f;
+			float high = 1.0f;
 			while (high < 2048.0f && ContourDistance(x + 0.5f, y + 0.5f, high) < 0.0f) {
 				low = high;
 				high += 0.25f;

@@ -74,15 +74,16 @@ static const char *const ScrollText[][12] = {
 	},
 };
 
+constexpr int PAGES = (int)(sizeof(ScrollText) / sizeof(ScrollText[0]));
+constexpr int PAGE_ROWS = (int)(sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]));
+
 static RETRO_Image *PageImage;
 
 void DEMO_Render(RETRO_Time time)
 {
-	int pages = sizeof(ScrollText) / sizeof(ScrollText[0]);
-	int lines = sizeof(ScrollText[0]) / sizeof(ScrollText[0][0]);
 	double cycle = ENTRANCE_TIME + HOLD_TIME + EXIT_TIME;
-	double pagetime = (lines - 1) * STAGGER + cycle;
-	double slot = fmod(time.total / pagetime, pages);
+	double pagetime = (PAGE_ROWS - 1) * STAGGER + cycle;
+	double slot = fmod(time.total / pagetime, PAGES);
 	int page = (int)slot;
 	double paget = (slot - page) * pagetime;
 
@@ -90,9 +91,9 @@ void DEMO_Render(RETRO_Time time)
 	int startx = RETRO_WIDTH;
 	int rowheight = FONT.height;
 	int spacing = rowheight + ROW_GAP;
-	int starty = (RETRO_HEIGHT - (lines * spacing - ROW_GAP)) / 2;
+	int starty = (RETRO_HEIGHT - (PAGE_ROWS * spacing - ROW_GAP)) / 2;
 
-	for (int i = 0; i < lines && ScrollText[page][i] != NULL; i++) {
+	for (int i = 0; i < PAGE_ROWS && ScrollText[page][i] != NULL; i++) {
 		double t = paget - i * STAGGER;
 		if (t < 0 || t >= cycle) {
 			continue;
@@ -107,7 +108,7 @@ void DEMO_Render(RETRO_Time time)
 		int resty = starty + i * spacing;
 		int y = resty + (int)round(WAVE_AMPLITUDE * sin(progress * WAVE_CYCLES * 2 * M_PI) * (1.0 - eased));
 
-		int sourcetop = (page * lines + i) * rowheight;
+		int sourcetop = (page * PAGE_ROWS + i) * rowheight;
 		int firsty = MAX(0, -y);
 		int lasty = MIN(rowheight, RETRO_HEIGHT - y);
 		int firstx = MAX(0, -x);
@@ -126,6 +127,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), &ScrollText[0][0], sizeof(ScrollText) / sizeof(ScrollText[0][0]));
+	PageImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), &ScrollText[0][0], PAGES * PAGE_ROWS);
 	RETRO_SetPalette(PageImage->palette);
 }

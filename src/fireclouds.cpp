@@ -88,8 +88,10 @@ static RETRO_Palette Base[BAND_COLORS];
 // fraction dropped before the two are added, so a band never rounds up.
 static void SetPalette(int weight)
 {
-	float firelevel = (float)(weight * LEVELS / WEIGHT_STOP) / LEVELS;
-	float fadelevel = (float)((WEIGHT_STOP - weight) * LEVELS / WEIGHT_STOP) / LEVELS;
+	int firesteps = weight * LEVELS / WEIGHT_STOP;
+	int fadesteps = (WEIGHT_STOP - weight) * LEVELS / WEIGHT_STOP;
+	float firelevel = (float)firesteps / LEVELS;
+	float fadelevel = (float)fadesteps / LEVELS;
 	for (int band = 0; band < BANDS; band++) {
 		RETRO_Palette fire = Fire[band] * firelevel;
 		for (int color = 0; color < BAND_COLORS; color++) {
@@ -107,8 +109,8 @@ static void BuildMap(void)
 	for (int ring = 0; ring < TEXTURE_WIDTH; ring++) {
 		for (int step = RING_ANGLES - 1; step >= 0; step--) {
 			double angle = step * (2.0 * M_PI / RING_ANGLES);
-			int x = (int)floor(CLOUD_WIDTH / 2 - cos(angle) * ring * RING_STEP * RING_SQUEEZE);
-			int y = (int)floor(CLOUD_HEIGHT / 2 + sin(angle) * ring * RING_STEP);
+			int x = (int)floor(CLOUD_WIDTH / 2.0 - cos(angle) * ring * RING_STEP * RING_SQUEEZE);
+			int y = (int)floor(CLOUD_HEIGHT / 2.0 + sin(angle) * ring * RING_STEP);
 			if (x >= 0 && x < CLOUD_WIDTH && y >= 0 && y < CLOUD_HEIGHT) {
 				int column = (int)lrint((double)step * TEXTURE_WIDTH / RING_ANGLES) % TEXTURE_WIDTH;
 				Map[y * CLOUD_WIDTH + x] = ring * TEXTURE_WIDTH + column;
@@ -133,7 +135,8 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	// The sine is read at half the angle, the fraction dropped. Only bits 8
 	// to 23 of the spiral reach the table.
 	int angle = (int)(pass * SPIRAL_STEP % SINE_PERIOD);
-	int sine = (int)lround(SINE_ONE * sin(angle / 2 * (2.0 * M_PI / (SINE_PERIOD / 2))));
+	int halfangle = angle / 2;
+	int sine = (int)lround(SINE_ONE * sin(halfangle * (2.0 * M_PI / (SINE_PERIOD / 2.0))));
 	unsigned spiral = (sine - pass * (TEXTURE_WIDTH << SPIRAL_SHIFT)) >> SPIRAL_SHIFT;
 	for (int i = 0; i < CLOUD_SIZE; i++) {
 		int texel = Texture[(Map[i] + spiral) % TEXTURE_SIZE];

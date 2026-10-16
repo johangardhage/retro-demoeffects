@@ -134,7 +134,9 @@ static void BuildFloor(Model3D *model)
 
 static void BuildMirror(Model3D *model)
 {
-	float hx = MIRROR_HX, hy = MIRROR_HY, hz = MIRROR_HZ;
+	float hx = MIRROR_HX;
+	float hy = MIRROR_HY;
+	float hz = MIRROR_HZ;
 	RETRO_AddModelVertex(model, -hx, -hy, -hz); // 0
 	RETRO_AddModelVertex(model, hx, -hy, -hz);  // 1
 	RETRO_AddModelVertex(model, hx, hy, -hz);   // 2

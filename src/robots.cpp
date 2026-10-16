@@ -61,8 +61,8 @@
 #include "lib/retrovector.h"
 
 // The terrain is 4000 world units across 40 samples
-#define WORLD(units) ((units) * (40 - 1) / 4000.0f)
-#define TO_WORLD(cells) ((cells) * 4000.0f / (40 - 1))
+constexpr float WORLD(float units) { return units * (40 - 1) / 4000.0f; }
+constexpr float TO_WORLD(float cells) { return cells * 4000.0f / (40 - 1); }
 
 constexpr float TERRAIN_SCALE = WORLD(700.0f / 255); // map cells of height per stored byte
 

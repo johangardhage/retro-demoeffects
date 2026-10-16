@@ -102,7 +102,7 @@ static double Flash; // brightness of the lightning, 0 to 1
 static void Respawn(Drop *drop, bool fresh)
 {
 	drop->x = mix(-RETRO_HEIGHT * RAIN_SLANT, RETRO_WIDTH, RAND());
-	drop->y = fresh ? -RANDOMF(RETRO_HEIGHT / 2) : RANDOMF(RETRO_HEIGHT);
+	drop->y = fresh ? -RANDOMF(RETRO_HEIGHT / 2.0) : RANDOMF(RETRO_HEIGHT);
 }
 
 //

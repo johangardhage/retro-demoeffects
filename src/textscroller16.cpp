@@ -64,14 +64,19 @@ static bool Ink(int letter, int x, int y)
 
 static void BuildGlyph(int letter)
 {
-	float dx = LETTER_WIDTH / Font.width, dy = LETTER_HEIGHT / Font.height;
-	float front = -LETTER_DEPTH / 2, back = LETTER_DEPTH / 2;
+	float dx = LETTER_WIDTH / Font.width;
+	float dy = LETTER_HEIGHT / Font.height;
+	float front = -LETTER_DEPTH / 2;
+	float back = LETTER_DEPTH / 2;
 	GlyphStart[letter + 1] = GlyphStart[letter];
 	for (int y = 0; y < Font.height; y++) {
 		// Merge horizontal ink runs into caps instead of making cubes for
 		// every bitmap pixel. Internal walls would never be visible.
 		for (int x = 0; x < Font.width;) {
-			if (!Ink(letter, x, y)) { x++; continue; }
+			if (!Ink(letter, x, y)) {
+				x++;
+				continue;
+			}
 			int start = x;
 			while (x < Font.width && Ink(letter, x, y)) x++;
 			float left = start * dx - LETTER_WIDTH / 2;
@@ -91,8 +96,10 @@ static void BuildGlyph(int letter)
 		}
 		for (int x = 0; x < Font.width; x++) {
 			if (!Ink(letter, x, y)) continue;
-			float left = x * dx - LETTER_WIDTH / 2, right = left + dx;
-			float top = y * dy, bottom = top + dy;
+			float left = x * dx - LETTER_WIDTH / 2;
+			float right = left + dx;
+			float top = y * dy;
+			float bottom = top + dy;
 			if (!Ink(letter, x, y - 1)) {
 				AddFace(letter, { left, top, front }, { right, top, front },
 					{ right, top, back }, { left, top, back }, { 0, -1, 0 });
@@ -175,7 +182,8 @@ void DEMO_Initialize(void)
 		{ 202, 91 }, { 160, 133 }, { 188, 161 }, { 174, 176 },
 		{ 188, 190 }, { 160, 216 } };
 	for (int segment = 0; segment < 8; segment++) {
-		vec2 a = edge[segment], b = edge[segment + 1];
+		vec2 a = edge[segment];
+		vec2 b = edge[segment + 1];
 		for (int y = (int)a.y; y < (int)b.y; y++) {
 			int right = (int)mix(a.x, b.x, (y - a.y) / (b.y - a.y));
 			for (int x = 0; x < right; x++) {

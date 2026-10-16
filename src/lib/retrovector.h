@@ -1,8 +1,6 @@
 //
 // Retro graphics library
 //
-// Author: Johan Gardhage <johan.gardhage@gmail.com>
-//
 // GLSL/GLM-style vector math - vec2, vec3, vec4 and ivec2, with operator
 // overloading and free functions (dot, cross, length, normalize) at global scope, bare,
 // matching GLSL naming exactly. This header and retromatrix.h are the two in
@@ -24,9 +22,10 @@
 // matters) would silently reopen the exact class of bug that split exists to
 // prevent.
 //
+// Author: Johan Gardhage <johan.gardhage@gmail.com>
+//
 
-#ifndef _RETROVECTOR_H_
-#define _RETROVECTOR_H_
+#pragma once
 
 #include "retro.h"
 
@@ -337,5 +336,3 @@ inline ivec2 &operator/=(ivec2 &v, int s) { return v = v / s; }
 
 inline bool operator==(ivec2 a, ivec2 b) { return a.x == b.x && a.y == b.y; }
 inline bool operator!=(ivec2 a, ivec2 b) { return !(a == b); }
-
-#endif

@@ -40,7 +40,7 @@ constexpr float FORWARD_SPEED = 30.0f;
 // across a unit of depth. It turns right by the heading as it cruises.
 static RETRO_Camera View;
 
-static const char *const ScrollText[] = { " RETRO DEMOEFFECTS..." };
+static const char ScrollText[] = " RETRO DEMOEFFECTS...";
 static RETRO_Image *ScrollImage;
 
 // Terrain and letters use the same perspective and pixel depth buffer.
@@ -96,9 +96,12 @@ static void DrawScrollerDots(double time, float camerax, float cameraz, float cs
 
 void DEMO_Render(RETRO_Time time)
 {
-	static float camerax = 64, cameraz = 118, heading = 0;
+	static float camerax = 64;
+	static float cameraz = 118;
+	static float heading = 0;
 	heading = fmodf(heading + TURN_SPEED * time.delta, 2.0f * M_PI);
-	float cs = cosf(heading), sn = sinf(heading);
+	float cs = cosf(heading);
+	float sn = sinf(heading);
 	camerax = fmodf(camerax + sn * FORWARD_SPEED * time.delta + RETRO_Terrain.width, RETRO_Terrain.width);
 	cameraz = fmodf(cameraz + cs * FORWARD_SPEED * time.delta + RETRO_Terrain.height, RETRO_Terrain.height);
 
@@ -112,7 +115,7 @@ void DEMO_Render(RETRO_Time time)
 void DEMO_Initialize(void)
 {
 	RETRO_LoadTerrain("assets/voxel_color_128x128.pcx", "assets/voxel_height_128x128.pcx", WORLD_HEIGHT_SCALE);
-	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText, sizeof(ScrollText) / sizeof(ScrollText[0]));
+	ScrollImage = RETRO_GenerateTextImage(RETRO_LoadFont(FONT), ScrollText);
 	if (ScrollImage->height > RETRO_COLORS - LETTER_COLOR_BASE) {
 		RETRO_RageQuit("Scroller font is too tall for the letter palette\n");
 	}

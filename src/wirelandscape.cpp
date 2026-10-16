@@ -67,7 +67,10 @@ static void DrawLine(const RETRO_CameraLens &lens, vec3 a, vec3 b)
 
 static void DrawCell(const RETRO_TerrainMesh &mesh, const RETRO_TerrainCell &cell, const void *)
 {
-	const RETRO_CameraVertex &p00 = cell.corner[0], &p10 = cell.corner[1], &p01 = cell.corner[2], &p11 = cell.corner[3];
+	const RETRO_CameraVertex &p00 = cell.corner[0];
+	const RETRO_CameraVertex &p10 = cell.corner[1];
+	const RETRO_CameraVertex &p01 = cell.corner[2];
+	const RETRO_CameraVertex &p11 = cell.corner[3];
 
 	for (const int *t : RETRO_TerrainCellTriangles) {
 		RETRO_ProjectedTriangle projected;

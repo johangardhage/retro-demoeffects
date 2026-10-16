@@ -104,14 +104,17 @@ void DEMO_Render(RETRO_Time time)
 	RETRO_Palette *palette = RETRO_ImagePalette();
 
 	for (Particle &particle : Particles) {
-		float fromx = back ? particle.bx : particle.ax, fromy = back ? particle.by : particle.ay;
-		float tox = back ? particle.ax : particle.bx, toy = back ? particle.ay : particle.by;
+		float fromx = back ? particle.bx : particle.ax;
+		float fromy = back ? particle.by : particle.ay;
+		float tox = back ? particle.ax : particle.bx;
+		float toy = back ? particle.ay : particle.by;
 		unsigned char from = back ? particle.colorb : particle.colora;
 		unsigned char to = back ? particle.colora : particle.colorb;
 
 		// The particle's own time, from its departure, delayed by its distance
 		// from the origin, to its landing
-		float dx = fromx - originx, dy = fromy - originy;
+		float dx = fromx - originx;
+		float dy = fromy - originy;
 		float distance = length(vec2{ dx, dy });
 		float departure = BLAST_SPREAD * distance / farthest;
 		float landing = 1 - LAND_SPREAD * particle.landing;
@@ -137,7 +140,8 @@ void DEMO_Render(RETRO_Time time)
 		}
 
 		// Blend its color on the way
-		RETRO_Palette ca = palette[from], cb = palette[to];
+		RETRO_Palette ca = palette[from];
+		RETRO_Palette cb = palette[to];
 		int r = (int)(mix(ca.r, cb.r, carry) + 0.5f);
 		int g = (int)(mix(ca.g, cb.g, carry) + 0.5f);
 		int b = (int)(mix(ca.b, cb.b, carry) + 0.5f);

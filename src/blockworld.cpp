@@ -253,11 +253,17 @@ static unsigned char SkyColor(vec3 dir, float dither)
 
 static unsigned char TraceRay(vec3 origin, vec3 dir, float dither)
 {
-	int x = (int)floorf(origin.x), y = (int)floorf(origin.y), z = (int)floorf(origin.z);
-	int stepx = dir.x < 0 ? -1 : 1, stepy = dir.y < 0 ? -1 : 1, stepz = dir.z < 0 ? -1 : 1;
+	int x = (int)floorf(origin.x);
+	int y = (int)floorf(origin.y);
+	int z = (int)floorf(origin.z);
+	int stepx = dir.x < 0 ? -1 : 1;
+	int stepy = dir.y < 0 ? -1 : 1;
+	int stepz = dir.z < 0 ? -1 : 1;
 
 	// t across one cell along each axis, and t to the first plane crossed
-	float deltax = fabsf(1.0f / dir.x), deltay = fabsf(1.0f / dir.y), deltaz = fabsf(1.0f / dir.z);
+	float deltax = fabsf(1.0f / dir.x);
+	float deltay = fabsf(1.0f / dir.y);
+	float deltaz = fabsf(1.0f / dir.z);
 	float nextx = (dir.x < 0 ? origin.x - x : x + 1 - origin.x) * deltax;
 	float nexty = (dir.y < 0 ? origin.y - y : y + 1 - origin.y) * deltay;
 	float nextz = (dir.z < 0 ? origin.z - z : z + 1 - origin.z) * deltaz;
@@ -337,9 +343,12 @@ static bool Solid(int x, int y, int z)
 // Whether the player's box, standing at p, overlaps a solid cell
 static bool Collides(vec3 p)
 {
-	int x1 = (int)floorf(p.x - PLAYER_RADIUS), x2 = (int)floorf(p.x + PLAYER_RADIUS);
-	int z1 = (int)floorf(p.z - PLAYER_RADIUS), z2 = (int)floorf(p.z + PLAYER_RADIUS);
-	int y1 = (int)floorf(p.y), y2 = (int)floorf(p.y + PLAYER_HEIGHT);
+	int x1 = (int)floorf(p.x - PLAYER_RADIUS);
+	int x2 = (int)floorf(p.x + PLAYER_RADIUS);
+	int z1 = (int)floorf(p.z - PLAYER_RADIUS);
+	int z2 = (int)floorf(p.z + PLAYER_RADIUS);
+	int y1 = (int)floorf(p.y);
+	int y2 = (int)floorf(p.y + PLAYER_HEIGHT);
 	for (int y = y1; y <= y2; y++) {
 		for (int z = z1; z <= z2; z++) {
 			for (int x = x1; x <= x2; x++) {

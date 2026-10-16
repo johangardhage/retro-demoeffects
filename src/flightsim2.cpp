@@ -88,7 +88,7 @@ constexpr int FACE_MAXCORNERS = RETRO_MAP_MAX_FACE;	// A map brush's face is a s
 // The palette: flat colors, sixteen grays at 17 apart, and a ramp of shades
 // for each material
 enum { COLOR_BLACK, COLOR_SKY, COLOR_SEA, COLOR_LAND, COLOR_RUNWAY, COLOR_MARKING, COLOR_RED, COLOR_TEXT, COLOR_GAUGE, COLOR_BALLSKY, COLOR_BALLGROUND, COLOR_POSITION };
-#define GRAY(level) (15 + (level))	// level 1 to 15
+constexpr int GRAY(int level) { return 15 + level; } // level 1 to 15
 
 enum { MATERIAL_HULL, MATERIAL_DECK, MATERIAL_ORANGE, MATERIAL_STEEL, MATERIAL_CONCRETE, MATERIAL_STONE, MATERIAL_JET, MATERIAL_CANOPY, MATERIALS };
 constexpr int MATERIAL_FIRST = 32;
@@ -173,13 +173,13 @@ constexpr int RADAR_X = 158;		// The aircraft on the radar
 constexpr int RADAR_Y = 165;
 constexpr float RADAR_TOP = 19.0f;	// Pixels from it to the top of the screen, the radar's range
 static const int RadarRanges[] = { 10, 20, 40 };	// Miles
+constexpr int RADAR_RANGES = (int)(sizeof(RadarRanges) / sizeof(RadarRanges[0]));
 constexpr int COMPASS_X = 209;
 constexpr float COMPASS_SCALE = 0.125f;	// Pixels per degree
 constexpr int BALL_X = 209;
 constexpr int BALL_Y = 173;
 constexpr int BALL_RADIUS = 12;
 constexpr float BALL_SPREAD = 1.2f;		// Tangent of the angle to the ball's rim
-
 
 //
 // The ground: flat polygons at sea level, in the order they are painted
@@ -297,9 +297,11 @@ static bool OverLand(float x, float z)
 {
 	for (int i = 0; i < GroundCount; i++) {
 		const GroundPolygon &ground = Ground[i];
-		bool negative = false, positive = false;
+		bool negative = false;
+		bool positive = false;
 		for (int j = 0; j < ground.corners; j++) {
-			vec3 a = ground.corner[j], b = ground.corner[(j + 1) % ground.corners];
+			vec3 a = ground.corner[j];
+			vec3 b = ground.corner[(j + 1) % ground.corners];
 			float turn = (b.x - a.x) * (z - a.z) - (b.z - a.z) * (x - a.x);
 			if (turn < 0) negative = true;
 			if (turn > 0) positive = true;
@@ -1165,7 +1167,7 @@ void DEMO_Render(RETRO_Time time)
 {
 	UpdateFlight(time.delta);
 	if (RETRO_KeyPressed(SDL_SCANCODE_V)) ChaseView = !ChaseView;
-	if (RETRO_KeyPressed(SDL_SCANCODE_R)) RadarRange = (RadarRange + 1) % (int)(sizeof(RadarRanges) / sizeof(RadarRanges[0]));
+	if (RETRO_KeyPressed(SDL_SCANCODE_R)) RadarRange = (RadarRange + 1) % RADAR_RANGES;
 	if (RETRO_KeyPressed(SDL_SCANCODE_H)) ShowHud = !ShowHud;
 	PlaceCamera();
 

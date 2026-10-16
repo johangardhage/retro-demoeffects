@@ -4,8 +4,7 @@
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 
-#ifndef _RETROMOUSE_H_
-#define _RETROMOUSE_H_
+#pragma once
 
 #include "retro.h"
 
@@ -96,5 +95,3 @@ inline void RETRO_SetMouseMode(bool relative, bool cursor = false)
 		SDL_HideCursor();
 	}
 }
-
-#endif

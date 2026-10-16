@@ -69,7 +69,10 @@ static void DrawShadebob(double xphase1, double xphase2, double yphase1, double 
 void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
-	static double xphase1 = 60, xphase2 = 100, yphase1 = 55, yphase2 = 200;
+	static double xphase1 = 60;
+	static double xphase2 = 100;
+	static double yphase1 = 55;
+	static double yphase2 = 200;
 
 	xphase1 = fmod(xphase1 + BOB_SPEED1 * time.delta, RETRO_ANGLES_PER_TURN);
 	xphase2 = fmod(xphase2 + BOB_SPEED2 * time.delta, RETRO_ANGLES_PER_TURN);

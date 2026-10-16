@@ -28,7 +28,8 @@ void DEMO_Render(RETRO_Time time)
 	double a = radians(phase);
 
 	// Every term is 2π periodic in b, so one extra degree closes the loop
-	double prevx = 0, prevy = 0;
+	double prevx = 0;
+	double prevy = 0;
 
 	for (int i = 0; i <= RETRO_DEGREES_PER_TURN; i++) {
 		double b = radians(i);

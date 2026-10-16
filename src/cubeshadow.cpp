@@ -64,7 +64,8 @@ static void DrawWall(double time)
 {
 	unsigned char *dest = RETRO_FrameBuffer();
 	double angle = time * WALL_SPEED;
-	double ca = cos(angle), sa = sin(angle);
+	double ca = cos(angle);
+	double sa = sin(angle);
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		double dy = (y + 0.5) - RETRO_HEIGHT / 2.0;
 		for (int x = 0; x < RETRO_WIDTH; x++) {

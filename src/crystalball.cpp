@@ -42,10 +42,11 @@ static const Glint Glints[] = {
 	{ 0.70f, 0.45f, 0.998f }
 };
 
+constexpr int GLINTS = (int)(sizeof(Glints) / sizeof(Glints[0]));
+
 static RETRO_Image *Logo;
-static const int GlintCount = sizeof(Glints) / sizeof(Glints[0]);
-static vec3 GlintLights[GlintCount]; // The light direction each glint reflects.
-static float GlintSizes[GlintCount];  // Its radius, as a chord between unit vectors.
+static vec3 GlintLights[GLINTS]; // The light direction each glint reflects.
+static float GlintSizes[GLINTS];  // Its radius, as a chord between unit vectors.
 static float BallX, BallY;
 static unsigned char ColorLookup[32 * 32 * 32];
 
@@ -58,8 +59,10 @@ static float SampleLogo(float x, float y)
 	x -= 0.5f;
 	y -= 0.5f;
 	if (x < 0 || y < 0 || x >= RETRO_WIDTH - 1 || y >= RETRO_HEIGHT - 1) return 0;
-	int ix = (int)x, iy = (int)y;
-	float fx = x - ix, fy = y - iy;
+	int ix = (int)x;
+	int iy = (int)y;
+	float fx = x - ix;
+	float fy = y - iy;
 	const unsigned char *p = Logo->data + iy * RETRO_WIDTH + ix;
 	return mix(mix(p[0], p[1], fx), mix(p[RETRO_WIDTH], p[RETRO_WIDTH + 1], fx), fy) / 255.0f;
 }
@@ -99,11 +102,12 @@ static vec3 ShadeBall(float sx, float sy)
 	// is ramped over one screen pixel: the chord's change per pixel along x
 	// plus along y. With dn.z = -(n.x dn.x + n.y dn.y) / n.z, dn.x = 1 / R
 	// along x and dn.y = -1 / R along y, differentiating the reflection gives:
-	float dzx = -n.x / n.z, dzy = n.y / n.z;
+	float dzx = -n.x / n.z;
+	float dzy = n.y / n.z;
 	vec3 alongx = vec3{ n.z + n.x * dzx, n.y * dzx, 2 * n.z * dzx } * (2 / Radius);
 	vec3 alongy = vec3{ n.x * dzy, -n.z + n.y * dzy, 2 * n.z * dzy } * (2 / Radius);
 	float glint = 0;
-	for (int i = 0; i < GlintCount; i++) {
+	for (int i = 0; i < GLINTS; i++) {
 		vec3 toward = reflected - GlintLights[i];
 		float chord = MAX(length(toward), 1e-6f);
 		float perpixel = (fabsf(dot(toward, alongx)) + fabsf(dot(toward, alongy))) / chord;
@@ -112,7 +116,8 @@ static vec3 ShadeBall(float sx, float sy)
 		// glides. So it is drawn at least a pixel wide and dimmed by the width
 		// it gained. Dimming by the area would keep its light exactly constant
 		// but leaves the small glints visibly fainter than they were meant.
-		float size = GlintSizes[i], drawn = MAX(size, perpixel);
+		float size = GlintSizes[i];
+		float drawn = MAX(size, perpixel);
 		float disc = CLAMP01((drawn - chord) / MAX(perpixel, 1e-6f) + 0.5f);
 		glint += disc * size / drawn;
 	}
@@ -164,7 +169,7 @@ void DEMO_Initialize(void)
 	// is the ink, 255 on the face and 178 on its shade.
 	Logo = RETRO_LoadImage("assets/retrologo_320x240.pcx");
 
-	for (int i = 0; i < GlintCount; i++) {
+	for (int i = 0; i < GLINTS; i++) {
 		const Glint &g = Glints[i];
 		GlintLights[i] = reflect(ViewRay, vec3{ g.nx, g.ny, sqrtf(1 - g.nx * g.nx - g.ny * g.ny) });
 		GlintSizes[i] = sqrtf(2 * (1 - g.edge));
@@ -192,7 +197,8 @@ void DEMO_Initialize(void)
 	}
 	for (int row = 0; row < 7; row++) {
 		for (int column = 0; column < 18; column++) {
-			float blue = 20 + 140 * row / 6.0f, white = (column + 1) / 19.0f;
+			float blue = 20 + 140 * row / 6.0f;
+			float white = (column + 1) / 19.0f;
 			unsigned char gray = (unsigned char)(255 * white);
 			palette[count++] = { gray, gray, (unsigned char)mix(blue, 255, white) };
 		}

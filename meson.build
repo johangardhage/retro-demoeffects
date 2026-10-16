@@ -4,9 +4,14 @@ project('retro-demoeffects', 'cpp',
 sdl3 = dependency('sdl3')
 fs = import('fs')
 
+deps = [sdl3]
 link_args = []
 if host_machine.system() == 'darwin'
-  link_args += ['-Wl,-undefined,dynamic_lookup']
+  # The key warmup in retro.h builds a key event with CoreGraphics and hands
+  # it to the menu through the Objective-C runtime
+  deps += dependency('appleframeworks', modules: ['ApplicationServices'])
+  # The DEMO_ callbacks a demo leaves out are weak and stay undefined
+  link_args += ['-lobjc', '-Wl,-undefined,dynamic_lookup']
 endif
 
 demos = run_command(
@@ -17,6 +22,6 @@ demos = run_command(
 
 foreach demo : demos
   executable(fs.stem(demo), demo,
-    dependencies: sdl3,
+    dependencies: deps,
     link_args: link_args)
 endforeach

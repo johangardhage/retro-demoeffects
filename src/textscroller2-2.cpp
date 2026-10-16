@@ -91,9 +91,8 @@ void DEMO_Render(RETRO_Time time)
 	int rows = PAGES * PAGE_ROWS;
 
 	// Calculate phase
-	double travel = RETRO_HEIGHT + rows * Font.height;
-	double phase = fmod(time.total * SCROLL_SPEED, travel);
-	int top = RETRO_HEIGHT - (int)phase;
+	int travel = RETRO_HEIGHT + rows * Font.height;
+	int top = RETRO_HEIGHT - (int)(RETRO_FramePosition(time.total, SCROLL_SPEED) % travel);
 
 	for (int row = 0; row < rows; row++) {
 		const char *line = ScrollText[row / PAGE_ROWS][row % PAGE_ROWS];

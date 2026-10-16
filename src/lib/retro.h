@@ -181,7 +181,7 @@ inline struct {
 	bool showcursor;
 	bool showfps;
 	int fpscap;
-	bool spacepauses = true;		// holding Space pauses the mainloop
+	bool spacepauses = true;		// Space toggles pause in the mainloop
 	const char *dumpfile = NULL;	// --dumpfile writes this PPM after dumptime, then quits
 	double dumptime = 0;			// demo time of the frame that write shows
 	bool quit;
@@ -197,6 +197,7 @@ inline struct {
 	bool keylatched[256];
 	int yoffset[RETRO_HEIGHT];
 	double time = 0;
+	double framerate = 60;			// frames shown a second; the clock steps by 1/this
 } RETRO = { .mode = RETRO_MODE_FULLSCREEN, .stretch = false, .vsync = true, .scaling = RETRO_SCALING_PIXELART, .showfps = true };
 
 // *******************************************************************
@@ -552,6 +553,61 @@ inline void RETRO_SetVSync(bool state = true)
 	RETRO.vsync = state;
 }
 
+// macOS fills in its menus the first time a key reaches the menu bar's key
+// equivalent lookup, on this thread, before the event is returned. That costs
+// a frame, so the first key jerks the scroll. Handing the main menu one key
+// event directly does the work now, before the clock starts. Nothing is posted,
+// so no event arrives later and no permission is needed. Virtual keycode 64 is
+// F17: no menu item uses it. --dumpfile has no Cocoa menu to fill.
+// The Objective-C and CoreGraphics headers stay out of this header: they
+// define names of their own (Point, id) that demos use too.
+#ifdef __APPLE__
+extern "C" {
+typedef unsigned short CGKeyCode;
+typedef struct CGEvent *CGEventRef;
+CGEventRef CGEventCreateKeyboardEvent(void *source, CGKeyCode key, bool down);
+void CFRelease(const void *cf);
+void *objc_getClass(const char *name);
+void *sel_registerName(const char *name);
+void objc_msgSend(void);
+}
+
+inline void RETRO_PopulateMenus(void)
+{
+	if (RETRO.dumpfile || !RETRO.window) return;
+
+	void *(*send)(void *, void *) = (void *(*)(void *, void *))objc_msgSend;
+	void *(*sendevent)(void *, void *, CGEventRef) = (void *(*)(void *, void *, CGEventRef))objc_msgSend;
+	bool (*sendkey)(void *, void *, void *) = (bool (*)(void *, void *, void *))objc_msgSend;
+
+	void *app = send(objc_getClass("NSApplication"), sel_registerName("sharedApplication"));
+	void *menu = app ? send(app, sel_registerName("mainMenu")) : NULL;
+	if (!menu) return;
+
+	CGEventRef down = CGEventCreateKeyboardEvent(NULL, 64, true);
+	if (!down) return;
+	void *event = sendevent(objc_getClass("NSEvent"), sel_registerName("eventWithCGEvent:"), down);
+	if (event) sendkey(menu, sel_registerName("performKeyEquivalent:"), event);
+	CFRelease(down);
+}
+#else
+inline void RETRO_PopulateMenus(void) {}
+#endif
+
+// The rate frames are shown at: the refresh of the display the window is on, or the
+// cap below it. The clock advances one of these a present. --dumpfile steps the
+// clock a simulation step a frame instead. Read again when the window moves to
+// another display or that display changes mode.
+inline void RETRO_UpdateFramerate(void)
+{
+	RETRO.framerate = 1.0 / RETRO_SIMULATION_STEP;
+	if (RETRO.dumpfile) return;
+
+	const SDL_DisplayMode *wm = SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(RETRO.window));
+	if (wm != NULL && wm->refresh_rate > 0) RETRO.framerate = wm->refresh_rate;
+	if (RETRO.fpscap > 0) RETRO.framerate = MIN(RETRO.framerate, (double)RETRO.fpscap);
+}
+
 inline void RETRO_Initialize(void)
 {
 	// --dumpfile never shows a window; render on the dummy driver instead of the real display.
@@ -620,6 +676,8 @@ inline void RETRO_Initialize(void)
 		SDL_SyncWindow(RETRO.window);
 	}
 
+	RETRO_UpdateFramerate();
+
 	// Create render buffer
 	RETRO.renderbuffer = SDL_CreateTexture(RETRO.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RETRO_WIDTH, RETRO_HEIGHT);
 	if (RETRO.renderbuffer == NULL) {
@@ -659,6 +717,8 @@ inline void RETRO_Initialize(void)
 	// Initialize random number generator. --dumpfile uses a fixed seed, so the same
 	// dumptime always writes the same picture.
 	srand(RETRO.dumpfile ? 1 : time(NULL));
+
+	RETRO_PopulateMenus();
 }
 
 inline void RETRO_Deinitialize(void)
@@ -682,31 +742,80 @@ inline void RETRO_Deinitialize(void)
 // --dumpfile steps the clock by a fixed RETRO_SIMULATION_STEP a frame instead of reading it,
 // so the frame it writes does not depend on how fast the machine renders.
 //
-// Otherwise a frame's time is the mean of the last few frames' durations. A
-// frame that misses the display, and the one handed over early behind it,
-// measure unevenly - 33 ms then 1 ms for two frames shown a refresh apart -
-// and a demo moving by them would jerk. The mean spreads that over a few
-// frames and loses none of it: over a run the means add up to the same time.
-inline double RETRO_DeltaTime(void)
+// Otherwise the clock starts on the first frame and then advances one shown
+// frame at a time. The first call has no completed frame and returns zero.
+// RETRO.framerate is the display refresh, or the cap below it.
+//
+// A present does not always last one frame. Fullscreen's mode switch is a
+// burst of very short frames, and later a present can block for two refreshes
+// while the next one returns at once. Short frames bank their time until a
+// whole frame is in hand. A present that covers more than one pays one now
+// and keeps the rest for the following present, so the motion never jumps two
+// steps and does not wait for the switch to finish. Only one frame and a half
+// may be kept: past that the presents are running slower than RETRO.framerate,
+// and the excess is paid at once so the clock does not fall behind.
+// discard drops the time since the last sample and clears the bank. Pause can
+// last any length, and that gap must not enter the bank.
+inline double RETRO_DeltaTime(bool discard = false)
 {
-	if (RETRO.dumpfile) return RETRO_SIMULATION_STEP;
+	if (RETRO.dumpfile) return discard ? 0 : RETRO_SIMULATION_STEP;
 
-	const int frames = 8;
-	static double duration[frames] = {};
-	static int frame = 0;
-	static unsigned long int now = SDL_GetPerformanceCounter();
-	static unsigned long int old = 0;
+	static Uint64 now = 0;
+	static bool started = false;
+	static double banked = 0;
 
-	old = now;
-	now = SDL_GetPerformanceCounter();
-	duration[frame] = (double)(now - old) / SDL_GetPerformanceFrequency();
-	frame = (frame + 1) % frames;
-
-	double sum = 0;
-	for (double d : duration) {
-		sum += d;
+	Uint64 sample = SDL_GetPerformanceCounter();
+	if (!started) {
+		started = true;
+		now = sample;
+		return 0;
 	}
-	return sum / frames;
+	if (discard) {
+		now = sample;
+		banked = 0;
+		return 0;
+	}
+
+	double measured = (double)(sample - now) / SDL_GetPerformanceFrequency();
+	now = sample;
+
+	double nominal = 1.0 / RETRO.framerate;
+	banked += measured;
+	// Half a frame already counts: the present intervals jitter around the
+	// frame, and waiting for a full one would hold every other frame.
+	if (lround(banked / nominal) < 1) return 0;
+	long frames = 1;
+	banked -= nominal;
+	if (banked > 1.5 * nominal) {
+		long behind = lround(banked / nominal) - 1;
+		frames += behind;
+		banked -= behind * nominal;
+	}
+	return frames * nominal;
+}
+
+// Where motion at speed pixels per second stands at total, in whole pixels
+//
+// Motion in whole pixels is only smooth when every shown frame moves it the
+// same way, and a speed in pixels per second does that only at the frame rates
+// it divides. So the motion keeps the nearest even cadence the display can show
+// instead: a whole step every frame when it is faster than the frame rate,
+//
+//   position = frames * round(speed / framerate)
+//
+// and one pixel every whole number of frames when it is slower,
+//
+//   position = frames / round(framerate / speed)
+//
+// where frames = round(total * framerate). The frame count is rounded so the
+// jitter in a frame's measured time cannot move it by one. The clock advances
+// one shown frame at a time, so this count does too.
+inline long RETRO_FramePosition(double total, double speed)
+{
+	if (speed <= 0) return 0;
+	long frames = lround(total * RETRO.framerate);
+	if (speed >= RETRO.framerate) return frames * lround(speed / RETRO.framerate);
+	return frames / lround(RETRO.framerate / speed);
 }
 
 inline bool RETRO_KeyState(SDL_Scancode key)
@@ -725,7 +834,7 @@ inline bool RETRO_KeyPressed(SDL_Scancode key)
 	return false;
 }
 
-// Holding Space pauses the mainloop; a demo that reads Space itself turns that off
+// Space toggles pause in the mainloop; a demo that reads Space itself turns that off
 inline void RETRO_SetSpacePause(bool enabled)
 {
 	RETRO.spacepauses = enabled;
@@ -742,6 +851,9 @@ inline bool RETRO_QuitRequested(void)
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_EVENT_QUIT) {
 			RETRO.quit = true;
+		} else if (event.type == SDL_EVENT_WINDOW_DISPLAY_CHANGED || event.type == SDL_EVENT_DISPLAY_CURRENT_MODE_CHANGED) {
+			RETRO_UpdateFramerate();
+			RETRO_DeltaTime(true);
 		} else if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
 			if (event.key.scancode == SDL_SCANCODE_ESCAPE || event.key.scancode == SDL_SCANCODE_Q) {
 				RETRO.quit = true;
@@ -786,25 +898,29 @@ inline void RETRO_AdvanceSimulation(double deltatime)
 
 inline void RETRO_Mainloop(void)
 {
+	bool paused = false;
 	while (!RETRO_QuitRequested()) {
-		double deltatime = RETRO_DeltaTime();
-
-		// Check events. Paused, nothing is drawn or flipped, so nothing waits
-		// on the display either; the delay keeps the loop from spinning
-		if (RETRO.spacepauses && RETRO_KeyState(SDL_SCANCODE_SPACE)) {
+		// Paused, nothing is drawn or flipped. The delay keeps the loop from
+		// spinning. Pressing Space again drops the whole gap, so the next shown
+		// frame measures one refresh.
+		if (RETRO.spacepauses && RETRO_KeyPressed(SDL_SCANCODE_SPACE)) {
+			paused = !paused;
+			RETRO_DeltaTime(true);
+		}
+		if (paused) {
 			SDL_Delay(10);
 			continue;
 		}
 
-		// Advance the displayed clock. Leads the render, so the first frame is
-		// handed its own deltatime rather than zero.
+		double deltatime = RETRO_DeltaTime();
+
+		// Advance the displayed clock ahead of the render. The first call has no
+		// completed frame, so the first picture is at time zero and the next
+		// one carries that frame's interval.
 		RETRO.time += deltatime;
 
-		// Time the whole frame, for the FPS cap below
-		unsigned long int start = SDL_GetTicks();
-
-		// Advance simulation. Both clocks are stepped after the pause check, so
-		// time spent paused is discarded rather than caught up on.
+		// Advance simulation. Time spent paused was discarded above, so it is not
+		// caught up on.
 		if (DEMO_FixedUpdate) RETRO_AdvanceSimulation(deltatime);
 
 		// Render scene
@@ -819,7 +935,6 @@ inline void RETRO_Mainloop(void)
 			// left standing between frames, so all that remains is to show it
 			RETRO_Flip();
 		}
-		unsigned long int stop = SDL_GetTicks();
 
 		// --dumpfile writes the frame nearest dumptime, then quits so Deinitialize
 		// still runs. The write is after the frame, so the file is the picture
@@ -833,9 +948,17 @@ inline void RETRO_Mainloop(void)
 			RETRO_DumpFrame("dumpfile.ppm");
 		}
 
-		// Limit FPS
-		if (RETRO.fpscap && ((stop - start) < 1000UL / RETRO.fpscap)) {
-			SDL_Delay((1000 / RETRO.fpscap) - (stop - start));
+		// Limit FPS. Frames are held to deadlines one period apart, in
+		// nanoseconds, so the rate is the cap itself and not a whole number of
+		// milliseconds plus the frame's own work. A frame that misses its
+		// deadline by more than a period, or a pause, starts the schedule again.
+		if (RETRO.fpscap) {
+			static Uint64 deadline = 0;
+			const Uint64 period = SDL_NS_PER_SECOND / RETRO.fpscap;
+			Uint64 now = SDL_GetTicksNS();
+			deadline += period;
+			if (deadline + period < now) deadline = now;
+			if (deadline > now) SDL_DelayPrecise(deadline - now);
 		}
 
 		// Show FPS once a second

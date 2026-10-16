@@ -37,8 +37,7 @@ void DEMO_Render(RETRO_Time time)
 	int scrolly = (RETRO_HEIGHT - displayheight) / 2;
 
 	// Calculate phase
-	double phase = fmod(time.total * SCROLL_SPEED, displaywidth);
-	int iphase = (int)phase;
+	int iphase = (int)(RETRO_FramePosition(time.total, SCROLL_SPEED) % displaywidth);
 
 	// Plot each lit font texel as a dot. Adding displaywidth wraps the
 	// strip seamlessly once its trailing padding has left the screen.

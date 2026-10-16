@@ -216,6 +216,8 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
+	RETRO_SetSpacePause(false);
+
 	// Load assets
 	RETRO_LoadImage("assets/mask_envmap_256x256.pcx");
 	RETRO_SetFont(RETRO_FONT_VGA_8X8);

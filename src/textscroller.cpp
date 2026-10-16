@@ -7,7 +7,9 @@
 //   color = strip[row][(x + phase) mod stripwidth]
 //
 // A zero texel is transparent, so the letters slide over a cleared
-// background. phase lives on stripwidth, in texels per second. The strip
+// background. phase lives on stripwidth and moves at the even whole-texel
+// cadence nearest SCROLL_SPEED that the display's frame rate allows; any
+// uneven step judders (see RETRO_FramePosition). The strip
 // is centered vertically and is as tall as one glyph, so every screen row
 // it occupies maps 1:1 onto a strip row. When phase returns to 0 the same
 // column is under x = 0 again, and the wrap is seamless.
@@ -23,15 +25,14 @@ constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 
 constexpr int SCROLL_SPEED = 200; // texels per second
 
-static const char ScrollText[] = "                    RETRO DEMOEFFECTS...";
+static const char ScrollText[] = "                       RETRO DEMOEFFECTS...";
 
 static RETRO_Image *ScrollImage;
 
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time.total * SCROLL_SPEED, ScrollImage->width);
-	int iphase = (int)phase;
+	int iphase = (int)(RETRO_FramePosition(time.total, SCROLL_SPEED) % ScrollImage->width);
 	int y = (RETRO_HEIGHT - ScrollImage->height) / 2;
 
 	// Draw scroller

@@ -38,7 +38,7 @@ static float ContourDistance(float x, float y, float s)
 
 void DEMO_Render(RETRO_Time time)
 {
-	int scroll = (int)fmod(time.total * SCROLL_SPEED, TEXTURE_SIZE);
+	int scroll = (int)(RETRO_FramePosition(time.total, SCROLL_SPEED) % TEXTURE_SIZE);
 	static const int threshold[2][2] = { { 0, 2 }, { 3, 1 } };
 	unsigned char *buffer = RETRO_FrameBuffer();
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

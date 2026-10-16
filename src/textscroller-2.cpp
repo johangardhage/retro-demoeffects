@@ -27,7 +27,7 @@ constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 
 constexpr int SCROLL_SPEED = 200; // texels per second
 
-static const char ScrollText[] = "                    RETRO DEMOEFFECTS...";
+static const char ScrollText[] = "                       RETRO DEMOEFFECTS...";
 
 static RETRO_Font Font;
 
@@ -36,8 +36,7 @@ void DEMO_Render(RETRO_Time time)
 	int textwidth = (int)(sizeof(ScrollText) - 1) * Font.width;
 
 	// Calculate phase
-	double phase = fmod(time.total * SCROLL_SPEED, textwidth);
-	int iphase = (int)phase;
+	int iphase = (int)(RETRO_FramePosition(time.total, SCROLL_SPEED) % textwidth);
 	int y = (RETRO_HEIGHT - Font.height) / 2;
 
 	// Draw scroller

@@ -76,8 +76,8 @@ void DEMO_Render(RETRO_Time time)
 
 	// The text enters at the right margin. Until it has scrolled in, phase is
 	// negative and the columns left of the text's start stay empty.
-	double scroll = time.total * 76.0 - (RETRO_WIDTH - TEXT_MARGIN);
-	int phase = scroll < 0 ? (int)floor(scroll) : (int)fmod(scroll, (double)ScrollImage->width);
+	long scroll = RETRO_FramePosition(time.total, 76.0) - (RETRO_WIDTH - TEXT_MARGIN);
+	int phase = (int)(scroll < 0 ? scroll : scroll % ScrollImage->width);
 	// A distant light, so every ray is parallel. slopex and slopey are how far
 	// it leans per unit of depth. A wall point is shaded when the ray from it
 	// toward the light meets ink at the text: its point in space, back from

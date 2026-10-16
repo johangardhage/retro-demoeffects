@@ -52,8 +52,7 @@ void DEMO_Render(RETRO_Time time)
 	int textwidth = (int)(sizeof(ScrollText) - 1) * Font.width;
 
 	// Calculate phase
-	double phase = fmod(time.total * SCROLL_SPEED, textwidth);
-	int iphase = (int)phase;
+	int iphase = (int)(RETRO_FramePosition(time.total, SCROLL_SPEED) % textwidth);
 	int scrolly = (RETRO_HEIGHT - Font.height) / 2;
 
 	// Calculate the phase of the wave the columns ride

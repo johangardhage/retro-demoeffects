@@ -44,8 +44,7 @@ static RETRO_Image *ScrollImage;
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time.total * SCROLL_SPEED, ScrollImage->width);
-	int iphase = (int)phase;
+	int iphase = (int)(RETRO_FramePosition(time.total, SCROLL_SPEED) % ScrollImage->width);
 	int scrolly = (RETRO_HEIGHT - ScrollImage->height) / 2;
 
 	// Calculate the phase of the wave the columns ride

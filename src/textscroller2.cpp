@@ -70,9 +70,8 @@ static RETRO_Image *PageImage;
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double travel = RETRO_HEIGHT + PageImage->height;
-	double phase = fmod(time.total * SCROLL_SPEED, travel);
-	int top = RETRO_HEIGHT - (int)phase;
+	int travel = RETRO_HEIGHT + PageImage->height;
+	int top = RETRO_HEIGHT - (int)(RETRO_FramePosition(time.total, SCROLL_SPEED) % travel);
 	int left = (RETRO_WIDTH - PageImage->width) / 2;
 
 	int firsty = MAX(0, -top);

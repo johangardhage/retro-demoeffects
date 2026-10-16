@@ -44,8 +44,7 @@ static int FontLit = 0;
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time.total * SCROLL_SPEED, ScrollImage->width);
-	int iphase = (int)phase;
+	int iphase = (int)(RETRO_FramePosition(time.total, SCROLL_SPEED) % ScrollImage->width);
 
 	memset(Image, 0, sizeof(Image));
 	for (int y = 0; y < ScrollImage->height; y++) {

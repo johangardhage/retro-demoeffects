@@ -70,26 +70,26 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define TEXTURE_SIZE 256
-#define TEXTURE_MASK (TEXTURE_SIZE - 1)
-#define ANGLE_TO_U (TEXTURE_SIZE / (2.0 * M_PI)) // texels of u per radian of θ
-#define TUNNEL_APERTURE 255 // palette entry the aperture owns; the map ends at 220
+constexpr int TEXTURE_SIZE = 256;
+constexpr int TEXTURE_MASK = TEXTURE_SIZE - 1;
+constexpr double ANGLE_TO_U = TEXTURE_SIZE / (2.0 * M_PI); // texels of u per radian of θ
+constexpr int TUNNEL_APERTURE = 255; // palette entry the aperture owns; the map ends at 220
 
-#define TUNNEL_WALL 126.0 // cylinder radius, world units
-#define TUNNEL_RELIEF 76.0 // inward height of a peak, world units
-#define TUNNEL_CORE (TUNNEL_WALL - TUNNEL_RELIEF)
+constexpr double TUNNEL_WALL = 126.0; // cylinder radius, world units
+constexpr double TUNNEL_RELIEF = 76.0; // inward height of a peak, world units
+constexpr double TUNNEL_CORE = TUNNEL_WALL - TUNNEL_RELIEF;
 
-#define TUNNEL_FOCAL_X 180.0 // pinhole focal, x pixels
-#define TUNNEL_FOCAL_Y (TUNNEL_FOCAL_X / 1.08) // shorter, so the view is taller
-#define TUNNEL_NEAR 18.0 // nearest depth the march will sample
-#define TUNNEL_FAR 1120.0 // furthest depth; beyond this is the aperture
-#define TUNNEL_STEP 4.0 // base world units between samples
-#define TUNNEL_LOD 0.004 // added fraction of Z, so far samples thin out
-#define TUNNEL_BISECTIONS 6 // halvings of a sign-change interval
-#define TUNNEL_AXIS_EPS (0.5 / TUNNEL_FOCAL_X) // half a pixel, in slope units
+constexpr double TUNNEL_FOCAL_X = 180.0; // pinhole focal, x pixels
+constexpr double TUNNEL_FOCAL_Y = TUNNEL_FOCAL_X / 1.08; // shorter, so the view is taller
+constexpr double TUNNEL_NEAR = 18.0; // nearest depth the march will sample
+constexpr double TUNNEL_FAR = 1120.0; // furthest depth; beyond this is the aperture
+constexpr double TUNNEL_STEP = 4.0; // base world units between samples
+constexpr double TUNNEL_LOD = 0.004; // added fraction of Z, so far samples thin out
+constexpr int TUNNEL_BISECTIONS = 6; // halvings of a sign-change interval
+constexpr double TUNNEL_AXIS_EPS = 0.5 / TUNNEL_FOCAL_X; // half a pixel, in slope units
 
-#define TUNNEL_FLIGHT 70.0 // texels of v per second
-#define TUNNEL_DEPTH_TEXELS 0.2875 // texels of v per world Z
+constexpr double TUNNEL_FLIGHT = 70.0; // texels of v per second
+constexpr double TUNNEL_DEPTH_TEXELS = 0.2875; // texels of v per world Z
 
 static RETRO_Image *Terrain;
 static const unsigned char *HeightPixels;

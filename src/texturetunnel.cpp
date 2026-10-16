@@ -25,13 +25,13 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 256
-#define TUNNEL_RATIO (32 * TEXTURE_HEIGHT) // v = RATIO/r, so 32 texture rows per 1/r
-#define TUNNEL_SPEED 1.0 // seconds of flight per second
-#define TUNNEL_SPIN 0.25 // texture turns around the axis per second of flight
-#define TUNNEL_MOUTH_RADIUS 10.0 // pixels, the hole cut at the vanishing point
-#define TUNNEL_HOLE_THRESHOLD (TUNNEL_RATIO / TUNNEL_MOUTH_RADIUS)
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 256;
+constexpr int TUNNEL_RATIO = 32 * TEXTURE_HEIGHT; // v = RATIO/r, so 32 texture rows per 1/r
+constexpr double TUNNEL_SPEED = 1.0; // seconds of flight per second
+constexpr double TUNNEL_SPIN = 0.25; // texture turns around the axis per second of flight
+constexpr double TUNNEL_MOUTH_RADIUS = 10.0; // pixels, the hole cut at the vanishing point
+constexpr double TUNNEL_HOLE_THRESHOLD = TUNNEL_RATIO / TUNNEL_MOUTH_RADIUS;
 
 static int DepthTable[RETRO_HEIGHT][RETRO_WIDTH];
 static int AngleTable[RETRO_HEIGHT][RETRO_WIDTH];

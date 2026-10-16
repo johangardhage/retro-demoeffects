@@ -35,20 +35,20 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define GRID_WIDTH (RETRO_WIDTH / 2) // interior cells across
-#define GRID_HEIGHT (RETRO_HEIGHT / 2) // interior cells down
-#define GRID_STRIDE (GRID_WIDTH + 2) // one wall cell each side
-#define GRID_SIZE (GRID_STRIDE * (GRID_HEIGHT + 2))
+constexpr int GRID_WIDTH = RETRO_WIDTH / 2; // interior cells across
+constexpr int GRID_HEIGHT = RETRO_HEIGHT / 2; // interior cells down
+constexpr int GRID_STRIDE = GRID_WIDTH + 2; // one wall cell each side
+constexpr int GRID_SIZE = GRID_STRIDE * (GRID_HEIGHT + 2);
 
-#define EMIT_RADIUS 5.0f // cells, the 1/e radius of a paddle
-#define EMIT_DENSITY 0.3f // ink added at a paddle's center each step
-#define STIR_REACH_X (GRID_WIDTH * 0.36f) // cells either side of the center
-#define STIR_REACH_Y (GRID_HEIGHT * 0.32f) // cells above and below the center
-#define STIR_PERIOD 24.0 // seconds for both paddles to close their paths
-#define CONFINEMENT 20.0f // strength of the vorticity confinement
-#define PROJECT_ITERATIONS 20 // Gauss-Seidel sweeps of the pressure solve
-#define DENSITY_KEEP 0.996f // kept per step, so how long a trail lasts
-#define INK_LEVELS 16 // levels per ink, INK_LEVELS² palette entries
+constexpr float EMIT_RADIUS = 5.0f; // cells, the 1/e radius of a paddle
+constexpr float EMIT_DENSITY = 0.3f; // ink added at a paddle's center each step
+constexpr float STIR_REACH_X = GRID_WIDTH * 0.36f; // cells either side of the center
+constexpr float STIR_REACH_Y = GRID_HEIGHT * 0.32f; // cells above and below the center
+constexpr double STIR_PERIOD = 24.0; // seconds for both paddles to close their paths
+constexpr float CONFINEMENT = 20.0f; // strength of the vorticity confinement
+constexpr int PROJECT_ITERATIONS = 20; // Gauss-Seidel sweeps of the pressure solve
+constexpr float DENSITY_KEEP = 0.996f; // kept per step, so how long a trail lasts
+constexpr int INK_LEVELS = 16; // levels per ink, INK_LEVELS² palette entries
 
 static const RETRO_Palette Water = { 2, 8, 24 };
 static const RETRO_Palette Ink1 = RETRO_ORANGE;

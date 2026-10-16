@@ -18,17 +18,17 @@
 #include "lib/retromath.h"
 #include "lib/retrogfx.h"
 
-#define BALLS 6
-#define RING_RADIUS 47.0f
-#define BALL_RADIUS 20.0f
-#define CYCLE 10.0f // seconds for one flight past the camera and back
-#define ROTATEX 0.63f // radians a second
-#define ROTATEY 0.91f
-#define ROTATEZ 0.37f
-#define NEAR_Z -215.0f
-#define FAR_Z 285.0f
-#define DRIFT_X 22.0f
-#define DRIFT_Y 13.0f
+constexpr int BALLS = 6;
+constexpr float RING_RADIUS = 47.0f;
+constexpr float BALL_RADIUS = 20.0f;
+constexpr float CYCLE = 10.0f; // seconds for one flight past the camera and back
+constexpr float ROTATEX = 0.63f; // radians a second
+constexpr float ROTATEY = 0.91f;
+constexpr float ROTATEZ = 0.37f;
+constexpr float NEAR_Z = -215.0f;
+constexpr float FAR_Z = 285.0f;
+constexpr float DRIFT_X = 22.0f;
+constexpr float DRIFT_Y = 13.0f;
 
 void DEMO_Render(RETRO_Time time)
 {

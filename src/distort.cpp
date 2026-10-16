@@ -15,9 +15,9 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define SINE_VALUES 64 // entries in the sine table, covering one whole turn
-#define DISTORT_AMPLITUDE 5 // pixels a row shifts sideways at the peak
-#define DISTORT_SPEED 100 // table entries traveled per second
+constexpr int SINE_VALUES = 64; // entries in the sine table, covering one whole turn
+constexpr int DISTORT_AMPLITUDE = 5; // pixels a row shifts sideways at the peak
+constexpr int DISTORT_SPEED = 100; // table entries traveled per second
 
 static int ShiftX[SINE_VALUES];
 static int ShiftY[SINE_VALUES];

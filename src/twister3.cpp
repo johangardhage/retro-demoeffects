@@ -72,18 +72,18 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define TWISTER_PERIOD 512 // one whole cycle of the column and four picture scrolls
-#define TWISTER_CYCLE ((double)RETRO_ANGLES_PER_TURN / TWISTER_PERIOD) // angle units a once-round wave advances per phase unit
-#define TWISTER_CENTER_X (RETRO_WIDTH / 2.0)
-#define TWISTER_RADIUS 60 // the circle the four corners ride, half the column's width corner on
-#define TWISTER_TURNS 1.5 // turns of the square over the period, a whole number of quarter turns
-#define TWISTER_TORSION 1.2 // table units the column twists per scanline where the torsion wave peaks
-#define TWISTER_TORSION_WAVE 7 // cycles of that wave over the period, under an envelope that closes once
-#define TWISTER_SPEED 30.0 // table units per second, half the original's one a frame
+constexpr int TWISTER_PERIOD = 512; // one whole cycle of the column and four picture scrolls
+constexpr double TWISTER_CYCLE = (double)RETRO_ANGLES_PER_TURN / TWISTER_PERIOD; // angle units a once-round wave advances per phase unit
+constexpr double TWISTER_CENTER_X = RETRO_WIDTH / 2.0;
+constexpr int TWISTER_RADIUS = 60; // the circle the four corners ride, half the column's width corner on
+constexpr double TWISTER_TURNS = 1.5; // turns of the square over the period, a whole number of quarter turns
+constexpr double TWISTER_TORSION = 1.2; // table units the column twists per scanline where the torsion wave peaks
+constexpr int TWISTER_TORSION_WAVE = 7; // cycles of that wave over the period, under an envelope that closes once
+constexpr double TWISTER_SPEED = 30.0; // table units per second, half the original's one a frame
 
-#define TWISTER_IMAGE_SIZE 256 // the picture is square and wraps both ways
-#define TWISTER_IMAGE_FACE (TWISTER_IMAGE_SIZE / 4) // texels a face carries, the picture going once round the four
-#define TWISTER_IMAGE_SCROLL 2.0 // texels the picture climbs per table unit, four whole pictures over the period
+constexpr int TWISTER_IMAGE_SIZE = 256; // the picture is square and wraps both ways
+constexpr int TWISTER_IMAGE_FACE = TWISTER_IMAGE_SIZE / 4; // texels a face carries, the picture going once round the four
+constexpr double TWISTER_IMAGE_SCROLL = 2.0; // texels the picture climbs per table unit, four whole pictures over the period
 
 //
 // One scanline of one face, half-open in x

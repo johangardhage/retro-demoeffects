@@ -51,11 +51,11 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define NUM_POINTS 2048
-#define SPHERE_SCALE 75 // the sphere is built at unit size, so the projection scales it to pixels
-#define ROTATION_SPEED 0.6 // radians per second
-#define BLOB_SIZE 5 // the splat stamped at each point, in pixels
-#define BLUR_DECAY 3 // brightness the blur takes off, so the smear stays a halo
+constexpr int NUM_POINTS = 2048;
+constexpr int SPHERE_SCALE = 75; // the sphere is built at unit size, so the projection scales it to pixels
+constexpr double ROTATION_SPEED = 0.6; // radians per second
+constexpr int BLOB_SIZE = 5; // the splat stamped at each point, in pixels
+constexpr int BLUR_DECAY = 3; // brightness the blur takes off, so the smear stays a halo
 
 static const unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 	{ 0, 17, 22, 17,  0},

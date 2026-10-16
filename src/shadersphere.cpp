@@ -57,38 +57,38 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define ROOM_FLOOR 1.8f // room units the floor lies below the ball's center; the ball's radius is 1
-#define ROOM_TILE 1.0f // room units a checker square spans
-#define ROOM_PIXEL (1.0f / RETRO_PROJECTION_EYEDISTANCE) // radians one screen pixel spans at the eye
-#define ROOM_EYE ((float)RETRO_PROJECTION_EYEDISTANCE / RETRO_PROJECTION_SCALE) // room units from the eye to the middle of the orbit
-#define CAMERA_PITCH 0.35f // radians the view looks down onto the ball
+constexpr float ROOM_FLOOR = 1.8f; // room units the floor lies below the ball's center; the ball's radius is 1
+constexpr float ROOM_TILE = 1.0f; // room units a checker square spans
+constexpr float ROOM_PIXEL = 1.0f / RETRO_PROJECTION_EYEDISTANCE; // radians one screen pixel spans at the eye
+constexpr float ROOM_EYE = (float)RETRO_PROJECTION_EYEDISTANCE / RETRO_PROJECTION_SCALE; // room units from the eye to the middle of the orbit
+constexpr float CAMERA_PITCH = 0.35f; // radians the view looks down onto the ball
 
-#define SUN_RADIUS 0.045f // radians, the disc as seen
-#define SUN_SOFTNESS 0.04f // radians, the light's disc as the shadow sees it; wider than the sun, for a softer shadow
-#define SHADOW_DEPTH 0.6f // how much of the light the shadow takes away
+constexpr float SUN_RADIUS = 0.045f; // radians, the disc as seen
+constexpr float SUN_SOFTNESS = 0.04f; // radians, the light's disc as the shadow sees it; wider than the sun, for a softer shadow
+constexpr float SHADOW_DEPTH = 0.6f; // how much of the light the shadow takes away
 
-#define CLOUD_HEIGHT 14.0f // room units the cloud plane lies above the ball's center
-#define CLOUD_SCALE 9.0f // room units a noise cell spans
-#define CLOUD_COVER 0.5f // noise level where a cloud begins; higher is clearer sky
-#define CLOUD_SPEED 0.6f // room units a second the clouds drift along x
-#define CLOUD_FOOTPRINT 0.3f // noise cells a pixel spans where the clouds have thinned out; they start to at half this
+constexpr float CLOUD_HEIGHT = 14.0f; // room units the cloud plane lies above the ball's center
+constexpr float CLOUD_SCALE = 9.0f; // room units a noise cell spans
+constexpr float CLOUD_COVER = 0.5f; // noise level where a cloud begins; higher is clearer sky
+constexpr float CLOUD_SPEED = 0.6f; // room units a second the clouds drift along x
+constexpr float CLOUD_FOOTPRINT = 0.3f; // noise cells a pixel spans where the clouds have thinned out; they start to at half this
 
-#define FLOOR_DARK 0.18f // the dark square's brightness, of white's
+constexpr float FLOOR_DARK = 0.18f; // the dark square's brightness, of white's
 
-#define CHROME_FLOOR_SHADES 16 // black through white, shadowed or not
-#define CHROME_HAZE_LEVELS 6 // steps from the clear checker to the horizon color
-#define CHROME_HAZE_FOOTPRINT 0.5f // squares a pixel covers before the checker averages out and is hazed over; fully at twice this
-#define CHROME_SKY_SHADES 32 // horizon to zenith
-#define CHROME_WHITE_LEVELS 5 // steps from clear sky to white cloud or sun; 16 x 6 + 32 x 5 is the whole palette
+constexpr int CHROME_FLOOR_SHADES = 16; // black through white, shadowed or not
+constexpr int CHROME_HAZE_LEVELS = 6; // steps from the clear checker to the horizon color
+constexpr float CHROME_HAZE_FOOTPRINT = 0.5f; // squares a pixel covers before the checker averages out and is hazed over; fully at twice this
+constexpr int CHROME_SKY_SHADES = 32; // horizon to zenith
+constexpr int CHROME_WHITE_LEVELS = 5; // steps from clear sky to white cloud or sun; 16 x 6 + 32 x 5 is the whole palette
 
-#define BALL_RADIUS 1.0f // spherequads.obj's
-#define ORBIT_SPEED 0.7f // radians a second
-#define ORBIT_RADIUS 1.6f // room units from the middle of the orbit to the ball's center
+constexpr float BALL_RADIUS = 1.0f; // spherequads.obj's
+constexpr float ORBIT_SPEED = 0.7f; // radians a second
+constexpr float ORBIT_RADIUS = 1.6f; // room units from the middle of the orbit to the ball's center
 
-#define CHROME_HORIZON RETRO_Palette{ 168, 198, 224 } // pale blue at Ry = 0, where the hazed floor meets the sky
+constexpr RETRO_Palette CHROME_HORIZON = { 168, 198, 224 }; // pale blue at Ry = 0, where the hazed floor meets the sky
 
-#define CHROME_FLOOR_START 0
-#define CHROME_SKY_START (CHROME_FLOOR_START + CHROME_FLOOR_SHADES * CHROME_HAZE_LEVELS)
+constexpr int CHROME_FLOOR_START = 0;
+constexpr int CHROME_SKY_START = CHROME_FLOOR_START + CHROME_FLOOR_SHADES * CHROME_HAZE_LEVELS;
 
 static mat3 RoomFrame; // view space to the room's, pitched so the camera looks down
 static const vec3 Sun = normalize(vec3{ 0.45f, -0.8f, -0.4f }); // toward the sun, in the room: right, up (-y) and behind the camera (-z)

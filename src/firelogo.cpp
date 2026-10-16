@@ -43,20 +43,20 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define FIRE_HEIGHT 6 // rows of fuel along the bottom, cropped off the blit
-#define FIRE_CHAOS 6 // a column is sparked with probability 1 / FIRE_CHAOS
-#define FIRE_DECAY 4 // subtracted after the 7-tap average
+constexpr int FIRE_HEIGHT = 6; // rows of fuel along the bottom, cropped off the blit
+constexpr int FIRE_CHAOS = 6; // a column is sparked with probability 1 / FIRE_CHAOS
+constexpr int FIRE_DECAY = 4; // subtracted after the 7-tap average
 
-#define LOGO_TITLE "RETRO"
-#define LOGO_SUBTITLE "DEMOEFFECTS"
-#define LOGO_HEAT 56 // steady seed heat of a full-brightness texel, doubled on average by the flicker
-#define LOGO_Y 78 // top row of the lockup, which centers it once the blit shifts it down
-#define LOGO_GAP 6 // rows between the two lines
-#define LOGO_TITLE_TRACKING 8 // columns left between glyphs, at that line's scale
-#define LOGO_SUBTITLE_TRACKING 4
+constexpr char LOGO_TITLE[] = "RETRO";
+constexpr char LOGO_SUBTITLE[] = "DEMOEFFECTS";
+constexpr int LOGO_HEAT = 56; // steady seed heat of a full-brightness texel, doubled on average by the flicker
+constexpr int LOGO_Y = 78; // top row of the lockup, which centers it once the blit shifts it down
+constexpr int LOGO_GAP = 6; // rows between the two lines
+constexpr int LOGO_TITLE_TRACKING = 8; // columns left between glyphs, at that line's scale
+constexpr int LOGO_SUBTITLE_TRACKING = 4;
 
 static unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 static unsigned char LogoBuffer[RETRO_HEIGHT * RETRO_WIDTH];

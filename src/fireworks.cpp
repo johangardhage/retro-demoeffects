@@ -32,15 +32,15 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define NUM_PARTICLES 1800
-#define SPARKS 140 // sparks a rocket becomes
-#define ROCKET_STEPS 28 // steps between launches
-#define BURST_LOW (RETRO_HEIGHT * 0.60f) // y of the lowest burst
-#define BURST_HIGH (RETRO_HEIGHT * 0.12f) // y of the highest burst
-#define SPARK_SPEED 4.6f // pixels a step, at the fastest spark
-#define GRAVITY 0.065f // pixels a step added to the downward speed each step
-#define SPARK_LIFE 110 // steps a spark lives
-#define TRAIL_DECAY 2 // brightness the blur takes off each step
+constexpr int NUM_PARTICLES = 1800;
+constexpr int SPARKS = 140; // sparks a rocket becomes
+constexpr int ROCKET_STEPS = 28; // steps between launches
+constexpr float BURST_LOW = RETRO_HEIGHT * 0.60f; // y of the lowest burst
+constexpr float BURST_HIGH = RETRO_HEIGHT * 0.12f; // y of the highest burst
+constexpr float SPARK_SPEED = 4.6f; // pixels a step, at the fastest spark
+constexpr float GRAVITY = 0.065f; // pixels a step added to the downward speed each step
+constexpr int SPARK_LIFE = 110; // steps a spark lives
+constexpr int TRAIL_DECAY = 2; // brightness the blur takes off each step
 
 enum { DEAD, ROCKET, SPARK };
 

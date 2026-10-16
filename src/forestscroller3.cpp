@@ -37,19 +37,19 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define FOREST_BACKGROUND "assets/forest_320x200.pcx"
-#define FOREST_BAND "assets/forest_band_640x32.pcx"
+constexpr char FOREST_BACKGROUND[] = "assets/forest_320x200.pcx";
+constexpr char FOREST_BAND[] = "assets/forest_band_640x32.pcx";
 #define FOREST_SCATTER { "assets/forest_scatter1.dat", "assets/forest_scatter2.dat", "assets/forest_scatter3.dat" }
 
-#define CELL_ROWS 31
-#define CELL_COLS 237
-#define CELL_XOFFSET 104 // the generated text strip column the grid's rightmost column starts sampling at
+constexpr int CELL_ROWS = 31;
+constexpr int CELL_COLS = 237;
+constexpr int CELL_XOFFSET = 104; // the generated text strip column the grid's rightmost column starts sampling at
 #define BAND_CYCLE (Band->width + CELL_XOFFSET) // one lap of the window, band plus its lead-in gap
-#define SCATTER_SETS 3
-#define TICKS_PER_WINDOW SCATTER_SETS // fixed ticks a full round through the three maps takes, so the window advances one column per round
-#define FONT_BOOST 128 // nonzero font pixels select the background palette's glow range
+constexpr int SCATTER_SETS = 3;
+constexpr int TICKS_PER_WINDOW = SCATTER_SETS; // fixed ticks a full round through the three maps takes, so the window advances one column per round
+constexpr int FONT_BOOST = 128; // nonzero font pixels select the background palette's glow range
 
-#define MAX_SCATTER_POINTS 8192
+constexpr int MAX_SCATTER_POINTS = 8192;
 
 static unsigned short ScatterAddr[SCATTER_SETS][MAX_SCATTER_POINTS];
 static int ScatterOffset[SCATTER_SETS][CELL_ROWS * CELL_COLS];

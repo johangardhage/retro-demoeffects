@@ -21,12 +21,12 @@
 #include "retro.h"
 #include "retrovector.h"
 
-#define RETRO_MAP_NAME 128				// The longest key, value or texture name, with its terminator
-#define RETRO_MAP_MAX_KEYS 16			// Keys an entity may have
-#define RETRO_MAP_MAX_ENTITIES 512
-#define RETRO_MAP_MAX_BRUSHES 1024
-#define RETRO_MAP_MAX_PLANES 16			// Planes a brush may have
-#define RETRO_MAP_MAX_FACE (RETRO_MAP_MAX_PLANES + 4)	// Corners a face may have: a square cut once by each other plane
+constexpr int RETRO_MAP_NAME = 128;			// The longest key, value or texture name, with its terminator
+constexpr int RETRO_MAP_MAX_KEYS = 16;		// Keys an entity may have
+constexpr int RETRO_MAP_MAX_ENTITIES = 512;
+constexpr int RETRO_MAP_MAX_BRUSHES = 1024;
+constexpr int RETRO_MAP_MAX_PLANES = 16;	// Planes a brush may have
+constexpr int RETRO_MAP_MAX_FACE = RETRO_MAP_MAX_PLANES + 4;	// Corners a face may have: a square cut once by each other plane
 
 //
 // One plane of a brush

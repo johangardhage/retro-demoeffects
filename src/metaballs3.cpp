@@ -50,13 +50,13 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define NUM_BALLS 4
-#define THRESHOLD 50 // F = T on the sphere of radius R around one ball
-#define EYE 250 // pinhole focal length, the library's eyedistance, in pixels
-#define MARCH_STEP 2.0f // world pixels a field sample advances along the ray
-#define MARCH_MAX 160 // samples along one ray, including the first
-#define BISECT_STEPS 8 // halvings of the crossing step
-#define ORBIT_SPEED 1.0 // radians of the base orbit per second; the rates below multiply it
+constexpr int NUM_BALLS = 4;
+constexpr int THRESHOLD = 50; // F = T on the sphere of radius R around one ball
+constexpr int EYE = 250; // pinhole focal length, the library's eyedistance, in pixels
+constexpr float MARCH_STEP = 2.0f; // world pixels a field sample advances along the ray
+constexpr int MARCH_MAX = 160; // samples along one ray, including the first
+constexpr int BISECT_STEPS = 8; // halvings of the crossing step
+constexpr double ORBIT_SPEED = 1.0; // radians of the base orbit per second; the rates below multiply it
 
 static vec3 Balls[NUM_BALLS]; // centers
 static float Charge[NUM_BALLS];

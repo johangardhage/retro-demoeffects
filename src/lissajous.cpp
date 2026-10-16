@@ -19,7 +19,7 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define LINE_SPEED 60 // degrees of a per second
+constexpr int LINE_SPEED = 60; // degrees of a per second
 
 void DEMO_Render(RETRO_Time time)
 {

@@ -31,15 +31,15 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define FLARE_SPEED 0.6 // radians of the Lissajous per second
-#define FLARE_MARGIN 40 // inset of the orbit, in pixels, so the glow stays on screen
-#define FLARE_CORE 14 // radius of the lamp itself
-#define FLARE_GLOW 38 // and of the soft halo around it
-#define FLARE_STREAK 18 // peak the anamorphic row adds at the lamp
-#define FLARE_STREAK_WIDTH 28 // pixels the streak is still half-bright
-#define FLARE_STREAK_ROWS 3 // rows above and below L_y that take the streak
-#define HEX_HALF 0.5f
-#define HEX_SQRT3_2 0.86602540378f // √3/2
+constexpr double FLARE_SPEED = 0.6; // radians of the Lissajous per second
+constexpr int FLARE_MARGIN = 40; // inset of the orbit, in pixels, so the glow stays on screen
+constexpr int FLARE_CORE = 14; // radius of the lamp itself
+constexpr int FLARE_GLOW = 38; // and of the soft halo around it
+constexpr int FLARE_STREAK = 18; // peak the anamorphic row adds at the lamp
+constexpr int FLARE_STREAK_WIDTH = 28; // pixels the streak is still half-bright
+constexpr int FLARE_STREAK_ROWS = 3; // rows above and below L_y that take the streak
+constexpr float HEX_HALF = 0.5f;
+constexpr float HEX_SQRT3_2 = 0.86602540378f; // √3/2
 
 // One reflection of the aperture: where on the axis it sits, how large and
 // how bright it is, and whether it takes the iris's six sides.

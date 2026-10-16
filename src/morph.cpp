@@ -39,13 +39,13 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TIME_FADEIN 1.5 // seconds to fade in the dark rose from black at startup
-#define TIME_WAIT 1.0 // seconds the dark rose is held after the fade-in
-#define TIME_MORPH 6.0 // seconds a morph takes
-#define TIME_CYCLE (2 * TIME_MORPH)
-#define WARP_A 1.0f // pixels, so the weight stays finite on a line
-#define WARP_P 0.5f // how much more a longer line weighs
-#define FEATURES 10
+constexpr double TIME_FADEIN = 1.5; // seconds to fade in the dark rose from black at startup
+constexpr double TIME_WAIT = 1.0; // seconds the dark rose is held after the fade-in
+constexpr double TIME_MORPH = 6.0; // seconds a morph takes
+constexpr double TIME_CYCLE = 2 * TIME_MORPH;
+constexpr float WARP_A = 1.0f; // pixels, so the weight stays finite on a line
+constexpr float WARP_P = 0.5f; // how much more a longer line weighs
+constexpr int FEATURES = 10;
 
 // A line segment, start to end, in picture coordinates
 struct Line {

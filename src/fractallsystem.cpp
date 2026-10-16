@@ -37,11 +37,11 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define MAX_RULES 2
-#define MAX_POINTS 4100 // the longest path, 4^6 points, and a little
-#define TIME_DRAW 1.5 // seconds a generation is traced for
-#define TIME_HOLD 1.0 // seconds the finished generation is held
-#define MARGIN 0.92 // of the screen the fitted path fills
+constexpr int MAX_RULES = 2;
+constexpr int MAX_POINTS = 4100; // the longest path, 4^6 points, and a little
+constexpr double TIME_DRAW = 1.5; // seconds a generation is traced for
+constexpr double TIME_HOLD = 1.0; // seconds the finished generation is held
+constexpr double MARGIN = 0.92; // of the screen the fitted path fills
 
 struct Rule {
 	char symbol;
@@ -64,7 +64,7 @@ static Curve Curves[] = {
 	{ "F", { { 'F', "F-G--G+F++FF+G-" }, { 'G', "+F-GG--G-F++F+G" } }, 2, 6, 4, RETRO_SPRINGGREEN, RETRO_YELLOW }, // Gosper curve
 };
 
-#define CURVES ((int)(sizeof(Curves) / sizeof(Curves[0])))
+constexpr int CURVES = (int)(sizeof(Curves) / sizeof(Curves[0]));
 
 struct Point {
 	float x, y;

@@ -22,32 +22,32 @@
 #include "lib/retrovector.h"
 #include "lib/retromain.h"
 
-#define FOREST_BACKGROUND "assets/forest_320x200.pcx"
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+constexpr char FOREST_BACKGROUND[] = "assets/forest_320x200.pcx";
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 
-#define CELL_COLS 237 // the grid along the spray
-#define CELL_XOFFSET 104 // the lap's lead-in gap
+constexpr int CELL_COLS = 237; // the grid along the spray
+constexpr int CELL_XOFFSET = 104; // the lap's lead-in gap
 #define BAND_CYCLE (Band->width + CELL_XOFFSET) // one lap of the window, band plus its lead-in gap
-#define TICKS_PER_WINDOW 2.5 // average ticks per column (20% faster than three ticks)
-#define END_ACCELERATION 0.10 // reduce column density near the narrow tip, ramping back to normal by the wide end
-#define EXIT_ACCELERATION 0.30 // push column density past normal right at the wide end
-#define SHIMMER_PHASES 3
-#define FONT_BOOST 128 // nonzero font pixels select the background palette's glow range
+constexpr double TICKS_PER_WINDOW = 2.5; // average ticks per column (20% faster than three ticks)
+constexpr double END_ACCELERATION = 0.10; // reduce column density near the narrow tip, ramping back to normal by the wide end
+constexpr double EXIT_ACCELERATION = 0.30; // push column density past normal right at the wide end
+constexpr int SHIMMER_PHASES = 3;
+constexpr int FONT_BOOST = 128; // nonzero font pixels select the background palette's glow range
 
-#define PATH_X0 0 // end of the scroll at bottom-left edge of screen
-#define PATH_END_SHIFT_X 75 // move the wide end right in pixels, fading to zero at the tip
-#define PATH_Y0 191 // wide-end anchor Y
-#define PATH_Y1 20 // narrow tip Y
-#define PATH_HEIGHT_PEAK 165 // approximate width at (X0,Y0), the end of the scroll
-#define PATH_HEIGHT_MIN 25 // approximate width at the tip (X1,Y1), the beginning of the scroll
-#define PATH_TAPER_CURVE 0.4 // gentle size boost toward the narrow tip; zero gives a linear taper
+constexpr int PATH_X0 = 0; // end of the scroll at bottom-left edge of screen
+constexpr int PATH_END_SHIFT_X = 75; // move the wide end right in pixels, fading to zero at the tip
+constexpr int PATH_Y0 = 191; // wide-end anchor Y
+constexpr int PATH_Y1 = 20; // narrow tip Y
+constexpr int PATH_HEIGHT_PEAK = 165; // approximate width at (X0,Y0), the end of the scroll
+constexpr int PATH_HEIGHT_MIN = 25; // approximate width at the tip (X1,Y1), the beginning of the scroll
+constexpr double PATH_TAPER_CURVE = 0.4; // gentle size boost toward the narrow tip; zero gives a linear taper
 
 // Along-path direction and cross-ribbon direction.
-#define UX 0.82
-#define UY -0.58
+constexpr double UX = 0.82;
+constexpr double UY = -0.58;
 // Letter rows follow the original's approximate 20-degree slant.
-#define VX 0.93969262
-#define VY 0.34202014
+constexpr double VX = 0.93969262;
+constexpr double VY = 0.34202014;
 
 static unsigned char *Background;
 static RETRO_Image *Band;

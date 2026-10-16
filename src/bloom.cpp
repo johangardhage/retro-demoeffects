@@ -24,9 +24,9 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define NUM_BLOBS 5
-#define BLOB_RADIUS 4
-#define BLOOM_PERIOD (200 * M_PI)
+constexpr int NUM_BLOBS = 5;
+constexpr int BLOB_RADIUS = 4;
+constexpr double BLOOM_PERIOD = 200 * M_PI;
 
 static void DrawBlob(int xc, int yc, unsigned char color)
 {

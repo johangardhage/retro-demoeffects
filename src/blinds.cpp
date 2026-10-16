@@ -16,15 +16,15 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define BLIND_WIDTH 16
-#define BLINDS ((RETRO_WIDTH + BLIND_WIDTH - 1) / BLIND_WIDTH)
-#define PHASE_WINDOW 0.72 // part of the transition spent rotating one slat
-#define TIME_TRANSITION 2.0
-#define TIME_HOLD 1.0 // seconds held on the white screen or on the curtain
-#define TIME_CYCLE (2 * (TIME_HOLD + TIME_TRANSITION))
-#define CURTAIN 0
-#define FIRST_SHADE 1
-#define SHADES 32
+constexpr int BLIND_WIDTH = 16;
+constexpr int BLINDS = (RETRO_WIDTH + BLIND_WIDTH - 1) / BLIND_WIDTH;
+constexpr double PHASE_WINDOW = 0.72; // part of the transition spent rotating one slat
+constexpr double TIME_TRANSITION = 2.0;
+constexpr double TIME_HOLD = 1.0; // seconds held on the white screen or on the curtain
+constexpr double TIME_CYCLE = 2 * (TIME_HOLD + TIME_TRANSITION);
+constexpr int CURTAIN = 0;
+constexpr int FIRST_SHADE = 1;
+constexpr int SHADES = 32;
 
 void DEMO_Render(RETRO_Time time)
 {

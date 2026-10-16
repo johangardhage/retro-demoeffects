@@ -36,34 +36,34 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define DROPS 500
-#define RAIN_MINSPEED 220.0f // pixels a second, farthest layer
-#define RAIN_MAXSPEED 520.0f // nearest layer
-#define RAIN_SLANT 0.18 // sideways pixels per pixel of fall
-#define RAIN_STREAK 0.03 // seconds of travel a streak spans
-#define STREET_TOP 176 // the street's far edge, where the city stands
-#define RIPPLES 256
-#define RIPPLE_LIFE 0.5 // seconds
-#define RIPPLE_SIZE 9.0 // pixels across a ripple grows at the near edge
-#define RIPPLE_FLATTEN 0.25 // height over width of a ripple
-#define SPLASH_DEPTH 0.7 // drops nearer than this splash
-#define SPLASH_DROPLETS 3
-#define SPLASHES 512
-#define SPLASH_SPEED 60.0 // pixels a second, upward at most
-#define SPLASH_GRAVITY 500.0 // pixels a second squared
-#define LIGHTNING_INTERVAL 7.0 // seconds between strikes, on average
-#define LIGHTNING_DECAY 9.0 // how fast a flash fades, per second
-#define LIGHTNING_GAP 0.12 // seconds between a strike's two flashes
-#define WINDOW_LIT 0.3 // chance a window is lit
-#define SKY 0 // palette ranges
-#define SKY_COLORS 48
-#define STREET (SKY + SKY_COLORS)
-#define STREET_COLORS 32
-#define BUILDING (STREET + STREET_COLORS)
-#define WINDOW (BUILDING + 1)
-#define RAIN (WINDOW + 1)
-#define RAIN_COLORS 16
-#define PALETTE_COLORS (RAIN + RAIN_COLORS)
+constexpr int DROPS = 500;
+constexpr float RAIN_MINSPEED = 220.0f; // pixels a second, farthest layer
+constexpr float RAIN_MAXSPEED = 520.0f; // nearest layer
+constexpr double RAIN_SLANT = 0.18; // sideways pixels per pixel of fall
+constexpr double RAIN_STREAK = 0.03; // seconds of travel a streak spans
+constexpr int STREET_TOP = 176; // the street's far edge, where the city stands
+constexpr int RIPPLES = 256;
+constexpr double RIPPLE_LIFE = 0.5; // seconds
+constexpr double RIPPLE_SIZE = 9.0; // pixels across a ripple grows at the near edge
+constexpr double RIPPLE_FLATTEN = 0.25; // height over width of a ripple
+constexpr double SPLASH_DEPTH = 0.7; // drops nearer than this splash
+constexpr int SPLASH_DROPLETS = 3;
+constexpr int SPLASHES = 512;
+constexpr double SPLASH_SPEED = 60.0; // pixels a second, upward at most
+constexpr double SPLASH_GRAVITY = 500.0; // pixels a second squared
+constexpr double LIGHTNING_INTERVAL = 7.0; // seconds between strikes, on average
+constexpr double LIGHTNING_DECAY = 9.0; // how fast a flash fades, per second
+constexpr double LIGHTNING_GAP = 0.12; // seconds between a strike's two flashes
+constexpr double WINDOW_LIT = 0.3; // chance a window is lit
+constexpr int SKY = 0; // palette ranges
+constexpr int SKY_COLORS = 48;
+constexpr int STREET = SKY + SKY_COLORS;
+constexpr int STREET_COLORS = 32;
+constexpr int BUILDING = STREET + STREET_COLORS;
+constexpr int WINDOW = BUILDING + 1;
+constexpr int RAIN = WINDOW + 1;
+constexpr int RAIN_COLORS = 16;
+constexpr int PALETTE_COLORS = RAIN + RAIN_COLORS;
 
 struct Drop {
 	float x;

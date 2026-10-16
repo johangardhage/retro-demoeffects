@@ -29,13 +29,13 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define COPPER_BARS 7
-#define COPPER_BARHEIGHT 20
-#define COPPER_CORE 3 // rows of highlight either side of the middle of a bar
-#define COPPER_RAMP0 1 // palette entry the first bar's ramp starts at, past the background
-#define COPPER_LAG 10 // how far behind its predecessor a bar rides
-#define COPPER_AMP 95
-#define COPPER_SPEED 70 // table units per second
+constexpr int COPPER_BARS = 7;
+constexpr int COPPER_BARHEIGHT = 20;
+constexpr int COPPER_CORE = 3; // rows of highlight either side of the middle of a bar
+constexpr int COPPER_RAMP0 = 1; // palette entry the first bar's ramp starts at, past the background
+constexpr int COPPER_LAG = 10; // how far behind its predecessor a bar rides
+constexpr int COPPER_AMP = 95;
+constexpr int COPPER_SPEED = 70; // table units per second
 
 // The rainbow, one color per bar and one bar per color, in draw order, which is
 // also the order of the bow: red on the outer edge with the longest wavelength

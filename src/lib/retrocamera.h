@@ -18,7 +18,7 @@
 // scale * eyedistance pair, for a model that sits some distance in front of
 // the eye, and no choice of the two makes depth rpos.z itself with focal
 // scaling only x and y, as a camera-relative point needs.
-#define RETRO_CAMERA_FOCAL 250
+constexpr int RETRO_CAMERA_FOCAL = 250;
 
 //
 // What the camera looks through: a pinhole with a focal length across and one
@@ -243,8 +243,8 @@ inline vec3 RETRO_ViewPoint(const RETRO_Camera *camera, vec3 point)
 
 // The most corners a polygon handed to RETRO_CameraClipProjectPolygon may have.
 // Each of the five cuts adds at most one more.
-#define RETRO_CAMERA_MAX_POLYGON 32
-#define RETRO_CAMERA_CLIP_PLANES 5
+constexpr int RETRO_CAMERA_MAX_POLYGON = 32;
+constexpr int RETRO_CAMERA_CLIP_PLANES = 5;
 
 // The lens's pinhole, for a point in the camera's frame in front of the eye.
 // The caller decides what is worth projecting first: a direction projects to
@@ -350,7 +350,7 @@ inline int RETRO_CameraClipToPlane(const RETRO_CameraVertex *vertex, int count, 
 
 // How much wider than the lens's view a cull keeps, so a shape on the screen
 // edge is kept rather than thrown out
-#define RETRO_CAMERA_CULL_WIDEN 1.05f
+constexpr float RETRO_CAMERA_CULL_WIDEN = 1.05f;
 
 //
 // How far the lens's view reaches from its center, per unit of depth

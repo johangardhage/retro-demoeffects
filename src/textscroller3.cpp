@@ -29,13 +29,13 @@
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define SCROLL_SPEED 200 // texels per second
-#define WAVE_AMP 40 // pixels either side of the middle a column reaches
-#define WAVE_RATE 1.2 // table units of the sine per pixel, so 1.5 waves across
-#define WAVE_SPEED 90 // table units per second
+constexpr int SCROLL_SPEED = 200; // texels per second
+constexpr int WAVE_AMP = 40; // pixels either side of the middle a column reaches
+constexpr double WAVE_RATE = 1.2; // table units of the sine per pixel, so 1.5 waves across
+constexpr int WAVE_SPEED = 90; // table units per second
 
 static const char *const ScrollText[] = { "                    RETRO DEMOEFFECTS..." };
 

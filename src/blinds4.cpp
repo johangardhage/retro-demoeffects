@@ -24,15 +24,15 @@
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
 
-#define BLIND_HEIGHT 16
-#define BLINDS ((RETRO_HEIGHT + BLIND_HEIGHT - 1) / BLIND_HEIGHT)
-#define PHASE_WINDOW 0.72 // part of the transition spent rotating one slat
-#define TIME_TRANSITION 2.0
-#define TIME_HOLD 1.0 // seconds held on either picture
-#define TIME_CYCLE (2 * (TIME_HOLD + TIME_TRANSITION))
-#define CURTAIN 0
-#define SHADES 16
-#define AMBIENT 0.25f // light left on a slat that is nearly edge-on
+constexpr int BLIND_HEIGHT = 16;
+constexpr int BLINDS = (RETRO_HEIGHT + BLIND_HEIGHT - 1) / BLIND_HEIGHT;
+constexpr double PHASE_WINDOW = 0.72; // part of the transition spent rotating one slat
+constexpr double TIME_TRANSITION = 2.0;
+constexpr double TIME_HOLD = 1.0; // seconds held on either picture
+constexpr double TIME_CYCLE = 2 * (TIME_HOLD + TIME_TRANSITION);
+constexpr int CURTAIN = 0;
+constexpr int SHADES = 16;
+constexpr float AMBIENT = 0.25f; // light left on a slat that is nearly edge-on
 
 static RETRO_Image *PictureA;
 static RETRO_Image *PictureB;

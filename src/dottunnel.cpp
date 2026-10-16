@@ -26,15 +26,15 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define RING_COUNT 40 // rings between the eye and the mouth
-#define RING_DOTS 60 // 6° per dot in the original, 360/6 = 60 exactly
-#define RING_WIDTH 740 // the ring is an ellipse, so it has two semi axes
-#define RING_HEIGHT 788
-#define TUNNEL_DEPTH 20 // depth of the furthest ring
-#define TUNNEL_SPEED 20 // depth traveled per second
-#define TWIST_PER_RING (RETRO_ANGLES_PER_TURN / 24.0) // 15° per ring, in angle units
-#define SWAY_RADIUS 260 // how far that turn throws a ring's center off the axis
-#define TWIST_SPEED (RETRO_ANGLES_PER_TURN * 5.0 / 3.0) // 600°/s, in angle units
+constexpr int RING_COUNT = 40; // rings between the eye and the mouth
+constexpr int RING_DOTS = 60; // 6° per dot in the original, 360/6 = 60 exactly
+constexpr int RING_WIDTH = 740; // the ring is an ellipse, so it has two semi axes
+constexpr int RING_HEIGHT = 788;
+constexpr int TUNNEL_DEPTH = 20; // depth of the furthest ring
+constexpr int TUNNEL_SPEED = 20; // depth traveled per second
+constexpr double TWIST_PER_RING = RETRO_ANGLES_PER_TURN / 24.0; // 15° per ring, in angle units
+constexpr int SWAY_RADIUS = 260; // how far that turn throws a ring's center off the axis
+constexpr double TWIST_SPEED = RETRO_ANGLES_PER_TURN * 5.0 / 3.0; // 600°/s, in angle units
 
 static double RingX[RING_DOTS];
 static double RingY[RING_DOTS];

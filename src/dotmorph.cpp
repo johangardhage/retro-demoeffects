@@ -25,17 +25,17 @@
 #include "lib/retromath.h"
 #include "lib/retropalette.h"
 
-#define POINTS 4096
-#define PROJECTION_SCALE 80 // the shapes are built at unit size, so the projection scales them to pixels
-#define ROTATION_SPEED 100 // degrees per second
+constexpr int POINTS = 4096;
+constexpr int PROJECTION_SCALE = 80; // the shapes are built at unit size, so the projection scales them to pixels
+constexpr int ROTATION_SPEED = 100; // degrees per second
 
-#define TORUS_RING 0.8 // distance from the axis out to the middle of the tube
-#define TORUS_TUBE 0.4 // and the radius of the tube itself
+constexpr double TORUS_RING = 0.8; // distance from the axis out to the middle of the tube
+constexpr double TORUS_TUBE = 0.4; // and the radius of the tube itself
 
-#define MORPH_STEPS 256 // steps a change from one shape to the other takes
-#define HOLD_STEPS 512 // and steps a shape is held for once it arrives
-#define CYCLE_STEPS (2 * (MORPH_STEPS + HOLD_STEPS)) // morph, hold, morph back, hold
-#define MORPH_SPEED 200 // steps per second
+constexpr int MORPH_STEPS = 256; // steps a change from one shape to the other takes
+constexpr int HOLD_STEPS = 512; // and steps a shape is held for once it arrives
+constexpr int CYCLE_STEPS = 2 * (MORPH_STEPS + HOLD_STEPS); // morph, hold, morph back, hold
+constexpr int MORPH_SPEED = 200; // steps per second
 
 static vec3 Sphere[POINTS];
 static vec3 Torus[POINTS];

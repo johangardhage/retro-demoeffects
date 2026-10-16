@@ -23,7 +23,7 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define PLATE_COUNT 3
+constexpr int PLATE_COUNT = 3;
 
 struct Plate {
 	int sides;				// A regular polygon with this many corners

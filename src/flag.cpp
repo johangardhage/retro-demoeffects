@@ -32,44 +32,44 @@
 // Flag of Sweden, SFS 1982:269. The proportions are 16:10, divided 5:2:9 along the flag and
 // 4:2:4 across it, which puts the cross off center toward the hoist and makes both arms the
 // same thickness. 256 by 160 is exactly 16:10, so none of that has to be compromised.
-#define FLAG_WIDTH 256
-#define FLAG_HEIGHT 160
-#define FLAG_LEFT ((RETRO_WIDTH - FLAG_WIDTH) / 2)
-#define FLAG_TOP ((RETRO_HEIGHT - FLAG_HEIGHT) / 2)
-#define CROSS_LEFT (FLAG_WIDTH * 5.0f / 16)
-#define CROSS_RIGHT (FLAG_WIDTH * 7.0f / 16)
-#define CROSS_TOP (FLAG_HEIGHT * 4.0f / 10)
-#define CROSS_BOTTOM (FLAG_HEIGHT * 6.0f / 10)
+constexpr int FLAG_WIDTH = 256;
+constexpr int FLAG_HEIGHT = 160;
+constexpr int FLAG_LEFT = (RETRO_WIDTH - FLAG_WIDTH) / 2;
+constexpr int FLAG_TOP = (RETRO_HEIGHT - FLAG_HEIGHT) / 2;
+constexpr float CROSS_LEFT = FLAG_WIDTH * 5.0f / 16;
+constexpr float CROSS_RIGHT = FLAG_WIDTH * 7.0f / 16;
+constexpr float CROSS_TOP = FLAG_HEIGHT * 4.0f / 10;
+constexpr float CROSS_BOTTOM = FLAG_HEIGHT * 6.0f / 10;
 
 // A shade ramp per color of the flag, the two splitting the palette evenly so
 // that every entry carries a shade
-#define FLAG_COLORS (RETRO_COLORS / 2)
-#define BLUE_SHADES 0
-#define YELLOW_SHADES FLAG_COLORS
+constexpr int FLAG_COLORS = RETRO_COLORS / 2;
+constexpr int BLUE_SHADES = 0;
+constexpr int YELLOW_SHADES = FLAG_COLORS;
 
-#define CLOTH_AMPLITUDE 22.0f // fold depth at the fly, in pixels
-#define CLOTH_SPEED 85 // pixels of wave travel per second
-#define CLOTH_WAVES 7
-#define CLOTH_OCCLUSION 4.0f // how far a crease shuts out the sky, per unit of curvature
-#define CLOTH_TILT 0.45f // the flag plane leans out of the screen, so a fold carries the
+constexpr float CLOTH_AMPLITUDE = 22.0f; // fold depth at the fly, in pixels
+constexpr int CLOTH_SPEED = 85; // pixels of wave travel per second
+constexpr int CLOTH_WAVES = 7;
+constexpr float CLOTH_OCCLUSION = 4.0f; // how far a crease shuts out the sky, per unit of curvature
+constexpr float CLOTH_TILT = 0.45f; // the flag plane leans out of the screen, so a fold carries the
                            // cloth across the picture as well as into it
-#define CLOTH_SWAY 16 // pixels the fly rises and falls as the flag swings on its halyard
-#define CLOTH_SWAYPERIOD 4.3 // seconds for one swing
+constexpr int CLOTH_SWAY = 16; // pixels the fly rises and falls as the flag swings on its halyard
+constexpr double CLOTH_SWAYPERIOD = 4.3; // seconds for one swing
 
 // Travel at which every mode is back on the crest it started from: the lcm of the
 // wavelengths 240, 155, 100, 65, 42, 27, 18 = 2^4·3^3·5^2·7·13·31 pixels.
-#define CLOTH_PERIOD (16.0 * 27 * 25 * 7 * 13 * 31)
+constexpr double CLOTH_PERIOD = 16.0 * 27 * 25 * 7 * 13 * 31;
 
 // Sunlight, so one direction serves the whole surface. (−5, −2, 4) normalized:
 // 37° above the cloth, from the left, well off the viewer's axis, so the
 // shading changes as the surface tilts.
-#define LIGHT_DIRX -0.74536f
-#define LIGHT_DIRY -0.29814f
-#define LIGHT_DIRZ 0.59629f
+constexpr float LIGHT_DIRX = -0.74536f;
+constexpr float LIGHT_DIRY = -0.29814f;
+constexpr float LIGHT_DIRZ = 0.59629f;
 
-#define MATERIAL_AMBIENT 0.34f // cloth is lit by the whole sky, not only by the sun
-#define MATERIAL_DIFFUSE 0.60f
-#define MATERIAL_SPECULAR 0.16f // cloth has a broad sheen, not a highlight
+constexpr float MATERIAL_AMBIENT = 0.34f; // cloth is lit by the whole sky, not only by the sun
+constexpr float MATERIAL_DIFFUSE = 0.60f;
+constexpr float MATERIAL_SPECULAR = 0.16f; // cloth has a broad sheen, not a highlight
 
 //
 // One mode of the surface

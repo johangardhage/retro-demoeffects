@@ -12,12 +12,12 @@
 #include "lib/retrocamera.h"
 #include "lib/retropalette.h"
 
-#define NUM_STARS 4000
-#define SPEED 600 // world units per second
-#define STAR_FAR 600
-#define STAR_NEAR 8
-#define SHADES 64
-#define FLIGHT_PERIOD 10.0
+constexpr int NUM_STARS = 4000;
+constexpr int SPEED = 600; // world units per second
+constexpr int STAR_FAR = 600;
+constexpr int STAR_NEAR = 8;
+constexpr int SHADES = 64;
+constexpr double FLIGHT_PERIOD = 10.0;
 
 static vec3 Stars[NUM_STARS]; // Positions relative to the eye, in world axes
 

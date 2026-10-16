@@ -23,14 +23,14 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define FLAG_SUBDIV 4 // dots per cell of the flag, in each direction
-#define DOT_SPACING 4 // pixels between neighboring dots
+constexpr int FLAG_SUBDIV = 4; // dots per cell of the flag, in each direction
+constexpr int DOT_SPACING = 4; // pixels between neighboring dots
 
-#define SINE_VALUES 255 // entries in the sine table, covering one whole turn
-#define WAVE_AMPLITUDE 10 // pixels a dot is displaced at the crest
-#define WAVE_CURVE 5 // table entries of phase per dot along the diagonal
-#define WAVE_SKEW 2 // and per dot along the axis the displacement acts on
-#define WAVE_SPEED 200 // table entries traveled per second
+constexpr int SINE_VALUES = 255; // entries in the sine table, covering one whole turn
+constexpr int WAVE_AMPLITUDE = 10; // pixels a dot is displaced at the crest
+constexpr int WAVE_CURVE = 5; // table entries of phase per dot along the diagonal
+constexpr int WAVE_SKEW = 2; // and per dot along the axis the displacement acts on
+constexpr int WAVE_SPEED = 200; // table entries traveled per second
 
 // Flag of Sweden, SFS 1982:269: 16:10, divided 5:2:9 across and 4:2:4 down.
 static const unsigned char SwedishFlag[10][16] = {

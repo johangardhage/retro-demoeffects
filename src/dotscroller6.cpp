@@ -30,33 +30,33 @@
 #include "lib/retropalette.h"
 #include "lib/retropoly.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define MAP_WIDTH 80 // cells across the platform
-#define MAP_DEPTH 40 // and along it
-#define ORIGIN_X ((MAP_WIDTH - 1) / 2.0f) // the patch's own center, in cells
-#define ORIGIN_Z ((MAP_DEPTH - 1) / 2.0f)
-#define DOT_SPACING 3.0f // pixels between neighboring dots, the same in x, y and z
-#define EXTRUSION 8 // levels a lit texel stands above the landscape
-#define LETTER_GAP 3 // levels of clearance between the floor and a letter's underside
-#define WAVE_AMP 4.0f // pixels the sine lifts the platform
-#define WAVE_KX 0.045f // radians per pixel of that sine in x
-#define WAVE_KZ 0.070f // and in z
-#define WAVE_SPEED 0.55 // radians per second the wave travels
-#define SCROLL_SPEED 10.0f // cells per second the strip travels left
-#define GROUND_SHADES 32 // palette entries the ground's depth shading ramps over
-#define LETTER_SHADES 32 // and the letters', in their own ramp
+constexpr int MAP_WIDTH = 80; // cells across the platform
+constexpr int MAP_DEPTH = 40; // and along it
+constexpr float ORIGIN_X = (MAP_WIDTH - 1) / 2.0f; // the patch's own center, in cells
+constexpr float ORIGIN_Z = (MAP_DEPTH - 1) / 2.0f;
+constexpr float DOT_SPACING = 3.0f; // pixels between neighboring dots, the same in x, y and z
+constexpr int EXTRUSION = 8; // levels a lit texel stands above the landscape
+constexpr int LETTER_GAP = 3; // levels of clearance between the floor and a letter's underside
+constexpr float WAVE_AMP = 4.0f; // pixels the sine lifts the platform
+constexpr float WAVE_KX = 0.045f; // radians per pixel of that sine in x
+constexpr float WAVE_KZ = 0.070f; // and in z
+constexpr double WAVE_SPEED = 0.55; // radians per second the wave travels
+constexpr float SCROLL_SPEED = 10.0f; // cells per second the strip travels left
+constexpr int GROUND_SHADES = 32; // palette entries the ground's depth shading ramps over
+constexpr int LETTER_SHADES = 32; // and the letters', in their own ramp
 // Both stretched around the midpoint before they pick a shade: at low yaw
 // the patch is nearly edge-on to the turn, so depth barely varies with x
 // and the ground goes as flat as the letters do without this.
-#define GROUND_CONTRAST 3.0f
-#define LETTER_CONTRAST 4.0f
-#define YAW_AMP 0.6 // radians either side of center the patch turns about y
-#define YAW_SPEED 0.5 // radians per second of that turn
-#define PITCH 1.15 // radians of x the view holds, looking down
-#define OBJECT_Z 55.0f // model units the patch is pushed back after the turn
-#define PROJECTION_SCALE 1.0f // the dots are built in pixels, so the projection adds no scale
+constexpr float GROUND_CONTRAST = 3.0f;
+constexpr float LETTER_CONTRAST = 4.0f;
+constexpr double YAW_AMP = 0.6; // radians either side of center the patch turns about y
+constexpr double YAW_SPEED = 0.5; // radians per second of that turn
+constexpr double PITCH = 1.15; // radians of x the view holds, looking down
+constexpr float OBJECT_Z = 55.0f; // model units the patch is pushed back after the turn
+constexpr float PROJECTION_SCALE = 1.0f; // the dots are built in pixels, so the projection adds no scale
 
 static const char *const ScrollText[] = { "     RETRO DEMOEFFECTS..." };
 

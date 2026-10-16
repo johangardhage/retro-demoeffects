@@ -24,11 +24,11 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define LENS_RADIUS 45 // pixels
-#define LENS_SIZE (2 * LENS_RADIUS)
-#define LENS_ZOOM 20 // sphere height at the rim, in pixels
-#define LENS_MARGIN 3 // kept between the disc and the screen edge
-#define LENS_PERIOD 14.6 // seconds for the disc's path to close
+constexpr int LENS_RADIUS = 45; // pixels
+constexpr int LENS_SIZE = 2 * LENS_RADIUS;
+constexpr int LENS_ZOOM = 20; // sphere height at the rim, in pixels
+constexpr int LENS_MARGIN = 3; // kept between the disc and the screen edge
+constexpr double LENS_PERIOD = 14.6; // seconds for the disc's path to close
 
 static int LensOffset[LENS_SIZE * LENS_SIZE];
 

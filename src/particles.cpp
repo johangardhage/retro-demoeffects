@@ -30,18 +30,18 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define NUM_PARTICLES 6000
-#define PARTICLE_SPEED 5 // pixels a step, at the fastest
-#define PARTICLE_GRAVITY 0.13 // pixels a step added to the downward speed each step
-#define EXPLOSION_STEPS 90 // steps between explosions
+constexpr int NUM_PARTICLES = 6000;
+constexpr int PARTICLE_SPEED = 5; // pixels a step, at the fastest
+constexpr double PARTICLE_GRAVITY = 0.13; // pixels a step added to the downward speed each step
+constexpr int EXPLOSION_STEPS = 90; // steps between explosions
 
-#define BOUNCE_RESTITUTION 0.5 // speed kept across a bounce, in the direction that reverses
-#define BOUNCE_FRICTION 0.25 // and along the wall
+constexpr double BOUNCE_RESTITUTION = 0.5; // speed kept across a bounce, in the direction that reverses
+constexpr double BOUNCE_FRICTION = 0.25; // and along the wall
 
-#define EMBER_ROWS 21 // rows above the floor in which a particle glows like an ember
-#define EMBER_SHADES 128 // the top half of the ramp, where the yellows and whites are
+constexpr int EMBER_ROWS = 21; // rows above the floor in which a particle glows like an ember
+constexpr int EMBER_SHADES = 128; // the top half of the ramp, where the yellows and whites are
 
-#define TRAIL_DECAY 3 // brightness the blur takes off each step, so the trails fade
+constexpr int TRAIL_DECAY = 3; // brightness the blur takes off each step, so the trails fade
 
 static struct Particle {
 	vec2 pos;

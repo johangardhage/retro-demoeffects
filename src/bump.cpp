@@ -24,13 +24,13 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define LIGHT_SIZE 128 // radius of the light in pixels, which is also the center of the light map
-#define LIGHTMAP_WIDTH (LIGHT_SIZE * 2 + 1) // odd, so the peak lands on an exact center pixel
-#define LIGHTMAP_HEIGHT (LIGHT_SIZE * 2 + 1)
-#define LIGHT_DEPTH 1 // scales the slope of the height map, so how deep the relief reads
-#define LIGHT_COLORS 128 // palette entries the light map ramps over
-#define LIGHT_ORBIT 128 // radius of the light's path across the screen, in pixels
-#define LIGHT_SPEED 100 // degrees of that path per second
+constexpr int LIGHT_SIZE = 128; // radius of the light in pixels, which is also the center of the light map
+constexpr int LIGHTMAP_WIDTH = LIGHT_SIZE * 2 + 1; // odd, so the peak lands on an exact center pixel
+constexpr int LIGHTMAP_HEIGHT = LIGHT_SIZE * 2 + 1;
+constexpr int LIGHT_DEPTH = 1; // scales the slope of the height map, so how deep the relief reads
+constexpr int LIGHT_COLORS = 128; // palette entries the light map ramps over
+constexpr int LIGHT_ORBIT = 128; // radius of the light's path across the screen, in pixels
+constexpr int LIGHT_SPEED = 100; // degrees of that path per second
 
 static unsigned char LightMap[LIGHTMAP_HEIGHT * LIGHTMAP_WIDTH];
 

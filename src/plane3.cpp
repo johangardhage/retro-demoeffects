@@ -51,13 +51,13 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define PLANE_DISTANCE 320
-#define PLANE_PERIOD 256 // one texture width; U, V, xd and yd share it
-#define PLANE_Y -16.0f // world y of the floor
-#define PLANE_YAW_SPEED 24.0 // degrees per second
-#define PLANE_WALK_SPEED 80.0 // texels per second
-#define PLANE_FIRST_ROW 140 // skip rows near the horizon at H/2
-#define FIELD_TILE 64
+constexpr int PLANE_DISTANCE = 320;
+constexpr int PLANE_PERIOD = 256; // one texture width; U, V, xd and yd share it
+constexpr float PLANE_Y = -16.0f; // world y of the floor
+constexpr double PLANE_YAW_SPEED = 24.0; // degrees per second
+constexpr double PLANE_WALK_SPEED = 80.0; // texels per second
+constexpr int PLANE_FIRST_ROW = 140; // skip rows near the horizon at H/2
+constexpr int FIELD_TILE = 64;
 
 static unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
 

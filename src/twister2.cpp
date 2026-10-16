@@ -39,17 +39,17 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TWISTER_CENTER_X (RETRO_WIDTH / 2.0)
-#define TWISTER_RADIUS 32 // half the column's width
-#define TWISTER_SWAY 32 // how far the axis wanders off center
-#define TWISTER_TWIST 512 // angle units the twist sweeps between its extremes, two whole turns
-#define TWISTER_TWIST_WAVE 0.125 // angle units the twist wave advances per row
-#define TWISTER_SWAY_WAVE 0.5 // and the axis wave, four times as fast
-#define TWISTER_SPEED 70 // angle units a second, the original's one a frame at the VGA's 70 Hz
-#define TWISTER_PERIOD RETRO_ANGLES_PER_TURN
+constexpr double TWISTER_CENTER_X = RETRO_WIDTH / 2.0;
+constexpr int TWISTER_RADIUS = 32; // half the column's width
+constexpr int TWISTER_SWAY = 32; // how far the axis wanders off center
+constexpr int TWISTER_TWIST = 512; // angle units the twist sweeps between its extremes, two whole turns
+constexpr double TWISTER_TWIST_WAVE = 0.125; // angle units the twist wave advances per row
+constexpr double TWISTER_SWAY_WAVE = 0.5; // and the axis wave, four times as fast
+constexpr int TWISTER_SPEED = 70; // angle units a second, the original's one a frame at the VGA's 70 Hz
+constexpr int TWISTER_PERIOD = RETRO_ANGLES_PER_TURN;
 
-#define TWISTER_FACE_COLOR 64 // base color of the first face
-#define TWISTER_FACE_STEP 48 // and the step from one face's base to the next, the widest face rounded up
+constexpr int TWISTER_FACE_COLOR = 64; // base color of the first face
+constexpr int TWISTER_FACE_STEP = 48; // and the step from one face's base to the next, the widest face rounded up
 
 //
 // One scanline of one face, half-open in x

@@ -47,32 +47,32 @@
 #include "lib/retroshadetable.h"
 #include "lib/retrovector.h"
 
-#define SPANS 32
-#define SPANMASK (SPANS - 1)
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 256
-#define DIFFUSE_SHADES 240
-#define SPECULAR_SHADES 16
-#define SHADE_LUT_WIDTH (DIFFUSE_SHADES + SPECULAR_SHADES)
+constexpr int SPANS = 32;
+constexpr int SPANMASK = SPANS - 1;
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 256;
+constexpr int DIFFUSE_SHADES = 240;
+constexpr int SPECULAR_SHADES = 16;
+constexpr int SHADE_LUT_WIDTH = DIFFUSE_SHADES + SPECULAR_SHADES;
 
-#define FLUBBER_RX 24.0f
-#define FLUBBER_RZ 110.0f
-#define FLUBBER_CX (RETRO_WIDTH / 2.0)
-#define FLUBBER_SWAY 40.0f // pixels of lateral sway
-#define FLUBBER_TWIST (3 * M_PI) // radians of the (modulated + 1) yaw
-#define FLUBBER_U_PER_SPAN (TEXTURE_WIDTH * 2.0f / SPANS) // 16 texels, two wraps of 256
-#define FLUBBER_LIGHT_CENTER 128.0f // tent peak in the 8-bit light table
-#define FLUBBER_Z_FAR 1.0e30f
+constexpr float FLUBBER_RX = 24.0f;
+constexpr float FLUBBER_RZ = 110.0f;
+constexpr double FLUBBER_CX = RETRO_WIDTH / 2.0;
+constexpr float FLUBBER_SWAY = 40.0f; // pixels of lateral sway
+constexpr double FLUBBER_TWIST = 3 * M_PI; // radians of the (modulated + 1) yaw
+constexpr float FLUBBER_U_PER_SPAN = TEXTURE_WIDTH * 2.0f / SPANS; // 16 texels, two wraps of 256
+constexpr float FLUBBER_LIGHT_CENTER = 128.0f; // tent peak in the 8-bit light table
+constexpr float FLUBBER_Z_FAR = 1.0e30f;
 
-#define FLUBBER_SCROLL_SPEED (TEXTURE_HEIGHT / 6.0) // texels per second, one wrap every 6s
-#define FLUBBER_SPIN_SPEED (2 * M_PI / 12.0) // rad/s, one turn every 12s
-#define FLUBBER_TWIST_OMEGA (2 * M_PI / 20.0) // rad/s, 20s period
-#define FLUBBER_TWIST_MOD_OMEGA (2 * M_PI / 17.0) // rad/s, 17s period
-#define FLUBBER_SWAY_OMEGA (2 * M_PI / 18.0) // rad/s, 18s period
+constexpr double FLUBBER_SCROLL_SPEED = TEXTURE_HEIGHT / 6.0; // texels per second, one wrap every 6s
+constexpr double FLUBBER_SPIN_SPEED = 2 * M_PI / 12.0; // rad/s, one turn every 12s
+constexpr double FLUBBER_TWIST_OMEGA = 2 * M_PI / 20.0; // rad/s, 20s period
+constexpr double FLUBBER_TWIST_MOD_OMEGA = 2 * M_PI / 17.0; // rad/s, 17s period
+constexpr double FLUBBER_SWAY_OMEGA = 2 * M_PI / 18.0; // rad/s, 18s period
 
-#define FLUBBER_DIFFUSE_BASE 120 // (BASE + s) / DIV: s = 0 is 1/3 ambient
-#define FLUBBER_DIFFUSE_DIV 360
-#define FLUBBER_SPECULAR_DIV 23 // h / DIV of the way from C to white
+constexpr int FLUBBER_DIFFUSE_BASE = 120; // (BASE + s) / DIV: s = 0 is 1/3 ambient
+constexpr int FLUBBER_DIFFUSE_DIV = 360;
+constexpr int FLUBBER_SPECULAR_DIV = 23; // h / DIV of the way from C to white
 
 static_assert(SHADE_LUT_WIDTH == 256, "lumel is an 8-bit index into a 256-wide LUT row");
 

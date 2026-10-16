@@ -16,18 +16,18 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define IMAGE_WIDTH 320
-#define IMAGE_HEIGHT 240
-#define RADIAL_MIN_SCALE 32
-#define RADIAL_MAX_SCALE 60
-#define RADIAL_SCALE_STEP 2
-#define RADIAL_SCALE_BASE 64
-#define RADIAL_ORBIT_DIVISOR 128
-#define RADIAL_BLEND_DIVISOR 512
-#define RADIAL_X_RADIUS 80
-#define RADIAL_X_ORBIT 100
-#define RADIAL_Y_ORBIT 40
-#define RADIAL_SPEED 3.0 // radians per second
+constexpr int IMAGE_WIDTH = 320;
+constexpr int IMAGE_HEIGHT = 240;
+constexpr int RADIAL_MIN_SCALE = 32;
+constexpr int RADIAL_MAX_SCALE = 60;
+constexpr int RADIAL_SCALE_STEP = 2;
+constexpr int RADIAL_SCALE_BASE = 64;
+constexpr int RADIAL_ORBIT_DIVISOR = 128;
+constexpr int RADIAL_BLEND_DIVISOR = 512;
+constexpr int RADIAL_X_RADIUS = 80;
+constexpr int RADIAL_X_ORBIT = 100;
+constexpr int RADIAL_Y_ORBIT = 40;
+constexpr double RADIAL_SPEED = 3.0; // radians per second
 
 void DEMO_Render(RETRO_Time time)
 {

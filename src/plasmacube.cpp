@@ -20,10 +20,10 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define PLASMA_FRAMES 720
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 256
-#define ROTATION_SPEED 2 // radians a second, about each axis
+constexpr int PLASMA_FRAMES = 720;
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 256;
+constexpr int ROTATION_SPEED = 2; // radians a second, about each axis
 
 static float SinTable[RETRO_DEGREES_PER_TURN];
 static unsigned char Texture[TEXTURE_WIDTH * TEXTURE_HEIGHT];

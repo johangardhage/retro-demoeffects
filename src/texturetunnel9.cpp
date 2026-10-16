@@ -43,26 +43,26 @@
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
 
-#define RING_SIDES 20
-#define RING_COUNT 36 // rings in front of the eye
-#define TUNNEL_RADIUS 48
-#define RING_SPACING 14 // world units from one ring to the next
-#define RING_NEAR 10 // nearest a station is allowed to the eye, in path units
-#define BEND_X 95 // how far the axis wanders off x
-#define BEND_Y 58
-#define BEND_FX 0.007f // radians of that wander per world unit of t
-#define BEND_FY 0.009f
-#define BEND_PHASE 1.1f
-#define FLIGHT_START ((float)M_PI / (2.0f * BEND_FX)) // t where x' = 0, so the opening looks along the tube
-#define FLIGHT_SPEED 108 // world units of t a second
-#define CAMERA_LOOKAHEAD 100 // path units ahead to aim into the bend; 0 follows the tangent
-#define TEXTURE_SIZE 64
-#define GROUT 3 // texels of mortar on the leading edges; the trailing edges are brick so neighbors do not double it
-#define FOG_SHADES 32
-#define AMBIENT 0.46f // unlit walls stay a dark red, not black
-#define FOG_KEEP 0.62f // far-end shade as a fraction of the lit shade
+constexpr int RING_SIDES = 20;
+constexpr int RING_COUNT = 36; // rings in front of the eye
+constexpr int TUNNEL_RADIUS = 48;
+constexpr int RING_SPACING = 14; // world units from one ring to the next
+constexpr int RING_NEAR = 10; // nearest a station is allowed to the eye, in path units
+constexpr int BEND_X = 95; // how far the axis wanders off x
+constexpr int BEND_Y = 58;
+constexpr float BEND_FX = 0.007f; // radians of that wander per world unit of t
+constexpr float BEND_FY = 0.009f;
+constexpr float BEND_PHASE = 1.1f;
+constexpr float FLIGHT_START = (float)M_PI / (2.0f * BEND_FX); // t where x' = 0, so the opening looks along the tube
+constexpr int FLIGHT_SPEED = 108; // world units of t a second
+constexpr int CAMERA_LOOKAHEAD = 100; // path units ahead to aim into the bend; 0 follows the tangent
+constexpr int TEXTURE_SIZE = 64;
+constexpr int GROUT = 3; // texels of mortar on the leading edges; the trailing edges are brick so neighbors do not double it
+constexpr int FOG_SHADES = 32;
+constexpr float AMBIENT = 0.46f; // unlit walls stay a dark red, not black
+constexpr float FOG_KEEP = 0.62f; // far-end shade as a fraction of the lit shade
 
-#define BRIGHT_ORANGE RETRO_Palette{ 255, 86, 6 }
+constexpr RETRO_Palette BRIGHT_ORANGE = { 255, 86, 6 };
 
 struct RingVertex {
 	vec3 eye;		// In the camera's frame

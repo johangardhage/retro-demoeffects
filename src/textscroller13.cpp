@@ -14,7 +14,7 @@
 #include "lib/retromath.h"
 #include "lib/retropoly.h"
 
-#define FONT RETRO_FONT_TOPAZ30_8X8
+const RETRO_FontData &FONT = RETRO_FONT_TOPAZ30_8X8;
 
 static const char *const CrawlText[] = {
 	"THE SIDEWAYS",
@@ -42,33 +42,33 @@ static const char *const CrawlText[] = {
 	"RETRO",
 	"DEMOEFFECTS...",
 };
-#define LINES (int)(sizeof(CrawlText) / sizeof(CrawlText[0]))
+constexpr int LINES = (int)(sizeof(CrawlText) / sizeof(CrawlText[0]));
 
 // Font pixels to plane units; glyphs are stretched vertically before the
 // plane is turned.
-#define GLYPH_WIDTH 1.4f
-#define GLYPH_HEIGHT 5.6f
-#define LINE_SPACING 50.0
-#define SCROLL_SPEED 65.0
-#define CRAWL_YAW -0.95f
-#define CRAWL_ROLL -0.23f
-#define CAMERA_DISTANCE 300.0f
-#define CX (RETRO_WIDTH * 0.28f)
-#define CY (RETRO_HEIGHT * 0.50f)
+constexpr float GLYPH_WIDTH = 1.4f;
+constexpr float GLYPH_HEIGHT = 5.6f;
+constexpr double LINE_SPACING = 50.0;
+constexpr double SCROLL_SPEED = 65.0;
+constexpr float CRAWL_YAW = -0.95f;
+constexpr float CRAWL_ROLL = -0.23f;
+constexpr float CAMERA_DISTANCE = 300.0f;
+constexpr float CX = RETRO_WIDTH * 0.28f;
+constexpr float CY = RETRO_HEIGHT * 0.50f;
 
 // A line whose top is below ENTRY_Y, or whose bottom is above EXIT_Y, is
 // offscreen at both ends, for lines up to 16 characters wide. Later lines
 // follow the first, and the loop waits for the last to leave.
-#define ENTRY_Y 170.0
-#define EXIT_Y -145.0
-#define PASS_GAP 1.5
+constexpr double ENTRY_Y = 170.0;
+constexpr double EXIT_Y = -145.0;
+constexpr double PASS_GAP = 1.5;
 #define LINE_HEIGHT (Font.height * GLYPH_HEIGHT)
 #define PASS_CYCLE ((ENTRY_Y - EXIT_Y + LINE_HEIGHT + (LINES - 1) * LINE_SPACING) / SCROLL_SPEED + PASS_GAP)
 
 // The ink flashes white on a beat and decays back to its base gray.
-#define FLASH_PERIOD 0.95
-#define FLASH_DECAY 0.18
-#define INK RETRO_Palette{ 192, 187, 193 }
+constexpr double FLASH_PERIOD = 0.95;
+constexpr double FLASH_DECAY = 0.18;
+constexpr RETRO_Palette INK = { 192, 187, 193 };
 
 static RETRO_Font Font;
 static RETRO_Image *TextStrip;

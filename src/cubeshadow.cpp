@@ -32,22 +32,22 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define ROTATION_SPEED 1.1 // radians a second, about each axis
+constexpr double ROTATION_SPEED = 1.1; // radians a second, about each axis
 
-#define SCALE 37.5
-#define CX (RETRO_WIDTH / 2.0)
-#define CY (RETRO_HEIGHT / 2.0 - 10)
+constexpr double SCALE = 37.5;
+constexpr double CX = RETRO_WIDTH / 2.0;
+constexpr double CY = RETRO_HEIGHT / 2.0 - 10;
 
-#define WALLZ 3.0f // model units behind the cube's center the wall stands
-#define WALL_CELL 24.0 // pixels across one checker cell
-#define WALL_SPEED 0.25 // radians a second the wall turns
-#define SHADOW_LIGHT 0.4 // share of the wall's brightness left in the shadow
+constexpr float WALLZ = 3.0f; // model units behind the cube's center the wall stands
+constexpr double WALL_CELL = 24.0; // pixels across one checker cell
+constexpr double WALL_SPEED = 0.25; // radians a second the wall turns
+constexpr double SHADOW_LIGHT = 0.4; // share of the wall's brightness left in the shadow
 
 // The wall and the shadow on a dark cell; LIGHT_CELL further on, on a light one
-#define WALL 0
-#define SHADOW 1
-#define LIGHT_CELL 2
-#define CUBE 4
+constexpr int WALL = 0;
+constexpr int SHADOW = 1;
+constexpr int LIGHT_CELL = 2;
+constexpr int CUBE = 4;
 
 static const RETRO_Lighting Lighting = { 1, { { normalize(vec3{ -0.5f, -0.5f, -1 }), 1 } } };
 

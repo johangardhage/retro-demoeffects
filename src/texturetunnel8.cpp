@@ -18,19 +18,19 @@
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
 
-#define RING_SIDES 32
-#define RING_COUNT 64
-#define TUNNEL_RADIUS 48
-#define RING_SPACING 8
-#define RING_NEAR 10
-#define BEND_CURVE 0.0025f
-#define FLIGHT_SPEED 72
-#define TEXTURE_SIZE 64
-#define FOG_SHADES 32
-#define AMBIENT 0.40f
-#define FOG_KEEP 0.92f
+constexpr int RING_SIDES = 32;
+constexpr int RING_COUNT = 64;
+constexpr int TUNNEL_RADIUS = 48;
+constexpr int RING_SPACING = 8;
+constexpr int RING_NEAR = 10;
+constexpr float BEND_CURVE = 0.0025f;
+constexpr int FLIGHT_SPEED = 72;
+constexpr int TEXTURE_SIZE = 64;
+constexpr int FOG_SHADES = 32;
+constexpr float AMBIENT = 0.40f;
+constexpr float FOG_KEEP = 0.92f;
 
-#define BRIGHT_ORANGE RETRO_Palette{ 255, 72, 0 }
+constexpr RETRO_Palette BRIGHT_ORANGE = { 255, 72, 0 };
 
 struct RingVertex {
 	vec3 eye;		// In the camera's frame

@@ -17,9 +17,9 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TIME_FADEIN 2.5 // seconds the fade in takes
-#define TIME_FADEOUT 2.5 // seconds the fade out takes
-#define TIME_HOLD 0.5 // seconds held on black or on the picture
+constexpr double TIME_FADEIN = 2.5; // seconds the fade in takes
+constexpr double TIME_FADEOUT = 2.5; // seconds the fade out takes
+constexpr double TIME_HOLD = 0.5; // seconds held on black or on the picture
 
 enum { FADEIN, FADEOUT, HOLD };
 

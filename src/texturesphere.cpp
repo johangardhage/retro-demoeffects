@@ -13,10 +13,10 @@
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 
-#define GLOBE_SCALE 80 // a unit sphere comes out this many pixels in radius
-#define ROTATION_SPEED_X 0.7 // radians a second
-#define ROTATION_SPEED_Y 1.1 // radians a second
-#define ROTATION_SPEED_Z 0.4 // radians a second
+constexpr int GLOBE_SCALE = 80; // a unit sphere comes out this many pixels in radius
+constexpr double ROTATION_SPEED_X = 0.7; // radians a second
+constexpr double ROTATION_SPEED_Y = 1.1; // radians a second
+constexpr double ROTATION_SPEED_Z = 0.4; // radians a second
 
 void DEMO_Render(RETRO_Time time)
 {

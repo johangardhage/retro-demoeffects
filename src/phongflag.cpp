@@ -33,30 +33,30 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define FLAG_SUBDIV 2 // quads per cell of the flag, as the asset was built
-#define FLAG_COLS (16 * FLAG_SUBDIV) // the flag is 16 cells across, per SFS 1982:269
-#define FLAG_SPAN 1.6 // the asset's own size, 16:10
-#define FLAG_DROP 1.0
-#define FLAG_SCALE 125 // pixels a model unit covers at the depth the flag hangs at
-#define FLAG_AMP 0.34 // model units the fly throws, at the crest
-#define FLAG_HALF 0.6 // the second mode, against the first
-#define FLAG_RATEU 300 // table units the first mode turns across the flag
-#define FLAG_RATEV 60 // and down it
-#define FLAG_RATEU2 500 // and the second mode, across
-#define FLAG_SPEED 55 // table units a second
-#define FLAG_SWAY 0.55 // radians of yaw the flag swings through
-#define FLAG_SWAYSPEED 13 // table units a second
-#define FLAG_TILTX 0.12 // radians the view leans, fixed
-#define FLAG_TILTY 0.40
-#define FLAG_RADIAN (2 * M_PI / RETRO_ANGLES_PER_TURN) // radians a table unit is worth
-#define FLAG_SHEEN 0.35 // how much of the highlight the cloth returns
-#define FLAG_FALLOFF 8 // how far it spreads, against RETRO_K_FALLOFF's 150
-#define FLAG_LIGHTX -0.7 // a direction the cloth reaches, so the sheen is lit
-#define FLAG_LIGHTY -0.22
-#define FLAG_LIGHTZ -1.0
-#define FLAG_SHADES 127 // palette entries a color's ramp covers
-#define FLAG_BLUE 1 // where the blue ramp starts, past the background
-#define FLAG_GOLD (FLAG_BLUE + FLAG_SHADES)
+constexpr int FLAG_SUBDIV = 2; // quads per cell of the flag, as the asset was built
+constexpr int FLAG_COLS = 16 * FLAG_SUBDIV; // the flag is 16 cells across, per SFS 1982:269
+constexpr double FLAG_SPAN = 1.6; // the asset's own size, 16:10
+constexpr double FLAG_DROP = 1.0;
+constexpr int FLAG_SCALE = 125; // pixels a model unit covers at the depth the flag hangs at
+constexpr double FLAG_AMP = 0.34; // model units the fly throws, at the crest
+constexpr double FLAG_HALF = 0.6; // the second mode, against the first
+constexpr int FLAG_RATEU = 300; // table units the first mode turns across the flag
+constexpr int FLAG_RATEV = 60; // and down it
+constexpr int FLAG_RATEU2 = 500; // and the second mode, across
+constexpr int FLAG_SPEED = 55; // table units a second
+constexpr double FLAG_SWAY = 0.55; // radians of yaw the flag swings through
+constexpr int FLAG_SWAYSPEED = 13; // table units a second
+constexpr double FLAG_TILTX = 0.12; // radians the view leans, fixed
+constexpr double FLAG_TILTY = 0.40;
+constexpr double FLAG_RADIAN = 2 * M_PI / RETRO_ANGLES_PER_TURN; // radians a table unit is worth
+constexpr double FLAG_SHEEN = 0.35; // how much of the highlight the cloth returns
+constexpr int FLAG_FALLOFF = 8; // how far it spreads, against RETRO_K_FALLOFF's 150
+constexpr double FLAG_LIGHTX = -0.7; // a direction the cloth reaches, so the sheen is lit
+constexpr double FLAG_LIGHTY = -0.22;
+constexpr double FLAG_LIGHTZ = -1.0;
+constexpr int FLAG_SHADES = 127; // palette entries a color's ramp covers
+constexpr int FLAG_BLUE = 1; // where the blue ramp starts, past the background
+constexpr int FLAG_GOLD = FLAG_BLUE + FLAG_SHADES;
 
 static const RETRO_Lighting Lighting = { 1, { { normalize(vec3{ FLAG_LIGHTX, FLAG_LIGHTY, FLAG_LIGHTZ }), 1 } } };
 

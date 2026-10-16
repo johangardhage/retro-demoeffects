@@ -14,25 +14,25 @@
 #include "lib/retromath.h"
 #include "lib/retropoly.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 static const char ScrollText[] = "RETRO DEMOEFFECTS...";
-#define LETTERS (int)(sizeof(ScrollText) - 1)
-#define LETTER_WIDTH 52.0f
-#define LETTER_HEIGHT 48.0f
-#define LINE_SPACING 60.0
-#define SCROLL_SPEED 115.0
-#define ROTATION_SPEED -1.8
-#define TWIST_RATE 0.026
-#define AXIS_X (RETRO_WIDTH * 0.78f)
-#define CAMERA_DISTANCE 700.0f
-#define SHADES 64
-#define INK_BASE 16
+constexpr int LETTERS = (int)(sizeof(ScrollText) - 1);
+constexpr float LETTER_WIDTH = 52.0f;
+constexpr float LETTER_HEIGHT = 48.0f;
+constexpr double LINE_SPACING = 60.0;
+constexpr double SCROLL_SPEED = 115.0;
+constexpr double ROTATION_SPEED = -1.8;
+constexpr double TWIST_RATE = 0.026;
+constexpr float AXIS_X = RETRO_WIDTH * 0.78f;
+constexpr float CAMERA_DISTANCE = 700.0f;
+constexpr int SHADES = 64;
+constexpr int INK_BASE = 16;
 // A letter is drawn from when its top is CULL_MARGIN below the screen until
 // its bottom is CULL_MARGIN above it; the pass ends when the last one leaves.
-#define CULL_MARGIN 16
-#define ENTRY_Y (RETRO_HEIGHT + CULL_MARGIN)
-#define PASS_GAP 1.0
-#define PASS_CYCLE ((ENTRY_Y + (LETTERS - 1) * LINE_SPACING + LETTER_HEIGHT + CULL_MARGIN) / SCROLL_SPEED + PASS_GAP)
+constexpr int CULL_MARGIN = 16;
+constexpr int ENTRY_Y = RETRO_HEIGHT + CULL_MARGIN;
+constexpr double PASS_GAP = 1.0;
+constexpr double PASS_CYCLE = (ENTRY_Y + (LETTERS - 1) * LINE_SPACING + LETTER_HEIGHT + CULL_MARGIN) / SCROLL_SPEED + PASS_GAP;
 
 static RETRO_Font Font;
 static RETRO_Image *TextStrip;

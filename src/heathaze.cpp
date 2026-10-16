@@ -56,48 +56,48 @@
 #include "lib/retropalette.h"
 #include "lib/retromath.h"
 
-#define HAZE_SIZE 256 // pixels the field repeats after, both ways
-#define HAZE_WAVES 24
-#define HAZE_KMIN 8 // turns a wave makes across the field, at the least
-#define HAZE_KMAX 16 // and at the most
-#define HAZE_STRENGTH 1.2f // pixels a reading moves the picture on the horizon, on the average
-#define HAZE_REACH 34.0f // rows from the horizon to where the haze is 1/e as strong
-#define HAZE_RISE 34 // pixels a second the slow reading rises
-#define HAZE_FASTRISE 61 // and the fast one
-#define HAZE_DRIFT 9 // pixels a second the fast reading moves sideways
+constexpr int HAZE_SIZE = 256; // pixels the field repeats after, both ways
+constexpr int HAZE_WAVES = 24;
+constexpr int HAZE_KMIN = 8; // turns a wave makes across the field, at the least
+constexpr int HAZE_KMAX = 16; // and at the most
+constexpr float HAZE_STRENGTH = 1.2f; // pixels a reading moves the picture on the horizon, on the average
+constexpr float HAZE_REACH = 34.0f; // rows from the horizon to where the haze is 1/e as strong
+constexpr int HAZE_RISE = 34; // pixels a second the slow reading rises
+constexpr int HAZE_FASTRISE = 61; // and the fast one
+constexpr int HAZE_DRIFT = 9; // pixels a second the fast reading moves sideways
 
-#define HORIZON 132 // first row of ground
-#define FOCAL 240.0f // rows below the horizon times depth
-#define ROAD_HALFWIDTH 1.25f // in eye heights, as every measure of the scene
-#define EDGE_OFFSET 1.1f // from the middle of the road to an edge line
-#define LINE_HALFWIDTH 0.035f
-#define DASH_LENGTH 2.0f // of a dash of the middle line, and of the gap after it
-#define POLES 14
-#define POLE_SPACING 6.0f // depth from one pole to the next
-#define POLE_OFFSET 2.3f // from the middle of the road
-#define POLE_HEIGHT 4.6f
-#define POLE_HALFWIDTH 0.06f
-#define POLE_ARM 0.5f // half the length of the crossbar
-#define POLE_ARMDROP 0.3f // from the top of the pole down to it
-#define SUN_X 248
-#define SUN_Y 34
-#define SUN_RADIUS 13
-#define STRATA 3 // rows a layer of rock is thick
-#define BUTTE_SLOPE 5.0f // pixels a side takes to reach the top
+constexpr int HORIZON = 132; // first row of ground
+constexpr float FOCAL = 240.0f; // rows below the horizon times depth
+constexpr float ROAD_HALFWIDTH = 1.25f; // in eye heights, as every measure of the scene
+constexpr float EDGE_OFFSET = 1.1f; // from the middle of the road to an edge line
+constexpr float LINE_HALFWIDTH = 0.035f;
+constexpr float DASH_LENGTH = 2.0f; // of a dash of the middle line, and of the gap after it
+constexpr int POLES = 14;
+constexpr float POLE_SPACING = 6.0f; // depth from one pole to the next
+constexpr float POLE_OFFSET = 2.3f; // from the middle of the road
+constexpr float POLE_HEIGHT = 4.6f;
+constexpr float POLE_HALFWIDTH = 0.06f;
+constexpr float POLE_ARM = 0.5f; // half the length of the crossbar
+constexpr float POLE_ARMDROP = 0.3f; // from the top of the pole down to it
+constexpr int SUN_X = 248;
+constexpr int SUN_Y = 34;
+constexpr int SUN_RADIUS = 13;
+constexpr int STRATA = 3; // rows a layer of rock is thick
+constexpr float BUTTE_SLOPE = 5.0f; // pixels a side takes to reach the top
 
 // Palette entries, the first of each range
-#define SKY_COLORS 64 // from the top of the screen down to the horizon
-#define MESA_COLORS 4
-#define SAND_COLORS 48 // from the horizon to the bottom of the screen
-#define ROAD_COLORS 48
-#define POLE_COLORS 16 // from the farthest pole to the nearest
-#define SKY 0
-#define MESA (SKY + SKY_COLORS)
-#define SAND (MESA + MESA_COLORS)
-#define ROAD (SAND + SAND_COLORS)
-#define POLE (ROAD + ROAD_COLORS)
-#define SUN (POLE + POLE_COLORS)
-#define LINE (SUN + 1)
+constexpr int SKY_COLORS = 64; // from the top of the screen down to the horizon
+constexpr int MESA_COLORS = 4;
+constexpr int SAND_COLORS = 48; // from the horizon to the bottom of the screen
+constexpr int ROAD_COLORS = 48;
+constexpr int POLE_COLORS = 16; // from the farthest pole to the nearest
+constexpr int SKY = 0;
+constexpr int MESA = SKY + SKY_COLORS;
+constexpr int SAND = MESA + MESA_COLORS;
+constexpr int ROAD = SAND + SAND_COLORS;
+constexpr int POLE = ROAD + ROAD_COLORS;
+constexpr int SUN = POLE + POLE_COLORS;
+constexpr int LINE = SUN + 1;
 
 struct Butte {
 	int x, halfwidth, height;

@@ -17,8 +17,8 @@
 #include "lib/retropoly.h"
 #include "lib/retroterrain.h"
 
-#define WORLD_HEIGHT_SCALE (1.0f / 8.0f)
-#define ISLAND_START_ROTATION -0.5f // A modest turn off dead-on at startup
+constexpr float WORLD_HEIGHT_SCALE = 1.0f / 8.0f;
+constexpr float ISLAND_START_ROTATION = -0.5f; // A modest turn off dead-on at startup
 
 static void PlotDot(const RETRO_CameraLens &lens, vec3 eye, unsigned char color)
 {

@@ -51,22 +51,22 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define SCROLL_SPEED 120.0 // strip columns per second
-#define ARC_SCALE 1.0 // screen pixels of path per strip column
-#define BAR_CY (RETRO_HEIGHT / 2.0)
-#define BAR_AMP 25 // pixels either side of CY the cosine reaches
-#define SAMPLE_WIDTH (RETRO_WIDTH * 3)
-#define WAVE_TURNS 3 // whole turns between the left border and the right one
-#define WAVE_RATE (2 * M_PI * WAVE_TURNS / SAMPLE_WIDTH) // radians per sample
-#define WAVE_START (3 * M_PI / 2) // both borders sit at the front of the wave, at full shade
-#define SAMPLE_RUN ((double)RETRO_WIDTH / SAMPLE_WIDTH) // screen columns a sample steps sideways
-#define SHADE_MID 100
-#define SHADE_AMP 80 // shade is in [20, 180] as depth runs through [−1, 1]
-#define SHADE_MAX (SHADE_MID + SHADE_AMP) // full shade, so ink · SHADE_MAX / SHADE_MAX is the atlas gray
-#define BACK_DIM 0.4 // extra scale on the back
+constexpr double SCROLL_SPEED = 120.0; // strip columns per second
+constexpr double ARC_SCALE = 1.0; // screen pixels of path per strip column
+constexpr double BAR_CY = RETRO_HEIGHT / 2.0;
+constexpr int BAR_AMP = 25; // pixels either side of CY the cosine reaches
+constexpr int SAMPLE_WIDTH = RETRO_WIDTH * 3;
+constexpr int WAVE_TURNS = 3; // whole turns between the left border and the right one
+constexpr double WAVE_RATE = 2 * M_PI * WAVE_TURNS / SAMPLE_WIDTH; // radians per sample
+constexpr double WAVE_START = 3 * M_PI / 2; // both borders sit at the front of the wave, at full shade
+constexpr double SAMPLE_RUN = (double)RETRO_WIDTH / SAMPLE_WIDTH; // screen columns a sample steps sideways
+constexpr int SHADE_MID = 100;
+constexpr int SHADE_AMP = 80; // shade is in [20, 180] as depth runs through [−1, 1]
+constexpr int SHADE_MAX = SHADE_MID + SHADE_AMP; // full shade, so ink · SHADE_MAX / SHADE_MAX is the atlas gray
+constexpr double BACK_DIM = 0.4; // extra scale on the back
 
 static const char *const ScrollText[] = { "                               RETRO DEMOEFFECTS..." };
 

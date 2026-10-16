@@ -63,33 +63,33 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define WORLD_SIZE 256
-#define WORLD_HEIGHT 48
-#define SEA_LEVEL 14
-#define GROUND_BASE 4 // the lowest the ground goes
-#define GROUND_RANGE 30 // blocks from the lowest ground to the highest
-#define NOISE_SCALE 48.0f // blocks per feature of the coarsest octave
+constexpr int WORLD_SIZE = 256;
+constexpr int WORLD_HEIGHT = 48;
+constexpr int SEA_LEVEL = 14;
+constexpr int GROUND_BASE = 4; // the lowest the ground goes
+constexpr int GROUND_RANGE = 30; // blocks from the lowest ground to the highest
+constexpr float NOISE_SCALE = 48.0f; // blocks per feature of the coarsest octave
 
-#define TREE_CELL 7 // at most one tree to a square this many blocks wide
-#define TREE_CHANCE 0.55f // of a square on grass having its tree
-#define TREE_MIN_TRUNK 4
-#define TREE_MAX_TRUNK 6
+constexpr int TREE_CELL = 7; // at most one tree to a square this many blocks wide
+constexpr float TREE_CHANCE = 0.55f; // of a square on grass having its tree
+constexpr int TREE_MIN_TRUNK = 4;
+constexpr int TREE_MAX_TRUNK = 6;
 
-#define FOCAL 200.0f // pixels; sets the field of view
-#define MAX_DISTANCE 64.0f // blocks a ray walks before it sees the sky
-#define FOG_START 24.0f
+constexpr float FOCAL = 200.0f; // pixels; sets the field of view
+constexpr float MAX_DISTANCE = 64.0f; // blocks a ray walks before it sees the sky
+constexpr float FOG_START = 24.0f;
 
-#define PLAYER_RADIUS 0.3f
-#define PLAYER_HEIGHT 1.8f
-#define EYE_HEIGHT 1.62f
-#define WALK_SPEED 4.3f // blocks a second
-#define GRAVITY 32.0f // blocks a second, a second
-#define JUMP_SPEED 9.0f // rises 9² / (2 × 32) = 1.27 blocks
-#define MAX_FALL_SPEED 40.0f // two thirds of a block a step, so a fall never passes through one
-#define CONTACT_GAP 0.001f // left between the box and a block it is pushed back from
+constexpr float PLAYER_RADIUS = 0.3f;
+constexpr float PLAYER_HEIGHT = 1.8f;
+constexpr float EYE_HEIGHT = 1.62f;
+constexpr float WALK_SPEED = 4.3f; // blocks a second
+constexpr float GRAVITY = 32.0f; // blocks a second, a second
+constexpr float JUMP_SPEED = 9.0f; // rises 9² / (2 × 32) = 1.27 blocks
+constexpr float MAX_FALL_SPEED = 40.0f; // two thirds of a block a step, so a fall never passes through one
+constexpr float CONTACT_GAP = 0.001f; // left between the box and a block it is pushed back from
 
-#define TEXTURE_SIZE 16
-#define TEXEL_HOLE 255 // a leaves texel the ray passes through
+constexpr int TEXTURE_SIZE = 16;
+constexpr int TEXEL_HOLE = 255; // a leaves texel the ray passes through
 
 enum Block { AIR, GRASS, DIRT, SAND, WATER, LOG, LEAVES, BLOCKS };
 
@@ -122,13 +122,13 @@ static const int BlockTexture[BLOCKS][3] = {
 	{ TEX_LEAVES, TEX_LEAVES, TEX_LEAVES },
 };
 
-#define SKY_HORIZON (RETRO_Palette){ 180, 210, 240 }
-#define SKY_ZENITH (RETRO_Palette){ 70, 120, 215 }
+constexpr RETRO_Palette SKY_HORIZON = { 180, 210, 240 };
+constexpr RETRO_Palette SKY_ZENITH = { 70, 120, 215 };
 
-#define SKY_START 0
-#define SKY_SHADES 16
-#define FOG_SHADES 5
-#define BLOCK_START (SKY_START + SKY_SHADES)
+constexpr int SKY_START = 0;
+constexpr int SKY_SHADES = 16;
+constexpr int FOG_SHADES = 5;
+constexpr int BLOCK_START = SKY_START + SKY_SHADES;
 
 static unsigned char World[WORLD_HEIGHT][WORLD_SIZE][WORLD_SIZE];
 static unsigned char Textures[TEXTURES][TEXTURE_SIZE][TEXTURE_SIZE];

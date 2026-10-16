@@ -35,13 +35,13 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define ROOTS 3
-#define MAX_ITERATIONS 32
-#define TOLERANCE 1.0e-6 // |z − r|², close enough to call the root reached
-#define SHADES 85 // palette entries a basin owns
-#define SHADE_ITERATIONS 20.0 // the count that reaches the top of a basin's ramp
-#define TURN_SPEED (1.0 / 40) // turns of the triangle a second
-#define PULSE 0.5 // how far a root leaves the unit circle
+constexpr int ROOTS = 3;
+constexpr int MAX_ITERATIONS = 32;
+constexpr double TOLERANCE = 1.0e-6; // |z − r|², close enough to call the root reached
+constexpr int SHADES = 85; // palette entries a basin owns
+constexpr double SHADE_ITERATIONS = 20.0; // the count that reaches the top of a basin's ramp
+constexpr double TURN_SPEED = 1.0 / 40; // turns of the triangle a second
+constexpr double PULSE = 0.5; // how far a root leaves the unit circle
 
 void DEMO_Render(RETRO_Time time)
 {

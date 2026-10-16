@@ -21,12 +21,12 @@
 #include "lib/retromath.h"
 #include "lib/retropalette.h"
 
-#define NUM_STARS 1000
-#define SPEED 2 // radians a second, about each axis
-#define BOX_DEPTH 250 // half the depth of the box; it is two screens wide and two tall
-#define PROJECTION_SCALE 1.0 // the box is built in pixels, so the projection adds no scale
-#define STAR_NEAREST (-150) // nearest a star may come before it would streak, in rotated depth
-#define SHADES 64 // palette entries the depth shading ramps over
+constexpr int NUM_STARS = 1000;
+constexpr int SPEED = 2; // radians a second, about each axis
+constexpr int BOX_DEPTH = 250; // half the depth of the box; it is two screens wide and two tall
+constexpr double PROJECTION_SCALE = 1.0; // the box is built in pixels, so the projection adds no scale
+constexpr int STAR_NEAREST = -150; // nearest a star may come before it would streak, in rotated depth
+constexpr int SHADES = 64; // palette entries the depth shading ramps over
 
 static Vertex Stars[NUM_STARS];
 

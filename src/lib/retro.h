@@ -73,15 +73,15 @@ void __attribute__((weak)) RETRO_Deinitialize_3D(void);
 #define RETRO_MAX_SIMULATION_STEPS 15
 #endif
 
-#define RETRO_COLORS 256
+constexpr int RETRO_COLORS = 256;
 
-#define RETRO_MAX_IMAGES 10
+constexpr int RETRO_MAX_IMAGES = 10;
 
-#define RETRO_ANGLES_PER_TURN 256
-#define RETRO_DEGREES_PER_TURN 360
+constexpr int RETRO_ANGLES_PER_TURN = 256;
+constexpr int RETRO_DEGREES_PER_TURN = 360;
 
-#define RAD2DEG (180 / M_PI)
-#define DEG2RAD (M_PI / 180)
+constexpr double RAD2DEG = 180 / M_PI;
+constexpr double DEG2RAD = M_PI / 180;
 
 #define SWAP(a, b) do { __typeof__(a) _swap = (a); (a) = (b); (b) = _swap; } while (0)
 #define MIN(a, b) ({ __typeof__(a) _a = (a); __typeof__(b) _b = (b); _a < _b ? _a : _b; })

@@ -33,18 +33,18 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define DIFFUSION_A 1.0f
-#define DIFFUSION_B 0.5f
-#define CORAL_FEED 0.0545f
-#define CORAL_KILL 0.062f
-#define MITOSIS_FEED 0.0367f
-#define MITOSIS_KILL 0.0649f
-#define DRIFT_PERIOD 60.0 // seconds for feed and kill to go and come back
-#define ITERATIONS 8 // model steps per fixed update
-#define SEEDS 12
-#define SEED_RADIUS 5 // cells
-#define B_MAX 0.4f // the B that the shade calls full
-#define EMBOSS 2.5f // weight of the slope in the shade
+constexpr float DIFFUSION_A = 1.0f;
+constexpr float DIFFUSION_B = 0.5f;
+constexpr float CORAL_FEED = 0.0545f;
+constexpr float CORAL_KILL = 0.062f;
+constexpr float MITOSIS_FEED = 0.0367f;
+constexpr float MITOSIS_KILL = 0.0649f;
+constexpr double DRIFT_PERIOD = 60.0; // seconds for feed and kill to go and come back
+constexpr int ITERATIONS = 8; // model steps per fixed update
+constexpr int SEEDS = 12;
+constexpr int SEED_RADIUS = 5; // cells
+constexpr float B_MAX = 0.4f; // the B that the shade calls full
+constexpr float EMBOSS = 2.5f; // weight of the slope in the shade
 
 static float A[2][RETRO_HEIGHT][RETRO_WIDTH];
 static float B[2][RETRO_HEIGHT][RETRO_WIDTH];

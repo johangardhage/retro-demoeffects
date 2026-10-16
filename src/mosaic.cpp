@@ -26,10 +26,10 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define BLOCK_MAX RETRO_WIDTH // pixels on a side of the coarsest block
-#define TIME_MOSAIC 3.0 // seconds the picture takes to coarsen or to sharpen
-#define TIME_HOLD 0.75 // seconds held on the picture or on the one block
-#define TIME_CYCLE (2 * (TIME_HOLD + TIME_MOSAIC))
+constexpr int BLOCK_MAX = RETRO_WIDTH; // pixels on a side of the coarsest block
+constexpr double TIME_MOSAIC = 3.0; // seconds the picture takes to coarsen or to sharpen
+constexpr double TIME_HOLD = 0.75; // seconds held on the picture or on the one block
+constexpr double TIME_CYCLE = 2 * (TIME_HOLD + TIME_MOSAIC);
 
 void DEMO_Render(RETRO_Time time)
 {

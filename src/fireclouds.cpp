@@ -43,27 +43,27 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define CLOUD_WIDTH 160
-#define CLOUD_HEIGHT 200                   // stretched over the screen's 240 rows
-#define CLOUD_SIZE (CLOUD_WIDTH * CLOUD_HEIGHT)
-#define TEXTURE_WIDTH 256
-#define RING_STEP 0.5914                   // cloud rows from one ring of the table to the next
-#define RING_SQUEEZE 0.7                   // across, for VGA's tall pixels
-#define RING_ANGLES 2048                   // samples around a ring
-#define TEXTURE_SIZE (TEXTURE_WIDTH * TEXTURE_WIDTH)
-#define MIX_PARTS 256                      // a pass mixes in 256ths
-#define TEXTURE_SHARE 24                   // the texture's part of each pass, the cloud's the rest
-#define MIX_ROUND 63                       // the pass's rounding
-#define CLOUD_MAX 112                      // the brightest a cloud byte gets
-#define SPIRAL_STEP 35                     // the spiral's turn each pass
-#define SINE_PERIOD 4096                   // angle units in one turn of the spiral's sine
-#define SINE_ONE 32767                     // 1.0 in the sine's fixed point
-#define SPIRAL_SHIFT 8                     // the spiral is in 1/256 texels before the shift
-#define BANDS 15
-#define BAND_COLORS 16
-#define LEVELS 256                         // the fades step in 1/256
-#define WEIGHT_STOP 4096
-#define DITHER 4                           // the bias repeats every 4 rows and columns
+constexpr int CLOUD_WIDTH = 160;
+constexpr int CLOUD_HEIGHT = 200;          // stretched over the screen's 240 rows
+constexpr int CLOUD_SIZE = CLOUD_WIDTH * CLOUD_HEIGHT;
+constexpr int TEXTURE_WIDTH = 256;
+constexpr double RING_STEP = 0.5914;       // cloud rows from one ring of the table to the next
+constexpr double RING_SQUEEZE = 0.7;       // across, for VGA's tall pixels
+constexpr int RING_ANGLES = 2048;          // samples around a ring
+constexpr int TEXTURE_SIZE = TEXTURE_WIDTH * TEXTURE_WIDTH;
+constexpr int MIX_PARTS = 256;             // a pass mixes in 256ths
+constexpr int TEXTURE_SHARE = 24;          // the texture's part of each pass, the cloud's the rest
+constexpr int MIX_ROUND = 63;              // the pass's rounding
+constexpr int CLOUD_MAX = 112;             // the brightest a cloud byte gets
+constexpr int SPIRAL_STEP = 35;            // the spiral's turn each pass
+constexpr int SINE_PERIOD = 4096;          // angle units in one turn of the spiral's sine
+constexpr int SINE_ONE = 32767;            // 1.0 in the sine's fixed point
+constexpr int SPIRAL_SHIFT = 8;            // the spiral is in 1/256 texels before the shift
+constexpr int BANDS = 15;
+constexpr int BAND_COLORS = 16;
+constexpr int LEVELS = 256;                // the fades step in 1/256
+constexpr int WEIGHT_STOP = 4096;
+constexpr int DITHER = 4;                  // the bias repeats every 4 rows and columns
 
 // Black through red and orange into white, 6-bit. A whole band of sixteen
 // colors is mixed toward one of these.

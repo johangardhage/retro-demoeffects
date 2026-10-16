@@ -27,13 +27,13 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define MAX_ITERATIONS 255
-#define BAILOUT 256.0 // |z|², far enough out for the smooth escape estimate
-#define CENTER_X (-0.5) // where the dive starts
-#define CENTER_Y 0.0
-#define PAN_SPEED 0.300654 // plane units a second at zoom 1, so the pan holds the feature
-#define ZOOM_RATE 1.34885 // zoom per second
-#define ZOOM_LIMIT 1.0e12 // as deep as double carries a distinct pixel spacing
+constexpr int MAX_ITERATIONS = 255;
+constexpr double BAILOUT = 256.0; // |z|², far enough out for the smooth escape estimate
+constexpr double CENTER_X = -0.5; // where the dive starts
+constexpr double CENTER_Y = 0.0;
+constexpr double PAN_SPEED = 0.300654; // plane units a second at zoom 1, so the pan holds the feature
+constexpr double ZOOM_RATE = 1.34885; // zoom per second
+constexpr double ZOOM_LIMIT = 1.0e12; // as deep as double carries a distinct pixel spacing
 
 void DEMO_Render(RETRO_Time time)
 {

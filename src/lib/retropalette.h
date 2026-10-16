@@ -20,164 +20,164 @@
 #define RETRO_RGB(hex) RETRO_Palette{ ((hex) >> 16) & 0xff, ((hex) >> 8) & 0xff, (hex) & 0xff }
 
 // Whites, grays and blacks
-#define RETRO_WHITE RETRO_Palette{ 255, 255, 255 }
-#define RETRO_IVORY RETRO_Palette{ 255, 255, 240 }
-#define RETRO_SOFTGHOSTWHITE RETRO_Palette{ 250, 250, 255 }
-#define RETRO_GHOSTWHITE RETRO_Palette{ 248, 248, 255 }
-#define RETRO_SOFTIVORY RETRO_Palette{ 248, 249, 240 }
-#define RETRO_LIGHTGRAY RETRO_Palette{ 200, 200, 200 }
-#define RETRO_SILVER RETRO_Palette{ 188, 188, 188 }
-#define RETRO_STONE RETRO_Palette{ 189, 187, 160 }
-#define RETRO_HAZE RETRO_Palette{ 168, 188, 196 }
-#define RETRO_SAGE RETRO_Palette{ 164, 164, 140 }
-#define RETRO_LIGHTSLATEGRAY RETRO_Palette{ 142, 137, 159 }
-#define RETRO_TEALGRAY RETRO_Palette{ 112, 142, 139 }
-#define RETRO_OLIVEGRAY RETRO_Palette{ 131, 133, 96 }
-#define RETRO_GRAY RETRO_Palette{ 128, 128, 128 }
-#define RETRO_SLATEGRAY RETRO_Palette{ 112, 128, 144 }
-#define RETRO_ASHGRAY RETRO_Palette{ 72, 72, 72 }
-#define RETRO_DIMGRAY RETRO_Palette{ 66, 66, 74 }
-#define RETRO_MUTEDDARKSLATEBLUE RETRO_Palette{ 65, 61, 88 }
-#define RETRO_UMBER RETRO_Palette{ 61, 58, 48 }
-#define RETRO_CHARCOAL RETRO_Palette{ 54, 54, 60 }
-#define RETRO_SOOT RETRO_Palette{ 52, 52, 52 }
-#define RETRO_GRAPHITE RETRO_Palette{ 40, 40, 40 }
-#define RETRO_JET RETRO_Palette{ 8, 8, 8 }
-#define RETRO_ONYX RETRO_Palette{ 1, 0, 16 }
-#define RETRO_BLACK RETRO_Palette{ 0, 0, 0 }
+constexpr RETRO_Palette RETRO_WHITE = { 255, 255, 255 };
+constexpr RETRO_Palette RETRO_IVORY = { 255, 255, 240 };
+constexpr RETRO_Palette RETRO_SOFTGHOSTWHITE = { 250, 250, 255 };
+constexpr RETRO_Palette RETRO_GHOSTWHITE = { 248, 248, 255 };
+constexpr RETRO_Palette RETRO_SOFTIVORY = { 248, 249, 240 };
+constexpr RETRO_Palette RETRO_LIGHTGRAY = { 200, 200, 200 };
+constexpr RETRO_Palette RETRO_SILVER = { 188, 188, 188 };
+constexpr RETRO_Palette RETRO_STONE = { 189, 187, 160 };
+constexpr RETRO_Palette RETRO_HAZE = { 168, 188, 196 };
+constexpr RETRO_Palette RETRO_SAGE = { 164, 164, 140 };
+constexpr RETRO_Palette RETRO_LIGHTSLATEGRAY = { 142, 137, 159 };
+constexpr RETRO_Palette RETRO_TEALGRAY = { 112, 142, 139 };
+constexpr RETRO_Palette RETRO_OLIVEGRAY = { 131, 133, 96 };
+constexpr RETRO_Palette RETRO_GRAY = { 128, 128, 128 };
+constexpr RETRO_Palette RETRO_SLATEGRAY = { 112, 128, 144 };
+constexpr RETRO_Palette RETRO_ASHGRAY = { 72, 72, 72 };
+constexpr RETRO_Palette RETRO_DIMGRAY = { 66, 66, 74 };
+constexpr RETRO_Palette RETRO_MUTEDDARKSLATEBLUE = { 65, 61, 88 };
+constexpr RETRO_Palette RETRO_UMBER = { 61, 58, 48 };
+constexpr RETRO_Palette RETRO_CHARCOAL = { 54, 54, 60 };
+constexpr RETRO_Palette RETRO_SOOT = { 52, 52, 52 };
+constexpr RETRO_Palette RETRO_GRAPHITE = { 40, 40, 40 };
+constexpr RETRO_Palette RETRO_JET = { 8, 8, 8 };
+constexpr RETRO_Palette RETRO_ONYX = { 1, 0, 16 };
+constexpr RETRO_Palette RETRO_BLACK = { 0, 0, 0 };
 
 // Reds
-#define RETRO_LIGHTRED RETRO_Palette{ 255, 204, 204 }
-#define RETRO_DARKSALMON RETRO_Palette{ 211, 146, 132 }
-#define RETRO_SCARLET RETRO_Palette{ 255, 36, 0 }
-#define RETRO_FIREBRICK RETRO_Palette{ 187, 40, 32 }
-#define RETRO_RED RETRO_Palette{ 255, 0, 0 }
-#define RETRO_BRICK RETRO_Palette{ 116, 48, 52 }
-#define RETRO_MEDIUMRED RETRO_Palette{ 187, 0, 0 }
-#define RETRO_DARKRED RETRO_Palette{ 128, 0, 0 }
-#define RETRO_EMBERBLACK RETRO_Palette{ 69, 5, 0 }
+constexpr RETRO_Palette RETRO_LIGHTRED = { 255, 204, 204 };
+constexpr RETRO_Palette RETRO_DARKSALMON = { 211, 146, 132 };
+constexpr RETRO_Palette RETRO_SCARLET = { 255, 36, 0 };
+constexpr RETRO_Palette RETRO_FIREBRICK = { 187, 40, 32 };
+constexpr RETRO_Palette RETRO_RED = { 255, 0, 0 };
+constexpr RETRO_Palette RETRO_BRICK = { 116, 48, 52 };
+constexpr RETRO_Palette RETRO_MEDIUMRED = { 187, 0, 0 };
+constexpr RETRO_Palette RETRO_DARKRED = { 128, 0, 0 };
+constexpr RETRO_Palette RETRO_EMBERBLACK = { 69, 5, 0 };
 
 // Oranges and browns
-#define RETRO_JASMINE RETRO_Palette{ 252, 212, 120 }
-#define RETRO_TAN RETRO_Palette{ 210, 180, 140 }
-#define RETRO_SAFFRON RETRO_Palette{ 252, 168, 56 }
-#define RETRO_CARROT RETRO_Palette{ 240, 132, 20 }
-#define RETRO_ORANGE RETRO_Palette{ 255, 128, 0 }
-#define RETRO_CHOCOLATE RETRO_Palette{ 191, 119, 43 }
-#define RETRO_PERU RETRO_Palette{ 185, 114, 49 }
-#define RETRO_FAWN RETRO_Palette{ 143, 122, 78 }
-#define RETRO_SIENNA RETRO_Palette{ 180, 80, 44 }
-#define RETRO_SADDLEBROWN RETRO_Palette{ 139, 69, 19 }
-#define RETRO_SCORCHED RETRO_Palette{ 80, 24, 0 }
+constexpr RETRO_Palette RETRO_JASMINE = { 252, 212, 120 };
+constexpr RETRO_Palette RETRO_TAN = { 210, 180, 140 };
+constexpr RETRO_Palette RETRO_SAFFRON = { 252, 168, 56 };
+constexpr RETRO_Palette RETRO_CARROT = { 240, 132, 20 };
+constexpr RETRO_Palette RETRO_ORANGE = { 255, 128, 0 };
+constexpr RETRO_Palette RETRO_CHOCOLATE = { 191, 119, 43 };
+constexpr RETRO_Palette RETRO_PERU = { 185, 114, 49 };
+constexpr RETRO_Palette RETRO_FAWN = { 143, 122, 78 };
+constexpr RETRO_Palette RETRO_SIENNA = { 180, 80, 44 };
+constexpr RETRO_Palette RETRO_SADDLEBROWN = { 139, 69, 19 };
+constexpr RETRO_Palette RETRO_SCORCHED = { 80, 24, 0 };
 
 // Yellows and golds
-#define RETRO_CREAM RETRO_Palette{ 255, 255, 142 }
-#define RETRO_BLANCHEDALMOND RETRO_Palette{ 255, 240, 200 }
-#define RETRO_ANTIQUEWHITE RETRO_Palette{ 242, 240, 209 }
-#define RETRO_YELLOW RETRO_Palette{ 255, 255, 0 }
-#define RETRO_KHAKI RETRO_Palette{ 222, 214, 149 }
-#define RETRO_BURLYWOOD RETRO_Palette{ 216, 206, 119 }
-#define RETRO_GOLD RETRO_Palette{ 254, 204, 0 }
-#define RETRO_MARIGOLD RETRO_Palette{ 255, 192, 40 }
-#define RETRO_AMBER RETRO_Palette{ 255, 191, 0 }
-#define RETRO_DARKKHAKI RETRO_Palette{ 183, 173, 82 }
-#define RETRO_BRASSGOLD RETRO_Palette{ 170, 160, 55 }
-#define RETRO_DRABGOLD RETRO_Palette{ 130, 119, 34 }
-#define RETRO_DUSTYGOLD RETRO_Palette{ 119, 115, 73 }
-#define RETRO_DARKBRASS RETRO_Palette{ 98, 89, 8 }
-#define RETRO_MUDGOLD RETRO_Palette{ 56, 53, 27 }
+constexpr RETRO_Palette RETRO_CREAM = { 255, 255, 142 };
+constexpr RETRO_Palette RETRO_BLANCHEDALMOND = { 255, 240, 200 };
+constexpr RETRO_Palette RETRO_ANTIQUEWHITE = { 242, 240, 209 };
+constexpr RETRO_Palette RETRO_YELLOW = { 255, 255, 0 };
+constexpr RETRO_Palette RETRO_KHAKI = { 222, 214, 149 };
+constexpr RETRO_Palette RETRO_BURLYWOOD = { 216, 206, 119 };
+constexpr RETRO_Palette RETRO_GOLD = { 254, 204, 0 };
+constexpr RETRO_Palette RETRO_MARIGOLD = { 255, 192, 40 };
+constexpr RETRO_Palette RETRO_AMBER = { 255, 191, 0 };
+constexpr RETRO_Palette RETRO_DARKKHAKI = { 183, 173, 82 };
+constexpr RETRO_Palette RETRO_BRASSGOLD = { 170, 160, 55 };
+constexpr RETRO_Palette RETRO_DRABGOLD = { 130, 119, 34 };
+constexpr RETRO_Palette RETRO_DUSTYGOLD = { 119, 115, 73 };
+constexpr RETRO_Palette RETRO_DARKBRASS = { 98, 89, 8 };
+constexpr RETRO_Palette RETRO_MUDGOLD = { 56, 53, 27 };
 
 // Greens
-#define RETRO_PALESAGE RETRO_Palette{ 150, 198, 150 }
-#define RETRO_MOSSGREEN RETRO_Palette{ 148, 176, 70 }
-#define RETRO_SPRINGGREEN RETRO_Palette{ 30, 230, 90 }
-#define RETRO_GREEN RETRO_Palette{ 0, 255, 0 }
-#define RETRO_MEDIUMSEAGREEN RETRO_Palette{ 60, 179, 113 }
-#define RETRO_SEAGREEN RETRO_Palette{ 46, 139, 87 }
-#define RETRO_FORESTGREEN RETRO_Palette{ 61, 122, 53 }
-#define RETRO_DARKGREEN RETRO_Palette{ 0, 128, 0 }
-#define RETRO_HUNTERGREEN RETRO_Palette{ 42, 86, 36 }
-#define RETRO_PINETREE RETRO_Palette{ 30, 74, 40 }
-#define RETRO_MOSSBLACK RETRO_Palette{ 0, 20, 0 }
+constexpr RETRO_Palette RETRO_PALESAGE = { 150, 198, 150 };
+constexpr RETRO_Palette RETRO_MOSSGREEN = { 148, 176, 70 };
+constexpr RETRO_Palette RETRO_SPRINGGREEN = { 30, 230, 90 };
+constexpr RETRO_Palette RETRO_GREEN = { 0, 255, 0 };
+constexpr RETRO_Palette RETRO_MEDIUMSEAGREEN = { 60, 179, 113 };
+constexpr RETRO_Palette RETRO_SEAGREEN = { 46, 139, 87 };
+constexpr RETRO_Palette RETRO_FORESTGREEN = { 61, 122, 53 };
+constexpr RETRO_Palette RETRO_DARKGREEN = { 0, 128, 0 };
+constexpr RETRO_Palette RETRO_HUNTERGREEN = { 42, 86, 36 };
+constexpr RETRO_Palette RETRO_PINETREE = { 30, 74, 40 };
+constexpr RETRO_Palette RETRO_MOSSBLACK = { 0, 20, 0 };
 
 // Cyans and teals
-#define RETRO_PALESKYBLUE RETRO_Palette{ 128, 225, 239 }
-#define RETRO_CYAN RETRO_Palette{ 0, 255, 255 }
-#define RETRO_BRIGHTCYAN RETRO_Palette{ 0, 232, 255 }
-#define RETRO_DARKTURQUOISE RETRO_Palette{ 48, 200, 224 }
-#define RETRO_DARKCYAN RETRO_Palette{ 0, 139, 139 }
-#define RETRO_TEAL RETRO_Palette{ 0, 128, 128 }
-#define RETRO_DARKSLATEGRAY RETRO_Palette{ 47, 79, 79 }
+constexpr RETRO_Palette RETRO_PALESKYBLUE = { 128, 225, 239 };
+constexpr RETRO_Palette RETRO_CYAN = { 0, 255, 255 };
+constexpr RETRO_Palette RETRO_BRIGHTCYAN = { 0, 232, 255 };
+constexpr RETRO_Palette RETRO_DARKTURQUOISE = { 48, 200, 224 };
+constexpr RETRO_Palette RETRO_DARKCYAN = { 0, 139, 139 };
+constexpr RETRO_Palette RETRO_TEAL = { 0, 128, 128 };
+constexpr RETRO_Palette RETRO_DARKSLATEGRAY = { 47, 79, 79 };
 
 // Blues
-#define RETRO_LAVENDER RETRO_Palette{ 208, 224, 255 }
-#define RETRO_LIGHTSKYBLUE RETRO_Palette{ 135, 206, 250 }
-#define RETRO_SKYBLUE RETRO_Palette{ 135, 206, 235 }
-#define RETRO_PERIWINKLE RETRO_Palette{ 160, 168, 252 }
-#define RETRO_CORNFLOWERBLUE RETRO_Palette{ 128, 160, 255 }
-#define RETRO_LIGHTBLUE RETRO_Palette{ 102, 170, 255 }
-#define RETRO_GLAUCOUS RETRO_Palette{ 92, 124, 160 }
-#define RETRO_STEELBLUE RETRO_Palette{ 70, 130, 180 }
-#define RETRO_AZURE RETRO_Palette{ 0, 128, 255 }
-#define RETRO_SEABLUE RETRO_Palette{ 27, 123, 166 }
-#define RETRO_DEEPSEABLUE RETRO_Palette{ 21, 120, 166 }
-#define RETRO_OCEANBLUE RETRO_Palette{ 48, 80, 192 }
-#define RETRO_CERULEAN RETRO_Palette{ 0, 106, 167 }
-#define RETRO_DARKSLATEBLUE RETRO_Palette{ 72, 61, 139 }
-#define RETRO_BRIGHTBLUE RETRO_Palette{ 18, 39, 255 }
-#define RETRO_SPACECADET RETRO_Palette{ 28, 40, 88 }
-#define RETRO_DEEPCERULEAN RETRO_Palette{ 14, 36, 101 }
-#define RETRO_MIDNIGHTBLUE RETRO_Palette{ 25, 25, 112 }
-#define RETRO_DARKMIDNIGHTBLUE RETRO_Palette{ 14, 36, 54 }
-#define RETRO_BLUE RETRO_Palette{ 0, 0, 255 }
-#define RETRO_NIGHTSKY RETRO_Palette{ 20, 24, 42 }
-#define RETRO_NAVY RETRO_Palette{ 0, 19, 85 }
-#define RETRO_DARKBLUE RETRO_Palette{ 0, 0, 128 }
-#define RETRO_BLUEBLACK RETRO_Palette{ 0, 0, 48 }
+constexpr RETRO_Palette RETRO_LAVENDER = { 208, 224, 255 };
+constexpr RETRO_Palette RETRO_LIGHTSKYBLUE = { 135, 206, 250 };
+constexpr RETRO_Palette RETRO_SKYBLUE = { 135, 206, 235 };
+constexpr RETRO_Palette RETRO_PERIWINKLE = { 160, 168, 252 };
+constexpr RETRO_Palette RETRO_CORNFLOWERBLUE = { 128, 160, 255 };
+constexpr RETRO_Palette RETRO_LIGHTBLUE = { 102, 170, 255 };
+constexpr RETRO_Palette RETRO_GLAUCOUS = { 92, 124, 160 };
+constexpr RETRO_Palette RETRO_STEELBLUE = { 70, 130, 180 };
+constexpr RETRO_Palette RETRO_AZURE = { 0, 128, 255 };
+constexpr RETRO_Palette RETRO_SEABLUE = { 27, 123, 166 };
+constexpr RETRO_Palette RETRO_DEEPSEABLUE = { 21, 120, 166 };
+constexpr RETRO_Palette RETRO_OCEANBLUE = { 48, 80, 192 };
+constexpr RETRO_Palette RETRO_CERULEAN = { 0, 106, 167 };
+constexpr RETRO_Palette RETRO_DARKSLATEBLUE = { 72, 61, 139 };
+constexpr RETRO_Palette RETRO_BRIGHTBLUE = { 18, 39, 255 };
+constexpr RETRO_Palette RETRO_SPACECADET = { 28, 40, 88 };
+constexpr RETRO_Palette RETRO_DEEPCERULEAN = { 14, 36, 101 };
+constexpr RETRO_Palette RETRO_MIDNIGHTBLUE = { 25, 25, 112 };
+constexpr RETRO_Palette RETRO_DARKMIDNIGHTBLUE = { 14, 36, 54 };
+constexpr RETRO_Palette RETRO_BLUE = { 0, 0, 255 };
+constexpr RETRO_Palette RETRO_NIGHTSKY = { 20, 24, 42 };
+constexpr RETRO_Palette RETRO_NAVY = { 0, 19, 85 };
+constexpr RETRO_Palette RETRO_DARKBLUE = { 0, 0, 128 };
+constexpr RETRO_Palette RETRO_BLUEBLACK = { 0, 0, 48 };
 
 // Purples and violets
-#define RETRO_LILAC RETRO_Palette{ 176, 144, 255 }
-#define RETRO_REBECCAPURPLE RETRO_Palette{ 102, 51, 153 }
-#define RETRO_DEEPDARKVIOLET RETRO_Palette{ 120, 20, 196 }
-#define RETRO_VIOLET RETRO_Palette{ 148, 0, 211 }
-#define RETRO_PURPLE RETRO_Palette{ 128, 0, 255 }
-#define RETRO_ROYALVIOLET RETRO_Palette{ 103, 23, 171 }
-#define RETRO_TWILIGHT RETRO_Palette{ 64, 32, 160 }
-#define RETRO_MUTEDINDIGO RETRO_Palette{ 55, 36, 68 }
-#define RETRO_ROYALINDIGO RETRO_Palette{ 58, 26, 110 }
-#define RETRO_INDIGO RETRO_Palette{ 75, 0, 130 }
-#define RETRO_INDIGOBLACK RETRO_Palette{ 15, 3, 40 }
-#define RETRO_DARKINDIGO RETRO_Palette{ 8, 0, 40 }
+constexpr RETRO_Palette RETRO_LILAC = { 176, 144, 255 };
+constexpr RETRO_Palette RETRO_REBECCAPURPLE = { 102, 51, 153 };
+constexpr RETRO_Palette RETRO_DEEPDARKVIOLET = { 120, 20, 196 };
+constexpr RETRO_Palette RETRO_VIOLET = { 148, 0, 211 };
+constexpr RETRO_Palette RETRO_PURPLE = { 128, 0, 255 };
+constexpr RETRO_Palette RETRO_ROYALVIOLET = { 103, 23, 171 };
+constexpr RETRO_Palette RETRO_TWILIGHT = { 64, 32, 160 };
+constexpr RETRO_Palette RETRO_MUTEDINDIGO = { 55, 36, 68 };
+constexpr RETRO_Palette RETRO_ROYALINDIGO = { 58, 26, 110 };
+constexpr RETRO_Palette RETRO_INDIGO = { 75, 0, 130 };
+constexpr RETRO_Palette RETRO_INDIGOBLACK = { 15, 3, 40 };
+constexpr RETRO_Palette RETRO_DARKINDIGO = { 8, 0, 40 };
 
 // Pinks and magentas
-#define RETRO_PINKLACE RETRO_Palette{ 252, 212, 252 }
-#define RETRO_PINK RETRO_Palette{ 255, 128, 192 }
-#define RETRO_HOTPINK RETRO_Palette{ 255, 105, 180 }
-#define RETRO_LIGHTMAGENTA RETRO_Palette{ 255, 66, 247 }
-#define RETRO_ROSE RETRO_Palette{ 172, 92, 132 }
-#define RETRO_DEEPPINK RETRO_Palette{ 219, 59, 150 }
-#define RETRO_MAGENTA RETRO_Palette{ 255, 0, 255 }
-#define RETRO_DARKMAGENTA RETRO_Palette{ 139, 0, 139 }
-#define RETRO_WINE RETRO_Palette{ 44, 24, 36 }
+constexpr RETRO_Palette RETRO_PINKLACE = { 252, 212, 252 };
+constexpr RETRO_Palette RETRO_PINK = { 255, 128, 192 };
+constexpr RETRO_Palette RETRO_HOTPINK = { 255, 105, 180 };
+constexpr RETRO_Palette RETRO_LIGHTMAGENTA = { 255, 66, 247 };
+constexpr RETRO_Palette RETRO_ROSE = { 172, 92, 132 };
+constexpr RETRO_Palette RETRO_DEEPPINK = { 219, 59, 150 };
+constexpr RETRO_Palette RETRO_MAGENTA = { 255, 0, 255 };
+constexpr RETRO_Palette RETRO_DARKMAGENTA = { 139, 0, 139 };
+constexpr RETRO_Palette RETRO_WINE = { 44, 24, 36 };
 
 // A phong palette keeps entry 0 black and ramps the material over the rest, so a
 // renderer shades from RETRO_PHONG_OFFSET across RETRO_PHONG_SHADES entries
-#define RETRO_PHONG_OFFSET 1
-#define RETRO_PHONG_SHADES (RETRO_COLORS - RETRO_PHONG_OFFSET)
+constexpr int RETRO_PHONG_OFFSET = 1;
+constexpr int RETRO_PHONG_SHADES = RETRO_COLORS - RETRO_PHONG_OFFSET;
 
 // The highlight a material takes unless it asks for another: how bright it is,
 // and how tightly it gathers around face on
-#define RETRO_K_SPECULAR 0.7
-#define RETRO_K_FALLOFF 150
+constexpr double RETRO_K_SPECULAR = 0.7;
+constexpr int RETRO_K_FALLOFF = 150;
 
 // The light a material is lit by, as intensities between 0.0 and 1.0
-#define RETRO_AMBIENT_R 0.0
-#define RETRO_AMBIENT_G 0.0
-#define RETRO_AMBIENT_B 0.0
+constexpr double RETRO_AMBIENT_R = 0.0;
+constexpr double RETRO_AMBIENT_G = 0.0;
+constexpr double RETRO_AMBIENT_B = 0.0;
 
-#define RETRO_LIGHT_R 0.83
-#define RETRO_LIGHT_G 0.83
-#define RETRO_LIGHT_B 0.83
+constexpr double RETRO_LIGHT_R = 0.83;
+constexpr double RETRO_LIGHT_G = 0.83;
+constexpr double RETRO_LIGHT_B = 0.83;
 
 //
 // The palette the VGA BIOS leaves in the DAC in mode 13h: the 16 EGA colors,
@@ -254,9 +254,9 @@ static const RETRO_Palette RETRO_PALETTE_VGA[RETRO_COLORS] = {
 
 // The phong reflection model's coefficients besides RETRO_K_SPECULAR and
 // RETRO_K_FALLOFF
-#define RETRO_K_AMBIENT 0.2
-#define RETRO_K_DIFFUSE 0.9
-#define RETRO_K_ATTENUATION 1.0
+constexpr double RETRO_K_AMBIENT = 0.2;
+constexpr double RETRO_K_DIFFUSE = 0.9;
+constexpr double RETRO_K_ATTENUATION = 1.0;
 
 // *******************************************************************
 // Public functions
@@ -893,9 +893,9 @@ inline float RETRO_DitherThreshold(int x, int y)
 // colors than a palette holds; gathering them here first lets a fit weigh
 // each by how much of the screen it is expected to cover
 //
-#define RETRO_HISTOGRAM_BITS 5
-#define RETRO_HISTOGRAM_SIDE (1 << RETRO_HISTOGRAM_BITS)
-#define RETRO_HISTOGRAM_CELLS (RETRO_HISTOGRAM_SIDE * RETRO_HISTOGRAM_SIDE * RETRO_HISTOGRAM_SIDE)
+constexpr int RETRO_HISTOGRAM_BITS = 5;
+constexpr int RETRO_HISTOGRAM_SIDE = 1 << RETRO_HISTOGRAM_BITS;
+constexpr int RETRO_HISTOGRAM_CELLS = RETRO_HISTOGRAM_SIDE * RETRO_HISTOGRAM_SIDE * RETRO_HISTOGRAM_SIDE;
 
 struct RETRO_ColorHistogram {
 	float weight[RETRO_HISTOGRAM_CELLS];

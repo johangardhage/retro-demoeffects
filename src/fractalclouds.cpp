@@ -28,12 +28,12 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define MAP_SIZE 256 // cells on a side, a power of two, and the field wraps
-#define MAP_MASK (MAP_SIZE - 1)
-#define ROUGHNESS 0.5 // what the displacement is multiplied by at each level
-#define SCROLL_X 11.0 // cells a second the field drifts across
-#define SCROLL_Y 7.0 // cells a second it drifts down
-#define CYCLE_SPEED 24.0 // palette entries a second the colors travel
+constexpr int MAP_SIZE = 256; // cells on a side, a power of two, and the field wraps
+constexpr int MAP_MASK = MAP_SIZE - 1;
+constexpr double ROUGHNESS = 0.5; // what the displacement is multiplied by at each level
+constexpr double SCROLL_X = 11.0; // cells a second the field drifts across
+constexpr double SCROLL_Y = 7.0; // cells a second it drifts down
+constexpr double CYCLE_SPEED = 24.0; // palette entries a second the colors travel
 
 static unsigned char Field[MAP_SIZE * MAP_SIZE];
 

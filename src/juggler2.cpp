@@ -63,14 +63,14 @@
 #include "lib/retromath.h"
 #include "lib/retropalette.h"
 
-#define NEAR_T 0.001f // t past which a hit counts, so a ray does not re-hit its own origin
-#define MAX_BOUNCES 10 // matches the source recreation's own MAX_DEPTH
-#define MIN_THROUGHPUT (1.0f / 256.0f) // matches its MIN_COLOR_INTENSITY - a bounce this dim can no longer move a displayed byte
+constexpr float NEAR_T = 0.001f; // t past which a hit counts, so a ray does not re-hit its own origin
+constexpr int MAX_BOUNCES = 10; // matches the source recreation's own MAX_DEPTH
+constexpr float MIN_THROUGHPUT = 1.0f / 256.0f; // matches its MIN_COLOR_INTENSITY - a bounce this dim can no longer move a displayed byte
 
-#define FOCAL_DISTANCE 50.0f // world units from the eye to the virtual screen
-#define SCREEN_WIDTH 100.0f // world units the virtual screen spans; with FOCAL_DISTANCE this sets the field of view
+constexpr float FOCAL_DISTANCE = 50.0f; // world units from the eye to the virtual screen
+constexpr float SCREEN_WIDTH = 100.0f; // world units the virtual screen spans; with FOCAL_DISTANCE this sets the field of view
 
-#define FLOOR_TILE 107.0f // world units per checker tile
+constexpr float FLOOR_TILE = 107.0f; // world units per checker tile
 
 // The source recreation measured these from photographs of the original: a
 // shadowed floor tile reads as 40% of its lit color, a shadowed sphere as
@@ -80,17 +80,17 @@
 // measurement come out right, after that encoding, is the measurement
 // decoded by RETRO_SRGBToLinear, not the measurement itself. Both are
 // AMBIENT_SHAPE's anchor value below, not the literal ambient weight
-#define PLASTIC_AMBIENT RETRO_SRGBToLinear(40 / 255.0f)
-#define PLASTIC_DIFFUSE 1.0f
-#define PLASTIC_SPECULAR 1.0f
-#define MATTE_AMBIENT RETRO_SRGBToLinear(102 / 255.0f)
-#define MATTE_DIFFUSE 1.5f
-#define MIRROR_SPECULAR 1.0f
+const float PLASTIC_AMBIENT = RETRO_SRGBToLinear(40 / 255.0f);
+constexpr float PLASTIC_DIFFUSE = 1.0f;
+constexpr float PLASTIC_SPECULAR = 1.0f;
+const float MATTE_AMBIENT = RETRO_SRGBToLinear(102 / 255.0f);
+constexpr float MATTE_DIFFUSE = 1.5f;
+constexpr float MIRROR_SPECULAR = 1.0f;
 
 // Eric Graham's real glint() test: not a Phong falloff, a hard cutoff on
 // cos^2 of the angle between the camera ray's reflection and the light -
 // see TraceScene
-#define MINGLINT 0.95f
+constexpr float MINGLINT = 0.95f;
 
 // The real source's ambient term is sky light, not a flat constant: a patch
 // facing straight up gets the full (N.up + 1.5) * 0.4 (peaking at 1), one
@@ -100,9 +100,9 @@
 // own ambient weight, leaving its calibration above where it was
 #define AMBIENT_SHAPE(normal) (((normal).y + 1.5f) * (2.0f / 3.0f))
 
-#define PALETTE_MATERIAL_SHADES 32 // six materials x 32 = 192
-#define PALETTE_SKY_SHADES 56 // a big, smooth, prominent area - measured at roughly half of every rendered pixel, so worth far more than a small one
-#define PALETTE_WHITE_SHADES 8 // a generic black-to-white ramp: whatever a search does not already have close by - measured at under 0.1% of rendered pixels, so this is a deliberately small reserve, not a peer of the other two
+constexpr int PALETTE_MATERIAL_SHADES = 32; // six materials x 32 = 192
+constexpr int PALETTE_SKY_SHADES = 56; // a big, smooth, prominent area - measured at roughly half of every rendered pixel, so worth far more than a small one
+constexpr int PALETTE_WHITE_SHADES = 8; // a generic black-to-white ramp: whatever a search does not already have close by - measured at under 0.1% of rendered pixels, so this is a deliberately small reserve, not a peer of the other two
 
 // The shower: a fast low arc returning a ball to the throwing hand, a slow
 // high arc lobbing it back. Both hands sit at JUGGLE_X0 and JUGGLE_X1;
@@ -137,7 +137,7 @@ struct JugglerSphere {
 // code below can be checked against it line for line: balls 2 -- 4, torso
 // 5 -- 12, head 13, neck 14, left leg 15 -- 31, right leg 32 -- 48, left arm
 // 49 -- 65, right arm 66 -- 82, eyes 83 -- 84, hair 85. 0 and 1 are unused.
-#define JUGGLER_SPHERES 86
+constexpr int JUGGLER_SPHERES = 86;
 static JugglerSphere Body[JUGGLER_SPHERES];
 
 static vec3 CamEye, CamCenter, CamU, CamV;
@@ -410,8 +410,8 @@ static void UpdateScene(double T)
 	Body[85].center.x = 152;
 }
 
-#define QUANTIZE_BITS 6 // 64 levels a channel
-#define QUANTIZE_LEVELS (1 << QUANTIZE_BITS)
+constexpr int QUANTIZE_BITS = 6; // 64 levels a channel
+constexpr int QUANTIZE_LEVELS = 1 << QUANTIZE_BITS;
 static unsigned char ColorLookup[QUANTIZE_LEVELS][QUANTIZE_LEVELS][QUANTIZE_LEVELS];
 
 // A color in 0..1 a channel, as the nearest entry. The cube is indexed by

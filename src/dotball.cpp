@@ -32,17 +32,17 @@
 #include "lib/retromath.h"
 #include "lib/retropalette.h"
 
-#define RADIUS 75
-#define POINTSTEP 0.1 // radians between points, in both angles
-#define SHADES 64 // palette entries the depth shading ramps over
-#define ZMIN 20 // points nearer the viewer than this are drawn, which hides the far side
-#define ROTATION_SPEED 1 // radians per second, so about a turn every six seconds
-#define PROJECTION_SCALE 1.0 // the ball is built in pixels, so the projection adds no scale
+constexpr int RADIUS = 75;
+constexpr double POINTSTEP = 0.1; // radians between points, in both angles
+constexpr int SHADES = 64; // palette entries the depth shading ramps over
+constexpr int ZMIN = 20; // points nearer the viewer than this are drawn, which hides the far side
+constexpr int ROTATION_SPEED = 1; // radians per second, so about a turn every six seconds
+constexpr double PROJECTION_SCALE = 1.0; // the ball is built in pixels, so the projection adds no scale
 
-#define ALPHA_STEPS ((int)(2 * M_PI / POINTSTEP + 0.5))
-#define BETA_STEPS ((int)(M_PI / POINTSTEP + 0.5))
+constexpr int ALPHA_STEPS = (int)(2 * M_PI / POINTSTEP + 0.5);
+constexpr int BETA_STEPS = (int)(M_PI / POINTSTEP + 0.5);
 
-#define NUM_POINTS (ALPHA_STEPS * (BETA_STEPS + 1)) // both poles included
+constexpr int NUM_POINTS = ALPHA_STEPS * (BETA_STEPS + 1); // both poles included
 
 static Vertex Ball[NUM_POINTS];
 

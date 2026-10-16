@@ -42,26 +42,26 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define BED_LEFT 10
-#define BED_RIGHT (RETRO_WIDTH - 10)
-#define BED_SPAN (BED_RIGHT - BED_LEFT)
+constexpr int BED_LEFT = 10;
+constexpr int BED_RIGHT = RETRO_WIDTH - 10;
+constexpr int BED_SPAN = BED_RIGHT - BED_LEFT;
 
-#define ROOT_RAND 20 // half-width of the random walk of a burning column
-#define DECAY 4 // max heat lost per rise, so how fast a flame dies
-#define MIN_FIRE 50 // below this a column is still catching; at or above, it burns
-#define TRICKLE 10 // a column this cold or colder stays out until a match reaches it
-#define SMOOTH 1 // radius of the box on the bed, so the tap count is 2·SMOOTH+1
-#define MATCH_WIDTH 5
-#define MATCH_HEAT 255
-#define MATCH_CHANCE 150 // a match is struck with probability 1 / MATCH_CHANCE
-#define MATCH_START_STEPS 40
-#define WATER_REACH 8.0 // drops land in the outer BED_SPAN / WATER_REACH of each side
-#define WATER_COUNT ((int)(BED_SPAN / WATER_REACH))
-#define DOUSE_COUNT 10
-#define IGNITION_WOOD 3 // keys 1–9 set ignition to IGNITION_WOOD + (n − 1)²
-#define FIRE_BIAS_MIN -2
-#define FIRE_BIAS_MAX 4
-#define FIRE_BIAS_START 1
+constexpr int ROOT_RAND = 20; // half-width of the random walk of a burning column
+constexpr int DECAY = 4; // max heat lost per rise, so how fast a flame dies
+constexpr int MIN_FIRE = 50; // below this a column is still catching; at or above, it burns
+constexpr int TRICKLE = 10; // a column this cold or colder stays out until a match reaches it
+constexpr int SMOOTH = 1; // radius of the box on the bed, so the tap count is 2·SMOOTH+1
+constexpr int MATCH_WIDTH = 5;
+constexpr int MATCH_HEAT = 255;
+constexpr int MATCH_CHANCE = 150; // a match is struck with probability 1 / MATCH_CHANCE
+constexpr int MATCH_START_STEPS = 40;
+constexpr double WATER_REACH = 8.0; // drops land in the outer BED_SPAN / WATER_REACH of each side
+constexpr int WATER_COUNT = (int)(BED_SPAN / WATER_REACH);
+constexpr int DOUSE_COUNT = 10;
+constexpr int IGNITION_WOOD = 3; // keys 1–9 set ignition to IGNITION_WOOD + (n − 1)²
+constexpr int FIRE_BIAS_MIN = -2;
+constexpr int FIRE_BIAS_MAX = 4;
+constexpr int FIRE_BIAS_START = 1;
 
 static int FireBed[RETRO_WIDTH];
 static unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];

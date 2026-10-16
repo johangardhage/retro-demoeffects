@@ -44,21 +44,21 @@
 #include "lib/retropoly.h"
 #include "lib/retroshadetable.h"
 
-#define BALLS 10
-#define BALL_SIZE 80
-#define PICTURE_SIZE 256
-#define BALL_RADIUS (BALL_SIZE / 2)
-#define BALL_INTERVAL 0.73f                // seconds between balls joining
-#define LIGHT_WIDTH 160
-#define LIGHT_SLOPE 0.6f                   // levels lost a pixel from the highlight
-#define LIGHT_FLOOR 10                     // the level the light falls no lower than
-#define SHADE_LEVELS 32
-#define UNLIT_LEVEL (SHADE_LEVELS / 2)     // the level that leaves a color as it is
+constexpr int BALLS = 10;
+constexpr int BALL_SIZE = 80;
+constexpr int PICTURE_SIZE = 256;
+constexpr int BALL_RADIUS = BALL_SIZE / 2;
+constexpr float BALL_INTERVAL = 0.73f;        // seconds between balls joining
+constexpr int LIGHT_WIDTH = 160;
+constexpr float LIGHT_SLOPE = 0.6f;           // levels lost a pixel from the highlight
+constexpr int LIGHT_FLOOR = 10;               // the level the light falls no lower than
+constexpr int SHADE_LEVELS = 32;
+constexpr int UNLIT_LEVEL = SHADE_LEVELS / 2; // the level that leaves a color as it is
 
 // The bounce box, in pixels
-#define MARGIN 10
-#define ROOM_X (RETRO_WIDTH - BALL_SIZE - 2 * MARGIN)    // how far a ball can move each way
-#define ROOM_Y (RETRO_HEIGHT - BALL_SIZE - 2 * MARGIN)
+constexpr int MARGIN = 10;
+constexpr int ROOM_X = RETRO_WIDTH - BALL_SIZE - 2 * MARGIN;    // how far a ball can move each way
+constexpr int ROOM_Y = RETRO_HEIGHT - BALL_SIZE - 2 * MARGIN;
 
 struct Ball {
 	float x, y, dx, dy;

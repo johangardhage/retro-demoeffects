@@ -13,34 +13,34 @@
 #include "lib/retropalette.h"
 #include "lib/retropoly.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define ORBIT_CENTER_X 80
-#define ORBIT_CENTER_Y 54
-#define ORBIT_RADIUS 20
-#define ORBIT_SPEED 0.8
+constexpr int ORBIT_CENTER_X = 80;
+constexpr int ORBIT_CENTER_Y = 54;
+constexpr int ORBIT_RADIUS = 20;
+constexpr double ORBIT_SPEED = 0.8;
 
-#define DOT_SPACING 3.0f
-#define GROUND_PAD 6
-#define EXTRUSION_MIN 4
-#define EXTRUSION_MAX 22
+constexpr float DOT_SPACING = 3.0f;
+constexpr int GROUND_PAD = 6;
+constexpr int EXTRUSION_MIN = 4;
+constexpr int EXTRUSION_MAX = 22;
 // Index 0 stays the screen's background black. Index 1 is reserved for the
 // flat ground; RETRO_LoadImage's own palette load fills the rest, so a
 // letter is drawn in whatever color the color map actually painted
 // that texel.
-#define GROUND_COLOR_INDEX 1
-#define YAW_AMP 0.75
-#define YAW_SPEED 0.35
-#define INITIAL_PITCH 1.15
-#define PITCH_AMP 0.38
-#define PITCH_SPEED 0.45
-#define ROLL_AMP 0.22
-#define ROLL_SPEED 0.55
-#define OBJECT_Z 50.0f
-#define PROJECTION_SCALE 1.0f
+constexpr int GROUND_COLOR_INDEX = 1;
+constexpr double YAW_AMP = 0.75;
+constexpr double YAW_SPEED = 0.35;
+constexpr double INITIAL_PITCH = 1.15;
+constexpr double PITCH_AMP = 0.38;
+constexpr double PITCH_SPEED = 0.45;
+constexpr double ROLL_AMP = 0.22;
+constexpr double ROLL_SPEED = 0.55;
+constexpr float OBJECT_Z = 50.0f;
+constexpr float PROJECTION_SCALE = 1.0f;
 
-#define MAX_MAP 256
+constexpr int MAX_MAP = 256;
 
 static const char *const ScrollText[] = { "RETRO", "DEMO" };
 static RETRO_Image *HeightMap, *ColorMap, *TextImage;

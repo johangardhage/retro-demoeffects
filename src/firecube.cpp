@@ -13,7 +13,7 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define ROTATION_SPEED 2 // radians a second, about each axis
+constexpr int ROTATION_SPEED = 2; // radians a second, about each axis
 
 //
 // Advance the trail in fixed steps. It is one blur pass per step into a framebuffer

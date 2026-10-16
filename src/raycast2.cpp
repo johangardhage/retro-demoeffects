@@ -65,20 +65,20 @@
 #include "lib/retroshadetable.h"
 #include "lib/retrovector.h"
 
-#define MAP_SIZE 16
-#define TILE_SIZE 64 // texels across a tile
-#define SHEET_TILES 5 // tiles across a row of a sheet
-#define SHEET_WIDTH (SHEET_TILES * TILE_SIZE)
-#define RAYCAST_FOV 66.0 // degrees across the screen
-#define RAYCAST_SIDE 0.7 // distance light on walls along x
-#define MAXLIGHT 32 // levels of light above none
-#define LIGHTS (MAXLIGHT + 1)
-#define LIGHT_NEAR 16 // levels of distance light up close
-#define LIGHT_REACH 1.5 // cells within which the distance light is full
-#define LIGHT_AMBIENT 6 // levels everywhere
-#define WALK_SPEED 1.5 // cells a second, under the arrow keys
-#define TURN_SPEED 2.0 // radians a second, under the arrow keys
-#define CAMERA_RADIUS 0.25 // cells kept clear round the camera
+constexpr int MAP_SIZE = 16;
+constexpr int TILE_SIZE = 64; // texels across a tile
+constexpr int SHEET_TILES = 5; // tiles across a row of a sheet
+constexpr int SHEET_WIDTH = SHEET_TILES * TILE_SIZE;
+constexpr double RAYCAST_FOV = 66.0; // degrees across the screen
+constexpr double RAYCAST_SIDE = 0.7; // distance light on walls along x
+constexpr int MAXLIGHT = 32; // levels of light above none
+constexpr int LIGHTS = MAXLIGHT + 1;
+constexpr int LIGHT_NEAR = 16; // levels of distance light up close
+constexpr double LIGHT_REACH = 1.5; // cells within which the distance light is full
+constexpr int LIGHT_AMBIENT = 6; // levels everywhere
+constexpr double WALK_SPEED = 1.5; // cells a second, under the arrow keys
+constexpr double TURN_SPEED = 2.0; // radians a second, under the arrow keys
+constexpr double CAMERA_RADIUS = 0.25; // cells kept clear round the camera
 
 static const int Walls[MAP_SIZE][MAP_SIZE] = {
 	{ 2, 2, 2, 2, 7, 4, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2 },

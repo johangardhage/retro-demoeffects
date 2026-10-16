@@ -43,13 +43,13 @@
 #include "lib/retrobsp.h"
 #include "lib/retromath.h"
 
-#define MOVEMENT_SPEED		480.0f	// World units per second
-#define TURN_SPEED			radians(180)	// Radians per second, from the arrow keys
-#define PITCH_SPEED			radians(60)		// Radians per second, from Page Up/Page Down
-#define MOUSE_SENSITIVITY	radians(0.3)	// Radians per mouse step
-#define EYE_HEIGHT			22.0f	// World units from the player's origin up to the eye, as in Quake
-#define ANIMATION_RATE		10.0	// Frames per second of animated textures and light styles
-#define LIGHT_STYLES		256		// Light styles a face can name
+constexpr float MOVEMENT_SPEED = 480.0f;	// World units per second
+constexpr double TURN_SPEED = radians(180);			// Radians per second, from the arrow keys
+constexpr double PITCH_SPEED = radians(60);			// Radians per second, from Page Up/Page Down
+constexpr double MOUSE_SENSITIVITY = radians(0.3);	// Radians per mouse step
+constexpr float EYE_HEIGHT = 22.0f;			// World units from the player's origin up to the eye, as in Quake
+constexpr double ANIMATION_RATE = 10.0;		// Frames per second of animated textures and light styles
+constexpr int LIGHT_STYLES = 256;			// Light styles a face can name
 
 // One mip level of a texture: 8-bit palette indices, read in place from the
 // BSP or the checkerboard

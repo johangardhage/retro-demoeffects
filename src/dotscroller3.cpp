@@ -16,24 +16,24 @@
 #include "lib/retropoly.h"
 #include "lib/retroterrain.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
 // voxel_color_128x128.pcx never uses palette indices 224 upward, so the
 // letter gradient can occupy them without stealing a terrain color.
-#define LETTER_COLOR_BASE 224
-#define LETTER_DOT_SPACING 0.8f
-#define LETTER_ROW_SPACING 1.0f
-#define LETTER_HEIGHT_OFFSET 1.5f
-#define SCROLL_SPEED 17.0f
-#define CAMERA_HEIGHT 20.0f
-#define PITCH -0.5f
-#define NEAR_PLANE 1.0f
-#define VIEW_DISTANCE 100.0f
-#define WORLD_HEIGHT_SCALE (1.0f / 27.0f)
-#define LETTER_NEAR_FORWARD 24.0f
-#define TURN_SPEED 0.3f
-#define FORWARD_SPEED 30.0f
+constexpr int LETTER_COLOR_BASE = 224;
+constexpr float LETTER_DOT_SPACING = 0.8f;
+constexpr float LETTER_ROW_SPACING = 1.0f;
+constexpr float LETTER_HEIGHT_OFFSET = 1.5f;
+constexpr float SCROLL_SPEED = 17.0f;
+constexpr float CAMERA_HEIGHT = 20.0f;
+constexpr float PITCH = -0.5f;
+constexpr float NEAR_PLANE = 1.0f;
+constexpr float VIEW_DISTANCE = 100.0f;
+constexpr float WORLD_HEIGHT_SCALE = 1.0f / 27.0f;
+constexpr float LETTER_NEAR_FORWARD = 24.0f;
+constexpr float TURN_SPEED = 0.3f;
+constexpr float FORWARD_SPEED = 30.0f;
 
 // Looking along +z with x to the right and y up, tipped down by -PITCH: the
 // frame the dots were always seen in. Half the screen's width and height

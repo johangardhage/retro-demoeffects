@@ -18,10 +18,10 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define CUBE1_ROTATION_SPEED 1.1f
-#define CUBE2_ROTATION_SPEED -1.7f
-#define CUBE1_ROTATION_PERIOD (20 * M_PI) // 10, 7 and 13 whole turns
-#define CUBE2_ROTATION_PERIOD (10 * M_PI) // 4, 6 and 5 whole turns
+constexpr float CUBE1_ROTATION_SPEED = 1.1f;
+constexpr float CUBE2_ROTATION_SPEED = -1.7f;
+constexpr double CUBE1_ROTATION_PERIOD = 20 * M_PI; // 10, 7 and 13 whole turns
+constexpr double CUBE2_ROTATION_PERIOD = 10 * M_PI; // 4, 6 and 5 whole turns
 
 static Model3D *Cube1 = NULL;
 static Model3D *Cube2 = NULL;

@@ -71,30 +71,30 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define ROTATION_SPEED 1.1 // radians a second, about each axis
+constexpr double ROTATION_SPEED = 1.1; // radians a second, about each axis
 
-#define SCALE 37.5
-#define CX (RETRO_WIDTH / 2.0)
-#define CY (RETRO_HEIGHT / 2.0 - 10)
+constexpr double SCALE = 37.5;
+constexpr double CX = RETRO_WIDTH / 2.0;
+constexpr double CY = RETRO_HEIGHT / 2.0 - 10;
 
-#define WALLZ 3.0f // model units behind the cube's center the wall stands
+constexpr float WALLZ = 3.0f; // model units behind the cube's center the wall stands
 
-#define LIGHT_SPEED 0.6f // radians a second the light orbits the board
-#define LIGHT_RADIUS 0.8f // how far off axis it swings, in x and y
-#define LIGHT_Z -1.1f // fixed depth component, toward the camera side
+constexpr float LIGHT_SPEED = 0.6f; // radians a second the light orbits the board
+constexpr float LIGHT_RADIUS = 0.8f; // how far off axis it swings, in x and y
+constexpr float LIGHT_Z = -1.1f; // fixed depth component, toward the camera side
 
-#define WALL_CELL 24.0 // pixels across one checker cell
-#define WALL_SPEED 0.25 // radians a second the wall turns
+constexpr double WALL_CELL = 24.0; // pixels across one checker cell
+constexpr double WALL_SPEED = 0.25; // radians a second the wall turns
 
-#define DIRECT_LIGHT 0.65f // share of the wall's light that comes straight from the light, 0..1; the rest is ambient and still falls in the shadow
-#define GLASS_TRANSMIT vec3{ 0.75f, 0.08f, 0.08f } // linear light a pane lets through, per channel
-#define GLASS_SCATTER vec3{ 0.20f, 0.01f, 0.01f } // linear light a pane scatters out diffusely; with the transmission at most 1
+constexpr float DIRECT_LIGHT = 0.65f; // share of the wall's light that comes straight from the light, 0..1; the rest is ambient and still falls in the shadow
+constexpr vec3 GLASS_TRANSMIT = { 0.75f, 0.08f, 0.08f }; // linear light a pane lets through, per channel
+constexpr vec3 GLASS_SCATTER = { 0.20f, 0.01f, 0.01f }; // linear light a pane scatters out diffusely; with the transmission at most 1
 
-#define SIDES 6
+constexpr int SIDES = 6;
 
-#define WALL 0
-#define SHADOW (1 + SIDES * SIDES)
-#define LIGHT_CELL (2 * SHADOW)
+constexpr int WALL = 0;
+constexpr int SHADOW = 1 + SIDES * SIDES;
+constexpr int LIGHT_CELL = 2 * SHADOW;
 
 // The side of the cube each face belongs to: faces with the same normal
 static int FaceSide[RETRO_MAX_FACES];

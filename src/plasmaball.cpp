@@ -48,35 +48,35 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define BALL_RADIUS 104.0f // pixels to the inside of the glass
-#define ELECTRODE_RADIUS 10.0f // pixels of the central electrode
-#define ARCS 7 // main filaments
-#define ARC_LEVELS 6 // midpoint subdivisions of a filament
-#define ARC_POINTS ((1 << ARC_LEVELS) + 1) // points along a filament
-#define ARC_ROUGHNESS 0.18f // midpoint offset per unit of span
-#define ARC_KEEP 0.985f // kept of each offset per step, so how slowly a filament writhes
-#define ARC_JITTER 0.15f // fresh offset added every step, the crackle
-#define ARC_REPEL 3.0f // how hard the filaments push apart
-#define ARC_REPEL_REACH 2.0f // how much harder a close neighbor pushes than a far one
-#define ARC_DRIFT 8.0f // random angular kick, radians per second squared
-#define ARC_SPIN_KEEP 0.97f // kept of the angular velocity per step
-#define TILT_MAX 0.9f // radians a filament leans toward or away from the viewer
-#define TILT_DRIFT 0.03f // random walk of the tilt per step
-#define BRANCHES 3 // side branches per filament
-#define BRANCH_LEVELS 4 // midpoint subdivisions of a branch
-#define BRANCH_POINTS ((1 << BRANCH_LEVELS) + 1) // points along a branch
-#define BRANCH_LIFE 6 // steps a branch lives, at most
-#define ARC_BRIGHTNESS 0.5f // intensity at the electrode end of a filament
-#define BRANCH_BRIGHTNESS 0.25f // intensity at the root of a branch
-#define SPOT_BRIGHTNESS 4.0f // intensity where a filament meets the glass
-#define CORE_GAIN 1.0f // weight of the sharp lines
-#define TIGHT_GAIN 1.5f // weight of the tight glow
-#define WIDE_GAIN 4.0f // weight of the wide glow
-#define GLASS_RIM 0.35f // intensity of the glass edge
-#define GLASS_RIM_WIDTH 3.0f // pixels of the glass edge
-#define GLASS_HAZE 0.08f // intensity the glass adds at its rim, falling to 0 at the center
-#define GLASS_HIGHLIGHT 0.3f // intensity of the window reflection
-#define ELECTRODE_GLOW 0.6f // intensity of the halo round the electrode
+constexpr float BALL_RADIUS = 104.0f; // pixels to the inside of the glass
+constexpr float ELECTRODE_RADIUS = 10.0f; // pixels of the central electrode
+constexpr int ARCS = 7; // main filaments
+constexpr int ARC_LEVELS = 6; // midpoint subdivisions of a filament
+constexpr int ARC_POINTS = (1 << ARC_LEVELS) + 1; // points along a filament
+constexpr float ARC_ROUGHNESS = 0.18f; // midpoint offset per unit of span
+constexpr float ARC_KEEP = 0.985f; // kept of each offset per step, so how slowly a filament writhes
+constexpr float ARC_JITTER = 0.15f; // fresh offset added every step, the crackle
+constexpr float ARC_REPEL = 3.0f; // how hard the filaments push apart
+constexpr float ARC_REPEL_REACH = 2.0f; // how much harder a close neighbor pushes than a far one
+constexpr float ARC_DRIFT = 8.0f; // random angular kick, radians per second squared
+constexpr float ARC_SPIN_KEEP = 0.97f; // kept of the angular velocity per step
+constexpr float TILT_MAX = 0.9f; // radians a filament leans toward or away from the viewer
+constexpr float TILT_DRIFT = 0.03f; // random walk of the tilt per step
+constexpr int BRANCHES = 3; // side branches per filament
+constexpr int BRANCH_LEVELS = 4; // midpoint subdivisions of a branch
+constexpr int BRANCH_POINTS = (1 << BRANCH_LEVELS) + 1; // points along a branch
+constexpr int BRANCH_LIFE = 6; // steps a branch lives, at most
+constexpr float ARC_BRIGHTNESS = 0.5f; // intensity at the electrode end of a filament
+constexpr float BRANCH_BRIGHTNESS = 0.25f; // intensity at the root of a branch
+constexpr float SPOT_BRIGHTNESS = 4.0f; // intensity where a filament meets the glass
+constexpr float CORE_GAIN = 1.0f; // weight of the sharp lines
+constexpr float TIGHT_GAIN = 1.5f; // weight of the tight glow
+constexpr float WIDE_GAIN = 4.0f; // weight of the wide glow
+constexpr float GLASS_RIM = 0.35f; // intensity of the glass edge
+constexpr float GLASS_RIM_WIDTH = 3.0f; // pixels of the glass edge
+constexpr float GLASS_HAZE = 0.08f; // intensity the glass adds at its rim, falling to 0 at the center
+constexpr float GLASS_HIGHLIGHT = 0.3f; // intensity of the window reflection
+constexpr float ELECTRODE_GLOW = 0.6f; // intensity of the halo round the electrode
 
 static const vec2 Center = { RETRO_WIDTH / 2.0f, RETRO_HEIGHT / 2.0f };
 static const vec2 Highlight = { -0.45f * BALL_RADIUS, -0.5f * BALL_RADIUS }; // from the center

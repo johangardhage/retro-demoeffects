@@ -37,13 +37,13 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define LAYERS 4
-#define LAYER_DELAY (8.0 / 70) // seconds a layer is behind the one before it
-#define BARS 11
-#define BAR_PITCH 64.0f // pixels from the middle of a bar to the next, at a spread of 1
-#define ORBIT_SPEED 7.3 // radians per second the middle of the set circles at
-#define BEAT_TIME 0.5 // seconds from a flash to the next
-#define FLASH_TIME 0.2 // seconds a flash takes to fade
+constexpr int LAYERS = 4;
+constexpr double LAYER_DELAY = 8.0 / 70; // seconds a layer is behind the one before it
+constexpr int BARS = 11;
+constexpr float BAR_PITCH = 64.0f; // pixels from the middle of a bar to the next, at a spread of 1
+constexpr double ORBIT_SPEED = 7.3; // radians per second the middle of the set circles at
+constexpr double BEAT_TIME = 0.5; // seconds from a flash to the next
+constexpr double FLASH_TIME = 0.2; // seconds a flash takes to fade
 
 struct Sequence {
 	double duration; // seconds

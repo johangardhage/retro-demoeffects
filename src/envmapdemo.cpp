@@ -65,15 +65,15 @@
 #include "lib/retrofont.h"
 #include "lib/retropalette.h"
 
-#define ROTATION_SPEED 1 // radians a second, about each axis
-#define ENVMAP_SIZE 256 // the environment map is square, and this is its side in pixels
-#define ANGLEMAP_SIZE 256 // the round and diamond maps are square, and this is their side in pixels
-#define ANGLEMAP_FACE vec3{ 0.86f, 0.23f, 0.59f } // the material, as intensities; RETRO_DEEPPINK
-#define ROUNDMAP_RADIUS 90 // texels from the round map's middle to where a normal at the silhouette reads it
-#define DIAMONDMAP_RADIUS 85 // texels from the diamond map's middle to where a normal at the silhouette reads it
-#define PHONGMAP_SIZE 1024 // the phong map is square, and this is its side in pixels
-#define INSET_SIZE 64 // side in pixels of the map's inset
-#define INSET_MARGIN 10 // pixels from the inset to the screen's edges, as the text keeps
+constexpr int ROTATION_SPEED = 1; // radians a second, about each axis
+constexpr int ENVMAP_SIZE = 256; // the environment map is square, and this is its side in pixels
+constexpr int ANGLEMAP_SIZE = 256; // the round and diamond maps are square, and this is their side in pixels
+constexpr vec3 ANGLEMAP_FACE = { 0.86f, 0.23f, 0.59f }; // the material, as intensities; RETRO_DEEPPINK
+constexpr int ROUNDMAP_RADIUS = 90; // texels from the round map's middle to where a normal at the silhouette reads it
+constexpr int DIAMONDMAP_RADIUS = 85; // texels from the diamond map's middle to where a normal at the silhouette reads it
+constexpr int PHONGMAP_SIZE = 1024; // the phong map is square, and this is its side in pixels
+constexpr int INSET_SIZE = 64; // side in pixels of the map's inset
+constexpr int INSET_MARGIN = 10; // pixels from the inset to the screen's edges, as the text keeps
 
 enum { ASSET_ENVMAP };
 enum { MATCAP_ROUND, MATCAP_DIAMOND, MATCAP_PHONG };

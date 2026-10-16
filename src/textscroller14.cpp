@@ -15,29 +15,29 @@
 #include "lib/retromath.h"
 #include "lib/retropoly.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 static const char *const ScrollText[] = { "RETRO DEMOEFFECTS..." };
-#define RADIUS 128.0f
-#define LETTER_WIDTH 48.0f
-#define LETTER_HEIGHT 108.0f
-#define TURN_SPEED 2.5 // radians per second along the path
-#define LETTER_DELAY 0.25 // seconds between letters, independent of message length
-#define GAP_LETTERS 4 // empty letter slots before the message repeats
+constexpr float RADIUS = 128.0f;
+constexpr float LETTER_WIDTH = 48.0f;
+constexpr float LETTER_HEIGHT = 108.0f;
+constexpr double TURN_SPEED = 2.5; // radians per second along the path
+constexpr double LETTER_DELAY = 0.25; // seconds between letters, independent of message length
+constexpr int GAP_LETTERS = 4; // empty letter slots before the message repeats
 #define PERIOD ((LetterCount + GAP_LETTERS) * LETTER_DELAY)
-#define CAMERA_DISTANCE 300.0f
-#define TOP 24
-#define BOTTOM 216
+constexpr float CAMERA_DISTANCE = 300.0f;
+constexpr int TOP = 24;
+constexpr int BOTTOM = 216;
 
 // A letter starts on the back straight with its right edge just off the left
 // edge, and is done once its right edge has left on the front straight.
-#define ENTRY_ANGLE 5.2
-#define EXIT_OFFSET (-RETRO_WIDTH / 2.0f * (CAMERA_DISTANCE - RADIUS) / CAMERA_DISTANCE - LETTER_WIDTH / 2)
+constexpr double ENTRY_ANGLE = 5.2;
+constexpr float EXIT_OFFSET = -RETRO_WIDTH / 2.0f * (CAMERA_DISTANCE - RADIUS) / CAMERA_DISTANCE - LETTER_WIDTH / 2;
 
 // A point light just left of and below the eye. Its Blinn-Phong highlight
 // sits left of center on the front straight and slides over each letter.
-#define EYE vec3{ 0, 0, -CAMERA_DISTANCE }
-#define LIGHT vec3{ -29, 9, -CAMERA_DISTANCE }
-#define SHININESS 80.0f
+constexpr vec3 EYE = { 0, 0, -CAMERA_DISTANCE };
+constexpr vec3 LIGHT = { -29, 9, -CAMERA_DISTANCE };
+constexpr float SHININESS = 80.0f;
 
 static RETRO_Font Font;
 static int LetterCount;

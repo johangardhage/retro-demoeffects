@@ -11,33 +11,34 @@
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 
-#define ROTATION_SPEED 0.42f
-#define START_ROTATION 1.80f
-#define RING_RADIUS (5271.0f / 2920.0f)
-#define CAMERA_DISTANCE (RING_RADIUS + 0.80f)
-#define FISH_COUNT 9
-#define FISH_SCALE 0.70f
-#define FISH_SWIM_SPEED 0.55f
-#define FISH_START_PHASE 0.35f
-#define FISH_ANIMATION_SPEED 1.8f
-#define FISH_ANIMATION_OFFSET 0.13f
-#define FISH_LANE_OFFSET 0.28f
-#define FISH_DRIFT 0.08f
-#define FISH_MD3_SCALE 5840.0f // steps per unit fish.md3 was packed at
-#define CAMERA_FOV 0.82f
-#define MODEL_SCALE 100.0f
-#define TEXTURE_SIZE 1024
-#define MATERIAL_SHADES 64
-#define FISH_PALETTE_START (MATERIAL_COUNT * MATERIAL_SHADES)
-#define BAND_REPEATS 10
-#define ROWS_PER_REPEAT 3
-#define TEETH_PER_RING 32
+constexpr float ROTATION_SPEED = 0.42f;
+constexpr float START_ROTATION = 1.80f;
+constexpr float RING_RADIUS = 5271.0f / 2920.0f;
+constexpr float CAMERA_DISTANCE = RING_RADIUS + 0.80f;
+constexpr int FISH_COUNT = 9;
+constexpr float FISH_SCALE = 0.70f;
+constexpr float FISH_SWIM_SPEED = 0.55f;
+constexpr float FISH_START_PHASE = 0.35f;
+constexpr float FISH_ANIMATION_SPEED = 1.8f;
+constexpr float FISH_ANIMATION_OFFSET = 0.13f;
+constexpr float FISH_LANE_OFFSET = 0.28f;
+constexpr float FISH_DRIFT = 0.08f;
+constexpr float FISH_MD3_SCALE = 5840.0f; // steps per unit fish.md3 was packed at
+constexpr float CAMERA_FOV = 0.82f;
+constexpr float MODEL_SCALE = 100.0f;
+constexpr int TEXTURE_SIZE = 1024;
+constexpr int MATERIAL_SHADES = 64;
+constexpr int BAND_REPEATS = 10;
+constexpr int ROWS_PER_REPEAT = 3;
+constexpr int TEETH_PER_RING = 32;
 
 enum Material {
 	MATERIAL_GREEN,
 	MATERIAL_BLUE,
 	MATERIAL_COUNT
 };
+
+constexpr int FISH_PALETTE_START = MATERIAL_COUNT * MATERIAL_SHADES;
 
 static Model3D *Torus;
 static Model3D *Fish;

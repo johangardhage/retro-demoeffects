@@ -33,41 +33,41 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define FOCAL 260.0f // pixels; sets the field of view
+constexpr float FOCAL = 260.0f; // pixels; sets the field of view
 
-#define FLOOR_Y -110.0f // world y of the floor, below the camera at the origin
-#define TILE_SIZE 70.0f // world units per checker tile
-#define FOG_DENSITY 0.0016f // darkens the floor with distance
-#define FLOOR_ALBEDO_DARK 0.08f // reflectance of a dark tile
-#define FLOOR_ALBEDO_LIGHT 0.85f // and of a light one
+constexpr float FLOOR_Y = -110.0f; // world y of the floor, below the camera at the origin
+constexpr float TILE_SIZE = 70.0f; // world units per checker tile
+constexpr float FOG_DENSITY = 0.0016f; // darkens the floor with distance
+constexpr float FLOOR_ALBEDO_DARK = 0.08f; // reflectance of a dark tile
+constexpr float FLOOR_ALBEDO_LIGHT = 0.85f; // and of a light one
 
-#define SPHERE_RADIUS 55.0f
-#define SPHERE_Z 340.0f // world z the sphere drifts and bounces at
-#define SPHERE_DRIFT_X 130.0f // world units either side of center
-#define SPHERE_DRIFT_SPEED 0.35 // radians a second
-#define SPHERE_BOUNCE_HEIGHT 85.0f // world units risen at the top of a bounce
-#define SPHERE_BOUNCE_SPEED 0.55 // bounces a second
-#define MIRROR_REFLECTIVITY 0.92f // short of 1, so the sphere reads darker than what it reflects
+constexpr float SPHERE_RADIUS = 55.0f;
+constexpr float SPHERE_Z = 340.0f; // world z the sphere drifts and bounces at
+constexpr float SPHERE_DRIFT_X = 130.0f; // world units either side of center
+constexpr double SPHERE_DRIFT_SPEED = 0.35; // radians a second
+constexpr float SPHERE_BOUNCE_HEIGHT = 85.0f; // world units risen at the top of a bounce
+constexpr double SPHERE_BOUNCE_SPEED = 0.55; // bounces a second
+constexpr float MIRROR_REFLECTIVITY = 0.92f; // short of 1, so the sphere reads darker than what it reflects
 
-#define LIGHT_ORBIT_RADIUS 260.0f
-#define LIGHT_Y 170.0f // above the camera, so it can be seen in the sky
-#define LIGHT_SPEED 0.5 // radians a second
-#define SUN_SHININESS 200.0f // higher is a tighter sun disc and highlight
+constexpr float LIGHT_ORBIT_RADIUS = 260.0f;
+constexpr float LIGHT_Y = 170.0f; // above the camera, so it can be seen in the sky
+constexpr double LIGHT_SPEED = 0.5; // radians a second
+constexpr float SUN_SHININESS = 200.0f; // higher is a tighter sun disc and highlight
 
-#define NEAR_T 0.001f // t past which a hit counts, so a ray does not re-hit its own origin
+constexpr float NEAR_T = 0.001f; // t past which a hit counts, so a ray does not re-hit its own origin
 
-#define MARCH_STEPS 32
-#define MARCH_MAXDIST 1400.0f
-#define HIT_EPS 0.1f // a sphere's SDF is exact, so the walk can close in tightly
+constexpr int MARCH_STEPS = 32;
+constexpr float MARCH_MAXDIST = 1400.0f;
+constexpr float HIT_EPS = 0.1f; // a sphere's SDF is exact, so the walk can close in tightly
 
-#define SHADOW_STEPS 32
+constexpr int SHADOW_STEPS = 32;
 
-#define SKY_START 0
-#define SKY_SHADES 48
-#define FLOOR_START (SKY_START + SKY_SHADES)
-#define FLOOR_SHADES 64
-#define MIRROR_START (FLOOR_START + FLOOR_SHADES)
-#define MIRROR_SHADES 128
+constexpr int SKY_START = 0;
+constexpr int SKY_SHADES = 48;
+constexpr int FLOOR_START = SKY_START + SKY_SHADES;
+constexpr int FLOOR_SHADES = 64;
+constexpr int MIRROR_START = FLOOR_START + FLOOR_SHADES;
+constexpr int MIRROR_SHADES = 128;
 
 static vec3 SphereCenter;
 

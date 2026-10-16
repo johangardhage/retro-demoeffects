@@ -32,29 +32,29 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define FONT RETRO_FONT_VGA_8X8
-//#define FONT RETRO_FONT_TOPAZ13_8X8
-//#define FONT RETRO_FONT_TOPAZ30_8X8
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+const RETRO_FontData &FONT = RETRO_FONT_VGA_8X8;
+//const RETRO_FontData &FONT = RETRO_FONT_TOPAZ13_8X8;
+//const RETRO_FontData &FONT = RETRO_FONT_TOPAZ30_8X8;
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define LETTER_HEIGHT 1.55f // model units a glyph stands, top to bottom
-#define LETTER_DEPTH 0.48f // model units a glyph is extruded along z
-#define LETTER_GAP 0.50f // model units of extra advance after each glyph
-#define SPACE_WIDTH 0.90f // model units a space occupies along the strip
+constexpr float LETTER_HEIGHT = 1.55f; // model units a glyph stands, top to bottom
+constexpr float LETTER_DEPTH = 0.48f; // model units a glyph is extruded along z
+constexpr float LETTER_GAP = 0.50f; // model units of extra advance after each glyph
+constexpr float SPACE_WIDTH = 0.90f; // model units a space occupies along the strip
 
-#define SCROLL_SPEED 1.85f // model units a second along the helix
-#define CULL 6.5f // |s| past which a letter is not drawn
+constexpr float SCROLL_SPEED = 1.85f; // model units a second along the helix
+constexpr float CULL = 6.5f; // |s| past which a letter is not drawn
 
-#define HELIX_DISTANCE 2.35f // model units the helix stands behind the origin
-#define HELIX_AMP_Y 0.72f // vertical radius of the helix
-#define HELIX_AMP_Z 1.05f // depth radius of the helix
-#define HELIX_WAVE 0.62f // radians of the helix per model unit of s
-#define HELIX_SPIN 0.35f // radians a second the helix twists
+constexpr float HELIX_DISTANCE = 2.35f; // model units the helix stands behind the origin
+constexpr float HELIX_AMP_Y = 0.72f; // vertical radius of the helix
+constexpr float HELIX_AMP_Z = 1.05f; // depth radius of the helix
+constexpr float HELIX_WAVE = 0.62f; // radians of the helix per model unit of s
+constexpr float HELIX_SPIN = 0.35f; // radians a second the helix twists
 
 static const char ScrollText[] = "RETRO DEMOEFFECTS...           ";
-#define LETTERS (int)(sizeof(ScrollText) - 1)
+constexpr int LETTERS = (int)(sizeof(ScrollText) - 1);
 
-#define MAX_DISTINCT_GLYPHS 32 // more than the alphabet any one ScrollText is likely to use
+constexpr int MAX_DISTINCT_GLYPHS = 32; // more than the alphabet any one ScrollText is likely to use
 
 static RETRO_Font Font;
 static float LetterS[LETTERS]; // where each letter's cube starts along the strip

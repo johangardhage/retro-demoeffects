@@ -21,7 +21,7 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define PLASMA_FRAMES 720
+constexpr int PLASMA_FRAMES = 720;
 
 static float CosTable[RETRO_DEGREES_PER_TURN];
 

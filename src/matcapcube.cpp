@@ -19,9 +19,9 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define PHONGMAP_SIZE 512 // the map is square, and this is its side in pixels
-#define PHONG_FALLOFF 30 // how tight the highlight is; the library's own default is far tighter
-#define ROTATION_SPEED 2 // radians a second, about each axis
+constexpr int PHONGMAP_SIZE = 512; // the map is square, and this is its side in pixels
+constexpr int PHONG_FALLOFF = 30; // how tight the highlight is; the library's own default is far tighter
+constexpr int ROTATION_SPEED = 2; // radians a second, about each axis
 
 static unsigned char PhongMap[PHONGMAP_SIZE * PHONGMAP_SIZE];
 

@@ -28,12 +28,12 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define LFSR_TAPS 0x12000 // x^17 + x^14 + 1, the bits fed back when a 1 shifts out
-#define LFSR_STATES ((1 << 17) - 1) // states the register takes before it repeats
-#define LFSR_SEED 1
-#define TIME_DISSOLVE 2.5 // seconds a pass takes
-#define TIME_HOLD 0.5 // seconds held on the picture or on the curtain
-#define CURTAIN 0 // palette entry the picture dissolves into
+constexpr int LFSR_TAPS = 0x12000; // x^17 + x^14 + 1, the bits fed back when a 1 shifts out
+constexpr int LFSR_STATES = (1 << 17) - 1; // states the register takes before it repeats
+constexpr int LFSR_SEED = 1;
+constexpr double TIME_DISSOLVE = 2.5; // seconds a pass takes
+constexpr double TIME_HOLD = 0.5; // seconds held on the picture or on the curtain
+constexpr int CURTAIN = 0; // palette entry the picture dissolves into
 
 enum { DISSOLVE_IN, DISSOLVE_OUT, HOLD };
 

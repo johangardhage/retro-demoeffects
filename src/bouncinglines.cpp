@@ -35,12 +35,12 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define LINES 2
-#define TRAIL 28 // times a line is drawn
-#define TRAIL_STEP 0.035 // seconds from one of them back to the next
-#define LINE_RAMP0 1 // palette entry the first line's trail starts at, past the background
-#define LINE_PERIOD 152482.0 // seconds, lcm(2 (WIDTH - 1), 2 (HEIGHT - 1))
-#define HUE_PERIOD 11.0 // seconds round the color circle, a divisor of LINE_PERIOD
+constexpr int LINES = 2;
+constexpr int TRAIL = 28; // times a line is drawn
+constexpr double TRAIL_STEP = 0.035; // seconds from one of them back to the next
+constexpr int LINE_RAMP0 = 1; // palette entry the first line's trail starts at, past the background
+constexpr double LINE_PERIOD = 152482.0; // seconds, lcm(2 (WIDTH - 1), 2 (HEIGHT - 1))
+constexpr double HUE_PERIOD = 11.0; // seconds round the color circle, a divisor of LINE_PERIOD
 
 struct Line {
 	vec2 from, fromspeed; // where one end began, in pixels, and its pixels per second

@@ -48,14 +48,14 @@
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
 
-#define RADIUS_ROLLED 28.0f // pixels, of the roll with all of the picture on it
-#define RADIUS_UNROLLED 9.0f // and with none of it
-#define TIME_ROLL 4.0 // seconds the picture takes to unroll, or to be rolled up
-#define TIME_FLAT 3.0 // seconds it lies flat
-#define TIME_ROLLED 0.5 // seconds it stays rolled up
-#define TIME_CYCLE (TIME_ROLLED + TIME_ROLL + TIME_FLAT + TIME_ROLL)
-#define AMBIENT 0.2f // light on the roll where it turns edge on
-#define SHADES 64 // levels of light
+constexpr float RADIUS_ROLLED = 28.0f; // pixels, of the roll with all of the picture on it
+constexpr float RADIUS_UNROLLED = 9.0f; // and with none of it
+constexpr double TIME_ROLL = 4.0; // seconds the picture takes to unroll, or to be rolled up
+constexpr double TIME_FLAT = 3.0; // seconds it lies flat
+constexpr double TIME_ROLLED = 0.5; // seconds it stays rolled up
+constexpr double TIME_CYCLE = TIME_ROLLED + TIME_ROLL + TIME_FLAT + TIME_ROLL;
+constexpr float AMBIENT = 0.2f; // light on the roll where it turns edge on
+constexpr int SHADES = 64; // levels of light
 
 static RETRO_ColorHistogram Histogram;
 static unsigned char ShadeTable[RETRO_COLORS * SHADES];

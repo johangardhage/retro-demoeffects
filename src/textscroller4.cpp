@@ -31,17 +31,17 @@
 #include "lib/retromain.h"
 #include "lib/retrovector.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define ROW_GAP 2 // extra pixels between rows, beyond glyph height
+constexpr int ROW_GAP = 2; // extra pixels between rows, beyond glyph height
 
-#define ENTRANCE_TIME 1.6 // seconds to fly in
-#define EXIT_TIME 0.8 // seconds to fly out
-#define HOLD_TIME 4.0 // seconds a row stays at rest before flying out
-#define STAGGER 0.25 // seconds after one row starts that the next starts
-#define WAVE_AMPLITUDE 40.0 // pixels the row swings above and below rest
-#define WAVE_CYCLES 2.0 // sine turns completed over one entrance
+constexpr double ENTRANCE_TIME = 1.6; // seconds to fly in
+constexpr double EXIT_TIME = 0.8; // seconds to fly out
+constexpr double HOLD_TIME = 4.0; // seconds a row stays at rest before flying out
+constexpr double STAGGER = 0.25; // seconds after one row starts that the next starts
+constexpr double WAVE_AMPLITUDE = 40.0; // pixels the row swings above and below rest
+constexpr double WAVE_CYCLES = 2.0; // sine turns completed over one entrance
 
 static const char *const ScrollText[][12] = {
 	{

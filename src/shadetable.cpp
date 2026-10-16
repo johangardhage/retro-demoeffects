@@ -90,22 +90,22 @@
 #include "lib/retroshadetable.h"
 #include "lib/retrovector.h"
 
-#define SHADES 64 // of the tables shaded from black
-#define TABLE_SIZE (RETRO_COLORS * SHADES) // entries, the most a table here has
-#define VIEW_HEIGHT 192 // rows of a page, above the scores
-#define GRID_WIDTH 256 // pixels across the table's grid
-#define PAGE_SECONDS 4.0
-#define HEAT_FULL 20.0f // the error at the top of the heat ramp
-#define REVERSAL_STEP 0.5f // of lightness
-#define GRAY_CHROMA 6.0f // a color with less is sorted among the grays
-#define HUE_SECTORS 12
-#define LUT_SIZE 32 // cells along a side of the color cube
-#define MATCH_STEP 7 // levels between the colors the matching is scored on
-#define LIGHT_REACH 260.0f // pixels from the light to black
-#define LIGHT_PERIOD 12.0 // seconds for the light's path to close
-#define FIELD_PERIOD 10.0 // seconds for the field's saturation to rise and fall
-#define TEXT_X 4
-#define TEXT_Y (VIEW_HEIGHT + 2)
+constexpr int SHADES = 64; // of the tables shaded from black
+constexpr int TABLE_SIZE = RETRO_COLORS * SHADES; // entries, the most a table here has
+constexpr int VIEW_HEIGHT = 192; // rows of a page, above the scores
+constexpr int GRID_WIDTH = 256; // pixels across the table's grid
+constexpr double PAGE_SECONDS = 4.0;
+constexpr float HEAT_FULL = 20.0f; // the error at the top of the heat ramp
+constexpr float REVERSAL_STEP = 0.5f; // of lightness
+constexpr float GRAY_CHROMA = 6.0f; // a color with less is sorted among the grays
+constexpr int HUE_SECTORS = 12;
+constexpr int LUT_SIZE = 32; // cells along a side of the color cube
+constexpr int MATCH_STEP = 7; // levels between the colors the matching is scored on
+constexpr float LIGHT_REACH = 260.0f; // pixels from the light to black
+constexpr double LIGHT_PERIOD = 12.0; // seconds for the light's path to close
+constexpr double FIELD_PERIOD = 10.0; // seconds for the field's saturation to rise and fall
+constexpr int TEXT_X = 4;
+constexpr int TEXT_Y = VIEW_HEIGHT + 2;
 
 enum { SUBJECT_PICTURE, SUBJECT_VGA, SUBJECT_FITTED, SUBJECT_PHONG, SUBJECTS };
 enum { PAGE_TABLE, PAGE_ERROR, PAGE_PICTURE, PAGE_MATCH, PAGES };

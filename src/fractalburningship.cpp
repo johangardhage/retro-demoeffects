@@ -35,14 +35,14 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define MAX_ITERATIONS 255
-#define BAILOUT 256.0 // |z|², far enough out for the smooth escape estimate
-#define TARGET_X (-1.7722) // a mast of the ship in the antenna
-#define TARGET_Y (-0.0424)
-#define FOCUS_X (RETRO_WIDTH * 0.22) // the pixel the target is held at
-#define FOCUS_Y (RETRO_HEIGHT * 0.6)
-#define ZOOM_RATE 1.4 // zoom per second
-#define ZOOM_LIMIT 1500.0 // as deep as MAX_ITERATIONS resolves the mast
+constexpr int MAX_ITERATIONS = 255;
+constexpr double BAILOUT = 256.0; // |z|², far enough out for the smooth escape estimate
+constexpr double TARGET_X = -1.7722; // a mast of the ship in the antenna
+constexpr double TARGET_Y = -0.0424;
+constexpr double FOCUS_X = RETRO_WIDTH * 0.22; // the pixel the target is held at
+constexpr double FOCUS_Y = RETRO_HEIGHT * 0.6;
+constexpr double ZOOM_RATE = 1.4; // zoom per second
+constexpr double ZOOM_LIMIT = 1500.0; // as deep as MAX_ITERATIONS resolves the mast
 
 void DEMO_Render(RETRO_Time time)
 {

@@ -25,16 +25,16 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define SPEED 70.0                         // rows the wall flies and columns it turns a second, one a VGA frame
+constexpr double SPEED = 70.0;                         // rows the wall flies and columns it turns a second, one a VGA frame
 
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 128
-#define ROWS (2 * TEXTURE_HEIGHT)          // the texture and its mirror image
-#define ANGLES 128                         // texture columns around the tube
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 128;
+constexpr int ROWS = 2 * TEXTURE_HEIGHT;   // the texture and its mirror image
+constexpr int ANGLES = 128;                // texture columns around the tube
 
-#define FIRST 14                           // the far end, the first ring drawn
-#define PERSPECTIVE 1949                   // rows of depth at a ring of one pixel
-#define HOLE -1                            // the depth of a pixel inside the first ring
+constexpr int FIRST = 14;                  // the far end, the first ring drawn
+constexpr int PERSPECTIVE = 1949;          // rows of depth at a ring of one pixel
+constexpr int HOLE = -1;                   // the depth of a pixel inside the first ring
 
 static int DepthTable[RETRO_HEIGHT][RETRO_WIDTH];
 static unsigned char AngleTable[RETRO_HEIGHT][RETRO_WIDTH];

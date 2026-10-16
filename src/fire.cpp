@@ -27,9 +27,9 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define FIRE_HEIGHT 10 // rows of fuel along the bottom, cropped off the blit so the bed is hidden
-#define FIRE_CHAOS 6 // a column is sparked with probability 1 / FIRE_CHAOS each step
-#define FIRE_DECAY 3 // subtracted after the 8-tap average, so how fast a flame dies as it rises
+constexpr int FIRE_HEIGHT = 10; // rows of fuel along the bottom, cropped off the blit so the bed is hidden
+constexpr int FIRE_CHAOS = 6; // a column is sparked with probability 1 / FIRE_CHAOS each step
+constexpr int FIRE_DECAY = 3; // subtracted after the 8-tap average, so how fast a flame dies as it rises
 
 static unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 

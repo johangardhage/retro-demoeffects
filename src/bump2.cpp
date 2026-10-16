@@ -31,16 +31,16 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define LIGHT_COLORS 128 // palette entries the shading ramps over
-#define LIGHT_ORBIT 128 // radius of the light's path across the screen, in pixels
-#define LIGHT_SPEED 100 // degrees of that path per second
-#define LIGHT_HEIGHT 80 // how far the light stands off the surface, in pixels
+constexpr int LIGHT_COLORS = 128; // palette entries the shading ramps over
+constexpr int LIGHT_ORBIT = 128; // radius of the light's path across the screen, in pixels
+constexpr int LIGHT_SPEED = 100; // degrees of that path per second
+constexpr int LIGHT_HEIGHT = 80; // how far the light stands off the surface, in pixels
 
-#define BUMP_HEIGHT_SCALE (1.0 / 16.0) // pixels of height per height map unit, so how deep the relief reads
+constexpr double BUMP_HEIGHT_SCALE = 1.0 / 16.0; // pixels of height per height map unit, so how deep the relief reads
 
-#define MATERIAL_DIFFUSE 0.75
-#define MATERIAL_SPECULAR 0.50
-#define MATERIAL_SHININESS 8 // specular exponent, low enough to keep the highlight wider than a pixel
+constexpr double MATERIAL_DIFFUSE = 0.75;
+constexpr double MATERIAL_SPECULAR = 0.50;
+constexpr int MATERIAL_SHININESS = 8; // specular exponent, low enough to keep the highlight wider than a pixel
 
 static vec3 SurfaceNormals[RETRO_HEIGHT * RETRO_WIDTH];
 

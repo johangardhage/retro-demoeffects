@@ -22,8 +22,8 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define NUM_BALLS 5
-#define THRESHOLD 50 // F = T on the circle of radius R around one ball
+constexpr int NUM_BALLS = 5;
+constexpr int THRESHOLD = 50; // F = T on the circle of radius R around one ball
 
 static struct MetaBall {
 	vec2 pos;

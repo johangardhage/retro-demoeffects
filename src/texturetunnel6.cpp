@@ -33,25 +33,25 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define SPEED 70.0                         // rows the wall flies and columns it turns a second, one a VGA frame
+constexpr double SPEED = 70.0;                         // rows the wall flies and columns it turns a second, one a VGA frame
 
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 128
-#define ANGLES 256                         // texture columns around the tube
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 128;
+constexpr int ANGLES = 256;                         // texture columns around the tube
 
-#define FIRST 16                           // the far end, the first ring drawn
-#define RINGS 256                          // one past the last ring, out past the screen's corners
-#define PERSPECTIVE 1134                   // rows of depth at a ring of one pixel
-#define WOBBLE 4                           // pixels the wall is pulled in and out
-#define LOBES 7
-#define PATH_RADIUS 15
-#define PATH_TURN 128                      // rows of depth over which the path turns
+constexpr int FIRST = 16;                  // the far end, the first ring drawn
+constexpr int RINGS = 256;                 // one past the last ring, out past the screen's corners
+constexpr int PERSPECTIVE = 1134;          // rows of depth at a ring of one pixel
+constexpr int WOBBLE = 4;                  // pixels the wall is pulled in and out
+constexpr int LOBES = 7;
+constexpr int PATH_RADIUS = 15;
+constexpr int PATH_TURN = 128;             // rows of depth over which the path turns
 
 // The pixels are made for every offset a center on the path can reach the
 // screen from
-#define REACH_X (RETRO_WIDTH / 2 + PATH_RADIUS + 1)
-#define REACH_Y (RETRO_HEIGHT / 2 + PATH_RADIUS + 1)
-#define MAX_PIXELS ((2 * REACH_X) * (2 * REACH_Y))
+constexpr int REACH_X = RETRO_WIDTH / 2 + PATH_RADIUS + 1;
+constexpr int REACH_Y = RETRO_HEIGHT / 2 + PATH_RADIUS + 1;
+constexpr int MAX_PIXELS = (2 * REACH_X) * (2 * REACH_Y);
 
 struct Pixel {
 	short x, y;                            // from the center of its ring

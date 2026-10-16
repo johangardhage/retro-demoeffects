@@ -122,7 +122,7 @@ inline double inversesqrt(double x) { return 1.0 / sqrt(x); }
 
 // GLSL's radians: an angle in degrees as radians. It takes and gives a
 // double, so a whole number of degrees needs no cast.
-inline double radians(double degrees) { return degrees * (M_PI / 180); }
+constexpr double radians(double degrees) { return degrees * (M_PI / 180); }
 
 //
 // vec2

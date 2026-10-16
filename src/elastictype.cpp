@@ -29,14 +29,14 @@
 #include "lib/retropalette.h"
 #include "lib/retrogfx.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define PANEL_LEFT 42
-#define PANEL_TOP 55
-#define PANEL_RIGHT 277
-#define PANEL_BOTTOM 184
-#define LETTERS 16
+constexpr int PANEL_LEFT = 42;
+constexpr int PANEL_TOP = 55;
+constexpr int PANEL_RIGHT = 277;
+constexpr int PANEL_BOTTOM = 184;
+constexpr int LETTERS = 16;
 
 struct Glyph {
 	char letter;

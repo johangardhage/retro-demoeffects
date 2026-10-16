@@ -28,19 +28,19 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define SEEDS_X 6 // grid the seeds start on
-#define SEEDS_Y 4
-#define SEEDS (SEEDS_X * SEEDS_Y)
-#define SEED_JITTER 0.35 // of a grid cell, how far a seed's center strays from its grid point
-#define SEED_ORBIT 28.0 // pixels, the largest radius of a seed's path
-#define SEED_MINSPEED 0.3 // radians a second
-#define SEED_MAXSPEED 0.9
-#define VORONOI_LEAD 1.5 // pixels of lead between the cells
-#define VORONOI_BEVEL 6.0 // pixels of sloping glass inside the lead
-#define VORONOI_SLOPE 1.2 // rise of the bevel per pixel inward
-#define GLASS_HUES 8
-#define GLASS_SHADES 31 // palette entries per hue
-#define GLASS 1 // first entry of the hues; entry 0 is the lead
+constexpr int SEEDS_X = 6; // grid the seeds start on
+constexpr int SEEDS_Y = 4;
+constexpr int SEEDS = SEEDS_X * SEEDS_Y;
+constexpr double SEED_JITTER = 0.35; // of a grid cell, how far a seed's center strays from its grid point
+constexpr double SEED_ORBIT = 28.0; // pixels, the largest radius of a seed's path
+constexpr double SEED_MINSPEED = 0.3; // radians a second
+constexpr double SEED_MAXSPEED = 0.9;
+constexpr double VORONOI_LEAD = 1.5; // pixels of lead between the cells
+constexpr double VORONOI_BEVEL = 6.0; // pixels of sloping glass inside the lead
+constexpr double VORONOI_SLOPE = 1.2; // rise of the bevel per pixel inward
+constexpr int GLASS_HUES = 8;
+constexpr int GLASS_SHADES = 31; // palette entries per hue
+constexpr int GLASS = 1; // first entry of the hues; entry 0 is the lead
 
 static const RETRO_Palette GlassHues[GLASS_HUES] = { RETRO_SCARLET, RETRO_ORANGE, RETRO_GOLD, RETRO_SPRINGGREEN, RETRO_DARKTURQUOISE, RETRO_AZURE, RETRO_PURPLE, RETRO_HOTPINK };
 static const vec3 Light = normalize(vec3{ -0.45f, -0.55f, 0.70f }); // toward the light

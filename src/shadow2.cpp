@@ -63,42 +63,42 @@
 #define WORLD(units) ((units) * (40 - 1) / 4000.0f)
 #define TO_WORLD(cells) ((cells) * 4000.0f / (40 - 1))
 
-#define TERRAIN_SCALE WORLD(700.0f / 255) // map cells of height per stored byte
+constexpr float TERRAIN_SCALE = WORLD(700.0f / 255); // map cells of height per stored byte
 
-#define AMBIENT_LIGHT (100 / 256.0f)
-#define INFINITE_LIGHT (100 / 256.0f)
-#define POINT_LIGHT (255 / 256.0f)
-#define POINT_LIGHT_RED_KL 0.002f // attenuation per world unit
-#define POINT_LIGHT_GREEN_KL 0.001f
-#define POINT_LIGHT_RATE radians(30) // radians a second round the world
-#define POINT_LIGHT_RED_ORBIT WORLD(200) // radius about the world's center, circled twice as fast as green the other way
-#define POINT_LIGHT_GREEN_ORBIT WORLD(500)
-#define POINT_LIGHT_ALTITUDE WORLD(500) // where both start
-#define POINT_LIGHT_RAISE WORLD(300) // a second, while 1 to 4 is held
-#define POINT_LIGHT_TOP WORLD(2000) // the highest 1 to 4 raise a light, and the ground's base the lowest
-#define LIGHT_LEVELS 32 // neutral light, in the tables
-#define TINT_LEVELS 8 // and each point light's color beyond it
+constexpr float AMBIENT_LIGHT = 100 / 256.0f;
+constexpr float INFINITE_LIGHT = 100 / 256.0f;
+constexpr float POINT_LIGHT = 255 / 256.0f;
+constexpr float POINT_LIGHT_RED_KL = 0.002f; // attenuation per world unit
+constexpr float POINT_LIGHT_GREEN_KL = 0.001f;
+constexpr double POINT_LIGHT_RATE = radians(30); // radians a second round the world
+constexpr float POINT_LIGHT_RED_ORBIT = WORLD(200); // radius about the world's center, circled twice as fast as green the other way
+constexpr float POINT_LIGHT_GREEN_ORBIT = WORLD(500);
+constexpr float POINT_LIGHT_ALTITUDE = WORLD(500); // where both start
+constexpr float POINT_LIGHT_RAISE = WORLD(300); // a second, while 1 to 4 is held
+constexpr float POINT_LIGHT_TOP = WORLD(2000); // the highest 1 to 4 raise a light, and the ground's base the lowest
+constexpr int LIGHT_LEVELS = 32; // neutral light, in the tables
+constexpr int TINT_LEVELS = 8; // and each point light's color beyond it
 
-#define OBJECT_SCALE WORLD(40)
-#define OBJECT_ORBIT WORLD(150) // radius of the orbit about the world's center
-#define OBJECT_ALTITUDE WORLD(200) // mean height of the orbit
-#define OBJECT_BOB WORLD(75) // and how far it rises and falls, once a lap
-#define OBJECT_RATE radians(30) // radians a second round the orbit
-#define LIGHT_OBJECT_SCALE WORLD(10)
+constexpr float OBJECT_SCALE = WORLD(40);
+constexpr float OBJECT_ORBIT = WORLD(150); // radius of the orbit about the world's center
+constexpr float OBJECT_ALTITUDE = WORLD(200); // mean height of the orbit
+constexpr float OBJECT_BOB = WORLD(75); // and how far it rises and falls, once a lap
+constexpr double OBJECT_RATE = radians(30); // radians a second round the orbit
+constexpr float LIGHT_OBJECT_SCALE = WORLD(10);
 
-#define SHADOW_LIFT WORLD(25) // above the ground it lies on
-#define SHADOW_MAX_CORNERS 30 // on a shadow's outline; a model that needs more casts none
-#define SHADOW_STEP WORLD(10) // along a ray, looking for the ground
-#define SHADOW_LIGHT 0.5f // fraction of the light left in the shadow
+constexpr float SHADOW_LIFT = WORLD(25); // above the ground it lies on
+constexpr int SHADOW_MAX_CORNERS = 30; // on a shadow's outline; a model that needs more casts none
+constexpr float SHADOW_STEP = WORLD(10); // along a ray, looking for the ground
+constexpr float SHADOW_LIGHT = 0.5f; // fraction of the light left in the shadow
 
-#define PALETTE_TURNS 8 // points round the point lights' paths the palette is fitted at
-#define OBJECT_WEIGHT (1 / 8.0f) // an object texture's say in the palette, beside the ground's
-#define SHADOW_WEIGHT (1 / 4.0f) // and the ground's in shadow
+constexpr int PALETTE_TURNS = 8; // points round the point lights' paths the palette is fitted at
+constexpr float OBJECT_WEIGHT = 1 / 8.0f; // an object texture's say in the palette, beside the ground's
+constexpr float SHADOW_WEIGHT = 1 / 4.0f; // and the ground's in shadow
 
-#define TEXTURE_SIZE 256 // every texture, on a side
+constexpr int TEXTURE_SIZE = 256; // every texture, on a side
 
 enum { ASSET_TERRAIN, ASSET_EARTH, ASSET_CUBE, ASSET_HEIGHTMAP };
-#define TEXTURES (ASSET_HEIGHTMAP - ASSET_TERRAIN)
+constexpr int TEXTURES = ASSET_HEIGHTMAP - ASSET_TERRAIN;
 enum { MODEL_SPHERE, MODEL_CUBE, MODELS };
 enum { LIGHT_RED, LIGHT_GREEN, POINT_LIGHTS, LIGHT_SUN = POINT_LIGHTS, LIGHTS };
 
@@ -111,7 +111,7 @@ static const Object Objects[] = {
 	{ MODEL_SPHERE, ASSET_EARTH },
 	{ MODEL_CUBE, ASSET_CUBE }
 };
-#define OBJECTS (int)(sizeof(Objects) / sizeof(Objects[0]))
+constexpr int OBJECTS = (int)(sizeof(Objects) / sizeof(Objects[0]));
 
 static unsigned char LightTableData[TEXTURES][RETRO_COLORS][LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS];
 static unsigned char ShadowTable[RETRO_COLORS];
@@ -126,7 +126,7 @@ static float LightWeight[LIGHT_LEVELS * TINT_LEVELS * TINT_LEVELS]; // how often
 // The colors drawn besides the textures, held in the palette exactly
 static const RETRO_Palette CubeGreen = { 0, 255, 10 }, CubeRed = { 255, 0, 0 }, Sky = { 50, 50, 200 }, Ground = { 25, 50, 110 };
 static const RETRO_Palette Held[] = { RETRO_BLACK, RETRO_GREEN, RETRO_WHITE, CubeGreen, CubeRed, Sky, Ground };
-#define HELD (int)(sizeof(Held) / sizeof(Held[0]))
+constexpr int HELD = (int)(sizeof(Held) / sizeof(Held[0]));
 
 // The point lights, placed each frame, and the sun, the infinite light,
 // toward it. All are in the world, in map cells, where a point light d cells

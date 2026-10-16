@@ -37,10 +37,10 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define SPIN_SPEED 1.1 // radians a second about y
-#define ROCK_SPEED 0.7 // radians a second around the rock
-#define ROCK 0.25 // radians the rock reaches about x and about z
-#define LOGO_DISTANCE 2.0 // model units the word stands behind the origin
+constexpr double SPIN_SPEED = 1.1; // radians a second about y
+constexpr double ROCK_SPEED = 0.7; // radians a second around the rock
+constexpr double ROCK = 0.25; // radians the rock reaches about x and about z
+constexpr double LOGO_DISTANCE = 2.0; // model units the word stands behind the origin
 
 void DEMO_Render(RETRO_Time time)
 {

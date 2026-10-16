@@ -56,30 +56,30 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define ROAD_MAX_SEGMENTS 2048
-#define ROAD_SEGMENT_LENGTH 200 // world units of z one quad spans
-#define ROAD_DRAW_DISTANCE 300 // segments drawn ahead of the camera
-#define ROAD_WIDTH 2000 // half the width of the tarmac, in world units
-#define ROAD_LANES 3
-#define ROAD_LANE_WIDTH 0.025 // half a lane marking, as a fraction of the half-width
-#define ROAD_RUMBLE_WIDTH 0.35 // how far the rumble strip reaches outside the tarmac
-#define ROAD_RUMBLE_LENGTH 3 // segments one stripe lasts
-#define ROAD_CAMERA_HEIGHT 1300 // world units above the road under the camera
-#define ROAD_FIELD_OF_VIEW 100 // degrees across the screen
-#define ROAD_NEAR_CLIP 10 // the nearest z the projection is allowed to divide by
-#define ROAD_SPEED 11000 // world units a second
-#define ROAD_CENTRIFUGAL 0.06 // half-widths a second the camera is pushed out per unit of curve
-#define ROAD_RECENTER 1.1 // how quickly it eases back to the middle
+constexpr int ROAD_MAX_SEGMENTS = 2048;
+constexpr int ROAD_SEGMENT_LENGTH = 200; // world units of z one quad spans
+constexpr int ROAD_DRAW_DISTANCE = 300; // segments drawn ahead of the camera
+constexpr int ROAD_WIDTH = 2000; // half the width of the tarmac, in world units
+constexpr int ROAD_LANES = 3;
+constexpr double ROAD_LANE_WIDTH = 0.025; // half a lane marking, as a fraction of the half-width
+constexpr double ROAD_RUMBLE_WIDTH = 0.35; // how far the rumble strip reaches outside the tarmac
+constexpr int ROAD_RUMBLE_LENGTH = 3; // segments one stripe lasts
+constexpr int ROAD_CAMERA_HEIGHT = 1300; // world units above the road under the camera
+constexpr int ROAD_FIELD_OF_VIEW = 100; // degrees across the screen
+constexpr int ROAD_NEAR_CLIP = 10; // the nearest z the projection is allowed to divide by
+constexpr int ROAD_SPEED = 11000; // world units a second
+constexpr double ROAD_CENTRIFUGAL = 0.06; // half-widths a second the camera is pushed out per unit of curve
+constexpr double ROAD_RECENTER = 1.1; // how quickly it eases back to the middle
 
-#define ROAD_CAMERA_DEPTH (1.0 / tan(radians(ROAD_FIELD_OF_VIEW / 2.0)))
+const double ROAD_CAMERA_DEPTH = 1.0 / tan(radians(ROAD_FIELD_OF_VIEW / 2.0));
 
 // Curve is an acceleration, in world units of x per segment squared, and a
 // hill is given in segment lengths of climb over the section it belongs to
-#define ROAD_CURVE_EASY 2.0
-#define ROAD_CURVE_MEDIUM 4.0
-#define ROAD_CURVE_HARD 6.0
-#define ROAD_HILL_LOW 20.0
-#define ROAD_HILL_HIGH 45.0
+constexpr double ROAD_CURVE_EASY = 2.0;
+constexpr double ROAD_CURVE_MEDIUM = 4.0;
+constexpr double ROAD_CURVE_HARD = 6.0;
+constexpr double ROAD_HILL_LOW = 20.0;
+constexpr double ROAD_HILL_HIGH = 45.0;
 
 // One entry per surface, and 0 for the screen the road is drawn on
 enum { COLOR_GRASS_DARK = 1, COLOR_GRASS_LIGHT, COLOR_RUMBLE_DARK, COLOR_RUMBLE_LIGHT,

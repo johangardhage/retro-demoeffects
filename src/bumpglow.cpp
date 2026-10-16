@@ -23,10 +23,10 @@
 #include "lib/retromodel.h"
 #include "lib/retrorender.h"
 
-#define MAP_RADIUS 54                      // the glow map's reach from its middle
-#define GRAZING 195.8                      // the bump's grazing height at its strongest
-#define PULSE_SPEED 2.5                    // radians a second, half a turn a rise and fall
-#define ROTATION_SPEED 0.5                 // radians a second, about each axis
+constexpr int MAP_RADIUS = 54;             // the glow map's reach from its middle
+constexpr double GRAZING = 195.8;          // the bump's grazing height at its strongest
+constexpr double PULSE_SPEED = 2.5;        // radians a second, half a turn a rise and fall
+constexpr double ROTATION_SPEED = 0.5;     // radians a second, about each axis
 
 void DEMO_Render(RETRO_Time time)
 {

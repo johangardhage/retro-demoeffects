@@ -42,14 +42,14 @@
 #include "lib/retromain.h"
 #include "lib/retrovector.h"
 
-#define MAP_SIZE 16
-#define TILE_SIZE 64 // texels across a tile
-#define SHEET_TILES 5 // tiles across a row of a sheet
-#define SHEET_WIDTH (SHEET_TILES * TILE_SIZE)
-#define RAYCAST_FOV 66.0 // degrees across the screen
-#define WALK_SPEED 1.5 // cells a second, under the arrow keys
-#define TURN_SPEED 2.0 // radians a second, under the arrow keys
-#define CAMERA_RADIUS 0.25 // cells kept clear round the camera
+constexpr int MAP_SIZE = 16;
+constexpr int TILE_SIZE = 64; // texels across a tile
+constexpr int SHEET_TILES = 5; // tiles across a row of a sheet
+constexpr int SHEET_WIDTH = SHEET_TILES * TILE_SIZE;
+constexpr double RAYCAST_FOV = 66.0; // degrees across the screen
+constexpr double WALK_SPEED = 1.5; // cells a second, under the arrow keys
+constexpr double TURN_SPEED = 2.0; // radians a second, under the arrow keys
+constexpr double CAMERA_RADIUS = 0.25; // cells kept clear round the camera
 
 static const int Walls[MAP_SIZE][MAP_SIZE] = {
 	{ 2, 2, 2, 2, 7, 4, 7, 2, 2, 2, 2, 2, 2, 2, 2, 2 },

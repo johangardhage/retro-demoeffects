@@ -38,10 +38,10 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define WATER_DAMP 0.985 // kept per step, so how slowly a ripple dies
-#define WATER_REFRACT 18.0 // texels a unit slope slides the sample
-#define WATER_DEPTH 300.0 // height subtracted by one droplet
-#define WATER_DROP_STEPS 36 // steps between droplets
+constexpr double WATER_DAMP = 0.985; // kept per step, so how slowly a ripple dies
+constexpr double WATER_REFRACT = 18.0; // texels a unit slope slides the sample
+constexpr double WATER_DEPTH = 300.0; // height subtracted by one droplet
+constexpr int WATER_DROP_STEPS = 36; // steps between droplets
 
 // Rotated rather than copied. The one-pixel frame is never written, so it
 // stays the Dirichlet boundary.

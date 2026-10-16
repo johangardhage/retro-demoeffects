@@ -27,11 +27,11 @@
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define CHARACTERS_PER_SECOND 20.0
-#define PAGE_TIME 10.0 // write + hold, must cover the longest page
+constexpr double CHARACTERS_PER_SECOND = 20.0;
+constexpr double PAGE_TIME = 10.0; // write + hold, must cover the longest page
 
 static const char *const ScrollText[][12] = {
 	{

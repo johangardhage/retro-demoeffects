@@ -31,17 +31,17 @@
 #include "lib/retromath.h"
 #include "lib/retropalette.h"
 
-#define RING_RADIUS 50 // from the axis out to the middle of the tube
-#define TUBE_RADIUS 25 // and the radius of the tube itself
-#define DOT_SPACING 5 // pixels between neighboring dots, the same both ways around
-#define SHADES 64 // palette entries the depth shading ramps over
-#define ROTATION_SPEED 1 // radians per second, so about a turn every six seconds
-#define PROJECTION_SCALE 1.0 // the torus is built in pixels, so the projection adds no scale
+constexpr int RING_RADIUS = 50; // from the axis out to the middle of the tube
+constexpr int TUBE_RADIUS = 25; // and the radius of the tube itself
+constexpr int DOT_SPACING = 5; // pixels between neighboring dots, the same both ways around
+constexpr int SHADES = 64; // palette entries the depth shading ramps over
+constexpr int ROTATION_SPEED = 1; // radians per second, so about a turn every six seconds
+constexpr double PROJECTION_SCALE = 1.0; // the torus is built in pixels, so the projection adds no scale
 
-#define RING_STEPS ((int)(2 * M_PI * RING_RADIUS / DOT_SPACING + 0.5))
-#define TUBE_STEPS ((int)(2 * M_PI * TUBE_RADIUS / DOT_SPACING + 0.5))
+constexpr int RING_STEPS = (int)(2 * M_PI * RING_RADIUS / DOT_SPACING + 0.5);
+constexpr int TUBE_STEPS = (int)(2 * M_PI * TUBE_RADIUS / DOT_SPACING + 0.5);
 
-#define NUM_POINTS (RING_STEPS * TUBE_STEPS)
+constexpr int NUM_POINTS = RING_STEPS * TUBE_STEPS;
 
 static Vertex Torus[NUM_POINTS];
 

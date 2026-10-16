@@ -20,12 +20,12 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define RIBBON_COUNT 3
-#define RIBBON_SEGMENTS 80 // samples along t, so this many − 1 quads
-#define RIBBON_TURNS 2 // how many times the helix wraps
-#define RIBBON_SCALE 90 // pixels a model unit covers
-#define ROTATION_SPEED 0.7 // radians a second about the middle axis
-#define ROTATION_SPREAD 0.25
+constexpr int RIBBON_COUNT = 3;
+constexpr int RIBBON_SEGMENTS = 80; // samples along t, so this many − 1 quads
+constexpr int RIBBON_TURNS = 2; // how many times the helix wraps
+constexpr int RIBBON_SCALE = 90; // pixels a model unit covers
+constexpr double ROTATION_SPEED = 0.7; // radians a second about the middle axis
+constexpr double ROTATION_SPREAD = 0.25;
 
 static const float RibbonRadius[RIBBON_COUNT] = { 1.15f, 0.78f, 0.48f };
 static const float RibbonWidth[RIBBON_COUNT] = { 0.20f, 0.16f, 0.13f };

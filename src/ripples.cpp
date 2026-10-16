@@ -33,14 +33,14 @@
 #include "lib/retromain.h"
 #include "lib/retroshadetable.h"
 
-#define WATER_YPOS 185 // mirror plane; the first water row is the one below
-#define WATER_EYE 60.0 // scales rows to depth
-#define WATER_TILT 0.1 // row offset per pixel below the plane
-#define WATER_KZ 14.0 // wave number along the depth
-#define WATER_SPEED 3.0 // radians a second
-#define WATER_LEVELS 16 // shades of reflection, far to near
-#define WATER_MIX 0.15f // how much water color the far level takes
-#define WATER_MIXSTEP 0.35f // and the near level this much more
+constexpr int WATER_YPOS = 185; // mirror plane; the first water row is the one below
+constexpr double WATER_EYE = 60.0; // scales rows to depth
+constexpr double WATER_TILT = 0.1; // row offset per pixel below the plane
+constexpr double WATER_KZ = 14.0; // wave number along the depth
+constexpr double WATER_SPEED = 3.0; // radians a second
+constexpr int WATER_LEVELS = 16; // shades of reflection, far to near
+constexpr float WATER_MIX = 0.15f; // how much water color the far level takes
+constexpr float WATER_MIXSTEP = 0.35f; // and the near level this much more
 
 static const RETRO_Palette WaterColor = { 20, 34, 56 };
 

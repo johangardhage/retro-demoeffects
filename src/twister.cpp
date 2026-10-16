@@ -22,15 +22,15 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define TWISTER_CENTER_X (RETRO_WIDTH / 2.0)
-#define TWISTER_RADIUS 60
-#define TWISTER_TWIST 2.0 // peak radians of twist from row 0 to row HEIGHT
-#define TWISTER_TORSION_WAVE 2 // wind-up cycles over one rotation
-#define TWISTER_SPEED 1.2 // radians per second
-#define TWISTER_PERIOD (2 * M_PI)
+constexpr double TWISTER_CENTER_X = RETRO_WIDTH / 2.0;
+constexpr int TWISTER_RADIUS = 60;
+constexpr double TWISTER_TWIST = 2.0; // peak radians of twist from row 0 to row HEIGHT
+constexpr int TWISTER_TORSION_WAVE = 2; // wind-up cycles over one rotation
+constexpr double TWISTER_SPEED = 1.2; // radians per second
+constexpr double TWISTER_PERIOD = 2 * M_PI;
 
-#define TWISTER_FACE_COLOR 33 // base color of the first face
-#define TWISTER_FACE_STEP 16 // step from one face color to the next
+constexpr int TWISTER_FACE_COLOR = 33; // base color of the first face
+constexpr int TWISTER_FACE_STEP = 16; // step from one face color to the next
 
 void DEMO_Render(RETRO_Time time)
 {

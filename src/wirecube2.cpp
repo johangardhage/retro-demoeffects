@@ -14,9 +14,9 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define ROTATION_SPEED 2 // radians a second, about each axis
-#define TRAIL_COUNT 6 // ghost cubes drawn each frame, leading one included
-#define TRAIL_STEP 0.015 // seconds each ghost trails the one ahead of it
+constexpr int ROTATION_SPEED = 2; // radians a second, about each axis
+constexpr int TRAIL_COUNT = 6; // ghost cubes drawn each frame, leading one included
+constexpr double TRAIL_STEP = 0.015; // seconds each ghost trails the one ahead of it
 
 void DEMO_Render(RETRO_Time time)
 {

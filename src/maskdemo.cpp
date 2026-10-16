@@ -43,9 +43,9 @@
 #include "lib/retroshadetable.h"
 #include "lib/retrofont.h"
 
-#define ROTATION_SPEED 1 // radians a second, about each axis
-#define MATCAP_SIZE 256 // the matcaps are square, and this is their side in pixels
-#define MATCAP_FACE vec3{ 0.86f, 0.23f, 0.59f } // the material, as intensities
+constexpr int ROTATION_SPEED = 1; // radians a second, about each axis
+constexpr int MATCAP_SIZE = 256; // the matcaps are square, and this is their side in pixels
+constexpr vec3 MATCAP_FACE = { 0.86f, 0.23f, 0.59f }; // the material, as intensities
 
 enum { ASSET_TEXMAP, ASSET_ENVMAP, ASSET_BUMPMAP };
 enum { MATERIAL_FLAT, MATERIAL_GOURAUD, MATERIAL_PHONG, MATERIALS };

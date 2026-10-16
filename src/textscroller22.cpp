@@ -46,18 +46,18 @@
 #include "lib/retrogfx.h"
 #include "lib/retromath.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 static const char *const ScrollText[] = { "    RETRO DEMOEFFECTS..." };
 
 // Ring geometry and perspective projection.
-#define RING_RADIUS 86.0
-#define RING_Y 75.0
-#define CAMERA_DISTANCE 260.0
-#define PROJECTION_SCALE 1.53
-#define RING_TILT 0.18
-#define SCROLL_SPEED 0.72
-#define WRAP_WIDTH 16.0
+constexpr double RING_RADIUS = 86.0;
+constexpr double RING_Y = 75.0;
+constexpr double CAMERA_DISTANCE = 260.0;
+constexpr double PROJECTION_SCALE = 1.53;
+constexpr double RING_TILT = 0.18;
+constexpr double SCROLL_SPEED = 0.72;
+constexpr double WRAP_WIDTH = 16.0;
 
 static RETRO_Font Font;
 

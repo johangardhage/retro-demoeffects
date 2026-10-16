@@ -46,25 +46,25 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define CONTROL_POINTS 16
-#define RING_RADIUS 1.3f // from the axis to a control point at rest
-#define RADIAL_SWING 0.3f // how far a control point moves in and out
-#define RADIAL_LOBES 3 // waves around the ring
-#define RADIAL_SPEED 1.3 // radians a second
-#define AXIAL_SWING 0.5f // how far a control point moves along the axis
-#define AXIAL_LOBES 2
-#define AXIAL_SPEED -0.9
-#define TUBE_RADIUS 0.2f
-#define RING_STEPS 6 // rings between two control points
-#define TUBE_RINGS (CONTROL_POINTS * RING_STEPS)
-#define TUBE_SIDES 8 // vertices around a ring
-#define CHECK_RINGS 3 // rings a square is long
-#define CHECK_SIDES 2 // and sides it is wide
-#define TUBE_SHADES ((RETRO_COLORS - 1) / 2) // palette entries a color's ramp covers
-#define PROJECTION_SCALE 52.0f // pixels per model unit
-#define ROTATION_SPEED_X 0.5 // radians a second
-#define ROTATION_SPEED_Y 0.8
-#define ROTATION_SPEED_Z 0.3
+constexpr int CONTROL_POINTS = 16;
+constexpr float RING_RADIUS = 1.3f; // from the axis to a control point at rest
+constexpr float RADIAL_SWING = 0.3f; // how far a control point moves in and out
+constexpr int RADIAL_LOBES = 3; // waves around the ring
+constexpr double RADIAL_SPEED = 1.3; // radians a second
+constexpr float AXIAL_SWING = 0.5f; // how far a control point moves along the axis
+constexpr int AXIAL_LOBES = 2;
+constexpr double AXIAL_SPEED = -0.9;
+constexpr float TUBE_RADIUS = 0.2f;
+constexpr int RING_STEPS = 6; // rings between two control points
+constexpr int TUBE_RINGS = CONTROL_POINTS * RING_STEPS;
+constexpr int TUBE_SIDES = 8; // vertices around a ring
+constexpr int CHECK_RINGS = 3; // rings a square is long
+constexpr int CHECK_SIDES = 2; // and sides it is wide
+constexpr int TUBE_SHADES = (RETRO_COLORS - 1) / 2; // palette entries a color's ramp covers
+constexpr float PROJECTION_SCALE = 52.0f; // pixels per model unit
+constexpr double ROTATION_SPEED_X = 0.5; // radians a second
+constexpr double ROTATION_SPEED_Y = 0.8;
+constexpr double ROTATION_SPEED_Z = 0.3;
 
 static int TubeVertex(int ring, int side)
 {

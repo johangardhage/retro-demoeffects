@@ -31,17 +31,17 @@
 #include "lib/retromain.h"
 #include "lib/retrogfx.h"
 
-#define PLANE_VIEW (RETRO_HEIGHT / 2)
-#define PLANE_SCROLL_SPEED 180.0 // texels per second
-#define PLANE_MAP 128
-#define PLANE_NEAR 10 // frustum half-width at the horizon, so 1/z stays finite
-#define PLANE_LAND_V 7000 // land v = this / (z + 1)
-#define PLANE_SKY_V 2048 // sky v = this / z
-#define PLANE_SKY_U 4 // sky u is this many times coarser than the land
-#define PLANE_SKY_SCROLL 32 // sky scroll is this many times slower than the land
-#define ATLAS_SKY PLANE_MAP // row offset of the sky tile
-#define ATLAS_SPRITE (2 * PLANE_MAP) // row offset of the sprite tile
-#define SPRITE_ALPHA 0
+constexpr int PLANE_VIEW = RETRO_HEIGHT / 2;
+constexpr double PLANE_SCROLL_SPEED = 180.0; // texels per second
+constexpr int PLANE_MAP = 128;
+constexpr int PLANE_NEAR = 10; // frustum half-width at the horizon, so 1/z stays finite
+constexpr int PLANE_LAND_V = 7000; // land v = this / (z + 1)
+constexpr int PLANE_SKY_V = 2048; // sky v = this / z
+constexpr int PLANE_SKY_U = 4; // sky u is this many times coarser than the land
+constexpr int PLANE_SKY_SCROLL = 32; // sky scroll is this many times slower than the land
+constexpr int ATLAS_SKY = PLANE_MAP; // row offset of the sky tile
+constexpr int ATLAS_SPRITE = 2 * PLANE_MAP; // row offset of the sprite tile
+constexpr int SPRITE_ALPHA = 0;
 
 void DEMO_Render(RETRO_Time time)
 {

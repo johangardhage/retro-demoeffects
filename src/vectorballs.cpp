@@ -33,23 +33,23 @@
 #include "lib/retropoly.h"
 #include "lib/retropalette.h"
 
-#define BALLS 32
-#define BALL_MAP 48 // the lit sphere is drawn once at this size and scaled from it
-#define BALL_SIZE 27 // pixels across at the depth the ring's center stands
-#define BALL_RADIUS 72 // the ring, in pixels, since the projection adds no scale
-#define BALL_WAVE 34 // pixels either way the ripple carries a ball out of the plane
-#define BALL_WAVES 3 // whole waves around the ring
-#define BALL_LEVELS 8 // depth ramps, and sprites, one per step of dimming
-#define BALL_SHADES 30 // palette entries a ramp spends on one ball
-#define BALL_DIM 0.35 // how much of its color the furthest ball keeps
-#define BALL_SHADOW 0.6 // brightness of a ramp's darkest shade, as a fraction of its hue
-#define BALL_DEPTH 110 // rotated depth the ramps cover, either side of the middle
-#define BALL_HUE RETRO_CYAN
-#define BALL_PROJECTION 1.0 // the ring is built in pixels, so the projection adds no scale
-#define BALL_SPEEDX 0.7 // radians a second, about each axis
-#define BALL_SPEEDY 1.1
-#define BALL_SPEEDZ 0.4
-#define BALL_WAVESPEED 60 // table units a second
+constexpr int BALLS = 32;
+constexpr int BALL_MAP = 48; // the lit sphere is drawn once at this size and scaled from it
+constexpr int BALL_SIZE = 27; // pixels across at the depth the ring's center stands
+constexpr int BALL_RADIUS = 72; // the ring, in pixels, since the projection adds no scale
+constexpr int BALL_WAVE = 34; // pixels either way the ripple carries a ball out of the plane
+constexpr int BALL_WAVES = 3; // whole waves around the ring
+constexpr int BALL_LEVELS = 8; // depth ramps, and sprites, one per step of dimming
+constexpr int BALL_SHADES = 30; // palette entries a ramp spends on one ball
+constexpr double BALL_DIM = 0.35; // how much of its color the furthest ball keeps
+constexpr double BALL_SHADOW = 0.6; // brightness of a ramp's darkest shade, as a fraction of its hue
+constexpr int BALL_DEPTH = 110; // rotated depth the ramps cover, either side of the middle
+constexpr RETRO_Palette BALL_HUE = RETRO_CYAN;
+constexpr double BALL_PROJECTION = 1.0; // the ring is built in pixels, so the projection adds no scale
+constexpr double BALL_SPEEDX = 0.7; // radians a second, about each axis
+constexpr double BALL_SPEEDY = 1.1;
+constexpr double BALL_SPEEDZ = 0.4;
+constexpr int BALL_WAVESPEED = 60; // table units a second
 
 static unsigned char BallMap[BALL_LEVELS][BALL_MAP * BALL_MAP];
 static float BallDepth[BALL_MAP * BALL_MAP]; // the front hemisphere, the same for every ramp

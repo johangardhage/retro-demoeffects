@@ -26,15 +26,15 @@
 #include "lib/retropalette.h"
 #include "lib/retromain.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 
-#define SCROLL_SPEED 42 // texels per second
-#define WAVE_AMP 40 // pixels either side of the middle a column reaches
-#define WAVE_RATE 0.85 // table units of the sine per pixel, so one wave per 300 pixels
-#define WAVE_SPEED 230 // table units per second
-#define COLOR_STEPS 120 // palette entries in one turn of the color ramp
-#define COLOR_RATE 0.8 // ramp entries per pixel, so one turn per 150 pixels
-#define COLOR_SPEED 100 // ramp entries per second
+constexpr int SCROLL_SPEED = 42; // texels per second
+constexpr int WAVE_AMP = 40; // pixels either side of the middle a column reaches
+constexpr double WAVE_RATE = 0.85; // table units of the sine per pixel, so one wave per 300 pixels
+constexpr int WAVE_SPEED = 230; // table units per second
+constexpr int COLOR_STEPS = 120; // palette entries in one turn of the color ramp
+constexpr double COLOR_RATE = 0.8; // ramp entries per pixel, so one turn per 150 pixels
+constexpr int COLOR_SPEED = 100; // ramp entries per second
 
 static const char *const ScrollText[] = { "                    RETRO DEMOEFFECTS..." };
 

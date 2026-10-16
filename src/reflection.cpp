@@ -35,34 +35,34 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define HORIZON 130 // first water row
-#define SCENE_COLORS 64 // palette entries of the scene, repeated per water level
-#define SKY_COLORS 40
-#define SUN_COLORS 16
-#define RIDGE_COLORS 4 // per ridge, shaded by height
-#define SKY 0 // first entry of each range
-#define SUN SKY_COLORS
-#define FAR_RIDGE (SUN + SUN_COLORS)
-#define NEAR_RIDGE (FAR_RIDGE + RIDGE_COLORS)
-#define SUN_X 212
-#define SUN_Y 70 // the sun's center, halfway through its swing
-#define SUN_RADIUS 22
-#define SUN_SWING 60 // pixels the sun sinks and rises either side of SUN_Y
-#define SUN_SPEED 0.15 // radians a second through the swing
-#define RIDGE_PERIOD 640 // pixels before a ridge repeats, a whole number of each of its waves
-#define FAR_SPEED 6 // pixels a second
-#define NEAR_SPEED 16
-#define WATER_LEVELS 3 // shades of reflection, far to near
-#define WATER_MIX 0.3 // how much water color the far level takes
-#define WATER_MIXSTEP 0.15 // and each nearer level more
-#define WATER_EYE 80.0f // scales rows to depth
-#define WATER_TILT 0.08f // row offset per pixel below the horizon
-#define WATER_SWAY 0.05f // column offset per pixel below the horizon
-#define WATER_KZ 12.0f // wave number along the depth
-#define WATER_KZ2 8.0f
-#define WATER_KX 24.0f // wave number across
-#define WATER_SPEED 2.3f // radians a second
-#define WATER_SWAYSPEED 1.7f
+constexpr int HORIZON = 130; // first water row
+constexpr int SCENE_COLORS = 64; // palette entries of the scene, repeated per water level
+constexpr int SKY_COLORS = 40;
+constexpr int SUN_COLORS = 16;
+constexpr int RIDGE_COLORS = 4; // per ridge, shaded by height
+constexpr int SKY = 0; // first entry of each range
+constexpr int SUN = SKY_COLORS;
+constexpr int FAR_RIDGE = SUN + SUN_COLORS;
+constexpr int NEAR_RIDGE = FAR_RIDGE + RIDGE_COLORS;
+constexpr int SUN_X = 212;
+constexpr int SUN_Y = 70; // the sun's center, halfway through its swing
+constexpr int SUN_RADIUS = 22;
+constexpr int SUN_SWING = 60; // pixels the sun sinks and rises either side of SUN_Y
+constexpr double SUN_SPEED = 0.15; // radians a second through the swing
+constexpr int RIDGE_PERIOD = 640; // pixels before a ridge repeats, a whole number of each of its waves
+constexpr int FAR_SPEED = 6; // pixels a second
+constexpr int NEAR_SPEED = 16;
+constexpr int WATER_LEVELS = 3; // shades of reflection, far to near
+constexpr double WATER_MIX = 0.3; // how much water color the far level takes
+constexpr double WATER_MIXSTEP = 0.15; // and each nearer level more
+constexpr float WATER_EYE = 80.0f; // scales rows to depth
+constexpr float WATER_TILT = 0.08f; // row offset per pixel below the horizon
+constexpr float WATER_SWAY = 0.05f; // column offset per pixel below the horizon
+constexpr float WATER_KZ = 12.0f; // wave number along the depth
+constexpr float WATER_KZ2 = 8.0f;
+constexpr float WATER_KX = 24.0f; // wave number across
+constexpr float WATER_SPEED = 2.3f; // radians a second
+constexpr float WATER_SWAYSPEED = 1.7f;
 
 static const RETRO_Palette WaterColor = { 8, 24, 52 };
 

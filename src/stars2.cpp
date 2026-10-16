@@ -22,12 +22,12 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define NUM_STARS 1000
-#define SPEED 120 // depth traveled per second
-#define EYE 250 // how far the eye sits from the screen
-#define STAR_NEAR 1 // nearest a star gets before it has gone past
-#define STAR_FAR 500 // and the depth it comes back at
-#define SHADES 64 // palette entries the depth shading ramps over
+constexpr int NUM_STARS = 1000;
+constexpr int SPEED = 120; // depth traveled per second
+constexpr int EYE = 250; // how far the eye sits from the screen
+constexpr int STAR_NEAR = 1; // nearest a star gets before it has gone past
+constexpr int STAR_FAR = 500; // and the depth it comes back at
+constexpr int SHADES = 64; // palette entries the depth shading ramps over
 
 static vec3 Stars[NUM_STARS];
 

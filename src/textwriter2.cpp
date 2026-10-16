@@ -13,18 +13,18 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
-#define LINE_PITCH 18
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+constexpr int LINE_PITCH = 18;
 
-#define HEAD_RADIUS 10.0
-#define HEAD_STROKES 24
-#define PATH_STEPS 2048
-#define CROSS_TIME 6.0
-#define TIME_HOLD 2.5
-#define TIME_BLANK 0.5
-#define COLOR_BRUSH 2
-#define SHOW_BRUSH false // draw the disc as it scrubs
+constexpr double HEAD_RADIUS = 10.0;
+constexpr int HEAD_STROKES = 24;
+constexpr int PATH_STEPS = 2048;
+constexpr double CROSS_TIME = 6.0;
+constexpr double TIME_HOLD = 2.5;
+constexpr double TIME_BLANK = 0.5;
+constexpr int COLOR_BRUSH = 2;
+constexpr bool SHOW_BRUSH = false; // draw the disc as it scrubs
 
 static const char *const ScrollText[][12] = {
 	{

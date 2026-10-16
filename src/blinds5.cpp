@@ -29,16 +29,16 @@
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
 
-#define TILE_SIZE 20
-#define TILES_X (RETRO_WIDTH / TILE_SIZE)
-#define TILES_Y (RETRO_HEIGHT / TILE_SIZE)
-#define PHASE_WINDOW 0.5 // part of the transition spent rotating one tile
-#define TIME_TRANSITION 2.0
-#define TIME_HOLD 1.0 // seconds held on either picture
-#define TIME_CYCLE (2 * (TIME_HOLD + TIME_TRANSITION))
-#define CURTAIN 0
-#define SHADES 16
-#define AMBIENT 0.25f // light left on a tile that is nearly edge-on
+constexpr int TILE_SIZE = 20;
+constexpr int TILES_X = RETRO_WIDTH / TILE_SIZE;
+constexpr int TILES_Y = RETRO_HEIGHT / TILE_SIZE;
+constexpr double PHASE_WINDOW = 0.5; // part of the transition spent rotating one tile
+constexpr double TIME_TRANSITION = 2.0;
+constexpr double TIME_HOLD = 1.0; // seconds held on either picture
+constexpr double TIME_CYCLE = 2 * (TIME_HOLD + TIME_TRANSITION);
+constexpr int CURTAIN = 0;
+constexpr int SHADES = 16;
+constexpr float AMBIENT = 0.25f; // light left on a tile that is nearly edge-on
 
 static RETRO_Image *PictureA;
 static RETRO_Image *PictureB;

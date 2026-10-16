@@ -17,11 +17,11 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define NUM_STARS 1000
-#define SPEED 60 // pixels a second traveled by a star in the furthest layer
-#define LAYER_NEAR 3 // layers, numbered from the furthest
-#define LAYER_FAR 1
-#define SHADES 64 // palette entries the layers are shaded over
+constexpr int NUM_STARS = 1000;
+constexpr int SPEED = 60; // pixels a second traveled by a star in the furthest layer
+constexpr int LAYER_NEAR = 3; // layers, numbered from the furthest
+constexpr int LAYER_FAR = 1;
+constexpr int SHADES = 64; // palette entries the layers are shaded over
 
 static vec3 Stars[NUM_STARS];
 

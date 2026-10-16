@@ -30,12 +30,12 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define PLANE_VIEW (RETRO_HEIGHT / 2)
-#define PLANE_EYE 100 // camera height in world units
-#define PLANE_YAW_SPEED 24.0 // degrees per second
-#define PLANE_WALK_SPEED 80.0 // texels per second
-#define PLANE_PERIOD 256 // one texture width; u, v, xd and yd share it
-#define FIELD_TILE 64
+constexpr int PLANE_VIEW = RETRO_HEIGHT / 2;
+constexpr int PLANE_EYE = 100; // camera height in world units
+constexpr double PLANE_YAW_SPEED = 24.0; // degrees per second
+constexpr double PLANE_WALK_SPEED = 80.0; // texels per second
+constexpr int PLANE_PERIOD = 256; // one texture width; u, v, xd and yd share it
+constexpr int FIELD_TILE = 64;
 
 static unsigned char Field[PLANE_PERIOD * PLANE_PERIOD];
 

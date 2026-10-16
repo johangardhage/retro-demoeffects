@@ -41,27 +41,13 @@
 #define _setcursortype  CONIO_setcursortype
 #define reset           CONIO_reset
 
-#define CONIO_BLACK        0
-#define CONIO_BLUE         1
-#define CONIO_GREEN        2
-#define CONIO_CYAN         3
-#define CONIO_RED          4
-#define CONIO_MAGENTA      5
-#define CONIO_BROWN        6
-#define CONIO_LIGHTGRAY    7
-#define CONIO_DARKGRAY     8
-#define CONIO_LIGHTBLUE    9
-#define CONIO_LIGHTGREEN   10
-#define CONIO_LIGHTCYAN    11
-#define CONIO_LIGHTRED     12
-#define CONIO_LIGHTMAGENTA 13
-#define CONIO_YELLOW       14
-#define CONIO_WHITE        15
-#define CONIO_BLINK        128
+enum {
+	CONIO_BLACK, CONIO_BLUE, CONIO_GREEN, CONIO_CYAN, CONIO_RED, CONIO_MAGENTA, CONIO_BROWN, CONIO_LIGHTGRAY,
+	CONIO_DARKGRAY, CONIO_LIGHTBLUE, CONIO_LIGHTGREEN, CONIO_LIGHTCYAN, CONIO_LIGHTRED, CONIO_LIGHTMAGENTA, CONIO_YELLOW, CONIO_WHITE
+};
+constexpr int CONIO_BLINK = 128;
 
-#define _NOCURSOR     0
-#define _SOLIDCURSOR  1
-#define _NORMALCURSOR 2
+enum { _NOCURSOR, _SOLIDCURSOR, _NORMALCURSOR };
 
 // DOS text mode is a fixed 80x25 character grid regardless of the physical
 // display, and window() is defined in absolute screen coordinates against

@@ -69,21 +69,21 @@
 #include "lib/retropalette.h"
 #include "lib/retroterrain.h"
 
-#define MAP_WIDTH 256
-#define MAP_HEIGHT 256
+constexpr int MAP_WIDTH = 256;
+constexpr int MAP_HEIGHT = 256;
 
 // How much of a world this one is. The map is 256 cells across where the
 // photographed ones are 1024, and every length below is the library's own
 // default taken down by this rather than a number written out again.
-#define VOXEL_WORLD_SCALE 0.25f
+constexpr float VOXEL_WORLD_SCALE = 0.25f;
 
 // Where the first slice stands and how much dz gains each slice, so far samples
 // thin out. Nearer than that first step the ground projects far below the
 // screen anyway, and a slice at zero has no focal length to be divided by. A
 // quarter of a world is crossed in a quarter of the steps, so both come down
 // with it and the same number of slices still covers the ground.
-#define VOXEL_NEAR (1.0f * VOXEL_WORLD_SCALE)
-#define VOXEL_LOD (0.005f * VOXEL_WORLD_SCALE)
+constexpr float VOXEL_NEAR = 1.0f * VOXEL_WORLD_SCALE;
+constexpr float VOXEL_LOD = 0.005f * VOXEL_WORLD_SCALE;
 
 // The two maps this demo builds for itself. A terrain is described by the bytes
 // it is read from and not by where they came from, so these are handed to it

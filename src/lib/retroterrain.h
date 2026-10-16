@@ -33,7 +33,7 @@
 // How far the wrapping look draws, in map cells. The wide lens flattens the
 // hills, so nothing hides where the ground stops: this has to reach far
 // enough to meet the sky.
-#define RETRO_TERRAIN_DISTANCE 800
+constexpr int RETRO_TERRAIN_DISTANCE = 800;
 
 // *******************************************************************
 // The map

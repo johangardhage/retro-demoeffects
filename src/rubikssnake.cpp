@@ -55,20 +55,20 @@
 #include "lib/retropalette.h"
 #include "lib/retrofont.h"
 
-#define PRISMS 24
-#define JOINTS (PRISMS - 1)
-#define PRISM_VERTICES 6
-#define PRISM_FACES 5
-#define PRISM_SHADES ((RETRO_COLORS - 1) / 2) // palette entries a color's ramp covers
-#define TEXT_COLOR (RETRO_COLORS - 1) // the entry past the two ramps
-#define SCREEN_REACH 100.0f // pixels from the middle of the screen to the farthest corner
-#define SHAPE_HOLD 2.5 // seconds a shape is held
-#define TWIST_TIME 0.5 // seconds a joint takes to turn a quarter turn, the careful way
-#define WAVE_TIME 2.0 // seconds a joint takes to turn, the quick way
-#define WAVE_STAGGER 0.2 // seconds a joint waits for the one before it
-#define ROTATION_SPEED_X 0.5 // radians a second
-#define ROTATION_SPEED_Y 0.8
-#define ROTATION_SPEED_Z 0.3
+constexpr int PRISMS = 24;
+constexpr int JOINTS = PRISMS - 1;
+constexpr int PRISM_VERTICES = 6;
+constexpr int PRISM_FACES = 5;
+constexpr int PRISM_SHADES = (RETRO_COLORS - 1) / 2; // palette entries a color's ramp covers
+constexpr int TEXT_COLOR = RETRO_COLORS - 1; // the entry past the two ramps
+constexpr float SCREEN_REACH = 100.0f; // pixels from the middle of the screen to the farthest corner
+constexpr double SHAPE_HOLD = 2.5; // seconds a shape is held
+constexpr double TWIST_TIME = 0.5; // seconds a joint takes to turn a quarter turn, the careful way
+constexpr double WAVE_TIME = 2.0; // seconds a joint takes to turn, the quick way
+constexpr double WAVE_STAGGER = 0.2; // seconds a joint waits for the one before it
+constexpr double ROTATION_SPEED_X = 0.5; // radians a second
+constexpr double ROTATION_SPEED_Y = 0.8;
+constexpr double ROTATION_SPEED_Z = 0.3;
 
 // Quarter turns at each joint, from the first to the last
 static const char *const Shapes[] = {
@@ -82,7 +82,7 @@ static const char *const Shapes[] = {
 	"11132311132311132311132", // wreath
 };
 
-#define NUM_SHAPES (int)(sizeof(Shapes) / sizeof(Shapes[0]))
+constexpr int NUM_SHAPES = (int)(sizeof(Shapes) / sizeof(Shapes[0]));
 
 // The twists that take each shape to the one after it, and the last back to
 // the first, in the order they are made: the joint, a for the first, then + or

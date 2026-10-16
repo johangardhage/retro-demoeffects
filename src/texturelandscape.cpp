@@ -40,7 +40,7 @@
 #include "lib/retrovector.h"
 
 // Near enough that a camera flown down onto the ground still sees it
-#define LANDSCAPE_NEARPLANE 0.25f
+constexpr float LANDSCAPE_NEARPLANE = 0.25f;
 
 static void DrawCell(const RETRO_TerrainMesh &mesh, const RETRO_TerrainCell &cell, const void *)
 {

@@ -20,10 +20,10 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define MSL_MAX 31
-#define SCANLINES (RETRO_HEIGHT * 2)
-#define MSL_STEPS_PER_SECOND 35.0
-#define FREEZE_STEPS_PER_SECOND 70.0
+constexpr int MSL_MAX = 31;
+constexpr int SCANLINES = RETRO_HEIGHT * 2;
+constexpr double MSL_STEPS_PER_SECOND = 35.0;
+constexpr double FREEZE_STEPS_PER_SECOND = 70.0;
 
 enum MeltMode { MELT_MAXIMUM_SCAN_LINE, MELT_FREEZE_LINE_OFFSET };
 

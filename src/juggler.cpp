@@ -56,37 +56,37 @@
 #include "lib/retrovector.h"
 #include "lib/retromath.h"
 
-#define NEAR_T 0.001f // t past which a hit counts, so a ray does not re-hit its own origin
-#define MAX_BOUNCES 10
-#define FOCAL_DISTANCE 50.0f // world units from the eye to the virtual screen
-#define SCREEN_WIDTH 100.0f // world units the virtual screen spans; with FOCAL_DISTANCE this sets the field of view
-#define FLOOR_TILE 107.0f // world units per checker tile
-#define PLASTIC_AMBIENT 0.05f
-#define PLASTIC_DIFFUSE 1.3f // >1, since flat ambient has no boost to lean on, so diffuse alone makes up the difference
-#define MATTE_AMBIENT 0.15f
-#define MATTE_DIFFUSE 1.5f
+constexpr float NEAR_T = 0.001f; // t past which a hit counts, so a ray does not re-hit its own origin
+constexpr int MAX_BOUNCES = 10;
+constexpr float FOCAL_DISTANCE = 50.0f; // world units from the eye to the virtual screen
+constexpr float SCREEN_WIDTH = 100.0f; // world units the virtual screen spans; with FOCAL_DISTANCE this sets the field of view
+constexpr float FLOOR_TILE = 107.0f; // world units per checker tile
+constexpr float PLASTIC_AMBIENT = 0.05f;
+constexpr float PLASTIC_DIFFUSE = 1.3f; // >1, since flat ambient has no boost to lean on, so diffuse alone makes up the difference
+constexpr float MATTE_AMBIENT = 0.15f;
+constexpr float MATTE_DIFFUSE = 1.5f;
 // Eric Graham's real glint() test: not a Phong falloff, a hard cutoff on
 // cos² of the angle between the camera ray's reflection and the light -
 // see Glint
-#define MINGLINT 0.95f
-#define JUGGLE_RATE 30.0 // "T" units a second, so the 30-unit pattern in UpdateScene loops once a second
-#define SPHERE_COUNT 86
+constexpr float MINGLINT = 0.95f;
+constexpr double JUGGLE_RATE = 30.0; // "T" units a second, so the 30-unit pattern in UpdateScene loops once a second
+constexpr int SPHERE_COUNT = 86;
 
 // Every ramp below is two RETRO_CreateGradientPalette halves back to back -
 // see CreateMaterialRamp - so each *_SHADES stays even
-#define SKY_START 0
-#define SKY_SHADES 64
-#define FLOOR_YELLOW_START (SKY_START + SKY_SHADES)
-#define FLOOR_SHADES 32
-#define FLOOR_GREEN_START (FLOOR_YELLOW_START + FLOOR_SHADES)
-#define TORSO_START (FLOOR_GREEN_START + FLOOR_SHADES)
-#define TORSO_SHADES 32
-#define SKIN_START (TORSO_START + TORSO_SHADES)
-#define SKIN_SHADES 64
-#define HAIR_START (SKIN_START + SKIN_SHADES)
-#define HAIR_SHADES 16
-#define EYE_START (HAIR_START + HAIR_SHADES)
-#define EYE_SHADES 16
+constexpr int SKY_START = 0;
+constexpr int SKY_SHADES = 64;
+constexpr int FLOOR_YELLOW_START = SKY_START + SKY_SHADES;
+constexpr int FLOOR_SHADES = 32;
+constexpr int FLOOR_GREEN_START = FLOOR_YELLOW_START + FLOOR_SHADES;
+constexpr int TORSO_START = FLOOR_GREEN_START + FLOOR_SHADES;
+constexpr int TORSO_SHADES = 32;
+constexpr int SKIN_START = TORSO_START + TORSO_SHADES;
+constexpr int SKIN_SHADES = 64;
+constexpr int HAIR_START = SKIN_START + SKIN_SHADES;
+constexpr int HAIR_SHADES = 16;
+constexpr int EYE_START = HAIR_START + HAIR_SHADES;
+constexpr int EYE_SHADES = 16;
 
 enum JugglerMaterial { MAT_MIRROR, MAT_TORSO, MAT_SKIN, MAT_HAIR, MAT_EYE };
 

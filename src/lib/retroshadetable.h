@@ -15,13 +15,13 @@
 
 // Lighting every texture color at every shade gives the shaded colors, so a
 // texture mapper can look up shadetable[texel * RETRO_SHADE_TABLE_SHADES + shade]
-#define RETRO_SHADE_TABLE_COLORS 32
-#define RETRO_SHADE_TABLE_SHADES 128
-#define RETRO_SHADE_TABLE_SIZE (RETRO_SHADE_TABLE_COLORS * RETRO_SHADE_TABLE_SHADES)
+constexpr int RETRO_SHADE_TABLE_COLORS = 32;
+constexpr int RETRO_SHADE_TABLE_SHADES = 128;
+constexpr int RETRO_SHADE_TABLE_SIZE = RETRO_SHADE_TABLE_COLORS * RETRO_SHADE_TABLE_SHADES;
 
 // Light levels a shade table may carry beside its shade, one per colored
 // light lifting a channel of its own, or one each for red, green and blue
-#define RETRO_MAX_TINTS 3
+constexpr int RETRO_MAX_TINTS = 3;
 
 // A shade table and the shape it was read at. The lookup is
 // table[color * shades + shade], which is what RETRO_CreatePhongShadeTable and

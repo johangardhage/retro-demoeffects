@@ -22,11 +22,11 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define LINE_PERIOD 256
-#define LINE_HALF 50
-#define LINE_SPEED1 100 // pixels of phase1 per second
-#define LINE_SPEED2 100 // pixels of phase2 per second, falling
-#define LINE_SPEED3 200 // pixels of phase3 per second, falling
+constexpr int LINE_PERIOD = 256;
+constexpr int LINE_HALF = 50;
+constexpr int LINE_SPEED1 = 100; // pixels of phase1 per second
+constexpr int LINE_SPEED2 = 100; // pixels of phase2 per second, falling
+constexpr int LINE_SPEED3 = 200; // pixels of phase3 per second, falling
 
 void DEMO_Render(RETRO_Time time)
 {

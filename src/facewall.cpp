@@ -13,12 +13,12 @@
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
 
-#define FACE_MD3_SCALE 256.0f // steps per unit facewall.md3 was packed at
-#define WALL_SCALE 21
-#define MORPH_PERIOD 14.0f
-#define FACE_SPECULAR 0.78f
-#define FACE_FALLOFF 16.0f
-#define FACE_COLORS 8
+constexpr float FACE_MD3_SCALE = 256.0f; // steps per unit facewall.md3 was packed at
+constexpr int WALL_SCALE = 21;
+constexpr float MORPH_PERIOD = 14.0f;
+constexpr float FACE_SPECULAR = 0.78f;
+constexpr float FACE_FALLOFF = 16.0f;
+constexpr int FACE_COLORS = 8;
 
 static unsigned char WallShadeTable[RETRO_SHADE_TABLE_SIZE];
 

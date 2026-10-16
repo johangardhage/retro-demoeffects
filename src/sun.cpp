@@ -49,16 +49,16 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define FLARE_WIDTH RETRO_WIDTH // angular bins, one per column; RETRO_Blur strides a row by RETRO_WIDTH, so the strip is that wide
-#define FLARE_RADII 120 // radial bins, one per row, at most RETRO_HEIGHT
-#define FLARE_HOLE 2 // bins inside the seeded row that nothing ever reaches
-#define FLARE_SEED (FLARE_RADII - FLARE_HOLE - 1) // row the ring of noise is seeded into
-#define FLARE_SWIRL 32 // angular bins the ring swings either way where the swell is widest
-#define FLARE_EBB 8 // and where it is narrowest; kept off zero, so the swing never dies out or flips sign
-#define FLARE_DECAY 1 // subtracted after the 7-tap average, so how fast a flame dies as it travels out
-#define SUN_SPEED 30.0 // phase units per second; the original +0.5 per frame at 60 Hz
-#define SUN_SWIRLS 8 // swings the ring makes per turn of the swell
-#define SUN_RAMP 128 // heat the palette ramp spans; the flare never quite reaches it, and anything hotter is white
+constexpr int FLARE_WIDTH = RETRO_WIDTH; // angular bins, one per column; RETRO_Blur strides a row by RETRO_WIDTH, so the strip is that wide
+constexpr int FLARE_RADII = 120; // radial bins, one per row, at most RETRO_HEIGHT
+constexpr int FLARE_HOLE = 2; // bins inside the seeded row that nothing ever reaches
+constexpr int FLARE_SEED = FLARE_RADII - FLARE_HOLE - 1; // row the ring of noise is seeded into
+constexpr int FLARE_SWIRL = 32; // angular bins the ring swings either way where the swell is widest
+constexpr int FLARE_EBB = 8; // and where it is narrowest; kept off zero, so the swing never dies out or flips sign
+constexpr int FLARE_DECAY = 1; // subtracted after the 7-tap average, so how fast a flame dies as it travels out
+constexpr double SUN_SPEED = 30.0; // phase units per second; the original +0.5 per frame at 60 Hz
+constexpr int SUN_SWIRLS = 8; // swings the ring makes per turn of the swell
+constexpr int SUN_RAMP = 128; // heat the palette ramp spans; the flare never quite reaches it, and anything hotter is white
 
 static unsigned char Flare[FLARE_WIDTH];
 static int FlareOffset[RETRO_WIDTH * RETRO_HEIGHT];

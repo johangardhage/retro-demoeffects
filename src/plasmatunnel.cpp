@@ -39,13 +39,13 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TEXTURE_SIZE 256
-#define MAP_WIDTH 160
-#define MAP_HEIGHT 100
-#define MAP_SIZE (MAP_WIDTH * MAP_HEIGHT)
-#define TUNNEL_SQUASH 0.8 // y squash that fits a ring to the frame
-#define TUNNEL_RING_STEP 0.5 // ring spacing, in ring radius units
-#define TUNNEL_RING_GAIN 1.035 // texture rows gained per ring inward
+constexpr int TEXTURE_SIZE = 256;
+constexpr int MAP_WIDTH = 160;
+constexpr int MAP_HEIGHT = 100;
+constexpr int MAP_SIZE = MAP_WIDTH * MAP_HEIGHT;
+constexpr double TUNNEL_SQUASH = 0.8; // y squash that fits a ring to the frame
+constexpr double TUNNEL_RING_STEP = 0.5; // ring spacing, in ring radius units
+constexpr double TUNNEL_RING_GAIN = 1.035; // texture rows gained per ring inward
 
 static unsigned char AngleMap[MAP_SIZE];
 static unsigned char DepthMap[MAP_SIZE];

@@ -41,15 +41,15 @@
 #include "lib/retropalette.h"
 
 // Near enough that a camera flown down onto the ground still sees it
-#define LANDSCAPE_NEARPLANE 0.25f
-#define LANDSCAPE_STEP 16 // map cells to a side of a quad
-#define LANDSCAPE_DISTANCE 420 // map cells the grid is drawn out to
+constexpr float LANDSCAPE_NEARPLANE = 0.25f;
+constexpr int LANDSCAPE_STEP = 16; // map cells to a side of a quad
+constexpr int LANDSCAPE_DISTANCE = 420; // map cells the grid is drawn out to
 
-#define SKY 0 // palette entry of the sky, and of the quads
-#define LINE_RAMP0 1 // palette entry the ramp of the lines starts at
-#define LINE_SHADES 48 // entries in it, from the sky's color to LINE_NEAR
-#define LINE_MIDDLE RETRO_Palette{ 0, 150, 255 }
-#define LINE_NEAR RETRO_Palette{ 200, 255, 255 }
+constexpr int SKY = 0; // palette entry of the sky, and of the quads
+constexpr int LINE_RAMP0 = 1; // palette entry the ramp of the lines starts at
+constexpr int LINE_SHADES = 48; // entries in it, from the sky's color to LINE_NEAR
+constexpr RETRO_Palette LINE_MIDDLE = { 0, 150, 255 };
+constexpr RETRO_Palette LINE_NEAR = { 200, 255, 255 };
 
 static void DrawLine(const RETRO_CameraLens &lens, vec3 a, vec3 b)
 {

@@ -46,30 +46,30 @@
 #include "lib/retrorender.h"
 #include "lib/retroshadetable.h"
 
-#define FOCAL 512.0f                       // the eye's distance from the screen, in pixels
-#define EYE 200.0f                         // and from the scene's z = 0, in its units
+constexpr float FOCAL = 512.0f;            // the eye's distance from the screen, in pixels
+constexpr float EYE = 200.0f;              // and from the scene's z = 0, in its units
 
-#define TEXTURE_COLORS 31                  // colors in dolphin_256x256.pcx
-#define SPECULARITY 0.85f                  // the highlight the shade table ramps up to
-#define FALLOFF 4.0f                       // and how tight it is
+constexpr int TEXTURE_COLORS = 31;         // colors in dolphin_256x256.pcx
+constexpr float SPECULARITY = 0.85f;       // the highlight the shade table ramps up to
+constexpr float FALLOFF = 4.0f;            // and how tight it is
 
-#define MD3_SCALE 32.0f                    // steps per unit both meshes were packed at
-#define SWIM_BLENDS 36                     // blends the dolphin makes over the part, a multiple of SWIM_ORDER
-#define SWIM_ORDER 4                       // blends before the order repeats
-#define FISH_PER_PHASE 2
-#define FISH_PHASES 4
-#define FISH 12                            // enough that the queue lasts until the last keyframe
-#define FISH_PACE 2                        // how much faster the fish blend their poses than the dolphin
+constexpr float MD3_SCALE = 32.0f;         // steps per unit both meshes were packed at
+constexpr int SWIM_BLENDS = 36;            // blends the dolphin makes over the part, a multiple of SWIM_ORDER
+constexpr int SWIM_ORDER = 4;              // blends before the order repeats
+constexpr int FISH_PER_PHASE = 2;
+constexpr int FISH_PHASES = 4;
+constexpr int FISH = 12;                   // enough that the queue lasts until the last keyframe
+constexpr int FISH_PACE = 2;               // how much faster the fish blend their poses than the dolphin
 
-#define SWIM_SPEED 350.0f                  // units a fish swims a second
-#define FISH_FAR 1900                      // how far along -x the first fish starts
-#define FISH_GAP 1000.0f                   // and how far apart along x the fish swim
-#define FISH_SPREAD 500                    // how far either way in y and z the fish swim
-#define FISH_NEAR 250                      // and how near in z, clear of the dolphin
-#define FISH_HEADING 0.0f                  // degrees about y the fish are turned, swimming toward +x
-#define DOLPHIN_HEADING 180.0f             // and the dolphin, heading into them
+constexpr float SWIM_SPEED = 350.0f;       // units a fish swims a second
+constexpr int FISH_FAR = 1900;             // how far along -x the first fish starts
+constexpr float FISH_GAP = 1000.0f;        // and how far apart along x the fish swim
+constexpr int FISH_SPREAD = 500;           // how far either way in y and z the fish swim
+constexpr int FISH_NEAR = 250;             // and how near in z, clear of the dolphin
+constexpr float FISH_HEADING = 0.0f;       // degrees about y the fish are turned, swimming toward +x
+constexpr float DOLPHIN_HEADING = 180.0f;  // and the dolphin, heading into them
 
-#define FADE 1.8f                          // seconds the fades take
+constexpr float FADE = 1.8f;                          // seconds the fades take
 
 // Where the camera stands and how it is turned, at a time. Between two
 // keyframes both move in a straight line, and the angles are turned through
@@ -94,7 +94,7 @@ static const Keyframe Keyframes[] = {
 	{ 33.0f, { -4292, 29, 3260 }, { 0, -489, 0 } },
 };
 
-#define KEYFRAMES (int)(sizeof(Keyframes) / sizeof(Keyframes[0]))
+constexpr int KEYFRAMES = (int)(sizeof(Keyframes) / sizeof(Keyframes[0]));
 
 // The pose at each place in the swimming order
 static const int SwimOrder[SWIM_ORDER] = { 0, 1, 2, 1 };

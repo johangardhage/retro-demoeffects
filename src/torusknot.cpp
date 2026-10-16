@@ -36,17 +36,17 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define KNOT_P 2 // turns around the axis of the torus
-#define KNOT_Q 3 // turns around its tube
-#define TORUS_RADIUS 1.0f // from the axis to the middle of the torus's tube
-#define TORUS_TUBE 0.45f // radius of the torus's tube, which the curve lies on
-#define TUBE_RADIUS 0.22f // radius of the tube drawn around the curve
-#define TUBE_RINGS 100 // rings along the curve
-#define TUBE_SIDES 10 // vertices around a ring
-#define PROJECTION_SCALE 62.0f // pixels per model unit
-#define ROTATION_SPEED_X 0.7 // radians a second
-#define ROTATION_SPEED_Y 1.1
-#define ROTATION_SPEED_Z 0.4
+constexpr int KNOT_P = 2; // turns around the axis of the torus
+constexpr int KNOT_Q = 3; // turns around its tube
+constexpr float TORUS_RADIUS = 1.0f; // from the axis to the middle of the torus's tube
+constexpr float TORUS_TUBE = 0.45f; // radius of the torus's tube, which the curve lies on
+constexpr float TUBE_RADIUS = 0.22f; // radius of the tube drawn around the curve
+constexpr int TUBE_RINGS = 100; // rings along the curve
+constexpr int TUBE_SIDES = 10; // vertices around a ring
+constexpr float PROJECTION_SCALE = 62.0f; // pixels per model unit
+constexpr double ROTATION_SPEED_X = 0.7; // radians a second
+constexpr double ROTATION_SPEED_Y = 1.1;
+constexpr double ROTATION_SPEED_Z = 0.4;
 
 static int TubeVertex(int ring, int side)
 {

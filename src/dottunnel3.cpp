@@ -39,17 +39,17 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TUNNEL_RINGS 128 // depth slices between the eye and the mouth
-#define RING_DOTS 64 // dots around a ring
-#define RING_WIDTH 50 // semi axes of a ring at the mouth
-#define RING_HEIGHT 37 // 31 on the original's 200 rows, scaled by 240/200 so the ellipse keeps its share of the frame
-#define TUNNEL_SHADES 16 // palette entries the depth shading steps over
-#define TUNNEL_BAND 5 // rings drawn, then the same number skipped
-#define TUNNEL_SWAY 50 // how far the center line wanders off the axis
-#define TUNNEL_SPEED 30 // angle units a second the path is walked, one ring per step at 60 Hz
-#define TUNNEL_LAG 0.5 // angle units of path between one ring and the next
-#define TUNNEL_XPHASE (RETRO_ANGLES_PER_TURN / 8.0) // offset that keeps the figure from opening on a crossing
-#define TUNNEL_PERIOD (5 * RETRO_ANGLES_PER_TURN) // five turns of the figure, the shortest span the bands also close over
+constexpr int TUNNEL_RINGS = 128; // depth slices between the eye and the mouth
+constexpr int RING_DOTS = 64; // dots around a ring
+constexpr int RING_WIDTH = 50; // semi axes of a ring at the mouth
+constexpr int RING_HEIGHT = 37; // 31 on the original's 200 rows, scaled by 240/200 so the ellipse keeps its share of the frame
+constexpr int TUNNEL_SHADES = 16; // palette entries the depth shading steps over
+constexpr int TUNNEL_BAND = 5; // rings drawn, then the same number skipped
+constexpr int TUNNEL_SWAY = 50; // how far the center line wanders off the axis
+constexpr int TUNNEL_SPEED = 30; // angle units a second the path is walked, one ring per step at 60 Hz
+constexpr double TUNNEL_LAG = 0.5; // angle units of path between one ring and the next
+constexpr double TUNNEL_XPHASE = RETRO_ANGLES_PER_TURN / 8.0; // offset that keeps the figure from opening on a crossing
+constexpr int TUNNEL_PERIOD = 5 * RETRO_ANGLES_PER_TURN; // five turns of the figure, the shortest span the bands also close over
 
 static double RingX[RING_DOTS];
 static double RingY[RING_DOTS];

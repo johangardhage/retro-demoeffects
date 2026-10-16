@@ -20,23 +20,23 @@
 // default. Below about 24 a finely detailed bump map breaks a highlight up
 // rather than roughening it. G is a height in the bump map's own units and has
 // nothing to do with bumpmapheight, which is that map's number of rows.
-#define RETRO_BUMP_GRAZING 32
-#define RETRO_ENVMAP_SIZE 256
+constexpr int RETRO_BUMP_GRAZING = 32;
+constexpr int RETRO_ENVMAP_SIZE = 256;
 
 // The loaders scale a model's UVs by this, so they come out as texels of a map this
 // wide. It is also the default texture, bump and stencil map size, but the renderers
 // stride each map by the model's own width, so a model given a map of another size
 // sets that width and rescales its UVs to match.
-#define RETRO_TEXMAP_SIZE 256
+constexpr int RETRO_TEXMAP_SIZE = 256;
 
-#define RETRO_MAX_VERTICES 1000
-#define RETRO_MAX_UVS 1000
-#define RETRO_MAX_NORMALS 1500 // a two sided mesh needs one per side of a vertex
-#define RETRO_MAX_FACES 2000
-#define RETRO_MAX_FACEVERTICES 5
-#define RETRO_MAX_MATERIALS 16
-#define RETRO_MATERIAL_NAME 32 // the longest material name, with its terminator
-#define RETRO_MAX_MODELS 32 // a demo can hold several models at once, as it can images; a
+constexpr int RETRO_MAX_VERTICES = 1000;
+constexpr int RETRO_MAX_UVS = 1000;
+constexpr int RETRO_MAX_NORMALS = 1500; // a two sided mesh needs one per side of a vertex
+constexpr int RETRO_MAX_FACES = 2000;
+constexpr int RETRO_MAX_FACEVERTICES = 5;
+constexpr int RETRO_MAX_MATERIALS = 16;
+constexpr int RETRO_MATERIAL_NAME = 32; // the longest material name, with its terminator
+constexpr int RETRO_MAX_MODELS = 32; // a demo can hold several models at once, as it can images; a
 									// per-character glyph cache is the heaviest current user
 
 struct Vertex {
@@ -86,7 +86,7 @@ struct Face {
 // ceiling. RETRO_DrawGlenzPolygon clamps to this unless a model sets a
 // lower GlenzLighting::colormax, so a triple overlap fills a chosen shade
 // instead of walking into white.
-#define RETRO_GLENZ_COLORMAX_DEFAULT (RETRO_COLORS - 1)
+constexpr int RETRO_GLENZ_COLORMAX_DEFAULT = RETRO_COLORS - 1;
 
 // Configuration for the Glenz renderer. The flat-shading fields set how a
 // face is lit: the default signed falloff lets rear faces shade below their

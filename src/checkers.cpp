@@ -14,10 +14,10 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define CHECKER_LAYERS 24
-#define CHECKER_SPACING 0.72
-#define CHECKER_FOCAL 180.0
-#define CHECKER_COLORS 8
+constexpr int CHECKER_LAYERS = 24;
+constexpr double CHECKER_SPACING = 0.72;
+constexpr double CHECKER_FOCAL = 180.0;
+constexpr int CHECKER_COLORS = 8;
 
 // The boards fade from each of these colors to the next
 static const RETRO_Palette Colors[CHECKER_COLORS] = {

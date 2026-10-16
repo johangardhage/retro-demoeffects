@@ -51,19 +51,19 @@
 #include "lib/retromatrix.h"
 #include "lib/retroshadetable.h"
 
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 256
-#define TEXTURE_TURNS 3 // times the texture goes around the tube
-#define TEXTURE_LENGTH 2.0f // length of tube a texture covers
-#define TUNNEL_RADIUS 1.0f
-#define TUNNEL_SWAY 0.45f // how far from the axis the camera flies
-#define TUNNEL_SWAY_SPEED 0.9 // radians per second it goes round the axis at
-#define TUNNEL_SPEED 1.6 // length of tube flown per second
-#define TUNNEL_FOG 6.0f // how far off the wall is black
-#define TUNNEL_FOG_SHADES 32 // steps from black to full color
-#define FOCAL (RETRO_WIDTH / 2) // pixels from the eye to the screen
-#define ROTATION_SPEED_Y 0.5 // radians per second
-#define ROTATION_SPEED_Z 0.17
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 256;
+constexpr int TEXTURE_TURNS = 3; // times the texture goes around the tube
+constexpr float TEXTURE_LENGTH = 2.0f; // length of tube a texture covers
+constexpr float TUNNEL_RADIUS = 1.0f;
+constexpr float TUNNEL_SWAY = 0.45f; // how far from the axis the camera flies
+constexpr double TUNNEL_SWAY_SPEED = 0.9; // radians per second it goes round the axis at
+constexpr double TUNNEL_SPEED = 1.6; // length of tube flown per second
+constexpr float TUNNEL_FOG = 6.0f; // how far off the wall is black
+constexpr int TUNNEL_FOG_SHADES = 32; // steps from black to full color
+constexpr int FOCAL = RETRO_WIDTH / 2; // pixels from the eye to the screen
+constexpr double ROTATION_SPEED_Y = 0.5; // radians per second
+constexpr double ROTATION_SPEED_Z = 0.17;
 
 static unsigned char FogTable[RETRO_COLORS * TUNNEL_FOG_SHADES];
 

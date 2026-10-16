@@ -45,45 +45,45 @@
 #include "lib/retromatrix.h"
 #include "lib/retrorender.h"
 
-#define FOCAL 512.0f                       // the eye's distance from the screen, in pixels
-#define MAP_SIZE 256                       // the lighting maps' width and height
-#define TORSO_MAP_RADIUS 64                // the torso's and the ring's reach from the map's middle
-#define KNOT_MAP_RADIUS 128                // the knot's reach from the map's middle
-#define OFFSET_MAP_WIDTH 128               // the offset map's width, two bytes a texel
-#define SHADOW_ROWS 16                     // rows of the torso's map the shadow covers
-#define SHADOW_TOP 136                     // the shadow's first row, less the ring's height
-#define SHADOW_REACH 100                   // the ring's height beyond which it casts no shadow
-#define SHADOW_OFFSET 32                   // the shaded metal is 32 entries past the lit
+constexpr float FOCAL = 512.0f;            // the eye's distance from the screen, in pixels
+constexpr int MAP_SIZE = 256;              // the lighting maps' width and height
+constexpr int TORSO_MAP_RADIUS = 64;       // the torso's and the ring's reach from the map's middle
+constexpr int KNOT_MAP_RADIUS = 128;       // the knot's reach from the map's middle
+constexpr int OFFSET_MAP_WIDTH = 128;      // the offset map's width, two bytes a texel
+constexpr int SHADOW_ROWS = 16;            // rows of the torso's map the shadow covers
+constexpr int SHADOW_TOP = 136;            // the shadow's first row, less the ring's height
+constexpr int SHADOW_REACH = 100;          // the ring's height beyond which it casts no shadow
+constexpr int SHADOW_OFFSET = 32;          // the shaded metal is 32 entries past the lit
 
 // Eye distances n pixels span at depth z, for placing things just off screen
 #define PIXELS(n, z) ((n) * ((z) + 1) / FOCAL)
 
-#define NECK_HEIGHT 2.0f                   // eye distances the neck's top is above the torso's middle
-#define NECK_DEPTH 0.25f                   // and at most behind it, as the torso starts turned away
-#define TORSO_REACH 2.2f                   // eye distances the ring reaches across from the torso's axis, circling it
-#define TORSO_NEAR 7.7f                    // the torso's depth as it rises
-#define TORSO_FAR 8.0f                     // and once the knot is in
-#define TORSO_BELOW (NECK_HEIGHT + PIXELS(RETRO_HEIGHT / 2, TORSO_NEAR + NECK_DEPTH)) // the height it rises from, the neck's top on the bottom edge
-#define TORSO_LEAVES (-(TORSO_REACH + PIXELS(RETRO_WIDTH / 2, TORSO_FAR))) // where it leaves to, past the left edge with its ring
-#define SPIN_START 2.3f                    // the time the torso has risen and starts to spin
-#define SPIN_SPEED -74.0f                  // degrees a second it spins
-#define ROCK_START 7.1f                    // the time it starts to rock and the ring to circle it
-#define ROCK_ANGLE 22.5f                   // degrees it rocks either way
-#define ROCK_PERIOD 0.9f                   // seconds a rock takes
+constexpr float NECK_HEIGHT = 2.0f;        // eye distances the neck's top is above the torso's middle
+constexpr float NECK_DEPTH = 0.25f;        // and at most behind it, as the torso starts turned away
+constexpr float TORSO_REACH = 2.2f;        // eye distances the ring reaches across from the torso's axis, circling it
+constexpr float TORSO_NEAR = 7.7f;         // the torso's depth as it rises
+constexpr float TORSO_FAR = 8.0f;          // and once the knot is in
+constexpr float TORSO_BELOW = NECK_HEIGHT + PIXELS(RETRO_HEIGHT / 2, TORSO_NEAR + NECK_DEPTH); // the height it rises from, the neck's top on the bottom edge
+constexpr float TORSO_LEAVES = -(TORSO_REACH + PIXELS(RETRO_WIDTH / 2, TORSO_FAR)); // where it leaves to, past the left edge with its ring
+constexpr float SPIN_START = 2.3f;         // the time the torso has risen and starts to spin
+constexpr float SPIN_SPEED = -74.0f;       // degrees a second it spins
+constexpr float ROCK_START = 7.1f;         // the time it starts to rock and the ring to circle it
+constexpr float ROCK_ANGLE = 22.5f;        // degrees it rocks either way
+constexpr float ROCK_PERIOD = 0.9f;        // seconds a rock takes
 
-#define RING_STEP 0.053f                   // eye distances the ring moves for a row of its shadow
-#define BOB_START 4.3f                     // the time the ring has landed and starts to bob
-#define BOB_ROWS 32                        // rows it bobs either way, and is from its place as it slows to land
-#define BOB_PERIOD 3.7f                    // seconds a bob takes
-#define CIRCLE_RADIUS 0.43f                // eye distances it swings off the torso's axis, circling twice a rock
+constexpr float RING_STEP = 0.053f;        // eye distances the ring moves for a row of its shadow
+constexpr float BOB_START = 4.3f;          // the time the ring has landed and starts to bob
+constexpr int BOB_ROWS = 32;               // rows it bobs either way, and is from its place as it slows to land
+constexpr float BOB_PERIOD = 3.7f;         // seconds a bob takes
+constexpr float CIRCLE_RADIUS = 0.43f;     // eye distances it swings off the torso's axis, circling twice a rock
 
-#define KNOT_RADIUS 2.86f                  // eye distances the knot reaches from its middle, whichever way it turns
-#define KNOT_FAR 20.0f                     // its depth as it flies in
-#define KNOT_NEAR 8.3f                     // and once it is in
-#define KNOT_OUTSIDE (-(KNOT_RADIUS + PIXELS(RETRO_WIDTH / 2, KNOT_FAR))) // where it flies in from, past the left edge
-#define KNOT_LEAVES (KNOT_RADIUS + PIXELS(RETRO_WIDTH / 2, KNOT_NEAR)) // and leaves to, past the right edge
-#define KNOT_START 9.0f                    // the time it flies in at
-#define TUMBLE_SPEED vec3{ 6.0f, -43.0f, -18.5f } // degrees a second it pitches, yaws and rolls
+constexpr float KNOT_RADIUS = 2.86f;       // eye distances the knot reaches from its middle, whichever way it turns
+constexpr float KNOT_FAR = 20.0f;          // its depth as it flies in
+constexpr float KNOT_NEAR = 8.3f;          // and once it is in
+constexpr float KNOT_OUTSIDE = -(KNOT_RADIUS + PIXELS(RETRO_WIDTH / 2, KNOT_FAR)); // where it flies in from, past the left edge
+constexpr float KNOT_LEAVES = KNOT_RADIUS + PIXELS(RETRO_WIDTH / 2, KNOT_NEAR); // and leaves to, past the right edge
+constexpr float KNOT_START = 9.0f;         // the time it flies in at
+constexpr vec3 TUMBLE_SPEED = { 6.0f, -43.0f, -18.5f }; // degrees a second it pitches, yaws and rolls
 
 // Where the torso is, the ring's height on it in rows of its shadow, and where
 // the knot is, at a time. Between two keyframes everything moves in a
@@ -109,7 +109,7 @@ static const Keyframe Keyframes[] = {
 	{ 35.0f, { TORSO_LEAVES, 0, TORSO_FAR }, 0, { KNOT_LEAVES, 0, KNOT_NEAR } },
 };
 
-#define KEYFRAMES (int)(sizeof(Keyframes) / sizeof(Keyframes[0]))
+constexpr int KEYFRAMES = (int)(sizeof(Keyframes) / sizeof(Keyframes[0]));
 
 // The torso and its ring at a moment: where the torso is, its pitch and yaw,
 // and where the ring is on it, turned with it

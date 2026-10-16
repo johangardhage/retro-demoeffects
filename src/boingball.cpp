@@ -37,29 +37,31 @@
 #include "lib/retropalette.h"
 #include "lib/retrogfx.h"
 
-#define BOING_MERIDIANS 16 // faces around the ball, and columns of checks
-#define BOING_SCALE 45 // a unit sphere comes out this many pixels in radius
-#define BOING_TILT 0.30 // radians the spin axis leans, about z
-#define BOING_SPIN 2.4 // radians a second about that axis
-#define BOING_PERIOD 9.6 // seconds of motion before the phase repeats
-#define BOING_SWEEPS 2 // crossings of the room and back in that time
-#define BOING_BOUNCES 7 // floor bounces in it, coprime with SWEEPS so the landings differ
-#define BOING_CX (RETRO_WIDTH / 2.0)
-#define BOING_AMP 95 // pixels either side of center the ball travels
-#define BOING_FLOOR 190 // screen y of the ball's center when it is on the floor
-#define BOING_HEIGHT 70 // pixels the ball rises at the top of a bounce
-#define BOING_SHADOWX 26 // pixels the shadow sits to the right of the ball
-#define BOING_SHADOWY 14 // and below it
-#define BOING_GRIDX 20 // pixels between the grid's vertical lines
-#define BOING_GRIDY 20 // and its horizontal ones
+constexpr int BOING_MERIDIANS = 16; // faces around the ball, and columns of checks
+constexpr int BOING_SCALE = 45; // a unit sphere comes out this many pixels in radius
+constexpr double BOING_TILT = 0.30; // radians the spin axis leans, about z
+constexpr double BOING_SPIN = 2.4; // radians a second about that axis
+constexpr double BOING_PERIOD = 9.6; // seconds of motion before the phase repeats
+constexpr int BOING_SWEEPS = 2; // crossings of the room and back in that time
+constexpr int BOING_BOUNCES = 7; // floor bounces in it, coprime with SWEEPS so the landings differ
+constexpr double BOING_CX = RETRO_WIDTH / 2.0;
+constexpr int BOING_AMP = 95; // pixels either side of center the ball travels
+constexpr int BOING_FLOOR = 190; // screen y of the ball's center when it is on the floor
+constexpr int BOING_HEIGHT = 70; // pixels the ball rises at the top of a bounce
+constexpr int BOING_SHADOWX = 26; // pixels the shadow sits to the right of the ball
+constexpr int BOING_SHADOWY = 14; // and below it
+constexpr int BOING_GRIDX = 20; // pixels between the grid's vertical lines
+constexpr int BOING_GRIDY = 20; // and its horizontal ones
 
 // Palette. The ball and the shadow are both drawn with face colors 0 and 1,
 // and the model's base color picks which pair those land in, so the shadow is
 // the same two entries set to the same gray
-#define BOING_BACKGROUND 0
-#define BOING_GRID 1
-#define BOING_SHADOW 2 // and 3, the two checks of the shadow, both one color
-#define BOING_BALL 4 // and 5, the white check and the red one
+enum {
+	BOING_BACKGROUND,
+	BOING_GRID,
+	BOING_SHADOW, // and 3, the two checks of the shadow, both one color
+	BOING_BALL = 4 // and 5, the white check and the red one
+};
 
 void DEMO_Render(RETRO_Time time)
 {

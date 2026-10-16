@@ -20,23 +20,23 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define FLAG_SUBDIV 2 // quads per cell of the flag, as the asset was built
-#define FLAG_COLS (16 * FLAG_SUBDIV) // the flag is 16 cells across, per SFS 1982:269
-#define FLAG_SPAN 1.6 // the asset's own size, 16:10
-#define FLAG_DROP 1.0
-#define FLAG_SCALE 125 // pixels a model unit covers at the depth the flag hangs at
-#define FLAG_AMP 0.34 // model units the fly throws, at the crest
-#define FLAG_HALF 0.6 // the second mode, against the first
-#define FLAG_RATEU 300 // table units the first mode turns across the flag
-#define FLAG_RATEV 60 // and down it
-#define FLAG_RATEU2 500 // and the second mode, across
-#define FLAG_SPEED 55 // table units a second
-#define FLAG_SWAY 0.55 // radians of yaw the flag swings through
-#define FLAG_SWAYSPEED 13 // table units a second
-#define FLAG_TILTX 0.12 // radians the view leans, fixed
-#define FLAG_TILTY 0.40
-#define FLAG_BLUE 1 // the two colors of the flag, past the background
-#define FLAG_GOLD 2
+constexpr int FLAG_SUBDIV = 2; // quads per cell of the flag, as the asset was built
+constexpr int FLAG_COLS = 16 * FLAG_SUBDIV; // the flag is 16 cells across, per SFS 1982:269
+constexpr double FLAG_SPAN = 1.6; // the asset's own size, 16:10
+constexpr double FLAG_DROP = 1.0;
+constexpr int FLAG_SCALE = 125; // pixels a model unit covers at the depth the flag hangs at
+constexpr double FLAG_AMP = 0.34; // model units the fly throws, at the crest
+constexpr double FLAG_HALF = 0.6; // the second mode, against the first
+constexpr int FLAG_RATEU = 300; // table units the first mode turns across the flag
+constexpr int FLAG_RATEV = 60; // and down it
+constexpr int FLAG_RATEU2 = 500; // and the second mode, across
+constexpr int FLAG_SPEED = 55; // table units a second
+constexpr double FLAG_SWAY = 0.55; // radians of yaw the flag swings through
+constexpr int FLAG_SWAYSPEED = 13; // table units a second
+constexpr double FLAG_TILTX = 0.12; // radians the view leans, fixed
+constexpr double FLAG_TILTY = 0.40;
+constexpr int FLAG_BLUE = 1; // the two colors of the flag, past the background
+constexpr int FLAG_GOLD = 2;
 
 void DEMO_Render(RETRO_Time time)
 {

@@ -26,11 +26,11 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define NUM_BLOBS 160
-#define BLOB_RADIUS 20
-#define BLOB_SIZE (BLOB_RADIUS * 2 + 1) // odd, so the peak lands on an exact center pixel
-#define BLOB_PEAK 80 // peak of one kernel; three overlaps almost fill the ramp, four saturate
-#define BLOB_STEP 2 // maximum walk on one axis per simulation step
+constexpr int NUM_BLOBS = 160;
+constexpr int BLOB_RADIUS = 20;
+constexpr int BLOB_SIZE = BLOB_RADIUS * 2 + 1; // odd, so the peak lands on an exact center pixel
+constexpr int BLOB_PEAK = 80; // peak of one kernel; three overlaps almost fill the ramp, four saturate
+constexpr int BLOB_STEP = 2; // maximum walk on one axis per simulation step
 
 static unsigned char BlobShape[BLOB_SIZE * BLOB_SIZE];
 static ivec2 BlobPositions[NUM_BLOBS];

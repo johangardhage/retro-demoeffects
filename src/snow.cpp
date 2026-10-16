@@ -39,25 +39,25 @@
 #include "lib/retrofont.h"
 #include "lib/retropalette.h"
 
-#define FLAKES 900
-#define SNOW_MINSPEED 12.0f // pixels a second, farthest layer
-#define SNOW_MAXSPEED 46.0f // nearest layer
-#define SNOW_SWAY 10.0 // pixels a second of each flake's own sway
-#define SNOW_WIND 28.0 // pixels a second, the gusts' strength
-#define SNOW_SETTLE 0.6 // flakes nearer than this land
-#define SNOW_MELT 50.0 // columns a second whose top is tested for melting
-#define SNOW_DEPTH 16.0 // depth of snow that melts one cell, on average, per test
-#define GROUND_HEIGHT 14 // pixels of ground at its lowest
-#define LOGO_TEXT "RETRO"
-#define LOGO_SCALE 6 // pixels per font pixel
-#define LOGO_Y 90 // top of the logo
-#define SKY 0 // palette ranges
-#define SKY_COLORS 64
-#define FLAKE SKY_COLORS
-#define FLAKE_COLORS 16
-#define GROUND (FLAKE + FLAKE_COLORS)
-#define LOGO (GROUND + 1)
-#define SNOW (LOGO + 1)
+constexpr int FLAKES = 900;
+constexpr float SNOW_MINSPEED = 12.0f; // pixels a second, farthest layer
+constexpr float SNOW_MAXSPEED = 46.0f; // nearest layer
+constexpr double SNOW_SWAY = 10.0; // pixels a second of each flake's own sway
+constexpr double SNOW_WIND = 28.0; // pixels a second, the gusts' strength
+constexpr double SNOW_SETTLE = 0.6; // flakes nearer than this land
+constexpr double SNOW_MELT = 50.0; // columns a second whose top is tested for melting
+constexpr double SNOW_DEPTH = 16.0; // depth of snow that melts one cell, on average, per test
+constexpr int GROUND_HEIGHT = 14; // pixels of ground at its lowest
+constexpr char LOGO_TEXT[] = "RETRO";
+constexpr int LOGO_SCALE = 6; // pixels per font pixel
+constexpr int LOGO_Y = 90; // top of the logo
+constexpr int SKY = 0; // palette ranges
+constexpr int SKY_COLORS = 64;
+constexpr int FLAKE = SKY_COLORS;
+constexpr int FLAKE_COLORS = 16;
+constexpr int GROUND = FLAKE + FLAKE_COLORS;
+constexpr int LOGO = GROUND + 1;
+constexpr int SNOW = LOGO + 1;
 
 enum { EMPTY, SOLID, SETTLED };
 

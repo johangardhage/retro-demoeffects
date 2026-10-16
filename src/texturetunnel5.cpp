@@ -14,9 +14,9 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TEXTURE_SIZE 64
-#define WALL_TILES 32
-#define SCROLL_SPEED 576.0f
+constexpr int TEXTURE_SIZE = 64;
+constexpr int WALL_TILES = 32;
+constexpr float SCROLL_SPEED = 576.0f;
 
 struct TunnelPixel {
 	unsigned short u, v;

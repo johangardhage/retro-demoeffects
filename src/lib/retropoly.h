@@ -68,7 +68,7 @@ struct RETRO_Light {
 	bool on = true;				// Switched off, it stays in the rig but lights nothing
 };
 
-#define RETRO_MAX_LIGHTS 4
+constexpr int RETRO_MAX_LIGHTS = 4;
 
 // The lights a model is shaded by, which several models can share. The
 // renderers that add light up - dots, flat, Gouraud, Phong and the texture

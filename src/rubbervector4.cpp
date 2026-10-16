@@ -32,13 +32,13 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define RUBBER_COPIES 24     // retained cube images, one per simulation step: 0.4s of rotation
-#define ROTATION_SPEED 1.1f  // cube rotation in radians per second
-#define RUBBER_SPEED 2.2f    // vertical selection wave speed
-#define RUBBER_WAVES 1.75f   // waves over the height of the screen
-#define MAX_LINE_SPANS 6     // a projected convex cube normally needs at most three
-#define RUBBER_RAMP 1        // where the first ramp starts, past the background
-#define RUBBER_SHADES ((RETRO_COLORS - RUBBER_RAMP) / 3) // palette entries a face color's ramp
+constexpr int RUBBER_COPIES = 24;      // retained cube images, one per simulation step: 0.4s of rotation
+constexpr float ROTATION_SPEED = 1.1f; // cube rotation in radians per second
+constexpr float RUBBER_SPEED = 2.2f;   // vertical selection wave speed
+constexpr float RUBBER_WAVES = 1.75f;  // waves over the height of the screen
+constexpr int MAX_LINE_SPANS = 6;      // a projected convex cube normally needs at most three
+constexpr int RUBBER_RAMP = 1;         // where the first ramp starts, past the background
+constexpr int RUBBER_SHADES = (RETRO_COLORS - RUBBER_RAMP) / 3; // palette entries a face color's ramp
                              // covers, the three sharing everything past the background
 
 static Model3D *Cube;

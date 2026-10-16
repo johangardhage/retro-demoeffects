@@ -28,18 +28,18 @@
 #include "lib/retropalette.h"
 #include "lib/retromath.h"
 
-#define DEPTH 11 // levels of branches, the trunk included
-#define TRUNK_LENGTH 50.0f // pixels
-#define SHRINK 0.74f // length of a child relative to its parent
-#define SPREAD radians(24) // turn of a child away from its parent
-#define JITTER 0.25f // largest relative change the hash makes to a branch
-#define SWAY radians(7) // the tips' bend at the peak of a gust
-#define WIND_SPEED 0.35 // gusts a second
-#define WIND_LAG 0.45 // radians of gust phase each level lags the one below
-#define BASE_WIDTH 6 // pixels, the trunk's thickness
-#define TIME_GROW 5.0 // seconds from a seed to the full tree
-#define TIME_HOLD 6.0 // seconds the full tree stands
-#define TIME_CYCLE (2 * TIME_GROW + TIME_HOLD)
+constexpr int DEPTH = 11; // levels of branches, the trunk included
+constexpr float TRUNK_LENGTH = 50.0f; // pixels
+constexpr float SHRINK = 0.74f; // length of a child relative to its parent
+constexpr double SPREAD = radians(24); // turn of a child away from its parent
+constexpr float JITTER = 0.25f; // largest relative change the hash makes to a branch
+constexpr double SWAY = radians(7); // the tips' bend at the peak of a gust
+constexpr double WIND_SPEED = 0.35; // gusts a second
+constexpr double WIND_LAG = 0.45; // radians of gust phase each level lags the one below
+constexpr int BASE_WIDTH = 6; // pixels, the trunk's thickness
+constexpr double TIME_GROW = 5.0; // seconds from a seed to the full tree
+constexpr double TIME_HOLD = 6.0; // seconds the full tree stands
+constexpr double TIME_CYCLE = 2 * TIME_GROW + TIME_HOLD;
 
 static float Sway[DEPTH];
 static float Growth;

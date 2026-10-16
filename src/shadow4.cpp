@@ -63,35 +63,35 @@
 #define WORLD(units) ((units) * (16 - 1) / 1000.0f)
 #define TO_WORLD(cells) ((cells) * 1000.0f / (16 - 1))
 
-#define TERRAIN_SCALE WORLD(700.0f / 255) // map cells of height per stored byte
+constexpr float TERRAIN_SCALE = WORLD(700.0f / 255); // map cells of height per stored byte
 
-#define AMBIENT_LIGHT (100 / 256.0f)
-#define INFINITE_LIGHT (100 / 256.0f)
-#define POINT_LIGHT (255 / 256.0f)
-#define POINT_LIGHT_RED_KL 0.002f // attenuation per world unit
-#define POINT_LIGHT_GREEN_KL 0.001f
-#define POINT_LIGHT_RATE radians(30) // radians a second round the world
-#define POINT_LIGHT_RED_ORBIT WORLD(200) // radius about the world's center, circled twice as fast as green the other way
-#define POINT_LIGHT_GREEN_ORBIT WORLD(500)
-#define POINT_LIGHT_ALTITUDE WORLD(500) // where both start
-#define POINT_LIGHT_RAISE WORLD(300) // a second, while 1 to 4 is held
-#define POINT_LIGHT_TOP WORLD(2000) // the highest 1 to 4 raise a light, and the ground's base the lowest
-#define LIGHT_LEVELS 32 // neutral light, in the tables
-#define TINT_LEVELS 8 // and each point light's color beyond it
+constexpr float AMBIENT_LIGHT = 100 / 256.0f;
+constexpr float INFINITE_LIGHT = 100 / 256.0f;
+constexpr float POINT_LIGHT = 255 / 256.0f;
+constexpr float POINT_LIGHT_RED_KL = 0.002f; // attenuation per world unit
+constexpr float POINT_LIGHT_GREEN_KL = 0.001f;
+constexpr double POINT_LIGHT_RATE = radians(30); // radians a second round the world
+constexpr float POINT_LIGHT_RED_ORBIT = WORLD(200); // radius about the world's center, circled twice as fast as green the other way
+constexpr float POINT_LIGHT_GREEN_ORBIT = WORLD(500);
+constexpr float POINT_LIGHT_ALTITUDE = WORLD(500); // where both start
+constexpr float POINT_LIGHT_RAISE = WORLD(300); // a second, while 1 to 4 is held
+constexpr float POINT_LIGHT_TOP = WORLD(2000); // the highest 1 to 4 raise a light, and the ground's base the lowest
+constexpr int LIGHT_LEVELS = 32; // neutral light, in the tables
+constexpr int TINT_LEVELS = 8; // and each point light's color beyond it
 
-#define OBJECT_SCALE WORLD(20)
-#define OBJECT_ALTITUDE WORLD(200) // over the world's center
-#define OBJECT_RATE radians(300) // radians a second it spins
-#define LIGHT_OBJECT_SCALE WORLD(10)
+constexpr float OBJECT_SCALE = WORLD(20);
+constexpr float OBJECT_ALTITUDE = WORLD(200); // over the world's center
+constexpr double OBJECT_RATE = radians(300); // radians a second it spins
+constexpr float LIGHT_OBJECT_SCALE = WORLD(10);
 
-#define TEXTURE_SIZE 256 // every texture, on a side
+constexpr int TEXTURE_SIZE = 256; // every texture, on a side
 
-#define LIGHTMAPS 9 // the fan's shadow, one after the other in their image
-#define LIGHTMAP_TURN radians(10) // radians the fan turns from one to the next
-#define NO_LIGHTMAP -1
+constexpr int LIGHTMAPS = 9; // the fan's shadow, one after the other in their image
+constexpr double LIGHTMAP_TURN = radians(10); // radians the fan turns from one to the next
+constexpr int NO_LIGHTMAP = -1;
 
-#define PALETTE_TURNS 8 // points round the point lights' paths the palette is fitted at
-#define OBJECT_WEIGHT (1 / 8.0f) // an object texture's say in the palette, beside the ground's
+constexpr int PALETTE_TURNS = 8; // points round the point lights' paths the palette is fitted at
+constexpr float OBJECT_WEIGHT = 1 / 8.0f; // an object texture's say in the palette, beside the ground's
 
 enum { ASSET_TERRAIN, ASSET_LIGHTMAPS };
 enum { MODEL_FAN, MODEL_CUBE, MODELS };
@@ -115,7 +115,7 @@ static float LightWeight[LIGHT_LEVELS * TINT_LEVELS * TINT_LEVELS]; // how often
 // The colors drawn besides the textures, held in the palette exactly
 static const RETRO_Palette CubeGreen = { 0, 255, 10 }, CubeRed = { 255, 0, 0 }, Sky = { 50, 50, 200 }, Ground = { 25, 50, 110 };
 static const RETRO_Palette Held[] = { RETRO_BLACK, RETRO_GREEN, RETRO_WHITE, CubeGreen, CubeRed, Sky, Ground };
-#define HELD (int)(sizeof(Held) / sizeof(Held[0]))
+constexpr int HELD = (int)(sizeof(Held) / sizeof(Held[0]));
 
 // The point lights, placed each frame, and the sun, the infinite light,
 // toward it. All are in the world, in map cells, where a point light d cells

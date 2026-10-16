@@ -36,20 +36,20 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define GRID_WIDTH (RETRO_WIDTH / 2) // interior cells across
-#define GRID_HEIGHT (RETRO_HEIGHT / 2) // interior cells down
-#define GRID_STRIDE (GRID_WIDTH + 2) // one wall cell each side
-#define GRID_SIZE (GRID_STRIDE * (GRID_HEIGHT + 2))
+constexpr int GRID_WIDTH = RETRO_WIDTH / 2; // interior cells across
+constexpr int GRID_HEIGHT = RETRO_HEIGHT / 2; // interior cells down
+constexpr int GRID_STRIDE = GRID_WIDTH + 2; // one wall cell each side
+constexpr int GRID_SIZE = GRID_STRIDE * (GRID_HEIGHT + 2);
 
-#define EMIT_RADIUS 4.0f // cells, the 1/e radius of a nozzle
-#define EMIT_SPEED 70.0f // cells per second along the jet
-#define EMIT_DENSITY 0.35f // added at a nozzle's center each step
-#define EMIT_SWING 0.6f // radians the jet swings either side of vertical
-#define EMIT_PERIOD 9.0 // seconds for the slower nozzle's swing
-#define BUOYANCY 30.0f // upward acceleration per unit of density
-#define CONFINEMENT 12.0f // strength of the vorticity confinement
-#define PROJECT_ITERATIONS 20 // Gauss-Seidel sweeps of the pressure solve
-#define DENSITY_KEEP 0.992f // kept per step, so how fast smoke thins out
+constexpr float EMIT_RADIUS = 4.0f; // cells, the 1/e radius of a nozzle
+constexpr float EMIT_SPEED = 70.0f; // cells per second along the jet
+constexpr float EMIT_DENSITY = 0.35f; // added at a nozzle's center each step
+constexpr float EMIT_SWING = 0.6f; // radians the jet swings either side of vertical
+constexpr double EMIT_PERIOD = 9.0; // seconds for the slower nozzle's swing
+constexpr float BUOYANCY = 30.0f; // upward acceleration per unit of density
+constexpr float CONFINEMENT = 12.0f; // strength of the vorticity confinement
+constexpr int PROJECT_ITERATIONS = 20; // Gauss-Seidel sweeps of the pressure solve
+constexpr float DENSITY_KEEP = 0.992f; // kept per step, so how fast smoke thins out
 
 enum { BOUNDARY_SCALAR, BOUNDARY_U, BOUNDARY_V };
 

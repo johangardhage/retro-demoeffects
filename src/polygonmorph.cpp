@@ -82,33 +82,33 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define ROTATION_SPEED 0.9f // radians a second, about the middle axis
-#define ROTATION_SPREAD 0.3f // the other two turn this much slower and faster
+constexpr float ROTATION_SPEED = 0.9f; // radians a second, about the middle axis
+constexpr float ROTATION_SPREAD = 0.3f; // the other two turn this much slower and faster
 
-#define SPHERE_RADIUS 1.3f
-#define STAR_RADIUS 1.8f // distance from the center to a spike's tip
-#define STAR_SPIKE 0.55f // fraction of STAR_RADIUS the spikes stand out
-#define STAR_SHARPNESS 6.0f // how narrow the spikes are
-#define ROUNDED_SIZE 1.2f // distance from the center to a flat side
-#define ROUNDED_RADIUS (4.0f / 7) // of the edges and corners, two of a side's seven quads
-#define SAUCER_RADIUS 1.8f
-#define SAUCER_RIM 0.1f // half the height of the rim
-#define SAUCER_DOME 0.55f // height of a dome above the rim
-#define CAPSULE_RADIUS 0.85f
-#define CAPSULE_HEIGHT 0.9f // half the height of the wall, between the two domes
-#define CAPSULE_CORE (3.0f / 7) // part of a side that becomes the wall, the middle three of its seven quads
-#define CYLINDER_RADIUS 1.15f
-#define CYLINDER_HEIGHT 1.25f // half of it, as a multiple of the cube's
-#define BARREL_END 0.7f // fraction of the radius left at the top and bottom
-#define HOURGLASS_WAIST 0.35f // fraction of the radius left at the middle
-#define BUCKET_TAPER 0.35f // fraction of the radius gained at the top and lost at the bottom
-#define TWIST_ANGLE (M_PI / 4) // turn at the top, and the opposite at the bottom
-#define PINCHED_SIZE 1.2f // distance from the center to an edge, as a multiple of the cube's
-#define PINCHED_DEPTH 0.5f // fraction of the way to the center the middle of a side sinks
+constexpr float SPHERE_RADIUS = 1.3f;
+constexpr float STAR_RADIUS = 1.8f; // distance from the center to a spike's tip
+constexpr float STAR_SPIKE = 0.55f; // fraction of STAR_RADIUS the spikes stand out
+constexpr float STAR_SHARPNESS = 6.0f; // how narrow the spikes are
+constexpr float ROUNDED_SIZE = 1.2f; // distance from the center to a flat side
+constexpr float ROUNDED_RADIUS = 4.0f / 7; // of the edges and corners, two of a side's seven quads
+constexpr float SAUCER_RADIUS = 1.8f;
+constexpr float SAUCER_RIM = 0.1f; // half the height of the rim
+constexpr float SAUCER_DOME = 0.55f; // height of a dome above the rim
+constexpr float CAPSULE_RADIUS = 0.85f;
+constexpr float CAPSULE_HEIGHT = 0.9f; // half the height of the wall, between the two domes
+constexpr float CAPSULE_CORE = 3.0f / 7; // part of a side that becomes the wall, the middle three of its seven quads
+constexpr float CYLINDER_RADIUS = 1.15f;
+constexpr float CYLINDER_HEIGHT = 1.25f; // half of it, as a multiple of the cube's
+constexpr float BARREL_END = 0.7f; // fraction of the radius left at the top and bottom
+constexpr float HOURGLASS_WAIST = 0.35f; // fraction of the radius left at the middle
+constexpr float BUCKET_TAPER = 0.35f; // fraction of the radius gained at the top and lost at the bottom
+constexpr double TWIST_ANGLE = M_PI / 4; // turn at the top, and the opposite at the bottom
+constexpr float PINCHED_SIZE = 1.2f; // distance from the center to an edge, as a multiple of the cube's
+constexpr float PINCHED_DEPTH = 0.5f; // fraction of the way to the center the middle of a side sinks
 
-#define TIME_HOLD 1.2 // seconds a shape is held
-#define TIME_MORPH 1.6 // seconds a morph takes
-#define TIME_SHAPE (TIME_HOLD + TIME_MORPH)
+constexpr double TIME_HOLD = 1.2; // seconds a shape is held
+constexpr double TIME_MORPH = 1.6; // seconds a morph takes
+constexpr double TIME_SHAPE = TIME_HOLD + TIME_MORPH;
 
 enum Shape {
 	SHAPE_CUBE,

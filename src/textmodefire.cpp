@@ -47,15 +47,15 @@
 #include "lib/retrofont.h"
 #include "lib/retropalette.h"
 
-#define COLUMNS (RETRO_WIDTH / 8) // text cells across
-#define ROWS (RETRO_HEIGHT / 8) // text cells down
-#define RAMP_COLORS 5 // text colors the ramp passes through
-#define SHADES (4 * (RAMP_COLORS - 1) + 1) // entries in the ramp
-#define FIRE_HIDDEN 5 // simulated rows below the screen
-#define FIRE_BED 2 // of those, the rows of fuel at the bottom
-#define FIRE_FUEL 0.6 // probability that a relit coal burns
-#define FIRE_FLICKER 0.15 // probability per step that a column of coals is relit
-#define FIRE_DECAY 4 // subtracted after the average, so how fast a flame dies as it rises
+constexpr int COLUMNS = RETRO_WIDTH / 8; // text cells across
+constexpr int ROWS = RETRO_HEIGHT / 8; // text cells down
+constexpr int RAMP_COLORS = 5; // text colors the ramp passes through
+constexpr int SHADES = 4 * (RAMP_COLORS - 1) + 1; // entries in the ramp
+constexpr int FIRE_HIDDEN = 5; // simulated rows below the screen
+constexpr int FIRE_BED = 2; // of those, the rows of fuel at the bottom
+constexpr double FIRE_FUEL = 0.6; // probability that a relit coal burns
+constexpr double FIRE_FLICKER = 0.15; // probability per step that a column of coals is relit
+constexpr int FIRE_DECAY = 4; // subtracted after the average, so how fast a flame dies as it rises
 
 static const int RampColors[RAMP_COLORS] = { RETRO_TEXT_BLACK, RETRO_TEXT_RED, RETRO_TEXT_LIGHTRED, RETRO_TEXT_YELLOW, RETRO_TEXT_WHITE };
 

@@ -11,14 +11,14 @@
 #include "lib/retrofont.h"
 #include "lib/retrovector.h"
 
-#define GLYPH_WIDTH 256
-#define GLYPH_HEIGHT 128
-#define LETTER_WIDTH 208.0
-#define INK_WIDTH 200.0
-#define SCROLL_SPEED 300.0
-#define BOUNCE_START 5.0
-#define BOUNCE_PERIOD 1.8
-#define SINE_START (BOUNCE_START + BOUNCE_PERIOD)
+constexpr int GLYPH_WIDTH = 256;
+constexpr int GLYPH_HEIGHT = 128;
+constexpr double LETTER_WIDTH = 208.0;
+constexpr double INK_WIDTH = 200.0;
+constexpr double SCROLL_SPEED = 300.0;
+constexpr double BOUNCE_START = 5.0;
+constexpr double BOUNCE_PERIOD = 1.8;
+constexpr double SINE_START = BOUNCE_START + BOUNCE_PERIOD;
 
 static const char ScrollText[] = "RETRO DEMOEFFECTS...   ";
 // Cruiser's blue font from Sanity's World of Commodore 1992 demo.

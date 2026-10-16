@@ -19,8 +19,8 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TWIST_AMOUNT (3.0 * M_PI) // maximum rotation at the center, radians
-#define TWIST_PERIOD 12.0 // seconds for a clockwise/counterclockwise cycle
+constexpr double TWIST_AMOUNT = 3.0 * M_PI; // maximum rotation at the center, radians
+constexpr double TWIST_PERIOD = 12.0; // seconds for a clockwise/counterclockwise cycle
 
 static RETRO_Image *Picture;
 static double Falloff[RETRO_HEIGHT][RETRO_WIDTH];

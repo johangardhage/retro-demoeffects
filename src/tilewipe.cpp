@@ -32,15 +32,15 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TILE_SIZE 16 // pixels on a side, even, so a box grows symmetrically
-#define TILES_X (RETRO_WIDTH / TILE_SIZE)
-#define TILES_Y (RETRO_HEIGHT / TILE_SIZE)
-#define TILES (TILES_X * TILES_Y)
-#define TILE_WINDOW 0.25 // fraction of the pass one tile spends opening
-#define TIME_WIPE 2.5 // seconds a pass takes
-#define TIME_HOLD 0.75 // seconds held on the whole picture or on the curtain
-#define TIME_CYCLE (2 * (TIME_HOLD + TIME_WIPE))
-#define CURTAIN 0 // palette entry an unopened tile leaves behind
+constexpr int TILE_SIZE = 16; // pixels on a side, even, so a box grows symmetrically
+constexpr int TILES_X = RETRO_WIDTH / TILE_SIZE;
+constexpr int TILES_Y = RETRO_HEIGHT / TILE_SIZE;
+constexpr int TILES = TILES_X * TILES_Y;
+constexpr double TILE_WINDOW = 0.25; // fraction of the pass one tile spends opening
+constexpr double TIME_WIPE = 2.5; // seconds a pass takes
+constexpr double TIME_HOLD = 0.75; // seconds held on the whole picture or on the curtain
+constexpr double TIME_CYCLE = 2 * (TIME_HOLD + TIME_WIPE);
+constexpr int CURTAIN = 0; // palette entry an unopened tile leaves behind
 
 enum WipeMode { WIPE_SHUFFLE, WIPE_CHECKERBOARD, WIPE_MODES };
 

@@ -32,7 +32,7 @@
 // actually drawn is the library's draw distance, the same one every landscape
 // here is seen at; this is only the widest one the lists can be filled from,
 // and DEMO_Initialize refuses to start on a view asking for more.
-#define WORLD_MAX_DISTANCE RETRO_TERRAIN_DISTANCE
+constexpr int WORLD_MAX_DISTANCE = RETRO_TERRAIN_DISTANCE;
 
 // Every dot the collector can produce. It scans the square reaching
 // WORLD_MAX_DISTANCE around the camera and looks at each cell in it once, so it
@@ -42,7 +42,7 @@
 // is a range of addresses and a length in the executable, not bytes in the file
 // and not memory; each page becomes real the first time it is written, so the
 // pages past the dots the camera found never cost anything.
-#define MAX_PROJECTED_DOTS ((2 * WORLD_MAX_DISTANCE + 4) * (2 * WORLD_MAX_DISTANCE + 4))
+constexpr int MAX_PROJECTED_DOTS = (2 * WORLD_MAX_DISTANCE + 4) * (2 * WORLD_MAX_DISTANCE + 4);
 
 // The cell a dot came from is what the ray march below walks toward, and the
 // ground height there follows from it, so only the cell is carried.

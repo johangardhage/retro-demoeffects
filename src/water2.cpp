@@ -28,14 +28,14 @@
 #include "lib/retroshadetable.h"
 #include "lib/retrovector.h"
 
-#define WATER_DAMP 0.985 // kept per step, so how slowly a ripple dies
-#define WATER_REFRACT 18.0 // texels a unit slope slides the sample
-#define WATER_DEPTH 40.0 // height subtracted at the center of one droplet
-#define WATER_DROP_STEPS 32 // steps between droplets
-#define WATER_DROP_RADIUS 3 // pixels of the cosine disk
-#define WATER_BUMP (1.0f / 16.0f) // scales the slope into N, so how steep the relief reads
-#define WATER_SHADES 32 // entries in each shade-table ramp
-#define WATER_AMBIENT 0.62f // darkest a texel may be, so troughs do not hole
+constexpr double WATER_DAMP = 0.985; // kept per step, so how slowly a ripple dies
+constexpr double WATER_REFRACT = 18.0; // texels a unit slope slides the sample
+constexpr double WATER_DEPTH = 40.0; // height subtracted at the center of one droplet
+constexpr int WATER_DROP_STEPS = 32; // steps between droplets
+constexpr int WATER_DROP_RADIUS = 3; // pixels of the cosine disk
+constexpr float WATER_BUMP = 1.0f / 16.0f; // scales the slope into N, so how steep the relief reads
+constexpr int WATER_SHADES = 32; // entries in each shade-table ramp
+constexpr float WATER_AMBIENT = 0.62f; // darkest a texel may be, so troughs do not hole
 
 static const vec3 Light = normalize(vec3{ 0.28f, -0.18f, 0.94f }); // from above-left, toward the viewer
 

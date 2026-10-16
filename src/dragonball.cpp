@@ -41,40 +41,40 @@
 #include "lib/retrogfx.h"
 #include "lib/retrovector.h"
 
-#define BALL_RADIUS 70.0f
-#define BALL_APEX 72.0f // center at the top of the bounce
-#define BALL_FLOOR 200.0f // scanline the bottom of the ellipse is pinned to
-#define BALL_RBMIN (30.0f / 65.0f * BALL_RADIUS) // original 30 on a radius of 65
-#define BALL_AIR (BALL_FLOOR - BALL_RADIUS - BALL_APEX) // apex to the contact point
-#define BALL_PENMAX (BALL_RADIUS - BALL_RBMIN) // peak spring compression, pixels
-#define BALL_TDOWN 0.58f // seconds of free fall, and of the rise after takeoff
-#define BALL_G (2.0f * BALL_AIR / (BALL_TDOWN * BALL_TDOWN))
-#define BALL_VHIT (BALL_G * BALL_TDOWN)
-#define BALL_OMEGA (BALL_VHIT / BALL_PENMAX) // contact spring; p_max = v / ω
-#define BALL_TCONTACT ((float)M_PI / BALL_OMEGA)
-#define BALL_PERIOD (2.0f * BALL_TDOWN + BALL_TCONTACT)
-#define BALL_ZETA 0.55f // underdamping of the takeoff oscillator
-#define BALL_WOBBLE_OMEGA (BALL_OMEGA * 1.4f) // faster than contact so the stretch overshoots less
-#define BALL_WD (BALL_WOBBLE_OMEGA * sqrtf(1.0f - BALL_ZETA * BALL_ZETA))
-#define BALL_HORIZON 158 // copper split, sky above, floor below
-#define BALL_SPEEDX 0.87f // radians a second, the original's 1/2/3 degrees a PAL frame
-#define BALL_SPEEDY 1.75f
-#define BALL_SPEEDZ -2.62f
-#define BALL_CX (RETRO_WIDTH / 2.0)
-#define BALL_EYE 3.2f // closer than RETRO_PROJECTION_EYEDISTANCE so the sphere bulges
+constexpr float BALL_RADIUS = 70.0f;
+constexpr float BALL_APEX = 72.0f; // center at the top of the bounce
+constexpr float BALL_FLOOR = 200.0f; // scanline the bottom of the ellipse is pinned to
+constexpr float BALL_RBMIN = 30.0f / 65.0f * BALL_RADIUS; // original 30 on a radius of 65
+constexpr float BALL_AIR = BALL_FLOOR - BALL_RADIUS - BALL_APEX; // apex to the contact point
+constexpr float BALL_PENMAX = BALL_RADIUS - BALL_RBMIN; // peak spring compression, pixels
+constexpr float BALL_TDOWN = 0.58f; // seconds of free fall, and of the rise after takeoff
+constexpr float BALL_G = 2.0f * BALL_AIR / (BALL_TDOWN * BALL_TDOWN);
+constexpr float BALL_VHIT = BALL_G * BALL_TDOWN;
+constexpr float BALL_OMEGA = BALL_VHIT / BALL_PENMAX; // contact spring; p_max = v / ω
+constexpr float BALL_TCONTACT = (float)M_PI / BALL_OMEGA;
+constexpr float BALL_PERIOD = 2.0f * BALL_TDOWN + BALL_TCONTACT;
+constexpr float BALL_ZETA = 0.55f; // underdamping of the takeoff oscillator
+constexpr float BALL_WOBBLE_OMEGA = BALL_OMEGA * 1.4f; // faster than contact so the stretch overshoots less
+const float BALL_WD = BALL_WOBBLE_OMEGA * sqrtf(1.0f - BALL_ZETA * BALL_ZETA);
+constexpr int BALL_HORIZON = 158; // copper split, sky above, floor below
+constexpr float BALL_SPEEDX = 0.87f; // radians a second, the original's 1/2/3 degrees a PAL frame
+constexpr float BALL_SPEEDY = 1.75f;
+constexpr float BALL_SPEEDZ = -2.62f;
+constexpr double BALL_CX = RETRO_WIDTH / 2.0;
+constexpr float BALL_EYE = 3.2f; // closer than RETRO_PROJECTION_EYEDISTANCE so the sphere bulges
 
-#define STAR_COUNT 6
-#define STAR_POINTS 5
-#define STAR_VERTS (STAR_POINTS * 2)
-#define STAR_OFFSET 0.962f // plane the pentagram sits in, original 875/910
-#define STAR_OUTER 0.275f // original 250/910
-#define STAR_INNER 0.165f // original 150/910
-#define STAR_SPIN 3.49f // radians a second, the original's 4 degrees a PAL frame
+constexpr int STAR_COUNT = 6;
+constexpr int STAR_POINTS = 5;
+constexpr int STAR_VERTS = STAR_POINTS * 2;
+constexpr float STAR_OFFSET = 0.962f; // plane the pentagram sits in, original 875/910
+constexpr float STAR_OUTER = 0.275f; // original 250/910
+constexpr float STAR_INNER = 0.165f; // original 150/910
+constexpr float STAR_SPIN = 3.49f; // radians a second, the original's 4 degrees a PAL frame
 
-#define BIT_BALL 1
-#define BIT_BACK 2 // far side of the sphere, muted lavender
-#define BIT_FRONT 4 // near side, mint green
-#define BANK_FLOOR 8
+constexpr int BIT_BALL = 1;
+constexpr int BIT_BACK = 2; // far side of the sphere, muted lavender
+constexpr int BIT_FRONT = 4; // near side, mint green
+constexpr int BANK_FLOOR = 8;
 
 // Continuation of the contact spring after takeoff. d(0) = 0 and d'(0) = −v
 // so the radii stay C¹ with p = (v/ω) sin(ω τ) at τ = π/ω.

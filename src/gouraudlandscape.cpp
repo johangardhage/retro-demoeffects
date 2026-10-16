@@ -38,15 +38,15 @@
 #include "lib/retroshadetable.h"
 #include "lib/retrovector.h"
 
-#define LANDSCAPE_SHADES 8
+constexpr int LANDSCAPE_SHADES = 8;
 // How much light a face turned away from the sun still catches, as a fraction
 // of full brightness. See the shade table below for why it is not zero, and
 // why it is higher here than a lambert term alone would want: this map's
 // palette runs out of dark colors before the ramp does
-#define LANDSCAPE_AMBIENT 0.55f
+constexpr float LANDSCAPE_AMBIENT = 0.55f;
 
 // Near enough that a camera flown down onto the ground still sees it
-#define LANDSCAPE_NEARPLANE 0.25f
+constexpr float LANDSCAPE_NEARPLANE = 0.25f;
 
 static unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
 
@@ -68,10 +68,10 @@ static unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
 // the direction turns. The shade table below is matched once against that ramp
 // and stays right for every position the sun takes.
 //
-#define LANDSCAPE_SUNPERIOD 24.0f
+constexpr float LANDSCAPE_SUNPERIOD = 24.0f;
 // Where the sun stands, as the default direction's height and its reach across
-#define LANDSCAPE_SUNHEIGHT 0.62f
-#define LANDSCAPE_SUNREACH 0.78f
+constexpr float LANDSCAPE_SUNHEIGHT = 0.62f;
+constexpr float LANDSCAPE_SUNREACH = 0.78f;
 
 // The sun itself, drawn where the light comes from. Three entries the color map
 // never uses and the shade table can never land on, so nothing on the ground
@@ -83,7 +83,7 @@ static unsigned char LandscapeShadeTable[RETRO_COLORS][LANDSCAPE_SHADES];
 // circle at this resolution. The two dimmer ones round it off and stand in for
 // the glow around a low sun, which is doing the same work a wider ramp would
 // do if the palette had one to spare.
-#define LANDSCAPE_SUNRINGS 3
+constexpr int LANDSCAPE_SUNRINGS = 3;
 static const float SunRadius[LANDSCAPE_SUNRINGS] = { 11.0f, 7.0f, 4.0f };
 static const unsigned char SunColor[LANDSCAPE_SUNRINGS] = { 247, 248, 249 };
 

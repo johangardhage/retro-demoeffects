@@ -11,13 +11,13 @@
 #include "retromap.h"
 #include "retrovector.h"
 
-#define BSP_VERSION			29
-#define HEADER_LUMPS		15
-#define MAX_MAP_HULLS		4
-#define MAX_MAP_LEAFS		8192	// The most leaves Quake's engine holds
-#define MIPLEVELS			4
-#define MAXLIGHTMAPS		4
-#define NUM_AMBIENTS		4
+constexpr int BSP_VERSION = 29;
+constexpr int HEADER_LUMPS = 15;
+constexpr int MAX_MAP_HULLS = 4;
+constexpr int MAX_MAP_LEAFS = 8192;	// The most leaves Quake's engine holds
+constexpr int MIPLEVELS = 4;
+constexpr int MAXLIGHTMAPS = 4;
+constexpr int NUM_AMBIENTS = 4;
 
 // Quake BSP version 29 lump order, from id Software's bspfile.h.
 enum
@@ -69,7 +69,7 @@ enum
 	CONTENTS_CURRENT_DOWN = -14
 };
 
-#define TEX_SPECIAL 1	// texinfo_t.flags bit: sky or liquid surface, drawn without a lightmap
+constexpr int TEX_SPECIAL = 1;	// texinfo_t.flags bit: sky or liquid surface, drawn without a lightmap
 
 //
 // On-disk BSP structures. These are laid out to match the file image

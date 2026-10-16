@@ -34,14 +34,14 @@
 #include "lib/retromath.h"
 #include "lib/retrogfx.h"
 
-#define BLOB_SIZE 5 // the blob stamped at each vertex, in pixels
-#define BLOB_LEVEL 15 // brightness of one level of the blob
-#define GLOW_COLORS 163 // palette entries the glow ramps over
-#define TRAIL_DECAY 3 // brightness the blur takes off each step, so the trail fades
-#define SQUASH 0.7 // how far the turn departs from a rotation
-#define ROTATION_SPEED 200 // table entries traveled per second
-#define PROJECTION_SCALE 1 // the model is built in pixels, so the projection adds no scale
-#define SINE_VALUES 720
+constexpr int BLOB_SIZE = 5; // the blob stamped at each vertex, in pixels
+constexpr int BLOB_LEVEL = 15; // brightness of one level of the blob
+constexpr int GLOW_COLORS = 163; // palette entries the glow ramps over
+constexpr int TRAIL_DECAY = 3; // brightness the blur takes off each step, so the trail fades
+constexpr double SQUASH = 0.7; // how far the turn departs from a rotation
+constexpr int ROTATION_SPEED = 200; // table entries traveled per second
+constexpr int PROJECTION_SCALE = 1; // the model is built in pixels, so the projection adds no scale
+constexpr int SINE_VALUES = 720;
 
 static const unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 	{BLOB_LEVEL * 0, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 0},

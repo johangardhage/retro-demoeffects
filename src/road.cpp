@@ -59,33 +59,33 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define ROAD_MAX_SEGMENTS 2048
-#define ROAD_SEGMENT_LENGTH 200 // world units of z one segment of track lasts
-#define ROAD_DRAW_DISTANCE 60000 // world units the table is allowed to reach
-#define ROAD_WIDTH 2000 // half the width of the tarmac, in world units
-#define ROAD_LANES 3
-#define ROAD_LANE_WIDTH 0.025 // half a lane marking, as a fraction of the half-width
-#define ROAD_RUMBLE_WIDTH 0.35 // how far the rumble strip reaches outside the tarmac
-#define ROAD_STRIPE_LENGTH 600 // world units one stripe lasts
-#define ROAD_CAMERA_HEIGHT 1300 // world units above the road, and it stays there
-#define ROAD_FIELD_OF_VIEW 100 // degrees across the screen
-#define ROAD_SPEED 11000 // world units a second
-#define ROAD_CENTRIFUGAL 12.0 // half-widths a second the camera is pushed out per unit of curve
-#define ROAD_RECENTER 1.1 // how quickly it eases back to the middle
-#define ROAD_MIN_STEP 0.15 // the slowest step the walk may take, for hills steeper than these
+constexpr int ROAD_MAX_SEGMENTS = 2048;
+constexpr int ROAD_SEGMENT_LENGTH = 200; // world units of z one segment of track lasts
+constexpr int ROAD_DRAW_DISTANCE = 60000; // world units the table is allowed to reach
+constexpr int ROAD_WIDTH = 2000; // half the width of the tarmac, in world units
+constexpr int ROAD_LANES = 3;
+constexpr double ROAD_LANE_WIDTH = 0.025; // half a lane marking, as a fraction of the half-width
+constexpr double ROAD_RUMBLE_WIDTH = 0.35; // how far the rumble strip reaches outside the tarmac
+constexpr int ROAD_STRIPE_LENGTH = 600; // world units one stripe lasts
+constexpr int ROAD_CAMERA_HEIGHT = 1300; // world units above the road, and it stays there
+constexpr int ROAD_FIELD_OF_VIEW = 100; // degrees across the screen
+constexpr int ROAD_SPEED = 11000; // world units a second
+constexpr double ROAD_CENTRIFUGAL = 12.0; // half-widths a second the camera is pushed out per unit of curve
+constexpr double ROAD_RECENTER = 1.1; // how quickly it eases back to the middle
+constexpr double ROAD_MIN_STEP = 0.15; // the slowest step the walk may take, for hills steeper than these
 
-#define ROAD_HORIZON (RETRO_HEIGHT / 2)
-#define ROAD_ZMAP_SIZE ROAD_HORIZON // one entry per row the ground can be seen on
-#define ROAD_CAMERA_DEPTH (1.0 / tan(radians(ROAD_FIELD_OF_VIEW / 2.0)))
+constexpr int ROAD_HORIZON = RETRO_HEIGHT / 2;
+constexpr int ROAD_ZMAP_SIZE = ROAD_HORIZON; // one entry per row the ground can be seen on
+const double ROAD_CAMERA_DEPTH = 1.0 / tan(radians(ROAD_FIELD_OF_VIEW / 2.0));
 
 // Curve is an acceleration, in pixels across per scanline squared; hill is a
 // rate, the table entries a scanline takes on top of the one it would take on
 // the flat. A section eases in and out of the values it is given
-#define ROAD_CURVE_EASY 0.012
-#define ROAD_CURVE_MEDIUM 0.025
-#define ROAD_CURVE_HARD 0.040
-#define ROAD_HILL_LOW 0.12
-#define ROAD_HILL_HIGH 0.20
+constexpr double ROAD_CURVE_EASY = 0.012;
+constexpr double ROAD_CURVE_MEDIUM = 0.025;
+constexpr double ROAD_CURVE_HARD = 0.040;
+constexpr double ROAD_HILL_LOW = 0.12;
+constexpr double ROAD_HILL_HIGH = 0.20;
 
 // One entry per surface, and 0 for the screen the road is drawn on
 enum { COLOR_GRASS_DARK = 1, COLOR_GRASS_LIGHT, COLOR_RUMBLE_DARK, COLOR_RUMBLE_LIGHT,

@@ -19,14 +19,14 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define NUM_STARS 1400
-#define SPEED 180 // depth traveled per second
-#define SPIN 1.4 // radians of θ per second, the cylinder's own turn
-#define EYE 250 // how far the eye sits from the screen
-#define STAR_NEAR 12 // nearest a star gets before it has gone past
-#define STAR_FAR 520 // and the depth it comes back at
-#define TWIST 90 // extra radians of θ at z = 1; at z it is this over z
-#define SHADES 64 // palette entries the depth shading ramps over
+constexpr int NUM_STARS = 1400;
+constexpr int SPEED = 180; // depth traveled per second
+constexpr double SPIN = 1.4; // radians of θ per second, the cylinder's own turn
+constexpr int EYE = 250; // how far the eye sits from the screen
+constexpr int STAR_NEAR = 12; // nearest a star gets before it has gone past
+constexpr int STAR_FAR = 520; // and the depth it comes back at
+constexpr int TWIST = 90; // extra radians of θ at z = 1; at z it is this over z
+constexpr int SHADES = 64; // palette entries the depth shading ramps over
 
 static struct VortexStar {
 	float angle;

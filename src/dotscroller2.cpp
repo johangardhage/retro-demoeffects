@@ -23,17 +23,17 @@
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define DOT_SPACING 3
-#define SCROLL_SPEED 100 // screen pixels per second
-#define DIAGONAL_RISE 0.25 // pixels upward for each pixel traveled left
+constexpr int DOT_SPACING = 3;
+constexpr int SCROLL_SPEED = 100; // screen pixels per second
+constexpr double DIAGONAL_RISE = 0.25; // pixels upward for each pixel traveled left
 
-#define DEPTH_AMPLITUDE 110
-#define DEPTH_WAVELENGTH 220
-#define DEPTH_SPEED 2.0 // radians per second
-#define CAMERA_DISTANCE 360
+constexpr int DEPTH_AMPLITUDE = 110;
+constexpr int DEPTH_WAVELENGTH = 220;
+constexpr double DEPTH_SPEED = 2.0; // radians per second
+constexpr int CAMERA_DISTANCE = 360;
 
 static const char *const ScrollText[] = { "       RETRO DEMOEFFECTS..." };
 

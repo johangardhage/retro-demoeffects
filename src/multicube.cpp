@@ -25,37 +25,37 @@
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
 
-#define SCENE_SCALE 58
-#define ROT_X 0.70f
-#define ROT_Y 1.40f
-#define ROT_Z 0.90f
+constexpr int SCENE_SCALE = 58;
+constexpr float ROT_X = 0.70f;
+constexpr float ROT_Y = 1.40f;
+constexpr float ROT_Z = 0.90f;
 
-#define TEXMAP 256
-#define CHECK_CELL 64
-#define PURPLE_SHADES 12
+constexpr int TEXMAP = 256;
+constexpr int CHECK_CELL = 64;
+constexpr int PURPLE_SHADES = 12;
 
-#define COL_BG 0
-#define COL_BLACK 1
-#define COL_WHITE 2
-#define COL_TRAIL0 3 // trailing ghost colors, nearest (whitest) to oldest (deepest blue)
-#define COL_TRAIL1 16
-#define COL_TRAIL2 17
-#define COL_PURPLE 4
-#define COL_GRAY 18 // two steps short of the usual 16, giving COL_TRAIL1/2 a home
-#define COL_GLENZ 32
+constexpr int COL_BG = 0;
+constexpr int COL_BLACK = 1;
+constexpr int COL_WHITE = 2;
+constexpr int COL_TRAIL0 = 3; // trailing ghost colors, nearest (whitest) to oldest (deepest blue)
+constexpr int COL_TRAIL1 = 16;
+constexpr int COL_TRAIL2 = 17;
+constexpr int COL_PURPLE = 4;
+constexpr int COL_GRAY = 18; // two steps short of the usual 16, giving COL_TRAIL1/2 a home
+constexpr int COL_GLENZ = 32;
 
 // The wireframe band's trail: a fixed number of ghost cubes fanning out
 // behind the leading one, each an earlier instant of the same spin and
 // wobble, each of the trailing ones its own shade of blue.
-#define WIRE_TRAIL_COUNT 4 // cubes drawn, the leading one plus WIRE_TRAIL_COUNT - 1 trailing ghosts
-#define WIRE_TRAIL_STEP 0.015 // seconds each ghost trails the one ahead of it
+constexpr int WIRE_TRAIL_COUNT = 4; // cubes drawn, the leading one plus WIRE_TRAIL_COUNT - 1 trailing ghosts
+constexpr double WIRE_TRAIL_STEP = 0.015; // seconds each ghost trails the one ahead of it
 
 // Six equal bands over the projected cube. BAND_START and BAND_HEIGHT
 // size those slices to the cube's typical projected height; the first
 // band still opens at row 0 and the last still runs to the bottom of
 // the screen, so a corner that swings past the window is not clipped.
-#define BAND_HEIGHT 34
-#define BAND_START 18
+constexpr int BAND_HEIGHT = 34;
+constexpr int BAND_START = 18;
 
 static Model3D *Cube;
 static Model3D *Dots;

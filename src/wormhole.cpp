@@ -34,15 +34,15 @@
 #include "lib/retromain.h"
 #include "lib/retrovector.h"
 
-#define WORM_XDIR -1
-#define WORM_YDIR 1
-#define WORM_SPOKES 2400 // angular cells the spoke index is quantized to
-#define WORM_DIVS 2400 // ring cells the ring index is quantized to
-#define WORM_Z0 -10 // constant offset of the throat
-#define WORM_ZLOG 11 // how hard the log packs far rings
-#define WORM_SPEED 100 // texture texels a second
-#define TEXTURE_WIDTH 15
-#define TEXTURE_HEIGHT 15
+constexpr int WORM_XDIR = -1;
+constexpr int WORM_YDIR = 1;
+constexpr int WORM_SPOKES = 2400; // angular cells the spoke index is quantized to
+constexpr int WORM_DIVS = 2400; // ring cells the ring index is quantized to
+constexpr int WORM_Z0 = -10; // constant offset of the throat
+constexpr int WORM_ZLOG = 11; // how hard the log packs far rings
+constexpr int WORM_SPEED = 100; // texture texels a second
+constexpr int TEXTURE_WIDTH = 15;
+constexpr int TEXTURE_HEIGHT = 15;
 
 static unsigned char WormHole[RETRO_WIDTH * RETRO_HEIGHT];
 

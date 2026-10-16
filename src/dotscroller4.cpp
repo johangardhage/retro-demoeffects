@@ -28,18 +28,18 @@
 #include "lib/retropoly.h"
 #include "lib/retroterrain.h"
 
-#define WORLD_HEIGHT_SCALE (1.0f / 8.0f)
-#define ISLAND_START_ROTATION -0.5f // A modest turn off dead-on at startup
+constexpr float WORLD_HEIGHT_SCALE = 1.0f / 8.0f;
+constexpr float ISLAND_START_ROTATION = -0.5f; // A modest turn off dead-on at startup
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
-#define LETTER_COLOR_BASE 224
-#define LETTER_DOT_SPACING 1.35f
-#define LETTER_ROW_SPACING 1.35f
-#define LETTER_BASE_Z 54.4f
-#define LETTER_HEIGHT_OFFSET 2.5f
-#define SCROLL_SPEED 34.0f // world units per second
+constexpr int LETTER_COLOR_BASE = 224;
+constexpr float LETTER_DOT_SPACING = 1.35f;
+constexpr float LETTER_ROW_SPACING = 1.35f;
+constexpr float LETTER_BASE_Z = 54.4f;
+constexpr float LETTER_HEIGHT_OFFSET = 2.5f;
+constexpr float SCROLL_SPEED = 34.0f; // world units per second
 
 static const char *const ScrollText[] = { " RETRO DEMOEFFECTS...    " };
 static RETRO_Image *ScrollImage;

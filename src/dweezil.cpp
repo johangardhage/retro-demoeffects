@@ -39,18 +39,18 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define PIECE_SIZE 16
-#define PIECES_X 23
-#define PIECES_Y 17
-#define BUFFER_WIDTH (PIECE_SIZE * PIECES_X)
-#define BUFFER_HEIGHT (PIECE_SIZE * PIECES_Y)
-#define BUFFER_SIZE (BUFFER_WIDTH * BUFFER_HEIGHT)
+constexpr int PIECE_SIZE = 16;
+constexpr int PIECES_X = 23;
+constexpr int PIECES_Y = 17;
+constexpr int BUFFER_WIDTH = PIECE_SIZE * PIECES_X;
+constexpr int BUFFER_HEIGHT = PIECE_SIZE * PIECES_Y;
+constexpr int BUFFER_SIZE = BUFFER_WIDTH * BUFFER_HEIGHT;
 
 // The screen is cut out of the middle of the buffer with a whole tile of margin
 // on every side. The margin absorbs the edges: the rows and columns the shifted
 // write-back leaves standing, and the smear where an out-of-range sample clamps.
-#define SOURCE_X ((BUFFER_WIDTH - RETRO_WIDTH) / 2)
-#define SOURCE_Y ((BUFFER_HEIGHT - RETRO_HEIGHT) / 2)
+constexpr int SOURCE_X = (BUFFER_WIDTH - RETRO_WIDTH) / 2;
+constexpr int SOURCE_Y = (BUFFER_HEIGHT - RETRO_HEIGHT) / 2;
 static_assert(BUFFER_WIDTH >= RETRO_WIDTH + 2 * PIECE_SIZE, "The buffer needs a tile of margin on each side");
 static_assert(BUFFER_HEIGHT >= RETRO_HEIGHT + 2 * PIECE_SIZE, "The buffer needs a tile of margin on each side");
 

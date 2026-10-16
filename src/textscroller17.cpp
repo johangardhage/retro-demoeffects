@@ -14,21 +14,21 @@
 #include "lib/retromath.h"
 #include "lib/retromain.h"
 
-#define WALL_WIDTH 198
-#define WALL_HEIGHT 126
-#define WALL_X ((RETRO_WIDTH - WALL_WIDTH) / 2)
-#define WALL_Y ((RETRO_HEIGHT - WALL_HEIGHT) / 2)
-#define TEXT_Y 124
-#define TEXT_MARGIN 20
-#define STONE_START 16
-#define STONE_SHADES 128
-#define TEXT_START 144
-#define TEXT_SHADES 64
+constexpr int WALL_WIDTH = 198;
+constexpr int WALL_HEIGHT = 126;
+constexpr int WALL_X = (RETRO_WIDTH - WALL_WIDTH) / 2;
+constexpr int WALL_Y = (RETRO_HEIGHT - WALL_HEIGHT) / 2;
+constexpr int TEXT_Y = 124;
+constexpr int TEXT_MARGIN = 20;
+constexpr int STONE_START = 16;
+constexpr int STONE_SHADES = 128;
+constexpr int TEXT_START = 144;
+constexpr int TEXT_SHADES = 64;
 // The eye is EYE_DISTANCE in front of the text and the wall WALL_DEPTH behind
 // it, so on screen the wall, and the shadow on it, appear at
 // EYE_DISTANCE / (EYE_DISTANCE + WALL_DEPTH) = 0.68 of the text's scale.
-#define WALL_DEPTH 80.0f
-#define EYE_DISTANCE 170.0f
+constexpr float WALL_DEPTH = 80.0f;
+constexpr float EYE_DISTANCE = 170.0f;
 
 static unsigned char Stone[WALL_HEIGHT][WALL_WIDTH];
 static vec3 StoneNormals[WALL_HEIGHT][WALL_WIDTH];

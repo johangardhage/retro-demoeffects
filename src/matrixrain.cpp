@@ -33,17 +33,17 @@
 #include "lib/retrofont.h"
 #include "lib/retropalette.h"
 
-#define CELL_WIDTH 8
-#define CELL_HEIGHT 12
-#define COLUMNS (RETRO_WIDTH / CELL_WIDTH)
-#define ROWS (RETRO_HEIGHT / CELL_HEIGHT)
-#define DROPS (COLUMNS * 3 / 2) // heads, so some columns carry two streams
-#define DROP_MINSPEED 8.0 // rows a second
-#define DROP_MAXSPEED 30.0
-#define MATRIX_FADE 0.965 // brightness kept per step
-#define MATRIX_MUTATIONS 12 // cells a step that change character
-#define MATRIX_SHADES 64 // palette entries of the trail ramp
-#define MATRIX_HEAD 255 // palette entry of the head
+constexpr int CELL_WIDTH = 8;
+constexpr int CELL_HEIGHT = 12;
+constexpr int COLUMNS = RETRO_WIDTH / CELL_WIDTH;
+constexpr int ROWS = RETRO_HEIGHT / CELL_HEIGHT;
+constexpr int DROPS = COLUMNS * 3 / 2; // heads, so some columns carry two streams
+constexpr double DROP_MINSPEED = 8.0; // rows a second
+constexpr double DROP_MAXSPEED = 30.0;
+constexpr double MATRIX_FADE = 0.965; // brightness kept per step
+constexpr int MATRIX_MUTATIONS = 12; // cells a step that change character
+constexpr int MATRIX_SHADES = 64; // palette entries of the trail ramp
+constexpr int MATRIX_HEAD = 255; // palette entry of the head
 
 struct Drop {
 	int column;

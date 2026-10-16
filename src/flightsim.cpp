@@ -47,39 +47,39 @@
 #include "lib/retrovector.h"
 #include "lib/retromatrix.h"
 
-#define LANDSCAPE_SHADES 8
-#define LANDSCAPE_AMBIENT 0.55f
-#define LANDSCAPE_NEARPLANE 0.5f
-#define LANDSCAPE_STEP 8
+constexpr int LANDSCAPE_SHADES = 8;
+constexpr float LANDSCAPE_AMBIENT = 0.55f;
+constexpr float LANDSCAPE_NEARPLANE = 0.5f;
+constexpr int LANDSCAPE_STEP = 8;
 
 // The ground fades into the haze along the horizon over this many levels,
 // starting this far out and gone into it at the draw distance
-#define FOG_LEVELS 16
-#define FOG_START 250.0f
+constexpr int FOG_LEVELS = 16;
+constexpr float FOG_START = 250.0f;
 
 // The sky, from the haze at the horizon to the blue overhead, in held palette
 // entries from 0. The fog fades into the first of them.
-#define SKY_BANDS 32
-#define SKY_HORIZON RETRO_Palette{ 195, 226, 245 }
-#define SKY_ZENITH RETRO_STEELBLUE
+constexpr int SKY_BANDS = 32;
+constexpr RETRO_Palette SKY_HORIZON = { 195, 226, 245 };
+constexpr RETRO_Palette SKY_ZENITH = RETRO_STEELBLUE;
 
-#define FLIGHT_PITCHRATE 1.2f		// Radians per second at full stick, at most
-#define FLIGHT_ROLLRATE 2.5f
-#define FLIGHT_RUDDERRATE 0.3f
-#define FLIGHT_TURNLOAD 2.0f		// Load factor the wings pull in a bank, in g
-#define FLIGHT_PULLLOAD 6.0f		// and the further load at full stick back,
-#define FLIGHT_PUSHLOAD 4.0f		// and the load taken off at full stick forward
-#define FLIGHT_MINTHROTTLE 60.0f	// Cells per second
-#define FLIGHT_MAXTHROTTLE 240.0f
-#define FLIGHT_THROTTLERATE 60.0f	// Throttle change per second the key is held
-#define FLIGHT_SPOOL 3.0f			// Seconds the speed takes to close most of the gap to the throttle
-#define FLIGHT_GRAVITY 50.0f		// One g: speed gained per second in a vertical dive
-#define FLIGHT_MINSPEED 20.0f
-#define FLIGHT_STALLSPEED 50.0f
-#define FLIGHT_SINK 12.0f			// Sink per second with the wings vertical
-#define FLIGHT_STALLSINK 40.0f		// Further sink per second at no speed at all
-#define FLIGHT_CLEARANCE 8.0f		// Closest the eye comes to the drawn ground
-#define FLIGHT_CEILING 600.0f		// Highest the eye may climb
+constexpr float FLIGHT_PITCHRATE = 1.2f;		// Radians per second at full stick, at most
+constexpr float FLIGHT_ROLLRATE = 2.5f;
+constexpr float FLIGHT_RUDDERRATE = 0.3f;
+constexpr float FLIGHT_TURNLOAD = 2.0f;			// Load factor the wings pull in a bank, in g
+constexpr float FLIGHT_PULLLOAD = 6.0f;			// and the further load at full stick back,
+constexpr float FLIGHT_PUSHLOAD = 4.0f;			// and the load taken off at full stick forward
+constexpr float FLIGHT_MINTHROTTLE = 60.0f;		// Cells per second
+constexpr float FLIGHT_MAXTHROTTLE = 240.0f;
+constexpr float FLIGHT_THROTTLERATE = 60.0f;	// Throttle change per second the key is held
+constexpr float FLIGHT_SPOOL = 3.0f;			// Seconds the speed takes to close most of the gap to the throttle
+constexpr float FLIGHT_GRAVITY = 50.0f;			// One g: speed gained per second in a vertical dive
+constexpr float FLIGHT_MINSPEED = 20.0f;
+constexpr float FLIGHT_STALLSPEED = 50.0f;
+constexpr float FLIGHT_SINK = 12.0f;			// Sink per second with the wings vertical
+constexpr float FLIGHT_STALLSINK = 40.0f;		// Further sink per second at no speed at all
+constexpr float FLIGHT_CLEARANCE = 8.0f;		// Closest the eye comes to the drawn ground
+constexpr float FLIGHT_CEILING = 600.0f;		// Highest the eye may climb
 
 static RETRO_ColorHistogram Histogram;
 static unsigned char LandscapeTable[RETRO_COLORS * LANDSCAPE_SHADES * FOG_LEVELS];

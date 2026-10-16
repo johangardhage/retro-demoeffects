@@ -22,15 +22,15 @@
 #include "lib/retromain.h"
 #include "lib/retroshadetable.h"
 
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 256
-#define TUNNEL_RATIO (32 * TEXTURE_HEIGHT) // v = RATIO/r, so 32 texture rows per 1/r
-#define TUNNEL_SPEED 1.0 // seconds of flight per second
-#define TUNNEL_SPIN 0.25 // texture turns around the axis per second of flight
-#define TUNNEL_WOBBLE (33.0 / 10.0) // nod/sway; with 2π this is a 20π period
-#define TUNNEL_PERIOD (20 * M_PI)
-#define TUNNEL_FOG_SHADES 32 // steps from black to full color
-#define TUNNEL_FOG_RADIUS (RETRO_WIDTH * 0.6) // screen-space radius fog climbs across
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 256;
+constexpr int TUNNEL_RATIO = 32 * TEXTURE_HEIGHT; // v = RATIO/r, so 32 texture rows per 1/r
+constexpr double TUNNEL_SPEED = 1.0; // seconds of flight per second
+constexpr double TUNNEL_SPIN = 0.25; // texture turns around the axis per second of flight
+constexpr double TUNNEL_WOBBLE = 33.0 / 10.0; // nod/sway; with 2π this is a 20π period
+constexpr double TUNNEL_PERIOD = 20 * M_PI;
+constexpr int TUNNEL_FOG_SHADES = 32; // steps from black to full color
+constexpr double TUNNEL_FOG_RADIUS = RETRO_WIDTH * 0.6; // screen-space radius fog climbs across
 
 static int DepthTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];
 static int AngleTable[2 * RETRO_HEIGHT][2 * RETRO_WIDTH];

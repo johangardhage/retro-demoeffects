@@ -34,19 +34,19 @@
 #include "lib/retropalette.h"
 #include "lib/retromain.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
-#define FONT_SCALE 2 // strip pixels per font pixel; the strip is larger but scrolls at the same pixel rate
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+constexpr int FONT_SCALE = 2; // strip pixels per font pixel; the strip is larger but scrolls at the same pixel rate
 
-#define COLUMN_RADIUS 40
-#define COLUMN_DEPTH_RATE 20
-#define COLUMN_LEAN 100 // table units the column leans as a whole
-#define COLUMN_TWIST_MAX 80 // greatest twist amplitude, in table units
-#define COLUMN_TWIST_MIN 24 // least twist amplitude as it breathes
-#define COLUMN_CENTER_Y 159
-#define COLUMN_SHADES 64
-#define COLUMN_TEXT_SHADE 64 // added to a letter's texel, selecting the second palette ramp
-#define COLUMN_SPEED 60 // table units per second
+constexpr int COLUMN_RADIUS = 40;
+constexpr int COLUMN_DEPTH_RATE = 20;
+constexpr int COLUMN_LEAN = 100; // table units the column leans as a whole
+constexpr int COLUMN_TWIST_MAX = 80; // greatest twist amplitude, in table units
+constexpr int COLUMN_TWIST_MIN = 24; // least twist amplitude as it breathes
+constexpr int COLUMN_CENTER_Y = 159;
+constexpr int COLUMN_SHADES = 64;
+constexpr int COLUMN_TEXT_SHADE = 64; // added to a letter's texel, selecting the second palette ramp
+constexpr int COLUMN_SPEED = 60; // table units per second
 
 static const char *const ScrollText[] = { "           RETRO DEMOEFFECTS..." };
 

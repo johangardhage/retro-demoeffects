@@ -35,22 +35,22 @@
 #include "lib/retropalette.h"
 #include "lib/retromath.h"
 
-#define TILE_SIZE 32.0 // pixels across a tile, halfway through the zoom
-#define TILE_ZOOM 12.0 // pixels either side of TILE_SIZE
-#define ZOOM_SPEED 0.35 // radians a second
-#define TURN_ANGLE 0.5 // radians either way the floor turns
-#define TURN_SPEED 0.21
-#define SCROLL_SPEED 0.9 // tiles a second
-#define SCROLL_SWAY 3.0 // tiles either side the path sways
-#define SWAY_SPEED 0.13
-#define TUBE_WIDTH 0.2 // of a tile
-#define TUBE_OUTLINE 1.0 // pixels
-#define TRUCHET_SHADOW 0.15 // of a tile, how far the floor darkens beside a tube
-#define TRUCHET_STRIPES 2 // per quarter circle
-#define FLOW_SPEED 1.2 // stripes a second
-#define SHADES 32 // palette entries per ramp
-#define FLOOR 1 // palette ranges, two floor colors then two stripe colors; entry 0 is the outline
-#define TUBE (FLOOR + 2 * SHADES)
+constexpr double TILE_SIZE = 32.0; // pixels across a tile, halfway through the zoom
+constexpr double TILE_ZOOM = 12.0; // pixels either side of TILE_SIZE
+constexpr double ZOOM_SPEED = 0.35; // radians a second
+constexpr double TURN_ANGLE = 0.5; // radians either way the floor turns
+constexpr double TURN_SPEED = 0.21;
+constexpr double SCROLL_SPEED = 0.9; // tiles a second
+constexpr double SCROLL_SWAY = 3.0; // tiles either side the path sways
+constexpr double SWAY_SPEED = 0.13;
+constexpr double TUBE_WIDTH = 0.2; // of a tile
+constexpr double TUBE_OUTLINE = 1.0; // pixels
+constexpr double TRUCHET_SHADOW = 0.15; // of a tile, how far the floor darkens beside a tube
+constexpr int TRUCHET_STRIPES = 2; // per quarter circle
+constexpr double FLOW_SPEED = 1.2; // stripes a second
+constexpr int SHADES = 32; // palette entries per ramp
+constexpr int FLOOR = 1; // palette ranges, two floor colors then two stripe colors; entry 0 is the outline
+constexpr int TUBE = FLOOR + 2 * SHADES;
 
 void DEMO_Render(RETRO_Time time)
 {

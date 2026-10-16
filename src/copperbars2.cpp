@@ -31,20 +31,20 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define COPPER_BARWIDTH 28
-#define COPPER_BARS 8 // colors the bar cycles through down the screen
-#define COPPER_CORE 3 // columns of highlight either side of the middle of the bar
-#define COPPER_RAMP0 1 // palette entry the first bar's ramp starts at, past the background
-#define COPPER_BANDHEIGHT (RETRO_HEIGHT / COPPER_BARS) // rows one color lasts
-#define COPPER_CX ((RETRO_WIDTH - COPPER_BARWIDTH) / 2)
-#define COPPER_AMP1 90
-#define COPPER_AMP2 45
-#define COPPER_RATE1 1.7 // table units the first sine turns per row
-#define COPPER_RATE2 -2.9 // table units the second sine turns per row
-#define COPPER_RATIO_NUM 5 // the second sine's phase against the first, as a fraction
-#define COPPER_RATIO_DEN 8 // so that both sines are whole turns when phase wraps
-#define COPPER_PERIOD (RETRO_ANGLES_PER_TURN * COPPER_RATIO_DEN)
-#define COPPER_SPEED 55 // table units per second
+constexpr int COPPER_BARWIDTH = 28;
+constexpr int COPPER_BARS = 8; // colors the bar cycles through down the screen
+constexpr int COPPER_CORE = 3; // columns of highlight either side of the middle of the bar
+constexpr int COPPER_RAMP0 = 1; // palette entry the first bar's ramp starts at, past the background
+constexpr int COPPER_BANDHEIGHT = RETRO_HEIGHT / COPPER_BARS; // rows one color lasts
+constexpr int COPPER_CX = (RETRO_WIDTH - COPPER_BARWIDTH) / 2;
+constexpr int COPPER_AMP1 = 90;
+constexpr int COPPER_AMP2 = 45;
+constexpr double COPPER_RATE1 = 1.7; // table units the first sine turns per row
+constexpr double COPPER_RATE2 = -2.9; // table units the second sine turns per row
+constexpr int COPPER_RATIO_NUM = 5; // the second sine's phase against the first, as a fraction
+constexpr int COPPER_RATIO_DEN = 8; // so that both sines are whole turns when phase wraps
+constexpr int COPPER_PERIOD = RETRO_ANGLES_PER_TURN * COPPER_RATIO_DEN;
+constexpr int COPPER_SPEED = 55; // table units per second
 
 // One color per band and one band per color, in the order of the bow
 static const RETRO_Palette BarColors[COPPER_BARS] = {

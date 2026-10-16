@@ -17,7 +17,7 @@
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 
-#define ROTATION_SPEED 2 // radians a second, about each axis
+constexpr int ROTATION_SPEED = 2; // radians a second, about each axis
 
 void DEMO_Render(RETRO_Time time)
 {

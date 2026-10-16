@@ -27,12 +27,12 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define ROTATION_SPEED 0.85f // radians a second, about the middle axis
-#define ROTATION_SPREAD 0.28f // the other two turn this much slower and faster
-#define PULSE_SPEED 2.1f // radians of the squash per second
-#define PULSE_AMOUNT 0.16f // how far an axis stretches from 1
-#define BULGE_AMOUNT 0.12f // extra scale the traveling wave adds
-#define BULGE_WAVE 1.8f // radians of that wave per model unit of rest y
+constexpr float ROTATION_SPEED = 0.85f; // radians a second, about the middle axis
+constexpr float ROTATION_SPREAD = 0.28f; // the other two turn this much slower and faster
+constexpr float PULSE_SPEED = 2.1f; // radians of the squash per second
+constexpr float PULSE_AMOUNT = 0.16f; // how far an axis stretches from 1
+constexpr float BULGE_AMOUNT = 0.12f; // extra scale the traveling wave adds
+constexpr float BULGE_WAVE = 1.8f; // radians of that wave per model unit of rest y
 
 static vec3 RestPos[RETRO_MAX_VERTICES];
 

@@ -37,62 +37,62 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define RING_COUNT 14
-#define SEGMENTS 16 // quads around a band. At this radius 32 already lies
+constexpr int RING_COUNT = 14;
+constexpr int SEGMENTS = 16; // quads around a band. At this radius 32 already lies
 					// inside a pixel of a circle, and the bands are visibly sided
 
 // Inner edge of the first band. The pitch is not stored: the last band's
 // outer edge is 1, and RING_FILL of each step is the top of the washer.
 // The rest of the step is the gap. The hole is 0.15 of the rim.
-#define HOLE 0.15f
-#define RING_FILL 0.58f
+constexpr float HOLE = 0.15f;
+constexpr float RING_FILL = 0.58f;
 
 // Thin enough that an edge-on frame is a blade. The face-on band is the
 // top; the wall is only a couple of pixels.
-#define BAND_DEPTH 0.016f
+constexpr float BAND_DEPTH = 0.016f;
 
 // Almost flat. A deeper bowl stays thick when the nod lays the stack down.
-#define BOWL 0.03f
+constexpr float BOWL = 0.03f;
 
 // Shades of one band's hue, dark at a grazing angle up to the hue face on.
-#define BAND_SHADES 16
-#define SHADE_FLOOR 0.50f
+constexpr int BAND_SHADES = 16;
+constexpr float SHADE_FLOOR = 0.50f;
 
 // Pixels per model unit at z = 0. Radius 1 then falls just inside the
 // screen edge, and a nearer rim overshoots it.
-#define PROJECTION_SCALE 155.0f
+constexpr float PROJECTION_SCALE = 155.0f;
 
 // Each band starts DROP_DISTANCE above its place and takes DROP_TIME to ease
 // onto it, RING_STAGGER after the band inside it. The distance hides even the
 // rim above the frame: laid down, its far side is a meter behind the dish,
 // where perspective pulls it down to 0.62 of its height.
-#define DROP_DISTANCE 1.8f
-#define DROP_TIME 3.0f
-#define RING_STAGGER 0.20f
+constexpr float DROP_DISTANCE = 1.8f;
+constexpr float DROP_TIME = 3.0f;
+constexpr float RING_STAGGER = 0.20f;
 
 // The fall pose: a nod that lays a band down into a horizontal ellipse.
 // RISE_OVERLAP before it lands, while the drop is easing off, it starts to
 // stand up face on, over RISE_TIME. So it never hangs still between the two.
 // On the way it swings RISE_TURN round the vertical and back, so a band half
 // up is turned side on.
-#define ENTER_NOD 1.55f
-#define RISE_OVERLAP 0.5f
-#define RISE_TIME 1.2f
-#define RISE_TURN 0.8f
+constexpr float ENTER_NOD = 1.55f;
+constexpr float RISE_OVERLAP = 0.5f;
+constexpr float RISE_TIME = 1.2f;
+constexpr float RISE_TURN = 0.8f;
 
 // The reference's first turnover crosses edge-on at about 8 seconds; the
 // next is about four seconds later. Inner bands lead the rim by half a second.
 // Alternate a quick turn with a broader, slower turn, as in the clip.
 // Use complete half-turns, with eased ends and a brisk passage through the
 // side view. Unlike a bounded tilt, this exposes the other face of the band.
-#define FLIP_START 7.0
-#define FLIP_PERIOD 3.9
-#define FLIP_TIME 1.6
-#define FLIP_TIME_SLOW 2.4
-#define FOLLOW_DELAY 0.04
-#define AXIS_SPEED 0.36
-#define AXIS_AT_FIRST_FLIP -1.30
-#define IDLE_TILT 0.22f
+constexpr double FLIP_START = 7.0;
+constexpr double FLIP_PERIOD = 3.9;
+constexpr double FLIP_TIME = 1.6;
+constexpr double FLIP_TIME_SLOW = 2.4;
+constexpr double FOLLOW_DELAY = 0.04;
+constexpr double AXIS_SPEED = 0.36;
+constexpr double AXIS_AT_FIRST_FLIP = -1.30;
+constexpr float IDLE_TILT = 0.22f;
 
 // The light is a direction that runs round two circles of the same size at
 // once, a quick one and a slow one the other way. Where the two cancel it
@@ -101,16 +101,16 @@
 // middle. Between times it swings round at the mean of the two speeds.
 // REACH is how far it leans off the axis at most; LIGHT_Z sets how dark the
 // far side gets. Screen y grows downward, so the swing is counterclockwise.
-#define LIGHT_REACH 1.0f
-#define LIGHT_Z -0.55f
-#define LIGHT_SPEED_1 3.44f
-#define LIGHT_SPEED_2 -0.48f
-#define LIGHT_PHASE_1 0.32f
-#define LIGHT_PHASE_2 1.62f
+constexpr float LIGHT_REACH = 1.0f;
+constexpr float LIGHT_Z = -0.55f;
+constexpr float LIGHT_SPEED_1 = 3.44f;
+constexpr float LIGHT_SPEED_2 = -0.48f;
+constexpr float LIGHT_PHASE_1 = 0.32f;
+constexpr float LIGHT_PHASE_2 = 1.62f;
 
 // A small lean: the lit side rises toward white across a wide arc, and the
 // far side keeps the band's color. A hard tilt paints a white slice.
-#define HIGHLIGHT_TILT 0.72f
+constexpr float HIGHLIGHT_TILT = 0.72f;
 
 // Pitch that puts the outer edge of the last band at radius 1.
 static const float RING_PITCH = (1.0f - HOLE) / (RING_COUNT - 1 + RING_FILL);
@@ -152,10 +152,7 @@ static RETRO_Palette ColorAt(float t)
 }
 
 // Four corners of one segment, in this order.
-#define CORNER_INNER_TOP 0
-#define CORNER_OUTER_TOP 1
-#define CORNER_INNER_BOTTOM 2
-#define CORNER_OUTER_BOTTOM 3
+enum { CORNER_INNER_TOP, CORNER_OUTER_TOP, CORNER_INNER_BOTTOM, CORNER_OUTER_BOTTOM };
 
 static int RingCorner(int base, int segment, int corner)
 {
@@ -165,9 +162,9 @@ static int RingCorner(int base, int segment, int corner)
 // The inner wall faces the hole, so it cannot share the corners' outward
 // normals. Each segment has two of its own, top and bottom, stored after
 // all the corner normals, one band at a time.
-#define CORNER_NORMALS (RING_COUNT * SEGMENTS * 4)
-#define WALL_TOP 0
-#define WALL_BOTTOM 1
+constexpr int CORNER_NORMALS = RING_COUNT * SEGMENTS * 4;
+constexpr int WALL_TOP = 0;
+constexpr int WALL_BOTTOM = 1;
 
 static int WallNormal(int ring, int segment, int edge)
 {

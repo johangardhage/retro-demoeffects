@@ -56,30 +56,30 @@
 #include "lib/retropalette.h"
 #include "lib/retropoly.h"
 
-#define CORNERS 16
-#define EDGES 32
-#define FACES 24
+constexpr int CORNERS = 16;
+constexpr int EDGES = 32;
+constexpr int FACES = 24;
 
-#define W_SPEED 0.9f       // radians a second, in the XW plane
-#define YZ_SPEED 0.6f      // radians a second, in the YZ plane
-#define XZ_SPEED 0.25f     // radians a second, in the XZ plane
-#define W_EYE 4.0f         // distance of the 4D eye along w
-#define SCALE 44.0f        // pixels per unit after the 4D projection
+constexpr float W_SPEED = 0.9f;   // radians a second, in the XW plane
+constexpr float YZ_SPEED = 0.6f;  // radians a second, in the YZ plane
+constexpr float XZ_SPEED = 0.25f; // radians a second, in the XZ plane
+constexpr float W_EYE = 4.0f;     // distance of the 4D eye along w
+constexpr float SCALE = 44.0f;    // pixels per unit after the 4D projection
 
-#define BEAM_RADIUS 0.065f // of a beam, in the units of the corners
-#define BEAM_SHADES 4      // palette entries a level spends: none, and the beam's three
-#define BEAM_BALLS 3       // balls a pixel of its length, so each pixel finds one centered on it
-#define BEAM_MAP 64        // the lit ball is drawn once at this size and scaled from it
-#define BEAM_DARK RETRO_Palette{ 20, 60, 110 }
-#define BEAM_LIGHT RETRO_Palette{ 130, 205, 255 }
+constexpr float BEAM_RADIUS = 0.065f; // of a beam, in the units of the corners
+constexpr int BEAM_SHADES = 4;        // palette entries a level spends: none, and the beam's three
+constexpr int BEAM_BALLS = 3;         // balls a pixel of its length, so each pixel finds one centered on it
+constexpr int BEAM_MAP = 64;          // the lit ball is drawn once at this size and scaled from it
+constexpr RETRO_Palette BEAM_DARK = { 20, 60, 110 };
+constexpr RETRO_Palette BEAM_LIGHT = { 130, 205, 255 };
 
-#define GLASS_LEVELS (RETRO_COLORS / BEAM_SHADES)
-#define GLASS_ALPHA 0.025f // opacity of one level
-#define GLASS_PANES 2      // levels a face lays whichever way it is turned
-#define GLASS_GLINT 12     // further levels on a face mirroring the light
-#define GLASS_BIAS 1.5f    // beam radii a pane sits behind its corners, clear of its own beams
-#define GLINT_POWER 24.0f
-#define GLASS RETRO_Palette{ 196, 222, 240 }
+constexpr int GLASS_LEVELS = RETRO_COLORS / BEAM_SHADES;
+constexpr float GLASS_ALPHA = 0.025f; // opacity of one level
+constexpr int GLASS_PANES = 2;        // levels a face lays whichever way it is turned
+constexpr int GLASS_GLINT = 12;       // further levels on a face mirroring the light
+constexpr float GLASS_BIAS = 1.5f;    // beam radii a pane sits behind its corners, clear of its own beams
+constexpr float GLINT_POWER = 24.0f;
+constexpr RETRO_Palette GLASS = { 196, 222, 240 };
 
 struct Edge {
 	int a, b;

@@ -19,12 +19,12 @@
 #include "lib/retromain.h"
 #include "lib/retrovector.h"
 
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 256
-#define WARP_WIDTH (RETRO_WIDTH / 2)
-#define WARP_HEIGHT (RETRO_HEIGHT / 2)
-#define WARP_ALPHA_SPEED 0.12 // radians per second
-#define WARP_BETA_SPEED 0.264
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 256;
+constexpr int WARP_WIDTH = RETRO_WIDTH / 2;
+constexpr int WARP_HEIGHT = RETRO_HEIGHT / 2;
+constexpr double WARP_ALPHA_SPEED = 0.12; // radians per second
+constexpr double WARP_BETA_SPEED = 0.264;
 
 static ivec2 DistortTable[WARP_HEIGHT * WARP_WIDTH];
 

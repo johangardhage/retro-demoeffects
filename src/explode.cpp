@@ -37,15 +37,15 @@
 #include "lib/retropalette.h"
 #include "lib/retromath.h"
 
-#define PARTICLES (RETRO_WIDTH * RETRO_HEIGHT)
-#define HOLD_TIME 2.0 // seconds a picture stands whole
-#define FLIGHT_TIME 4.0 // seconds from one picture to the other
-#define BLAST_SPREAD 0.35 // of the flight, the delay of the particles farthest from the origin
-#define LAND_SPREAD 0.3 // of the flight, the part at the end the particles land at random in
-#define BLAST_DISTANCE 160.0 // pixels a particle is thrown out at the most
-#define BLAST_TURN 0.6 // radians either way a particle strays from straight out
-#define PAIR_BLOCK 16 // pixels across the squares the pairing is made within, dividing the screen
-#define LUT_SIZE 32 // cells a channel of the inverse color table
+constexpr int PARTICLES = RETRO_WIDTH * RETRO_HEIGHT;
+constexpr double HOLD_TIME = 2.0; // seconds a picture stands whole
+constexpr double FLIGHT_TIME = 4.0; // seconds from one picture to the other
+constexpr double BLAST_SPREAD = 0.35; // of the flight, the delay of the particles farthest from the origin
+constexpr double LAND_SPREAD = 0.3; // of the flight, the part at the end the particles land at random in
+constexpr double BLAST_DISTANCE = 160.0; // pixels a particle is thrown out at the most
+constexpr double BLAST_TURN = 0.6; // radians either way a particle strays from straight out
+constexpr int PAIR_BLOCK = 16; // pixels across the squares the pairing is made within, dividing the screen
+constexpr int LUT_SIZE = 32; // cells a channel of the inverse color table
 
 struct Particle {
 	short ax, ay; // pixel in the first picture

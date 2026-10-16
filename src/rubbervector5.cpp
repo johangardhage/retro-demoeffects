@@ -17,24 +17,24 @@
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 
-#define SLIME_HISTORY 0.57      // seconds of rotation retained, one cube image per simulation step
-#define SLIME_STRIP 4            // pixels across a strip, each copied from one image
-#define ROTATION_SPEED 0.43f     // pitch in radians per second; roll turns twice and yaw four times as fast
-#define ROW_REACH 0.51f          // seconds back the two row waves reach together
-#define ROW_PHASE_A 5.22f        // radians each wave has reached at the middle of the screen when the demo starts
-#define ROW_PHASE_B 2.42f
-#define STRIP_PHASE 2.60f
-#define ROW_SPEED_A 1.29f        // first vertical selection wave speed
-#define ROW_SPEED_B -0.43f       // second vertical selection wave speed, running the other way
-#define ROW_WAVES_A 2.04f        // first wave's waves over the height of the screen
-#define ROW_WAVES_B 1.56f        // second wave's waves over the height of the screen
-#define STRIP_REACH 0.047f       // seconds back the horizontal wave reaches
-#define STRIP_SPEED 2.15f        // horizontal selection wave speed
-#define STRIP_WAVES 2.8f         // waves over the width of the screen
-#define SLIME_AMBIENT 16         // shade every face starts from, however it faces the light
-#define SLIME_SHADES 63          // entries in the cube's ramp, the top of the DAC's six-bit scale
+constexpr double SLIME_HISTORY = 0.57;      // seconds of rotation retained, one cube image per simulation step
+constexpr int SLIME_STRIP = 4;          // pixels across a strip, each copied from one image
+constexpr float ROTATION_SPEED = 0.43f; // pitch in radians per second; roll turns twice and yaw four times as fast
+constexpr float ROW_REACH = 0.51f;      // seconds back the two row waves reach together
+constexpr float ROW_PHASE_A = 5.22f;    // radians each wave has reached at the middle of the screen when the demo starts
+constexpr float ROW_PHASE_B = 2.42f;
+constexpr float STRIP_PHASE = 2.60f;
+constexpr float ROW_SPEED_A = 1.29f;    // first vertical selection wave speed
+constexpr float ROW_SPEED_B = -0.43f;   // second vertical selection wave speed, running the other way
+constexpr float ROW_WAVES_A = 2.04f;    // first wave's waves over the height of the screen
+constexpr float ROW_WAVES_B = 1.56f;    // second wave's waves over the height of the screen
+constexpr float STRIP_REACH = 0.047f;   // seconds back the horizontal wave reaches
+constexpr float STRIP_SPEED = 2.15f;    // horizontal selection wave speed
+constexpr float STRIP_WAVES = 2.8f;     // waves over the width of the screen
+constexpr int SLIME_AMBIENT = 16;       // shade every face starts from, however it faces the light
+constexpr int SLIME_SHADES = 63;        // entries in the cube's ramp, the top of the DAC's six-bit scale
 
-#define SLIME_COPIES (int)(SLIME_HISTORY / RETRO_SIMULATION_STEP + 1)
+constexpr int SLIME_COPIES = (int)(SLIME_HISTORY / RETRO_SIMULATION_STEP + 1);
 
 static unsigned char History[SLIME_COPIES][RETRO_HEIGHT][RETRO_WIDTH];
 static int HistoryHead;

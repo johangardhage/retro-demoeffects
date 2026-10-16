@@ -35,14 +35,14 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define MAX_ITERATIONS 255
-#define BAILOUT 256.0 // |z|², far enough out for the smooth escape estimate
-#define CONST_RE -0.7 // real part of c, which selects the Julia set
-#define CONST_IM 0.27015 // imaginary part of c
-#define CENTER_X 0.01101 // the point the dive closes on
-#define CENTER_Y 0.0101
-#define ZOOM_RATE 3.281 // zoom per second
-#define ZOOM_LIMIT 1.0e12 // as deep as double carries a distinct pixel spacing
+constexpr int MAX_ITERATIONS = 255;
+constexpr double BAILOUT = 256.0; // |z|², far enough out for the smooth escape estimate
+constexpr double CONST_RE = -0.7; // real part of c, which selects the Julia set
+constexpr double CONST_IM = 0.27015; // imaginary part of c
+constexpr double CENTER_X = 0.01101; // the point the dive closes on
+constexpr double CENTER_Y = 0.0101;
+constexpr double ZOOM_RATE = 3.281; // zoom per second
+constexpr double ZOOM_LIMIT = 1.0e12; // as deep as double carries a distinct pixel spacing
 
 void DEMO_Render(RETRO_Time time)
 {

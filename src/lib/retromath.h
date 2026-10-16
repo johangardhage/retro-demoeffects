@@ -99,11 +99,11 @@ inline void RETRO_TranslateModel(float tx, float ty, float tz, Model3D *model = 
 // The pinhole projection's defaults, see RETRO_ProjectVertex. A demo whose
 // camera does not fit it - one that wants a focal length per axis, or a depth
 // it works out for itself - writes that formula out with what it has.
-#define RETRO_PROJECTION_EYEDISTANCE 250
+constexpr int RETRO_PROJECTION_EYEDISTANCE = 250;
 
 // Pixels per model unit when the model does not say. A model built in pixels
 // passes 1; one built at unit size passes the size it wants to appear.
-#define RETRO_PROJECTION_SCALE 50
+constexpr int RETRO_PROJECTION_SCALE = 50;
 
 //
 // Screen point of a vertex whose rotated coordinates are already the ones the

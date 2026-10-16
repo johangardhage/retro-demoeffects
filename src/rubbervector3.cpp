@@ -13,23 +13,23 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define FLUBBER_SEGMENTS 12 // vertices around each ring
-#define FLUBBER_STACKS 16 // quads from top to bottom, so this many rings minus one of vertices
-#define FLUBBER_RX 0.55f // model units, the thin radius of the ellipse
-#define FLUBBER_RZ 1.45f // model units, the fat radius
-#define FLUBBER_HEIGHT 5.2f // model units, a little taller than the screen at the default scale
-#define FLUBBER_SWAY 0.50f // model units of lateral bow at the waist
+constexpr int FLUBBER_SEGMENTS = 12; // vertices around each ring
+constexpr int FLUBBER_STACKS = 16; // quads from top to bottom, so this many rings minus one of vertices
+constexpr float FLUBBER_RX = 0.55f; // model units, the thin radius of the ellipse
+constexpr float FLUBBER_RZ = 1.45f; // model units, the fat radius
+constexpr float FLUBBER_HEIGHT = 5.2f; // model units, a little taller than the screen at the default scale
+constexpr float FLUBBER_SWAY = 0.50f; // model units of lateral bow at the waist
 
-#define FLUBBER_TWIST (3 * M_PI) // radians of the (modulated + 1) yaw
-#define FLUBBER_SPIN_SPEED (2 * M_PI / 12.0) // rad/s, one turn every 12s
-#define FLUBBER_TWIST_OMEGA (2 * M_PI / 20.0) // rad/s, 20s period
-#define FLUBBER_TWIST_MOD_OMEGA (2 * M_PI / 17.0) // rad/s, 17s period
-#define FLUBBER_SWAY_OMEGA (2 * M_PI / 18.0) // rad/s, 18s period
+constexpr double FLUBBER_TWIST = 3 * M_PI; // radians of the (modulated + 1) yaw
+constexpr double FLUBBER_SPIN_SPEED = 2 * M_PI / 12.0; // rad/s, one turn every 12s
+constexpr double FLUBBER_TWIST_OMEGA = 2 * M_PI / 20.0; // rad/s, 20s period
+constexpr double FLUBBER_TWIST_MOD_OMEGA = 2 * M_PI / 17.0; // rad/s, 17s period
+constexpr double FLUBBER_SWAY_OMEGA = 2 * M_PI / 18.0; // rad/s, 18s period
 
-#define FLUBBER_EYE_DISTANCE 1400.0f
-#define FLUBBER_DARK_C 0
-#define FLUBBER_GOLD_C 64
-#define FLUBBER_BACK_STRENGTH 0.8f // rear surface visibility, from 0 to 1
+constexpr float FLUBBER_EYE_DISTANCE = 1400.0f;
+constexpr int FLUBBER_DARK_C = 0;
+constexpr int FLUBBER_GOLD_C = 64;
+constexpr float FLUBBER_BACK_STRENGTH = 0.8f; // rear surface visibility, from 0 to 1
 
 static Model3D *Flubber;
 static vec3 RestPos[RETRO_MAX_VERTICES];

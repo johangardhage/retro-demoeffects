@@ -38,19 +38,19 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define CURL_RADIUS 18.0f     // pixels
-#define CURL_DIRECTION_X 0.8f // n, the direction the corner lifts along
-#define CURL_DIRECTION_Y 0.6f
-#define LIGHT_N -0.5f         // light, along n and up; it falls from the top left
-#define LIGHT_Z 1.0f
-#define AMBIENT 0.35f         // light a face turned away from LIGHT still gets
-#define PAPER RETRO_Palette{ 235, 230, 215 }
-#define BACK_TINT 0.75f       // how far the back side is washed toward PAPER
-#define SHADOW_WIDTH 24.0f    // pixels past the roll the shadow fades over
-#define SHADOW_DEPTH 0.55f    // fraction of the light the shadow takes away
-#define TIME_HOLD 1.0         // seconds a picture lies flat
-#define TIME_CURL 3.0         // seconds a picture takes to peel off
-#define TIME_TURN (TIME_HOLD + TIME_CURL)
+constexpr float CURL_RADIUS = 18.0f;     // pixels
+constexpr float CURL_DIRECTION_X = 0.8f; // n, the direction the corner lifts along
+constexpr float CURL_DIRECTION_Y = 0.6f;
+constexpr float LIGHT_N = -0.5f;         // light, along n and up; it falls from the top left
+constexpr float LIGHT_Z = 1.0f;
+constexpr float AMBIENT = 0.35f;         // light a face turned away from LIGHT still gets
+constexpr RETRO_Palette PAPER = { 235, 230, 215 };
+constexpr float BACK_TINT = 0.75f;       // how far the back side is washed toward PAPER
+constexpr float SHADOW_WIDTH = 24.0f;    // pixels past the roll the shadow fades over
+constexpr float SHADOW_DEPTH = 0.55f;    // fraction of the light the shadow takes away
+constexpr double TIME_HOLD = 1.0;        // seconds a picture lies flat
+constexpr double TIME_CURL = 3.0;        // seconds a picture takes to peel off
+constexpr double TIME_TURN = TIME_HOLD + TIME_CURL;
 
 static RETRO_Image *Picture[2];
 static unsigned char ColorLUT[32][32][32];

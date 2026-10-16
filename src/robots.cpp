@@ -64,39 +64,39 @@
 #define WORLD(units) ((units) * (40 - 1) / 4000.0f)
 #define TO_WORLD(cells) ((cells) * 4000.0f / (40 - 1))
 
-#define TERRAIN_SCALE WORLD(700.0f / 255) // map cells of height per stored byte
+constexpr float TERRAIN_SCALE = WORLD(700.0f / 255); // map cells of height per stored byte
 
-#define AMBIENT_LIGHT (100 / 256.0f)
-#define INFINITE_LIGHT (100 / 256.0f)
-#define POINT_LIGHT (255 / 256.0f)
-#define POINT_LIGHT_ORANGE_KL 0.001f // attenuation per world unit
-#define POINT_LIGHT_YELLOW_KL 0.002f
-#define POINT_LIGHT_RATE radians(30) // radians a second round the world
-#define POINT_LIGHT_ORANGE_ORBIT WORLD(500) // radius about the world's center
-#define POINT_LIGHT_YELLOW_ORBIT WORLD(200) // twice as fast the other way
-#define POINT_LIGHT_ALTITUDE WORLD(500)
-#define LIGHT_LEVELS 32 // neutral light, in the tables
-#define TINT_LEVELS 8 // and red and green beyond it
+constexpr float AMBIENT_LIGHT = 100 / 256.0f;
+constexpr float INFINITE_LIGHT = 100 / 256.0f;
+constexpr float POINT_LIGHT = 255 / 256.0f;
+constexpr float POINT_LIGHT_ORANGE_KL = 0.001f; // attenuation per world unit
+constexpr float POINT_LIGHT_YELLOW_KL = 0.002f;
+constexpr double POINT_LIGHT_RATE = radians(30); // radians a second round the world
+constexpr float POINT_LIGHT_ORANGE_ORBIT = WORLD(500); // radius about the world's center
+constexpr float POINT_LIGHT_YELLOW_ORBIT = WORLD(200); // twice as fast the other way
+constexpr float POINT_LIGHT_ALTITUDE = WORLD(500);
+constexpr int LIGHT_LEVELS = 32; // neutral light, in the tables
+constexpr int TINT_LEVELS = 8; // and red and green beyond it
 
-#define ROBOT_SCALE WORLD(4) // world units per model unit
-#define ROBOT_ALTITUDE WORLD(100) // height of the model's origin
-#define ROBOT_SPACING WORLD(200) // the second stands this much further along z
-#define LIGHT_OBJECT_SCALE WORLD(10)
+constexpr float ROBOT_SCALE = WORLD(4); // world units per model unit
+constexpr float ROBOT_ALTITUDE = WORLD(100); // height of the model's origin
+constexpr float ROBOT_SPACING = WORLD(200); // the second stands this much further along z
+constexpr float LIGHT_OBJECT_SCALE = WORLD(10);
 
-#define SHADOW_PLANE WORLD(10) // height of the plane the shadows lie on
-#define SHADOW_LIGHT (5 / 7.0f) // fraction of the light left in the shadow
+constexpr float SHADOW_PLANE = WORLD(10); // height of the plane the shadows lie on
+constexpr float SHADOW_LIGHT = 5 / 7.0f; // fraction of the light left in the shadow
 
 // The sunset is 800 pixels across in the book, and moves one of them a frame
 // at 30 frames a second. It goes round once a turn of the camera, so it is
 // where it was whenever the camera faces the same way again, heading wrapping
 // or not
-#define SKY_DRIFT (30 * RETRO_WIDTH / 800.0f) // pixels a second
-#define SKY_TURN (RETRO_WIDTH / (2 * M_PI)) // pixels a radian of turn
+constexpr float SKY_DRIFT = 30 * RETRO_WIDTH / 800.0f; // pixels a second
+constexpr double SKY_TURN = RETRO_WIDTH / (2 * M_PI); // pixels a radian of turn
 
-#define TEXTURE_SIZE 256 // every texture, on a side
+constexpr int TEXTURE_SIZE = 256; // every texture, on a side
 
 enum { ASSET_SKY, ASSET_TERRAIN, ASSET_SKIN, ASSET_HEIGHTMAP };
-#define TEXTURES (ASSET_HEIGHTMAP - ASSET_TERRAIN)
+constexpr int TEXTURES = ASSET_HEIGHTMAP - ASSET_TERRAIN;
 enum { MODEL_ROBOT, MODEL_CUBE, MODELS };
 enum { LIGHT_ORANGE, LIGHT_YELLOW, POINT_LIGHTS, LIGHT_SUN = POINT_LIGHTS, LIGHTS };
 
@@ -129,7 +129,7 @@ static const Animation Animations[] = {
 	{ "DEATH_FORWARD", 184, 189, 7.5f },
 	{ "DEATH_SLOW", 190, 197, 7.5f }
 };
-#define ANIMATIONS (int)(sizeof(Animations) / sizeof(Animations[0]))
+constexpr int ANIMATIONS = (int)(sizeof(Animations) / sizeof(Animations[0]));
 
 static unsigned char LightTableData[TEXTURES][RETRO_COLORS][LIGHT_LEVELS][TINT_LEVELS][TINT_LEVELS];
 static unsigned char ShadowTable[RETRO_COLORS];

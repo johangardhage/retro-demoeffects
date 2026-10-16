@@ -18,11 +18,11 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define DISTORT_WIDTH (RETRO_WIDTH * 2)
-#define DISTORT_HEIGHT (RETRO_HEIGHT * 2)
-#define DISTORT_SPEED 400 // phase units per second, about a third of a turn a second
+constexpr int DISTORT_WIDTH = RETRO_WIDTH * 2;
+constexpr int DISTORT_HEIGHT = RETRO_HEIGHT * 2;
+constexpr int DISTORT_SPEED = 400; // phase units per second, about a third of a turn a second
 // 197, 224=2^5·7, 205=5·41, 231=3·7·11 → lcm = 2^5·3·5·7·11·41·197
-#define DISTORT_PERIOD (32.0 * 3 * 5 * 7 * 11 * 41 * 197 * 2 * M_PI)
+constexpr double DISTORT_PERIOD = 32.0 * 3 * 5 * 7 * 11 * 41 * 197 * 2 * M_PI;
 
 // Displacements are signed. Plain char is unsigned on some targets, which would
 // turn every negative shift into a large positive one.

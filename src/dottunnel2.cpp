@@ -23,16 +23,16 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define POINTSTEP 5 // angle units between the dots around a ring, of the 256 in a whole turn
-#define RING_DOTS (RETRO_ANGLES_PER_TURN / POINTSTEP) // 5 does not divide 256; the ring uses 256/n
-#define CIRCLE_RADIUS 50
-#define RING_COUNT 87 // rings between the mouth and the eye
-#define RING_STEP 5 // depth from one ring to the next
-#define TUNNEL_START (-240) // depth of the furthest ring
-#define EYE 250 // how far the eye sits from the screen
-#define SWAY 128 // how far the tunnel's center wanders off the axis
-#define SWAY_SPEED 100 // angle units per second
-#define SHADES 64 // palette entries the depth shading ramps over
+constexpr int POINTSTEP = 5; // angle units between the dots around a ring, of the 256 in a whole turn
+constexpr int RING_DOTS = RETRO_ANGLES_PER_TURN / POINTSTEP; // 5 does not divide 256; the ring uses 256/n
+constexpr int CIRCLE_RADIUS = 50;
+constexpr int RING_COUNT = 87; // rings between the mouth and the eye
+constexpr int RING_STEP = 5; // depth from one ring to the next
+constexpr int TUNNEL_START = -240; // depth of the furthest ring
+constexpr int EYE = 250; // how far the eye sits from the screen
+constexpr int SWAY = 128; // how far the tunnel's center wanders off the axis
+constexpr int SWAY_SPEED = 100; // angle units per second
+constexpr int SHADES = 64; // palette entries the depth shading ramps over
 
 static vec2 Circle[RING_DOTS];
 

@@ -28,11 +28,11 @@
 
 // Pixels per model unit. Each torus reaches 2.1 from its center and the linked
 // centers sit 0.75 to either side of the origin.
-#define PROJECTION_SCALE 36.0f
+constexpr float PROJECTION_SCALE = 36.0f;
 
-#define LINK_RADIUS 1.5f
-#define LINK_ROTATION_SPEED 0.8f
-#define LINK_ROTATION_PERIOD (20 * M_PI) // 10, 7 and 4 whole turns on x, y and z
+constexpr float LINK_RADIUS = 1.5f;
+constexpr float LINK_ROTATION_SPEED = 0.8f;
+constexpr double LINK_ROTATION_PERIOD = 20 * M_PI; // 10, 7 and 4 whole turns on x, y and z
 
 static Model3D *Torus1 = NULL;
 static Model3D *Torus2 = NULL;

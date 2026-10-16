@@ -15,13 +15,13 @@
 #include "lib/retropoly.h"
 #include "lib/retroterrain.h"
 
-#define CAMERA_X 128.0f
-#define CAMERA_HEIGHT 20.0f
-#define PITCH -0.5f
-#define NEAR_PLANE 1.0f
-#define VIEW_DISTANCE 100.0f
-#define WORLD_HEIGHT_SCALE (1.0f / 16.0f)
-#define FORWARD_SPEED 30.0f
+constexpr float CAMERA_X = 128.0f;
+constexpr float CAMERA_HEIGHT = 20.0f;
+constexpr float PITCH = -0.5f;
+constexpr float NEAR_PLANE = 1.0f;
+constexpr float VIEW_DISTANCE = 100.0f;
+constexpr float WORLD_HEIGHT_SCALE = 1.0f / 16.0f;
+constexpr float FORWARD_SPEED = 30.0f;
 
 // Looking along +z with x to the right and y up, tipped down by -PITCH: the
 // frame the dots were always seen in. Half the screen's width and height

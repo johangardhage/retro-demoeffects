@@ -40,14 +40,14 @@
 #include "lib/retropalette.h"
 #include "lib/retroshadetable.h"
 
-#define LAMPS 2
-#define LAMP_HEIGHT 260.0f // pixels from the picture out to a lamp
-#define BEAM_INNER 0.11f // radians from the middle of a beam to where it starts to fade
-#define BEAM_OUTER 0.22f // and to where it is gone
-#define AIM_MARGIN 30 // pixels kept between an aim and the edge of the picture
-#define AIM_PERIOD 30.0 // seconds for the aims to come back to where they began
-#define AMBIENT 0.12f // light on the picture where no beam reaches
-#define SHADES 64 // levels of light
+constexpr int LAMPS = 2;
+constexpr float LAMP_HEIGHT = 260.0f; // pixels from the picture out to a lamp
+constexpr float BEAM_INNER = 0.11f; // radians from the middle of a beam to where it starts to fade
+constexpr float BEAM_OUTER = 0.22f; // and to where it is gone
+constexpr int AIM_MARGIN = 30; // pixels kept between an aim and the edge of the picture
+constexpr double AIM_PERIOD = 30.0; // seconds for the aims to come back to where they began
+constexpr float AMBIENT = 0.12f; // light on the picture where no beam reaches
+constexpr int SHADES = 64; // levels of light
 
 struct Lamp {
 	float x, y; // the point of the picture it hangs over

@@ -46,20 +46,20 @@
 #include "lib/retropalette.h"
 #include "lib/retrofont.h"
 
-#define ROTATION_SPEED 0.4 // radians a second, about each axis
-#define PROJECTION_SCALE 38 // pixels per unit of the torus, which is 4.2 across
-#define LAMP_STRENGTH 1.6f // where a lamp stands
-#define LAMP_LINEAR 0.5f // how fast it dims, per unit of distance
-#define LAMP_SIZE 0.12f // radius of a lamp's disc, in the torus's units
-#define LAMP_SHADES 8 // palette entries at the top for the lamps' glow
-#define TORUS_SHADES (RETRO_COLORS - RETRO_PHONG_OFFSET - LAMP_SHADES)
-#define TORUS_COLOR RETRO_Palette{ 230, 200, 150 }
-#define LAMP_EDGE RETRO_Palette{ 255, 170, 60 }
-#define TORUS_WHITE 230 // the material under colored lamps, gray on every channel
-#define TABLE_LEVELS 16 // of each of red, green and blue light in the color light table
-#define PALETTE_SAMPLES 64 // moments the colored lamps' light is surveyed at
-#define PALETTE_SPAN 60.0 // seconds they are spread over
-#define PLAIN_WEIGHT (1 / 4.0f) // the plain torus's say in the colored palette, beside the marble's
+constexpr double ROTATION_SPEED = 0.4; // radians a second, about each axis
+constexpr int PROJECTION_SCALE = 38; // pixels per unit of the torus, which is 4.2 across
+constexpr float LAMP_STRENGTH = 1.6f; // where a lamp stands
+constexpr float LAMP_LINEAR = 0.5f; // how fast it dims, per unit of distance
+constexpr float LAMP_SIZE = 0.12f; // radius of a lamp's disc, in the torus's units
+constexpr int LAMP_SHADES = 8; // palette entries at the top for the lamps' glow
+constexpr int TORUS_SHADES = RETRO_COLORS - RETRO_PHONG_OFFSET - LAMP_SHADES;
+constexpr RETRO_Palette TORUS_COLOR = { 230, 200, 150 };
+constexpr RETRO_Palette LAMP_EDGE = { 255, 170, 60 };
+constexpr int TORUS_WHITE = 230; // the material under colored lamps, gray on every channel
+constexpr int TABLE_LEVELS = 16; // of each of red, green and blue light in the color light table
+constexpr int PALETTE_SAMPLES = 64; // moments the colored lamps' light is surveyed at
+constexpr double PALETTE_SPAN = 60.0; // seconds they are spread over
+constexpr float PLAIN_WEIGHT = 1 / 4.0f; // the plain torus's say in the colored palette, beside the marble's
 
 enum { MODE_FLAT, MODE_GOURAUD, MODE_PHONG, MODES };
 
@@ -92,7 +92,7 @@ static const Lamp Lamps[] = {
 	{ 2.6f, 0.3f, -1.3f, 2.1f, { 0.1f, 1.0f, 0.15f } },
 	{ 2.2f, 1.4f, 0.6f, 4.2f, { 0.2f, 0.35f, 1.0f } },
 };
-#define LAMPS (int)(sizeof(Lamps) / sizeof(Lamps[0]))
+constexpr int LAMPS = (int)(sizeof(Lamps) / sizeof(Lamps[0]));
 static_assert(LAMPS <= RETRO_MAX_LIGHTS, "Each lamp is a light of the torus's rig");
 
 // The colored palette's held entries: black, white, and each lamp's glow from

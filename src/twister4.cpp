@@ -17,20 +17,20 @@
 #include "lib/retromain.h"
 #include "lib/retroshadetable.h"
 
-#define TWISTER_PERIOD 512
-#define TWISTER_CYCLE ((double)RETRO_ANGLES_PER_TURN / TWISTER_PERIOD)
-#define TWISTER_CENTER_X (RETRO_WIDTH / 2.0)
-#define TWISTER_RADIUS 60
-#define TWISTER_DEPTH_RATE 30
-#define TWISTER_TURNS 1.5
-#define TWISTER_TORSION 1.2
-#define TWISTER_TORSION_WAVE 7
-#define TWISTER_SPEED 30.0
+constexpr int TWISTER_PERIOD = 512;
+constexpr double TWISTER_CYCLE = (double)RETRO_ANGLES_PER_TURN / TWISTER_PERIOD;
+constexpr double TWISTER_CENTER_X = RETRO_WIDTH / 2.0;
+constexpr int TWISTER_RADIUS = 60;
+constexpr int TWISTER_DEPTH_RATE = 30;
+constexpr double TWISTER_TURNS = 1.5;
+constexpr double TWISTER_TORSION = 1.2;
+constexpr int TWISTER_TORSION_WAVE = 7;
+constexpr double TWISTER_SPEED = 30.0;
 
-#define TWISTER_IMAGE_SIZE 256
-#define TWISTER_IMAGE_FACE (TWISTER_IMAGE_SIZE / 4)
-#define TWISTER_IMAGE_SCROLL 2.0
-#define TWISTER_SHADES 64
+constexpr int TWISTER_IMAGE_SIZE = 256;
+constexpr int TWISTER_IMAGE_FACE = TWISTER_IMAGE_SIZE / 4;
+constexpr double TWISTER_IMAGE_SCROLL = 2.0;
+constexpr int TWISTER_SHADES = 64;
 
 static unsigned char TwisterShadeTable[RETRO_COLORS * TWISTER_SHADES];
 

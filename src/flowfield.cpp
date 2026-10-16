@@ -47,15 +47,15 @@
 #include "lib/retromath.h"
 #include "lib/retropalette.h"
 
-#define NUM_PARTICLES 4000
-#define PARTICLE_SPEED 0.7f // pixels a step
-#define PARTICLE_LIFE 400 // steps a particle is carried for, at the most
-#define FIELD_SCALE (3.0f / RETRO_WIDTH) // noise cells a pixel
-#define FIELD_TURNS 2.0f // turns the angle makes as the noise goes from 0 to 1
-#define FIELD_DRIFT 0.08 // noise cells a second the field moves through time
-#define NOISE_PERIOD 256 // cells the noise repeats after
-#define TRAIL_KEEP 0.97f // of its count a pixel keeps a step
-#define TRAIL_EXPOSURE 6.0f // the count that reaches 1 − 1/e of the ramp
+constexpr int NUM_PARTICLES = 4000;
+constexpr float PARTICLE_SPEED = 0.7f; // pixels a step
+constexpr int PARTICLE_LIFE = 400; // steps a particle is carried for, at the most
+constexpr float FIELD_SCALE = 3.0f / RETRO_WIDTH; // noise cells a pixel
+constexpr float FIELD_TURNS = 2.0f; // turns the angle makes as the noise goes from 0 to 1
+constexpr double FIELD_DRIFT = 0.08; // noise cells a second the field moves through time
+constexpr int NOISE_PERIOD = 256; // cells the noise repeats after
+constexpr float TRAIL_KEEP = 0.97f; // of its count a pixel keeps a step
+constexpr float TRAIL_EXPOSURE = 6.0f; // the count that reaches 1 − 1/e of the ramp
 
 struct Particle {
 	float x, y;

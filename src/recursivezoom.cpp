@@ -28,14 +28,14 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define CHILD_SCALE 0.6 // child image size before clipping to the arch
-#define ZOOM_PERIOD 4.0 // seconds for one child to grow to its parent's size
-#define MAX_DEPTH 32 // bounds the singular center pixel at odd resolutions
-#define ANCESTOR_LEVELS 2 // trace starts this many levels above the viewport
-#define INV_CHILD_SCALE (1.0 / CHILD_SCALE) // the trace's per-level growth is a multiply, not a divide
+constexpr double CHILD_SCALE = 0.6; // child image size before clipping to the arch
+constexpr double ZOOM_PERIOD = 4.0; // seconds for one child to grow to its parent's size
+constexpr int MAX_DEPTH = 32; // bounds the singular center pixel at odd resolutions
+constexpr int ANCESTOR_LEVELS = 2; // trace starts this many levels above the viewport
+constexpr double INV_CHILD_SCALE = 1.0 / CHILD_SCALE; // the trace's per-level growth is a multiply, not a divide
 
-#define MAX_LEVELS 16 // generous bound for a mip pyramid down from RETRO_WIDTH x RETRO_HEIGHT to 1x1
-#define MAX_PIXELS (RETRO_WIDTH * RETRO_HEIGHT * 4 / 3 + 64) // geometric series bound, each level near a quarter of its parent
+constexpr int MAX_LEVELS = 16; // generous bound for a mip pyramid down from RETRO_WIDTH x RETRO_HEIGHT to 1x1
+constexpr int MAX_PIXELS = RETRO_WIDTH * RETRO_HEIGHT * 4 / 3 + 64; // geometric series bound, each level near a quarter of its parent
 
 // Premultiplied color keeps the transparent doorway from bleeding black
 // into the stone.

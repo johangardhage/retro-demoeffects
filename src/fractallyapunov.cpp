@@ -66,12 +66,12 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define STEPS 8 // steps of the map a fixed step
-#define WARMUP_UPDATES 8 // fixed steps that move x before the sum starts
-#define DRAW_UPDATES 360 // fixed steps a slide is summed for
-#define HOLD_UPDATES 240 // fixed steps the finished slide is held
-#define SLOPE_FLOOR 1.0e-30f // the least a fixed step's product of slopes counts as
-#define CHAOS_COLORS 64 // palette entries of chaos, after entry 0; the rest are order
+constexpr int STEPS = 8; // steps of the map a fixed step
+constexpr int WARMUP_UPDATES = 8; // fixed steps that move x before the sum starts
+constexpr int DRAW_UPDATES = 360; // fixed steps a slide is summed for
+constexpr int HOLD_UPDATES = 240; // fixed steps the finished slide is held
+constexpr float SLOPE_FLOOR = 1.0e-30f; // the least a fixed step's product of slopes counts as
+constexpr int CHAOS_COLORS = 64; // palette entries of chaos, after entry 0; the rest are order
 
 enum {
 	MAP_LOGISTIC,
@@ -133,7 +133,7 @@ static Slide Slides[] = {
 	  { { 20, 110, 30 }, { 0, 60, 20 }, { 0, 10, 0 } }, { { 240, 235, 0 }, { 120, 150, 0 } } },
 };
 
-#define SLIDES ((int)(sizeof(Slides) / sizeof(Slides[0])))
+constexpr int SLIDES = (int)(sizeof(Slides) / sizeof(Slides[0]));
 
 static float X[RETRO_WIDTH * RETRO_HEIGHT];
 static float Sum[RETRO_WIDTH * RETRO_HEIGHT];

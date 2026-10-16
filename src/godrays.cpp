@@ -20,50 +20,50 @@
 #include "lib/retromain.h"
 #include "lib/retrorender.h"
 
-#define HOLE_ANGLE 0.41f // radians from an axis to the rim of its hole
-#define HOLE_SEGMENTS 24 // corners around a cap
-#define HOLE_RINGS 3 // rings from a cap's middle out to its rim
-#define BALL_SHINE 0.38f // brightness of the ball where it faces the eye
-#define BALL_LIFT 1.01f // the caps' radius; the ball's facets lie inside radius 1
+constexpr float HOLE_ANGLE = 0.41f; // radians from an axis to the rim of its hole
+constexpr int HOLE_SEGMENTS = 24; // corners around a cap
+constexpr int HOLE_RINGS = 3; // rings from a cap's middle out to its rim
+constexpr float BALL_SHINE = 0.38f; // brightness of the ball where it faces the eye
+constexpr float BALL_LIFT = 1.01f; // the caps' radius; the ball's facets lie inside radius 1
 
-#define BEAM_SPREAD 0.15f // ball radii a beam widens by for every radius it travels
-#define BEAM_LENGTH 9.0f // ball radii from the lamp to the end of a beam
-#define BEAM_FADE 0.5f // share of the beam's length before its end starts to fade
-#define BEAM_SECTIONS 12 // adjoining sections along each beam
-#define BEAM_SHELLS 24 // nested volumes approximating the radial profile
-#define BEAM_SEGMENTS 16 // corners around each beam section
-#define BEAM_CORE 0.6f // share of a beam's radius its bright core spans
-#define BEAM_EDGE 0.85f // brightness at the core's rim, of the middle's
-#define BEAM_DENSITY 0.62f // calibrated for this radial profile, seen side-on
-#define BEAM_NEAR_DEPTH 1.0f // matches RETRO_ProjectVertex's near plane
+constexpr float BEAM_SPREAD = 0.15f; // ball radii a beam widens by for every radius it travels
+constexpr float BEAM_LENGTH = 9.0f; // ball radii from the lamp to the end of a beam
+constexpr float BEAM_FADE = 0.5f; // share of the beam's length before its end starts to fade
+constexpr int BEAM_SECTIONS = 12; // adjoining sections along each beam
+constexpr int BEAM_SHELLS = 24; // nested volumes approximating the radial profile
+constexpr int BEAM_SEGMENTS = 16; // corners around each beam section
+constexpr float BEAM_CORE = 0.6f; // share of a beam's radius its bright core spans
+constexpr float BEAM_EDGE = 0.85f; // brightness at the core's rim, of the middle's
+constexpr float BEAM_DENSITY = 0.62f; // calibrated for this radial profile, seen side-on
+constexpr float BEAM_NEAR_DEPTH = 1.0f; // matches RETRO_ProjectVertex's near plane
 
-#define PATH_Z 0.5f // ball radii the middle of the path lies behind the origin
-#define PATH_SPEED 0.45 // radians a second
-#define PATH_WIDTH 1.5f // ball radii the path reaches either side
-#define PATH_HEIGHT 1.0f // ball radii the path reaches above and below
-#define PATH_DEPTH 1.6f // ball radii the path reaches toward and away from the eye
+constexpr float PATH_Z = 0.5f; // ball radii the middle of the path lies behind the origin
+constexpr double PATH_SPEED = 0.45; // radians a second
+constexpr float PATH_WIDTH = 1.5f; // ball radii the path reaches either side
+constexpr float PATH_HEIGHT = 1.0f; // ball radii the path reaches above and below
+constexpr float PATH_DEPTH = 1.6f; // ball radii the path reaches toward and away from the eye
 
-#define SPIN_SPEED_X 0.9 // radians a second
-#define SPIN_SPEED_Y 1.3
-#define SPIN_SPEED_Z 0.5
+constexpr double SPIN_SPEED_X = 0.9; // radians a second
+constexpr double SPIN_SPEED_Y = 1.3;
+constexpr double SPIN_SPEED_Z = 0.5;
 
-#define WALL_ARMS 5 // arms of blue haze
-#define WALL_TWIST 0.008f // radians the arms curl through per pixel out from the middle
-#define WALL_ROUGHNESS 0.5f // how far the noise pushes the arms' edges about
-#define WALL_THRESHOLD 0.72f // how much of the spiral is cut away; higher is thinner arms
-#define WALL_CELL 10.0f // pixels a noise cell spans
-#define WALL_PIXEL 2 // pixels a block of the wall spans
-#define WALL_CORE 60.0f // pixels from the middle the arms thin out within
+constexpr int WALL_ARMS = 5; // arms of blue haze
+constexpr float WALL_TWIST = 0.008f; // radians the arms curl through per pixel out from the middle
+constexpr float WALL_ROUGHNESS = 0.5f; // how far the noise pushes the arms' edges about
+constexpr float WALL_THRESHOLD = 0.72f; // how much of the spiral is cut away; higher is thinner arms
+constexpr float WALL_CELL = 10.0f; // pixels a noise cell spans
+constexpr int WALL_PIXEL = 2; // pixels a block of the wall spans
+constexpr float WALL_CORE = 60.0f; // pixels from the middle the arms thin out within
 
-#define WALL_RED RETRO_Palette{ 35, 2, 0 }
-#define WALL_BLUE RETRO_Palette{ 0, 0, 31 }
+constexpr RETRO_Palette WALL_RED = { 35, 2, 0 };
+constexpr RETRO_Palette WALL_BLUE = { 0, 0, 31 };
 
-#define LIGHT_LEVELS 78 // no light through white, per ramp
-#define BALL_SHADES 20 // the ball's own shades
-#define GRAY_START 0
-#define RED_START (GRAY_START + LIGHT_LEVELS)
-#define BLUE_START (RED_START + LIGHT_LEVELS)
-#define BALL_START (BLUE_START + LIGHT_LEVELS) // 3 x 78 + 20 is the palette but for two colors
+constexpr int LIGHT_LEVELS = 78; // no light through white, per ramp
+constexpr int BALL_SHADES = 20; // the ball's own shades
+constexpr int GRAY_START = 0;
+constexpr int RED_START = GRAY_START + LIGHT_LEVELS;
+constexpr int BLUE_START = RED_START + LIGHT_LEVELS;
+constexpr int BALL_START = BLUE_START + LIGHT_LEVELS; // 3 x 78 + 20 is the palette but for two colors
 
 struct BeamFrustum {
 	float start, end; // distances along the beam axis

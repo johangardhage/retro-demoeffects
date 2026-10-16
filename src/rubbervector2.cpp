@@ -26,13 +26,13 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define ROTATION_SPEED 0.9f   // radians per second, about the middle axis
-#define ROTATION_SPREAD 0.3f  // the other two turn this much slower and faster
-#define RUBBER_SPEED 2.4f     // deformation phase per second, of the middle wave
-#define RUBBER_SPREAD 0.3f    // and the same spread across the three waves
-#define RUBBER_AMOUNT 0.38f   // displacement in model units
-#define RUBBER_WAVE1 1.5f     // radians a wave's phase turns per model unit along
-#define RUBBER_WAVE2 1.0f     // the next axis, and along the one after that
+constexpr float ROTATION_SPEED = 0.9f;  // radians per second, about the middle axis
+constexpr float ROTATION_SPREAD = 0.3f; // the other two turn this much slower and faster
+constexpr float RUBBER_SPEED = 2.4f;    // deformation phase per second, of the middle wave
+constexpr float RUBBER_SPREAD = 0.3f;   // and the same spread across the three waves
+constexpr float RUBBER_AMOUNT = 0.38f;  // displacement in model units
+constexpr float RUBBER_WAVE1 = 1.5f;    // radians a wave's phase turns per model unit along
+constexpr float RUBBER_WAVE2 = 1.0f;    // the next axis, and along the one after that
 
 static vec3 RestPos[RETRO_MAX_VERTICES];
 

@@ -32,18 +32,18 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define BOB_SCREENS 8 // screens drawn in turn, and the chain's spacing in steps
-#define BOB_SIZE 24 // pixels across
-#define BOB_AMPX 136 // pixels either side of the center
-#define BOB_AMPY 96
-#define BOB_SPEEDX 0.9 // radians a second
-#define BOB_SPEEDY 1.3
-#define BOB_WOBBLE 0.3 // how far the y rate swings either side of BOB_SPEEDY
-#define BOB_DRIFT 0.11 // radians a second the swing moves through
-#define BOB_COLORS 4 // ramps, one per pass
-#define BOB_SHADES 60 // palette entries a ramp spends on the ball
-#define BOB_COLORTIME 5.0 // seconds a ramp is drawn before the next
-#define BOB_SHADOW 0.6 // brightness of a ramp's darkest shade, as a fraction of its hue
+constexpr int BOB_SCREENS = 8; // screens drawn in turn, and the chain's spacing in steps
+constexpr int BOB_SIZE = 24; // pixels across
+constexpr int BOB_AMPX = 136; // pixels either side of the center
+constexpr int BOB_AMPY = 96;
+constexpr double BOB_SPEEDX = 0.9; // radians a second
+constexpr double BOB_SPEEDY = 1.3;
+constexpr double BOB_WOBBLE = 0.3; // how far the y rate swings either side of BOB_SPEEDY
+constexpr double BOB_DRIFT = 0.11; // radians a second the swing moves through
+constexpr int BOB_COLORS = 4; // ramps, one per pass
+constexpr int BOB_SHADES = 60; // palette entries a ramp spends on the ball
+constexpr double BOB_COLORTIME = 5.0; // seconds a ramp is drawn before the next
+constexpr double BOB_SHADOW = 0.6; // brightness of a ramp's darkest shade, as a fraction of its hue
 
 static const RETRO_Palette BobHues[BOB_COLORS] = { RETRO_CYAN, RETRO_ORANGE, RETRO_SPRINGGREEN, RETRO_HOTPINK };
 

@@ -132,68 +132,68 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define WORLD_SIZE 512
-#define WORLD_HEIGHT 48
-#define SEA_LEVEL 14
-#define GROUND_BASE 4 // the lowest the ground goes
-#define GROUND_RANGE 30 // blocks from the lowest ground to the highest
-#define NOISE_SCALE 48.0f // blocks per feature of the coarsest octave
+constexpr int WORLD_SIZE = 512;
+constexpr int WORLD_HEIGHT = 48;
+constexpr int SEA_LEVEL = 14;
+constexpr int GROUND_BASE = 4; // the lowest the ground goes
+constexpr int GROUND_RANGE = 30; // blocks from the lowest ground to the highest
+constexpr float NOISE_SCALE = 48.0f; // blocks per feature of the coarsest octave
 
-#define TREE_CELL 7 // at most one tree to a square this many blocks wide
-#define TREE_CHANCE 0.55f // of a square on grass having its tree
-#define TREE_MIN_TRUNK 4
-#define TREE_MAX_TRUNK 6
+constexpr int TREE_CELL = 7; // at most one tree to a square this many blocks wide
+constexpr float TREE_CHANCE = 0.55f; // of a square on grass having its tree
+constexpr int TREE_MIN_TRUNK = 4;
+constexpr int TREE_MAX_TRUNK = 6;
 
-#define FOCAL 200.0f // pixels; sets the field of view
-#define MAX_DISTANCE 128.0f // blocks a ray walks before it sees the sky
-#define FOG_START 80.0f
+constexpr float FOCAL = 200.0f; // pixels; sets the field of view
+constexpr float MAX_DISTANCE = 128.0f; // blocks a ray walks before it sees the sky
+constexpr float FOG_START = 80.0f;
 
-#define PLAYER_RADIUS 0.3f
-#define PLAYER_HEIGHT 1.8f
-#define EYE_HEIGHT 1.62f
-#define WALK_SPEED 4.3f // blocks a second
-#define GRAVITY 32.0f // blocks a second, a second
-#define JUMP_SPEED 9.0f // rises 9² / (2 × 32) = 1.27 blocks
-#define MAX_FALL_SPEED 40.0f // two thirds of a block a step, so a fall never passes through one
-#define CONTACT_GAP 0.001f // left between the box and a block it is pushed back from
-#define REACH 5.0f // blocks from the eye a block can be broken or placed
-#define REPEAT_DELAY 0.25 // seconds between breaks or placings while a button is held
+constexpr float PLAYER_RADIUS = 0.3f;
+constexpr float PLAYER_HEIGHT = 1.8f;
+constexpr float EYE_HEIGHT = 1.62f;
+constexpr float WALK_SPEED = 4.3f; // blocks a second
+constexpr float GRAVITY = 32.0f; // blocks a second, a second
+constexpr float JUMP_SPEED = 9.0f; // rises 9² / (2 × 32) = 1.27 blocks
+constexpr float MAX_FALL_SPEED = 40.0f; // two thirds of a block a step, so a fall never passes through one
+constexpr float CONTACT_GAP = 0.001f; // left between the box and a block it is pushed back from
+constexpr float REACH = 5.0f; // blocks from the eye a block can be broken or placed
+constexpr double REPEAT_DELAY = 0.25; // seconds between breaks or placings while a button is held
 
-#define DAY_LENGTH 240.0 // seconds for the sun to go round once
-#define DAY_START 0.45 // radians round from sunrise at the start, mid morning
-#define FAST_TIME 20.0 // times as fast as the day runs while T is held
-#define SUNRISE_AZIMUTH 0.5f // radians around from +x toward +z
-#define SUN_NOON_ELEVATION 1.1f // radians above the horizon at the top
-#define SUN_SIZE 0.08f // the tangent of half the angle across
-#define SUN_CORE_SIZE 0.6f // of the sun that is its pale core
-#define MOON_SIZE 0.06f
-#define NIGHT_LIGHT 0.22f // of the day's light left at night
-#define DUSK_HEIGHT 0.05f // the sun's height h at which the light begins to fail
-#define NIGHT_HEIGHT -0.25f // and at which it is night
-#define SUNSET_HEIGHT 0.2f // the sun's height either side of the horizon within which it glows
-#define SUN_AMBIENT 0.75f // of a face's light it has facing away from the sun
-#define SUN_DIRECT 0.4f // and the most the sun adds to it, facing it square on
-#define MOON_DIRECT 0.2f // and the moon at night
-#define SUN_FADE_HEIGHT 0.15f // the sun's height h under which its direct light weakens, gone at the horizon
-#define SUN_WHITE_HEIGHT 0.35f // and under which it reddens toward LOW_SUN
-#define STAR_COUNT 320 // over the whole sphere, half of them above the horizon
+constexpr double DAY_LENGTH = 240.0; // seconds for the sun to go round once
+constexpr double DAY_START = 0.45; // radians round from sunrise at the start, mid morning
+constexpr double FAST_TIME = 20.0; // times as fast as the day runs while T is held
+constexpr float SUNRISE_AZIMUTH = 0.5f; // radians around from +x toward +z
+constexpr float SUN_NOON_ELEVATION = 1.1f; // radians above the horizon at the top
+constexpr float SUN_SIZE = 0.08f; // the tangent of half the angle across
+constexpr float SUN_CORE_SIZE = 0.6f; // of the sun that is its pale core
+constexpr float MOON_SIZE = 0.06f;
+constexpr float NIGHT_LIGHT = 0.22f; // of the day's light left at night
+constexpr float DUSK_HEIGHT = 0.05f; // the sun's height h at which the light begins to fail
+constexpr float NIGHT_HEIGHT = -0.25f; // and at which it is night
+constexpr float SUNSET_HEIGHT = 0.2f; // the sun's height either side of the horizon within which it glows
+constexpr float SUN_AMBIENT = 0.75f; // of a face's light it has facing away from the sun
+constexpr float SUN_DIRECT = 0.4f; // and the most the sun adds to it, facing it square on
+constexpr float MOON_DIRECT = 0.2f; // and the moon at night
+constexpr float SUN_FADE_HEIGHT = 0.15f; // the sun's height h under which its direct light weakens, gone at the horizon
+constexpr float SUN_WHITE_HEIGHT = 0.35f; // and under which it reddens toward LOW_SUN
+constexpr int STAR_COUNT = 320; // over the whole sphere, half of them above the horizon
 
-#define CLOUD_HEIGHT 60.0f // above the highest block the player can stand on
-#define CLOUD_CELL 8.0f // blocks across a cloud cell
-#define CLOUD_SCALE 0.3f // noise features per cell, the size of a cloud
-#define CLOUD_COVER 0.6f // noise above which a cell is cloud
-#define CLOUD_SPEED 1.5 // blocks a second, drifting along x
-#define CLOUD_DISTANCE 200.0f // past which the cloud layer is sky
+constexpr float CLOUD_HEIGHT = 60.0f; // above the highest block the player can stand on
+constexpr float CLOUD_CELL = 8.0f; // blocks across a cloud cell
+constexpr float CLOUD_SCALE = 0.3f; // noise features per cell, the size of a cloud
+constexpr float CLOUD_COVER = 0.6f; // noise above which a cell is cloud
+constexpr double CLOUD_SPEED = 1.5; // blocks a second, drifting along x
+constexpr float CLOUD_DISTANCE = 200.0f; // past which the cloud layer is sky
 
-#define SHIMMER_SPEED 2.5 // radians a second
-#define SHIMMER_LOW 0.4f // of the way from the water's dark blue to its light one
-#define SHIMMER_HIGH 0.8f // that the streaks pulse between
-#define OUTLINE_WIDTH 1.0f // pixels
+constexpr double SHIMMER_SPEED = 2.5; // radians a second
+constexpr float SHIMMER_LOW = 0.4f; // of the way from the water's dark blue to its light one
+constexpr float SHIMMER_HIGH = 0.8f; // that the streaks pulse between
+constexpr float OUTLINE_WIDTH = 1.0f; // pixels
 
-#define SLOT_SIZE 20 // a texture and a two-pixel frame
+constexpr int SLOT_SIZE = 20; // a texture and a two-pixel frame
 
-#define TEXTURE_SIZE 16
-#define TEXEL_HOLE 255 // a leaves texel the ray passes through
+constexpr int TEXTURE_SIZE = 16;
+constexpr int TEXEL_HOLE = 255; // a leaves texel the ray passes through
 
 enum Block { AIR, GRASS, DIRT, SAND, WATER, LOG, LEAVES, BEDROCK, BLOCKS };
 
@@ -231,34 +231,28 @@ static const int BlockTexture[BLOCKS][3] = {
 	{ TEX_BEDROCK, TEX_BEDROCK, TEX_BEDROCK },
 };
 
-#define DAY_HORIZON (RETRO_Palette){ 180, 210, 240 }
-#define DAY_ZENITH (RETRO_Palette){ 70, 120, 215 }
-#define NIGHT_HORIZON (RETRO_Palette){ 24, 30, 56 }
-#define NIGHT_ZENITH (RETRO_Palette){ 6, 8, 24 }
-#define SUNSET (RETRO_Palette){ 244, 140, 72 }
-#define SUNSET_STRENGTH 0.75f
-#define LOW_SUN (RETRO_Palette){ 255, 140, 70 } // the sun's direct light at the horizon
-#define DAY_CLOUD (RETRO_Palette){ 242, 244, 248 }
-#define NIGHT_CLOUD (RETRO_Palette){ 34, 38, 58 }
-#define STAR (RETRO_Palette){ 230, 232, 255 }
+constexpr RETRO_Palette DAY_HORIZON = { 180, 210, 240 };
+constexpr RETRO_Palette DAY_ZENITH = { 70, 120, 215 };
+constexpr RETRO_Palette NIGHT_HORIZON = { 24, 30, 56 };
+constexpr RETRO_Palette NIGHT_ZENITH = { 6, 8, 24 };
+constexpr RETRO_Palette SUNSET = { 244, 140, 72 };
+constexpr float SUNSET_STRENGTH = 0.75f;
+constexpr RETRO_Palette LOW_SUN = { 255, 140, 70 }; // the sun's direct light at the horizon
+constexpr RETRO_Palette DAY_CLOUD = { 242, 244, 248 };
+constexpr RETRO_Palette NIGHT_CLOUD = { 34, 38, 58 };
+constexpr RETRO_Palette STAR = { 230, 232, 255 };
 
-#define SKY_START 0
-#define SKY_SHADES 15
-#define FOG_SHADES 2
-#define BLOCK_START (SKY_START + SKY_SHADES)
-#define HOTBAR_START (BLOCK_START + COLORS * LIGHTS * FOG_SHADES)
-#define OUTLINE_COLOR (HOTBAR_START + COLORS)
-#define CROSSHAIR_COLOR (OUTLINE_COLOR + 1)
-#define SUN_RIM_COLOR (OUTLINE_COLOR + 2)
-#define SUN_CORE_COLOR (OUTLINE_COLOR + 3)
-#define MOON_COLOR (OUTLINE_COLOR + 4)
-#define CLOUD_COLOR (OUTLINE_COLOR + 5)
-#define STAR_COLOR (OUTLINE_COLOR + 6)
-#define OUTLINE (RETRO_Palette){ 20, 20, 20 }
-#define CROSSHAIR (RETRO_Palette){ 240, 240, 240 }
-#define SUN_RIM (RETRO_Palette){ 255, 226, 110 }
-#define SUN_CORE (RETRO_Palette){ 255, 250, 210 }
-#define MOON (RETRO_Palette){ 214, 220, 232 }
+constexpr int SKY_START = 0;
+constexpr int SKY_SHADES = 15;
+constexpr int FOG_SHADES = 2;
+constexpr int BLOCK_START = SKY_START + SKY_SHADES;
+constexpr int HOTBAR_START = BLOCK_START + COLORS * LIGHTS * FOG_SHADES;
+enum { OUTLINE_COLOR = HOTBAR_START + COLORS, CROSSHAIR_COLOR, SUN_RIM_COLOR, SUN_CORE_COLOR, MOON_COLOR, CLOUD_COLOR, STAR_COLOR };
+constexpr RETRO_Palette OUTLINE = { 20, 20, 20 };
+constexpr RETRO_Palette CROSSHAIR = { 240, 240, 240 };
+constexpr RETRO_Palette SUN_RIM = { 255, 226, 110 };
+constexpr RETRO_Palette SUN_CORE = { 255, 250, 210 };
+constexpr RETRO_Palette MOON = { 214, 220, 232 };
 
 static unsigned char World[WORLD_HEIGHT][WORLD_SIZE][WORLD_SIZE];
 static unsigned char Textures[TEXTURES][TEXTURE_SIZE][TEXTURE_SIZE];
@@ -369,7 +363,7 @@ static void CreateTextures(void)
 
 // The blocks 1 to 5 select
 static const int Hotbar[] = { GRASS, DIRT, SAND, LOG, LEAVES };
-#define HOTBAR_SLOTS (int)(sizeof(Hotbar) / sizeof(Hotbar[0]))
+constexpr int HOTBAR_SLOTS = (int)(sizeof(Hotbar) / sizeof(Hotbar[0]));
 
 // What a walk through the grid found
 struct RayHit {

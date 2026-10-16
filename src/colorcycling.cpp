@@ -35,7 +35,7 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define CYCLE_UNITS 280.0 // rate units per entry a second
+constexpr double CYCLE_UNITS = 280.0; // rate units per entry a second
 
 enum CycleMode { CYCLE_FORWARD, CYCLE_REVERSE, CYCLE_PINGPONG, CYCLE_SINE_QUARTER, CYCLE_SINE_HALF, CYCLE_MODES };
 

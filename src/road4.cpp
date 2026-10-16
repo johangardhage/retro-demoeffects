@@ -67,44 +67,44 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define ROAD_MAX_SEGMENTS 2048
-#define ROAD_SEGMENT_LENGTH 200 // world units of z one quad spans
-#define ROAD_DRAW_DISTANCE 300 // segments drawn ahead of the camera
-#define ROAD_WIDTH 2000 // half the width of the tarmac, in world units
-#define ROAD_LANES 3
-#define ROAD_LANE_WIDTH 0.025 // half a lane marking, as a fraction of the half-width
-#define ROAD_RUMBLE_WIDTH 0.35 // how far the rumble strip reaches outside the tarmac
-#define ROAD_RUMBLE_LENGTH 3 // segments one stripe lasts
-#define ROAD_CAMERA_HEIGHT 1300 // world units above the road under the camera
-#define ROAD_FIELD_OF_VIEW 100 // degrees across the screen
-#define ROAD_NEAR_CLIP 10 // the nearest z the projection is allowed to divide by
-#define ROAD_SPEED 11000 // world units a second
-#define ROAD_CENTRIFUGAL 0.06 // half-widths a second the camera is pushed out per unit of curve
-#define ROAD_RECENTER 1.1 // how quickly it eases back to the middle
-#define ROAD_FOG_DENSITY 5.0
-#define ROAD_SPRITE_SIZE 32 // the largest billboard bitmap, either way
+constexpr int ROAD_MAX_SEGMENTS = 2048;
+constexpr int ROAD_SEGMENT_LENGTH = 200; // world units of z one quad spans
+constexpr int ROAD_DRAW_DISTANCE = 300; // segments drawn ahead of the camera
+constexpr int ROAD_WIDTH = 2000; // half the width of the tarmac, in world units
+constexpr int ROAD_LANES = 3;
+constexpr double ROAD_LANE_WIDTH = 0.025; // half a lane marking, as a fraction of the half-width
+constexpr double ROAD_RUMBLE_WIDTH = 0.35; // how far the rumble strip reaches outside the tarmac
+constexpr int ROAD_RUMBLE_LENGTH = 3; // segments one stripe lasts
+constexpr int ROAD_CAMERA_HEIGHT = 1300; // world units above the road under the camera
+constexpr int ROAD_FIELD_OF_VIEW = 100; // degrees across the screen
+constexpr int ROAD_NEAR_CLIP = 10; // the nearest z the projection is allowed to divide by
+constexpr int ROAD_SPEED = 11000; // world units a second
+constexpr double ROAD_CENTRIFUGAL = 0.06; // half-widths a second the camera is pushed out per unit of curve
+constexpr double ROAD_RECENTER = 1.1; // how quickly it eases back to the middle
+constexpr double ROAD_FOG_DENSITY = 5.0;
+constexpr int ROAD_SPRITE_SIZE = 32; // the largest billboard bitmap, either way
 
-#define ROAD_CAMERA_DEPTH (1.0 / tan(radians(ROAD_FIELD_OF_VIEW / 2.0)))
+const double ROAD_CAMERA_DEPTH = 1.0 / tan(radians(ROAD_FIELD_OF_VIEW / 2.0));
 
 // Curve is an acceleration, in world units of x per segment squared, and a
 // hill is given in segment lengths of climb over the section it belongs to
-#define ROAD_CURVE_EASY 2.0
-#define ROAD_CURVE_MEDIUM 4.0
-#define ROAD_CURVE_HARD 6.0
-#define ROAD_HILL_LOW 20.0
-#define ROAD_HILL_HIGH 45.0
+constexpr double ROAD_CURVE_EASY = 2.0;
+constexpr double ROAD_CURVE_MEDIUM = 4.0;
+constexpr double ROAD_CURVE_HARD = 6.0;
+constexpr double ROAD_HILL_LOW = 20.0;
+constexpr double ROAD_HILL_HIGH = 45.0;
 
 // The palette holds one ramp per material, haze to material, and the sky above them
-#define ROAD_SHADES 24
-#define ROAD_MATERIALS 8
-#define ROAD_SKY (ROAD_MATERIALS * ROAD_SHADES)
-#define ROAD_SKY_SHADES (RETRO_COLORS - ROAD_SKY)
+constexpr int ROAD_SHADES = 24;
+constexpr int ROAD_MATERIALS = 8;
+constexpr int ROAD_SKY = ROAD_MATERIALS * ROAD_SHADES;
+constexpr int ROAD_SKY_SHADES = RETRO_COLORS - ROAD_SKY;
 
 enum { MATERIAL_GRASS_DARK, MATERIAL_GRASS_LIGHT, MATERIAL_RUMBLE_DARK, MATERIAL_RUMBLE_LIGHT,
 	MATERIAL_TARMAC_DARK, MATERIAL_TARMAC_LIGHT, MATERIAL_LANE, MATERIAL_TREE };
 
-#define ROAD_FOG RETRO_HAZE
-#define ROAD_ZENITH RETRO_SPACECADET
+constexpr RETRO_Palette ROAD_FOG = RETRO_HAZE;
+constexpr RETRO_Palette ROAD_ZENITH = RETRO_SPACECADET;
 
 static const RETRO_Palette MaterialColor[ROAD_MATERIALS] = {
 	RETRO_HUNTERGREEN, RETRO_FORESTGREEN, RETRO_FIREBRICK, RETRO_LIGHTGRAY,

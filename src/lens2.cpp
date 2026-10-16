@@ -42,17 +42,17 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define DOME_RADIUS 56.0f // pixels
-#define DOME_MARGIN 4 // kept between the dome and the screen edge
-#define DOME_PERIOD 16.0 // seconds for the dome's path to close
-#define IOR 1.5f // glass
-#define SHININESS 80.0f
-#define SHADOW_OFFSET 18.0f // pixels right and down
-#define SHADOW_DEPTH 0.45f // fraction of the light the shadow takes away
-#define SHADOW_SOFTNESS 14.0f // pixels over which the shadow's edge fades
-#define GLASS_TINT vec3{ 0.88f, 0.97f, 1.0f }
-#define SKY_LOW vec3{ 30, 30, 45 }
-#define SKY_HIGH vec3{ 215, 225, 255 }
+constexpr float DOME_RADIUS = 56.0f; // pixels
+constexpr int DOME_MARGIN = 4; // kept between the dome and the screen edge
+constexpr double DOME_PERIOD = 16.0; // seconds for the dome's path to close
+constexpr float IOR = 1.5f; // glass
+constexpr float SHININESS = 80.0f;
+constexpr float SHADOW_OFFSET = 18.0f; // pixels right and down
+constexpr float SHADOW_DEPTH = 0.45f; // fraction of the light the shadow takes away
+constexpr float SHADOW_SOFTNESS = 14.0f; // pixels over which the shadow's edge fades
+constexpr vec3 GLASS_TINT = { 0.88f, 0.97f, 1.0f };
+constexpr vec3 SKY_LOW = { 30, 30, 45 };
+constexpr vec3 SKY_HIGH = { 215, 225, 255 };
 
 static const vec3 Light = normalize(vec3{ -0.5f, -0.6f, -1.0f }); // toward the light, in view space
 static RETRO_Image *Picture;

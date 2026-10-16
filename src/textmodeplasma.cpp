@@ -37,12 +37,12 @@
 #include "lib/retrofont.h"
 #include "lib/retropalette.h"
 
-#define COLUMNS (RETRO_WIDTH / 8) // text cells across
-#define ROWS (RETRO_HEIGHT / 8) // text cells down
-#define RAMP_COLORS 9 // text colors the ramp passes through, the last equal to the first
-#define SHADES (4 * (RAMP_COLORS - 1)) // entries in the cyclic ramp
-#define PLASMA_BANDS 1.5f // times the ramp repeats across the range of v
-#define PLASMA_CYCLE 6.0 // ramp entries the colors flow per second
+constexpr int COLUMNS = RETRO_WIDTH / 8; // text cells across
+constexpr int ROWS = RETRO_HEIGHT / 8; // text cells down
+constexpr int RAMP_COLORS = 9; // text colors the ramp passes through, the last equal to the first
+constexpr int SHADES = 4 * (RAMP_COLORS - 1); // entries in the cyclic ramp
+constexpr float PLASMA_BANDS = 1.5f; // times the ramp repeats across the range of v
+constexpr double PLASMA_CYCLE = 6.0; // ramp entries the colors flow per second
 
 static const int RampColors[RAMP_COLORS] = { RETRO_TEXT_BLUE, RETRO_TEXT_LIGHTBLUE, RETRO_TEXT_LIGHTCYAN, RETRO_TEXT_WHITE, RETRO_TEXT_YELLOW, RETRO_TEXT_LIGHTRED, RETRO_TEXT_RED, RETRO_TEXT_MAGENTA, RETRO_TEXT_BLUE };
 

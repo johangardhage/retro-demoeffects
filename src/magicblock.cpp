@@ -26,29 +26,29 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define BLOCK_SPEED_X  0.86f
-#define BLOCK_SPEED_Y -0.43f
-#define BLOCK_SPEED_Z  0.43f
+constexpr float BLOCK_SPEED_X = 0.86f;
+constexpr float BLOCK_SPEED_Y = -0.43f;
+constexpr float BLOCK_SPEED_Z = 0.43f;
 
-#define CUBE_SPEED_X  1.29f
-#define CUBE_SPEED_Y -0.43f
-#define CUBE_SPEED_Z  1.29f
+constexpr float CUBE_SPEED_X = 1.29f;
+constexpr float CUBE_SPEED_Y = -0.43f;
+constexpr float CUBE_SPEED_Z = 1.29f;
 
-#define BLOCK_HALF_THICKNESS 0.25f // magicblock.obj's broad faces sit at z = ±0.25
+constexpr float BLOCK_HALF_THICKNESS = 0.25f; // magicblock.obj's broad faces sit at z = ±0.25
 
-#define STAR_COUNT 81
-#define STAR_FIELD 4.0f // stars fill a cube this far from the center along each axis
-#define STAR_SPEED 2.5f // along x, units a second
-#define STAR_ROTATION_SPEED 0.43f
+constexpr int STAR_COUNT = 81;
+constexpr float STAR_FIELD = 4.0f; // stars fill a cube this far from the center along each axis
+constexpr float STAR_SPEED = 2.5f; // along x, units a second
+constexpr float STAR_ROTATION_SPEED = 0.43f;
 
 // The block replaces index bits 2 and 3 only, so the blue it covers keeps its
 // low two bits and shows through as purple. The cube replaces all four.
-#define BLOCK_MASK 12
-#define CUBE_MASK 15
+constexpr int BLOCK_MASK = 12;
+constexpr int CUBE_MASK = 15;
 
 // With the library's default eye distance of 250, the eye sits 250 / 32, about
 // 7.8 units, from the center.
-#define PROJECTION_SCALE 32.0f
+constexpr float PROJECTION_SCALE = 32.0f;
 
 // Face colors, in the order the assets list their faces. The block's broad
 // faces, then its edges; the cube's outside faces, then its inside ones.

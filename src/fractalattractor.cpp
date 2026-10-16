@@ -83,17 +83,17 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define POINTS_PER_SECOND 1200000 // points the orbit is followed for a second
-#define DENSITY_MAX 255 // points a pixel counts before it stops counting
-#define DENSITY_FADE 2 // steps between fades of a pixel's count
-#define DENSITY_SHIFT 3 // the share of a count a fade takes, as a right shift
-#define ATTRACTOR_REACH 2.0 // the furthest sin - cos can carry a coordinate
-#define MARGIN 0.98 // of the screen the frame fills
-#define DRIFT_SPEED 0.14 // radians a second the slowest parameter travels
-#define DENSITY_STEP (((DENSITY_MAX >> DENSITY_SHIFT) + 1) / DENSITY_FADE) // points one step adds to one pixel
-#define ORBIT_SPREAD (RETRO_WIDTH * RETRO_HEIGHT / 7) // pixels a step reaches with the orbit running free
-#define ORBIT_STALL (ORBIT_SPREAD / 8) // pixels a step reaches below which it is drawing no attractor
-#define DRIFT_HURRY 4 // times its usual speed the drift crosses a window the orbit has stalled in
+constexpr int POINTS_PER_SECOND = 1200000; // points the orbit is followed for a second
+constexpr int DENSITY_MAX = 255; // points a pixel counts before it stops counting
+constexpr int DENSITY_FADE = 2; // steps between fades of a pixel's count
+constexpr int DENSITY_SHIFT = 3; // the share of a count a fade takes, as a right shift
+constexpr double ATTRACTOR_REACH = 2.0; // the furthest sin - cos can carry a coordinate
+constexpr double MARGIN = 0.98; // of the screen the frame fills
+constexpr double DRIFT_SPEED = 0.14; // radians a second the slowest parameter travels
+constexpr int DENSITY_STEP = ((DENSITY_MAX >> DENSITY_SHIFT) + 1) / DENSITY_FADE; // points one step adds to one pixel
+constexpr int ORBIT_SPREAD = RETRO_WIDTH * RETRO_HEIGHT / 7; // pixels a step reaches with the orbit running free
+constexpr int ORBIT_STALL = ORBIT_SPREAD / 8; // pixels a step reaches below which it is drawing no attractor
+constexpr int DRIFT_HURRY = 4; // times its usual speed the drift crosses a window the orbit has stalled in
 
 static unsigned char Density[RETRO_WIDTH * RETRO_HEIGHT];
 static unsigned char Landed[RETRO_WIDTH * RETRO_HEIGHT];

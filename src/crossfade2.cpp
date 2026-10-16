@@ -14,8 +14,8 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define TIME_FADEIN 1.5 // seconds to fade in the monkey from black at startup
-#define CROSSFADE_SPEED 1.2 // radians of φ per second; a round trip is 2π / this
+constexpr double TIME_FADEIN = 1.5; // seconds to fade in the monkey from black at startup
+constexpr double CROSSFADE_SPEED = 1.2; // radians of φ per second; a round trip is 2π / this
 
 static RETRO_Image *PictureA;
 static RETRO_Image *PictureB;

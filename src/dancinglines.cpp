@@ -23,9 +23,9 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define POINTS 170
-#define LINE_SPEED 2.5
-#define LINE_PERIOD (2 * M_PI * 19715670.0) // 2π · 2 · 3³ · 5 · 13 · 41 · 137
+constexpr int POINTS = 170;
+constexpr double LINE_SPEED = 2.5;
+constexpr double LINE_PERIOD = 2 * M_PI * 19715670.0; // 2π · 2 · 3³ · 5 · 13 · 41 · 137
 
 static void DrawLines(int x, int y, float k)
 {

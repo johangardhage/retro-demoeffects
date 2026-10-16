@@ -11,21 +11,21 @@
 #include "lib/retrovector.h"
 
 // The reference advances about 125 video pixels/sec at roughly 2x scale.
-#define SCROLL_SPEED 64.0
-#define LETTER_ADVANCE 24.0
-#define WAVE_LENGTH 220.0
-#define WAVE_AMPLITUDE 27.0
-#define UPPER_BAR_Y 106
-#define LOWER_BAR_Y 133
-#define RIPPLE_SPEED 2.5
+constexpr double SCROLL_SPEED = 64.0;
+constexpr double LETTER_ADVANCE = 24.0;
+constexpr double WAVE_LENGTH = 220.0;
+constexpr double WAVE_AMPLITUDE = 27.0;
+constexpr int UPPER_BAR_Y = 106;
+constexpr int LOWER_BAR_Y = 133;
+constexpr double RIPPLE_SPEED = 2.5;
 
 // The palette: a silver ink ramp and a cyan one, the rows of a raster bar,
 // then for each face and bar row a ramp from the bar's color to full ink.
-#define INK_SHADES 64 // shades in each ink ramp
-#define BAR_ROWS 7 // scanlines a raster bar is tall
-#define BAR_BASE (2 * INK_SHADES)
-#define BLEND_STEPS 8 // steps from a bar row's own color to the ink over it
-#define BLEND_BASE (BAR_BASE + BAR_ROWS)
+constexpr int INK_SHADES = 64; // shades in each ink ramp
+constexpr int BAR_ROWS = 7; // scanlines a raster bar is tall
+constexpr int BAR_BASE = 2 * INK_SHADES;
+constexpr int BLEND_STEPS = 8; // steps from a bar row's own color to the ink over it
+constexpr int BLEND_BASE = BAR_BASE + BAR_ROWS;
 
 static const char ScrollText[] = "RETRO DEMOEFFECTS...   ";
 static double LetterOffsets[sizeof(ScrollText) - 1];

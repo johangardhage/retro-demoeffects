@@ -24,30 +24,26 @@
 #include "lib/retropalette.h"
 #include "lib/retrovector.h"
 
-#define FLOOR_TILES 6
-#define FLOOR_TILE 1.0f // model units a checker square spans
-#define FLOOR_THICKNESS 0.48f // model units of the platform's side
-#define FLOOR_EXTENT (FLOOR_TILES * FLOOR_TILE / 2)
+constexpr int FLOOR_TILES = 6;
+constexpr float FLOOR_TILE = 1.0f; // model units a checker square spans
+constexpr float FLOOR_THICKNESS = 0.48f; // model units of the platform's side
+constexpr float FLOOR_EXTENT = FLOOR_TILES * FLOOR_TILE / 2;
 
-#define MIRROR_HX 0.95f // half-extent of the square face
-#define MIRROR_HY 0.95f
-#define MIRROR_HZ 0.18f // half-thickness, much thinner than a cube
-#define MIRROR_HOVER 1.20f // model units the center sits above the platform
+constexpr float MIRROR_HX = 0.95f; // half-extent of the square face
+constexpr float MIRROR_HY = 0.95f;
+constexpr float MIRROR_HZ = 0.18f; // half-thickness, much thinner than a cube
+constexpr float MIRROR_HOVER = 1.20f; // model units the center sits above the platform
 
-#define WORLD_TILT 0.50f // radians of pitch, looking down onto the board
-#define SCENE_Y 1.55f // model units the scene is shifted down the screen
-#define SCENE_Z 3.90f // and away from the camera
-#define SCENE_SCALE 44
+constexpr float WORLD_TILT = 0.50f; // radians of pitch, looking down onto the board
+constexpr float SCENE_Y = 1.55f; // model units the scene is shifted down the screen
+constexpr float SCENE_Z = 3.90f; // and away from the camera
+constexpr int SCENE_SCALE = 44;
 
-#define TUMBLE_X 0.55f // radians a second about each axis
-#define TUMBLE_Y 0.92f
-#define TUMBLE_Z 0.37f
+constexpr float TUMBLE_X = 0.55f; // radians a second about each axis
+constexpr float TUMBLE_Y = 0.92f;
+constexpr float TUMBLE_Z = 0.37f;
 
-#define COL_BG 0
-#define COL_FLOOR_DARK 1
-#define COL_FLOOR_LIGHT 2
-#define COL_GLASS 3
-#define COL_RIM 4
+enum { COL_BG, COL_FLOOR_DARK, COL_FLOOR_LIGHT, COL_GLASS, COL_RIM };
 
 static Model3D *Floor;
 static Model3D *Mirror;

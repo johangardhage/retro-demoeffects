@@ -20,11 +20,11 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define IMAGE_WIDTH 640
-#define XOR_SPEED 1.0 // radians of the x-orbit per second
-#define XOR_WOBBLE (33.0 / 10.0) // y vs x; with 2π this is a 20π period
-#define XOR_PHASE 1.66 // second window, same orbit
-#define XOR_PERIOD (20 * M_PI)
+constexpr int IMAGE_WIDTH = 640;
+constexpr double XOR_SPEED = 1.0; // radians of the x-orbit per second
+constexpr double XOR_WOBBLE = 33.0 / 10.0; // y vs x; with 2π this is a 20π period
+constexpr double XOR_PHASE = 1.66; // second window, same orbit
+constexpr double XOR_PERIOD = 20 * M_PI;
 
 void DEMO_Render(RETRO_Time time)
 {

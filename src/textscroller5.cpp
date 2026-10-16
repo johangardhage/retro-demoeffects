@@ -23,15 +23,15 @@
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-//#define FONT RETRO_FONT_MINECRAFT_8X8
-#define SCROLL_SPEED 60.0 // strip columns per second
-#define CIRCLE_X (RETRO_WIDTH / 2.0)
-#define CIRCLE_Y (RETRO_HEIGHT / 2.0)
-#define CIRCLE_RADIUS 68
-#define CIRCLE_GAP 16 // pixels of open circumference before the bottom
-#define SAMPLES_PER_PIXEL 2
-#define CIRCLE_SAMPLES ((int)((2 * M_PI * CIRCLE_RADIUS - CIRCLE_GAP) * SAMPLES_PER_PIXEL))
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+constexpr double SCROLL_SPEED = 60.0; // strip columns per second
+constexpr double CIRCLE_X = RETRO_WIDTH / 2.0;
+constexpr double CIRCLE_Y = RETRO_HEIGHT / 2.0;
+constexpr int CIRCLE_RADIUS = 68;
+constexpr int CIRCLE_GAP = 16; // pixels of open circumference before the bottom
+constexpr int SAMPLES_PER_PIXEL = 2;
+constexpr int CIRCLE_SAMPLES = (int)((2 * M_PI * CIRCLE_RADIUS - CIRCLE_GAP) * SAMPLES_PER_PIXEL);
 
 static const char *const ScrollText[] = { "                          RETRO DEMOEFFECTS..." };
 

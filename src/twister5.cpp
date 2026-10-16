@@ -30,32 +30,32 @@
 #include "lib/retromain.h"
 #include "lib/retroshadetable.h"
 
-#define TWISTER_PERIOD 512
-#define TWISTER_CYCLE ((double)RETRO_ANGLES_PER_TURN / TWISTER_PERIOD)
-#define TWISTER_CENTER_X (RETRO_WIDTH / 2.0)
-#define TWISTER_RADIUS 70 // mean radius of the circle the four corners ride
-#define TWISTER_RADIUS_WAVE 42 // how far the radius walks off that mean
-#define TWISTER_SWAY 44 // how far the axis wanders off center
-#define TWISTER_TURNS 1.5
-#define TWISTER_TORSION 1.2
-#define TWISTER_TORSION_WAVE 7
-#define TWISTER_RADIUS_Y 1.05 // radius cycles down the column, in turns
-#define TWISTER_SWAY_Y 0.55 // and the axis, about half a turn so it is an S
-#define TWISTER_RADIUS_PHASE 0.35 // how fast the radius wave rides the clock
-#define TWISTER_SWAY_PHASE 0.7
-#define TWISTER_SPEED 30.0
-#define TWISTER_FORM 2.2f // broad cylindrical roundness
-#define TWISTER_FALLOFF 16.0f // tight specular stripe down the facing side
+constexpr int TWISTER_PERIOD = 512;
+constexpr double TWISTER_CYCLE = (double)RETRO_ANGLES_PER_TURN / TWISTER_PERIOD;
+constexpr double TWISTER_CENTER_X = RETRO_WIDTH / 2.0;
+constexpr int TWISTER_RADIUS = 70; // mean radius of the circle the four corners ride
+constexpr int TWISTER_RADIUS_WAVE = 42; // how far the radius walks off that mean
+constexpr int TWISTER_SWAY = 44; // how far the axis wanders off center
+constexpr double TWISTER_TURNS = 1.5;
+constexpr double TWISTER_TORSION = 1.2;
+constexpr int TWISTER_TORSION_WAVE = 7;
+constexpr double TWISTER_RADIUS_Y = 1.05; // radius cycles down the column, in turns
+constexpr double TWISTER_SWAY_Y = 0.55; // and the axis, about half a turn so it is an S
+constexpr double TWISTER_RADIUS_PHASE = 0.35; // how fast the radius wave rides the clock
+constexpr double TWISTER_SWAY_PHASE = 0.7;
+constexpr double TWISTER_SPEED = 30.0;
+constexpr float TWISTER_FORM = 2.2f; // broad cylindrical roundness
+constexpr float TWISTER_FALLOFF = 16.0f; // tight specular stripe down the facing side
 
-#define TWISTER_IMAGE_SIZE 256
-#define TWISTER_IMAGE_FACE (TWISTER_IMAGE_SIZE / 4)
-#define TWISTER_IMAGE_SCROLL 2.0
+constexpr int TWISTER_IMAGE_SIZE = 256;
+constexpr int TWISTER_IMAGE_FACE = TWISTER_IMAGE_SIZE / 4;
+constexpr double TWISTER_IMAGE_SCROLL = 2.0;
 
-#define TWISTER_SHADES 64
-#define TWISTER_SPECULAR 10 // top of the ramp, walked partway toward white
-#define TWISTER_DIFFUSE (TWISTER_SHADES - TWISTER_SPECULAR)
-#define TWISTER_AMBIENT 0.32f
-#define TWISTER_SPECULAR_MIX 0.50f // how far the highlight walks toward white
+constexpr int TWISTER_SHADES = 64;
+constexpr int TWISTER_SPECULAR = 10; // top of the ramp, walked partway toward white
+constexpr int TWISTER_DIFFUSE = TWISTER_SHADES - TWISTER_SPECULAR;
+constexpr float TWISTER_AMBIENT = 0.32f;
+constexpr float TWISTER_SPECULAR_MIX = 0.50f; // how far the highlight walks toward white
 
 static unsigned char TwisterShadeTable[RETRO_COLORS * TWISTER_SHADES];
 

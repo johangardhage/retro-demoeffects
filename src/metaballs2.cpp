@@ -25,9 +25,9 @@
 #include "lib/retromain.h"
 #include "lib/retrovector.h"
 
-#define NUM_BALLS 4
-#define SINE_VALUES 360
-#define ORBIT_SPEED 40 // degrees of the base orbit per second; the rates below multiply it
+constexpr int NUM_BALLS = 4;
+constexpr int SINE_VALUES = 360;
+constexpr int ORBIT_SPEED = 40; // degrees of the base orbit per second; the rates below multiply it
 
 struct MetaBall {
 	vec2 pos;

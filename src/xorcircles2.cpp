@@ -12,9 +12,9 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define IMAGE_WIDTH (RETRO_WIDTH * 2)
-#define IMAGE_HEIGHT (RETRO_HEIGHT * 2)
-#define RING_PERIOD 23.0
+constexpr int IMAGE_WIDTH = RETRO_WIDTH * 2;
+constexpr int IMAGE_HEIGHT = RETRO_HEIGHT * 2;
+constexpr double RING_PERIOD = 23.0;
 
 static unsigned char ShadedRings[IMAGE_WIDTH * IMAGE_HEIGHT];
 static unsigned char SolidRings[IMAGE_WIDTH * IMAGE_HEIGHT];

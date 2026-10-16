@@ -33,17 +33,17 @@
 #include "lib/retrofont.h"
 #include "lib/retromain.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-#define FONT_SCALE 1
-//#define FONT RETRO_FONT_MINECRAFT_8X8
-//#define FONT_SCALE 2
-#define HORIZON_Y 42
-#define BOTTOM_Y RETRO_HEIGHT
-#define BOTTOM_DISTANCE (BOTTOM_Y - HORIZON_Y)
-#define CRAWL_SPEED 22.0 // page rows per second
-#define PERSPECTIVE_DEPTH 3600.0
-#define PHASE_BOTTOM (PERSPECTIVE_DEPTH / BOTTOM_DISTANCE) // sourcey lag at y = BOTTOM_Y
-#define CRAWL_GAP 180 // extra rows after the strip before the crawl wraps
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+constexpr int FONT_SCALE = 1;
+//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+//constexpr int FONT_SCALE = 2;
+constexpr int HORIZON_Y = 42;
+constexpr int BOTTOM_Y = RETRO_HEIGHT;
+constexpr int BOTTOM_DISTANCE = BOTTOM_Y - HORIZON_Y;
+constexpr double CRAWL_SPEED = 22.0; // page rows per second
+constexpr double PERSPECTIVE_DEPTH = 3600.0;
+constexpr double PHASE_BOTTOM = PERSPECTIVE_DEPTH / BOTTOM_DISTANCE; // sourcey lag at y = BOTTOM_Y
+constexpr int CRAWL_GAP = 180; // extra rows after the strip before the crawl wraps
 
 static const char *const ScrollText[] = {
 	"THE TEXT WRITER",

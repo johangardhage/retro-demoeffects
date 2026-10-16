@@ -17,9 +17,9 @@
 #include "lib/retromain.h"
 #include "lib/retrovector.h"
 
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 256
-#define ROTATION_SPEED 100 // degrees a second
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 256;
+constexpr int ROTATION_SPEED = 100; // degrees a second
 
 void DEMO_Render(RETRO_Time time)
 {

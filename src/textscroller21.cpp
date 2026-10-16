@@ -53,29 +53,29 @@
 #include "lib/retropalette.h"
 #include "lib/retropoly.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 static const char *const Message[] = { "RETRO DEMOEFFECTS..." };
-#define RING_LETTERS 30 // letters the ring has room for
-#define LETTER_WIDTH 26.0f
-#define LETTER_HEIGHT 40.0f
-#define LETTER_GAP 2.0f
-#define SCROLL_SPEED 2.5 // letters per second
-#define FADE_LETTERS 4.0f // places from the middle of the back to where a letter is solid
-#define FADE_LEVELS 16 // steps from nothing to solid
-#define TILT 0.1f
-#define WOBBLE 0.22f
-#define WOBBLE_SPEED 0.7
-#define CAMERA_DISTANCE 400.0f
-#define AMBIENT 0.35f // light on a letter turned edge on to the lamp
-#define BACK_LIGHT 0.4f // what is left of the light at the back of the ring
-#define SHININESS 12 // how sharply the gleam falls off as a letter turns from the lamp
-#define GLEAM_START 0.7f // part of the ramp below the gleam
+constexpr int RING_LETTERS = 30; // letters the ring has room for
+constexpr float LETTER_WIDTH = 26.0f;
+constexpr float LETTER_HEIGHT = 40.0f;
+constexpr float LETTER_GAP = 2.0f;
+constexpr double SCROLL_SPEED = 2.5; // letters per second
+constexpr float FADE_LETTERS = 4.0f; // places from the middle of the back to where a letter is solid
+constexpr int FADE_LEVELS = 16; // steps from nothing to solid
+constexpr float TILT = 0.1f;
+constexpr float WOBBLE = 0.22f;
+constexpr double WOBBLE_SPEED = 0.7;
+constexpr float CAMERA_DISTANCE = 400.0f;
+constexpr float AMBIENT = 0.35f; // light on a letter turned edge on to the lamp
+constexpr float BACK_LIGHT = 0.4f; // what is left of the light at the back of the ring
+constexpr int SHININESS = 12; // how sharply the gleam falls off as a letter turns from the lamp
+constexpr float GLEAM_START = 0.7f; // part of the ramp below the gleam
 
 // A letter is drawn in its shade from that shade's own copy of the strip.
-#define SHADES 32
-#define INK 1
-#define SKY (INK + SHADES)
-#define SKY_SHADES 64
+constexpr int SHADES = 32;
+constexpr int INK = 1;
+constexpr int SKY = INK + SHADES;
+constexpr int SKY_SHADES = 64;
 
 static const vec3 Light = normalize(vec3{ -0.45f, -0.35f, -0.82f }); // toward the lamp: left, up and out of the screen
 static RETRO_Font Font;

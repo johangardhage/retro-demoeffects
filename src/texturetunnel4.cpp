@@ -16,14 +16,14 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 256
-#define ANGLE_SCALE (TEXTURE_WIDTH / (2 * M_PI)) // texture columns per radian
-#define DEPTH_SCALE 2350.0f
-#define FLIGHT_SPEED 105.0f
-#define ROLL_SPEED 9.0f
-#define MOUTH_RADIUS 6.2f // texels, before the angular ripple below
-#define MOUTH_RIPPLE 0.8f
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 256;
+constexpr double ANGLE_SCALE = TEXTURE_WIDTH / (2 * M_PI); // texture columns per radian
+constexpr float DEPTH_SCALE = 2350.0f;
+constexpr float FLIGHT_SPEED = 105.0f;
+constexpr float ROLL_SPEED = 9.0f;
+constexpr float MOUTH_RADIUS = 6.2f; // texels, before the angular ripple below
+constexpr float MOUTH_RIPPLE = 0.8f;
 
 void DEMO_Render(RETRO_Time time)
 {

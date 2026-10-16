@@ -18,10 +18,10 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define BOB_SIZE 16
-#define BOB_AMP 128
-#define BOB_SPEED1 200 // table units per second
-#define BOB_SPEED2 300
+constexpr int BOB_SIZE = 16;
+constexpr int BOB_AMP = 128;
+constexpr int BOB_SPEED1 = 200; // table units per second
+constexpr int BOB_SPEED2 = 300;
 
 static const unsigned char Image[] = {
 	 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,

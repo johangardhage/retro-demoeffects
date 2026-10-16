@@ -22,13 +22,13 @@
 #include "lib/retromatrix.h"
 #include "lib/retrorender.h"
 
-#define YAW_TURNS 8                        // the camera's turns in a loop
-#define CAT_TURNS -10                      // the cat's own turns in a loop, on top of the camera's
-#define FOCAL 437.5f                       // the eye's distance from the screen, in pixels
-#define MAP_SIZE 128                       // the lighting maps' width and height
-#define MAP_RADIUS 54                      // the lighting maps' reach from the middle, in texels
-#define SHADOW_OFFSET 64                   // the dark bronze is 64 entries past the lit
-#define BUMP_GRAZING 293.0f                // the bump's grazing height at full strength
+constexpr int YAW_TURNS = 8;               // the camera's turns in a loop
+constexpr int CAT_TURNS = -10;             // the cat's own turns in a loop, on top of the camera's
+constexpr float FOCAL = 437.5f;            // the eye's distance from the screen, in pixels
+constexpr int MAP_SIZE = 128;              // the lighting maps' width and height
+constexpr int MAP_RADIUS = 54;             // the lighting maps' reach from the middle, in texels
+constexpr int SHADOW_OFFSET = 64;          // the dark bronze is 64 entries past the lit
+constexpr float BUMP_GRAZING = 293.0f;     // the bump's grazing height at full strength
 
 // Where the camera is, its pitch in degrees, the bump strength from 0 for
 // none to 1 for full, and the morph from 0 for bronze to 1 for steel, at a
@@ -64,7 +64,7 @@ static const Keyframe Keyframes[] = {
 	{ 58.5f, { -5.875f, 0, 9.277f }, 0.0f, 1.0f, 0.0f },
 };
 
-#define KEYFRAMES (int)(sizeof(Keyframes) / sizeof(Keyframes[0]))
+constexpr int KEYFRAMES = (int)(sizeof(Keyframes) / sizeof(Keyframes[0]));
 
 static Model3D *Cat;
 static Model3D *Hoops;

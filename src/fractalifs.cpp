@@ -34,13 +34,13 @@
 #include "lib/retromain.h"
 #include "lib/retropalette.h"
 
-#define MAX_TRANSFORMS 4
-#define POINTS_PER_SECOND 240000 // points the chaos game draws a second
-#define TRANSIENT 20 // points dropped while the orbit falls onto the attractor
-#define DENSITY_MAX 255 // points a pixel counts before it stops counting
-#define TIME_DRAW 6.0 // seconds a system is dealt for
-#define TIME_HOLD 2.0 // seconds the finished system is held
-#define MARGIN 0.92 // of the screen the framed attractor fills
+constexpr int MAX_TRANSFORMS = 4;
+constexpr int POINTS_PER_SECOND = 240000; // points the chaos game draws a second
+constexpr int TRANSIENT = 20; // points dropped while the orbit falls onto the attractor
+constexpr int DENSITY_MAX = 255; // points a pixel counts before it stops counting
+constexpr double TIME_DRAW = 6.0; // seconds a system is dealt for
+constexpr double TIME_HOLD = 2.0; // seconds the finished system is held
+constexpr double MARGIN = 0.92; // of the screen the framed attractor fills
 
 struct Transform {
 	float a, b, c, d, e, f; // w(x, y) = (a x + b y + e, c x + d y + f)
@@ -78,7 +78,7 @@ static System Systems[] = {
 		-0.24f, 0.24f, 0.00f, 0.44f, RETRO_SADDLEBROWN, RETRO_JASMINE },
 };
 
-#define SYSTEMS ((int)(sizeof(Systems) / sizeof(Systems[0])))
+constexpr int SYSTEMS = (int)(sizeof(Systems) / sizeof(Systems[0]));
 
 static unsigned char Density[RETRO_WIDTH * RETRO_HEIGHT];
 static unsigned char Shade[DENSITY_MAX + 1];

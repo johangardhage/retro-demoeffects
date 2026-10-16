@@ -78,41 +78,22 @@
 #include "lib/retromap.h"
 
 // The view above the panel. Rows from VIEW_BOTTOM down are always panel.
-#define VIEW_BOTTOM 162
-#define VIEW_FOCAL 240.0f
-#define VIEW_EYELEVEL 73.0f			// The boresight's row
-#define VIEW_NEARPLANE 1.0f			// Feet
-#define VIEW_LINENEARPLANE 20.0f	// Lines are cut further out, so no end lands far off the screen
-#define FACE_MAXCORNERS RETRO_MAP_MAX_FACE	// A map brush's face is a square cut once by each other plane
+constexpr int VIEW_BOTTOM = 162;
+constexpr float VIEW_FOCAL = 240.0f;
+constexpr float VIEW_EYELEVEL = 73.0f;		// The boresight's row
+constexpr float VIEW_NEARPLANE = 1.0f;		// Feet
+constexpr float VIEW_LINENEARPLANE = 20.0f;	// Lines are cut further out, so no end lands far off the screen
+constexpr int FACE_MAXCORNERS = RETRO_MAP_MAX_FACE;	// A map brush's face is a square cut once by each other plane
 
 // The palette: flat colors, sixteen grays at 17 apart, and a ramp of shades
 // for each material
-#define COLOR_BLACK 0
-#define COLOR_SKY 1
-#define COLOR_SEA 2
-#define COLOR_LAND 3
-#define COLOR_RUNWAY 4
-#define COLOR_MARKING 5
-#define COLOR_RED 6
-#define COLOR_TEXT 7
-#define COLOR_GAUGE 8
-#define COLOR_BALLSKY 9
-#define COLOR_BALLGROUND 10
-#define COLOR_POSITION 11
+enum { COLOR_BLACK, COLOR_SKY, COLOR_SEA, COLOR_LAND, COLOR_RUNWAY, COLOR_MARKING, COLOR_RED, COLOR_TEXT, COLOR_GAUGE, COLOR_BALLSKY, COLOR_BALLGROUND, COLOR_POSITION };
 #define GRAY(level) (15 + (level))	// level 1 to 15
 
-#define MATERIAL_HULL 0
-#define MATERIAL_DECK 1
-#define MATERIAL_ORANGE 2
-#define MATERIAL_STEEL 3
-#define MATERIAL_CONCRETE 4
-#define MATERIAL_STONE 5
-#define MATERIAL_JET 6
-#define MATERIAL_CANOPY 7
-#define MATERIALS 8
-#define MATERIAL_FIRST 32
-#define MATERIAL_SHADES 16
-#define MATERIAL_AMBIENT 0.45f
+enum { MATERIAL_HULL, MATERIAL_DECK, MATERIAL_ORANGE, MATERIAL_STEEL, MATERIAL_CONCRETE, MATERIAL_STONE, MATERIAL_JET, MATERIAL_CANOPY, MATERIALS };
+constexpr int MATERIAL_FIRST = 32;
+constexpr int MATERIAL_SHADES = 16;
+constexpr float MATERIAL_AMBIENT = 0.45f;
 static const RETRO_Palette MaterialColor[MATERIALS] = {
 	{ 119, 119, 136 },	// Hull
 	{ 68, 68, 68 },		// Deck
@@ -128,76 +109,76 @@ static const vec3 Light = normalize(vec3{ -0.40f, 0.80f, 0.45f }); // toward the
 // The world, in feet: x east, y up and z south of the middle of the Golden
 // Gate Bridge, which the map gives with y north and z up. Where its origin is,
 // in degrees north and west, for the latitude and longitude readout.
-#define ORIGIN_LATITUDE 37.8199f
-#define ORIGIN_LONGITUDE 122.4783f
-#define FEET_PER_DEGREE_LATITUDE 364000.0f
-#define FEET_PER_DEGREE_LONGITUDE 287600.0f	// At this latitude
-#define MILE 5280.0f
+constexpr float ORIGIN_LATITUDE = 37.8199f;
+constexpr float ORIGIN_LONGITUDE = 122.4783f;
+constexpr float FEET_PER_DEGREE_LATITUDE = 364000.0f;
+constexpr float FEET_PER_DEGREE_LONGITUDE = 287600.0f;	// At this latitude
+constexpr float MILE = 5280.0f;
 
-#define CARRIER_DECK 66.0f			// Height of the flight deck
-#define CARRIER_DECKHALF vec3{ 540.0f, 4.0f, 125.0f }
-#define CARRIER_DECKOFFSET 15.0f	// The deck overhangs to starboard
+constexpr float CARRIER_DECK = 66.0f;		// Height of the flight deck
+constexpr vec3 CARRIER_DECKHALF = { 540.0f, 4.0f, 125.0f };
+constexpr float CARRIER_DECKOFFSET = 15.0f;	// The deck overhangs to starboard
 
-#define FLIGHT_PITCHRATE 1.2f		// Radians per second at full stick, at most
-#define FLIGHT_ROLLRATE 2.5f
-#define FLIGHT_RUDDERRATE 0.3f
-#define FLIGHT_TURNLOAD 2.0f		// Load factor the wings pull in a bank, in g
-#define FLIGHT_PULLLOAD 6.0f		// and the further load at full stick back,
-#define FLIGHT_PUSHLOAD 4.0f		// and the load taken off at full stick forward
-#define FLIGHT_THROTTLERATE 40.0f	// Percent per second the key is held
-#define FLIGHT_KNOTSPERPERCENT 6.0f	// Full throttle draws the speed toward 600 knots
-#define FLIGHT_SPOOL 3.0f			// Seconds the speed takes to close most of the gap to the throttle
-#define FLIGHT_GRAVITY (GRAVITY / KNOT)	// One g: knots gained per second in a vertical dive
-#define FLIGHT_STALLSPEED 130.0f	// Knots
-#define FLIGHT_SINK 80.0f			// Feet per second of sink with the wings vertical
-#define FLIGHT_STALLSINK 150.0f		// Further feet per second at no speed at all
-#define FLIGHT_EYEHEIGHT 10.0f		// Eye above the ground when on it
-#define FLIGHT_GROUNDBANK 0.26f		// Radians of bank the wing tips clear the ground at
-#define FLIGHT_CEILING 50000.0f
-#define FLIGHT_LOADLAG 0.2f			// Seconds the load factor takes to settle
-#define KNOT 1.6878f				// Feet per second
-#define GRAVITY 32.174f				// Feet per second per second
+constexpr float FLIGHT_PITCHRATE = 1.2f;		// Radians per second at full stick, at most
+constexpr float FLIGHT_ROLLRATE = 2.5f;
+constexpr float FLIGHT_RUDDERRATE = 0.3f;
+constexpr float FLIGHT_TURNLOAD = 2.0f;			// Load factor the wings pull in a bank, in g
+constexpr float FLIGHT_PULLLOAD = 6.0f;			// and the further load at full stick back,
+constexpr float FLIGHT_PUSHLOAD = 4.0f;			// and the load taken off at full stick forward
+constexpr float FLIGHT_THROTTLERATE = 40.0f;	// Percent per second the key is held
+constexpr float FLIGHT_KNOTSPERPERCENT = 6.0f;	// Full throttle draws the speed toward 600 knots
+constexpr float FLIGHT_SPOOL = 3.0f;			// Seconds the speed takes to close most of the gap to the throttle
+constexpr float KNOT = 1.6878f;					// Feet per second
+constexpr float GRAVITY = 32.174f;				// Feet per second per second
+constexpr float FLIGHT_GRAVITY = GRAVITY / KNOT;	// One g: knots gained per second in a vertical dive
+constexpr float FLIGHT_STALLSPEED = 130.0f;		// Knots
+constexpr float FLIGHT_SINK = 80.0f;			// Feet per second of sink with the wings vertical
+constexpr float FLIGHT_STALLSINK = 150.0f;		// Further feet per second at no speed at all
+constexpr float FLIGHT_EYEHEIGHT = 10.0f;		// Eye above the ground when on it
+constexpr float FLIGHT_GROUNDBANK = 0.26f;		// Radians of bank the wing tips clear the ground at
+constexpr float FLIGHT_CEILING = 50000.0f;
+constexpr float FLIGHT_LOADLAG = 0.2f;			// Seconds the load factor takes to settle
 
-#define BRAKE_DRAG 40.0f			// Knots lost per second with the speed brake out
-#define GEAR_DRAG 10.0f				// and with the gear down
-#define CRASH_PAUSE 3.0f			// Seconds a crash is shown before the next flight
-#define CHASE_DISTANCE 90.0f		// Feet behind the aircraft
-#define CHASE_HEIGHT 20.0f			// and above it
+constexpr float BRAKE_DRAG = 40.0f;		// Knots lost per second with the speed brake out
+constexpr float GEAR_DRAG = 10.0f;		// and with the gear down
+constexpr float CRASH_PAUSE = 3.0f;		// Seconds a crash is shown before the next flight
+constexpr float CHASE_DISTANCE = 90.0f;	// Feet behind the aircraft
+constexpr float CHASE_HEIGHT = 20.0f;	// and above it
 
-#define FUEL_FULL 25000.0f			// Pounds
-#define FUEL_IDLE 2.0f				// Pounds per second at no throttle
-#define FUEL_PERPERCENT 0.25f		// and this much more for each percent
+constexpr float FUEL_FULL = 25000.0f;		// Pounds
+constexpr float FUEL_IDLE = 2.0f;			// Pounds per second at no throttle
+constexpr float FUEL_PERPERCENT = 0.25f;	// and this much more for each percent
 
 // The HUD, in its frame of two posts and a bar across the top
-#define HUD_LEFT 85
-#define HUD_RIGHT 234
-#define HUD_POSTTOP 46
-#define HUD_BAR 37
-#define HUD_BARINSET 8
-#define HUD_BOTTOM 129				// The ladder stays above the nose
-#define HUD_CENTER 160
-#define HUD_LADDERSTEP 10			// Degrees between pitch ladder rungs
-#define HUD_RUNGIN 14				// Each half of a rung runs this far out from the middle
-#define HUD_RUNGOUT 19
-#define HUD_TAPEY 61				// The heading tape's dots
-#define HUD_TAPESCALE 2.0f			// Pixels per degree
-#define HUD_TAPEHALF 28				// Half the tape's width, in pixels
-#define HUD_LADDERTOP 67			// The ladder stays below the tape
+constexpr int HUD_LEFT = 85;
+constexpr int HUD_RIGHT = 234;
+constexpr int HUD_POSTTOP = 46;
+constexpr int HUD_BAR = 37;
+constexpr int HUD_BARINSET = 8;
+constexpr int HUD_BOTTOM = 129;			// The ladder stays above the nose
+constexpr int HUD_CENTER = 160;
+constexpr int HUD_LADDERSTEP = 10;		// Degrees between pitch ladder rungs
+constexpr int HUD_RUNGIN = 14;			// Each half of a rung runs this far out from the middle
+constexpr int HUD_RUNGOUT = 19;
+constexpr int HUD_TAPEY = 61;			// The heading tape's dots
+constexpr float HUD_TAPESCALE = 2.0f;	// Pixels per degree
+constexpr int HUD_TAPEHALF = 28;		// Half the tape's width, in pixels
+constexpr int HUD_LADDERTOP = 67;		// The ladder stays below the tape
 
 // The panel, which rounds down into each side
-#define PANEL_TOP 146
-#define PANEL_CORNER 16
+constexpr int PANEL_TOP = 146;
+constexpr int PANEL_CORNER = 16;
 
-#define RADAR_X 158					// The aircraft on the radar
-#define RADAR_Y 165
-#define RADAR_TOP 19.0f				// Pixels from it to the top of the screen, the radar's range
+constexpr int RADAR_X = 158;		// The aircraft on the radar
+constexpr int RADAR_Y = 165;
+constexpr float RADAR_TOP = 19.0f;	// Pixels from it to the top of the screen, the radar's range
 static const int RadarRanges[] = { 10, 20, 40 };	// Miles
-#define COMPASS_X 209
-#define COMPASS_SCALE 0.125f		// Pixels per degree
-#define BALL_X 209
-#define BALL_Y 173
-#define BALL_RADIUS 12
-#define BALL_SPREAD 1.2f			// Tangent of the angle to the ball's rim
+constexpr int COMPASS_X = 209;
+constexpr float COMPASS_SCALE = 0.125f;	// Pixels per degree
+constexpr int BALL_X = 209;
+constexpr int BALL_Y = 173;
+constexpr int BALL_RADIUS = 12;
+constexpr float BALL_SPREAD = 1.2f;		// Tangent of the angle to the ball's rim
 
 
 //
@@ -209,7 +190,7 @@ struct GroundPolygon {
 	unsigned char color;
 };
 
-#define MAX_GROUND 512
+constexpr int MAX_GROUND = 512;
 static GroundPolygon Ground[MAX_GROUND];
 static int GroundCount;
 
@@ -229,10 +210,10 @@ struct WorldLine {
 	unsigned char color;
 };
 
-#define MAX_FACES 512
-#define MAX_LINES 256
-#define MAX_CONTACTS 8
-#define CABLE_SEGMENTS 16
+constexpr int MAX_FACES = 512;
+constexpr int MAX_LINES = 256;
+constexpr int MAX_CONTACTS = 8;
+constexpr int CABLE_SEGMENTS = 16;
 static WorldFace Faces[MAX_FACES];
 static WorldLine Lines[MAX_LINES];
 static vec3 Contacts[MAX_CONTACTS];	// What the radar shows
@@ -245,7 +226,7 @@ struct Solid {
 	float distance[RETRO_MAP_MAX_PLANES];	// dot(normal, any point on the plane)
 };
 
-#define MAX_SOLIDS 128
+constexpr int MAX_SOLIDS = 128;
 static Solid Solids[MAX_SOLIDS];
 static int SolidCount;
 

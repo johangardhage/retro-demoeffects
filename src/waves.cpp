@@ -35,30 +35,30 @@
 #include "lib/retrogfx.h"
 #include "lib/retropalette.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 
 // The font row that sits on the waterline. Rows above it show, rows from it down are under water
-#define FLOAT_DRAFT 12
+constexpr int FLOAT_DRAFT = 12;
 
 // Spring pulling a letter to the surface, a = stiffness * (surface - y) - damping * v.
 // Stiffness is the natural frequency squared (5 rad/s), damping is 2 * 0.3 * 5 for a light overshoot
-#define FLOAT_STIFFNESS 25.0f
-#define FLOAT_DAMPING 3.0f
+constexpr float FLOAT_STIFFNESS = 25.0f;
+constexpr float FLOAT_DAMPING = 3.0f;
 
 // Sky gradient, SKY_SHADES entries from the top of the screen down to the horizon at SKY_HORIZON,
 // the lowest row the back wave ever uncovers
-#define SKY_SHADES 32
-#define SKY_HORIZON 100
+constexpr int SKY_SHADES = 32;
+constexpr int SKY_HORIZON = 100;
 
 // Sky and water colors. Each layer is WATER mixed toward HORIZON by its haze
-#define SKY_TOP RETRO_Palette{ 112, 126, 142 }
-#define HORIZON RETRO_Palette{ 176, 186, 190 }
-#define WATER RETRO_Palette{ 56, 110, 180 }
-#define FOAM RETRO_Palette{ 236, 242, 245 }
-#define HAZE_BACK 0.5f
-#define HAZE_MID 0.25f
-#define HAZE_FRONT 0.0f
-#define FOAM_MIX 0.45f
+constexpr RETRO_Palette SKY_TOP = { 112, 126, 142 };
+constexpr RETRO_Palette HORIZON = { 176, 186, 190 };
+constexpr RETRO_Palette WATER = { 56, 110, 180 };
+constexpr RETRO_Palette FOAM = { 236, 242, 245 };
+constexpr float HAZE_BACK = 0.5f;
+constexpr float HAZE_MID = 0.25f;
+constexpr float HAZE_FRONT = 0.0f;
+constexpr float FOAM_MIX = 0.45f;
 
 // Palette color indices
 enum {

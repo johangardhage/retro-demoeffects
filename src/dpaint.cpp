@@ -30,24 +30,24 @@
 #include "lib/retromouse.h"
 #include "lib/retropalette.h"
 
-#define MOUSE_ACCEL 0.2 // relative-mode step per window pixel
+constexpr double MOUSE_ACCEL = 0.2; // relative-mode step per window pixel
 
 // The Amiga .cur sources are 32x32 with hotspot (10,10); RETRO_DrawSprite
 // centers on its (x,y), so the sprite must be offset by (center - hotspot)
 // to land the hotspot, not the sprite's center, on the mouse position.
-#define POINTER_SIZE 32
-#define POINTER_HOTSPOT_OFFSET (POINTER_SIZE / 2 - 10)
+constexpr int POINTER_SIZE = 32;
+constexpr int POINTER_HOTSPOT_OFFSET = POINTER_SIZE / 2 - 10;
 
 // Canvas area, clear of the chrome (matches dpaint_640x480.pcx)
-#define CANVAS_TOP 12
-#define CANVAS_RIGHT 592
+constexpr int CANVAS_TOP = 12;
+constexpr int CANVAS_RIGHT = 592;
 
 // Brush-size selector: round, square, then two dotted brushes, at the top
 // of the panel (matches dpaint_640x480.pcx)
-#define BRUSH_SELECTOR_TOP CANVAS_TOP
-#define BRUSH_SELECTOR_SPLIT 30
-#define BRUSH_SPRAY_TOP 40
-#define BRUSH_SELECTOR_BOTTOM 52
+constexpr int BRUSH_SELECTOR_TOP = CANVAS_TOP;
+constexpr int BRUSH_SELECTOR_SPLIT = 30;
+constexpr int BRUSH_SPRAY_TOP = 40;
+constexpr int BRUSH_SELECTOR_BOTTOM = 52;
 
 // Unequal icon slots: full row height, with widths following the brush layout.
 // Share horizontal edges between highlighting and hit testing.
@@ -65,18 +65,18 @@ static const SprayRect SprayBounds[2] = {
 };
 
 // Nine rows of two tool buttons, separated by two-pixel black rules.
-#define TOOL_TOP 52
-#define TOOL_CELL_SIZE 24
-#define TOOL_ROWS 9
-#define TOOL_COLUMNS 2
-#define TOOL_DEFAULT_SELECTION 1 // freehand
+constexpr int TOOL_TOP = 52;
+constexpr int TOOL_CELL_SIZE = 24;
+constexpr int TOOL_ROWS = 9;
+constexpr int TOOL_COLUMNS = 2;
+constexpr int TOOL_DEFAULT_SELECTION = 1; // freehand
 
 // Color swatches: base colors on the left, bright variants on the right.
 // Reserve separate indices so paint colors do not recolor the interface/pointers.
-#define PAINT_PALETTE_OFFSET 32
-#define SWATCH_LEFT (CANVAS_RIGHT + 1)
-#define SWATCH_ROWS 8
-#define SWATCH_COL_SPLIT 617
+constexpr int PAINT_PALETTE_OFFSET = 32;
+constexpr int SWATCH_LEFT = CANVAS_RIGHT + 1;
+constexpr int SWATCH_ROWS = 8;
+constexpr int SWATCH_COL_SPLIT = 617;
 
 // Exact row boundaries from the asset; the first row is 22 pixels tall.
 static const int SwatchRowEdges[SWATCH_ROWS + 1] = { 311, 333, 354, 375, 396, 417, 438, 459, 480 };

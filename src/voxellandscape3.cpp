@@ -44,7 +44,7 @@
 #include "lib/retropalette.h"
 #include "lib/retroterrain.h"
 
-#define VOXEL_LOD 0.005f // added to dz each slice, so far samples thin out
+constexpr float VOXEL_LOD = 0.005f; // added to dz each slice, so far samples thin out
 
 void DEMO_Render(RETRO_Time time)
 {

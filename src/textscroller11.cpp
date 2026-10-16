@@ -37,23 +37,23 @@
 #include "lib/retropalette.h"
 #include "lib/retromain.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
-#define FONT_SCALE 3
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
+constexpr int FONT_SCALE = 3;
 
-#define SCROLL_SPEED 42 // texels per second
-#define WAVE_AMP 40 // pixels either side of the middle a column reaches
-#define WAVE_RATE 0.85 // table units of the sine per pixel, so one wave per 300 pixels
-#define WAVE_SPEED 230 // table units per second
-#define GROUND_STEPS 96 // palette entries, and scanlines, in one turn of the ground
-#define GROUND_SPEED 30 // scanlines per second
-#define GROUND_RAMP0 1 // palette entry the ground's ramp starts at, past the background
-#define BARS 4
-#define BAR_HEIGHT 16
-#define BAR_CORE 2 // rows of highlight either side of the middle of a bar
-#define BAR_RAMP0 (GROUND_RAMP0 + GROUND_STEPS) // palette entry the first bar's ramp starts at
-#define BAR_LAG 30 // table units a bar rides behind the bar before it
-#define BAR_AMP 62 // pixels either side of the middle a bar reaches
-#define BAR_SPEED 75 // table units per second
+constexpr int SCROLL_SPEED = 42; // texels per second
+constexpr int WAVE_AMP = 40; // pixels either side of the middle a column reaches
+constexpr double WAVE_RATE = 0.85; // table units of the sine per pixel, so one wave per 300 pixels
+constexpr int WAVE_SPEED = 230; // table units per second
+constexpr int GROUND_STEPS = 96; // palette entries, and scanlines, in one turn of the ground
+constexpr int GROUND_SPEED = 30; // scanlines per second
+constexpr int GROUND_RAMP0 = 1; // palette entry the ground's ramp starts at, past the background
+constexpr int BARS = 4;
+constexpr int BAR_HEIGHT = 16;
+constexpr int BAR_CORE = 2; // rows of highlight either side of the middle of a bar
+constexpr int BAR_RAMP0 = GROUND_RAMP0 + GROUND_STEPS; // palette entry the first bar's ramp starts at
+constexpr int BAR_LAG = 30; // table units a bar rides behind the bar before it
+constexpr int BAR_AMP = 62; // pixels either side of the middle a bar reaches
+constexpr int BAR_SPEED = 75; // table units per second
 
 static const char *const ScrollText[] = { "       RETRO DEMOEFFECTS..." };
 

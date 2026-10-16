@@ -22,10 +22,10 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-#define ROTATION_SPEED 1.1f
-#define METAL_SIZE 256
-#define METAL_BAR 16 // rows a bar occupies
-#define METAL_SCROLL 40 // texels of the map a second
+constexpr float ROTATION_SPEED = 1.1f;
+constexpr int METAL_SIZE = 256;
+constexpr int METAL_BAR = 16; // rows a bar occupies
+constexpr int METAL_SCROLL = 40; // texels of the map a second
 
 static unsigned char Metal[METAL_SIZE * METAL_SIZE];
 

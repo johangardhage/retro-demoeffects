@@ -19,15 +19,15 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define TEXTURE_WIDTH 256
-#define TEXTURE_HEIGHT 256
-#define KALEIDOSCOPE_SECTORS 12
-#define ANGLE_STEPS 3072
-#define SECTOR_STEPS (ANGLE_STEPS / KALEIDOSCOPE_SECTORS)
-#define TRIG_SHIFT 14
-#define TRIG_SCALE (1 << TRIG_SHIFT)
-#define ZOOM_SHIFT 8
-#define ANIMATION_SPEED 0.25 // radians a second; the complete motion repeats at 2pi
+constexpr int TEXTURE_WIDTH = 256;
+constexpr int TEXTURE_HEIGHT = 256;
+constexpr int KALEIDOSCOPE_SECTORS = 12;
+constexpr int ANGLE_STEPS = 3072;
+constexpr int SECTOR_STEPS = ANGLE_STEPS / KALEIDOSCOPE_SECTORS;
+constexpr int TRIG_SHIFT = 14;
+constexpr int TRIG_SCALE = 1 << TRIG_SHIFT;
+constexpr int ZOOM_SHIFT = 8;
+constexpr double ANIMATION_SPEED = 0.25; // radians a second; the complete motion repeats at 2pi
 
 static int RadiusTable[RETRO_HEIGHT][RETRO_WIDTH];
 static int AngleTable[RETRO_HEIGHT][RETRO_WIDTH];

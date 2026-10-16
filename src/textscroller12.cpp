@@ -12,7 +12,7 @@
 #include "lib/retropoly.h"
 #include "lib/retromath.h"
 
-#define FONT RETRO_FontAsset{ "assets/font_16x16.pcx", 16, 16 }
+constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 
 static const char *const CrawlText[] = {
 	"THE TEXT CRAWL",
@@ -38,21 +38,21 @@ static const char *const CrawlText[] = {
 	"RETRO",
 	"DEMOEFFECTS...",
 };
-#define LINES (int)(sizeof(CrawlText) / sizeof(CrawlText[0]))
+constexpr int LINES = (int)(sizeof(CrawlText) / sizeof(CrawlText[0]));
 
 // Lines enter fully below the screen, recede, then fade out.
-#define LINE_SPACING 34.0
-#define ZNEAR 34.0
-#define ZSPAN 500.0
-#define ZFAR (ZNEAR + ZSPAN)
-#define SCROLL_SPEED 50.0
-#define PASS_GAP 2.0
-#define PASS_CYCLE ((ZSPAN + (LINES - 1) * LINE_SPACING) / SCROLL_SPEED + PASS_GAP)
+constexpr double LINE_SPACING = 34.0;
+constexpr double ZNEAR = 34.0;
+constexpr double ZSPAN = 500.0;
+constexpr double ZFAR = ZNEAR + ZSPAN;
+constexpr double SCROLL_SPEED = 50.0;
+constexpr double PASS_GAP = 2.0;
+constexpr double PASS_CYCLE = (ZSPAN + (LINES - 1) * LINE_SPACING) / SCROLL_SPEED + PASS_GAP;
 
-#define CRAWL_TILT 1.05
-#define CAMERA_DISTANCE 320.0
-#define CY (float)(RETRO_HEIGHT + 36)
-#define SHADES 24
+constexpr double CRAWL_TILT = 1.05;
+constexpr double CAMERA_DISTANCE = 320.0;
+constexpr float CY = (float)(RETRO_HEIGHT + 36);
+constexpr int SHADES = 24;
 
 static RETRO_Font Font;
 static RETRO_Image *TextStrip;

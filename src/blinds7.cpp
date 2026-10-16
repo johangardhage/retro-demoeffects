@@ -22,11 +22,11 @@
 #include "lib/retro.h"
 #include "lib/retromain.h"
 
-#define BLIND_WIDTH 32
-#define BLINDS ((RETRO_WIDTH + BLIND_WIDTH - 1) / BLIND_WIDTH)
-#define TIME_TRANSITION 1.5
-#define TIME_HOLD 1.0 // seconds held on either picture
-#define TIME_CYCLE (2 * (TIME_HOLD + TIME_TRANSITION))
+constexpr int BLIND_WIDTH = 32;
+constexpr int BLINDS = (RETRO_WIDTH + BLIND_WIDTH - 1) / BLIND_WIDTH;
+constexpr double TIME_TRANSITION = 1.5;
+constexpr double TIME_HOLD = 1.0; // seconds held on either picture
+constexpr double TIME_CYCLE = 2 * (TIME_HOLD + TIME_TRANSITION);
 
 static RETRO_Image *PictureA;
 static RETRO_Image *PictureB;

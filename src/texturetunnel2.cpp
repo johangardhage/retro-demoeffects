@@ -59,7 +59,7 @@ static void CreateTables(void)
 
 void DEMO_Render(RETRO_Time time)
 {
-	int travel = (int)(time.total * SPEED);
+	int travel = (int)RETRO_FramePosition(time.total, SPEED);
 	const unsigned char *texture = RETRO_ImageData();
 	unsigned char *screen = RETRO_FrameBuffer();
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

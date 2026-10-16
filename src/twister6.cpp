@@ -153,7 +153,7 @@ void DEMO_Render(RETRO_Time time)
 		ZBuffer[i] = FLUBBER_Z_FAR;
 	}
 
-	TextureScroll = (long)(time.total * FLUBBER_SCROLL_SPEED);
+	TextureScroll = RETRO_FramePosition(time.total, FLUBBER_SCROLL_SPEED);
 
 	// Calculate phase. The three oscillators have incommensurate periods
 	// (20s, 17s, 18s) so the pose does not obviously loop.

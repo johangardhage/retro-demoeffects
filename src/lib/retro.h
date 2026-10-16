@@ -181,7 +181,7 @@ inline struct {
 	bool showcursor;
 	bool showfps;
 	int fpscap;
-	bool spacepauses = true;		// Space toggles pause in the mainloop
+	bool keyboardoverride = false;	// the demo handles every key itself, Esc and Q included
 	const char *dumpfile = NULL;	// --dumpfile writes this PPM after dumptime, then quits
 	double dumptime = 0;			// demo time of the frame that write shows
 	bool quit;
@@ -378,32 +378,6 @@ inline void RETRO_FreeImage(int id = 0)
 		RETRO.image[id] = NULL;
 		RETRO.images--;
 	}
-}
-
-//
-// Read a whole file into a new buffer, freed with free(). A zero byte follows
-// the data, so a text file reads as a string; size, when given, receives the
-// length without it.
-//
-inline unsigned char *RETRO_LoadFile(const char *filename, int *size = NULL)
-{
-	FILE *fp = fopen(filename, "rb");
-	if (fp == NULL) {
-		RETRO_RageQuit("Cannot open file: %s\n", filename);
-	}
-	long length = fseek(fp, 0, SEEK_END) == 0 ? ftell(fp) : -1;
-	if (length < 0 || fseek(fp, 0, SEEK_SET) != 0) {
-		RETRO_RageQuit("Cannot read file: %s\n", filename);
-	}
-	unsigned char *data = (unsigned char *)malloc(length + 1);
-	if (data == NULL || fread(data, 1, length, fp) != (size_t)length) {
-		RETRO_RageQuit("Cannot read file: %s\n", filename);
-	}
-	data[length] = 0;
-	fclose(fp);
-
-	if (size) *size = (int)length;
-	return data;
 }
 
 inline RETRO_Image *RETRO_LoadImage(const char *filename, bool setpalette = false)
@@ -834,10 +808,11 @@ inline bool RETRO_KeyPressed(SDL_Scancode key)
 	return false;
 }
 
-// Space toggles pause in the mainloop; a demo that reads Space itself turns that off
-inline void RETRO_SetSpacePause(bool enabled)
+// The mainloop quits on Esc or Q, pauses on Space and dumps a frame on Backspace.
+// A demo that overrides the keyboard gets none of these and must quit itself.
+inline void RETRO_SetKeyboardOverride(bool enabled)
 {
-	RETRO.spacepauses = enabled;
+	RETRO.keyboardoverride = enabled;
 }
 
 inline void RETRO_Quit(void)
@@ -855,7 +830,7 @@ inline bool RETRO_QuitRequested(void)
 			RETRO_UpdateFramerate();
 			RETRO_DeltaTime(true);
 		} else if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
-			if (event.key.scancode == SDL_SCANCODE_ESCAPE || event.key.scancode == SDL_SCANCODE_Q) {
+			if (!RETRO.keyboardoverride && (event.key.scancode == SDL_SCANCODE_ESCAPE || event.key.scancode == SDL_SCANCODE_Q)) {
 				RETRO.quit = true;
 			}
 			if (event.key.scancode < 256) {
@@ -903,7 +878,7 @@ inline void RETRO_Mainloop(void)
 		// Paused, nothing is drawn or flipped. The delay keeps the loop from
 		// spinning. Pressing Space again drops the whole gap, so the next shown
 		// frame measures one refresh.
-		if (RETRO.spacepauses && RETRO_KeyPressed(SDL_SCANCODE_SPACE)) {
+		if (!RETRO.keyboardoverride && RETRO_KeyPressed(SDL_SCANCODE_SPACE)) {
 			paused = !paused;
 			RETRO_DeltaTime(true);
 		}
@@ -944,7 +919,7 @@ inline void RETRO_Mainloop(void)
 			RETRO_Quit();
 		}
 
-		if (RETRO_KeyPressed(SDL_SCANCODE_BACKSPACE)) {
+		if (!RETRO.keyboardoverride && RETRO_KeyPressed(SDL_SCANCODE_BACKSPACE)) {
 			RETRO_DumpFrame("dumpfile.ppm");
 		}
 

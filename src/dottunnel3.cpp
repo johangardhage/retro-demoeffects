@@ -1,8 +1,9 @@
 //
 // Dot tunnel, trailing
 //
-// Rings of dots receding into the distance. Ring i sits at depth d = (i + 1) /
-// TUNNEL_RINGS and is projected by
+// Rings of dots receding into the distance. Ring i sits at depth d = (i + 1 -
+// frac) / TUNNEL_RINGS, where frac is how far the phase is past its last whole
+// ring, and is projected by
 //
 //   (sx, sy) = (ring / d) + (WIDTH/2, HEIGHT/2) + sway
 //
@@ -15,9 +16,9 @@
 // Lissajous figure, and a ring is offset by where that path was
 // TUNNEL_LAG per ring ago - the mouth carries the newest point on the
 // path and the nearest ring the oldest, so the tunnel is the wake the
-// path leaves behind it. Walking the path one lag further moves each
-// ring's offset onto the ring in front of it, and the shape flows toward
-// the eye. The sway is added after the projection, not before, so it
+// path leaves behind it. A ring keeps the point it was laid down at and
+// glides one ring closer per lag walked, so the shape flows toward the
+// eye with no step between frames. The sway is added after the projection, not before, so it
 // slides the whole ring across the screen rather than displacing it in
 // the tunnel's own space.
 //
@@ -25,10 +26,12 @@
 // positions, one pushed per frame. The path is analytic, so the position
 // is evaluated straight from the lagged phase instead, which costs two
 // cosines a ring and drops the buffer, its modular indexing and its tie
-// to the frame rate.
+// to the frame rate. Sliding the rings by frac is what the buffer gave
+// for free at one push a frame; without it the rings and bands would
+// jump a whole ring whenever frames and steps drift apart.
 //
 // TUNNEL_BAND rings are drawn and the same number skipped, stepped along
-// with the phase, so bands of rings travel down the tunnel. phase lives
+// with the rings, so bands of rings travel down the tunnel. phase lives
 // on TUNNEL_PERIOD: the figure itself closes in a turn, but the bands
 // only come back into step after five, and iphase counts the phase in
 // rings, which is the unit the bands are laid out in.
@@ -53,13 +56,13 @@ constexpr int TUNNEL_PERIOD = 5 * RETRO_ANGLES_PER_TURN; // five turns of the fi
 
 static double RingX[RING_DOTS];
 static double RingY[RING_DOTS];
-static double RingScale[TUNNEL_RINGS];
 
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
 	double phase = fmod(time.total * TUNNEL_SPEED, TUNNEL_PERIOD);
 	int iphase = phase / TUNNEL_LAG;
+	double frac = phase / TUNNEL_LAG - iphase;
 
 	for (int i = 0; i < TUNNEL_RINGS; i++) {
 		// Leave the gap between two bands
@@ -68,17 +71,20 @@ void DEMO_Render(RETRO_Time time)
 		}
 
 		// Where the path was when this ring was laid down
-		double lag = phase - (TUNNEL_RINGS - 1 - i) * TUNNEL_LAG;
+		double lag = (iphase + i - (TUNNEL_RINGS - 1)) * TUNNEL_LAG;
 		double swayx = TUNNEL_SWAY * COS(2 * lag + TUNNEL_XPHASE);
 		double swayy = TUNNEL_SWAY * COS(3 * lag);
+
+		// Depth slides toward the eye by the part of a step walked so far
+		double scale = TUNNEL_RINGS / (i + 1 - frac);
 
 		// Shade by depth, so the mouth fades to black
 		unsigned char color = TUNNEL_SHADES - 1 - i / (TUNNEL_RINGS / TUNNEL_SHADES);
 
 		// Draw ring
 		for (int j = 0; j < RING_DOTS; j++) {
-			int x = RETRO_WIDTH / 2.0 + lround(RingX[j] * RingScale[i] + swayx);
-			int y = RETRO_HEIGHT / 2.0 + lround(RingY[j] * RingScale[i] + swayy);
+			int x = RETRO_WIDTH / 2.0 + lround(RingX[j] * scale + swayx);
+			int y = RETRO_HEIGHT / 2.0 + lround(RingY[j] * scale + swayy);
 
 			if (RETRO_OnScreen(x, y)) {
 				RETRO_PutPixel(x, y, color);
@@ -98,11 +104,5 @@ void DEMO_Initialize(void)
 
 		RingX[i] = RING_WIDTH * COS(angle);
 		RingY[i] = RING_HEIGHT * SIN(angle);
-	}
-
-	// Init depth. Ring i sits at depth (i + 1) / TUNNEL_RINGS, and the projection
-	// divides by it, so what the draw needs is the reciprocal.
-	for (int i = 0; i < TUNNEL_RINGS; i++) {
-		RingScale[i] = (double)TUNNEL_RINGS / (i + 1);
 	}
 }

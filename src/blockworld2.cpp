@@ -568,6 +568,8 @@ void DEMO_FixedUpdate(RETRO_Time time)
 {
 	float dt = time.delta;
 
+	if (RETRO_KeyPressed(SDL_SCANCODE_ESCAPE) || RETRO_KeyPressed(SDL_SCANCODE_Q)) RETRO_Quit();
+
 	for (int slot = 0; slot < HOTBAR_SLOTS; slot++) {
 		if (RETRO_KeyPressed((SDL_Scancode)(SDL_SCANCODE_1 + slot))) Selected = slot;
 	}
@@ -793,7 +795,7 @@ void DEMO_Initialize(void)
 		if (found) break;
 	}
 
-	RETRO_SetSpacePause(false);
+	RETRO_SetKeyboardOverride(true);
 	RETRO_SetMouseMode(true);
 
 	RETRO_SetColor(OUTLINE_COLOR, OUTLINE);

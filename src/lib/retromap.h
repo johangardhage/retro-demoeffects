@@ -71,6 +71,32 @@ struct RETRO_Map {
 // *******************************************************************
 
 //
+// Read a whole file into a new buffer, freed with free(). A zero byte follows
+// the data, so a text file reads as a string; size, when given, receives the
+// length without it.
+//
+inline unsigned char *RETRO_LoadFile(const char *filename, int *size = NULL)
+{
+	FILE *fp = fopen(filename, "rb");
+	if (fp == NULL) {
+		RETRO_RageQuit("Cannot open file: %s\n", filename);
+	}
+	long length = fseek(fp, 0, SEEK_END) == 0 ? ftell(fp) : -1;
+	if (length < 0 || fseek(fp, 0, SEEK_SET) != 0) {
+		RETRO_RageQuit("Cannot read file: %s\n", filename);
+	}
+	unsigned char *data = (unsigned char *)malloc(length + 1);
+	if (data == NULL || fread(data, 1, length, fp) != (size_t)length) {
+		RETRO_RageQuit("Cannot read file: %s\n", filename);
+	}
+	data[length] = 0;
+	fclose(fp);
+
+	if (size) *size = (int)length;
+	return data;
+}
+
+//
 // The tokens of a .map: braces, parentheses, quoted strings and bare words,
 // with // comments skipped
 //

@@ -1,11 +1,11 @@
 //
 // Retro graphics library
 //
-// GLSL/GLM-style 3x3 matrix - mat3, with operator overloading at global
-// scope, bare, matching GLSL naming exactly. Stored as three columns, the
-// same layout and multiplication convention as GLSL's mat3: mat3(c0, c1, c2)
-// applied to a column vector v is v.x*c0 + v.y*c1 + v.z*c2, so column i is
-// where basis vector i lands. This follows retrovector.h's own exception to
+// GLSL/GLM-style 2x2 and 3x3 matrices - mat2 and mat3, with operator
+// overloading at global scope, bare, matching GLSL naming exactly. Stored as
+// columns, the same layout and multiplication convention as GLSL's: mat3(c0,
+// c1, c2) applied to a column vector v is v.x*c0 + v.y*c1 + v.z*c2, so column
+// i is where basis vector i lands. This follows retrovector.h's own exception to
 // the library's RETRO_ prefix, for the same reason: plain matrix algebra
 // reads better unprefixed, the way GLSL itself reads.
 //
@@ -15,6 +15,12 @@
 #pragma once
 
 #include "retrovector.h"
+
+struct mat2 {
+	vec2 col0, col1;
+};
+
+inline vec2 operator*(const mat2 &m, vec2 v) { return v.x * m.col0 + v.y * m.col1; }
 
 struct mat3 {
 	vec3 col0, col1, col2;

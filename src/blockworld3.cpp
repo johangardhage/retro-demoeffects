@@ -150,9 +150,11 @@
 // the side away from it.
 //
 // Blocks cast shadows. From where a ray meets a face turned toward the sun,
-// a second walk sets out toward the sun from just inside the face, so its
-// first step crosses the face and leaves against it are tested like any
-// other, through water and leaf holes as light goes, for SHADOW_DISTANCE; a
+// a second walk sets out toward the sun from the face itself, in its own
+// block and inside that block's edges, so its first step crosses the face
+// even at a seam with the next block and a low sun, and leaves against it
+// are tested like any other, through water and leaf holes as light goes, for
+// SHADOW_DISTANCE; a
 // block on the way leaves the face with the sky's light alone. That is the
 // light of the face opposite it, which the sun does not reach, and of the
 // same face light L, so a face in shadow takes the opposite face's colors,
@@ -228,7 +230,7 @@ constexpr float MAX_FALL_SPEED = 40.0f; // two thirds of a block a step, so a fa
 constexpr float CONTACT_GAP = 0.001f; // left between the box and a block it is pushed back from
 constexpr float REACH = 5.0f; // blocks from the eye a block can be broken or placed
 constexpr float SHADOW_DISTANCE = 32.0f; // blocks a shadow ray walks toward the sun
-constexpr float SHADOW_OFFSET = 0.001f; // into the face, so a shadow ray's first step crosses it
+constexpr float SHADOW_OFFSET = 0.001f; // inside a block's edges, where a shadow ray sets out along its face
 constexpr double REPEAT_DELAY = 0.25; // seconds between breaks or placings while a button is held
 
 constexpr double WATER_DELAY = 0.25; // seconds between steps of flowing water
@@ -496,13 +498,12 @@ static int BlockAt(vec3 p)
 // Walks the ray cell by cell until it enters a block other than clear, or
 // air, or walks maxdistance or leaves the world. With holes, a leaves texel
 // that is a hole lets the ray walk on. With surface, a ray rising out of
-// water into air stops there, at the surface seen from below.
-static bool WalkRay(vec3 origin, vec3 dir, float maxdistance, int clear, bool holes, bool surface, RayHit &hit)
+// water into air stops there, at the surface seen from below. The walk sets
+// out in cell x, y, z, which holds origin, so that a ray from a point on a
+// face can set out in the block behind it rather than in front.
+static bool WalkRayFrom(vec3 origin, int x, int y, int z, vec3 dir, float maxdistance, int clear, bool holes, bool surface, RayHit &hit)
 {
-	int x = (int)floorf(origin.x);
-	int y = (int)floorf(origin.y);
-	int z = (int)floorf(origin.z);
-	int from = BlockAt(origin);
+	int from = BlockAt({ x + 0.5f, y + 0.5f, z + 0.5f });
 	int stepx = dir.x < 0 ? -1 : 1;
 	int stepy = dir.y < 0 ? -1 : 1;
 	int stepz = dir.z < 0 ? -1 : 1;
@@ -591,6 +592,12 @@ static bool WalkRay(vec3 origin, vec3 dir, float maxdistance, int clear, bool ho
 		hit.t = t;
 		return true;
 	}
+}
+
+// The same from the cell origin is in
+static bool WalkRay(vec3 origin, vec3 dir, float maxdistance, int clear, bool holes, bool surface, RayHit &hit)
+{
+	return WalkRayFrom(origin, (int)floorf(origin.x), (int)floorf(origin.y), (int)floorf(origin.z), dir, maxdistance, clear, holes, surface, hit);
 }
 
 // Whether a cell stops the player. The world's edges and floor do, and the
@@ -813,6 +820,8 @@ void DEMO_FixedUpdate(RETRO_Time time)
 		nextsand = time.total + SAND_DELAY;
 		StepQueue(SandQueue, FallSand);
 	}
+
+	if (RETRO_KeyPressed(SDL_SCANCODE_ESCAPE) || RETRO_KeyPressed(SDL_SCANCODE_Q)) RETRO_Quit();
 
 	// Space twice in quick succession takes off, or lands
 	static bool flying = false;
@@ -1089,9 +1098,17 @@ void DEMO_Render(RETRO_Time time)
 					int face = hit.light;
 					vec3 normal = FaceNormal[face];
 					if (sunstrength > 0 && dot(normal, sun) > 0) {
-						vec3 p = eye + dir * hit.t - normal * SHADOW_OFFSET;
+						// From the face itself, in the block's own cell, kept inside
+						// its edges so that the first step crosses the face even at
+						// a seam and a low sun, and tests what lies against it
+						vec3 cell = { (float)hit.x, (float)hit.y, (float)hit.z };
+						vec3 p = cell + clamp(eye + dir * hit.t - cell, SHADOW_OFFSET, 1 - SHADOW_OFFSET);
+						vec3 plane = cell + (normal + vec3{ 1, 1, 1 }) * 0.5f;
+						if (normal.x != 0) p.x = plane.x;
+						if (normal.y != 0) p.y = plane.y;
+						if (normal.z != 0) p.z = plane.z;
 						RayHit blocker;
-						if (WalkRay(p, sun, SHADOW_DISTANCE, WATER, true, false, blocker)) face = Opposite[face];
+						if (WalkRayFrom(p, hit.x, hit.y, hit.z, sun, SHADOW_DISTANCE, WATER, true, false, blocker)) face = Opposite[face];
 					}
 					color = BlockColor(hit.texel, face, fogstep);
 					sky = false;
@@ -1152,7 +1169,7 @@ void DEMO_Initialize(void)
 		if (found) break;
 	}
 
-	RETRO_SetSpacePause(false);
+	RETRO_SetKeyboardOverride(true);
 	RETRO_SetMouseMode(true);
 
 	RETRO_SetColor(OUTLINE_COLOR, OUTLINE);

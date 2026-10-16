@@ -143,8 +143,6 @@ static void SelectMode(void)
 void DEMO_Render(RETRO_Time time)
 {
 	static int meshindex = 0;
-	static bool paused = false;
-	static double rotationtime = 0; // seconds the mesh has turned for, which stops while paused
 
 	// Handle keys
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
@@ -169,20 +167,14 @@ void DEMO_Render(RETRO_Time time)
 		MatcapIndex = (MatcapIndex + 1) % MATCAPS;
 		SelectMode();
 	}
-	if (RETRO_KeyPressed(SDL_SCANCODE_SPACE)) {
-		paused = !paused;
-	}
 
 	const Mesh *mesh = &Meshes[meshindex];
 	Model3D *model = RETRO_Get3DModel(meshindex);
 
 	// Calculate rotation
-	if (!paused) {
-		rotationtime += time.delta;
-	}
-	float ax = fmod(mesh->ax + rotationtime * ROTATION_SPEED, 2 * M_PI);
-	float ay = fmod(rotationtime * ROTATION_SPEED, 2 * M_PI);
-	float az = fmod(mesh->az + rotationtime * ROTATION_SPEED, 2 * M_PI);
+	float ax = fmod(mesh->ax + time.total * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(mesh->az + time.total * ROTATION_SPEED, 2 * M_PI);
 
 	// Draw mesh
 	RETRO_RotateModel(ax, ay, az, model);
@@ -216,8 +208,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	RETRO_SetSpacePause(false);
-
 	// Load assets
 	RETRO_LoadImage("assets/mask_envmap_256x256.pcx");
 	RETRO_SetFont(RETRO_FONT_VGA_8X8);

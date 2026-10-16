@@ -37,8 +37,7 @@ void DEMO_Render(RETRO_Time time)
 	float az = fmod(time.total * ROTATION_SPEED * 0.61f, 2 * M_PI);
 
 	// Calculate phase
-	double scroll = fmod(time.total * METAL_SCROLL, METAL_SIZE);
-	int iscroll = (int)scroll;
+	int iscroll = (int)(RETRO_FramePosition(time.total, METAL_SCROLL) % METAL_SIZE);
 
 	// Draw cube
 	int halfscroll = iscroll / 2;

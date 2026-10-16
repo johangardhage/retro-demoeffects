@@ -186,7 +186,7 @@ static void DrawTunnel(int travel)
 
 void DEMO_Render2(RETRO_Time time)
 {
-	DrawTunnel((int)(time.total * SPEED));
+	DrawTunnel((int)RETRO_FramePosition(time.total, SPEED));
 	RETRO_Flip();
 }
 

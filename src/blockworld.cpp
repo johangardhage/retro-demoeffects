@@ -363,6 +363,8 @@ void DEMO_FixedUpdate(RETRO_Time time)
 {
 	float dt = time.delta;
 
+	if (RETRO_KeyPressed(SDL_SCANCODE_ESCAPE) || RETRO_KeyPressed(SDL_SCANCODE_Q)) RETRO_Quit();
+
 	// Walk along the ground, whichever way the player looks
 	vec3 forward = { cosf(Look.yaw), 0, sinf(Look.yaw) };
 	vec3 right = { forward.z, 0, -forward.x };
@@ -439,7 +441,7 @@ void DEMO_Initialize(void)
 		if (found) break;
 	}
 
-	RETRO_SetSpacePause(false);
+	RETRO_SetKeyboardOverride(true);
 	RETRO_SetMouseMode(true);
 
 	RETRO_CreateGradientPalette(SKY_START, SKY_START + SKY_SHADES, SKY_HORIZON, SKY_ZENITH);

@@ -113,7 +113,8 @@ void DEMO_Render(RETRO_Time time)
 				float theta = s <= 0 ? 0 : (s >= M_PI * r ? M_PI : s / r);
 				float lambert = -sin(theta) * lightn + cos(theta) * lightz;
 				lambert = back ? -lambert : lambert;
-				float shade = MIN(1.0f, mix(AMBIENT, 1, MAX(0.0f, lambert) / lightz));
+				float lit = MAX(0.0f, lambert);
+				float shade = MIN(1.0f, mix(AMBIENT, 1, lit / lightz));
 
 				RETRO_Palette color = palette[front[sy * RETRO_WIDTH + sx]];
 				red = color.r;

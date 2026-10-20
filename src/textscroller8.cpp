@@ -52,7 +52,7 @@
 #include "lib/retropalette.h"
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
-//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
 constexpr double SCROLL_SPEED = 120.0; // strip columns per second
 constexpr double ARC_SCALE = 1.0; // screen pixels of path per strip column

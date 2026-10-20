@@ -82,8 +82,9 @@ static void DrawRidge(unsigned char *buffer, double offset, float base, float am
 {
 	for (int x = 0; x < RETRO_WIDTH; x++) {
 		int height = Ridge(x, offset, base, amplitude, wave1, wave2, wave3);
+		int span = MAX(height, 1);
 		for (int y = MAX(HORIZON - height, 0); y < HORIZON; y++) {
-			buffer[y * RETRO_WIDTH + x] = color + MIN((y - (HORIZON - height)) * RIDGE_COLORS / MAX(height, 1), RIDGE_COLORS - 1);
+			buffer[y * RETRO_WIDTH + x] = color + MIN((y - (HORIZON - height)) * RIDGE_COLORS / span, RIDGE_COLORS - 1);
 		}
 	}
 }

@@ -236,7 +236,7 @@ static int FaceMipLevel(const Texture *texture, const Corner *corners, const RET
 
 		float du = (corners[j].uv.x - corners[i].uv.x) * (float)texture->levels[0].width;
 		float dv = (corners[j].uv.y - corners[i].uv.y) * (float)texture->levels[0].height;
-		float texels = sqrtf(du * du + dv * dv);
+		float texels = hypotf(du, dv);
 		most = MAX(most, texels / pixels);
 	}
 

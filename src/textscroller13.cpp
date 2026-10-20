@@ -14,7 +14,7 @@
 #include "lib/retromath.h"
 #include "lib/retropoly.h"
 
-const RETRO_FontData &FONT = RETRO_FONT_TOPAZ30_8X8;
+static const RETRO_FontData &FONT = RETRO_FONT_TOPAZ30_8X8;
 
 static const char *const CrawlText[] = {
 	"THE SIDEWAYS",

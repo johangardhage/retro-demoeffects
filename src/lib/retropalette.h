@@ -962,9 +962,9 @@ inline void RETRO_FitPalette(const vec3 *color, const float *weight, int count, 
 			float mindistance = 1e30f;
 			for (int e = 0; e < colors; e++) {
 				vec3 d = color[i] - entry[e];
-				float distance = dot(d, d);
-				if (distance < mindistance) {
-					mindistance = distance;
+				float gap = dot(d, d);
+				if (gap < mindistance) {
+					mindistance = gap;
 					match = e;
 				}
 			}

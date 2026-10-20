@@ -62,7 +62,7 @@ static void DrawLine(const RETRO_CameraLens &lens, vec3 a, vec3 b)
 
 	PolygonPoint from = RETRO_ProjectViewPoint(lens, a);
 	PolygonPoint to = RETRO_ProjectViewPoint(lens, b);
-	RETRO_DrawLine((int)floorf(from.pos.x), (int)floorf(from.pos.y), (int)floorf(to.pos.x), (int)floorf(to.pos.y), color);
+	RETRO_DrawSubpixelLine(from.pos.x, from.pos.y, to.pos.x, to.pos.y, color);
 }
 
 static void DrawCell(const RETRO_TerrainMesh &mesh, const RETRO_TerrainCell &cell, const void *)

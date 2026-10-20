@@ -7,13 +7,13 @@
 // positions span (n − 1) DOT_SPACING, and that box is centered on the
 // screen.
 //
-// Each dot is displaced by a traveling sine. The table has N entries
-// at θ = 2π i / N, so it closes; t is kept on that table.
+// Each dot is displaced by a traveling sine, rounded to whole pixels.
+// The phase t grows smoothly with time.
 //
-//   Δx = A sin(2π (t + (xp+yp) κ + xp σ) / N)
-//   Δy = A sin(2π (t + (xp+yp) κ + yp σ) / N)
+//   Δx = A sin(t + (xp+yp) κ + xp σ)
+//   Δy = A sin(t + (xp+yp) κ + yp σ)
 //
-// κ is phase per dot along the diagonal, σ along the axis the
+// κ is radians of phase per dot along the diagonal, σ along the axis the
 // displacement acts on. Without σ the two sines are equal and every
 // dot moves on the same diagonal.
 //
@@ -26,11 +26,10 @@
 constexpr int FLAG_SUBDIV = 4; // dots per cell of the flag, in each direction
 constexpr int DOT_SPACING = 4; // pixels between neighboring dots
 
-constexpr int SINE_VALUES = 255; // entries in the sine table, covering one whole turn
 constexpr int WAVE_AMPLITUDE = 10; // pixels a dot is displaced at the crest
-constexpr int WAVE_CURVE = 5; // table entries of phase per dot along the diagonal
-constexpr int WAVE_SKEW = 2; // and per dot along the axis the displacement acts on
-constexpr int WAVE_SPEED = 200; // table entries traveled per second
+constexpr double WAVE_CURVE = radians(5); // phase per dot along the diagonal
+constexpr double WAVE_SKEW = radians(2); // and per dot along the axis the displacement acts on
+constexpr double WAVE_SPEED = radians(200); // phase the wave travels per second
 
 // Flag of Sweden, SFS 1982:269: 16:10, divided 5:2:9 across and 4:2:4 down.
 static const unsigned char SwedishFlag[][16] = {
@@ -49,13 +48,10 @@ static const unsigned char SwedishFlag[][16] = {
 constexpr int FLAG_COLUMNS = (int)sizeof(SwedishFlag[0]);
 constexpr int FLAG_ROWS = (int)(sizeof(SwedishFlag) / sizeof(SwedishFlag[0]));
 
-static int SineTable[SINE_VALUES];
-
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time.total * WAVE_SPEED, SINE_VALUES);
-	int iphase = phase;
+	double phase = fmod(time.total * WAVE_SPEED, 2 * M_PI);
 
 	int left = (RETRO_WIDTH - (FLAG_COLUMNS * FLAG_SUBDIV - 1) * DOT_SPACING) / 2;
 	int top = (RETRO_HEIGHT - (FLAG_ROWS * FLAG_SUBDIV - 1) * DOT_SPACING) / 2;
@@ -70,8 +66,9 @@ void DEMO_Render(RETRO_Time time)
 					int xp = cellx * FLAG_SUBDIV + dotx;
 					int yp = celly * FLAG_SUBDIV + doty;
 
-					int wavex = SineTable[WRAP(iphase + (xp + yp) * WAVE_CURVE + xp * WAVE_SKEW, SINE_VALUES)];
-					int wavey = SineTable[WRAP(iphase + (xp + yp) * WAVE_CURVE + yp * WAVE_SKEW, SINE_VALUES)];
+					double along = phase + (xp + yp) * WAVE_CURVE;
+					int wavex = lround(WAVE_AMPLITUDE * sin(along + xp * WAVE_SKEW));
+					int wavey = lround(WAVE_AMPLITUDE * sin(along + yp * WAVE_SKEW));
 
 					RETRO_PutPixel(left + xp * DOT_SPACING + wavex, top + yp * DOT_SPACING + wavey, color);
 				}
@@ -86,9 +83,4 @@ void DEMO_Initialize(void)
 	RETRO_SetColor(0, RETRO_BLACK);
 	RETRO_SetColor(1, RETRO_CERULEAN);
 	RETRO_SetColor(2, RETRO_GOLD);
-
-	// Init tables
-	for (int i = 0; i < SINE_VALUES; i++) {
-		SineTable[i] = lround(WAVE_AMPLITUDE * sin(2 * M_PI * i / SINE_VALUES));
-	}
 }

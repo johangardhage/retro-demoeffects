@@ -55,12 +55,13 @@ static const Line Lines[LINES] = {
 
 //
 // Where between the walls at 0 and size - 1 a coordinate is that would have
-// been at position without them
+// been at position without them. The walls are pixel centers, which a
+// subpixel line puts half a pixel in, so the result is shifted by that half.
 //
-static int Bounce(double position, int size)
+static float Bounce(double position, int size)
 {
 	double m = mod(position, 2 * (size - 1));
-	return lround(m > size - 1 ? 2 * (size - 1) - m : m);
+	return (m > size - 1 ? 2 * (size - 1) - m : m) + 0.5;
 }
 
 void DEMO_Render(RETRO_Time time)
@@ -78,12 +79,12 @@ void DEMO_Render(RETRO_Time time)
 			int entry = LINE_RAMP0 + i * TRAIL + j;
 			RETRO_SetColor(entry, RETRO_HSLColor(fract(line.hue + t / HUE_PERIOD), 1, 0.5f) * ((float)(TRAIL - j) / TRAIL));
 
-			int x1 = Bounce(line.from.x + line.fromspeed.x * t, RETRO_WIDTH);
-			int y1 = Bounce(line.from.y + line.fromspeed.y * t, RETRO_HEIGHT);
-			int x2 = Bounce(line.to.x + line.tospeed.x * t, RETRO_WIDTH);
-			int y2 = Bounce(line.to.y + line.tospeed.y * t, RETRO_HEIGHT);
+			float x1 = Bounce(line.from.x + line.fromspeed.x * t, RETRO_WIDTH);
+			float y1 = Bounce(line.from.y + line.fromspeed.y * t, RETRO_HEIGHT);
+			float x2 = Bounce(line.to.x + line.tospeed.x * t, RETRO_WIDTH);
+			float y2 = Bounce(line.to.y + line.tospeed.y * t, RETRO_HEIGHT);
 
-			RETRO_DrawLine(x1, y1, x2, y2, entry);
+			RETRO_DrawSubpixelLine(x1, y1, x2, y2, entry);
 		}
 	}
 }

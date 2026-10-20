@@ -44,7 +44,7 @@
 constexpr float BALL_RADIUS = 70.0f;
 constexpr float BALL_APEX = 72.0f; // center at the top of the bounce
 constexpr float BALL_FLOOR = 200.0f; // scanline the bottom of the ellipse is pinned to
-constexpr float BALL_RBMIN = 30.0f / 65.0f * BALL_RADIUS; // original 30 on a radius of 65
+constexpr float BALL_RBMIN = 30.0f / 65.0f * BALL_RADIUS; // the squashed half height
 constexpr float BALL_AIR = BALL_FLOOR - BALL_RADIUS - BALL_APEX; // apex to the contact point
 constexpr float BALL_PENMAX = BALL_RADIUS - BALL_RBMIN; // peak spring compression, pixels
 constexpr float BALL_TDOWN = 0.58f; // seconds of free fall, and of the rise after takeoff
@@ -57,19 +57,19 @@ constexpr float BALL_ZETA = 0.55f; // underdamping of the takeoff oscillator
 constexpr float BALL_WOBBLE_OMEGA = BALL_OMEGA * 1.4f; // faster than contact so the stretch overshoots less
 const float BALL_WD = BALL_WOBBLE_OMEGA * sqrtf(1.0f - BALL_ZETA * BALL_ZETA);
 constexpr int BALL_HORIZON = 158; // copper split, sky above, floor below
-constexpr float BALL_SPEEDX = 0.87f; // radians a second, the original's 1/2/3 degrees a PAL frame
-constexpr float BALL_SPEEDY = 1.75f;
-constexpr float BALL_SPEEDZ = -2.62f;
+constexpr float BALL_SPEEDX = radians(50); // a second
+constexpr float BALL_SPEEDY = radians(100);
+constexpr float BALL_SPEEDZ = radians(-150);
 constexpr double BALL_CX = RETRO_WIDTH / 2.0;
 constexpr float BALL_EYE = 3.2f; // closer than RETRO_PROJECTION_EYEDISTANCE so the sphere bulges
 
 constexpr int STAR_COUNT = 6;
 constexpr int STAR_POINTS = 5;
 constexpr int STAR_VERTS = STAR_POINTS * 2;
-constexpr float STAR_OFFSET = 0.962f; // plane the pentagram sits in, original 875/910
-constexpr float STAR_OUTER = 0.275f; // original 250/910
-constexpr float STAR_INNER = 0.165f; // original 150/910
-constexpr float STAR_SPIN = 3.49f; // radians a second, the original's 4 degrees a PAL frame
+constexpr float STAR_OFFSET = 0.962f; // plane the pentagram sits in
+constexpr float STAR_OUTER = 0.275f;
+constexpr float STAR_INNER = 0.165f;
+constexpr float STAR_SPIN = radians(200); // a second
 
 constexpr int BIT_BALL = 1;
 constexpr int BIT_BACK = 2; // far side of the sphere, muted lavender

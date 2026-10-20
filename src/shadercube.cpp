@@ -139,8 +139,10 @@ static void ChromeSlab(float o, float d, float &tnear, float &tfar)
 	}
 	float t1 = (-1.0f - o) / d;
 	float t2 = (1.0f - o) / d;
-	tnear = MAX(tnear, MIN(t1, t2));
-	tfar = MIN(tfar, MAX(t1, t2));
+	float enter = MIN(t1, t2);
+	float leave = MAX(t1, t2);
+	tnear = MAX(tnear, enter);
+	tfar = MIN(tfar, leave);
 }
 
 // True when the ray from o along d, both in the cube's frame, passes through it

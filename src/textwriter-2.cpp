@@ -23,7 +23,7 @@
 #include "lib/retromain.h"
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
-//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
 constexpr double CHARACTERS_PER_SECOND = 20.0;
 constexpr double PAGE_TIME = 10.0; // write + hold, must cover the longest page

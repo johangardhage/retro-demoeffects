@@ -172,7 +172,8 @@ void DEMO_Initialize(void)
 	for (int i = 0; i < model->vertices; i++) {
 		vec3 p = model->vertex[i].pos;
 		vec3 u = normalize(p);
-		float m = MAX(fabs(u.x), MAX(fabs(u.y), fabs(u.z)));
+		float yz = MAX(fabs(u.y), fabs(u.z));
+		float m = MAX(fabs(u.x), yz);
 
 		float core = 1 - ROUNDED_RADIUS;
 		vec3 q = clamp(p, -core, core);

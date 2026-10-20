@@ -17,8 +17,8 @@
 // is also turned about the axis and the mouth wanders. twist lives in
 // [0, RETRO_ANGLES_PER_TURN).
 //
-// Each ring is RING_DOTS dots at an even step: 6° in the original, 360/6 = 60
-// exactly, so the ellipse closes with no seam.
+// Each ring is RING_DOTS dots at an even step of 6°, 360/6 = 60 exactly, so
+// the ellipse closes with no seam.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -27,7 +27,7 @@
 #include "lib/retropalette.h"
 
 constexpr int RING_COUNT = 40; // rings between the eye and the mouth
-constexpr int RING_DOTS = 60; // 6° per dot in the original, 360/6 = 60 exactly
+constexpr int RING_DOTS = 60; // 6° per dot, 360/6 = 60 exactly
 constexpr int RING_WIDTH = 740; // the ring is an ellipse, so it has two semi axes
 constexpr int RING_HEIGHT = 788;
 constexpr int TUNNEL_DEPTH = 20; // depth of the furthest ring

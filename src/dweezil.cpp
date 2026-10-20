@@ -63,11 +63,8 @@ static bool DoShift = true;
 //
 // Copy one 16x16 block out of the previous step into the mosaic being built
 //
-// A sample outside the buffer clamps to its edge, per axis. The original wrapped
-// instead, over the buffer as one flat array, so a block reaching past the right
-// edge continued at the left of the next row down - which carried a strip of the
-// picture clear across the screen. That stayed out of sight behind its 192x184
-// crop and does not here, so the edges smear rather than teleport.
+// A sample outside the buffer clamps to its edge, per axis, so the edges smear
+// rather than a strip of the picture wrapping across the screen.
 //
 static void CopyTile(int sourcex, int sourcey, int destx, int desty)
 {

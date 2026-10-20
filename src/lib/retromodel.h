@@ -28,10 +28,10 @@ constexpr int RETRO_ENVMAP_SIZE = 256;
 // sets that width and rescales its UVs to match.
 constexpr int RETRO_TEXMAP_SIZE = 256;
 
-constexpr int RETRO_MAX_VERTICES = 1000;
-constexpr int RETRO_MAX_UVS = 1000;
-constexpr int RETRO_MAX_NORMALS = 1500; // a two sided mesh needs one per side of a vertex
-constexpr int RETRO_MAX_FACES = 2000;
+constexpr int RETRO_MAX_VERTICES = 4000;
+constexpr int RETRO_MAX_UVS = 4000;
+constexpr int RETRO_MAX_NORMALS = 6000; // a two sided mesh needs one per side of a vertex
+constexpr int RETRO_MAX_FACES = 6000;
 constexpr int RETRO_MAX_FACEVERTICES = 5;
 constexpr int RETRO_MAX_MATERIALS = 16;
 constexpr int RETRO_MATERIAL_NAME = 32; // the longest material name, with its terminator

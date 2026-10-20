@@ -61,7 +61,8 @@ static unsigned char Wall[RETRO_WIDTH * RETRO_HEIGHT]; // RED_START or BLUE_STAR
 static float BeamDensity(vec3 q)
 {
 	float r2 = dot(q, q);
-	float along = MAX(fabs(q.x), MAX(fabs(q.y), fabs(q.z)));
+	float yz = MAX(fabs(q.y), fabs(q.z));
+	float along = MAX(fabs(q.x), yz);
 	float radial = sqrt(MAX(r2 - along * along, 0.0f));
 	float width = sinf(HOLE_ANGLE) + BEAM_SPREAD * (along - cosf(HOLE_ANGLE));
 	float inside = 1.0f - smoothstep(1.0f - BEAM_SOFTNESS, 1.0f + BEAM_SOFTNESS, radial / width);
@@ -73,7 +74,8 @@ static float BeamDensity(vec3 q)
 
 static float ShadeBall(vec3 normal, vec3 direction, float pixel)
 {
-	float holeaxis = MAX(fabs(normal.x), MAX(fabs(normal.y), fabs(normal.z)));
+	float yz = MAX(fabs(normal.y), fabs(normal.z));
+	float holeaxis = MAX(fabs(normal.x), yz);
 	float facing = -dot(normal, direction);
 	float shade = BALL_SHINE * facing * facing * facing * facing;
 	// Blend the hole rim across a pixel, including the surface foreshortening.

@@ -81,7 +81,8 @@ static unsigned char ShadeBall(const Fragment &fragment)
 	// slope, and max |q| climbs by sin HOLE_ANGLE a radian there
 	float pixel = 1.0f / (RETRO_PROJECTION_SCALE * RETRO_PROJECTION_EYEDISTANCE * fragment.q * MAX(facing, 0.1f));
 	float rim = 0.5f * sinf(HOLE_ANGLE) * pixel;
-	float hole = smoothstep(cosf(HOLE_ANGLE) - rim, cosf(HOLE_ANGLE) + rim, MAX(fabs(q.x), MAX(fabs(q.y), fabs(q.z))));
+	float yz = MAX(fabs(q.y), fabs(q.z));
+	float hole = smoothstep(cosf(HOLE_ANGLE) - rim, cosf(HOLE_ANGLE) + rim, MAX(fabs(q.x), yz));
 	shade = mix(shade, 1.0f, hole);
 	return GRAY_START + (int)(shade * (LIGHT_LEVELS - 1) + 0.5f);
 }
@@ -106,8 +107,10 @@ static bool IntersectBeam(vec3 eye, vec3 direction, float balldepth, float &near
 	} else {
 		float t0 = (start - axialorigin) / axialdirection;
 		float t1 = (end - axialorigin) / axialdirection;
-		near = MAX(near, MIN(t0, t1));
-		far = MIN(far, MAX(t0, t1));
+		float enter = MIN(t0, t1);
+		float leave = MAX(t0, t1);
+		near = MAX(near, enter);
+		far = MIN(far, leave);
 	}
 	if (far <= near) return false;
 

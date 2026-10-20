@@ -319,11 +319,10 @@ static void Warp(void)
 		int left = SourceX[col - 1];
 		int span = SourceX[col] - left;
 		for (int j = 0; j < span; j++) {
+			float t = (float)j / span;
 			int lines[LINES_Y];
 			for (int row = 0; row < LINES_Y; row++) {
-				float from = Grid[row][col - 1].y;
-				float to = Grid[row][col].y;
-				lines[row] = (int)floorf(from + (to - from) * j / span);
+				lines[row] = (int)floorf(mix(Grid[row][col - 1].y, Grid[row][col].y, t));
 			}
 			Resample(image + left + j, Intermediate + left + j, IMAGE_WIDTH, SourceY, lines, LINES_Y, RETRO_HEIGHT);
 		}
@@ -334,11 +333,10 @@ static void Warp(void)
 		int top = SourceY[row - 1] * RETRO_HEIGHT / IMAGE_HEIGHT;
 		int span = SourceY[row] * RETRO_HEIGHT / IMAGE_HEIGHT - top;
 		for (int j = 0; j < span; j++) {
+			float t = (float)j / span;
 			int lines[LINES_X];
 			for (int col = 0; col < LINES_X; col++) {
-				float from = Grid[row - 1][col].x;
-				float to = Grid[row][col].x;
-				lines[col] = (int)floorf(from + (to - from) * j / span);
+				lines[col] = (int)floorf(mix(Grid[row - 1][col].x, Grid[row][col].x, t));
 			}
 			int y = top + j;
 			Resample(Intermediate + y * IMAGE_WIDTH, screen + y * RETRO_WIDTH, 1, SourceX, lines, LINES_X, RETRO_WIDTH);

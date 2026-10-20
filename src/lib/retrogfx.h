@@ -84,6 +84,58 @@ inline void RETRO_DrawLine(int x1, int y1, int x2, int y2, unsigned char color, 
 	}
 }
 
+// A line between subpixel end points, for edges that move a fraction of a
+// pixel a frame. Bresenham needs whole-pixel ends, so a turning wireframe's
+// ends snap to pixels on their own and the slope jumps between the few the
+// rounded ends allow: the edge crawls. Here the slope is the exact one and
+// only where each pixel sits is rounded.
+//
+// The line walks its major axis, the one it covers more of, so each step
+// moves the minor axis by at most one pixel and the line stays connected.
+// For every column i the segment touches, the minor coordinate is taken at
+// the column's center, clamped to the segment so the end columns use the
+// real ends, and floored to its pixel:
+//
+//   y(i) = y1 + (clamp(i + 0.5, x1, x2) - x1) (y2 - y1) / (x2 - x1)
+//
+// A steep line is the same with x and y swapped. intensity and the clip are
+// as in RETRO_DrawLine.
+inline void RETRO_DrawSubpixelLine(float x1, float y1, float x2, float y2, unsigned char color, RETRO_Rectangle clip = {}, unsigned char intensity = 0, unsigned char *buffer = RETRO.framebuffer, int bufferwidth = RETRO_WIDTH, int bufferheight = RETRO_HEIGHT)
+{
+	int clipx1 = MIN(clip.x1, bufferwidth);
+	int clipy1 = MIN(clip.y1, bufferheight);
+
+	// Make x the major axis, then draw from its lower end, so a segment and
+	// its reverse light the same pixels
+	bool steep = fabsf(y2 - y1) > fabsf(x2 - x1);
+	if (steep) {
+		SWAP(x1, y1);
+		SWAP(x2, y2);
+	}
+	if (x1 > x2) {
+		SWAP(x1, x2);
+		SWAP(y1, y2);
+	}
+
+	// Only the columns inside the clip are walked, so an end far off screen
+	// costs nothing
+	float slope = x2 > x1 ? (y2 - y1) / (x2 - x1) : 0.0f;
+	int first = MAX((int)floorf(x1), steep ? clip.y0 : clip.x0);
+	int last = MIN((int)floorf(x2), (steep ? clipy1 : clipx1) - 1);
+
+	for (int i = first; i <= last; i++) {
+		float center = MAX(i + 0.5f, x1);
+		center = MIN(center, x2);
+		int j = (int)floorf(y1 + (center - x1) * slope);
+		int x = steep ? j : i;
+		int y = steep ? i : j;
+
+		if (x >= clip.x0 && x < clipx1 && y >= clip.y0 && y < clipy1) {
+			buffer[y * bufferwidth + x] = intensity ? color + RANDOM(intensity) : color;
+		}
+	}
+}
+
 // Fill a row from x1 to x2, clipped to [0, width). The ends are pixel
 // positions, each truncated to the column it falls in, and x2's column is
 // exclusive: a span that crosses no column boundary draws nothing, however

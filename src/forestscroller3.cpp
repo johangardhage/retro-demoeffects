@@ -28,8 +28,6 @@
 // plus that same lead-in, which serves as the gap between laps - is what window
 // wraps on, looping the banner forever.
 //
-// The scatter maps, background, and text band use the original data.
-//
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
 #define RETRO_HEIGHT 200

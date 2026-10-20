@@ -48,15 +48,15 @@ static float Growth;
 // A line width pixels thick, stacked across whichever axis the line
 // runs less along
 //
-static void DrawThickLine(int x1, int y1, int x2, int y2, int width, unsigned char color)
+static void DrawThickLine(float x1, float y1, float x2, float y2, int width, unsigned char color)
 {
-	bool steep = abs(y2 - y1) > abs(x2 - x1);
+	bool steep = fabsf(y2 - y1) > fabsf(x2 - x1);
 
 	for (int k = -(width - 1) / 2; k <= width / 2; k++) {
 		if (steep) {
-			RETRO_DrawLine(x1 + k, y1, x2 + k, y2, color);
+			RETRO_DrawSubpixelLine(x1 + k, y1, x2 + k, y2, color);
 		} else {
-			RETRO_DrawLine(x1, y1 + k, x2, y2 + k, color);
+			RETRO_DrawSubpixelLine(x1, y1 + k, x2, y2 + k, color);
 		}
 	}
 }
@@ -77,7 +77,9 @@ static void DrawBranch(float x, float y, float angle, float length, int depth, i
 	int width = MAX(1, BASE_WIDTH - depth);
 	unsigned char color = 1 + depth * (RETRO_COLORS - 2) / (DEPTH - 1);
 
-	DrawThickLine(lround(x), lround(y), lround(x2), lround(y2), width, color);
+	// Branch points sit on pixel centers, half a pixel in from the corner the
+	// subpixel line counts from
+	DrawThickLine(x + 0.5f, y + 0.5f, x2 + 0.5f, y2 + 0.5f, width, color);
 
 	for (int side = 0; side < 2; side++) {
 		int child = 2 * index + side;

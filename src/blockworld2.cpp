@@ -661,14 +661,14 @@ void DEMO_Render(RETRO_Time time)
 	float dip = atan2f(MAX(eye.y - SEA_LEVEL, 0.0f), MAX_DISTANCE);
 	float height = sinf(asinf(sun.y) + dip);
 
-	float daylight = smoothstep(NIGHT_HEIGHT, DUSK_HEIGHT, height);
-	float light = mix(NIGHT_LIGHT, 1.0f, daylight);
+	float day = smoothstep(NIGHT_HEIGHT, DUSK_HEIGHT, height);
+	float light = mix(NIGHT_LIGHT, 1.0f, day);
 	float sunset = (1.0f - smoothstep(0.0f, SUNSET_HEIGHT, fabsf(height))) * SUNSET_STRENGTH;
-	RETRO_Palette horizon = mix(mix(NIGHT_HORIZON, DAY_HORIZON, daylight), SUNSET, sunset);
-	RETRO_Palette zenith = mix(NIGHT_ZENITH, DAY_ZENITH, daylight);
+	RETRO_Palette horizon = mix(mix(NIGHT_HORIZON, DAY_HORIZON, day), SUNSET, sunset);
+	RETRO_Palette zenith = mix(NIGHT_ZENITH, DAY_ZENITH, day);
 	RETRO_CreateGradientPalette(SKY_START, SKY_START + SKY_SHADES, horizon, zenith);
-	RETRO_SetColor(CLOUD_COLOR, mix(mix(NIGHT_CLOUD, DAY_CLOUD, daylight), SUNSET, sunset * 0.5f));
-	RETRO_SetColor(STAR_COLOR, mix(zenith, STAR, 1.0f - daylight));
+	RETRO_SetColor(CLOUD_COLOR, mix(mix(NIGHT_CLOUD, DAY_CLOUD, day), SUNSET, sunset * 0.5f));
+	RETRO_SetColor(STAR_COLOR, mix(zenith, STAR, 1.0f - day));
 
 	// The sun's direct light, through ever more air as it sinks: weaker and
 	// redder toward the horizon, and gone once it is down
@@ -682,7 +682,7 @@ void DEMO_Render(RETRO_Time time)
 	vec3 level[LIGHTS];
 	for (int face = 0; face < LIGHTS; face++) {
 		float sunfacing = MAX(dot(FaceNormal[face], sun), 0.0f);
-		float moonfacing = MAX(-dot(FaceNormal[face], sun), 0.0f) * (1.0f - daylight);
+		float moonfacing = MAX(-dot(FaceNormal[face], sun), 0.0f) * (1.0f - day);
 		vec3 sum = vec3{ 1, 1, 1 } * (SUN_AMBIENT * light + MOON_DIRECT * moonfacing) + sunlight * (SUN_DIRECT * sunfacing);
 		level[face] = min(sum * LightLevel[face], 1.0f);
 	}
@@ -729,7 +729,9 @@ void DEMO_Render(RETRO_Time time)
 			if (!missed) {
 				bool ontarget = targeting && hit.x == target.x && hit.y == target.y && hit.z == target.z;
 				float width = OUTLINE_WIDTH * hit.t * dot(dir, forward) / FOCAL;
-				bool edge = MIN(MIN(hit.u, 1.0f - hit.u), MIN(hit.v, 1.0f - hit.v)) < width;
+				float edgeu = MIN(hit.u, 1.0f - hit.u);
+				float edgev = MIN(hit.v, 1.0f - hit.v);
+				bool edge = MIN(edgeu, edgev) < width;
 				float fog = smoothstep(FOG_START, MAX_DISTANCE, hit.t);
 				int fogstep = (int)(fog * FOG_SHADES + 0.5f);
 				if (ontarget && edge) {
@@ -741,7 +743,7 @@ void DEMO_Render(RETRO_Time time)
 				}
 			}
 			if (sky) {
-				if (missed && dir.y > 0 && daylight < 1 && starmap[sy][sx]) color = STAR_COLOR;
+				if (missed && dir.y > 0 && day < 1 && starmap[sy][sx]) color = STAR_COLOR;
 
 				// Wherever the sky's color shows, below the horizon too, so that
 				// they set behind the last of the sea or land to be seen

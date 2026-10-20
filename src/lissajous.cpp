@@ -39,7 +39,7 @@ void DEMO_Render(RETRO_Time time)
 		if (i > 0) {
 			// One shade per segment, taken at its midpoint
 			unsigned char color = 50 + (prevx + x) / 4;
-			RETRO_DrawLine(lround(prevx), lround(prevy), lround(x), lround(y), color);
+			RETRO_DrawSubpixelLine(prevx, prevy, x, y, color);
 		}
 
 		prevx = x;

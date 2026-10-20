@@ -1,12 +1,12 @@
 //
 // Forest scroller, on a straight ribbon
 //
-// Uses the original forest with text generated from FONT on a diagonal path.
+// A forest with text generated from FONT on a diagonal path.
 // The wide end is shifted right; the ribbon extends below the screen until its
 // full width clears the bottom edge. Text enters at the narrow tip and moves
 // along the ribbon with a blank gap between laps, accelerating at the wide end.
 // Foliage stays in front of the text, selected from the background palette.
-// Three interleaved pixel groups refresh in turn for the original's shimmer.
+// Three interleaved pixel groups refresh in turn, so the forest shimmers.
 //
 // Each screen pixel inverts the ribbon's along-path/cross-ribbon coordinates
 // directly (the ribbon's x and y are both affine in along, so this is one
@@ -44,7 +44,7 @@ constexpr double PATH_TAPER_CURVE = 0.4; // gentle size boost toward the narrow 
 // Along-path direction and cross-ribbon direction.
 constexpr double UX = 0.82;
 constexpr double UY = -0.58;
-// Letter rows follow the original's approximate 20-degree slant.
+// Letter rows follow an approximate 20-degree slant.
 constexpr double VX = 0.93969262;
 constexpr double VY = 0.34202014;
 

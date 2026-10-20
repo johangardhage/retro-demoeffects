@@ -56,8 +56,8 @@ void DEMO_FixedUpdate(RETRO_Time time)
 {
 	static unsigned char scroll;
 
-	// Fade first so the blit shows this step's add, matching the original
-	// order: accumulate, display, then fade for the next step. Fading up
+	// Fade first so the blit shows this step's add, in the order
+	// accumulate, display, then fade for the next step. Fading up
 	// front is that same cycle entered one phase earlier; nothing here
 	// depends on another pixel, so fade and add can share one pass.
 	for (int i = 0; i < MAP_SIZE; i++) {
@@ -92,8 +92,8 @@ void DEMO_Initialize(void)
 {
 	// Init palette: a cool climb from black to white, a fall through a
 	// muted green down to near-black, then a rise through a dusty orange
-	// back to white-hot. The waypoints are sampled straight from the
-	// original hand-tuned VGA table rather than named "pure" colors, since
+	// back to white-hot. The waypoints are hand-tuned rather than named
+	// "pure" colors, since
 	// a plain white-to-green-to-orange-to-white ramp through saturated
 	// colors reads as neon; this keeps the same dustier, desaturated cast.
 	// Additive trails climb this palette; the far center sits on the

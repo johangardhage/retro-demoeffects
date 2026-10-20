@@ -226,13 +226,9 @@ void DEMO_Render(RETRO_Time time)
 		float speed = mix(RAIN_MINSPEED, RAIN_MAXSPEED, drop.z);
 		float length = speed * RAIN_STREAK;
 		unsigned char color = RAIN + MIN((int)(drop.z * RAIN_COLORS), RAIN_COLORS - 1);
-		int x1 = (int)floorf(drop.x);
-		int y1 = (int)floorf(drop.y);
-		int x2 = (int)floorf(drop.x - length * RAIN_SLANT);
-		int y2 = (int)floorf(drop.y - length);
-		if (y1 >= 0 && y2 < RETRO_HEIGHT) {
-			RETRO_DrawLine(x1, y1, x2, y2, color);
-		}
+		float x2 = drop.x - length * RAIN_SLANT;
+		float y2 = drop.y - length;
+		RETRO_DrawSubpixelLine(drop.x, drop.y, x2, y2, color);
 	}
 
 	// Draw the droplets

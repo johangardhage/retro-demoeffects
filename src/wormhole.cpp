@@ -51,9 +51,9 @@ void DEMO_Render(RETRO_Time time)
 	unsigned char *image = RETRO_ImageData();
 
 	// Calculate phase
-	double phase = fmod(time.total * WORM_SPEED, TEXTURE_WIDTH);
-	int xphase = (int)phase * WORM_XDIR;
-	int yphase = (int)phase * WORM_YDIR;
+	int phase = (int)(RETRO_FramePosition(time.total, WORM_SPEED) % TEXTURE_WIDTH);
+	int xphase = phase * WORM_XDIR;
+	int yphase = phase * WORM_YDIR;
 
 	unsigned char newimage[TEXTURE_WIDTH * TEXTURE_HEIGHT];
 

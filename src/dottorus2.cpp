@@ -10,9 +10,9 @@
 // right-hand tube passes through it. The turn is about a point on the
 // tube, not the hole, so the body sweeps a wide orbit.
 //
-// The turn is not in SO(3). A table of 720 pairs
+// The turn is not in SO(3). The pair
 //
-//   (cos θ,  SQUASH sin θ),   θ = 2π i / 720
+//   (cos θ,  SQUASH sin θ)
 //
 // is fed to sequential Rx, Ry, Rz. Each plane map scales that plane by
 //
@@ -22,10 +22,10 @@
 // at θ = 0, π (where r = 1). The model is squashed as it turns and the
 // trails swell and shrink instead of tracing the same path.
 //
-// DEMO_FixedUpdate is a fixed 1/60 s step, so a step crosses speed/60 = 10/3
-// table slots. Every integer slot from ceil(10/3) = 4 behind the new
-// phase through the phase is stamped, so the 1/3 leftover does not leave
-// a gap. The table itself divides 2π evenly.
+// DEMO_FixedUpdate is a fixed 1/60 s step, so a step turns θ by speed/60,
+// 10/3 STAMP_SPACING. The step is split into ceil(10/3) = 4 evenly
+// spaced stamps ending on the new θ, so no two stamps of a vertex are
+// further apart than STAMP_SPACING and the trail has no gap.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -39,9 +39,9 @@ constexpr int BLOB_LEVEL = 15; // brightness of one level of the blob
 constexpr int GLOW_COLORS = 163; // palette entries the glow ramps over
 constexpr int TRAIL_DECAY = 3; // brightness the blur takes off each step, so the trail fades
 constexpr double SQUASH = 0.7; // how far the turn departs from a rotation
-constexpr int ROTATION_SPEED = 200; // table entries traveled per second
+constexpr double ROTATION_SPEED = radians(100); // the turn advances per second
+constexpr double STAMP_SPACING = radians(0.5); // at most between two stamps of a vertex
 constexpr int PROJECTION_SCALE = 1; // the model is built in pixels, so the projection adds no scale
-constexpr int SINE_VALUES = 720;
 
 static const unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 	{BLOB_LEVEL * 0, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 0},
@@ -51,31 +51,30 @@ static const unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 	{BLOB_LEVEL * 0, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 3, BLOB_LEVEL * 0}
 };
 
-static float SinTable[SINE_VALUES];
-static float CosTable[SINE_VALUES];
-
 void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
 	static double phase = 0;
+	double start = phase;
 	double moved = time.delta * ROTATION_SPEED;
-	phase = fmod(phase + moved, SINE_VALUES);
-	int iphase = phase;
+	phase = fmod(phase + moved, 2 * M_PI);
 
-	// Stamp every table slot crossed this step so the trail has no gaps.
-	int slots = MAX((int)ceil(moved), 1);
+	// Split the step into stamps no further apart than STAMP_SPACING so the trail has no gaps.
+	int stamps = MAX((int)ceil(moved / STAMP_SPACING), 1);
 
 	Model3D *model = RETRO_Get3DModel();
 	Vertex *vertex = model->vertex;
 
 	// Draw blobs
-	for (int step = 0; step < slots; step++) {
-		int turn = WRAP(iphase - slots + 1 + step, SINE_VALUES);
+	for (int step = 0; step < stamps; step++) {
+		double turn = start + moved * (step + 1) / stamps;
+		float c = cos(turn);
+		float s = SQUASH * sin(turn);
 		// Not a rotation: the same (cos, sin) pair on all three axes. Each
 		// plane map scales that plane by r = sqrt(cos^2+sin^2) and leaves its
 		// axis alone, so a pair that is not unit squashes the model as it
 		// turns and the composition is not in SO(3).
-		mat3 matrix = rotate(CosTable[turn], SinTable[turn], CosTable[turn], SinTable[turn], CosTable[turn], SinTable[turn]);
+		mat3 matrix = rotate(c, s, c, s, c, s);
 
 		for (int p = 0; p < model->vertices; p++) {
 			RETRO_RotateVertex(&vertex[p], matrix);
@@ -104,12 +103,6 @@ void DEMO_FixedUpdate(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	// Init tables
-	for (int i = 0; i < SINE_VALUES; i++) {
-		SinTable[i] = sin(i * 2 * M_PI / SINE_VALUES) * SQUASH;
-		CosTable[i] = cos(i * 2 * M_PI / SINE_VALUES);
-	}
-
 	// Init palette. Where the dots pile up, red ~ intensity² and white ~ intensity⁷, so the
 	// glow stays red for a long time and only the hottest pile-ups go white.
 	for (int i = 0; i < GLOW_COLORS; i++) {

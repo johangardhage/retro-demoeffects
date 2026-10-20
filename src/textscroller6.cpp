@@ -35,7 +35,7 @@
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
 constexpr int FONT_SCALE = 1;
-//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 //constexpr int FONT_SCALE = 2;
 constexpr int HORIZON_Y = 42;
 constexpr int BOTTOM_Y = RETRO_HEIGHT;

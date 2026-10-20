@@ -179,7 +179,7 @@ inline void RETRO_RenderWireModel(Model3D *model, bool hiddenlines, bool fire, C
 		for (int j = 0; j < face->vertices; j++) {
 			Vertex *p1 = &model->vertex[face->vertex[j]];
 			Vertex *p2 = &model->vertex[face->vertex[(j + 1) % face->vertices]];
-			RETRO_DrawLine(p1->spos.x, p1->spos.y, p2->spos.x, p2->spos.y, color, { clip.x0, clip.x1, clip.y0, clip.y1 }, fire ? model->shades : 0);
+			RETRO_DrawSubpixelLine(p1->spos.x, p1->spos.y, p2->spos.x, p2->spos.y, color, { clip.x0, clip.x1, clip.y0, clip.y1 }, fire ? model->shades : 0);
 		}
 	}
 }

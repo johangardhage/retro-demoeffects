@@ -17,7 +17,7 @@
 #include "lib/retroterrain.h"
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
-//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
 // voxel_color_128x128.pcx never uses palette indices 224 upward, so the
 // letter gradient can occupy them without stealing a terrain color.

@@ -30,10 +30,10 @@
 #include "lib/retrorender.h"
 #include "lib/retropalette.h"
 
-const RETRO_FontData &FONT = RETRO_FONT_VGA_8X8;
-//const RETRO_FontData &FONT = RETRO_FONT_TOPAZ13_8X8;
-//const RETRO_FontData &FONT = RETRO_FONT_TOPAZ30_8X8;
-//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+static const RETRO_FontData &FONT = RETRO_FONT_VGA_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_TOPAZ13_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_TOPAZ30_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
 constexpr float LETTER_HEIGHT = 1.55f; // model units a glyph stands, top to bottom
 constexpr float LETTER_DEPTH = 0.48f; // model units a glyph is extruded along z

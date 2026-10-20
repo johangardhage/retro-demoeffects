@@ -31,13 +31,13 @@ void DEMO_Render(RETRO_Time time)
 	unsigned char *first = ShadedRings + (RETRO_HEIGHT - y1) * IMAGE_WIDTH + RETRO_WIDTH - x1;
 	unsigned char *second = SolidRings + (RETRO_HEIGHT - y2) * IMAGE_WIDTH + RETRO_WIDTH - x2;
 
-	// Original: 15 strength steps, one every 16 frames at 70 Hz, after
-	// five seconds. Smooth the ramp but retain its duration and 32px peak.
+	// After five seconds the strength ramps up smoothly to its 32px peak
+	// over 15 steps of 16 frames at 70 Hz.
 	double strength = CLAMP01((time.total - 5.0) * 70.0 / (16.0 * 15.0));
 	double wavephase = fmod(time.total * 70.0 * 7.0, 1024.0) * (2.0 * M_PI / 1024.0);
 
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
-		// Nine sine-table entries per original 200-line screen row.
+		// Nine sine-table entries per 200-line screen row.
 		// The maximum shift is 32 pixels; the window has at least 84
 		// pixels of horizontal margin, so sampling stays inside the image.
 		double rowphase = (y * 200.0 / RETRO_HEIGHT + 1.0) * 9.0 * (2.0 * M_PI / 1024.0);

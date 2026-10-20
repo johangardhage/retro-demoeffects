@@ -1,7 +1,7 @@
 //
 // Fire clouds
 //
-// A 160x200 cloud that remembers itself. On every pass, 35 a second, each
+// A 160x200 cloud that remembers itself. On every pass, 60 a second, each
 // byte is sent through a coordinate table, the table is slid by a spiral, and
 // the texture sample found there is mixed back into the byte:
 //
@@ -37,8 +37,6 @@
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
-#define RETRO_SIMULATION_STEP (1.0 / 35.0) // one pass of the cloud
-
 #include "lib/retro.h"
 #include "lib/retromain.h"
 #include "lib/retropalette.h"

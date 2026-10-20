@@ -102,8 +102,10 @@ void DEMO_Render(RETRO_Time time)
 			* EYE_DISTANCE / (EYE_DISTANCE - half * sine);
 		double edgeb = CENTER_X + (center + half * cosine - CENTER_X)
 			* EYE_DISTANCE / (EYE_DISTANCE + half * sine);
-		int first = MAX((int)floor(MIN(edgea, edgeb)), 0);
-		int last = MIN((int)ceil(MAX(edgea, edgeb)), RETRO_WIDTH);
+		double lower = MIN(edgea, edgeb);
+		double upper = MAX(edgea, edgeb);
+		int first = MAX((int)floor(lower), 0);
+		int last = MIN((int)ceil(upper), RETRO_WIDTH);
 
 		for (int x = first; x < last; x++) {
 			// Where the ray through the center of this column meets the slat.

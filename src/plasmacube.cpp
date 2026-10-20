@@ -2,16 +2,18 @@
 // Plasma cube
 //
 // A plasma, the product of two traveling-wave sums, written into a 256²
-// texture and mapped onto a cube. The table is sine rather than cosine (a 90°
-// phase), one turn in degrees, indices WRAP360. t lives in [0, 720) so the
-// integer t/2 term covers a full period.
+// texture and mapped onto a cube. Sine rather than cosine (a 90° phase), with
+// angles in degrees. t is the unrounded time times 80, so the flow is smooth;
+// it lives on [0, 720) so the t/2 term covers a full period.
 //
 //   X(x, t) = 75 + sin(2x + t/2) + sin(x + 2t) + 2 sin(x/2 + t)
 //   Y(y, t) = 75 + 2 sin(y + 2t) + sin(2y + t/2) + 2 sin(y + t)
 //   color   = (X Y) mod 252
 //
 // The field is regenerated every frame so the cube carries a live
-// plasma. The cube turn is Rz Ry Rx; the Euler angles live on 2π.
+// plasma. X depends only on x and Y only on y, so each is worked out once
+// per column and row rather than once per texel. The cube turn is Rz Ry Rx;
+// the Euler angles live on 2π.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -25,24 +27,25 @@ constexpr int TEXTURE_WIDTH = 256;
 constexpr int TEXTURE_HEIGHT = 256;
 constexpr int ROTATION_SPEED = 2; // radians a second, about each axis
 
-static float SinTable[RETRO_DEGREES_PER_TURN];
 static unsigned char Texture[TEXTURE_WIDTH * TEXTURE_HEIGHT];
 
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
 	double phase = fmod(time.total * 80, PLASMA_FRAMES);
-	int iphase = (int)phase;
+
+	float columns[TEXTURE_WIDTH];
+	for (int x = 0; x < TEXTURE_WIDTH; x++) {
+		columns[x] = 75 + sin(radians(x * 2 + phase / 2)) + sin(radians(x + phase * 2)) + sin(radians(x / 2.0 + phase)) * 2;
+	}
 
 	// Generate plasma
 	for (int y = 0; y < TEXTURE_HEIGHT; y++) {
-		float yc = 75 + SinTable[WRAP360(y + iphase * 2)] * 2 + SinTable[WRAP360(y * 2 + iphase / 2)] + SinTable[WRAP360(y + iphase)] * 2;
+		float yc = 75 + sin(radians(y + phase * 2)) * 2 + sin(radians(y * 2 + phase / 2)) + sin(radians(y + phase)) * 2;
 
 		for (int x = 0; x < TEXTURE_WIDTH; x++) {
-			float xc = 75 + SinTable[WRAP360(x * 2 + iphase / 2)] + SinTable[WRAP360(x + iphase * 2)] + SinTable[WRAP360(x / 2 + iphase)] * 2;
-
 			// Wrap into the 252-entry palette cycle
-			unsigned char color = (int)(yc * xc) % 252;
+			unsigned char color = (int)(yc * columns[x]) % 252;
 			Texture[y * TEXTURE_WIDTH + x] = color;
 		}
 	}
@@ -72,9 +75,4 @@ void DEMO_Initialize(void)
 
 	Model3D *model = RETRO_Load3DModel("assets/cube.obj");
 	model->texmap = Texture;
-
-	// Init tables
-	for (int i = 0; i < RETRO_DEGREES_PER_TURN; i++) {
-		SinTable[i] = sin(radians(i));
-	}
 }

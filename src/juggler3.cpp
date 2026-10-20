@@ -72,8 +72,8 @@
 #include "lib/retropalette.h"
 
 constexpr float NEAR_T = 0.001f; // t past which a hit counts, so a ray does not re-hit its own origin
-constexpr int MAX_BOUNCES = 10; // matches the source recreation's own MAX_DEPTH
-constexpr float MIN_THROUGHPUT = 1.0f / 256.0f; // matches its MIN_COLOR_INTENSITY - a bounce this dim can no longer move a displayed byte
+constexpr int MAX_BOUNCES = 10;
+constexpr float MIN_THROUGHPUT = 1.0f / 256.0f; // a bounce this dim can no longer move a displayed byte
 
 constexpr float FOCAL_DISTANCE = 50.0f; // world units from the eye to the virtual screen
 constexpr float SCREEN_WIDTH = 100.0f; // world units the virtual screen spans; with FOCAL_DISTANCE this sets the field of view
@@ -81,9 +81,8 @@ constexpr int SUPERSAMPLE = 2; // SUPERSAMPLE x SUPERSAMPLE camera rays a pixel,
 
 constexpr float FLOOR_TILE = 107.0f; // world units per checker tile
 
-// The source recreation measured these from photographs of the original: a
-// shadowed floor tile reads as 40% of its lit color, a shadowed sphere as
-// 15%, 102 and 40 of 255. Both are stored decoded to linear light, since
+// Measured from photographs: a shadowed floor tile reads as 40% of its lit
+// color, a shadowed sphere as 15%, 102 and 40 of 255. Both are stored decoded to linear light, since
 // every material color here is linear light and only encoded to sRGB right
 // before it is shown - so the weight that makes a 0.4 or 0.15 photograph
 // measurement come out right, after that encoding, is the measurement
@@ -142,8 +141,7 @@ struct JugglerSphere {
 	unsigned char material;
 };
 
-// Indices 2..85 mirror the source recreation's own numbering, so the update
-// code below can be checked against it line for line: balls 2 -- 4, torso
+// Indices 2..85 number the parts: balls 2 -- 4, torso
 // 5 -- 12, head 13, neck 14, left leg 15 -- 31, right leg 32 -- 48, left arm
 // 49 -- 65, right arm 66 -- 82, eyes 83 -- 84, hair 85. 0 and 1 are unused.
 constexpr int JUGGLER_SPHERES = 86;
@@ -329,11 +327,8 @@ static void UpdateAppendage(int sceneindex, vec3 p, vec3 q, vec3 w, float A, flo
 	}
 }
 
-// Radii and materials, set once - the source recreation's own split between
-// createScene (sizes and materials, called once) and updateScene (centers,
-// called every frame - see UpdateScene below) kept here rather than folded
-// into DEMO_Initialize alongside the camera and the palette, which have
-// nothing to do with the body
+// Radii and materials, set once. The centers are set every frame by
+// UpdateScene below
 static void CreateScene(void)
 {
 	for (int i = 2; i <= 4; i++) {

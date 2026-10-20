@@ -79,7 +79,7 @@ constexpr int TWISTER_RADIUS = 60; // the circle the four corners ride, half the
 constexpr double TWISTER_TURNS = 1.5; // turns of the square over the period, a whole number of quarter turns
 constexpr double TWISTER_TORSION = 1.2; // table units the column twists per scanline where the torsion wave peaks
 constexpr int TWISTER_TORSION_WAVE = 7; // cycles of that wave over the period, under an envelope that closes once
-constexpr double TWISTER_SPEED = 30.0; // table units per second, half the original's one a frame
+constexpr double TWISTER_SPEED = 30.0; // table units per second
 
 constexpr int TWISTER_IMAGE_SIZE = 256; // the picture is square and wraps both ways
 constexpr int TWISTER_IMAGE_FACE = TWISTER_IMAGE_SIZE / 4; // texels a face carries, the picture going once round the four

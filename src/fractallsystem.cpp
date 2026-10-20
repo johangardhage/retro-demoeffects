@@ -139,8 +139,9 @@ static void StartGeneration(void)
 
 	// Fit the box to the screen, keeping the plane's aspect. A path with no
 	// height is as tall as one step
-	ScreenScale = MARGIN * MIN(RETRO_WIDTH / MAX(right - left, 1.0f),
-							   RETRO_HEIGHT / MAX(top - bottom, 1.0f));
+	float boxwidth = MAX(right - left, 1.0f);
+	float boxheight = MAX(top - bottom, 1.0f);
+	ScreenScale = MARGIN * MIN(RETRO_WIDTH / boxwidth, RETRO_HEIGHT / boxheight);
 	ScreenX = RETRO_WIDTH / 2.0 - ScreenScale * (left + right) / 2;
 	ScreenY = RETRO_HEIGHT / 2.0 + ScreenScale * (bottom + top) / 2;
 }

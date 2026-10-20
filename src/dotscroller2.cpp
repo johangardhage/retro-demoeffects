@@ -24,7 +24,7 @@
 #include "lib/retromain.h"
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
-//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
 constexpr int DOT_SPACING = 3;
 constexpr int SCROLL_SPEED = 100; // screen pixels per second

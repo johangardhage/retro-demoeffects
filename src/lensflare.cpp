@@ -112,7 +112,8 @@ static void AddHex(float cx, float cy, float radius, int peak)
 			float d = fabs(px);
 			float d2 = fabs(px * HEX_HALF + py * HEX_SQRT3_2);
 			float d3 = fabs(-px * HEX_HALF + py * HEX_SQRT3_2);
-			float hex = MAX(d, MAX(d2, d3));
+			float slant = MAX(d2, d3);
+			float hex = MAX(d, slant);
 			if (hex >= 1.0f) {
 				continue;
 			}

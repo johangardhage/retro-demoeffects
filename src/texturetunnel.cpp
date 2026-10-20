@@ -40,12 +40,11 @@ void DEMO_Render(RETRO_Time time)
 {
 	unsigned char *image = RETRO_ImageData();
 
-	// Calculate tunnel movement. WRAP folds any int, so phase need not be
-	// bounded itself; sx and sy wrap into the texture however large time
-	// grows.
-	double phase = time.total * TUNNEL_SPEED;
-	int sx = TEXTURE_WIDTH * phase;
-	int sy = TEXTURE_HEIGHT * TUNNEL_SPIN * phase;
+	// Calculate tunnel movement. WRAP folds any int, so sx and sy need not be
+	// bounded themselves; they wrap into the texture however large time
+	// grows. Whole texels, stepped evenly frame to frame.
+	int sx = (int)RETRO_FramePosition(time.total, TEXTURE_WIDTH * TUNNEL_SPEED);
+	int sy = (int)RETRO_FramePosition(time.total, TEXTURE_HEIGHT * TUNNEL_SPIN * TUNNEL_SPEED);
 
 	// Draw tunnel
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

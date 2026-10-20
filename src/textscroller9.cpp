@@ -25,7 +25,7 @@
 #include "lib/retrovector.h"
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
-//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 constexpr int FONT_SCALE = 4;
 constexpr int FONT_SPACING = 2; // proportional inter-letter space, in unscaled font pixels
 constexpr int IMAGE_WIDTH = 256;
@@ -95,7 +95,7 @@ void DEMO_Render(RETRO_Time time)
 			for (int offset = -1; offset <= 1; offset++) {
 				vec2 a = p1 + perp * (float)offset;
 				vec2 b = p2 + perp * (float)offset;
-				RETRO_DrawLine(roundf(a.x), roundf(a.y), roundf(b.x), roundf(b.y), 250);
+				RETRO_DrawSubpixelLine(a.x, a.y, b.x, b.y, 250);
 			}
 		}
 	}

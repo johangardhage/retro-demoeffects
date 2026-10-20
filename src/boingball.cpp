@@ -7,7 +7,7 @@
 // f % MERIDIANS and the parity of their sum picks one of two colors. It lines
 // up around the seam because the meridians are even. Nothing is lit, so the
 // ball reads as round only from the way the checks foreshorten toward the
-// silhouette, as in the original.
+// silhouette.
 //
 // RETRO_RotateModel builds R = Rz Ry Rx, so with ax = 0 the spin about y
 // happens before the tilt about z: a ball turning about a leaning axis, not a

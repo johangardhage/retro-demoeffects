@@ -32,7 +32,7 @@ constexpr float WORLD_HEIGHT_SCALE = 1.0f / 8.0f;
 constexpr float ISLAND_START_ROTATION = -0.5f; // A modest turn off dead-on at startup
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
-//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
 constexpr int LETTER_COLOR_BASE = 224;
 constexpr float LETTER_DOT_SPACING = 1.35f;

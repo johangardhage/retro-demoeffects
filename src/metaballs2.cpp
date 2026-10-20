@@ -10,7 +10,8 @@
 // circle of radius √r, where 20 r / (√r)² = 20. |p−c|² is floored at 10⁻⁴.
 // Each center rides its own (cos, sin) at its own whole multiple of the phase
 // and its own offset, so the four do not move as one. Whole multiples keep
-// every orbit closed on the same 360-entry table.
+// every orbit closed over one 360° turn of the phase. The angle is taken
+// unrounded; whole-degree steps times the rate would jump several pixels.
 //
 // The palette is not a Phong of ∇F. Density is treated as a Lambert
 // term I = cos(π (255 − i) / 512), then
@@ -26,7 +27,6 @@
 #include "lib/retrovector.h"
 
 constexpr int NUM_BALLS = 4;
-constexpr int SINE_VALUES = 360;
 constexpr int ORBIT_SPEED = 40; // degrees of the base orbit per second; the rates below multiply it
 
 struct MetaBall {
@@ -34,14 +34,10 @@ struct MetaBall {
 	float r;
 };
 
-static float SinTable[SINE_VALUES];
-static float CosTable[SINE_VALUES];
-
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time.total * ORBIT_SPEED, SINE_VALUES);
-	int iphase = WRAP(phase, SINE_VALUES);
+	double phase = fmod(time.total * ORBIT_SPEED, 360);
 
 	// Move balls
 	static const int rate[NUM_BALLS] = { 4, 3, 1, 2 };
@@ -52,9 +48,9 @@ void DEMO_Render(RETRO_Time time)
 	MetaBall balls[NUM_BALLS];
 
 	for (int i = 0; i < NUM_BALLS; i++) {
-		int p = WRAP(iphase * rate[i] + offset[i], SINE_VALUES);
+		double angle = radians(phase * rate[i] + offset[i]);
 		balls[i].r = charge[i];
-		balls[i].pos = { (float)(CosTable[p] * amplitudex[i] + (RETRO_WIDTH / 2.0)), (float)(SinTable[p] * amplitudey[i] + (RETRO_HEIGHT / 2.0)) };
+		balls[i].pos = { (float)(cos(angle) * amplitudex[i] + (RETRO_WIDTH / 2.0)), (float)(sin(angle) * amplitudey[i] + (RETRO_HEIGHT / 2.0)) };
 	}
 
 	// Draw balls
@@ -74,12 +70,6 @@ void DEMO_Render(RETRO_Time time)
 
 void DEMO_Initialize(void)
 {
-	// Init tables
-	for (int i = 0; i < SINE_VALUES; i++) {
-		SinTable[i] = sin(radians(i));
-		CosTable[i] = cos(radians(i));
-	}
-
 	// Init palette. Density index → Lambert-like I, then plastic Phong
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		double intensity = cos((255 - i) / 512.0 * M_PI);

@@ -21,7 +21,7 @@
 // and covers nothing. Spans are half-open, so two faces sharing a vertex
 // tile exactly.
 //
-// The shading is the original's, and it is not a lighting model: a face
+// The shading is not a lighting model: a face
 // starts at its own base color and steps one entry along the palette per
 // pixel drawn. A face that is nearly edge on gets a short ramp and a face
 // turned toward the viewer a long one, so the sheen stretches and squeezes
@@ -45,7 +45,7 @@ constexpr int TWISTER_SWAY = 32; // how far the axis wanders off center
 constexpr int TWISTER_TWIST = 512; // angle units the twist sweeps between its extremes, two whole turns
 constexpr double TWISTER_TWIST_WAVE = 0.125; // angle units the twist wave advances per row
 constexpr double TWISTER_SWAY_WAVE = 0.5; // and the axis wave, four times as fast
-constexpr int TWISTER_SPEED = 70; // angle units a second, the original's one a frame at the VGA's 70 Hz
+constexpr int TWISTER_SPEED = 70; // angle units a second
 constexpr int TWISTER_PERIOD = RETRO_ANGLES_PER_TURN;
 
 constexpr int TWISTER_FACE_COLOR = 64; // base color of the first face

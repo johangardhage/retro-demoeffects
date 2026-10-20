@@ -32,7 +32,7 @@
 #include "lib/retrovector.h"
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
-//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
 constexpr int ROW_GAP = 2; // extra pixels between rows, beyond glyph height
 
@@ -101,7 +101,8 @@ void DEMO_Render(RETRO_Time time)
 
 		// It rises to 1 as the row flies in, stays there while it is held,
 		// and falls back to 0 over the last EXIT_TIME
-		double progress = MIN(MIN(t / ENTRANCE_TIME, (cycle - t) / EXIT_TIME), 1.0);
+		double ramp = MIN(t / ENTRANCE_TIME, (cycle - t) / EXIT_TIME);
+		double progress = MIN(ramp, 1.0);
 		double eased = smoothstep(0.0, 1.0, progress); // ease gently through both ends
 
 		int x = startx + (int)round((restx - startx) * eased);

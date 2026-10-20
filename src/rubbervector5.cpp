@@ -52,7 +52,7 @@ static const RETRO_Lighting Lighting = { 1, { { normalize(vec3{ -1, -1, -2 }), 1
 static void RetainCubeImage(float angle, unsigned char *image)
 {
 	RETRO_Clear();
-	// Yaw outermost, as in the original tumble. RETRO_RotateModel(ax, ay, az)
+	// Yaw outermost. RETRO_RotateModel(ax, ay, az)
 	// turns the axes in the other order and gives a different motion
 	RETRO_RotateModel(rotateY(4 * angle) * rotateX(angle) * rotateZ(2 * angle));
 	RETRO_ProjectModel();

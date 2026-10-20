@@ -74,7 +74,7 @@ void DEMO_Render(RETRO_Time time)
 void DEMO_Initialize(void)
 {
 	Font = RETRO_LoadFont(RETRO_FontAsset{ "assets/font_256x128.pcx", GLYPH_WIDTH, GLYPH_HEIGHT });
-	// The original #7777ff blue, with a coverage ramp for smooth zooming.
+	// The font's #7777ff blue, with a coverage ramp for smooth zooming.
 	RETRO_Palette blue = Font.atlas->palette[1];
 	for (int i = 0; i < RETRO_COLORS; i++) {
 		RETRO_SetColor(i, i * blue.r / 255, i * blue.g / 255, i * blue.b / 255);

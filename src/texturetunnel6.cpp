@@ -71,7 +71,7 @@ static void Measure(int x, int y, int *ring, int *angle)
 	double fx = x + 0.5;
 	double fy = y + 0.5;
 	double a = atan2(fy, fx);
-	*ring = (int)floor(sqrt(fx * fx + fy * fy) - WOBBLE * sin(LOBES * a));
+	*ring = (int)floor(hypot(fx, fy) - WOBBLE * sin(LOBES * a));
 	*angle = WRAP(a * ANGLES / (2 * M_PI), ANGLES);
 }
 

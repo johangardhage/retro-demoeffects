@@ -770,7 +770,8 @@ inline bool RETRO_KeepTerrainCell(const RETRO_TerrainMesh &mesh, int x, int z)
 inline int RETRO_TerrainFarIndex(int i, int min, int max, int camera, int step)
 {
 	int before = (int)floorf((float)(camera - min) / step);
-	before = MAX(0, MIN(before, (max - min) / step));
+	before = MIN(before, (max - min) / step);
+	before = MAX(0, before);
 	return i < before ? min + i * step : max - step - (i - before) * step;
 }
 

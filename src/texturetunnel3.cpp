@@ -44,9 +44,9 @@ void DEMO_Render(RETRO_Time time)
 
 	unsigned char *image = RETRO_ImageData();
 
-	// Calculate tunnel movement
-	int sx = TEXTURE_WIDTH * phase;
-	int sy = TEXTURE_HEIGHT * TUNNEL_SPIN * phase;
+	// Calculate tunnel movement, in whole texels stepped evenly frame to frame
+	int sx = (int)RETRO_FramePosition(time.total, TEXTURE_WIDTH * TUNNEL_SPEED);
+	int sy = (int)RETRO_FramePosition(time.total, TEXTURE_HEIGHT * TUNNEL_SPIN * TUNNEL_SPEED);
 
 	// Calculate camera movement
 	int dx = RETRO_WIDTH / 2.0 + RETRO_WIDTH / 2.0 * cos(phase);

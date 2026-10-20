@@ -2,8 +2,7 @@
 // Inward torus
 //
 // An inward-facing OBJ torus shell rendered by the retro 3D pipeline. The torus
-// UVs and texture are procedural; fish paths and timing approximate the
-// original. Vertex lighting is interpolated by the Gouraud texture mapper.
+// UVs and texture are procedural. Vertex lighting is interpolated by the Gouraud texture mapper.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //

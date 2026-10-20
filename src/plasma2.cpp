@@ -23,12 +23,12 @@ static int Plasma[RETRO_HEIGHT][RETRO_WIDTH];
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase = fmod(time.total * 200, RETRO_COLORS);
+	int phase = (int)(RETRO_FramePosition(time.total, 200) % RETRO_COLORS);
 
 	// Draw every pixel again with the shifted palette color
 	for (int y = 0; y < RETRO_HEIGHT; y++) {
 		for (int x = 0; x < RETRO_WIDTH; x++) {
-			int color = WRAP(Plasma[y][x] + (int)phase, RETRO_COLORS);
+			int color = WRAP(Plasma[y][x] + phase, RETRO_COLORS);
 			RETRO_PutPixel(x, y, color);
 		}
 	}

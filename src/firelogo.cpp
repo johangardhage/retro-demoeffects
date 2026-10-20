@@ -44,7 +44,7 @@
 #include "lib/retropalette.h"
 
 constexpr RETRO_FontAsset FONT = { "assets/font_16x16.pcx", 16, 16 };
-//const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
+//static const RETRO_FontData &FONT = RETRO_FONT_MINECRAFT_8X8;
 
 constexpr int FIRE_HEIGHT = 6; // rows of fuel along the bottom, cropped off the blit
 constexpr int FIRE_CHAOS = 6; // a column is sparked with probability 1 / FIRE_CHAOS

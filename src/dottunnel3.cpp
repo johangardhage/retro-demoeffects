@@ -22,13 +22,11 @@
 // slides the whole ring across the screen rather than displacing it in
 // the tunnel's own space.
 //
-// The original kept that history as a ring buffer of TUNNEL_RINGS past
-// positions, one pushed per frame. The path is analytic, so the position
-// is evaluated straight from the lagged phase instead, which costs two
-// cosines a ring and drops the buffer, its modular indexing and its tie
-// to the frame rate. Sliding the rings by frac is what the buffer gave
-// for free at one push a frame; without it the rings and bands would
-// jump a whole ring whenever frames and steps drift apart.
+// The path is analytic, so no history of past positions is kept: each
+// ring's position is evaluated straight from the lagged phase, which costs
+// two cosines a ring and has no tie to the frame rate. The rings slide by
+// frac; without it the rings and bands would jump a whole ring whenever
+// frames and steps drift apart.
 //
 // TUNNEL_BAND rings are drawn and the same number skipped, stepped along
 // with the rings, so bands of rings travel down the tunnel. phase lives
@@ -45,7 +43,7 @@
 constexpr int TUNNEL_RINGS = 128; // depth slices between the eye and the mouth
 constexpr int RING_DOTS = 64; // dots around a ring
 constexpr int RING_WIDTH = 50; // semi axes of a ring at the mouth
-constexpr int RING_HEIGHT = 37; // 31 on the original's 200 rows, scaled by 240/200 so the ellipse keeps its share of the frame
+constexpr int RING_HEIGHT = 37;
 constexpr int TUNNEL_SHADES = 16; // palette entries the depth shading steps over
 constexpr int TUNNEL_BAND = 5; // rings drawn, then the same number skipped
 constexpr int TUNNEL_SWAY = 50; // how far the center line wanders off the axis

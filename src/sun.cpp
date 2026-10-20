@@ -56,7 +56,7 @@ constexpr int FLARE_SEED = FLARE_RADII - FLARE_HOLE - 1; // row the ring of nois
 constexpr int FLARE_SWIRL = 32; // angular bins the ring swings either way where the swell is widest
 constexpr int FLARE_EBB = 8; // and where it is narrowest; kept off zero, so the swing never dies out or flips sign
 constexpr int FLARE_DECAY = 1; // subtracted after the 7-tap average, so how fast a flame dies as it travels out
-constexpr double SUN_SPEED = 30.0; // phase units per second; the original +0.5 per frame at 60 Hz
+constexpr double SUN_SPEED = 30.0; // phase units per second
 constexpr int SUN_SWIRLS = 8; // swings the ring makes per turn of the swell
 constexpr int SUN_RAMP = 128; // heat the palette ramp spans; the flare never quite reaches it, and anything hotter is white
 

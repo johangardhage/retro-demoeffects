@@ -67,8 +67,7 @@ void DEMO_Initialize(void)
 {
 	RETRO_SetColor(CURTAIN, RETRO_BLACK);
 
-	// The original transition does not leave the rotating faces flat white.
-	// They lose reflected light as they turn, passing through cold blue-gray
+	// The rotating faces are not left flat white. They lose reflected light as they turn, passing through cold blue-gray
 	// to the deep blue visible just before a slat becomes edge-on.
 	for (int shade = 0; shade < SHADES; shade++) {
 		double light = (double)shade / (SHADES - 1);

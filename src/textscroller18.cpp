@@ -62,10 +62,14 @@ static void DrawStrokeSegment(const StrokePoint &a, const StrokePoint &b)
 	double dx = b.x - a.x;
 	double dy = b.y - a.y;
 	double length2 = dx * dx + dy * dy;
-	int left = MAX(0, (int)floor(MIN(a.x, b.x) - 1.0));
-	int right = MIN(RETRO_WIDTH - 1, (int)ceil(MAX(a.x, b.x) + 1.0));
-	int top = MAX(0, (int)floor(MIN(a.y, b.y) - 1.0));
-	int bottom = MIN(RETRO_HEIGHT - 1, (int)ceil(MAX(a.y, b.y) + 1.0));
+	double minx = MIN(a.x, b.x);
+	double maxx = MAX(a.x, b.x);
+	double miny = MIN(a.y, b.y);
+	double maxy = MAX(a.y, b.y);
+	int left = MAX(0, (int)floor(minx - 1.0));
+	int right = MIN(RETRO_WIDTH - 1, (int)ceil(maxx + 1.0));
+	int top = MAX(0, (int)floor(miny - 1.0));
+	int bottom = MIN(RETRO_HEIGHT - 1, (int)ceil(maxy + 1.0));
 	for (int y = top; y <= bottom; y++) {
 		for (int x = left; x <= right; x++) {
 			double t = length2 > 0.0 ? CLAMP01(((x - a.x) * dx + (y - a.y) * dy) / length2) : 0.0;

@@ -422,7 +422,7 @@ static void AddSuspensionBridge(vec3 a, vec3 b, float mainspan, float deckheight
 // Which way a heading faces, in degrees clockwise from north
 static vec3 HeadingDirection(float heading)
 {
-	float angle = heading * (float)M_PI / 180.0f;
+	float angle = radians(heading);
 	return { sinf(angle), 0, -cosf(angle) };
 }
 
@@ -851,14 +851,14 @@ static void DrawLadder(void)
 	vec2 along = normalize(vec2{ dot(across, Plane.right), -dot(across, Plane.up) });
 	RETRO_Rectangle clip = { HUD_LEFT + 1, HUD_RIGHT, HUD_LADDERTOP, HUD_BOTTOM };
 	for (int degrees = -90 + HUD_LADDERSTEP; degrees < 90; degrees += HUD_LADDERSTEP) {
-		float elevation = degrees * (float)M_PI / 180.0f;
+		float elevation = radians(degrees);
 		vec3 eye = RETRO_ViewDirection(&Camera, ahead * cosf(elevation) + worldup * sinf(elevation));
 		if (eye.z <= 0.1f) continue;
 		vec2 center = RETRO_ProjectViewPoint(Camera.lens, eye).pos;
 		for (int side = -1; side <= 1; side += 2) {
 			vec2 a = center + along * (float)(side * HUD_RUNGIN);
 			vec2 b = center + along * (float)(side * HUD_RUNGOUT);
-			RETRO_DrawLine((int)floorf(a.x), (int)floorf(a.y), (int)floorf(b.x), (int)floorf(b.y), GRAY(8), clip);
+			RETRO_DrawSubpixelLine(a.x, a.y, b.x, b.y, GRAY(8), clip);
 		}
 	}
 }
@@ -1153,7 +1153,8 @@ static void DrawCable(vec3 from, vec3 to, unsigned char color)
 	PolygonPoint pa = RETRO_ProjectViewPoint(Camera.lens, a);
 	PolygonPoint pb = RETRO_ProjectViewPoint(Camera.lens, b);
 	vec2 delta = pb.pos - pa.pos;
-	int steps = MAX((int)ceilf(MAX(fabsf(delta.x), fabsf(delta.y))), 1);
+	float longest = MAX(fabsf(delta.x), fabsf(delta.y));
+	int steps = MAX((int)ceilf(longest), 1);
 	for (int i = 0; i <= steps; i++) {
 		float t = (float)i / steps;
 		int x = (int)floorf(pa.pos.x + delta.x * t);

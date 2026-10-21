@@ -412,6 +412,18 @@ inline bool RETRO_FrustumCornersOutside(const RETRO_CameraFrustum &frustum, cons
 	return outside != 0;
 }
 
+// Whether a sphere around eye, a point in the camera's frame, lies wholly
+// outside one plane of frustum. The planes are not of unit length, so each
+// distance is measured against the radius scaled by its normal's length
+inline bool RETRO_FrustumSphereOutside(const RETRO_CameraFrustum &frustum, vec3 eye, float radius)
+{
+	for (int i = 0; i < RETRO_CAMERA_CLIP_PLANES; i++) {
+		const RETRO_CameraPlane &plane = frustum.plane[i];
+		if (RETRO_CameraPlaneDistance(plane, eye) < -radius * length(plane.normal)) return true;
+	}
+	return false;
+}
+
 //
 // Clip a polygon in the camera's frame to the view, then project it
 //

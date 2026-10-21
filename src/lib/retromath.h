@@ -559,3 +559,25 @@ inline vec3 RETRO_CatmullRomDerivative(vec3 p0, vec3 p1, vec3 p2, vec3 p3, float
 		+ (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * (2 * t)
 		+ (p1 * 3.0f - p0 - p2 * 3.0f + p3) * (3 * t * t)) * 0.5f;
 }
+
+//
+// Hermite cubic: the curve over a span of h from a at t = 0, leaving it at
+// velocity va, to b at t = 1, arriving at velocity vb. The velocities are per
+// unit of the span, so the tangents are va * h and vb * h:
+//
+//   H(t) = (2t³ − 3t² + 1) a + (t³ − 2t² + t) h va + (−2t³ + 3t²) b
+//          + (t³ − t²) h vb
+//
+inline float RETRO_Hermite(float a, float va, float b, float vb, float h, float t)
+{
+	float t2 = t * t;
+	float t3 = t2 * t;
+	return a * (2 * t3 - 3 * t2 + 1) + va * ((t3 - 2 * t2 + t) * h) + b * (-2 * t3 + 3 * t2) + vb * ((t3 - t2) * h);
+}
+
+inline vec3 RETRO_Hermite(vec3 a, vec3 va, vec3 b, vec3 vb, float h, float t)
+{
+	float t2 = t * t;
+	float t3 = t2 * t;
+	return a * (2 * t3 - 3 * t2 + 1) + va * ((t3 - 2 * t2 + t) * h) + b * (-2 * t3 + 3 * t2) + vb * ((t3 - t2) * h);
+}

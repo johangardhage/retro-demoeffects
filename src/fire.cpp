@@ -11,14 +11,12 @@
 // Taps: left/right on this row, and the three cells one and two rows
 // below. No self, so a cell keeps none of its own heat. Six of the
 // eight sit below it (y grows down), so each step lifts heat from
-// y+1, y+2 onto y. Every tap reads the previous step. Out-of-range
-// taps wrap on both axes: the x wrap joins the flame's left and right
-// edges. The
-// y wrap only hits the last two hidden rows, and those taps land on
-// buffer rows 0 and 1. A spark writes 255
-// into the bottom FIRE_HEIGHT rows of a column with probability
-// 1/FIRE_CHAOS. The blit hides that bed and leaves a clear strip
-// above the flame.
+// y+1, y+2 onto y. Out-of-range taps wrap on both axes: the x wrap
+// joins the flame's left and right edges, and the y wrap only hits the
+// last two hidden rows, whose taps land on buffer rows 0 and 1. A spark
+// writes 255 into the bottom FIRE_HEIGHT rows of a column with
+// probability 1/FIRE_CHAOS. The blit hides that bed and leaves a clear
+// strip above the flame.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -34,22 +32,8 @@ constexpr int FIRE_DECAY = 3; // subtracted after the 8-tap average, so how fast
 static unsigned char FireBuffer[RETRO_HEIGHT * RETRO_WIDTH];
 
 //
-// Advance the field one fixed step
-//
-// A spark writes 255 into the bottom FIRE_HEIGHT pixels of a column. The blur then
-// replaces every cell with the mean of eight neighbors - left and right on its own
-// row, and the three cells one and two rows below - and subtracts FIRE_DECAY:
-//
-//   T'(x, y) = max(0, (T(x-1, y) + T(x+1, y)
-//                    + T(x-1, y+1) + T(x, y+1) + T(x+1, y+1)
-//                    + T(x-1, y+2) + T(x, y+2) + T(x+1, y+2)) / 8
-//                    - FIRE_DECAY)
-//
-// There is no self term, so a cell keeps none of its own heat. Six of the eight taps
-// sit below it, so the mean is a sample of the heat underneath, which is what makes
-// the field rise: each step copies heat from y+1, y+2 up onto y. The two side taps
-// smear a column into its neighbors, and wrapping those in x lets a flame at the
-// edge continue on the other side.
+// Advance the field one fixed step: seed the sparks, then the 8-tap pass described
+// at the top. The two side taps smear a column into its neighbors.
 //
 // RETRO_Blur reads a copy of the field taken before the pass, so every tap reads
 // the previous step: a Jacobi update on both axes, and the flame rises straight.

@@ -49,8 +49,8 @@ void DEMO_Render(RETRO_Time time)
 			PlaceStar(&Stars[i], STAR_FAR);
 		}
 
-		int x = RETRO_WIDTH / 2.0f + (Stars[i].x * EYE) / Stars[i].z;
-		int y = RETRO_HEIGHT / 2.0f + (Stars[i].y * EYE) / Stars[i].z;
+		float x = RETRO_WIDTH / 2.0f + (Stars[i].x * EYE) / Stars[i].z;
+		float y = RETRO_HEIGHT / 2.0f + (Stars[i].y * EYE) / Stars[i].z;
 
 		if (RETRO_OnScreen(x, y)) {
 			int color = (STAR_FAR - Stars[i].z) * (SHADES - 1) / (STAR_FAR - STAR_NEAR);

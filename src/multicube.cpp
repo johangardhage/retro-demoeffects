@@ -100,7 +100,8 @@ void DEMO_Render(RETRO_Time time)
 	Cube->c = COL_GLENZ;
 	Cube->shades = 64;
 	for (int i = 0; i < Cube->faces; i++) {
-		Cube->face[i].c = Cube->face[i].backc = 24;
+		Cube->face[i].c = 24;
+		Cube->face[i].backc = 24;
 	}
 	RETRO_RenderModel(RETRO_POLY_GLENZ, RETRO_SHADE_FLAT, Cube, true, { .y0 = y[2], .y1 = y[3] });
 
@@ -108,7 +109,8 @@ void DEMO_Render(RETRO_Time time)
 	Cube->shades = RETRO_SHADE_TABLE_SHADES;
 	Cube->texmap = CheckMap;
 	for (int i = 0; i < Cube->faces; i++) {
-		Cube->face[i].c = Cube->face[i].backc = 0;
+		Cube->face[i].c = 0;
+		Cube->face[i].backc = 0;
 	}
 	RETRO_RenderModel(RETRO_POLY_TEXTURE, RETRO_SHADE_FLAT, Cube, true, { .y0 = y[3], .y1 = y[4] });
 

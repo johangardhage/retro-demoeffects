@@ -369,10 +369,10 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	vec3 forward = { cosf(Look.yaw), 0, sinf(Look.yaw) };
 	vec3 right = { forward.z, 0, -forward.x };
 	vec3 move = { 0, 0, 0 };
-	if (RETRO_KeyState(SDL_SCANCODE_W)) move = move + forward;
-	if (RETRO_KeyState(SDL_SCANCODE_S)) move = move - forward;
-	if (RETRO_KeyState(SDL_SCANCODE_D)) move = move + right;
-	if (RETRO_KeyState(SDL_SCANCODE_A)) move = move - right;
+	if (RETRO_KeyState(SDL_SCANCODE_W)) move += forward;
+	if (RETRO_KeyState(SDL_SCANCODE_S)) move -= forward;
+	if (RETRO_KeyState(SDL_SCANCODE_D)) move += right;
+	if (RETRO_KeyState(SDL_SCANCODE_A)) move -= right;
 	if (length(move) > 0) move = normalize(move) * (WALK_SPEED * dt);
 
 	VelocityY = MAX(VelocityY - GRAVITY * dt, -MAX_FALL_SPEED);

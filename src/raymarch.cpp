@@ -196,9 +196,9 @@ void DEMO_Render(RETRO_Time time)
 	float w = 2.0f * bouncephase - 1.0f;
 	float bounce = SPHERE_BOUNCE_HEIGHT * (1.0f - w * w);
 
-	SphereCenter = { SPHERE_DRIFT_X * sinf(time.total * SPHERE_DRIFT_SPEED), FLOOR_Y + SPHERE_RADIUS + bounce, SPHERE_Z };
+	SphereCenter = { SPHERE_DRIFT_X * sinf(fmod(time.total * SPHERE_DRIFT_SPEED, 2 * M_PI)), FLOOR_Y + SPHERE_RADIUS + bounce, SPHERE_Z };
 
-	float lightangle = time.total * LIGHT_SPEED;
+	float lightangle = fmod(time.total * LIGHT_SPEED, 2 * M_PI);
 	vec3 light = { LIGHT_ORBIT_RADIUS * cosf(lightangle), LIGHT_Y, SPHERE_Z + LIGHT_ORBIT_RADIUS * sinf(lightangle) };
 
 	for (int sy = 0; sy < RETRO_HEIGHT; sy++) {

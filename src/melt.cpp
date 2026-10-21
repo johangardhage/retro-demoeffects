@@ -30,29 +30,18 @@ enum MeltMode { MELT_MAXIMUM_SCAN_LINE, MELT_FREEZE_LINE_OFFSET };
 void DEMO_Render(RETRO_Time time)
 {
 	static MeltMode mode = MELT_FREEZE_LINE_OFFSET;
-	static double meltposition = 0;
-	static int meltdirection = 1;
+	static double start = 0; // when the mode began, so it melts from the top
 
 	if (RETRO_KeyPressed(SDL_SCANCODE_TAB)) {
 		mode = mode == MELT_MAXIMUM_SCAN_LINE ? MELT_FREEZE_LINE_OFFSET : MELT_MAXIMUM_SCAN_LINE;
-		meltposition = 0;
-		meltdirection = 1;
+		start = time.total;
 	}
 
+	// Bounce between 0 and maximum: a triangle wave of period 2 maximum
 	double maximum = mode == MELT_MAXIMUM_SCAN_LINE ? MSL_MAX : SCANLINES;
 	double speed = mode == MELT_MAXIMUM_SCAN_LINE ? MSL_STEPS_PER_SECOND : FREEZE_STEPS_PER_SECOND;
-	meltposition += meltdirection * speed * time.delta;
-
-	// Reflect overshoot at an endpoint so a long frame still bounces cleanly.
-	while (meltposition < 0 || meltposition > maximum) {
-		if (meltposition > maximum) {
-			meltposition = 2 * maximum - meltposition;
-			meltdirection = -1;
-		} else {
-			meltposition = -meltposition;
-			meltdirection = 1;
-		}
-	}
+	double swing = fmod((time.total - start) * speed, 2 * maximum);
+	double meltposition = swing > maximum ? 2 * maximum - swing : swing;
 
 	unsigned char *image = RETRO_ImageData();
 	unsigned char *buffer = RETRO_FrameBuffer();

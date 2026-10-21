@@ -196,7 +196,7 @@ static Model3D *GetGlyph(unsigned char character)
 void DEMO_Render(RETRO_Time time)
 {
 	double phase = mod(time.total * SCROLL_SPEED, (double)TextWidth);
-	float spin = (float)(time.total * HELIX_SPIN);
+	float spin = fmod(time.total * HELIX_SPIN, 2 * M_PI);
 
 	// All letters share one depth buffer. Clearing before each glyph would
 	// make a later letter overwrite an earlier one regardless of its depth.

@@ -49,7 +49,6 @@ void DEMO_Initialize(void)
 {
 	// Init palette. The 252 cycling colors ramp one channel at a time, from
 	// black through red, yellow, white, cyan and blue, and back to black
-	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_BLACK);
 	RETRO_CreateGradientPalette(0, 42, RETRO_BLACK, RETRO_RED);
 	RETRO_CreateGradientPalette(42, 84, RETRO_RED, RETRO_YELLOW);
 	RETRO_CreateGradientPalette(84, 126, RETRO_YELLOW, RETRO_WHITE);

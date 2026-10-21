@@ -578,10 +578,10 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	vec3 forward = { cosf(Look.yaw), 0, sinf(Look.yaw) };
 	vec3 right = { forward.z, 0, -forward.x };
 	vec3 move = { 0, 0, 0 };
-	if (RETRO_KeyState(SDL_SCANCODE_W)) move = move + forward;
-	if (RETRO_KeyState(SDL_SCANCODE_S)) move = move - forward;
-	if (RETRO_KeyState(SDL_SCANCODE_D)) move = move + right;
-	if (RETRO_KeyState(SDL_SCANCODE_A)) move = move - right;
+	if (RETRO_KeyState(SDL_SCANCODE_W)) move += forward;
+	if (RETRO_KeyState(SDL_SCANCODE_S)) move -= forward;
+	if (RETRO_KeyState(SDL_SCANCODE_D)) move += right;
+	if (RETRO_KeyState(SDL_SCANCODE_A)) move -= right;
 	if (length(move) > 0) move = normalize(move) * (WALK_SPEED * dt);
 
 	VelocityY = MAX(VelocityY - GRAVITY * dt, -MAX_FALL_SPEED);
@@ -689,9 +689,9 @@ void DEMO_Render(RETRO_Time time)
 
 	// The water's light streaks pulse a little brighter and back, never far
 	// from the blue around them, so the sea shimmers without speckling
-	float shimmer = 0.5f + 0.5f * sinf(time.total * SHIMMER_SPEED);
+	float shimmer = 0.5f + 0.5f * sinf(fmod(time.total * SHIMMER_SPEED, 2 * M_PI));
 	RETRO_Palette base[COLORS];
-	for (int color = 0; color < COLORS; color++) base[color] = ColorTable[color];
+	memcpy(base, ColorTable, sizeof(base));
 	base[WATER2] = mix(ColorTable[WATER1], ColorTable[WATER2], mix(SHIMMER_LOW, SHIMMER_HIGH, shimmer));
 
 	for (int color = 0; color < COLORS; color++) {
@@ -703,7 +703,7 @@ void DEMO_Render(RETRO_Time time)
 		}
 	}
 
-	float clouddrift = time.total * CLOUD_SPEED;
+	double clouddrift = time.total * CLOUD_SPEED;
 
 	// Each star in front of the eye marks the one pixel it projects to
 	bool starmap[RETRO_HEIGHT][RETRO_WIDTH] = {};
@@ -757,7 +757,7 @@ void DEMO_Render(RETRO_Time time)
 			float cloudt = (CLOUD_HEIGHT - eye.y) / dir.y;
 			if (cloudt > 0 && cloudt < CLOUD_DISTANCE && (missed || cloudt < hit.t)) {
 				vec3 p = eye + dir * cloudt;
-				int cellx = (int)floorf((p.x + clouddrift) / CLOUD_CELL);
+				int cellx = (int)floor((p.x + clouddrift) / CLOUD_CELL);
 				int cellz = (int)floorf(p.z / CLOUD_CELL);
 				if (RETRO_ValueNoise(cellx * CLOUD_SCALE, cellz * CLOUD_SCALE) > CLOUD_COVER) color = CLOUD_COLOR;
 			}

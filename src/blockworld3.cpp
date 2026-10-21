@@ -846,10 +846,10 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	vec3 forward = flying || swimming ? ViewDirection() : vec3{ cosf(Look.yaw), 0, sinf(Look.yaw) };
 	vec3 right = { sinf(Look.yaw), 0, -cosf(Look.yaw) };
 	vec3 move = { 0, 0, 0 };
-	if (RETRO_KeyState(SDL_SCANCODE_W)) move = move + forward;
-	if (RETRO_KeyState(SDL_SCANCODE_S)) move = move - forward;
-	if (RETRO_KeyState(SDL_SCANCODE_D)) move = move + right;
-	if (RETRO_KeyState(SDL_SCANCODE_A)) move = move - right;
+	if (RETRO_KeyState(SDL_SCANCODE_W)) move += forward;
+	if (RETRO_KeyState(SDL_SCANCODE_S)) move -= forward;
+	if (RETRO_KeyState(SDL_SCANCODE_D)) move += right;
+	if (RETRO_KeyState(SDL_SCANCODE_A)) move -= right;
 	if (length(move) > 0) move = normalize(move);
 
 	bool space = RETRO_KeyState(SDL_SCANCODE_SPACE);
@@ -875,11 +875,11 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	} else if (RETRO_KeyState(SDL_SCANCODE_LCTRL)) {
 		speed *= SPRINT_FACTOR;
 	}
-	move = move * (speed * dt);
+	move *= speed * dt;
 
 	// The eye sinks while sneaking and rises again after
 	float eyetarget = sneaking ? SNEAK_EYE_HEIGHT : EYE_HEIGHT;
-	EyeHeight = EyeHeight < eyetarget ? MIN(EyeHeight + EYE_SPEED * dt, eyetarget) : MAX(EyeHeight - EYE_SPEED * dt, eyetarget);
+	EyeHeight = APPROACH(EyeHeight, eyetarget, EYE_SPEED * dt);
 
 	// Sneaking on the ground, a step that would leave nothing under the feet
 	// is not taken, so the player can lean out over an edge but not fall off
@@ -1006,7 +1006,10 @@ void DEMO_Render(RETRO_Time time)
 	RETRO_Palette zenith = mix(NIGHT_ZENITH, DAY_ZENITH, day);
 
 	// Under water, the sky and the fog are both the water's own blue
-	if (underwater) horizon = zenith = RETRO_ShadeColor(WATER_FOG, light);
+	if (underwater) {
+		horizon = RETRO_ShadeColor(WATER_FOG, light);
+		zenith = horizon;
+	}
 	RETRO_CreateGradientPalette(SKY_START, SKY_START + SKY_SHADES, horizon, zenith);
 	RETRO_SetColor(CLOUD_COLOR, mix(mix(NIGHT_CLOUD, DAY_CLOUD, day), SUNSET, sunset * 0.5f));
 	RETRO_SetColor(STAR_COLOR, mix(zenith, STAR, 1.0f - day));
@@ -1030,9 +1033,9 @@ void DEMO_Render(RETRO_Time time)
 
 	// The water's light streaks pulse a little brighter and back, never far
 	// from the blue around them, so the sea shimmers without speckling
-	float shimmer = 0.5f + 0.5f * sinf(time.total * SHIMMER_SPEED);
+	float shimmer = 0.5f + 0.5f * sinf(fmod(time.total * SHIMMER_SPEED, 2 * M_PI));
 	RETRO_Palette base[COLORS];
-	for (int color = 0; color < COLORS; color++) base[color] = ColorTable[color];
+	memcpy(base, ColorTable, sizeof(base));
 	base[WATER2] = mix(ColorTable[WATER1], ColorTable[WATER2], mix(SHIMMER_LOW, SHIMMER_HIGH, shimmer));
 
 	if (underwater) {
@@ -1057,7 +1060,7 @@ void DEMO_Render(RETRO_Time time)
 		}
 	}
 
-	float clouddrift = time.total * CLOUD_SPEED;
+	double clouddrift = time.total * CLOUD_SPEED;
 
 	// Each star in front of the eye marks the one pixel it projects to
 	bool starmap[RETRO_HEIGHT][RETRO_WIDTH] = {};
@@ -1131,7 +1134,7 @@ void DEMO_Render(RETRO_Time time)
 			float cloudt = (CLOUD_HEIGHT - eye.y) / dir.y;
 			if (!underwater && cloudt > 0 && cloudt < CLOUD_DISTANCE && (missed || cloudt < hit.t)) {
 				vec3 p = eye + dir * cloudt;
-				int cellx = (int)floorf((p.x + clouddrift) / CLOUD_CELL);
+				int cellx = (int)floor((p.x + clouddrift) / CLOUD_CELL);
 				int cellz = (int)floorf(p.z / CLOUD_CELL);
 				if (RETRO_ValueNoise(cellx * CLOUD_SCALE, cellz * CLOUD_SCALE) > CLOUD_COVER) color = CLOUD_COLOR;
 			}

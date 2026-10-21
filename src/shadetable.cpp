@@ -355,7 +355,8 @@ static void BuildPicture(Subject *subject, const RETRO_Image *picture)
 	subject->colors = RETRO_COLORS;
 	subject->shades = SHADES;
 	for (int i = 0; i < RETRO_COLORS; i++) {
-		subject->source[i] = subject->palette[i] = picture->palette[i];
+		subject->source[i] = picture->palette[i];
+		subject->palette[i] = picture->palette[i];
 	}
 	CountTexels(subject);
 
@@ -589,7 +590,7 @@ void DEMO_Initialize(void)
 	RETRO_CreateGradientPalette(0, 64, RETRO_BLACK, RETRO_BLUE, HeatPalette);
 	RETRO_CreateGradientPalette(64, 128, RETRO_BLUE, RETRO_RED, HeatPalette);
 	RETRO_CreateGradientPalette(128, 192, RETRO_RED, RETRO_YELLOW, HeatPalette);
-	RETRO_CreateGradientPalette(192, 256, RETRO_YELLOW, RETRO_WHITE, HeatPalette);
+	RETRO_CreateGradientPalette(192, RETRO_COLORS, RETRO_YELLOW, RETRO_WHITE, HeatPalette);
 
 	// Build and score the subjects
 	BuildPicture(&Subjects[SUBJECT_PICTURE], picture);

@@ -52,7 +52,7 @@ void DEMO_Render(RETRO_Time time)
 	unsigned char *sprite = atlas + ATLAS_SPRITE * PLANE_MAP;
 
 	// Calculate phase
-	float phase = time.total * PLANE_SCROLL_SPEED;
+	double phase = time.total * PLANE_SCROLL_SPEED;
 
 	int midx = RETRO_WIDTH / 2;
 
@@ -63,7 +63,7 @@ void DEMO_Render(RETRO_Time time)
 		float u = 0;
 		float halfw = 2 * z + PLANE_NEAR;
 		float du = midx / halfw;
-		int v = PLANE_SKY_V / z; // whole rows
+		float v = (float)PLANE_SKY_V / z;
 
 		for (int x = 0; x < midx; x++) {
 			int xsrc = WRAP(u / PLANE_SKY_U, PLANE_MAP);

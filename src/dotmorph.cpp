@@ -73,8 +73,8 @@ void DEMO_Render(RETRO_Time time)
 		RETRO_RotateVertex(&Morph[i], matrix);
 		RETRO_ProjectVertex(&Morph[i], PROJECTION_SCALE);
 
-		int x = Morph[i].spos.x;
-		int y = Morph[i].spos.y;
+		float x = Morph[i].spos.x;
+		float y = Morph[i].spos.y;
 
 		if (RETRO_OnScreen(x, y)) {
 			unsigned char color = CLAMP256((RETRO_COLORS - 1) * (furthest - Morph[i].rpos.z) / (2 * furthest));

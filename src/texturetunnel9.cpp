@@ -18,7 +18,9 @@
 //
 //   p(t) = (Ax sin(ωx t),  Ay sin(ωy t + φ),  t)
 //
-// Always advancing in z, waving in x and y. The ring frame is the
+// Always advancing in z, waving in x and y. z is taken from the camera's
+// own t, so the world stays near the eye and keeps float precision however
+// far the flight goes; t itself is a double. The ring frame is the
 // camera's own: forward is the tangent, right is world-down × forward,
 // down is forward × right, the camera's y-down, z-away frame. Inward normals are −(cos θ · right + sin θ · down).
 //
@@ -78,17 +80,23 @@ static const RETRO_ShadeTable BrickShadeTable = { FogTable, RETRO_COLORS, FOG_SH
 // would turn into one, so it stays fixed relative to the camera.
 static const vec3 Light = normalize(vec3{ -0.98f, 0.06f, -0.18f });
 
-// The axis at t, and the orthonormal frame a ring there is built in.
-static vec3 Path(float t)
+// The axis at t, with z measured from base (the camera's t), and the
+// orthonormal frame a ring there is built in.
+static vec3 Path(double t, double base)
 {
-	return { BEND_X * sinf(t * BEND_FX), BEND_Y * sinf(t * BEND_FY + BEND_PHASE), t };
+	float x = BEND_X * sin(t * BEND_FX);
+	float y = BEND_Y * sin(t * BEND_FY + BEND_PHASE);
+	float z = t - base;
+	return { x, y, z };
 }
 
 // Derivative of Path. z' is 1, so the tangent never parallels world
 // down and the cross that makes right does not collapse.
-static vec3 PathTangent(float t)
+static vec3 PathTangent(double t)
 {
-	return normalize(vec3{ BEND_X * BEND_FX * cosf(t * BEND_FX), BEND_Y * BEND_FY * cosf(t * BEND_FY + BEND_PHASE), 1.0f });
+	float dx = BEND_X * BEND_FX * cos(t * BEND_FX);
+	float dy = BEND_Y * BEND_FY * cos(t * BEND_FY + BEND_PHASE);
+	return normalize(vec3{ dx, dy, 1.0f });
 }
 
 static void BuildBrick(void)
@@ -137,24 +145,24 @@ static void DrawQuad(const RETRO_CameraLens &lens, const RingVertex &a, const Ri
 
 void DEMO_Render(RETRO_Time time)
 {
-	float t = (float)(time.total * FLIGHT_SPEED) + FLIGHT_START;
+	double t = time.total * FLIGHT_SPEED + FLIGHT_START;
 
 	// Stay on the path, but aim ahead so the viewer looks into each bend.
-	vec3 origin = Path(t);
-	vec3 forward = CAMERA_LOOKAHEAD > 0 ? normalize(Path(t + CAMERA_LOOKAHEAD) - origin) : PathTangent(t);
+	vec3 origin = Path(t, t);
+	vec3 forward = CAMERA_LOOKAHEAD > 0 ? normalize(Path(t + CAMERA_LOOKAHEAD, t) - origin) : PathTangent(t);
 	RETRO_Camera camera;
 	RETRO_LookAlong(&camera, origin, forward);
 
 	// World stations, not camera-relative offsets: ring k is always at
 	// k · spacing on the path. first is the nearest station still at
 	// least RING_NEAR in front of the eye.
-	int first = (int)ceilf((t + RING_NEAR) / RING_SPACING);
+	int first = (int)ceil((t + RING_NEAR) / RING_SPACING);
 	float far = RING_SPACING * RING_COUNT;
 	RingVertex ring[RING_COUNT][RING_SIDES];
 
 	for (int i = 0; i < RING_COUNT; i++) {
-		float along = (first + i) * (float)RING_SPACING;
-		vec3 center = Path(along);
+		double along = (first + i) * (double)RING_SPACING;
+		vec3 center = Path(along, t);
 		vec3 ringright, ringdown;
 		RETRO_FrameFromForward(PathTangent(along), { 0, 1, 0 }, &ringright, &ringdown);
 

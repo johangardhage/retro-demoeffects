@@ -69,6 +69,7 @@
 
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retropalette.h"
 
 constexpr int TEXTURE_SIZE = 256;
 constexpr int TEXTURE_MASK = TEXTURE_SIZE - 1;
@@ -214,5 +215,5 @@ void DEMO_Initialize(void)
 	// The photograph owns the palette, so the aperture has to take an entry
 	// the picture never uses rather than one it happens to spare. The map
 	// stops short of the top of the range, so the last entry is free.
-	RETRO_SetColor(TUNNEL_APERTURE, 0, 0, 0);
+	RETRO_SetColor(TUNNEL_APERTURE, RETRO_BLACK);
 }

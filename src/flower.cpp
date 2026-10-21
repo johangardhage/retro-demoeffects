@@ -44,7 +44,7 @@ constexpr unsigned short NO_FLOWER = 0xffff;
 constexpr int TEXT_SCALE = 4;
 constexpr int TEXT_COLOR = 97;             // a stone gray in the text's ramp
 
-constexpr double TURN_SPEED = 140.0;       // rows of the skin the flower turns a second
+constexpr double TURN_SPEED = 140.0;       // rows of the skin the flower turns a second, at the nearest even cadence (see RETRO_FramePosition)
 constexpr int BREATH_COLUMNS = 32;         // columns it breathes across
 constexpr double BREATH_RATE = 1.1;        // breaths a second
 constexpr int SKIN_EDGE = 256 - BREATH_COLUMNS; // the column a ray ends short of
@@ -133,7 +133,7 @@ void DEMO_Render(RETRO_Time time)
 
 	// The flower turned and breathed. The turn moves the rows and the breath
 	// the columns, both added to where the map reads
-	int turn = (int)(time.total * TURN_SPEED) & 255;
+	int turn = (int)(RETRO_FramePosition(time.total, TURN_SPEED) & 255);
 	int breath = (int)((sin(2 * M_PI * time.total * BREATH_RATE) + 1) * BREATH_COLUMNS / 2);
 	unsigned short offset = (unsigned short)(turn << 8 | breath);
 

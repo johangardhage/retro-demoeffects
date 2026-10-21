@@ -50,10 +50,10 @@ void DEMO_Render(RETRO_Time time)
 		int color = i * (SHADES - 1) / (RING_COUNT - 1);
 
 		for (int j = 0; j < RING_DOTS; j++) {
-			int x = (RETRO_WIDTH / 2.0) + (Circle[j].x * EYE) / (EYE - z) + xo;
-			int y = (RETRO_HEIGHT / 2.0) + (Circle[j].y * EYE) / (EYE - z) + yo;
+			double x = (RETRO_WIDTH / 2.0) + (Circle[j].x * EYE) / (EYE - z) + xo;
+			double y = (RETRO_HEIGHT / 2.0) + (Circle[j].y * EYE) / (EYE - z) + yo;
 
-			if (RETRO_OnScreen(x, y)) {
+			if (RETRO_OnScreen((float)x, (float)y)) {
 				RETRO_PutPixel(x, y, color);
 			}
 		}

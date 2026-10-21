@@ -59,8 +59,8 @@ void DEMO_Render(RETRO_Time time)
 		RETRO_RotateVertex(&Ball[i], matrix);
 		RETRO_ProjectVertex(&Ball[i], PROJECTION_SCALE);
 
-		int x = Ball[i].spos.x;
-		int y = Ball[i].spos.y;
+		float x = Ball[i].spos.x;
+		float y = Ball[i].spos.y;
 		int z = -round(Ball[i].rpos.z);
 
 		if (RETRO_OnScreen(x, y) && z > ZMIN) {

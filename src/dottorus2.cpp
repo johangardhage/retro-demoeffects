@@ -54,10 +54,8 @@ static const unsigned char Blob[BLOB_SIZE][BLOB_SIZE] = {
 void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
-	static double phase = 0;
-	double start = phase;
 	double moved = time.delta * ROTATION_SPEED;
-	phase = fmod(phase + moved, 2 * M_PI);
+	double start = fmod((time.total - time.delta) * ROTATION_SPEED, 2 * M_PI);
 
 	// Split the step into stamps no further apart than STAMP_SPACING so the trail has no gaps.
 	int stamps = MAX((int)ceil(moved / STAMP_SPACING), 1);

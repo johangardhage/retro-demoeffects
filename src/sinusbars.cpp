@@ -31,7 +31,7 @@ constexpr int LINE_SPEED3 = 200; // pixels of phase3 per second, falling
 void DEMO_Render(RETRO_Time time)
 {
 	// Calculate phase
-	double phase1 = fmod(10.0 + time.total * LINE_SPEED1, LINE_PERIOD);
+	double phase1 = mod(10.0 + time.total * LINE_SPEED1, LINE_PERIOD);
 	double phase2 = mod(-20.0 - time.total * LINE_SPEED2, LINE_PERIOD);
 	double phase3 = mod(-30.0 - time.total * LINE_SPEED3, LINE_PERIOD);
 
@@ -45,8 +45,8 @@ void DEMO_Render(RETRO_Time time)
 		int x2 = RETRO_WIDTH / 2.0 + LINE_HALF + w;
 
 		// w's max amplitude is 10 + 15 + 15 = 40, so scale it across the
-		// two half-palettes centered on the neutral, white midpoint
-		unsigned char color = 128 + CLAMP(w * 127 / 40, -127, 128);
+		// two half-palettes centered on the neutral, white midpoint: 1 to 255
+		unsigned char color = 128 + (int)lround(w * 127 / 40);
 
 		RETRO_DrawHline(x1, x2, y, color);
 	}

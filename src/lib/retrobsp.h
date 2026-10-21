@@ -319,11 +319,30 @@ inline void RETRO_LoadBSPColormap(RETRO_BSP *bsp, const char *filename)
 //
 inline void RETRO_LoadBSPMap(RETRO_BSP *bsp, const char *filename)
 {
-	bsp->bsp = (char *)RETRO_LoadFile(filename);
-	bsp->header = (dheader_t *)bsp->bsp;
-	if (bsp->header->version != BSP_VERSION) {
+	char *file = (char *)RETRO_LoadFile(filename);
+	dheader_t *fileheader = (dheader_t *)file;
+	if (fileheader->version != BSP_VERSION) {
 		RETRO_RageQuit("BSP file is not version %d: %s\n", BSP_VERSION, filename);
 	}
+
+	// A lump may start at any byte of the file, so each is copied to a
+	// 4-aligned offset of its own and the accessors read aligned structs
+	int size = sizeof(dheader_t);
+	for (int i = 0; i < HEADER_LUMPS; i++) {
+		size += (fileheader->lumps[i].filelen + 3) & ~3;
+	}
+	bsp->bsp = (char *)malloc(size);
+	bsp->header = (dheader_t *)bsp->bsp;
+	memcpy(bsp->header, fileheader, sizeof(dheader_t));
+	int offset = sizeof(dheader_t);
+	for (int i = 0; i < HEADER_LUMPS; i++) {
+		lump_t *lump = bsp->lump(i);
+		memcpy(bsp->bsp + offset, file + lump->fileofs, lump->filelen);
+		lump->fileofs = offset;
+		offset += (lump->filelen + 3) & ~3;
+	}
+	free(file);
+
 	if (bsp->numleaves() > MAX_MAP_LEAFS) {
 		RETRO_RageQuit("BSP file has more than %d leaves: %s\n", MAX_MAP_LEAFS, filename);
 	}

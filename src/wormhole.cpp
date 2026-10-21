@@ -95,23 +95,20 @@ void DEMO_Initialize(void)
 				double df = e / 2 - 2 * k * b;
 				if (fabs(df) < 1.0e-14) break;
 				double next = clamp(t - f / df, tmin, tmax);
-				if (fabs(next - t) < 1.0e-13) {
-					t = next;
-					break;
-				}
+				bool converged = fabs(next - t) < 1.0e-13;
 				t = next;
+				if (converged) break;
 			}
 
 			double b = c + k * t;
 			double distance = exp(t) / 2;
 			double angle = atan2(b, a);
-			if (angle < 0) {
-				angle += 2 * M_PI;
-			}
 
-			// A pixel outside the outermost ellipse has no root and takes the rim
+			// A pixel outside the outermost ellipse has no root and takes the rim.
+			// WRAP floors, so a negative angle lands on the same spoke as its
+			// positive turn
 			int d = CLAMP((int)(distance * WORM_DIVS), 1, WORM_DIVS);
-			int s = WRAP((int)(angle / (2 * M_PI) * WORM_SPOKES), WORM_SPOKES);
+			int s = WRAP(angle / (2 * M_PI) * WORM_SPOKES, WORM_SPOKES);
 
 			WormHole[y * RETRO_WIDTH + x] = WRAP(s / 8, TEXTURE_WIDTH) + (TEXTURE_WIDTH * WRAP(d / 7, TEXTURE_WIDTH));
 		}

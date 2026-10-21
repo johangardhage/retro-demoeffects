@@ -123,17 +123,17 @@ static void DrawLayer(const int *surface, unsigned char color, unsigned char foa
 }
 
 // Surface height of a wave layer at column x; the text samples the same function to ride it
-static float WaveHeight(const Wave &wave, float x, float time)
+static float WaveHeight(const Wave &wave, float x, double time)
 {
-	return wave.base + wave.amplitude1 * sinf(wave.k1 * x + time * wave.speed1)
-	                 + wave.amplitude2 * sinf(wave.k2 * x + time * wave.speed2);
+	return wave.base + wave.amplitude1 * sin(wave.k1 * x + time * wave.speed1)
+	                 + wave.amplitude2 * sin(wave.k2 * x + time * wave.speed2);
 }
 
 // Center column of letter i, the word centered on the screen
-static float LetterX(const Word &word, int i, float time)
+static float LetterX(const Word &word, int i, double time)
 {
 	int start = (RETRO_WIDTH - word.length * word.spacing) / 2 + word.spacing / 2;
-	return start + i * word.spacing + word.sway * sinf(time * word.swayspeed + i * 0.5f);
+	return start + i * word.spacing + word.sway * sin(time * word.swayspeed + i * 0.5);
 }
 
 // Draw a 16x16 character centered on column cx, its FLOAT_DRAFT row at height waterline
@@ -156,7 +156,7 @@ static void DrawFloatingChar(char character, float cx, float waterline, unsigned
 	}
 }
 
-static void DrawWord(const Word &word, float time)
+static void DrawWord(const Word &word, double time)
 {
 	for (int i = 0; i < word.length; i++) {
 		DrawFloatingChar(word.text[i], LetterX(word, i, time), word.buoys[i].y, word.color);
@@ -165,7 +165,7 @@ static void DrawWord(const Word &word, float time)
 
 // Pull each letter toward the surface under it. Semi-implicit Euler: velocity first,
 // then position from the new velocity, which stays stable at this stiffness and step
-static void FloatWord(const Word &word, float time, float timestep)
+static void FloatWord(const Word &word, double time, double timestep)
 {
 	for (int i = 0; i < word.length; i++) {
 		Buoy &buoy = word.buoys[i];
@@ -177,7 +177,7 @@ static void FloatWord(const Word &word, float time, float timestep)
 }
 
 // Rest each letter on the surface, still
-static void LaunchWord(const Word &word, float time)
+static void LaunchWord(const Word &word, double time)
 {
 	for (int i = 0; i < word.length; i++) {
 		word.buoys[i] = { WaveHeight(word.wave, LetterX(word, i, time), time), 0.0f };
@@ -188,8 +188,8 @@ static void LaunchWord(const Word &word, float time)
 // cannot catch up on leaves the letters behind for a moment rather than for good
 void DEMO_FixedUpdate(RETRO_Time time)
 {
-	FloatWord(WordTop, (float)RETRO.time, (float)time.delta);
-	FloatWord(WordMain, (float)RETRO.time, (float)time.delta);
+	FloatWord(WordTop, RETRO.time, (float)time.delta);
+	FloatWord(WordMain, RETRO.time, (float)time.delta);
 }
 
 void DEMO_Render(RETRO_Time time)
@@ -210,18 +210,18 @@ void DEMO_Render(RETRO_Time time)
 	// Layer 3 (Foreground wave): faster, rolling front water wave
 	// RETRO_DrawVline clips, so the heights need no clamping
 	for (int x = 0; x < RETRO_WIDTH; x++) {
-		wave1y[x] = (int)lroundf(WaveHeight(WaveBack, (float)x, (float)time.total));
-		wave2y[x] = (int)lroundf(WaveHeight(WaveMid, (float)x, (float)time.total));
-		wave3y[x] = (int)lroundf(WaveHeight(WaveFront, (float)x, (float)time.total));
+		wave1y[x] = (int)lroundf(WaveHeight(WaveBack, (float)x, time.total));
+		wave2y[x] = (int)lroundf(WaveHeight(WaveMid, (float)x, time.total));
+		wave3y[x] = (int)lroundf(WaveHeight(WaveFront, (float)x, time.total));
 	}
 
 	// Draw top text ("RETRO"), then Layer 1 (Back wave) over it, which sinks it to its waterline
-	DrawWord(WordTop, (float)time.total);
+	DrawWord(WordTop, time.total);
 
 	DrawLayer(wave1y, COLOR_WAVE_BACK, COLOR_FOAM_BACK);
 
 	// Draw main text ("DEMOEFFECTS"), then Layer 2 (Middle wave) over it
-	DrawWord(WordMain, (float)time.total);
+	DrawWord(WordMain, time.total);
 
 	DrawLayer(wave2y, COLOR_WAVE_MID, COLOR_FOAM_MID);
 
@@ -249,6 +249,6 @@ void DEMO_Initialize(void)
 	Font = RETRO_LoadFont(FONT);
 
 	// Start the letters at rest on the surface
-	LaunchWord(WordTop, (float)RETRO.time);
-	LaunchWord(WordMain, (float)RETRO.time);
+	LaunchWord(WordTop, RETRO.time);
+	LaunchWord(WordMain, RETRO.time);
 }

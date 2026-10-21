@@ -62,8 +62,7 @@ static void RetainCubeImage(float angle, unsigned char *image)
 
 void DEMO_FixedUpdate(RETRO_Time time)
 {
-	static float angle;
-	angle = fmod(angle + time.delta * ROTATION_SPEED, 2 * M_PI);
+	float angle = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
 
 	// The head is the newest image
 	HistoryHead = (HistoryHead + 1) % SLIME_COPIES;

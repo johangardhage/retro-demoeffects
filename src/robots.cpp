@@ -210,7 +210,7 @@ static void PoseRobot(double time)
 // pitch, the image's top or bottom row repeated over whatever it uncovers.
 static void DrawSky(double time)
 {
-	int scroll = WRAP((float)(time * SKY_DRIFT - RETRO_Rider.heading * SKY_TURN), RETRO_WIDTH);
+	int scroll = WRAP(time * SKY_DRIFT - RETRO_Rider.heading * SKY_TURN, RETRO_WIDTH);
 	float tip = tanf(RETRO_Vehicle.restpitch) - tanf(RETRO_Vehicle.pitch);
 	int rise = (int)lroundf(View.lens.focaly * tip);
 	const unsigned char *sky = RETRO_ImageData(ASSET_SKY);
@@ -264,7 +264,8 @@ void DEMO_Render(RETRO_Time time)
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
 		// Both on unless both already are
 		bool on = !(Lights.light[LIGHT_ORANGE].on && Lights.light[LIGHT_YELLOW].on);
-		Lights.light[LIGHT_ORANGE].on = Lights.light[LIGHT_YELLOW].on = on;
+		Lights.light[LIGHT_ORANGE].on = on;
+		Lights.light[LIGHT_YELLOW].on = on;
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_O)) Lights.light[LIGHT_ORANGE].on = !Lights.light[LIGHT_ORANGE].on;
 	if (RETRO_KeyPressed(SDL_SCANCODE_Y)) Lights.light[LIGHT_YELLOW].on = !Lights.light[LIGHT_YELLOW].on;
@@ -382,7 +383,8 @@ void DEMO_Initialize(void)
 	RETRO_Vehicle.lift = 10.7f; // -ln(0.7) * 30
 	RETRO_Vehicle.clearance = WORLD(150);
 	RETRO_Vehicle.floor = WORLD(50);
-	RETRO_Vehicle.restpitch = RETRO_Vehicle.pitch = radians(10);
+	RETRO_Vehicle.restpitch = radians(10);
+	RETRO_Vehicle.pitch = RETRO_Vehicle.restpitch;
 	RETRO_Vehicle.pitchkick = radians(0.6f) / WORLD(1);
 	RETRO_Vehicle.pitchreturn = radians(10);
 

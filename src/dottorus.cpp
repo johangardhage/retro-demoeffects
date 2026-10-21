@@ -60,8 +60,8 @@ void DEMO_Render(RETRO_Time time)
 		RETRO_RotateVertex(&Torus[i], matrix);
 		RETRO_ProjectVertex(&Torus[i], PROJECTION_SCALE);
 
-		int x = Torus[i].spos.x;
-		int y = Torus[i].spos.y;
+		float x = Torus[i].spos.x;
+		float y = Torus[i].spos.y;
 		int z = -round(Torus[i].rpos.z);
 
 		if (RETRO_OnScreen(x, y)) {

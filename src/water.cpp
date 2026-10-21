@@ -59,15 +59,12 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	static float *waterprevious = WaterB; // h_prev
 	static float *waterscratch = WaterC; // what the smoothing pass writes into
 
-	// Seed droplet
+	// Seed droplet, inside the frame
 	static int tick = 0;
-	if (tick % WATER_DROP_STEPS == 0) {
-		int x = RANDOM(RETRO_WIDTH);
-		int y = RANDOM(RETRO_HEIGHT);
-
-		if (x > 0 && x < RETRO_WIDTH - 1 && y > 0 && y < RETRO_HEIGHT - 1) {
-			Water[y * RETRO_WIDTH + x] -= WATER_DEPTH;
-		}
+	if (tick == 0) {
+		int x = RANDOM(RETRO_WIDTH - 2) + 1;
+		int y = RANDOM(RETRO_HEIGHT - 2) + 1;
+		Water[y * RETRO_WIDTH + x] -= WATER_DEPTH;
 	}
 	tick = (tick + 1) % WATER_DROP_STEPS;
 

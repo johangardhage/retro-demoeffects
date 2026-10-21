@@ -51,7 +51,6 @@ void DEMO_Initialize(void)
 {
 	// Init palette. The lines pick their color from their x position, so they
 	// heat up from red through orange into white from left to right
-	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_BLACK);
 	RETRO_CreateGradientPalette(50, 95, RETRO_BLACK, RETRO_RED);
 	RETRO_CreateGradientPalette(95, 135, RETRO_RED, RETRO_ORANGE);
 	RETRO_CreateGradientPalette(135, 200, RETRO_ORANGE, RETRO_WHITE);

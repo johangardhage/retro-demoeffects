@@ -2,7 +2,10 @@
 // Dot scroller, raised by the terrain
 //
 // Terrain samples raise a fixed text mask into columns of dots. The sampling
-// window orbits the map while the patch rocks.
+// window orbits the map while the patch rocks. The window moves smoothly,
+// but a sample is a whole map cell, so each dot crosses to the next cell
+// when the window's fraction passes its ordered-dither threshold: the
+// letters change a few dots at a time instead of all at once.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -62,8 +65,12 @@ static bool GlyphLit(int row, int col)
 	return TextImage->data[imagerow * TextImage->width + imagecol] != 0;
 }
 
-static void SampleLandscape(int offsetx, int offsety)
+static void SampleLandscape(double offsetx, double offsety)
 {
+	int basex = (int)floor(offsetx);
+	int basey = (int)floor(offsety);
+	float fx = offsetx - basex;
+	float fy = offsety - basey;
 	int mapwidth = TextImage->width + 2 * GROUND_PAD;
 	int mapheight = TextImage->height + 2 * GROUND_PAD;
 	int low = 255;
@@ -75,8 +82,9 @@ static void SampleLandscape(int offsetx, int offsety)
 			ColorSample[cell] = GROUND_COLOR_INDEX;
 			if (!GlyphLit(row, col)) continue;
 
-			int x = (col + offsetx) % HeightMap->width;
-			int y = (row + offsety) % HeightMap->height;
+			float threshold = RETRO_DitherThreshold(col, row);
+			int x = (col + basex + (fx > threshold)) % HeightMap->width;
+			int y = (row + basey + (fy > threshold)) % HeightMap->height;
 			int sample = y * HeightMap->width + x;
 			HeightSample[cell] = HeightMap->data[sample];
 			ColorSample[cell] = ColorMap->data[sample];
@@ -119,8 +127,8 @@ static void PlotDot(float x, float y, float z, unsigned char color, const mat3 &
 
 void DEMO_Render(RETRO_Time time)
 {
-	int offsetx = (int)(ORBIT_CENTER_X + ORBIT_RADIUS * cos(time.total * ORBIT_SPEED));
-	int offsety = (int)(ORBIT_CENTER_Y + ORBIT_RADIUS * sin(time.total * ORBIT_SPEED));
+	double offsetx = ORBIT_CENTER_X + ORBIT_RADIUS * cos(time.total * ORBIT_SPEED);
+	double offsety = ORBIT_CENTER_Y + ORBIT_RADIUS * sin(time.total * ORBIT_SPEED);
 	SampleLandscape(offsetx, offsety);
 
 	float ax = INITIAL_PITCH + PITCH_AMP * sin(time.total * PITCH_SPEED);

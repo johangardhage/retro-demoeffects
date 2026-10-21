@@ -62,10 +62,10 @@ void DEMO_Render(RETRO_Time time)
 		unsigned char color = CLAMP256((RETRO_COLORS - 1) * along / RING_COUNT);
 
 		for (int j = 0; j < RING_DOTS; j++) {
-			int x = (RingX[j] + swayx) / depth + RETRO_WIDTH / 2.0;
-			int y = (RingY[j] + swayy) / depth + RETRO_HEIGHT / 2.0;
+			double x = (RingX[j] + swayx) / depth + RETRO_WIDTH / 2.0;
+			double y = (RingY[j] + swayy) / depth + RETRO_HEIGHT / 2.0;
 
-			if (RETRO_OnScreen(x, y)) {
+			if (RETRO_OnScreen((float)x, (float)y)) {
 				RETRO_PutPixel(x, y, color);
 			}
 		}

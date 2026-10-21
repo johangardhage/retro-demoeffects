@@ -54,7 +54,7 @@ void DEMO_Render(RETRO_Time time)
 	// Row j of a bar is entry j of that bar's ramp, so the tube shading comes out
 	// of the palette, and a bar that runs off an edge is clipped to the screen
 	for (int k = 0; k < COPPER_BARS; k++) {
-		int y = lround(RETRO_HEIGHT / 2.0 + COPPER_AMP * COS(phase + k * COPPER_LAG)) - COPPER_BARHEIGHT / 2.0;
+		int y = lround(RETRO_HEIGHT / 2.0 + COPPER_AMP * COS(phase + k * COPPER_LAG)) - COPPER_BARHEIGHT / 2;
 		int ramp = COPPER_RAMP0 + k * COPPER_BARHEIGHT;
 		int top = MAX(y, 0);
 		int bottom = MIN(y + COPPER_BARHEIGHT, RETRO_HEIGHT);

@@ -66,9 +66,9 @@ static RETRO_Image *ScrollImage;
 static float DepthNear;
 static float DepthFar;
 
-static float LandscapeY(float x, float z, float time)
+static float LandscapeY(float x, float z, double time)
 {
-	return WAVE_AMP * sinf(x * WAVE_KX + time * WAVE_SPEED) * sinf(z * WAVE_KZ);
+	return WAVE_AMP * sin(x * WAVE_KX + time * WAVE_SPEED) * sinf(z * WAVE_KZ);
 }
 
 static bool GlyphLit(int x, int y)
@@ -108,7 +108,7 @@ static void PlotDot(float x, float y, float z, int base, int shades, float contr
 	}
 }
 
-static void PlotLetterColumn(float x, float z, float time, bool wall, const mat3 &matrix)
+static void PlotLetterColumn(float x, float z, double time, bool wall, const mat3 &matrix)
 {
 	float base = LandscapeY(x, z, time) + LETTER_GAP * DOT_SPACING;
 	PlotDot(x, -(base + EXTRUSION * DOT_SPACING), z, 1 + GROUND_SHADES, LETTER_SHADES, LETTER_CONTRAST, matrix);
@@ -152,7 +152,7 @@ void DEMO_Render(RETRO_Time time)
 
 				float x = (col - ORIGIN_X) * DOT_SPACING;
 				float z = (ORIGIN_Z - (textrow0 + sy)) * DOT_SPACING;
-				PlotLetterColumn(x, z, (float)time.total, wall, matrix);
+				PlotLetterColumn(x, z, time.total, wall, matrix);
 			}
 		}
 	}
@@ -164,7 +164,7 @@ void DEMO_Render(RETRO_Time time)
 			}
 			float x = (col - ORIGIN_X) * DOT_SPACING;
 			float z = (ORIGIN_Z - row) * DOT_SPACING;
-			PlotDot(x, -LandscapeY(x, z, (float)time.total), z, 1, GROUND_SHADES, GROUND_CONTRAST, matrix);
+			PlotDot(x, -LandscapeY(x, z, time.total), z, 1, GROUND_SHADES, GROUND_CONTRAST, matrix);
 		}
 	}
 }

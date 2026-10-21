@@ -81,10 +81,10 @@ void DEMO_Render(RETRO_Time time)
 
 		// Draw ring
 		for (int j = 0; j < RING_DOTS; j++) {
-			int x = RETRO_WIDTH / 2.0 + lround(RingX[j] * scale + swayx);
-			int y = RETRO_HEIGHT / 2.0 + lround(RingY[j] * scale + swayy);
+			double x = RETRO_WIDTH / 2.0 + round(RingX[j] * scale + swayx);
+			double y = RETRO_HEIGHT / 2.0 + round(RingY[j] * scale + swayy);
 
-			if (RETRO_OnScreen(x, y)) {
+			if (RETRO_OnScreen((float)x, (float)y)) {
 				RETRO_PutPixel(x, y, color);
 			}
 		}

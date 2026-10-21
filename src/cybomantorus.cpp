@@ -146,12 +146,13 @@ static void InitializeModels(void)
 
 void DEMO_Render(RETRO_Time time)
 {
-	float phase = time.total * ROTATION_SPEED + START_ROTATION;
+	double turn = time.total * ROTATION_SPEED + START_ROTATION;
+	float phase = fmod(turn, 2 * M_PI);
 	float focal = RETRO_HEIGHT * 0.5f / CAMERA_FOV;
 
 	// Spin the texture around the ring, then roll its axis in the screen.
 	// This keeps the camera inside the tube throughout the rotation.
-	RETRO_RotateModel(phase * 0.61f, 0.0f, phase, Torus);
+	RETRO_RotateModel(fmod(turn * 0.61, 2 * M_PI), 0.0f, phase, Torus);
 	RETRO_TranslateModel(0.0f, 0.0f, CAMERA_DISTANCE - focal / MODEL_SCALE, Torus);
 	RETRO_ProjectModel(MODEL_SCALE, RETRO_WIDTH / 2.0, RETRO_HEIGHT / 2.0, Torus, focal);
 	RETRO_RenderModel(RETRO_POLY_TEXTURE, RETRO_SHADE_GOURAUD, Torus);
@@ -160,8 +161,8 @@ void DEMO_Render(RETRO_Time time)
 	// Reuse one model instance; the shared depth buffer resolves every fish
 	// against the torus and previously drawn fish.
 	for (int i = 0; i < FISH_COUNT; i++) {
-		float swim = time.total * FISH_SWIM_SPEED + FISH_START_PHASE + i * (2.0f * M_PI / FISH_COUNT);
-		float cycle = time.total * FISH_ANIMATION_SPEED + i * FISH_ANIMATION_OFFSET;
+		float swim = fmod(time.total * FISH_SWIM_SPEED + FISH_START_PHASE + i * (2.0 * M_PI / FISH_COUNT), 2 * M_PI);
+		double cycle = time.total * FISH_ANIMATION_SPEED + i * FISH_ANIMATION_OFFSET;
 		RETRO_MorphModel(fract(cycle), Fish);
 		RETRO_RotateModel(swim + M_PI * 0.5f, 0.0f, phase, Fish);
 		float ringy = RING_RADIUS * sinf(swim);

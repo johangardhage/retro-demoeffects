@@ -18,7 +18,7 @@
 //
 //   x = W/2 + BOB_AMPX sin xphase
 //   y = H/2 + BOB_AMPY sin yphase
-//   yphase' = BOB_SPEEDY (1 + BOB_WOBBLE sin driftphase)
+//   yphase' = BOB_SPEEDY (1 + BOB_WOBBLE sin(BOB_DRIFT t))
 //
 // so the figure keeps reshaping and the new chain crosses the old ones
 // rather than retracing them. The bob is a shaded ball, and every
@@ -54,13 +54,11 @@ static int Step;
 void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
-	static double xphase = 0;
-	static double yphase = M_PI / 2;
-	static double driftphase = 0;
-
-	xphase = fmod(xphase + BOB_SPEEDX * time.delta, 2 * M_PI);
-	yphase = fmod(yphase + BOB_SPEEDY * (1 + BOB_WOBBLE * sin(driftphase)) * time.delta, 2 * M_PI);
-	driftphase = fmod(driftphase + BOB_DRIFT * time.delta, 2 * M_PI);
+	// The y rate swings with sin(BOB_DRIFT t), so yphase is that rate
+	// integrated from pi/2 at t = 0
+	double t = time.total;
+	double xphase = fmod(BOB_SPEEDX * t, 2 * M_PI);
+	double yphase = fmod(M_PI / 2 + BOB_SPEEDY * (t + BOB_WOBBLE * (1 - cos(BOB_DRIFT * t)) / BOB_DRIFT), 2 * M_PI);
 
 	// Draw one bob into the next screen
 	Step = (Step + 1) % BOB_SCREENS;

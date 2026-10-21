@@ -323,7 +323,8 @@ void DEMO_Render(RETRO_Time time)
 	if (RETRO_KeyPressed(SDL_SCANCODE_P)) {
 		// Both on unless both already are
 		bool on = !(Lights.light[LIGHT_GREEN].on && Lights.light[LIGHT_RED].on);
-		Lights.light[LIGHT_GREEN].on = Lights.light[LIGHT_RED].on = on;
+		Lights.light[LIGHT_GREEN].on = on;
+		Lights.light[LIGHT_RED].on = on;
 	}
 	if (RETRO_KeyPressed(SDL_SCANCODE_G)) Lights.light[LIGHT_GREEN].on = !Lights.light[LIGHT_GREEN].on;
 	if (RETRO_KeyPressed(SDL_SCANCODE_R)) Lights.light[LIGHT_RED].on = !Lights.light[LIGHT_RED].on;
@@ -436,7 +437,8 @@ void DEMO_Initialize(void)
 	RETRO_Vehicle.lift = 10.7f; // -ln(0.7) * 30
 	RETRO_Vehicle.clearance = WORLD(125);
 	RETRO_Vehicle.floor = WORLD(50);
-	RETRO_Vehicle.restpitch = RETRO_Vehicle.pitch = radians(10);
+	RETRO_Vehicle.restpitch = radians(10);
+	RETRO_Vehicle.pitch = RETRO_Vehicle.restpitch;
 	RETRO_Vehicle.pitchkick = radians(0.6f) / WORLD(1);
 	RETRO_Vehicle.pitchreturn = radians(10);
 

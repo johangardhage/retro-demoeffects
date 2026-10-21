@@ -60,8 +60,7 @@ static void DrawLines(float x, float y, float k)
 void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + time.delta * LINE_SPEED, LINE_PERIOD);
+	double phase = fmod(time.total * LINE_SPEED, LINE_PERIOD);
 
 	// Calculate movement
 	double aa = phase / 1.37;

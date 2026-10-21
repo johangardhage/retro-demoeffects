@@ -78,7 +78,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	static int step = 0;
 
 	// Seed explosion
-	if (step % EXPLOSION_STEPS == 0) {
+	if (step == 0) {
 		CreateExplosion();
 	}
 

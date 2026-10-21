@@ -67,7 +67,7 @@ static void BuildFlubber(Model3D *model)
 
 void DEMO_Render(RETRO_Time time)
 {
-	float spin = (float)(time.total * FLUBBER_SPIN_SPEED);
+	float spin = fmod(time.total * FLUBBER_SPIN_SPEED, 2 * M_PI);
 	float twistcos = cos(time.total * FLUBBER_TWIST_OMEGA);
 	float twistmod = sin(time.total * FLUBBER_TWIST_MOD_OMEGA);
 	float swaycos = cos(time.total * FLUBBER_SWAY_OMEGA);

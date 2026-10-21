@@ -89,8 +89,7 @@ static void Step(float feed, float kill)
 void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase. Feed and kill ease from coral to mitosis and back
-	static double phase = 0;
-	phase = fract(phase + time.delta / DRIFT_PERIOD);
+	double phase = fract(time.total / DRIFT_PERIOD);
 
 	float t = 0.5f - 0.5f * cos(2 * M_PI * phase);
 	float feed = mix(CORAL_FEED, MITOSIS_FEED, t);

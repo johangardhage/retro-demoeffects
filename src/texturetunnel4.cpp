@@ -15,6 +15,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retropalette.h"
 
 constexpr int TEXTURE_WIDTH = 256;
 constexpr int TEXTURE_HEIGHT = 256;
@@ -70,5 +71,5 @@ void DEMO_Initialize(void)
 	// The picture owns the palette and leaves no entry spare, so the mouth
 	// takes index 0. That entry is all but black already, and claiming it
 	// outright costs the picture nothing.
-	RETRO_SetColor(0, 0, 0, 0);
+	RETRO_SetColor(0, RETRO_BLACK);
 }

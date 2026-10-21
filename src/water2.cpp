@@ -75,7 +75,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	static float *waterprevious = WaterB;
 	static float *waterscratch = WaterC;
 	static int tick = 0;
-	if (tick % WATER_DROP_STEPS == 0) {
+	if (tick == 0) {
 		Drop(RANDOM(RETRO_WIDTH), RANDOM(RETRO_HEIGHT), WATER_DEPTH, WATER_DROP_RADIUS);
 	}
 	tick = (tick + 1) % WATER_DROP_STEPS;

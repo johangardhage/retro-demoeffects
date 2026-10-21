@@ -372,7 +372,8 @@ static void AddBox(vec3 center, vec3 along, vec3 half, int material)
 // A level deck at a height over the line from a to b
 static void AddDeck(vec3 a, vec3 b, float height, float width, int material)
 {
-	a.y = b.y = height;
+	a.y = height;
+	b.y = height;
 	vec3 along = normalize(b - a);
 	AddBox((a + b) * 0.5f, along, { distance(a, b) / 2, 8.0f, width / 2 }, material);
 }
@@ -460,7 +461,6 @@ static int NamedMaterial(const char *name)
 		if (name && strcmp(name, MaterialNames[i]) == 0) return i;
 	}
 	RETRO_RageQuit("The map names a material that is not known: %s\n", name ? name : "(none)");
-	return 0;
 }
 
 // The color a texture paints the ground in, or -1 for one that is not ground

@@ -128,12 +128,12 @@ static unsigned char SampleSky(const Texture *texture, int x, int y)
 	float scale = (6.0f * 63.0f) / length(dir);
 	int layer = mip->width / 2;
 
-	float back = (float)(Time * 8.0);
-	int backx = WRAP((int)floorf(back + dir.x * scale), layer);
-	int backy = WRAP((int)floorf(back + dir.y * scale), mip->height);
-	float front = (float)(Time * 16.0);
-	int frontx = WRAP((int)floorf(front + dir.x * scale), layer);
-	int fronty = WRAP((int)floorf(front + dir.y * scale), mip->height);
+	double back = Time * 8.0;
+	int backx = WRAP((int)floor(back + dir.x * scale), layer);
+	int backy = WRAP((int)floor(back + dir.y * scale), mip->height);
+	double front = Time * 16.0;
+	int frontx = WRAP((int)floor(front + dir.x * scale), layer);
+	int fronty = WRAP((int)floor(front + dir.y * scale), mip->height);
 
 	unsigned char cloud = mip->pixels[frontx + fronty * mip->width];
 	return cloud != 0 ? cloud : mip->pixels[layer + backx + backy * mip->width];
@@ -148,7 +148,7 @@ static unsigned char SampleTexture(const Texture *texture, int level, vec2 uv)
 	float s = uv.x * (float)mip->width;
 	float t = uv.y * (float)mip->height;
 	if (texture->isturbulent) {
-		float time = (float)Time;
+		float time = (float)fmod(Time, M_PI); // both warps come round whole every pi seconds
 		float warps = sinf((t + time * 96.0f) * 0.125f) * 4.0f;
 		float warpt = sinf((s + time * 80.0f) * 0.125f) * 4.0f;
 		s += warps;
@@ -397,7 +397,8 @@ static void DecodeTextures(void)
 			continue;
 		}
 
-		const char *name = texture->name = miptex->name;
+		texture->name = miptex->name;
+		const char *name = texture->name;
 		texture->issky = tolower(name[0]) == 's' && tolower(name[1]) == 'k' && tolower(name[2]) == 'y';
 		texture->isturbulent = name[0] == '*';
 		for (int level = 0; level < MIPLEVELS; level++) {

@@ -50,8 +50,8 @@ void DEMO_Render(RETRO_Time time)
 
 		RETRO_ProjectVertex(&Stars[i], PROJECTION_SCALE);
 
-		int x = Stars[i].spos.x;
-		int y = Stars[i].spos.y;
+		float x = Stars[i].spos.x;
+		float y = Stars[i].spos.y;
 
 		if (RETRO_OnScreen(x, y)) {
 			int color = (furthest - Stars[i].rpos.z) * (SHADES - 1) / (furthest - STAR_NEAREST);

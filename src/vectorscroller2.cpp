@@ -359,7 +359,7 @@ static Model3D *GetGlyph(unsigned char character)
 void DEMO_Render(RETRO_Time time)
 {
 	double phase = mod(time.total * SCROLL_SPEED, (double)TextWidth);
-	float spin = (float)(time.total * HELIX_SPIN);
+	float spin = fmod(time.total * HELIX_SPIN, 2 * M_PI);
 
 	for (int i = 0; i < LETTERS; i++) {
 		unsigned char character = (unsigned char)ScrollText[i];

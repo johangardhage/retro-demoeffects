@@ -11,7 +11,7 @@
 // signs of that quadrant. The four walks start at (W/2, H/2) and step away,
 // so the center is one pixel (the second write) rather than two copies of
 // table (0, 0). Row 0 and column 0 sit outside those walks and take the
-// outer table entry. dz, dw and the two phases live on the wall clock.
+// outer table entry. dz and dw are worked out from the wall clock alone.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -30,14 +30,19 @@ static ivec2 DistortTable[WARP_HEIGHT * WARP_WIDTH];
 
 void DEMO_Render(RETRO_Time time)
 {
-	static float dz = 0;
-	static float dw = 0;
-
-	// Calculate phase
-	float alpha = fmod(time.total * WARP_ALPHA_SPEED, 2 * M_PI);
-	float beta = fmod(time.total * WARP_BETA_SPEED, 2 * M_PI);
-	dz += (sin(alpha + beta) * 2 + cos(beta) + 0.4) * time.delta * 60;
-	dw += (cos(beta - alpha) * 3 + sin(alpha) + 0.2) * time.delta * 60;
+	// Calculate offsets. They drift at
+	//
+	//   dz' = 60 (2 sin((a + b) t) + cos(b t) + 0.4)
+	//   dw' = 60 (3 cos((b - a) t) + sin(a t) + 0.2)
+	//
+	// texels a second, a and b the two speeds, and are those integrated from
+	// zero at t = 0, so they follow the clock exactly. Wrapped to the texture,
+	// so they stay small however long the demo runs.
+	double t = time.total;
+	double a = WARP_ALPHA_SPEED;
+	double b = WARP_BETA_SPEED;
+	double dz = mod(60 * (2 * (1 - cos((a + b) * t)) / (a + b) + sin(b * t) / b + 0.4 * t), (double)TEXTURE_WIDTH);
+	double dw = mod(60 * (3 * sin((b - a) * t) / (b - a) + (1 - cos(a * t)) / a + 0.2 * t), (double)TEXTURE_HEIGHT);
 
 	unsigned char *buffer = RETRO_FrameBuffer();
 	unsigned char *image = RETRO_ImageData();

@@ -100,7 +100,7 @@ static mat3 RoomToCube; // the room to the cube's own frame, where it is the box
 static const vec3 Sun = normalize(vec3{ 0.45f, -0.8f, -0.4f }); // toward the sun, in the room: right, up (-y) and behind the camera (-z)
 static vec3 SunRays[SUN_SAMPLES]; // the shadow rays, in the cube's frame; set every frame
 static vec3 SunCenter; // the middle one, in the cube's frame
-static float CloudDrift; // room units the clouds have moved along x
+static double CloudDrift; // room units the clouds have moved along x
 
 // abs(fract(x) - 1/2), the distance from x to the center of its unit cell, folded
 static float ChromeFold(float x)
@@ -284,7 +284,7 @@ void DEMO_Render(RETRO_Time time)
 	Model3D *model = RETRO_Get3DModel();
 	RoomToCube = transpose(model->matrix) * transpose(RoomFrame);
 	AimSunRays();
-	CloudDrift = (float)(time.total * CLOUD_SPEED);
+	CloudDrift = time.total * CLOUD_SPEED;
 
 	DrawRoom();
 

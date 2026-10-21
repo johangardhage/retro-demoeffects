@@ -177,10 +177,7 @@ void DEMO_Render(RETRO_Time time)
 
 	// First fall has no previous takeoff to continue, so the oscillator
 	// only runs after the ball has hit the floor once.
-	static bool launched = false;
-	if (phase >= BALL_TDOWN) {
-		launched = true;
-	}
+	bool launched = time.total >= BALL_TDOWN;
 
 	float ra, rb, cy;
 	if (phase < BALL_TDOWN) {

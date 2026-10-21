@@ -213,8 +213,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	float dt = (float)time.delta;
 
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + time.delta * 2 * M_PI / EMIT_PERIOD, 2 * M_PI);
+	double phase = fmod(time.total * 2 * M_PI / EMIT_PERIOD, 2 * M_PI);
 
 	// Emit smoke
 	Emit(GRID_WIDTH / 3.0f, GRID_HEIGHT - 8.0f, EMIT_SWING * (float)sin(phase));

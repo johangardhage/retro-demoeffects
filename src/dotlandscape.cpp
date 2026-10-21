@@ -16,6 +16,7 @@
 #include "lib/retroterrain.h"
 
 constexpr float CAMERA_X = 128.0f;
+constexpr float CAMERA_Z = 236.0f; // where the cruise starts
 constexpr float CAMERA_HEIGHT = 20.0f;
 constexpr float PITCH = -0.5f;
 constexpr float NEAR_PLANE = 1.0f;
@@ -40,7 +41,7 @@ static void PlotDot(const RETRO_CameraLens &lens, vec3 eye, unsigned char color)
 
 void DEMO_Render(RETRO_Time time)
 {
-	View.pos.z = fmodf(View.pos.z + FORWARD_SPEED * time.delta + RETRO_Terrain.height, RETRO_Terrain.height);
+	View.pos.z = fmod(CAMERA_Z + FORWARD_SPEED * time.total, RETRO_Terrain.height);
 	RETRO_ClearDepthBuffer();
 
 	// Scan the view radius around the camera and plot every terrain cell in
@@ -62,7 +63,7 @@ void DEMO_Initialize(void)
 	RETRO_LoadTerrain("assets/voxel_color_256x256.pcx", "assets/voxel_height_256x256.pcx", WORLD_HEIGHT_SCALE);
 	RETRO_SetColor(0, RETRO_NIGHTSKY);
 
-	View.pos = { CAMERA_X, CAMERA_HEIGHT, 236 };
+	View.pos = { CAMERA_X, CAMERA_HEIGHT, CAMERA_Z };
 	RETRO_AimCamera(&View, { 1, 0, 0 }, { 0, -1, 0 }, { 0, 0, 1 }, 0, -PITCH);
 	View.lens.focalx = RETRO_WIDTH * 0.5f;
 	View.lens.focaly = RETRO_HEIGHT * 0.5f;

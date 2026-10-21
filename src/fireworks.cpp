@@ -98,7 +98,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 {
 	static int step = 0;
 
-	if (step % ROCKET_STEPS == 0) {
+	if (step == 0) {
 		LaunchRocket();
 	}
 
@@ -116,15 +116,12 @@ void DEMO_FixedUpdate(RETRO_Time time)
 				particle.kind = DEAD;
 				continue;
 			}
-			if (particle.pos.x >= 0 && particle.pos.x < RETRO_WIDTH &&
-				particle.pos.y >= 0 && particle.pos.y < RETRO_HEIGHT) {
+			if (RETRO_OnScreen(particle.pos.x, particle.pos.y)) {
 				RETRO_PutPixel(particle.pos.x, particle.pos.y, RETRO_COLORS - 1);
 			}
 		} else {
 			particle.life--;
-			if (particle.life <= 0 ||
-				particle.pos.x < 0 || particle.pos.x >= RETRO_WIDTH ||
-				particle.pos.y < 0 || particle.pos.y >= RETRO_HEIGHT) {
+			if (particle.life <= 0 || !RETRO_OnScreen(particle.pos.x, particle.pos.y)) {
 				particle.kind = DEAD;
 				continue;
 			}
@@ -144,7 +141,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 
 	RETRO_Blur(RETRO_BLUR_DIFFUSE, TRAIL_DECAY);
 
-	step++;
+	step = (step + 1) % ROCKET_STEPS;
 }
 
 void DEMO_Initialize(void)

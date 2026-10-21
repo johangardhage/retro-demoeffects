@@ -93,7 +93,7 @@ constexpr int CHROME_SKY_START = CHROME_FLOOR_START + CHROME_FLOOR_SHADES * CHRO
 static mat3 RoomFrame; // view space to the room's, pitched so the camera looks down
 static const vec3 Sun = normalize(vec3{ 0.45f, -0.8f, -0.4f }); // toward the sun, in the room: right, up (-y) and behind the camera (-z)
 static vec3 Ball; // the ball's center, in the room; set every frame
-static float CloudDrift; // room units the clouds have moved along x
+static double CloudDrift; // room units the clouds have moved along x
 
 // abs(fract(x) - 1/2), the distance from x to the center of its unit cell, folded
 static float ChromeFold(float x)
@@ -235,7 +235,7 @@ void DEMO_Render(RETRO_Time time)
 	// it stands in the room, what it reflects from there, and its shadow.
 	float phase = fmod(time.total * ORBIT_SPEED, 2 * M_PI);
 	Ball = vec3{ ORBIT_RADIUS * cosf(phase), 0.0f, ORBIT_RADIUS * sinf(phase) };
-	CloudDrift = (float)(time.total * CLOUD_SPEED);
+	CloudDrift = time.total * CLOUD_SPEED;
 
 	DrawRoom();
 

@@ -82,8 +82,8 @@ void DEMO_Render(RETRO_Time time)
 		}
 
 		vec2 screen = RETRO_ProjectViewPoint(camera.lens, eye).pos;
-		int x = screen.x;
-		int y = screen.y;
+		float x = screen.x;
+		float y = screen.y;
 		if (RETRO_OnScreen(x, y)) {
 			int color = (SHADES - 1) * (1 - distance / STAR_FAR);
 			RETRO_PutPixel(x, y, color);

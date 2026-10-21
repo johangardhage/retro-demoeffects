@@ -50,8 +50,7 @@ static void DrawBlob(int xc, int yc, unsigned char color)
 void DEMO_FixedUpdate(RETRO_Time time)
 {
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + time.delta, BLOOM_PERIOD);
+	double phase = fmod(time.total, BLOOM_PERIOD);
 
 	// Draw orbiting blobs
 	for (int i = 0; i < NUM_BLOBS; i++) {

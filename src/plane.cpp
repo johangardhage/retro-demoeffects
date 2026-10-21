@@ -49,8 +49,8 @@ void DEMO_Render(RETRO_Time time)
 	float cosa = cos(radians(ang));
 	float sina = sin(radians(ang));
 
-	float xd = time.total * PLANE_WALK_SPEED;
-	float yd = time.total * PLANE_WALK_SPEED;
+	float xd = fmod(time.total * PLANE_WALK_SPEED, PLANE_PERIOD);
+	float yd = fmod(time.total * PLANE_WALK_SPEED, PLANE_PERIOD);
 
 	// Perspective scales. v is the forward texel at this depth and does
 	// not depend on x. u stretches about the screen center with a factor

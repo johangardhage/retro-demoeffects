@@ -56,14 +56,14 @@ void DEMO_Render(RETRO_Time time)
 
 		for (int y = y0; y < y1; y++) {
 			for (int x = x0; x < x1; x++) {
-				int sourcex = (int)(x * scale / (float)RADIAL_SCALE_BASE + xcenter + xoffset);
-				int sourcey = (int)(y * scale / (float)RADIAL_SCALE_BASE + ycenter + yoffset);
-				if (sourcex < 0 || sourcex >= IMAGE_WIDTH || sourcey < 0 || sourcey >= IMAGE_HEIGHT) {
+				float sourcex = x * scale / (float)RADIAL_SCALE_BASE + xcenter + xoffset;
+				float sourcey = y * scale / (float)RADIAL_SCALE_BASE + ycenter + yoffset;
+				if (!RETRO_OnScreen(sourcex, sourcey, IMAGE_WIDTH, IMAGE_HEIGHT)) {
 					continue;
 				}
 
 				int offset = y * RETRO_WIDTH + x;
-				float color = buffer[offset] + image[sourcey * IMAGE_WIDTH + sourcex] * scale / (float)RADIAL_BLEND_DIVISOR;
+				float color = buffer[offset] + image[(int)sourcey * IMAGE_WIDTH + (int)sourcex] * scale / (float)RADIAL_BLEND_DIVISOR;
 				buffer[offset] = CLAMP256(color);
 			}
 		}

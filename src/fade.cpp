@@ -7,9 +7,9 @@
 //   C(s) = s · C_loaded          fading in
 //   C(s) = (1 − s) · C_loaded    fading out
 //
-// s runs from 0 to 1 over TIME_FADEIN / TIME_FADEOUT. A three-state
-// machine HOLD / FADEIN / FADEOUT holds for TIME_HOLD on black or on
-// the picture, then fades the other way.
+// s runs from 0 to 1 over TIME_FADEIN / TIME_FADEOUT. The cycle holds
+// for TIME_HOLD on black, fades in, holds for TIME_HOLD on the picture,
+// then fades out, and is worked out from the time alone.
 //
 // Author: Johan Gardhage <johan.gardhage@gmail.com>
 //
@@ -21,48 +21,19 @@ constexpr double TIME_FADEIN = 2.5; // seconds the fade in takes
 constexpr double TIME_FADEOUT = 2.5; // seconds the fade out takes
 constexpr double TIME_HOLD = 0.5; // seconds held on black or on the picture
 
-enum FadeState { FADEIN, FADEOUT, HOLD };
+constexpr double TIME_CYCLE = 2 * TIME_HOLD + TIME_FADEIN + TIME_FADEOUT;
 
 void DEMO_Render(RETRO_Time time)
 {
-	static FadeState state = HOLD;
-	static FadeState next = FADEIN;
-	static double hold = TIME_HOLD;
-	static double step = 0;
+	// Calculate level: it rises to 1 over TIME_FADEIN after the hold on black,
+	// stays there over the hold on the picture, and falls back to 0 over the
+	// last TIME_FADEOUT of the cycle
+	double cycle = fmod(time.total, TIME_CYCLE);
+	double level = CLAMP01(MIN((cycle - TIME_HOLD) / TIME_FADEIN, (TIME_CYCLE - cycle) / TIME_FADEOUT));
 
 	// Draw picture
 	RETRO_Blit(RETRO_ImageData());
-
-	// Fade palette
-	switch (state) {
-	case HOLD:
-		hold -= time.delta;
-		if (hold <= 0) {
-			state = next;
-			step = 0;
-		}
-		break;
-	case FADEIN:
-		RETRO_Fade(step, RETRO_ImagePalette());
-		if (step >= 1) {
-			state = HOLD;
-			next = FADEOUT;
-			hold = TIME_HOLD;
-		} else {
-			step += time.delta / TIME_FADEIN;
-		}
-		break;
-	case FADEOUT:
-		RETRO_Fade(1 - step, RETRO_ImagePalette());
-		if (step >= 1) {
-			state = HOLD;
-			next = FADEIN;
-			hold = TIME_HOLD;
-		} else {
-			step += time.delta / TIME_FADEOUT;
-		}
-		break;
-	}
+	RETRO_Fade(level, RETRO_ImagePalette());
 }
 
 void DEMO_Initialize(void)

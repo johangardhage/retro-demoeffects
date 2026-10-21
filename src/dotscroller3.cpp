@@ -34,6 +34,8 @@ constexpr float WORLD_HEIGHT_SCALE = 1.0f / 27.0f;
 constexpr float LETTER_NEAR_FORWARD = 24.0f;
 constexpr float TURN_SPEED = 0.3f;
 constexpr float FORWARD_SPEED = 30.0f;
+constexpr float CAMERA_START_X = 64.0f; // where the cruise starts
+constexpr float CAMERA_START_Z = 118.0f;
 
 // Looking along +z with x to the right and y up, tipped down by -PITCH: the
 // frame the dots were always seen in. Half the screen's width and height
@@ -96,14 +98,14 @@ static void DrawScrollerDots(double time, float camerax, float cameraz, float cs
 
 void DEMO_Render(RETRO_Time time)
 {
-	static float camerax = 64;
-	static float cameraz = 118;
-	static float heading = 0;
-	heading = fmodf(heading + TURN_SPEED * time.delta, 2.0f * M_PI);
+	// The heading turns steadily, so the camera runs round a circle of radius
+	// FORWARD_SPEED / TURN_SPEED: its position is the turn integrated from the start
+	float heading = fmod(time.total * TURN_SPEED, 2 * M_PI);
 	float cs = cosf(heading);
 	float sn = sinf(heading);
-	camerax = fmodf(camerax + sn * FORWARD_SPEED * time.delta + RETRO_Terrain.width, RETRO_Terrain.width);
-	cameraz = fmodf(cameraz + cs * FORWARD_SPEED * time.delta + RETRO_Terrain.height, RETRO_Terrain.height);
+	float radius = FORWARD_SPEED / TURN_SPEED;
+	float camerax = mod(CAMERA_START_X + radius * (1 - cos(time.total * TURN_SPEED)), (double)RETRO_Terrain.width);
+	float cameraz = mod(CAMERA_START_Z + radius * sin(time.total * TURN_SPEED), (double)RETRO_Terrain.height);
 
 	View.pos = { camerax, CAMERA_HEIGHT, cameraz };
 	RETRO_AimCamera(&View, { 1, 0, 0 }, { 0, -1, 0 }, { 0, 0, 1 }, heading, -PITCH);

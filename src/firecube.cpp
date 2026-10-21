@@ -21,10 +21,9 @@ constexpr int ROTATION_SPEED = 2; // radians a second, about each axis
 //
 void DEMO_FixedUpdate(RETRO_Time time)
 {
-	static float ax, ay, az;
-	ax = fmod(ax + time.delta * ROTATION_SPEED, 2 * M_PI);
-	ay = fmod(ay + time.delta * ROTATION_SPEED, 2 * M_PI);
-	az = fmod(az + time.delta * ROTATION_SPEED, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
 
 	RETRO_RotateModel(ax, ay, az);
 	RETRO_ProjectModel();
@@ -36,7 +35,6 @@ void DEMO_FixedUpdate(RETRO_Time time)
 void DEMO_Initialize(void)
 {
 	// Init palette
-	RETRO_CreateGradientPalette(0, RETRO_COLORS, RETRO_BLACK, RETRO_BLACK);
 	RETRO_CreateGradientPalette(0, 63, RETRO_BLACK, RETRO_RED);
 	RETRO_CreateGradientPalette(63, 127, RETRO_RED, RETRO_YELLOW);
 	RETRO_CreateGradientPalette(127, 190, RETRO_YELLOW, RETRO_WHITE);

@@ -228,8 +228,7 @@ void DEMO_FixedUpdate(RETRO_Time time)
 	float dt = (float)time.delta;
 
 	// Calculate phase
-	static double phase = 0;
-	phase = fmod(phase + time.delta * 2 * M_PI / STIR_PERIOD, 2 * M_PI);
+	double phase = fmod(time.total * 2 * M_PI / STIR_PERIOD, 2 * M_PI);
 
 	// Stir ink in
 	Stir(phase, 3, 0, 2, M_PI / 2, Density1);

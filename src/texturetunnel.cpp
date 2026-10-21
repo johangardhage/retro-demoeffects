@@ -24,6 +24,7 @@
 //
 #include "lib/retro.h"
 #include "lib/retromain.h"
+#include "lib/retropalette.h"
 
 constexpr int TEXTURE_WIDTH = 256;
 constexpr int TEXTURE_HEIGHT = 256;
@@ -70,7 +71,7 @@ void DEMO_Initialize(void)
 
 	// That entry is all but black already, and claiming it outright costs
 	// the picture nothing.
-	RETRO_SetColor(0, 0, 0, 0);
+	RETRO_SetColor(0, RETRO_BLACK);
 
 	// Init tables
 	for (int y = 0; y < RETRO_HEIGHT; y++) {

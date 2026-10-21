@@ -87,7 +87,8 @@ void DEMO_Render(RETRO_Time time)
 				cornery = 1 - cornerx;
 			} else {
 				// Round the top left and bottom right
-				cornerx = cornery = fx + fy > 1;
+				cornerx = fx + fy > 1;
+				cornery = cornerx;
 			}
 			double vx = fx - cornerx;
 			double vy = fy - cornery;

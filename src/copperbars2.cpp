@@ -58,8 +58,7 @@ void DEMO_Render(RETRO_Time time)
 
 	// The one line every scanline is a copy of. Cleared once per frame, not once
 	// per row: what a row inherits from the rows above it is the whole effect
-	static unsigned char line[RETRO_WIDTH];
-	memset(line, 0, sizeof(line));
+	unsigned char line[RETRO_WIDTH] = {};
 
 	// Stamp one bar per row and copy the line down. Column i of the bar is entry
 	// i of that band's ramp, so the tube shading comes out of the palette, and a

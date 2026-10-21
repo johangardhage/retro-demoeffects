@@ -104,10 +104,9 @@ static void RetainCubeImage(float ax, float ay, float az, RubberLine *image)
 //
 void DEMO_FixedUpdate(RETRO_Time time)
 {
-	static float ax, ay, az;
-	ax = fmod(ax + time.delta * ROTATION_SPEED, 2 * M_PI);
-	ay = fmod(ay + time.delta * ROTATION_SPEED * 1.17f, 2 * M_PI);
-	az = fmod(az + time.delta * ROTATION_SPEED * 0.61f, 2 * M_PI);
+	float ax = fmod(time.total * ROTATION_SPEED, 2 * M_PI);
+	float ay = fmod(time.total * ROTATION_SPEED * 1.17f, 2 * M_PI);
+	float az = fmod(time.total * ROTATION_SPEED * 0.61f, 2 * M_PI);
 
 	// The head is the newest image rather than the next slot to fill, so it
 	// stands still between steps and DEMO_Render can read the ring on a frame

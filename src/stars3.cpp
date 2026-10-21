@@ -58,22 +58,22 @@ void DEMO_Render(RETRO_Time time)
 
 		float a = Stars[i].angle + TWIST / Stars[i].z;
 		float q = EYE / Stars[i].z;
-		int x = cx + Stars[i].radius * cos(a) * q;
-		int y = cy + Stars[i].radius * sin(a) * q;
+		double x = cx + Stars[i].radius * cos(a) * q;
+		double y = cy + Stars[i].radius * sin(a) * q;
 
-		if (RETRO_OnScreen(x, y)) {
+		if (RETRO_OnScreen((float)x, (float)y)) {
 			int color = (STAR_FAR - Stars[i].z) * (SHADES - 1) / (STAR_FAR - STAR_NEAR);
 			RETRO_PutPixel(x, y, color);
 
 			// Near stars take a neighbor so they read as a streak along the
 			// vortex rather than as a single pixel.
 			if (color > SHADES / 2) {
-				int x2 = x + (x > cx ? 1 : -1);
-				int y2 = y + (y > cy ? 1 : -1);
-				if (x2 >= 0 && x2 < RETRO_WIDTH) {
+				double x2 = x + (x > cx ? 1 : -1);
+				double y2 = y + (y > cy ? 1 : -1);
+				if (RETRO_OnScreen((float)x2, (float)y)) {
 					RETRO_PutPixel(x2, y, color);
 				}
-				if (y2 >= 0 && y2 < RETRO_HEIGHT) {
+				if (RETRO_OnScreen((float)x, (float)y2)) {
 					RETRO_PutPixel(x, y2, color / 2);
 				}
 			}
